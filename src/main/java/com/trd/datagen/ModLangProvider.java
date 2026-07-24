@@ -132,6 +132,76 @@ public class ModLangProvider extends LanguageProvider {
         add("item.trd.cast_pickaxe.desc.tunnel_miner", "Tunnel Miner: %s");
 
 
+        // ═══ GUI: Electric Furnace ═══
+        add("gui.trd.electric_furnace.energy_tooltip", "%s / %s JE");
+        add("gui.trd.electric_furnace.progress_tooltip", "§6Remaining: §f%s sec");
+
+        // ═══ GUI: Fluid Barrel / Fuel Tank (shared) ═══
+        add("gui.trd.fluid_barrel.empty", "Empty");
+        add("gui.trd.fluid_barrel.amount", "%s / %s mB");
+        add("gui.trd.fluid_barrel.mode.title", "Mode:");
+        add("gui.trd.fluid_barrel.mode.both", "§aInput / Output (Both)");
+        add("gui.trd.fluid_barrel.mode.input", "§bInput Only");
+        add("gui.trd.fluid_barrel.mode.output", "§6Output Only");
+        add("gui.trd.fluid_barrel.mode.disabled", "§cDisabled");
+        add("gui.trd.fluid_barrel.mode.unknown", "Unknown");
+
+        // ═══ GUI: Fluid Identifier ═══
+        add("gui.trd.fluid_identifier.title", "Fluid Identifier");
+        add("gui.trd.fluid_identifier.unknown", "Unknown");
+
+        // ═══ GUI: Heater ═══
+        add("gui.trd.heater.fuel_tiers_title", "§6§lFuel Tiers:");
+        add("gui.trd.heater.fuel_tier_format", "§8Tier %s: §f%s°C, §f%s§7s.");
+        add("gui.trd.heater.temperature_format", "%s / %s °C");
+        add("gui.trd.heater.burn_time_format", "§6Remaining: §f%s§7/§f%s sec");
+        add("gui.trd.heater.stopped", "§7Stopped");
+
+        // ═══ GUI: Machine Battery ═══
+        add("gui.trd.battery.panel.out", "OUT: %s JE/S");
+        add("gui.trd.battery.panel.in", "IN: %s JE/S");
+        add("gui.trd.battery.tooltip.discharge_speed", "§cDischarge Speed: %s JE/t");
+        add("gui.trd.battery.tooltip.charge_speed", "§aCharge Speed: %s JE/t");
+        add("gui.trd.battery.tooltip.speed_per_second", "(%s JE/s)");
+
+        // ═══ GUI: Small Smelter ═══
+        add("gui.trd.small_smelter.fuel_tiers_title", "§6§lFuel Tiers:");
+        add("gui.trd.small_smelter.fuel_tier.0", "§8Tier 0: §f1°C, §f6.25§7s.");
+        add("gui.trd.small_smelter.fuel_tier.1", "§8Tier 1: §f2°C, §f12.5§7s.");
+        add("gui.trd.small_smelter.fuel_tier.2", "§8Tier 2: §f3°C, §f25§7s.");
+        add("gui.trd.small_smelter.fuel_tier.3", "§8Tier 3: §f4°C, §f40§7s.");
+        add("gui.trd.small_smelter.fuel_tier.4", "§8Tier 4: §f6°C, §f60§7s.");
+        add("gui.trd.small_smelter.fuel_tier.5", "§8Tier 5: §f8°C, §f120§7s.");
+        add("gui.trd.small_smelter.temperature_format", "%s / %s °C");
+        add("gui.trd.small_smelter.burn_time_format", "§6Remaining: §f%s§7/§f%s sec");
+        add("gui.trd.small_smelter.stopped", "§7Stopped");
+        add("gui.trd.small_smelter.progress.temperature_format", "Temperature: %d/%d °C");
+        add("gui.trd.small_smelter.progress.remaining", "Remaining: %ss");
+        add("gui.trd.small_smelter.metal_tank.title", "§6§lMolten Metals:");
+        add("gui.trd.small_smelter.metal_tank.empty", "§7Empty");
+        add("gui.trd.small_smelter.metal_tank.exact_format", "%s: %s units");
+        add("gui.trd.small_smelter.metal_tank.block_abbr", "bl");
+        add("gui.trd.small_smelter.metal_tank.ingot_abbr", "ing");
+        add("gui.trd.small_smelter.metal_tank.nugget_abbr", "nug");
+        add("gui.trd.small_smelter.metal_tank.total_exact", "§7Total: §f%s§7 units / §f%s§7 units");
+        add("gui.trd.small_smelter.metal_tank.shift_hide", "§8[Shift] hide exact value");
+        add("gui.trd.small_smelter.metal_tank.shift_show", "§8[Shift] exact value");
+
+        // ═══ GUI: Smelter ═══
+        add("gui.trd.smelter.temperature_format", "%d / %d °C");
+        add("gui.trd.smelter.progress.temperature_format", "Temperature: %d/%d °C");
+        add("gui.trd.smelter.progress.remaining", "Remaining: %ss");
+        add("gui.trd.smelter.metal_tank.title", "§6§lMolten Metals:");
+        add("gui.trd.smelter.metal_tank.empty", "§7Empty");
+        add("gui.trd.smelter.metal_tank.block_abbr", "blocks");
+        add("gui.trd.smelter.metal_tank.ingot_abbr", "ingots");
+        add("gui.trd.smelter.metal_tank.nugget_abbr", "nuggets");
+        add("gui.trd.smelter.metal_tank.total_exact", "§7Total: §f%d§7 units / §f%d§7 units");
+        add("gui.trd.smelter.metal_tank.total_converted", "§7Total: §f%dbl, %ding, %dnug §8/ %d blocks");
+        add("gui.trd.smelter.metal_tank.shift_hide", "§8[Shift] hide exact value");
+        add("gui.trd.smelter.metal_tank.shift_show", "§8[Shift] exact value");
+
+
         // Sequoia
         add(ModBlocks.SEQUOIA_BARK.get(), "Sequoia Bark");
         add(ModBlocks.SEQUOIA_HEARTWOOD.get(), "Sequoia Heartwood");
@@ -511,6 +581,76 @@ public class ModLangProvider extends LanguageProvider {
         add("gui.trd.heater.tier5", "Уровень V");
 
         add("item.trd.hot_ingot.tooltip", "§6§lРАСКАЛЁННЫЙ! §r§7(%s%%)");
+
+
+        // ═══ GUI: Electric Furnace ═══
+        add("gui.trd.electric_furnace.energy_tooltip", "%s / %s JE");
+        add("gui.trd.electric_furnace.progress_tooltip", "§6Осталось: §f%s сек");
+
+        // ═══ GUI: Fluid Barrel / Fuel Tank (shared) ═══
+        add("gui.trd.fluid_barrel.empty", "Пусто");
+        add("gui.trd.fluid_barrel.amount", "%s / %s mB");
+        add("gui.trd.fluid_barrel.mode.title", "Режим:");
+        add("gui.trd.fluid_barrel.mode.both", "§aВход / Выход (Оба)");
+        add("gui.trd.fluid_barrel.mode.input", "§bТолько Вход");
+        add("gui.trd.fluid_barrel.mode.output", "§6Только Выход");
+        add("gui.trd.fluid_barrel.mode.disabled", "§cОтключено");
+        add("gui.trd.fluid_barrel.mode.unknown", "Неизвестно");
+
+        // ═══ GUI: Fluid Identifier ═══
+        add("gui.trd.fluid_identifier.title", "Жидкостный идентификатор");
+        add("gui.trd.fluid_identifier.unknown", "Неизвестно");
+
+        // ═══ GUI: Heater ═══
+        add("gui.trd.heater.fuel_tiers_title", "§6§lТопливные тиры:");
+        add("gui.trd.heater.fuel_tier_format", "§8Тир %s: §f%s°C, §f%s§7с.");
+        add("gui.trd.heater.temperature_format", "%s / %s °C");
+        add("gui.trd.heater.burn_time_format", "§6Осталось: §f%s§7/§f%s сек");
+        add("gui.trd.heater.stopped", "§7Остановлен");
+
+        // ═══ GUI: Machine Battery ═══
+        add("gui.trd.battery.panel.out", "OUT: %s JE/S");
+        add("gui.trd.battery.panel.in", "IN: %s JE/S");
+        add("gui.trd.battery.tooltip.discharge_speed", "§cСкорость разрядки: %s JE/t");
+        add("gui.trd.battery.tooltip.charge_speed", "§aСкорость зарядки: %s JE/t");
+        add("gui.trd.battery.tooltip.speed_per_second", "(%s JE/s)");
+
+        // ═══ GUI: Small Smelter ═══
+        add("gui.trd.small_smelter.fuel_tiers_title", "§6§lТопливные тиры:");
+        add("gui.trd.small_smelter.fuel_tier.0", "§8Тир 0: §f1°C, §f6.25§7с.");
+        add("gui.trd.small_smelter.fuel_tier.1", "§8Тир 1: §f2°C, §f12.5§7с.");
+        add("gui.trd.small_smelter.fuel_tier.2", "§8Тир 2: §f3°C, §f25§7с.");
+        add("gui.trd.small_smelter.fuel_tier.3", "§8Тир 3: §f4°C, §f40§7с.");
+        add("gui.trd.small_smelter.fuel_tier.4", "§8Тир 4: §f6°C, §f60§7с.");
+        add("gui.trd.small_smelter.fuel_tier.5", "§8Тир 5: §f8°C, §f120§7с.");
+        add("gui.trd.small_smelter.temperature_format", "%s / %s °C");
+        add("gui.trd.small_smelter.burn_time_format", "§6Осталось: §f%s§7/§f%s сек");
+        add("gui.trd.small_smelter.stopped", "§7Остановлен");
+        add("gui.trd.small_smelter.progress.temperature_format", "Температура: %d/%d °C");
+        add("gui.trd.small_smelter.progress.remaining", "Осталось: %sс");
+        add("gui.trd.small_smelter.metal_tank.title", "§6§lРасплавленные металлы:");
+        add("gui.trd.small_smelter.metal_tank.empty", "§7Пусто");
+        add("gui.trd.small_smelter.metal_tank.exact_format", "%s: %s ед.");
+        add("gui.trd.small_smelter.metal_tank.block_abbr", "б");
+        add("gui.trd.small_smelter.metal_tank.ingot_abbr", "сл");
+        add("gui.trd.small_smelter.metal_tank.nugget_abbr", "см");
+        add("gui.trd.small_smelter.metal_tank.total_exact", "§7Всего: §f%s§7 ед. / §f%s§7 ед.");
+        add("gui.trd.small_smelter.metal_tank.shift_hide", "§8[Shift] скрыть точное значение");
+        add("gui.trd.small_smelter.metal_tank.shift_show", "§8[Shift] точное значение");
+
+        // ═══ GUI: Smelter ═══
+        add("gui.trd.smelter.temperature_format", "%d / %d °C");
+        add("gui.trd.smelter.progress.temperature_format", "Температура: %d/%d °C");
+        add("gui.trd.smelter.progress.remaining", "Осталось: %sс");
+        add("gui.trd.smelter.metal_tank.title", "§6§lРасплавленные металлы:");
+        add("gui.trd.smelter.metal_tank.empty", "§7Пусто");
+        add("gui.trd.smelter.metal_tank.block_abbr", "блоки");
+        add("gui.trd.smelter.metal_tank.ingot_abbr", "слитки");
+        add("gui.trd.smelter.metal_tank.nugget_abbr", "самородки");
+        add("gui.trd.smelter.metal_tank.total_exact", "§7Всего: §f%d§7 ед. / §f%d§7 ед.");
+        add("gui.trd.smelter.metal_tank.total_converted", "§7Всего: §f%dб, %dсл, %dсм §8/ %d блоков");
+        add("gui.trd.smelter.metal_tank.shift_hide", "§8[Shift] скрыть точное значение");
+        add("gui.trd.smelter.metal_tank.shift_show", "§8[Shift] точное значение");
 
         // Секвойя
         add(ModBlocks.SEQUOIA_BARK.get(), "Кора секвойи");

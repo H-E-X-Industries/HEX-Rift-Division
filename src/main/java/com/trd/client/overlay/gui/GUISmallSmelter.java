@@ -173,13 +173,13 @@ public class GUISmallSmelter extends AbstractContainerScreen<SmallSmelterMenu> {
 
     private void renderFuelTooltip(GuiGraphics guiGraphics, int mouseX, int mouseY) {
         String[] lines = {
-                "§6§lТопливные тиры:",
-                "§8Тир 0: §f1°C, §f6.25§7с.",
-                "§8Тир 1: §f2°C, §f12.5§7с.",
-                "§8Тир 2: §f3°C, §f25§7с.",
-                "§8Тир 3: §f4°C, §f40§7с.",
-                "§8Тир 4: §f6°C, §f60§7с.",
-                "§8Тир 5: §f8°C, §f120§7с."
+                Component.translatable("gui.trd.small_smelter.fuel_tiers_title").getString(),
+                Component.translatable("gui.trd.small_smelter.fuel_tier.0").getString(),
+                Component.translatable("gui.trd.small_smelter.fuel_tier.1").getString(),
+                Component.translatable("gui.trd.small_smelter.fuel_tier.2").getString(),
+                Component.translatable("gui.trd.small_smelter.fuel_tier.3").getString(),
+                Component.translatable("gui.trd.small_smelter.fuel_tier.4").getString(),
+                Component.translatable("gui.trd.small_smelter.fuel_tier.5").getString(),
         };
 
         int lineHeight = 11;
@@ -242,7 +242,8 @@ public class GUISmallSmelter extends AbstractContainerScreen<SmallSmelterMenu> {
         float temp = menu.getTemperature() / 10f;
         float maxTemp = SmallSmelterBlockEntity.MAX_TEMP;
         int color = getSmoothTemperatureColor(temp / maxTemp);
-        Component text = Component.literal(String.format("%.0f / %.0f °C", temp, maxTemp))
+        Component text = Component.translatable("gui.trd.small_smelter.temperature_format",
+                        String.format("%.0f", temp), String.format("%.0f", maxTemp))
                 .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(color)));
         gui.renderTooltip(this.font, text, mx, my);
     }
@@ -251,10 +252,10 @@ public class GUISmallSmelter extends AbstractContainerScreen<SmallSmelterMenu> {
         if (menu.isBurning()) {
             int seconds = menu.getBurnTime() / 20;
             int totalSeconds = menu.getTotalBurnTime() / 20;
-            Component text = Component.literal(String.format("§6Осталось: §f%d§7/§f%d сек", seconds, totalSeconds));
+            Component text = Component.translatable("gui.trd.small_smelter.burn_time_format", seconds, totalSeconds);
             gui.renderTooltip(this.font, text, mx, my);
         } else {
-            gui.renderTooltip(this.font, Component.literal("§7Остановлен"), mx, my);
+            gui.renderTooltip(this.font, Component.translatable("gui.trd.small_smelter.stopped"), mx, my);
         }
     }
 
@@ -265,7 +266,7 @@ public class GUISmallSmelter extends AbstractContainerScreen<SmallSmelterMenu> {
         int requiredTemp = be != null ? be.getRequiredTemp() : 0;
         boolean hasEnough = currentTemp >= requiredTemp;
         int tempColor = hasEnough ? 0x00FF00 : (System.currentTimeMillis() / 500 % 2 == 0 ? 0x910000 : 0x808080);
-        lines.add(Component.literal(String.format("Температура: %d/%d °C", currentTemp, requiredTemp))
+        lines.add(Component.translatable("gui.trd.small_smelter.progress.temperature_format", currentTemp, requiredTemp)
                 .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(tempColor))));
 
         if (be != null && be.getSmeltMaxProgress() > 0) {
@@ -278,7 +279,8 @@ public class GUISmallSmelter extends AbstractContainerScreen<SmallSmelterMenu> {
             }
             if (heatPerTick > 0) {
                 float seconds = remaining / (heatPerTick * 20.0f);
-                lines.add(Component.literal(String.format("Осталось: %.1fс", Math.max(0, seconds)))
+                lines.add(Component.translatable("gui.trd.small_smelter.progress.remaining",
+                                String.format("%.1f", Math.max(0, seconds)))
                         .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAAAA))));
             }
         }
@@ -287,10 +289,11 @@ public class GUISmallSmelter extends AbstractContainerScreen<SmallSmelterMenu> {
 
     private void renderMetalTankTooltip(GuiGraphics gui, int mx, int my) {
         List<Component> lines = new ArrayList<>();
-        lines.add(Component.literal("§6§lРасплавленные металлы:"));
+        lines.add(Component.translatable("gui.trd.small_smelter.metal_tank.title"));
+
         List<SmallSmelterBlockEntity.MetalStack> metals = menu.getBlockEntity().getMetalStacks();
         if (metals.isEmpty()) {
-            lines.add(Component.literal("§7Пусто"));
+            lines.add(Component.translatable("gui.trd.small_smelter.metal_tank.empty"));
         } else {
             boolean showExact = hasShiftDown();
             List<SmallSmelterBlockEntity.MetalStack> displayOrder = new ArrayList<>(metals);
@@ -300,21 +303,27 @@ public class GUISmallSmelter extends AbstractContainerScreen<SmallSmelterMenu> {
                 MetalUnits2.MetalStack converted = MetalUnits2.convertFromUnits(units);
                 String name = Component.translatable(stack.metal.getTranslationKey()).getString();
                 if (showExact) {
-                    lines.add(Component.literal(name + ": " + units + " ед.")
+                    lines.add(Component.translatable("gui.trd.small_smelter.metal_tank.exact_format", name, units)
                             .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(stack.metal.getColor()))));
                 } else {
                     StringBuilder sb = new StringBuilder();
-                    if (converted.blocks() > 0) sb.append(converted.blocks()).append("б ");
-                    if (converted.ingots() > 0) sb.append(converted.ingots()).append("сл ");
-                    if (converted.nuggets() > 0) sb.append(converted.nuggets()).append("см ");
+                    if (converted.blocks() > 0) sb.append(converted.blocks())
+                            .append(Component.translatable("gui.trd.small_smelter.metal_tank.block_abbr").getString()).append(" ");
+                    if (converted.ingots() > 0) sb.append(converted.ingots())
+                            .append(Component.translatable("gui.trd.small_smelter.metal_tank.ingot_abbr").getString()).append(" ");
+                    if (converted.nuggets() > 0) sb.append(converted.nuggets())
+                            .append(Component.translatable("gui.trd.small_smelter.metal_tank.nugget_abbr").getString()).append(" ");
                     if (sb.length() == 0) sb.append("0");
                     lines.add(Component.literal(name + ": " + sb.toString())
                             .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(stack.metal.getColor()))));
                 }
             }
             int total = menu.getBlockEntity().getTotalMetalAmount();
-            lines.add(Component.literal(String.format("§7Всего: §f%d§7 ед. / §f%d§7 ед.", total, SmallSmelterBlockEntity.CAPACITY_UNITS)));
-            lines.add(Component.literal(showExact ? "§8[Shift] скрыть точное значение" : "§8[Shift] точное значение"));
+            lines.add(Component.translatable("gui.trd.small_smelter.metal_tank.total_exact",
+                    total, SmallSmelterBlockEntity.CAPACITY_UNITS));
+            lines.add(Component.translatable(showExact
+                    ? "gui.trd.small_smelter.metal_tank.shift_hide"
+                    : "gui.trd.small_smelter.metal_tank.shift_show"));
         }
         gui.renderComponentTooltip(this.font, lines, mx, my);
     }

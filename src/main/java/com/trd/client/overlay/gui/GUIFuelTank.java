@@ -69,8 +69,8 @@ public class GUIFuelTank extends AbstractContainerScreen<FuelTankMenu> {
         if (relX >= TANK_X && relX < TANK_X + TANK_W && relY >= TANK_Y && relY < TANK_Y + TANK_H) {
             List<Component> tooltip = new ArrayList<>();
             FluidStack fluid = menu.getFluid();
+            // Внутри renderCustomTooltips — блок "Пусто" / жидкость
             if (fluid.isEmpty()) {
-                // ФИКС: если жидкости нет, но задан тип (фильтр) — показываем его имя и 0 / ёмкость
                 String filter = menu.blockEntity.fluidFilter;
                 net.minecraft.world.level.material.Fluid filterFluid = (filter == null || filter.equals("none"))
                         ? null
@@ -81,29 +81,31 @@ public class GUIFuelTank extends AbstractContainerScreen<FuelTankMenu> {
                     int filterTint = IClientFluidTypeExtensions.of(filterFluid).getTintColor() | 0xFF000000;
                     filterName.setStyle(Style.EMPTY.withColor(TextColor.fromRgb(filterTint)));
                     tooltip.add(filterName);
-                    tooltip.add(Component.literal("0 / " + menu.getCapacity() + " mB").withStyle(ChatFormatting.GRAY));
+                    tooltip.add(Component.translatable("gui.trd.fluid_barrel.amount", 0, menu.getCapacity())
+                            .withStyle(ChatFormatting.GRAY));
                 } else {
-                    tooltip.add(Component.literal("Пусто").withStyle(ChatFormatting.GRAY));
+                    tooltip.add(Component.translatable("gui.trd.fluid_barrel.empty").withStyle(ChatFormatting.GRAY));
                 }
             } else {
                 MutableComponent fluidName = fluid.getDisplayName().copy();
                 int tint = IClientFluidTypeExtensions.of(fluid.getFluid()).getTintColor() | 0xFF000000;
                 fluidName.setStyle(Style.EMPTY.withColor(TextColor.fromRgb(tint)));
                 tooltip.add(fluidName);
-                tooltip.add(Component.literal(fluid.getAmount() + " / " + menu.getCapacity() + " mB")
+                tooltip.add(Component.translatable("gui.trd.fluid_barrel.amount", fluid.getAmount(), menu.getCapacity())
                         .withStyle(ChatFormatting.GRAY));
             }
             graphics.renderComponentTooltip(this.font, tooltip, mouseX, mouseY);
         }
 
+        // --- режим ---
         if (relX >= MODE_X && relX < MODE_X + MODE_SIZE && relY >= MODE_Y && relY < MODE_Y + MODE_SIZE) {
             List<Component> tooltip = List.of(
-                    Component.literal("Режим:"),
-                    Component.literal(switch (menu.getMode()) {
-                        case 0 -> "§aВход / Выход (Оба)";
-                        case 1 -> "§bТолько Вход";
-                        case 2 -> "§6Только Выход";
-                        default -> "§cОтключено";
+                    Component.translatable("gui.trd.fluid_barrel.mode.title"),
+                    Component.translatable(switch (menu.getMode()) {
+                        case 0 -> "gui.trd.fluid_barrel.mode.both";
+                        case 1 -> "gui.trd.fluid_barrel.mode.input";
+                        case 2 -> "gui.trd.fluid_barrel.mode.output";
+                        default -> "gui.trd.fluid_barrel.mode.disabled";
                     })
             );
             graphics.renderComponentTooltip(this.font, tooltip, mouseX, mouseY);

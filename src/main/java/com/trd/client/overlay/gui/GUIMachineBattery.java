@@ -88,20 +88,18 @@ public class GUIMachineBattery extends AbstractContainerScreen<MachineBatteryMen
         int filledCells = menu.getFilledCellCount();
         if (filledCells <= 0) return;
 
-        // Левая панель (OUT)
         graphics.blit(TEXTURE, x + 8, y + 7, 177, 117, 76, 16);
-        // Правая панель (IN)
         graphics.blit(TEXTURE, x + 92, y + 7, 177, 117, 76, 16);
 
         long chargingSpeed = menu.getChargingSpeed();
         long unchargingSpeed = menu.getUnchargingSpeed();
 
-        String outText = "OUT: " + EnergyFormatter.format(unchargingSpeed * 20) + " JE/S";
-        String inText  = "IN: " + EnergyFormatter.format(chargingSpeed * 20) + " JE/S";
+        String outText = Component.translatable("gui.trd.battery.panel.out",
+                EnergyFormatter.format(unchargingSpeed * 20)).getString();
+        String inText = Component.translatable("gui.trd.battery.panel.in",
+                EnergyFormatter.format(chargingSpeed * 20)).getString();
 
-        // Левая панель (OUT)
         graphics.drawString(this.font, outText, x + 8 + 1, y + 7 + 4, SPEED_TEXT_COLOR, false);
-        // Правая панель (IN)
         graphics.drawString(this.font, inText, x + 92 + 1, y + 7 + 4, SPEED_TEXT_COLOR, false);
     }
 
@@ -243,26 +241,28 @@ public class GUIMachineBattery extends AbstractContainerScreen<MachineBatteryMen
             pGuiGraphics.renderTooltip(this.font, tooltip, Optional.empty(), pMouseX, pMouseY);
         }
 
-        // Тултип для левой панели (OUT) – теперь координаты x8, y7
+        // Тултип для левой панели (OUT)
         if (isMouseOver(pMouseX, pMouseY, 8, 7, 76, 16)) {
             int filledCells = menu.getFilledCellCount();
             if (filledCells > 0) {
                 List<Component> tooltip = new ArrayList<>();
-                long speed = menu.getUnchargingSpeed(); // скорость разрядки
-                tooltip.add(Component.literal("§cСкорость разрядки: " + EnergyFormatter.format(speed) + " JE/t"));
-                tooltip.add(Component.literal("§7(" + EnergyFormatter.format(speed * 20) + " JE/s)").withStyle(ChatFormatting.GRAY));
+                long speed = menu.getUnchargingSpeed();
+                tooltip.add(Component.translatable("gui.trd.battery.tooltip.discharge_speed", EnergyFormatter.format(speed)));
+                tooltip.add(Component.translatable("gui.trd.battery.tooltip.speed_per_second", EnergyFormatter.format(speed * 20))
+                        .withStyle(ChatFormatting.GRAY));
                 pGuiGraphics.renderTooltip(this.font, tooltip, Optional.empty(), pMouseX, pMouseY);
             }
         }
 
-// Тултип для правой панели (IN) – теперь координаты x92, y7
+        // Тултип для правой панели (IN)
         if (isMouseOver(pMouseX, pMouseY, 92, 7, 76, 16)) {
             int filledCells = menu.getFilledCellCount();
             if (filledCells > 0) {
                 List<Component> tooltip = new ArrayList<>();
-                long speed = menu.getChargingSpeed(); // скорость зарядки
-                tooltip.add(Component.literal("§aСкорость зарядки: " + EnergyFormatter.format(speed) + " JE/t"));
-                tooltip.add(Component.literal("§7(" + EnergyFormatter.format(speed * 20) + " JE/s)").withStyle(ChatFormatting.GRAY));
+                long speed = menu.getChargingSpeed();
+                tooltip.add(Component.translatable("gui.trd.battery.tooltip.charge_speed", EnergyFormatter.format(speed)));
+                tooltip.add(Component.translatable("gui.trd.battery.tooltip.speed_per_second", EnergyFormatter.format(speed * 20))
+                        .withStyle(ChatFormatting.GRAY));
                 pGuiGraphics.renderTooltip(this.font, tooltip, Optional.empty(), pMouseX, pMouseY);
             }
         }

@@ -70,31 +70,28 @@ public class GUIHeater extends AbstractContainerScreen<HeaterMenu> {
     }
 
     private void renderStandardTooltips(GuiGraphics guiGraphics, int mouseX, int mouseY, int x, int y) {
-        // Тултип температуры — округление до целых
         if (this.isHovering(64, 9, 15, 51, mouseX, mouseY)) {
             float temp = menu.getTemperatureFloat();
             float maxTemp = HeaterBlockEntity.MAX_TEMP;
             float percent = temp / maxTemp;
             int color = getSmoothTemperatureColor(percent);
 
-            Component tempText = Component.literal(String.format("%.0f / %.0f °C", temp, maxTemp))
+            Component tempText = Component.translatable("gui.trd.heater.temperature_format",
+                            String.format("%.0f", temp), String.format("%.0f", maxTemp))
                     .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(color)));
 
             guiGraphics.renderTooltip(this.font, tempText, mouseX, mouseY);
         }
 
-        // Тултип индикатора работы — секунды без десятых
         if (this.isHovering(104, 25, 18, 18, mouseX, mouseY)) {
             if (menu.isBurning()) {
                 int seconds = menu.getBurnTime() / 20;
                 int totalSeconds = menu.getTotalBurnTime() / 20;
 
-                Component timeText = Component.literal(
-                        String.format("§6Осталось: §f%d§7/§f%d сек", seconds, totalSeconds)
-                );
+                Component timeText = Component.translatable("gui.trd.heater.burn_time_format", seconds, totalSeconds);
                 guiGraphics.renderTooltip(this.font, timeText, mouseX, mouseY);
             } else {
-                guiGraphics.renderTooltip(this.font, Component.literal("§7Остановлен"), mouseX, mouseY);
+                guiGraphics.renderTooltip(this.font, Component.translatable("gui.trd.heater.stopped"), mouseX, mouseY);
             }
         }
     }
@@ -108,14 +105,12 @@ public class GUIHeater extends AbstractContainerScreen<HeaterMenu> {
         int iconSize = 12;
         int iconTextGap = 2;
 
-        // Заголовок
-        Component header = Component.literal("§6§lТопливные тиры:");
-        int maxTextWidth = this.font.width(header);
+        Component header = Component.translatable("gui.trd.heater.fuel_tiers_title");
+        int maxTextWidth = this.font.width(header.getString());
 
-        // Считаем максимальную ширину текста
         for (HeaterBlockEntity.FuelTierInfo info : tiers) {
-            String line = String.format("§8Тир %d: §f%.0f°C, §f%d§7с.",
-                    info.tier(), info.heatPerTick(), info.getBurnSeconds());
+            String line = Component.translatable("gui.trd.heater.fuel_tier_format",
+                    info.tier(), (int) info.heatPerTick(), info.getBurnSeconds()).getString();
             maxTextWidth = Math.max(maxTextWidth, this.font.width(line));
         }
 

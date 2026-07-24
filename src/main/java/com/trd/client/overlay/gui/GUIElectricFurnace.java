@@ -72,15 +72,15 @@ public class GUIElectricFurnace extends AbstractContainerScreen<ElectricFurnaceM
     protected void renderTooltip(GuiGraphics gui, int mouseX, int mouseY) {
         super.renderTooltip(gui, mouseX, mouseY);
 
-        // Тултип энергобара (132, 16, 16, 52)
+        // Тултип энергобара
         if (isHovering(132, 16, 16, 52, mouseX, mouseY)) {
             int energy = this.menu.getDataSlot(2);
             int maxEnergy = this.menu.getDataSlot(3);
             gui.renderTooltip(this.font,
-                    Component.literal(energy + " / " + maxEnergy + " JE"), mouseX, mouseY);
+                    Component.translatable("gui.trd.electric_furnace.energy_tooltip", energy, maxEnergy), mouseX, mouseY);
         }
 
-        // Тултип прогресса плавки (76, 51, 24, 6)
+        // Тултип прогресса плавки
         if (isHovering(76, 51, 24, 6, mouseX, mouseY)) {
             int progress = this.menu.getDataSlot(0);
             int maxProgress = this.menu.getDataSlot(1);
@@ -88,7 +88,7 @@ public class GUIElectricFurnace extends AbstractContainerScreen<ElectricFurnaceM
                 int remaining = maxProgress - progress;
                 int seconds = (int) Math.ceil(remaining / 20.0);
                 gui.renderTooltip(this.font,
-                        Component.literal("§6Осталось: §f" + seconds + " сек"), mouseX, mouseY);
+                        Component.translatable("gui.trd.electric_furnace.progress_tooltip", seconds), mouseX, mouseY);
             }
         }
     }
