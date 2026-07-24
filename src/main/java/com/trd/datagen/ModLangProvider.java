@@ -202,6 +202,42 @@ public class ModLangProvider extends LanguageProvider {
         add("gui.trd.smelter.metal_tank.shift_show", "§8[Shift] exact value");
 
 
+        // ═══ GUI: Turret (shared) ═══
+        add("gui.trd.turret.boot", "SYSTEM BOOT%s");
+        add("gui.trd.turret.status.online", "SYSTEM ONLINE");
+        add("gui.trd.turret.status.repairing", "REPAIRING: %s%%");
+        add("gui.trd.turret.status.charging", "CHARGING...");
+        add("gui.trd.turret.status.standby", "STANDBY MODE");
+        add("gui.trd.turret.menu.chip_control", "CHIP CONTROL");
+        add("gui.trd.turret.menu.attack_mode", "ATTACK MODE");
+        add("gui.trd.turret.menu.stats", "TURRET STATS");
+        add("gui.trd.turret.target.hostiles", "HOSTILES");
+        add("gui.trd.turret.target.neutrals", "NEUTRALS");
+        add("gui.trd.turret.target.players", "PLAYERS");
+        add("gui.trd.turret.toggle.on", "[V]");
+        add("gui.trd.turret.toggle.off", "[X]");
+        add("gui.trd.turret.stats.kills", "KILLS: %s");
+        add("gui.trd.turret.stats.time", "TIME: %dh %dm");
+        add("gui.trd.turret.stats.owner", "OWNER: [DATA]");
+        add("gui.trd.turret.chip.empty", "EMPTY LIST");
+        add("gui.trd.turret.chip.format", "%s/%s %s");
+        add("gui.trd.turret.result.success", "SUCCESS");
+        add("gui.trd.turret.result.error", "ERROR 404");
+        add("gui.trd.turret.energy_tooltip", "%s / %s JE");
+
+        // Light Turret
+        add("gui.trd.turret.status.respawn", "RESPAWN: %ss");
+
+        // Trombone
+        add("gui.trd.turret.status.reloading", "RELOADING: %ss");
+        add("gui.trd.turret.status.no_missiles", "NO MISSILES");
+        add("gui.trd.turret.menu.missiles", "MISSILES");
+        add("gui.trd.turret.missiles.none", "NO MISSILES!");
+        add("gui.trd.turret.missiles.standard", "STD: %s");
+        add("gui.trd.turret.missiles.he", "HE: %s");
+        add("gui.trd.turret.missiles.fire", "FIRE: %s");
+        add("gui.trd.turret.missiles.total", "TTL: %s");
+
         // Sequoia
         add(ModBlocks.SEQUOIA_BARK.get(), "Sequoia Bark");
         add(ModBlocks.SEQUOIA_HEARTWOOD.get(), "Sequoia Heartwood");
@@ -651,6 +687,42 @@ public class ModLangProvider extends LanguageProvider {
         add("gui.trd.smelter.metal_tank.total_converted", "§7Всего: §f%dб, %dсл, %dсм §8/ %d блоков");
         add("gui.trd.smelter.metal_tank.shift_hide", "§8[Shift] скрыть точное значение");
         add("gui.trd.smelter.metal_tank.shift_show", "§8[Shift] точное значение");
+
+        // ═══ GUI: Turret (общее для Light & Trombone) ═══
+        add("gui.trd.turret.boot", "ЗАГРУЗКА%s");
+        add("gui.trd.turret.status.online", "СИСТЕМА В НОРМЕ");
+        add("gui.trd.turret.status.repairing", "РЕМОНТ: %s%%");
+        add("gui.trd.turret.status.charging", "ЗАРЯДКА...");
+        add("gui.trd.turret.status.standby", "РЕЖИМ ОЖИДАНИЯ");
+        add("gui.trd.turret.menu.chip_control", "ЧИП");
+        add("gui.trd.turret.menu.attack_mode", "РЕЖИМ АТАКИ");
+        add("gui.trd.turret.menu.stats", "СТАТИСТИКА");
+        add("gui.trd.turret.target.hostiles", "ВРАГИ");
+        add("gui.trd.turret.target.neutrals", "НЕЙТРАЛЬНЫЕ");
+        add("gui.trd.turret.target.players", "ИГРОКИ");
+        add("gui.trd.turret.toggle.on", "[V]");
+        add("gui.trd.turret.toggle.off", "[X]");
+        add("gui.trd.turret.stats.kills", "УБИЙСТВА: %s");
+        add("gui.trd.turret.stats.time", "ВРЕМЯ ЖИЗНИ: %dч %dм");
+        add("gui.trd.turret.stats.owner", "ВЛАДЕЛЕЦ: [ДАННЫЕ]");
+        add("gui.trd.turret.chip.empty", "СПИСОК ПУСТ");
+        add("gui.trd.turret.chip.format", "%s/%s %s");
+        add("gui.trd.turret.result.success", "УСПЕХ");
+        add("gui.trd.turret.result.error", "ОШИБКА 404");
+        add("gui.trd.turret.energy_tooltip", "%s / %s JE");
+
+        // Light Turret
+        add("gui.trd.turret.status.respawn", "ВОЗРОЖДЕНИЕ: %sс");
+
+        // Trombone
+        add("gui.trd.turret.status.reloading", "ПЕРЕЗАРЯДКА: %sс");
+        add("gui.trd.turret.status.no_missiles", "НЕТ РАКЕТ");
+        add("gui.trd.turret.menu.missiles", "РАКЕТЫ");
+        add("gui.trd.turret.missiles.none", "НЕТ РАКЕТ!");
+        add("gui.trd.turret.missiles.standard", "СТД: %s");
+        add("gui.trd.turret.missiles.he", "ФУГ: %s");
+        add("gui.trd.turret.missiles.fire", "ЗАЖ: %s");
+        add("gui.trd.turret.missiles.total", "ВСЕГО: %s");
 
         // Секвойя
         add(ModBlocks.SEQUOIA_BARK.get(), "Кора секвойи");

@@ -6,6 +6,7 @@ import com.trd.block.entity.industrial.casting.SmallSmelterBlockEntity;
 import com.trd.item.ModItems;
 import com.trd.main.MainRegistry;
 import com.trd.menu.industrial.SmallSmelterMenu;
+import com.trd.multiblock.industrial.HeaterBlockEntity;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -40,43 +41,7 @@ public class GUISmallSmelter extends AbstractContainerScreen<SmallSmelterMenu> {
     private static final int PROGRESS_W = 16;
     private static final int PROGRESS_H = 3;
 
-    private static final List<ItemStack>[] TIER_ITEMS = new List[6];
 
-    static {
-        TIER_ITEMS[0] = Arrays.asList(
-                new ItemStack(Items.STICK), new ItemStack(Items.SCAFFOLDING),
-                new ItemStack(Items.OAK_PLANKS), new ItemStack(Items.SPRUCE_PLANKS),
-                new ItemStack(Items.BIRCH_PLANKS), new ItemStack(Items.JUNGLE_PLANKS),
-                new ItemStack(Items.ACACIA_PLANKS), new ItemStack(Items.DARK_OAK_PLANKS),
-                new ItemStack(Items.MANGROVE_PLANKS), new ItemStack(Items.CHERRY_PLANKS),
-                new ItemStack(Items.BAMBOO_PLANKS), new ItemStack(Items.BAMBOO_MOSAIC),
-                new ItemStack(Items.OAK_LOG), new ItemStack(Items.SPRUCE_LOG),
-                new ItemStack(Items.BIRCH_LOG), new ItemStack(Items.JUNGLE_LOG),
-                new ItemStack(Items.ACACIA_LOG), new ItemStack(Items.DARK_OAK_LOG),
-                new ItemStack(Items.MANGROVE_LOG), new ItemStack(Items.CHERRY_LOG),
-                new ItemStack(Items.BAMBOO_BLOCK)
-        );
-        TIER_ITEMS[1] = Arrays.asList(
-                new ItemStack(Items.COAL),
-                new ItemStack(Items.CHARCOAL),
-                new ItemStack(Items.BLAZE_POWDER)
-        );
-        TIER_ITEMS[2] = Arrays.asList(
-                new ItemStack(Items.BLAZE_ROD),
-                new ItemStack(Items.MAGMA_CREAM),
-                new ItemStack(Items.PORKCHOP)
-        );
-        TIER_ITEMS[3] = Arrays.asList(
-                new ItemStack(Items.COAL_BLOCK)
-        );
-        TIER_ITEMS[4] = Arrays.asList(
-                new ItemStack(Items.LAVA_BUCKET)
-        );
-        TIER_ITEMS[5] = Arrays.asList(
-                new ItemStack(ModItems.MORY_LAH.get()),
-                new ItemStack(Items.DRAGON_BREATH)
-        );
-    }
 
     public GUISmallSmelter(SmallSmelterMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
@@ -172,37 +137,33 @@ public class GUISmallSmelter extends AbstractContainerScreen<SmallSmelterMenu> {
     }
 
     private void renderFuelTooltip(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        String[] lines = {
-                Component.translatable("gui.trd.small_smelter.fuel_tiers_title").getString(),
-                Component.translatable("gui.trd.small_smelter.fuel_tier.0").getString(),
-                Component.translatable("gui.trd.small_smelter.fuel_tier.1").getString(),
-                Component.translatable("gui.trd.small_smelter.fuel_tier.2").getString(),
-                Component.translatable("gui.trd.small_smelter.fuel_tier.3").getString(),
-                Component.translatable("gui.trd.small_smelter.fuel_tier.4").getString(),
-                Component.translatable("gui.trd.small_smelter.fuel_tier.5").getString(),
-        };
+        List<HeaterBlockEntity.FuelTierInfo> tiers = SmallSmelterBlockEntity.getAllTierInfos();
+        int tierCount = tiers.size();
 
         int lineHeight = 11;
         int padding = 4;
         int iconSize = 12;
         int iconTextGap = 2;
 
-        int maxTextWidth = 0;
-        for (String line : lines) {
+        Component header = Component.translatable("gui.trd.small_smelter.fuel_tiers_title");
+        int maxTextWidth = this.font.width(header);
+
+        for (HeaterBlockEntity.FuelTierInfo info : tiers) {
+            String line = Component.translatable("gui.trd.heater.fuel_tier_format",
+                    info.tier(), (int) info.heatPerTick(), info.getBurnSeconds()).getString();
             maxTextWidth = Math.max(maxTextWidth, this.font.width(line));
         }
 
         int tooltipWidth = padding + iconSize + iconTextGap + maxTextWidth + padding;
-        int tooltipHeight = lines.length * lineHeight + padding * 2;
+        int tooltipHeight = (1 + tierCount) * lineHeight + padding * 2;
 
-        // === ВСЕГДА СЛЕВА ===
         int tooltipX = mouseX - tooltipWidth - 8;
         int tooltipY = mouseY - tooltipHeight / 2;
 
-        // Только вертикальная коррекция, если вылезает за экран
         if (tooltipY < 4) tooltipY = 4;
         if (tooltipY + tooltipHeight > this.height) tooltipY = this.height - tooltipHeight - 4;
 
+        // Фон тултипа
         guiGraphics.fill(tooltipX, tooltipY, tooltipX + tooltipWidth, tooltipY + tooltipHeight, 0xF0100010);
         guiGraphics.fill(tooltipX + 1, tooltipY, tooltipX + tooltipWidth - 1, tooltipY + 1, 0xF0500070);
         guiGraphics.fill(tooltipX + 1, tooltipY + tooltipHeight - 1, tooltipX + tooltipWidth - 1, tooltipY + tooltipHeight, 0xF0500070);
@@ -211,30 +172,32 @@ public class GUISmallSmelter extends AbstractContainerScreen<SmallSmelterMenu> {
 
         long currentSecond = System.currentTimeMillis() / 1000;
 
-        for (int i = 0; i < lines.length; i++) {
-            int lineY = tooltipY + padding + i * lineHeight;
+        // Заголовок
+        int headerY = tooltipY + padding;
+        guiGraphics.drawString(this.font, header, tooltipX + padding, headerY + 2, 0xFFFFFF, true);
 
-            if (i == 0) {
-                guiGraphics.drawString(this.font, lines[i], tooltipX + padding, lineY + 2, 0xFFFFFF, true);
-            } else {
-                int tier = i - 1;
+        // Каждый тир
+        for (int i = 0; i < tierCount; i++) {
+            HeaterBlockEntity.FuelTierInfo info = tiers.get(i);
+            int lineY = headerY + (i + 1) * lineHeight;
 
-                List<ItemStack> items = TIER_ITEMS[tier];
-                if (items != null && !items.isEmpty()) {
-                    int itemIndex = (int)((currentSecond + tier) % items.size());
-                    ItemStack stack = items.get(itemIndex);
+            List<ItemStack> items = HeaterBlockEntity.getFuelItemsForTier(info.tier());
+            if (!items.isEmpty()) {
+                int itemIndex = (int) ((currentSecond + info.tier()) % items.size());
+                ItemStack stack = items.get(itemIndex);
 
-                    guiGraphics.pose().pushPose();
-                    guiGraphics.pose().translate(tooltipX + padding, lineY, 100);
-                    guiGraphics.pose().scale(0.75f, 0.75f, 1.0f);
-                    guiGraphics.renderItem(stack, 0, 0);
-                    guiGraphics.renderItemDecorations(this.font, stack, 0, 0);
-                    guiGraphics.pose().popPose();
-                }
-
-                int textX = tooltipX + padding + iconSize + iconTextGap;
-                guiGraphics.drawString(this.font, lines[i], textX, lineY + 2, 0xFFFFFF, true);
+                guiGraphics.pose().pushPose();
+                guiGraphics.pose().translate(tooltipX + padding, lineY, 100);
+                guiGraphics.pose().scale(0.75f, 0.75f, 1.0f);
+                guiGraphics.renderItem(stack, 0, 0);
+                guiGraphics.renderItemDecorations(this.font, stack, 0, 0);
+                guiGraphics.pose().popPose();
             }
+
+            String line = Component.translatable("gui.trd.heater.fuel_tier_format",
+                    info.tier(), (int) info.heatPerTick(), info.getBurnSeconds()).getString();
+            int textX = tooltipX + padding + iconSize + iconTextGap;
+            guiGraphics.drawString(this.font, line, textX, lineY + 2, 0xFFFFFF, true);
         }
     }
 
