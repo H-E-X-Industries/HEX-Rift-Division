@@ -160,17 +160,14 @@ public class EnergyCellItem extends Item implements GeoItem {
 
         // Энергия в ячейке
         if (stored > 0) {
-            pTooltip.add(Component.literal("§eEnergy: " + formatNumber(stored) + " / " + formatNumber(max) + " HE"));
+            pTooltip.add(Component.translatable("tooltip.trd.energy_cell.energy_stored", formatNumber(stored), formatNumber(max)));
         } else {
-            pTooltip.add(Component.literal("§7Energy: Empty"));
+            pTooltip.add(Component.translatable("tooltip.trd.energy_cell.empty"));
         }
 
-        pTooltip.add(Component.literal("Capacity: " + formatNumber(max) + " HE")
-                .withStyle(ChatFormatting.GOLD));
-        pTooltip.add(Component.literal("Charge Speed: " + formatNumber(getCellChargingSpeed(pStack)) + " HE/t")
-                .withStyle(ChatFormatting.GREEN));
-        pTooltip.add(Component.literal("Discharge Speed: " + formatNumber(getCellUnchargingSpeed(pStack)) + " HE/t")
-                .withStyle(ChatFormatting.RED));
+        pTooltip.add(Component.translatable("tooltip.trd.energy_cell.capacity", formatNumber(max)).withStyle(ChatFormatting.GOLD));
+        pTooltip.add(Component.translatable("tooltip.trd.energy_cell.charge_speed", formatNumber(getCellChargingSpeed(pStack))).withStyle(ChatFormatting.GREEN));
+        pTooltip.add(Component.translatable("tooltip.trd.energy_cell.discharge_speed", formatNumber(getCellUnchargingSpeed(pStack))).withStyle(ChatFormatting.RED));
     }
 
     private static String formatNumber(long value) {

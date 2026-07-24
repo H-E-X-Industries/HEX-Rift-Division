@@ -135,10 +135,10 @@ public class FluidPipeBlock extends Block implements EntityBlock, SimpleWaterlog
     public void appendHoverText(net.minecraft.world.item.ItemStack stack, @org.jetbrains.annotations.Nullable net.minecraft.world.level.BlockGetter level, java.util.List<net.minecraft.network.chat.Component> tooltip, net.minecraft.world.item.TooltipFlag flag) {
         super.appendHoverText(stack, level, tooltip, flag);
 
-        tooltip.add(Component.literal("Макс. температура: ").withStyle(ChatFormatting.GRAY)
+        tooltip.add(Component.translatable("tooltip.trd.fluid_pipe.max_temp").withStyle(ChatFormatting.GRAY)
                 .append(Component.literal(tier.getMaxTemperature() + " °C").withStyle(ChatFormatting.GOLD)));
 
-        tooltip.add(Component.literal("Макс. коррозия: ").withStyle(ChatFormatting.GRAY)
+        tooltip.add(Component.translatable("tooltip.trd.fluid_pipe.max_corrosion").withStyle(ChatFormatting.GRAY)
                 .append(Component.literal(String.valueOf(tier.getMaxCorrosivity())).withStyle(ChatFormatting.YELLOW)));
     }
 

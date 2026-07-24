@@ -326,6 +326,114 @@ public class ModLangProvider extends LanguageProvider {
         add("hud.trd.stator.load_label", "Load: ");
         add("hud.trd.stator.production_label", "Production: ");
 
+        // ═══ GUI: Casting Pot ═══
+        add("gui.trd.casting_pot.cannot_insert", "§cCannot insert: pot is occupied or has no mold");
+        add("gui.trd.casting_pot.slag_hot", "§cSlag is hot! Use a poker.");
+        add("gui.trd.casting_pot.too_hot", "§cToo hot! %d°C (%d%%) Use a poker.");
+        add("gui.trd.casting_pot.too_hot_simple", "§cToo hot! (%d%%) Use a poker.");
+        add("gui.trd.casting_pot.cannot_remove_mold", "§cCannot remove mold: contains metal or item");
+
+        // ═══ GUI: Machine Battery ═══
+        add("gui.trd.machine_battery.cell_extracted", "§eCell extracted from slot %s");
+        add("gui.trd.machine_battery.cell_inserted", "§aCell inserted into slot %s");
+        add("gui.trd.machine_battery.slot_occupied", "§cSlot %s is already occupied!");
+
+        // ═══ Tooltip: Machine Battery ═══
+        add("tooltip.trd.machine_battery.frame", "§7Energy storage frame");
+        add("tooltip.trd.machine_battery.energy", "§eEnergy: %s JE");
+        add("tooltip.trd.machine_battery.insert_cells", "§8Insert energy cells to increase parameters");
+
+        // ═══ Message: Fluid Barrel ═══
+        add("message.trd.fluid_barrel.filter_reset", "§eBarrel filter reset (Closed)");
+        add("message.trd.fluid_barrel.filter_set", "§aBarrel Filter: §f%s");
+
+        // ═══ Tooltip: Fluid Barrel ═══
+        add("tooltip.trd.fluid_barrel.capacity", "Capacity: ");
+        add("tooltip.trd.fluid_barrel.melting_point", "Melting point: ");
+        add("tooltip.trd.fluid_barrel.corrosion_resistance", "Corrosion resistance: ");
+        add("tooltip.trd.fluid_barrel.leaking", "⚠ Leaking: ");
+        add("tooltip.trd.fluid_barrel.leak_rate_unit", "mB/sec");
+        add("tooltip.trd.fluid_barrel.fluid", "§bFluid: §f%s");
+        add("tooltip.trd.fluid_barrel.amount", "§eVolume: §f%s / %s mB");
+        add("tooltip.trd.fluid_barrel.empty", "§bFluid: §7Empty");
+        add("tooltip.trd.fluid_barrel.filter", "§aFilter: §f%s");
+        add("tooltip.trd.fluid_barrel.filter_closed", "§aFilter: §cClosed");
+
+        // ═══ Tooltip: Fluid Pipe ═══
+        add("tooltip.trd.fluid_pipe.max_temp", "Max temperature: ");
+        add("tooltip.trd.fluid_pipe.max_corrosion", "Max corrosion: ");
+
+        // ═══ Message: Fluid Pipe ═══
+        add("message.trd.fluid_pipe.filter_line_reset", "§aPipe line filter reset. §7(%s pipes)");
+        add("message.trd.fluid_pipe.filter_line_set", "§aPipe line filter set: §f%s §7(%s pipes)");
+        add("message.trd.fluid_pipe.filter_reset", "§eFilter reset (Pipe accepts all)");
+        add("message.trd.fluid_pipe.filter_set", "§aFilter: §f%s");
+
+        // ═══ Tooltip: Low Pressure Steam Condenser ═══
+        add("tooltip.trd.condenser.steam_in", "⬇ L.P. Steam (input): ");
+        add("tooltip.trd.condenser.water_out", "⬆ Water (output): ");
+        add("tooltip.trd.condenser.cooling", "❄ Cooling: ");
+
+        // ═══ Message: Valve ═══
+        add("message.trd.valve.filter_reset", "§eValve filter reset");
+        add("message.trd.valve.filter_set", "§aValve filter: §f%s");
+
+        // ═══ Tooltip: Steel Storage ═══
+        add("tooltip.trd.steel_storage.empty", "Empty");
+        add("tooltip.trd.steel_storage.contains", "Contains: %s/%s");
+        add("tooltip.trd.steel_storage.and_more", "... and %s more");
+        add("tooltip.trd.steel_storage.item", "• %s x%s");
+
+        // ═══ Tooltip & Message: Fuel Tank (shared) ═══
+        add("message.trd.fuel_tank.filter_reset", "§eFilter reset (tank closed)");
+        add("message.trd.fuel_tank.filter_set", "§aFilter set: §f%s");
+        add("tooltip.trd.fuel_tank.capacity", "Capacity: %s mB");
+        add("tooltip.trd.fuel_tank.resistant", "Resistant to corrosion and heat");
+        add("tooltip.trd.fuel_tank.fluid", "§bFluid: §f%s");
+        add("tooltip.trd.fuel_tank.amount", "§eVolume: §f%s / %s mB");
+        add("tooltip.trd.fuel_tank.empty", "§bFluid: §7Empty");
+        add("tooltip.trd.fuel_tank.type", "§aType: §f%s");
+        add("tooltip.trd.fuel_tank.type_not_set", "§aType: §cnot set");
+
+        // ═══ Tooltip: Conglomerate ═══
+        add("tooltip.trd.conglomerate.empty", "§7Empty chunk");
+        add("tooltip.trd.conglomerate.contains_fractions", "§eContains fractions:");
+        add("tooltip.trd.conglomerate.fraction", "%s: %d%%");
+        add("tooltip.trd.conglomerate.ou", "§8OU: %d");
+        add("tooltip.trd.conglomerate.vein_type", "§8Vein type: %s");
+
+        // ═══ Tooltip: Energy Cell ═══
+        add("tooltip.trd.energy_cell.energy_stored", "§eEnergy: %s / %s JE");
+        add("tooltip.trd.energy_cell.empty", "§7Energy: Empty");
+        add("tooltip.trd.energy_cell.capacity", "Capacity: %s JE");
+        add("tooltip.trd.energy_cell.charge_speed", "Charge Speed: %s JE/t");
+        add("tooltip.trd.energy_cell.discharge_speed", "Discharge Speed: %s JE/t");
+
+        // ═══ Message: Wire Coil ═══
+        add("message.trd.wire_coil.cancelled", "§eConnection cancelled.");
+        add("message.trd.wire_coil.connector_full", "§cThis connector is already full!");
+        add("message.trd.wire_coil.started", "§aConnection started... Click the second connector.");
+        add("message.trd.wire_coil.self_connect", "§cCannot connect a connector to itself!");
+        add("message.trd.wire_coil.first_destroyed", "§cThe first connector was destroyed or lost.");
+        add("message.trd.wire_coil.first_full", "§cThe first connector is already full!");
+        add("message.trd.wire_coil.second_full", "§cThe second connector is already full!");
+        add("message.trd.wire_coil.already_connected", "§cThese connectors are already connected!");
+        add("message.trd.wire_coil.too_far", "§cToo far! Maximum length: %s blocks.");
+        add("message.trd.wire_coil.blocked", "§cPath blocked: %s");
+        add("message.trd.wire_coil.success", "§bConnection successfully established!");
+
+        // ═══ Message: Belt ═══
+        add("message.trd.belt.pulleys_only", "§cBelt can only be stretched on pulleys!");
+        add("message.trd.belt.already_connected", "§cThis pulley is already connected by a belt!");
+        add("message.trd.belt.first_selected", "§aFirst pulley selected. Click the second one.");
+        add("message.trd.belt.cancelled", "§eLinking cancelled.");
+        add("message.trd.belt.too_far", "§cToo far! (Max. %s blocks)");
+        add("message.trd.belt.first_destroyed", "§cThe first pulley was destroyed or removed.");
+        add("message.trd.belt.axis_mismatch", "§cPulley axes are not parallel!");
+        add("message.trd.belt.not_coplanar", "§cPulleys must lie in the same plane!");
+        add("message.trd.belt.pulley_occupied", "§cOne of the pulleys is already occupied!");
+        add("message.trd.belt.success", "§aBelt successfully stretched!");
+
         // Sequoia
         add(ModBlocks.SEQUOIA_BARK.get(), "Sequoia Bark");
         add(ModBlocks.SEQUOIA_HEARTWOOD.get(), "Sequoia Heartwood");
@@ -471,7 +579,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModItems.IRON_BARREL_ITEM.get(), "Iron Barrel");
         add(ModItems.STEEL_BARREL_ITEM.get(), "Steel Barrel");
         add(ModItems.LEAD_BARREL_ITEM.get(), "Lead Barrel");
-        add(ModItems.INFINITE_FLUID_BARREL.get(), "Infinite Fluid Barrel");
+        add(ModItems.INFINITE_FLUID_BARREL.get(), "Infinite Fluid Source");
         add(ModBlocks.FUEL_TANK_SMALL.get(), "Small Fuel Tank");
         add(ModBlocks.FUEL_TANK_BIG.get(), "Big Fuel Tank");
         add(ModBlocks.LOW_PRESSURE_STEAM_CONDENSER.get(), "Low Pressure Steam Condenser");
@@ -898,6 +1006,113 @@ public class ModLangProvider extends LanguageProvider {
         add("hud.trd.stator.load_label", "Нагрузка: ");
         add("hud.trd.stator.production_label", "Производство: ");
 
+        // ═══ GUI: Casting Pot ═══
+        add("gui.trd.casting_pot.cannot_insert", "§cНельзя поместить: котёл занят или нет формы");
+        add("gui.trd.casting_pot.slag_hot", "§cШлак горячий! Используйте кочергу.");
+        add("gui.trd.casting_pot.too_hot", "§cСлишком горячо! %d°C (%d%%) Используйте кочергу.");
+        add("gui.trd.casting_pot.too_hot_simple", "§cСлишком горячо! (%d%%) Используйте кочергу.");
+        add("gui.trd.casting_pot.cannot_remove_mold", "§cНельзя извлечь форму: есть металл или предмет");
+
+        // ═══ GUI: Machine Battery ═══
+        add("gui.trd.machine_battery.cell_extracted", "§eЯчейка извлечена из слота %s");
+        add("gui.trd.machine_battery.cell_inserted", "§aЯчейка вставлена в слот %s");
+        add("gui.trd.machine_battery.slot_occupied", "§cСлот %s уже занят!");
+
+        // ═══ Tooltip: Machine Battery ═══
+        add("tooltip.trd.machine_battery.frame", "§7Каркас энергохранилища");
+        add("tooltip.trd.machine_battery.energy", "§eЭнергия: %s JE");
+        add("tooltip.trd.machine_battery.insert_cells", "§8Вставьте энергоячейки для увеличения параметров");
+
+        // ═══ Message: Fluid Barrel ═══
+        add("message.trd.fluid_barrel.filter_reset", "§eФильтр бочки сброшен (Закрыто)");
+        add("message.trd.fluid_barrel.filter_set", "§aФильтр бочки: §f%s");
+
+        // ═══ Tooltip: Fluid Barrel ═══
+        add("tooltip.trd.fluid_barrel.capacity", "Ёмкость: ");
+        add("tooltip.trd.fluid_barrel.melting_point", "Точка плавления: ");
+        add("tooltip.trd.fluid_barrel.corrosion_resistance", "Коррозионная стойкость: ");
+        add("tooltip.trd.fluid_barrel.leaking", "⚠ Протекает: ");
+        add("tooltip.trd.fluid_barrel.leak_rate_unit", "мБ/сек");
+        add("tooltip.trd.fluid_barrel.fluid", "§bЖидкость: §f%s");
+        add("tooltip.trd.fluid_barrel.amount", "§eОбъём: §f%s / %s мБ");
+        add("tooltip.trd.fluid_barrel.empty", "§bЖидкость: §7Пусто");
+        add("tooltip.trd.fluid_barrel.filter", "§aФильтр: §f%s");
+        add("tooltip.trd.fluid_barrel.filter_closed", "§aФильтр: §cЗакрыто");
+
+        // ═══ Tooltip: Fluid Pipe ═══
+        add("tooltip.trd.fluid_pipe.max_temp", "Макс. температура: ");
+        add("tooltip.trd.fluid_pipe.max_corrosion", "Макс. коррозия: ");
+
+        // ═══ Message: Fluid Pipe ═══
+        add("message.trd.fluid_pipe.filter_line_reset", "§aФильтр линии труб сброшен. §7(%s труб)");
+        add("message.trd.fluid_pipe.filter_line_set", "§aФильтр линии труб установлен: §f%s §7(%s труб)");
+        add("message.trd.fluid_pipe.filter_reset", "§eФильтр сброшен (Труба принимает всё)");
+        add("message.trd.fluid_pipe.filter_set", "§aФильтр: §f%s");
+
+        // ═══ Tooltip: Low Pressure Steam Condenser ═══
+        add("tooltip.trd.condenser.steam_in", "⬇ Пар Н.Д. (вход): ");
+        add("tooltip.trd.condenser.water_out", "⬆ Вода (выход): ");
+        add("tooltip.trd.condenser.cooling", "❄ Охлаждение: ");
+
+        // ═══ Message: Valve ═══
+        add("message.trd.valve.filter_reset", "§eФильтр клапана сброшен");
+        add("message.trd.valve.filter_set", "§aФильтр клапана: §f%s");
+
+        // ═══ Tooltip: Steel Storage ═══
+        add("tooltip.trd.steel_storage.empty", "Пусто");
+        add("tooltip.trd.steel_storage.contains", "Содержит: %s/%s");
+        add("tooltip.trd.steel_storage.and_more", "... и ещё %s");
+        add("tooltip.trd.steel_storage.item", "• %s x%s");
+
+        // ═══ Tooltip & Message: Fuel Tank (shared) ═══
+        add("message.trd.fuel_tank.filter_reset", "§eФильтр сброшен (цистерна закрыта)");
+        add("message.trd.fuel_tank.filter_set", "§aФильтр установлен: §f%s");
+        add("tooltip.trd.fuel_tank.capacity", "Ёмкость: %s мБ");
+        add("tooltip.trd.fuel_tank.resistant", "Устойчив к коррозии и нагреву");
+        add("tooltip.trd.fuel_tank.fluid", "§bЖидкость: §f%s");
+        add("tooltip.trd.fuel_tank.amount", "§eОбъём: §f%s / %s мБ");
+        add("tooltip.trd.fuel_tank.empty", "§bЖидкость: §7Пусто");
+        add("tooltip.trd.fuel_tank.type", "§aТип: §f%s");
+        add("tooltip.trd.fuel_tank.type_not_set", "§aТип: §cне задан");
+
+        // ═══ Tooltip: Conglomerate ═══
+        add("tooltip.trd.conglomerate.empty", "§7Пустой кусок");
+        add("tooltip.trd.conglomerate.contains_fractions", "§eСодержит фракции:");
+        add("tooltip.trd.conglomerate.fraction", "%s: %d%%");
+        add("tooltip.trd.conglomerate.ou", "§8OU: %d");
+        add("tooltip.trd.conglomerate.vein_type", "§8Тип жилы: %s");
+
+        // ═══ Tooltip: Energy Cell ═══
+        add("tooltip.trd.energy_cell.energy_stored", "§eЭнергия: %s / %s JE");
+        add("tooltip.trd.energy_cell.empty", "§7Энергия: Пусто");
+        add("tooltip.trd.energy_cell.capacity", "Ёмкость: %s JE");
+        add("tooltip.trd.energy_cell.charge_speed", "Скорость зарядки: %s JE/t");
+        add("tooltip.trd.energy_cell.discharge_speed", "Скорость разрядки: %s JE/t");
+
+        // ═══ Message: Wire Coil ═══
+        add("message.trd.wire_coil.cancelled", "§eСоединение отменено.");
+        add("message.trd.wire_coil.connector_full", "§cЭтот коннектор уже полностью занят!");
+        add("message.trd.wire_coil.started", "§aНачато соединение... Кликните по второму коннектору.");
+        add("message.trd.wire_coil.self_connect", "§cНельзя соединить коннектор с самим собой!");
+        add("message.trd.wire_coil.first_destroyed", "§cПервый коннектор был разрушен или потерян.");
+        add("message.trd.wire_coil.first_full", "§cПервый коннектор уже полностью занят!");
+        add("message.trd.wire_coil.second_full", "§cВторой коннектор уже полностью занят!");
+        add("message.trd.wire_coil.already_connected", "§cЭти коннекторы уже соединены!");
+        add("message.trd.wire_coil.too_far", "§cСлишком далеко! Максимальная длина: %s блоков.");
+        add("message.trd.wire_coil.blocked", "§cПуть заблокирован: %s");
+        add("message.trd.wire_coil.success", "§bСоединение успешно установлено!");
+
+        // ═══ Message: Belt ═══
+        add("message.trd.belt.pulleys_only", "§cРемень можно натянуть только на шкивы!");
+        add("message.trd.belt.already_connected", "§cЭтот шкив уже соединен ремнем!");
+        add("message.trd.belt.first_selected", "§aПервый шкив выбран. Кликните по второму.");
+        add("message.trd.belt.cancelled", "§eЛинковка отменена.");
+        add("message.trd.belt.too_far", "§cСлишком далеко! (Макс. %s блоков)");
+        add("message.trd.belt.first_destroyed", "§cПервый шкив был разрушен или снят.");
+        add("message.trd.belt.axis_mismatch", "§cОси шкивов не параллельны!");
+        add("message.trd.belt.not_coplanar", "§cШкивы должны лежать в одной плоскости!");
+        add("message.trd.belt.pulley_occupied", "§cОдин из шкивов уже занят!");
+        add("message.trd.belt.success", "§aРемень успешно натянут!");
 
         // Секвойя
         add(ModBlocks.SEQUOIA_BARK.get(), "Кора секвойи");

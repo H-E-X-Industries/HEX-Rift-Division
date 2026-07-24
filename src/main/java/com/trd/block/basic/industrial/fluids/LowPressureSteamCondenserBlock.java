@@ -171,11 +171,11 @@ public class LowPressureSteamCondenserBlock extends BaseEntityBlock implements S
             }
         }
         int cap = LowPressureSteamCondenserBlockEntity.TANK_CAPACITY;
-        tooltip.add(Component.literal("⬇ Пар Н.Д. (вход): ").withStyle(ChatFormatting.GREEN)
+        tooltip.add(Component.translatable("tooltip.trd.condenser.steam_in").withStyle(ChatFormatting.GREEN)
                 .append(Component.literal(fmt(steam) + "/" + fmt(cap) + " mB").withStyle(ChatFormatting.WHITE)));
-        tooltip.add(Component.literal("⬆ Вода (выход): ").withStyle(ChatFormatting.RED)
+        tooltip.add(Component.translatable("tooltip.trd.condenser.water_out").withStyle(ChatFormatting.RED)
                 .append(Component.literal(fmt(water) + "/" + fmt(cap) + " mB").withStyle(ChatFormatting.WHITE)));
-        tooltip.add(Component.literal("❄ Охлаждение: ").withStyle(ChatFormatting.AQUA)
+        tooltip.add(Component.translatable("tooltip.trd.condenser.cooling").withStyle(ChatFormatting.AQUA)
                 .append(Component.literal(String.format("%.1fx", multiplier)).withStyle(ChatFormatting.WHITE)));
     }
 

@@ -152,7 +152,7 @@ public class ModBatteryItem extends Item {
         tooltip.add(Component.translatable("tooltip.trd.battery.stored").withStyle(color));
 
         // Строка 2: " X / Y HE"
-        tooltip.add(Component.literal(String.format(" %s / %s HE",
+        tooltip.add(Component.literal(String.format(" %s / %s JE",
                         EnergyFormatter.format(stored),
                         EnergyFormatter.format(max)))
                 .withStyle(color));

@@ -198,8 +198,7 @@ public class MachineBatteryBlock extends BaseEntityBlock {
                                 heldItem.hurtAndBreak(1, player, (p) -> p.broadcastBreakEvent(hand));
                             }
 
-                            player.displayClientMessage(
-                                    Component.literal("§eЯчейка извлечена из слота " + (cellSlot + 1)), true);
+                            player.displayClientMessage(Component.translatable("gui.trd.machine_battery.cell_extracted", cellSlot + 1), true);
                             return InteractionResult.CONSUME;
                         }
                     }
@@ -212,8 +211,7 @@ public class MachineBatteryBlock extends BaseEntityBlock {
                         ItemStack insertStack = heldItem.copy();
                         if (battery.insertCell(cellSlot, insertStack)) {
                             level.playSound(null, pos, SoundEvents.IRON_TRAPDOOR_CLOSE, SoundSource.BLOCKS, 0.6f, 0.9f);
-                            player.displayClientMessage(
-                                    Component.literal("§aЯчейка вставлена в слот " + (cellSlot + 1)), true);
+                            player.displayClientMessage(Component.translatable("gui.trd.machine_battery.cell_inserted", cellSlot + 1), true);
 
                             // Тратим только в выживании
                             if (!player.isCreative()) {
@@ -223,8 +221,7 @@ public class MachineBatteryBlock extends BaseEntityBlock {
                             return InteractionResult.CONSUME;
                         }
                     } else {
-                        player.displayClientMessage(
-                                Component.literal("§cСлот " + (cellSlot + 1) + " уже занят!"), true);
+                        player.displayClientMessage(Component.translatable("gui.trd.machine_battery.slot_occupied", cellSlot + 1), true);
                         return InteractionResult.CONSUME;
                     }
                 }
@@ -325,9 +322,9 @@ public class MachineBatteryBlock extends BaseEntityBlock {
         }
 
         String energyStr = EnergyFormatter.format(energy);
-        pTooltip.add(Component.literal("§7Каркас энергохранилища"));
-        pTooltip.add(Component.literal("§eЭнергия: " + energyStr + " HE"));
-        pTooltip.add(Component.literal("§8Вставьте энергоячейки для увеличения параметров"));
+        pTooltip.add(Component.translatable("tooltip.trd.machine_battery.frame"));
+        pTooltip.add(Component.translatable("tooltip.trd.machine_battery.energy", energyStr));
+        pTooltip.add(Component.translatable("tooltip.trd.machine_battery.insert_cells"));
     }
 
     @Override

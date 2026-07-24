@@ -41,7 +41,7 @@ public class WireCoilItem extends Item {
             // Если игрок кликнул с Shift по воздуху/другому блоку — сбрасываем сохраненные координаты
             if (player != null && player.isShiftKeyDown() && stack.hasTag() && stack.getTag().contains("FirstPos")) {
                 stack.getTag().remove("FirstPos");
-                player.displayClientMessage(Component.literal("§eСоединение отменено."), true);
+                player.displayClientMessage(Component.translatable("message.trd.wire_coil.cancelled"), true);
                 return InteractionResult.SUCCESS;
             }
             return InteractionResult.PASS;
@@ -53,13 +53,13 @@ public class WireCoilItem extends Item {
         if (!tag.contains("FirstPos")) {
             // Проверяем, есть ли свободные слоты для проводов у этого коннектора
             if (currentConnector.getConnections().size() >= currentConnector.getTier().maxConnections()) {
-                if (player != null) player.displayClientMessage(Component.literal("§cЭтот коннектор уже полностью занят!"), true);
+                if (player != null) player.displayClientMessage(Component.translatable("message.trd.wire_coil.connector_full"), true);
                 return InteractionResult.FAIL;
             }
 
             // Сохраняем координаты в предмет
             tag.put("FirstPos", NbtUtils.writeBlockPos(pos));
-            if (player != null) player.displayClientMessage(Component.literal("§aНачато соединение... Кликните по второму коннектору."), true);
+            if (player != null) player.displayClientMessage(Component.translatable("message.trd.wire_coil.started"), true);
             return InteractionResult.SUCCESS;
         }
 
@@ -72,7 +72,7 @@ public class WireCoilItem extends Item {
 
             // 1. Проверка на клик по тому же самому блоку
             if (pos.equals(firstPos)) {
-                if (player != null) player.displayClientMessage(Component.literal("§cНельзя соединить коннектор с самим собой!"), true);
+                if (player != null) player.displayClientMessage(Component.translatable("message.trd.wire_coil.self_connect"), true);
                 return InteractionResult.FAIL;
             }
 
@@ -84,17 +84,17 @@ public class WireCoilItem extends Item {
 
             // 2. Проверка лимитов подключений для ОБОИХ коннекторов
             if (firstConnector.getConnections().size() >= firstConnector.getTier().maxConnections()) {
-                if (player != null) player.displayClientMessage(Component.literal("§cПервый коннектор уже полностью занят!"), true);
+                if (player != null) player.displayClientMessage(Component.translatable("message.trd.wire_coil.first_destroyed"), true);
                 return InteractionResult.FAIL;
             }
             if (currentConnector.getConnections().size() >= currentConnector.getTier().maxConnections()) {
-                if (player != null) player.displayClientMessage(Component.literal("§cВторой коннектор уже полностью занят!"), true);
+                if (player != null) player.displayClientMessage(Component.translatable("message.trd.wire_coil.second_full"), true);
                 return InteractionResult.FAIL;
             }
 
             // 3. Проверка: не соединены ли они уже друг с другом?
             if (firstConnector.getConnections().contains(pos) || currentConnector.getConnections().contains(firstPos)) {
-                if (player != null) player.displayClientMessage(Component.literal("§cЭти коннекторы уже соединены!"), true);
+                if (player != null) player.displayClientMessage(Component.translatable("message.trd.wire_coil.already_connected"), true);
                 return InteractionResult.FAIL;
             }
 
@@ -105,7 +105,7 @@ public class WireCoilItem extends Item {
             int maxAllowed = Math.min(maxDist1, maxDist2);
 
             if (distance > maxAllowed) {
-                if (player != null) player.displayClientMessage(Component.literal("§cСлишком далеко! Максимальная длина: " + maxAllowed + " блоков."), true);
+                if (player != null) player.displayClientMessage(Component.translatable("message.trd.wire_coil.too_far", maxAllowed), true);
                 return InteractionResult.FAIL;
             }
 
@@ -119,7 +119,7 @@ public class WireCoilItem extends Item {
             firstConnector.connectTo(pos);
             currentConnector.connectTo(firstPos);
 
-            if (player != null) player.displayClientMessage(Component.literal("§bСоединение успешно установлено!"), true);
+            if (player != null) player.displayClientMessage(Component.translatable("message.trd.wire_coil.success"), true);
             return InteractionResult.SUCCESS;
         }
     }
@@ -151,7 +151,7 @@ public class WireCoilItem extends Item {
                             blockName = level.getBlockState(part.getControllerPos()).getBlock().getName().getString();
                         }
 
-                        player.displayClientMessage(Component.literal("§cПуть заблокирован: " + blockName), true);
+                        player.displayClientMessage(Component.translatable("message.trd.wire_coil.blocked", blockName), true);
                     }
                     return true;
                 }

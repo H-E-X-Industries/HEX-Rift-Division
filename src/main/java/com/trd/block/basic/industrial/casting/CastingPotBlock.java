@@ -118,7 +118,7 @@ public class CastingPotBlock extends BaseEntityBlock {
                 level.playSound(null, pos, SoundEvents.LAVA_EXTINGUISH, SoundSource.BLOCKS, 0.5f, 2.0f);
                 return InteractionResult.CONSUME;
             }
-            player.displayClientMessage(Component.literal("§cНельзя поместить: котёл занят или нет формы"), true);
+            player.displayClientMessage(Component.translatable("gui.trd.casting_pot.cannot_insert"), true);
             return InteractionResult.PASS;
         }
 
@@ -136,7 +136,7 @@ public class CastingPotBlock extends BaseEntityBlock {
             }
             // Если горячий и не кочерга - сообщение
             if (isHot && !heldItem.is(ModItems.POKER.get())) {
-                player.displayClientMessage(Component.literal("§cШлак горячий! Используйте кочергу."), true);
+                player.displayClientMessage(Component.translatable("gui.trd.casting_pot.slag_hot"), true);
                 return InteractionResult.PASS;
             }
         }
@@ -163,11 +163,7 @@ public class CastingPotBlock extends BaseEntityBlock {
             float heatRatio = HotItemHandler.getHeatRatio(output);
             int percent = (int)(heatRatio * 100);
             int temp = HotItemHandler.getTemperature(output);
-
-            player.displayClientMessage(
-                    Component.literal(String.format("§cСлишком горячо! %d°C (%d%%) Используйте кочергу.", temp, percent)),
-                    true
-            );
+            player.displayClientMessage(Component.translatable("gui.trd.casting_pot.too_hot", temp, percent), true);
             return InteractionResult.PASS;
         }
 
@@ -278,10 +274,7 @@ public class CastingPotBlock extends BaseEntityBlock {
         // Рукой - только если остыл
         if (isHot && heatRatio > 0.1f) {
             int percent = (int)(heatRatio * 100);
-            player.displayClientMessage(
-                    Component.literal(String.format("§cСлишком горячо! (%d%%) Используйте кочергу.", percent)),
-                    true
-            );
+            player.displayClientMessage(Component.translatable("gui.trd.casting_pot.too_hot_simple", percent), true);
             return InteractionResult.PASS;
         }
 
@@ -319,7 +312,7 @@ public class CastingPotBlock extends BaseEntityBlock {
                 return InteractionResult.CONSUME;
             }
             if (!moldStack.isEmpty() && !pot.canRemoveMold()) {
-                player.displayClientMessage(Component.literal("§cНельзя извлечь форму: есть металл или предмет"), true);
+                player.displayClientMessage(Component.translatable("gui.trd.casting_pot.cannot_remove_mold"), true);
             }
             return InteractionResult.PASS;
         }
@@ -343,7 +336,7 @@ public class CastingPotBlock extends BaseEntityBlock {
                 return InteractionResult.CONSUME;
             }
             if (heldItem.isEmpty() && !pot.canRemoveMold()) {
-                player.displayClientMessage(Component.literal("§cНельзя извлечь форму: есть металл или предмет"), true);
+                player.displayClientMessage(Component.translatable("gui.trd.casting_pot.cannot_remove_mold"), true);
                 return InteractionResult.PASS;
             }
         }

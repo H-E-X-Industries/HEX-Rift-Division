@@ -102,7 +102,7 @@ public class SmallSmelterBlock extends BaseEntityBlock {
             }
             // Shift+ПКМ без кочерги – сообщение
             if (player.isShiftKeyDown()) {
-                player.displayClientMessage(Component.literal("§cДля сброса металла нужна кочерга!"), true);
+                player.displayClientMessage(Component.translatable("gui.trd.small_smelter.need_poker"), true);
                 return InteractionResult.CONSUME;
             }
             // Открываем GUI

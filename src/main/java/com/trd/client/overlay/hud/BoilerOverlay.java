@@ -98,7 +98,48 @@ public class BoilerOverlay implements IGuiOverlay {
         guiGraphics.drawString(font, steamPrefix, steamX, y + 10, steamColor, true);
         guiGraphics.drawString(font, steamSuffix, steamX + steamPrefixWidth, y + 10, 0xFFFFFF, true);
 
-        int tempColor = temp > 1000 ? ChatFormatting.DARK_RED.getColor() : ChatFormatting.GOLD.getColor();
+        // ═══ ТЕМПЕРАТУРА С ГРАДИЕНТОМ И МИГАНИЕМ ═══
+        int tempColor;
+        if (temp >= 500f) {
+            // При критической температуре мигаем тёмно-серым / красным
+            boolean darkPhase = (System.currentTimeMillis() / 250) % 2 == 0;
+            tempColor = darkPhase ? 0x444444 : 0xFF2222;
+        } else {
+            // Плавный нагрев: серый → оранжевый → красный
+            float percent = temp / BoilerBlockEntity.MAX_TEMP;
+            tempColor = getSmoothTemperatureColor(percent);
+        }
+
         guiGraphics.drawString(font, tempText, x, y + 20, tempColor, true);
+
+        guiGraphics.drawString(font, tempText, x, y + 20, tempColor, true);
+    }
+
+    private static int getSmoothTemperatureColor(float percent) {
+        percent = Math.max(0.0f, Math.min(1.0f, percent));
+        int colorGrey  = 0xAAAAAA;
+        int colorOrange = 0xFFAA00;
+        int colorRed   = 0xFF2222;
+
+        if (percent <= 0.3f) {
+            return lerpColor(colorGrey, colorOrange, percent / 0.3f);
+        } else if (percent <= 0.7f) {
+            return lerpColor(colorOrange, colorRed, (percent - 0.3f) / 0.4f);
+        } else {
+            return colorRed;
+        }
+    }
+
+    private static int lerpColor(int color1, int color2, float t) {
+        int r1 = (color1 >> 16) & 0xFF;
+        int g1 = (color1 >> 8)  & 0xFF;
+        int b1 =  color1        & 0xFF;
+        int r2 = (color2 >> 16) & 0xFF;
+        int g2 = (color2 >> 8)  & 0xFF;
+        int b2 =  color2        & 0xFF;
+        int r = (int) (r1 + (r2 - r1) * t);
+        int g = (int) (g1 + (g2 - g1) * t);
+        int b = (int) (b1 + (b2 - b1) * t);
+        return (r << 16) | (g << 8) | b;
     }
 }
