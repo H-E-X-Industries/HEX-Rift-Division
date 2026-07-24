@@ -132,6 +132,338 @@ public class ModLangProvider extends LanguageProvider {
         add("item.trd.cast_pickaxe.desc.tunnel_miner", "Tunnel Miner: %s");
 
 
+        // ═══ GUI: Electric Furnace ═══
+        add("gui.trd.electric_furnace.energy_tooltip", "%s / %s JE");
+        add("gui.trd.electric_furnace.progress_tooltip", "§6Remaining: §f%s sec");
+
+        // ═══ GUI: Fluid Barrel / Fuel Tank (shared) ═══
+        add("gui.trd.fluid_barrel.empty", "Empty");
+        add("gui.trd.fluid_barrel.amount", "%s / %s mB");
+        add("gui.trd.fluid_barrel.mode.title", "Mode:");
+        add("gui.trd.fluid_barrel.mode.both", "§aInput / Output (Both)");
+        add("gui.trd.fluid_barrel.mode.input", "§bInput Only");
+        add("gui.trd.fluid_barrel.mode.output", "§6Output Only");
+        add("gui.trd.fluid_barrel.mode.disabled", "§cDisabled");
+        add("gui.trd.fluid_barrel.mode.unknown", "Unknown");
+
+        // ═══ GUI: Fluid Identifier ═══
+        add("gui.trd.fluid_identifier.title", "Fluid Identifier");
+        add("gui.trd.fluid_identifier.unknown", "Unknown");
+
+        // ═══ GUI: Heater ═══
+        add("gui.trd.heater.fuel_tiers_title", "§6§lFuel Tiers:");
+        add("gui.trd.heater.fuel_tier_format", "§8Tier %s: §f%s°C, §f%s§7s.");
+        add("gui.trd.heater.temperature_format", "%s / %s °C");
+        add("gui.trd.heater.burn_time_format", "§6Remaining: §f%s§7/§f%s sec");
+        add("gui.trd.heater.stopped", "§7Stopped");
+
+        // ═══ GUI: Machine Battery ═══
+        add("gui.trd.battery.panel.out", "OUT: %s JE/S");
+        add("gui.trd.battery.panel.in", "IN: %s JE/S");
+        add("gui.trd.battery.tooltip.discharge_speed", "§cDischarge Speed: %s JE/t");
+        add("gui.trd.battery.tooltip.charge_speed", "§aCharge Speed: %s JE/t");
+        add("gui.trd.battery.tooltip.speed_per_second", "(%s JE/s)");
+
+        // ═══ GUI: Small Smelter ═══
+        add("gui.trd.small_smelter.fuel_tiers_title", "§6§lFuel Tiers:");
+        add("gui.trd.small_smelter.fuel_tier.0", "§8Tier 0: §f1°C, §f6.25§7s.");
+        add("gui.trd.small_smelter.fuel_tier.1", "§8Tier 1: §f2°C, §f12.5§7s.");
+        add("gui.trd.small_smelter.fuel_tier.2", "§8Tier 2: §f3°C, §f25§7s.");
+        add("gui.trd.small_smelter.fuel_tier.3", "§8Tier 3: §f4°C, §f40§7s.");
+        add("gui.trd.small_smelter.fuel_tier.4", "§8Tier 4: §f6°C, §f60§7s.");
+        add("gui.trd.small_smelter.fuel_tier.5", "§8Tier 5: §f8°C, §f120§7s.");
+        add("gui.trd.small_smelter.temperature_format", "%s / %s °C");
+        add("gui.trd.small_smelter.burn_time_format", "§6Remaining: §f%s§7/§f%s sec");
+        add("gui.trd.small_smelter.stopped", "§7Stopped");
+        add("gui.trd.small_smelter.progress.temperature_format", "Temperature: %d/%d °C");
+        add("gui.trd.small_smelter.progress.remaining", "Remaining: %ss");
+        add("gui.trd.small_smelter.metal_tank.title", "§6§lMolten Metals:");
+        add("gui.trd.small_smelter.metal_tank.empty", "§7Empty");
+        add("gui.trd.small_smelter.metal_tank.exact_format", "%s: %s units");
+        add("gui.trd.small_smelter.metal_tank.block_abbr", "bl");
+        add("gui.trd.small_smelter.metal_tank.ingot_abbr", "ing");
+        add("gui.trd.small_smelter.metal_tank.nugget_abbr", "nug");
+        add("gui.trd.small_smelter.metal_tank.total_exact", "§7Total: §f%s§7 units / §f%s§7 units");
+        add("gui.trd.small_smelter.metal_tank.shift_hide", "§8[Shift] hide exact value");
+        add("gui.trd.small_smelter.metal_tank.shift_show", "§8[Shift] exact value");
+
+        // ═══ GUI: Smelter ═══
+        add("gui.trd.smelter.temperature_format", "%d / %d °C");
+        add("gui.trd.smelter.progress.temperature_format", "Temperature: %d/%d °C");
+        add("gui.trd.smelter.progress.remaining", "Remaining: %ss");
+        add("gui.trd.smelter.metal_tank.title", "§6§lMolten Metals:");
+        add("gui.trd.smelter.metal_tank.empty", "§7Empty");
+        add("gui.trd.smelter.metal_tank.block_abbr", "blocks");
+        add("gui.trd.smelter.metal_tank.ingot_abbr", "ingots");
+        add("gui.trd.smelter.metal_tank.nugget_abbr", "nuggets");
+        add("gui.trd.smelter.metal_tank.total_exact", "§7Total: §f%d§7 units / §f%d§7 units");
+        add("gui.trd.smelter.metal_tank.total_converted", "§7Total: §f%dbl, %ding, %dnug §8/ %d blocks");
+        add("gui.trd.smelter.metal_tank.shift_hide", "§8[Shift] hide exact value");
+        add("gui.trd.smelter.metal_tank.shift_show", "§8[Shift] exact value");
+
+
+        // ═══ GUI: Turret (shared) ═══
+        add("gui.trd.turret.boot", "SYSTEM BOOT%s");
+        add("gui.trd.turret.status.online", "SYSTEM ONLINE");
+        add("gui.trd.turret.status.repairing", "REPAIRING: %s%%");
+        add("gui.trd.turret.status.charging", "CHARGING...");
+        add("gui.trd.turret.status.standby", "STANDBY MODE");
+        add("gui.trd.turret.menu.chip_control", "CHIP CONTROL");
+        add("gui.trd.turret.menu.attack_mode", "ATTACK MODE");
+        add("gui.trd.turret.menu.stats", "TURRET STATS");
+        add("gui.trd.turret.target.hostiles", "HOSTILES");
+        add("gui.trd.turret.target.neutrals", "NEUTRALS");
+        add("gui.trd.turret.target.players", "PLAYERS");
+        add("gui.trd.turret.toggle.on", "[V]");
+        add("gui.trd.turret.toggle.off", "[X]");
+        add("gui.trd.turret.stats.kills", "KILLS: %s");
+        add("gui.trd.turret.stats.time", "TIME: %dh %dm");
+        add("gui.trd.turret.stats.owner", "OWNER: [DATA]");
+        add("gui.trd.turret.chip.empty", "EMPTY LIST");
+        add("gui.trd.turret.chip.format", "%s/%s %s");
+        add("gui.trd.turret.result.success", "SUCCESS");
+        add("gui.trd.turret.result.error", "ERROR 404");
+        add("gui.trd.turret.energy_tooltip", "%s / %s JE");
+
+        // Light Turret
+        add("gui.trd.turret.status.respawn", "RESPAWN: %ss");
+
+        // Trombone
+        add("gui.trd.turret.status.reloading", "RELOADING: %ss");
+        add("gui.trd.turret.status.no_missiles", "NO MISSILES");
+        add("gui.trd.turret.menu.missiles", "MISSILES");
+        add("gui.trd.turret.missiles.none", "NO MISSILES!");
+        add("gui.trd.turret.missiles.standard", "STD: %s");
+        add("gui.trd.turret.missiles.he", "HE: %s");
+        add("gui.trd.turret.missiles.fire", "FIRE: %s");
+        add("gui.trd.turret.missiles.total", "TTL: %s");
+
+        // Battery
+        add("gui.trd.battery.priority.0", "Priority: Low");
+        add("gui.trd.battery.priority.0.desc", "Lowest priority. Will be drained first and filled last.");
+        add("gui.trd.battery.priority.1", "Priority: Normal");
+        add("gui.trd.battery.priority.1.desc", "Standard priority for energy transfer.");
+        add("gui.trd.battery.priority.2", "Priority: High");
+        add("gui.trd.battery.priority.2.desc", "Highest priority. Will be filled first and drained last.");
+        add("gui.trd.battery.priority.recommended", "(Recommended)");
+
+        add("gui.trd.battery.mode.both", "Mode: Input & Output");
+        add("gui.trd.battery.mode.both.desc", "All energy operations are allowed.");
+        add("gui.trd.battery.mode.input", "Mode: Input Only");
+        add("gui.trd.battery.mode.input.desc", "Only receiving energy is allowed.");
+        add("gui.trd.battery.mode.output", "Mode: Output Only");
+        add("gui.trd.battery.mode.output.desc", "Only sending energy is allowed.");
+        add("gui.trd.battery.mode.locked", "Mode: Locked");
+        add("gui.trd.battery.mode.locked.desc", "All energy operations are disabled.");
+
+        // ═══ HUD: Temperature ═══
+        add("hud.trd.temperature.format", "%.0f / %.0f °C");
+        add("hud.trd.temperature.heating", "§6● §fHeating");
+        add("hud.trd.temperature.smelting", "§6● §fSmelting");
+
+        // ═══ HUD: Low Pressure Steam Condenser ═══
+        add("hud.trd.condenser.steam_name", "L.P. Steam");
+        add("hud.trd.condenser.water_name", "Water");
+        add("hud.trd.condenser.arrow_in", "§a-> ");
+        add("hud.trd.condenser.arrow_out", "§c<- ");
+        add("hud.trd.condenser.amount", "§7%s/%s mB");
+        add("hud.trd.condenser.status.no_water", "§cRequires waterlogging!");
+        add("hud.trd.condenser.status.cooling", "§7Cooling: §b%.2fx");
+
+        // ═══ HUD: Motor Electro ═══
+        add("hud.trd.motor.title", "§e⚡ Motor §7[%s]");
+        add("hud.trd.motor.status.on", "§aON");
+        add("hud.trd.motor.status.off", "§cOFF");
+        add("hud.trd.motor.speed", "§7Speed:    §f%s RPM");
+        add("hud.trd.motor.torque", "§7Torque:      §f%s Nm");
+        add("hud.trd.motor.consumption", "§7Consumption: §f%s JE/s");
+        add("hud.trd.motor.charge", "§7Charge: %s%s§7/%s JE");
+
+        // ═══ HUD: Steel Storage ═══
+        add("hud.trd.storage.header", "%s/%s slots");
+        add("hud.trd.storage.empty", "Empty");
+        add("hud.trd.storage.item", "• %s x%s");
+        add("hud.trd.storage.more", "... and %s more");
+
+        // ═══ HUD: Tachometer ═══
+        add("hud.trd.tachometer.no_shaft", "⚠ No Shaft Inserted");
+        add("hud.trd.tachometer.title", "▶ Network Analyzer");
+        add("hud.trd.tachometer.speed", "Speed: %s RPM");
+        add("hud.trd.tachometer.torque", "Torque: %s / %s Nm");
+        add("hud.trd.tachometer.inertia", "Inertia: %.2f");
+        add("hud.trd.tachometer.stress", "Stress: %.1f%%");
+
+        // ═══ HUD: Boiler ═══
+        add("hud.trd.boiler.water", "Water");
+        add("hud.trd.boiler.steam", "Steam");
+        add("hud.trd.boiler.arrow_in", "§a-> §7");
+        add("hud.trd.boiler.arrow_out", "§c<- §7");
+        add("hud.trd.boiler.amount_suffix", " mB");
+        add("hud.trd.boiler.temperature", "Temperature: %.1f °C");
+
+        // ═══ HUD: Millstone ═══
+        add("hud.trd.millstone.result", "✓ %s");
+        add("hud.trd.millstone.result_extra", " + %s");
+        add("hud.trd.millstone.take", "RMB to collect");
+        add("hud.trd.millstone.progress", "%d/%d turns");
+        add("hud.trd.millstone.remaining", "Remaining: %s");
+        add("hud.trd.millstone.grind", "RMB to grind");
+        add("hud.trd.millstone.empty", "Millstone is empty");
+        add("hud.trd.millstone.insert", "Place mineral");
+
+        // ═══ HUD: Steam Engine ═══
+        add("hud.trd.engine.steam", "Steam");
+        add("hud.trd.engine.lp_steam", "L.P. Steam");
+        add("hud.trd.engine.arrow_in", "§a-> §7");
+        add("hud.trd.engine.arrow_out", "§c<- §7");
+        add("hud.trd.engine.amount_suffix", " mB");
+
+        // ═══ HUD: Stator ═══
+
+// English
+        add("hud.trd.stator.coils_label", "Coils: ");
+        add("hud.trd.stator.buffer_label", "Buffer: ");
+        add("hud.trd.stator.load_label", "Load: ");
+        add("hud.trd.stator.production_label", "Production: ");
+
+        // ═══ GUI: Casting Pot ═══
+        add("gui.trd.casting_pot.cannot_insert", "§cCannot insert: pot is occupied or has no mold");
+        add("gui.trd.casting_pot.slag_hot", "§cSlag is hot! Use a poker.");
+        add("gui.trd.casting_pot.too_hot", "§cToo hot! %d°C (%d%%) Use a poker.");
+        add("gui.trd.casting_pot.too_hot_simple", "§cToo hot! (%d%%) Use a poker.");
+        add("gui.trd.casting_pot.cannot_remove_mold", "§cCannot remove mold: contains metal or item");
+
+        // ═══ GUI: Machine Battery ═══
+        add("gui.trd.machine_battery.cell_extracted", "§eCell extracted from slot %s");
+        add("gui.trd.machine_battery.cell_inserted", "§aCell inserted into slot %s");
+        add("gui.trd.machine_battery.slot_occupied", "§cSlot %s is already occupied!");
+
+        // ═══ Tooltip: Machine Battery ═══
+        add("tooltip.trd.machine_battery.frame", "§7Energy storage frame");
+        add("tooltip.trd.machine_battery.energy", "§eEnergy: %s JE");
+        add("tooltip.trd.machine_battery.insert_cells", "§8Insert energy cells to increase parameters");
+
+        // ═══ Message: Fluid Barrel ═══
+        add("message.trd.fluid_barrel.filter_reset", "§eBarrel filter reset (Closed)");
+        add("message.trd.fluid_barrel.filter_set", "§aBarrel Filter: §f%s");
+
+        // ═══ Tooltip: Fluid Barrel ═══
+        add("tooltip.trd.fluid_barrel.capacity", "Capacity: ");
+        add("tooltip.trd.fluid_barrel.melting_point", "Melting point: ");
+        add("tooltip.trd.fluid_barrel.corrosion_resistance", "Corrosion resistance: ");
+        add("tooltip.trd.fluid_barrel.leaking", "⚠ Leaking: ");
+        add("tooltip.trd.fluid_barrel.leak_rate_unit", "mB/sec");
+        add("tooltip.trd.fluid_barrel.fluid", "§bFluid: §f%s");
+        add("tooltip.trd.fluid_barrel.amount", "§eVolume: §f%s / %s mB");
+        add("tooltip.trd.fluid_barrel.empty", "§bFluid: §7Empty");
+        add("tooltip.trd.fluid_barrel.filter", "§aFilter: §f%s");
+        add("tooltip.trd.fluid_barrel.filter_closed", "§aFilter: §cClosed");
+
+        // ═══ Tooltip: Fluid Pipe ═══
+        add("tooltip.trd.fluid_pipe.max_temp", "Max temperature: ");
+        add("tooltip.trd.fluid_pipe.max_corrosion", "Max corrosion: ");
+
+        // ═══ Message: Fluid Pipe ═══
+        add("message.trd.fluid_pipe.filter_line_reset", "§aPipe line filter reset. §7(%s pipes)");
+        add("message.trd.fluid_pipe.filter_line_set", "§aPipe line filter set: §f%s §7(%s pipes)");
+        add("message.trd.fluid_pipe.filter_reset", "§eFilter reset (Pipe accepts all)");
+        add("message.trd.fluid_pipe.filter_set", "§aFilter: §f%s");
+
+        // ═══ Tooltip: Low Pressure Steam Condenser ═══
+        add("tooltip.trd.condenser.steam_in", "⬇ L.P. Steam (input): ");
+        add("tooltip.trd.condenser.water_out", "⬆ Water (output): ");
+        add("tooltip.trd.condenser.cooling", "❄ Cooling: ");
+
+        // ═══ Message: Valve ═══
+        add("message.trd.valve.filter_reset", "§eValve filter reset");
+        add("message.trd.valve.filter_set", "§aValve filter: §f%s");
+
+        // ═══ Tooltip: Steel Storage ═══
+        add("tooltip.trd.steel_storage.empty", "Empty");
+        add("tooltip.trd.steel_storage.contains", "Contains: %s/%s");
+        add("tooltip.trd.steel_storage.and_more", "... and %s more");
+        add("tooltip.trd.steel_storage.item", "• %s x%s");
+
+        // ═══ Tooltip & Message: Fuel Tank (shared) ═══
+        add("message.trd.fuel_tank.filter_reset", "§eFilter reset (tank closed)");
+        add("message.trd.fuel_tank.filter_set", "§aFilter set: §f%s");
+        add("tooltip.trd.fuel_tank.capacity", "Capacity: %s mB");
+        add("tooltip.trd.fuel_tank.resistant", "Resistant to corrosion and heat");
+        add("tooltip.trd.fuel_tank.fluid", "§bFluid: §f%s");
+        add("tooltip.trd.fuel_tank.amount", "§eVolume: §f%s / %s mB");
+        add("tooltip.trd.fuel_tank.empty", "§bFluid: §7Empty");
+        add("tooltip.trd.fuel_tank.type", "§aType: §f%s");
+        add("tooltip.trd.fuel_tank.type_not_set", "§aType: §cnot set");
+
+        // ═══ Tooltip: Conglomerate ═══
+        add("tooltip.trd.conglomerate.empty", "§7Empty chunk");
+        add("tooltip.trd.conglomerate.contains_fractions", "§eContains fractions:");
+        add("tooltip.trd.conglomerate.fraction", "%s: %d%%");
+        add("tooltip.trd.conglomerate.ou", "§8OU: %d");
+        add("tooltip.trd.conglomerate.vein_type", "§8Vein type: %s");
+
+        // ═══ Tooltip: Energy Cell ═══
+        add("tooltip.trd.energy_cell.energy_stored", "§eEnergy: %s / %s JE");
+        add("tooltip.trd.energy_cell.empty", "§7Energy: Empty");
+        add("tooltip.trd.energy_cell.capacity", "Capacity: %s JE");
+        add("tooltip.trd.energy_cell.charge_speed", "Charge Speed: %s JE/t");
+        add("tooltip.trd.energy_cell.discharge_speed", "Discharge Speed: %s JE/t");
+
+        // ═══ Message: Wire Coil ═══
+        add("message.trd.wire_coil.cancelled", "§eConnection cancelled.");
+        add("message.trd.wire_coil.connector_full", "§cThis connector is already full!");
+        add("message.trd.wire_coil.started", "§aConnection started... Click the second connector.");
+        add("message.trd.wire_coil.self_connect", "§cCannot connect a connector to itself!");
+        add("message.trd.wire_coil.first_destroyed", "§cThe first connector was destroyed or lost.");
+        add("message.trd.wire_coil.first_full", "§cThe first connector is already full!");
+        add("message.trd.wire_coil.second_full", "§cThe second connector is already full!");
+        add("message.trd.wire_coil.already_connected", "§cThese connectors are already connected!");
+        add("message.trd.wire_coil.too_far", "§cToo far! Maximum length: %s blocks.");
+        add("message.trd.wire_coil.blocked", "§cPath blocked: %s");
+        add("message.trd.wire_coil.success", "§bConnection successfully established!");
+
+        // ═══ Message: Belt ═══
+        add("message.trd.belt.pulleys_only", "§cBelt can only be stretched on pulleys!");
+        add("message.trd.belt.already_connected", "§cThis pulley is already connected by a belt!");
+        add("message.trd.belt.first_selected", "§aFirst pulley selected. Click the second one.");
+        add("message.trd.belt.cancelled", "§eLinking cancelled.");
+        add("message.trd.belt.too_far", "§cToo far! (Max. %s blocks)");
+        add("message.trd.belt.first_destroyed", "§cThe first pulley was destroyed or removed.");
+        add("message.trd.belt.axis_mismatch", "§cPulley axes are not parallel!");
+        add("message.trd.belt.not_coplanar", "§cPulleys must lie in the same plane!");
+        add("message.trd.belt.pulley_occupied", "§cOne of the pulleys is already occupied!");
+        add("message.trd.belt.success", "§aBelt successfully stretched!");
+
+        // ═══ Tooltip: Protector ═══
+        add("tooltip.trd.protector.melting_point", "  +%s°C to melting point");
+        add("tooltip.trd.protector.corrosion", "  +%s corrosion resistance");
+        add("tooltip.trd.protector.install", "§7Install in barrel");
+
+        // ═══ Message: Poker ═══
+        add("message.trd.poker.pot_empty", "§7Pot is empty or contains liquid metal");
+        add("message.trd.poker.hot_item_extracted", "§6Extracted hot item! %d°C");
+        add("message.trd.poker.smelter_empty", "§7No metal in smelter");
+        add("message.trd.poker.slag_dumped", "§6Dumped %d slag units");
+
+        // ═══ Tooltip: Infinite Fluid Barrel ═══
+        add("tooltip.trd.infinite_barrel.slot", "§8Place in emptying slot");
+        add("tooltip.trd.infinite_barrel.tank", "§8of configured tank to");
+        add("tooltip.trd.infinite_barrel.fill", "§8fill it infinitely.");
+        add("tooltip.trd.infinite_barrel.source", "§dInfinite source");
+
+        // ═══ Tooltip: Fluid Identifier ═══
+        add("tooltip.trd.fluid_identifier.fluid", "Fluid: ");
+
+        // ═══ Message: Beam Placer ═══
+        add("message.trd.beam_placer.same_point", "§cPoints cannot match! Link reset.");
+        add("message.trd.beam_placer.not_enough", "§cNot enough beams! Required: §e%s");
+        add("message.trd.beam_placer.placed", "§aBeam placed! Spent: %s");
+        add("message.trd.beam_placer.first_set", "§aFirst point (center) anchored.");
+
+        // ═══ Message: Cast Pickaxe ═══
+        add("message.trd.cast_pickaxe.cooldown", "§cCooldown...");
+        add("item.trd.cast_pickaxe.warning.twohanded", "§cRequires both hands!");
+
         // Sequoia
         add(ModBlocks.SEQUOIA_BARK.get(), "Sequoia Bark");
         add(ModBlocks.SEQUOIA_HEARTWOOD.get(), "Sequoia Heartwood");
@@ -277,7 +609,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModItems.IRON_BARREL_ITEM.get(), "Iron Barrel");
         add(ModItems.STEEL_BARREL_ITEM.get(), "Steel Barrel");
         add(ModItems.LEAD_BARREL_ITEM.get(), "Lead Barrel");
-        add(ModItems.INFINITE_FLUID_BARREL.get(), "Infinite Fluid Barrel");
+        add(ModItems.INFINITE_FLUID_BARREL.get(), "Infinite Fluid Source");
         add(ModBlocks.FUEL_TANK_SMALL.get(), "Small Fuel Tank");
         add(ModBlocks.FUEL_TANK_BIG.get(), "Big Fuel Tank");
         add(ModBlocks.LOW_PRESSURE_STEAM_CONDENSER.get(), "Low Pressure Steam Condenser");
@@ -511,6 +843,336 @@ public class ModLangProvider extends LanguageProvider {
         add("gui.trd.heater.tier5", "Уровень V");
 
         add("item.trd.hot_ingot.tooltip", "§6§lРАСКАЛЁННЫЙ! §r§7(%s%%)");
+
+
+        // ═══ GUI: Electric Furnace ═══
+        add("gui.trd.electric_furnace.energy_tooltip", "%s / %s JE");
+        add("gui.trd.electric_furnace.progress_tooltip", "§6Осталось: §f%s сек");
+
+        // ═══ GUI: Fluid Barrel / Fuel Tank (shared) ═══
+        add("gui.trd.fluid_barrel.empty", "Пусто");
+        add("gui.trd.fluid_barrel.amount", "%s / %s mB");
+        add("gui.trd.fluid_barrel.mode.title", "Режим:");
+        add("gui.trd.fluid_barrel.mode.both", "§aВход / Выход (Оба)");
+        add("gui.trd.fluid_barrel.mode.input", "§bТолько Вход");
+        add("gui.trd.fluid_barrel.mode.output", "§6Только Выход");
+        add("gui.trd.fluid_barrel.mode.disabled", "§cОтключено");
+        add("gui.trd.fluid_barrel.mode.unknown", "Неизвестно");
+
+        // ═══ GUI: Fluid Identifier ═══
+        add("gui.trd.fluid_identifier.title", "Жидкостный идентификатор");
+        add("gui.trd.fluid_identifier.unknown", "Неизвестно");
+
+        // ═══ GUI: Heater ═══
+        add("gui.trd.heater.fuel_tiers_title", "§6§lТопливные тиры:");
+        add("gui.trd.heater.fuel_tier_format", "§8Тир %s: §f%s°C, §f%s§7с.");
+        add("gui.trd.heater.temperature_format", "%s / %s °C");
+        add("gui.trd.heater.burn_time_format", "§6Осталось: §f%s§7/§f%s сек");
+        add("gui.trd.heater.stopped", "§7Остановлен");
+
+        // ═══ GUI: Machine Battery ═══
+        add("gui.trd.battery.panel.out", "OUT: %s JE/S");
+        add("gui.trd.battery.panel.in", "IN: %s JE/S");
+        add("gui.trd.battery.tooltip.discharge_speed", "§cСкорость разрядки: %s JE/t");
+        add("gui.trd.battery.tooltip.charge_speed", "§aСкорость зарядки: %s JE/t");
+        add("gui.trd.battery.tooltip.speed_per_second", "(%s JE/s)");
+
+        // ═══ GUI: Small Smelter ═══
+        add("gui.trd.small_smelter.fuel_tiers_title", "§6§lТопливные тиры:");
+        add("gui.trd.small_smelter.fuel_tier.0", "§8Тир 0: §f1°C, §f6.25§7с.");
+        add("gui.trd.small_smelter.fuel_tier.1", "§8Тир 1: §f2°C, §f12.5§7с.");
+        add("gui.trd.small_smelter.fuel_tier.2", "§8Тир 2: §f3°C, §f25§7с.");
+        add("gui.trd.small_smelter.fuel_tier.3", "§8Тир 3: §f4°C, §f40§7с.");
+        add("gui.trd.small_smelter.fuel_tier.4", "§8Тир 4: §f6°C, §f60§7с.");
+        add("gui.trd.small_smelter.fuel_tier.5", "§8Тир 5: §f8°C, §f120§7с.");
+        add("gui.trd.small_smelter.temperature_format", "%s / %s °C");
+        add("gui.trd.small_smelter.burn_time_format", "§6Осталось: §f%s§7/§f%s сек");
+        add("gui.trd.small_smelter.stopped", "§7Остановлен");
+        add("gui.trd.small_smelter.progress.temperature_format", "Температура: %d/%d °C");
+        add("gui.trd.small_smelter.progress.remaining", "Осталось: %sс");
+        add("gui.trd.small_smelter.metal_tank.title", "§6§lРасплавленные металлы:");
+        add("gui.trd.small_smelter.metal_tank.empty", "§7Пусто");
+        add("gui.trd.small_smelter.metal_tank.exact_format", "%s: %s ед.");
+        add("gui.trd.small_smelter.metal_tank.block_abbr", "б");
+        add("gui.trd.small_smelter.metal_tank.ingot_abbr", "сл");
+        add("gui.trd.small_smelter.metal_tank.nugget_abbr", "см");
+        add("gui.trd.small_smelter.metal_tank.total_exact", "§7Всего: §f%s§7 ед. / §f%s§7 ед.");
+        add("gui.trd.small_smelter.metal_tank.shift_hide", "§8[Shift] скрыть точное значение");
+        add("gui.trd.small_smelter.metal_tank.shift_show", "§8[Shift] точное значение");
+
+        // ═══ GUI: Smelter ═══
+        add("gui.trd.smelter.temperature_format", "%d / %d °C");
+        add("gui.trd.smelter.progress.temperature_format", "Температура: %d/%d °C");
+        add("gui.trd.smelter.progress.remaining", "Осталось: %sс");
+        add("gui.trd.smelter.metal_tank.title", "§6§lРасплавленные металлы:");
+        add("gui.trd.smelter.metal_tank.empty", "§7Пусто");
+        add("gui.trd.smelter.metal_tank.block_abbr", "блоки");
+        add("gui.trd.smelter.metal_tank.ingot_abbr", "слитки");
+        add("gui.trd.smelter.metal_tank.nugget_abbr", "самородки");
+        add("gui.trd.smelter.metal_tank.total_exact", "§7Всего: §f%d§7 ед. / §f%d§7 ед.");
+        add("gui.trd.smelter.metal_tank.total_converted", "§7Всего: §f%dб, %dсл, %dсм §8/ %d блоков");
+        add("gui.trd.smelter.metal_tank.shift_hide", "§8[Shift] скрыть точное значение");
+        add("gui.trd.smelter.metal_tank.shift_show", "§8[Shift] точное значение");
+
+        // ═══ GUI: Turret (общее для Light & Trombone) ═══
+        add("gui.trd.turret.boot", "ЗАГРУЗКА%s");
+        add("gui.trd.turret.status.online", "СИСТЕМА В НОРМЕ");
+        add("gui.trd.turret.status.repairing", "РЕМОНТ: %s%%");
+        add("gui.trd.turret.status.charging", "ЗАРЯДКА...");
+        add("gui.trd.turret.status.standby", "РЕЖИМ ОЖИДАНИЯ");
+        add("gui.trd.turret.menu.chip_control", "ЧИП");
+        add("gui.trd.turret.menu.attack_mode", "РЕЖИМ АТАКИ");
+        add("gui.trd.turret.menu.stats", "СТАТИСТИКА");
+        add("gui.trd.turret.target.hostiles", "ВРАГИ");
+        add("gui.trd.turret.target.neutrals", "НЕЙТРАЛЬНЫЕ");
+        add("gui.trd.turret.target.players", "ИГРОКИ");
+        add("gui.trd.turret.toggle.on", "[V]");
+        add("gui.trd.turret.toggle.off", "[X]");
+        add("gui.trd.turret.stats.kills", "УБИЙСТВА: %s");
+        add("gui.trd.turret.stats.time", "ВРЕМЯ ЖИЗНИ: %dч %dм");
+        add("gui.trd.turret.stats.owner", "ВЛАДЕЛЕЦ: [ДАННЫЕ]");
+        add("gui.trd.turret.chip.empty", "СПИСОК ПУСТ");
+        add("gui.trd.turret.chip.format", "%s/%s %s");
+        add("gui.trd.turret.result.success", "УСПЕХ");
+        add("gui.trd.turret.result.error", "ОШИБКА 404");
+        add("gui.trd.turret.energy_tooltip", "%s / %s JE");
+
+        // Light Turret
+        add("gui.trd.turret.status.respawn", "ВОЗРОЖДЕНИЕ: %sс");
+
+        // Trombone
+        add("gui.trd.turret.status.reloading", "ПЕРЕЗАРЯДКА: %sс");
+        add("gui.trd.turret.status.no_missiles", "НЕТ РАКЕТ");
+        add("gui.trd.turret.menu.missiles", "РАКЕТЫ");
+        add("gui.trd.turret.missiles.none", "НЕТ РАКЕТ!");
+        add("gui.trd.turret.missiles.standard", "СТД: %s");
+        add("gui.trd.turret.missiles.he", "ФУГ: %s");
+        add("gui.trd.turret.missiles.fire", "ЗАЖ: %s");
+        add("gui.trd.turret.missiles.total", "ВСЕГО: %s");
+
+        add("gui.trd.battery.priority.0", "Приоритет: Низкий");
+        add("gui.trd.battery.priority.0.desc", "Низший приоритет. Опустошается в первую очередь, заполняется в последнюю");
+        add("gui.trd.battery.priority.1", "Приоритет: Нормальный");
+        add("gui.trd.battery.priority.1.desc", "Стандартный приоритет для передачи энергии.");
+        add("gui.trd.battery.priority.2", "Приоритет: Высокий");
+        add("gui.trd.battery.priority.2.desc", "Высший приоритет. Заполняется первым, опустошается последним.");
+        add("gui.trd.battery.priority.recommended", "(Рекомендуется)");
+
+        add("gui.trd.battery.mode.both", "Режим: Приём и Передача");
+        add("gui.trd.battery.mode.both.desc", "Разрешены все операции с энергией.");
+        add("gui.trd.battery.mode.input", "Режим: Только Приём");
+        add("gui.trd.battery.mode.input.desc", "Разрешён только приём энергии.");
+        add("gui.trd.battery.mode.output", "Режим: Только Передача");
+        add("gui.trd.battery.mode.output.desc", "Разрешена только отдача энергии.");
+        add("gui.trd.battery.mode.locked", "Режим: Заблокировано");
+        add("gui.trd.battery.mode.locked.desc", "Все операции с энергией отключены.");
+
+
+        // ═══ HUD: Общая температура (Heater/Smelter/SmallSmelter) ═══
+        add("hud.trd.temperature.format", "%.0f / %.0f °C");
+        add("hud.trd.temperature.heating", "§6● §fНагрев");
+        add("hud.trd.temperature.smelting", "§6● §fПлавка");
+
+        // ═══ HUD: Low Pressure Steam Condenser ═══
+        add("hud.trd.condenser.steam_name", "Пар Н.Д.");
+        add("hud.trd.condenser.water_name", "Вода");
+        add("hud.trd.condenser.arrow_in", "§a-> ");
+        add("hud.trd.condenser.arrow_out", "§c<- ");
+        add("hud.trd.condenser.amount", "§7%s/%s mB");
+        add("hud.trd.condenser.status.no_water", "§cТребуется залить водой!");
+        add("hud.trd.condenser.status.cooling", "§7Охлаждение: §b%.2fx");
+
+        // ═══ HUD: Motor Electro ═══
+        add("hud.trd.motor.title", "§e⚡ Мотор §7[%s]");
+        add("hud.trd.motor.status.on", "§aON");
+        add("hud.trd.motor.status.off", "§cOFF");
+        add("hud.trd.motor.speed", "§7Скорость:    §f%s RPM");
+        add("hud.trd.motor.torque", "§7Момент:      §f%s Нм");
+        add("hud.trd.motor.consumption", "§7Потребление: §f%s JE/s");
+        add("hud.trd.motor.charge", "§7Заряд: %s%s§7/%s JE");
+
+        // ═══ HUD: Steel Storage ═══
+        add("hud.trd.storage.header", "%s/%s слотов");
+        add("hud.trd.storage.empty", "Пусто");
+        add("hud.trd.storage.item", "• %s x%s");
+        add("hud.trd.storage.more", "... и ещё %s");
+
+        // ═══ HUD: Tachometer ═══
+        add("hud.trd.tachometer.no_shaft", "⚠ Вал не вставлен");
+        add("hud.trd.tachometer.title", "▶ Анализатор сети");
+        add("hud.trd.tachometer.speed", "Скорость: %s RPM");
+        add("hud.trd.tachometer.torque", "Момент: %s / %s Нм");
+        add("hud.trd.tachometer.inertia", "Инерция: %.2f");
+        add("hud.trd.tachometer.stress", "Нагрузка: %.1f%%");
+
+        // ═══ HUD: Boiler ═══
+        add("hud.trd.boiler.water", "Вода");
+        add("hud.trd.boiler.steam", "Пар");
+        add("hud.trd.boiler.arrow_in", "§a-> §7");
+        add("hud.trd.boiler.arrow_out", "§c<- §7");
+        add("hud.trd.boiler.amount_suffix", " mB");
+        add("hud.trd.boiler.temperature", "Температура: %.1f °C");
+
+        // ═══ HUD: Millstone ═══
+        add("hud.trd.millstone.result", "✓ %s");
+        add("hud.trd.millstone.result_extra", " + %s");
+        add("hud.trd.millstone.take", "ПКМ чтобы забрать");
+        add("hud.trd.millstone.progress", "%d/%d оборотов");
+        add("hud.trd.millstone.remaining", "Осталось: %s");
+        add("hud.trd.millstone.grind", "ПКМ для помола");
+        add("hud.trd.millstone.empty", "Жернова пусты");
+        add("hud.trd.millstone.insert", "Положите минерал");
+
+        // ═══ HUD: Steam Engine ═══
+        add("hud.trd.engine.steam", "Пар");
+        add("hud.trd.engine.lp_steam", "Пар Н.Д.");
+        add("hud.trd.engine.arrow_in", "§a-> §7");
+        add("hud.trd.engine.arrow_out", "§c<- §7");
+        add("hud.trd.engine.amount_suffix", " mB");
+
+        // ═══ HUD: Stator ═══
+        add("hud.trd.stator.coils_label", "Катушки: ");
+        add("hud.trd.stator.buffer_label", "Буфер: ");
+        add("hud.trd.stator.load_label", "Нагрузка: ");
+        add("hud.trd.stator.production_label", "Производство: ");
+
+        // ═══ GUI: Casting Pot ═══
+        add("gui.trd.casting_pot.cannot_insert", "§cНельзя поместить: котёл занят или нет формы");
+        add("gui.trd.casting_pot.slag_hot", "§cШлак горячий! Используйте кочергу.");
+        add("gui.trd.casting_pot.too_hot", "§cСлишком горячо! %d°C (%d%%) Используйте кочергу.");
+        add("gui.trd.casting_pot.too_hot_simple", "§cСлишком горячо! (%d%%) Используйте кочергу.");
+        add("gui.trd.casting_pot.cannot_remove_mold", "§cНельзя извлечь форму: есть металл или предмет");
+
+        // ═══ GUI: Machine Battery ═══
+        add("gui.trd.machine_battery.cell_extracted", "§eЯчейка извлечена из слота %s");
+        add("gui.trd.machine_battery.cell_inserted", "§aЯчейка вставлена в слот %s");
+        add("gui.trd.machine_battery.slot_occupied", "§cСлот %s уже занят!");
+
+        // ═══ Tooltip: Machine Battery ═══
+        add("tooltip.trd.machine_battery.frame", "§7Каркас энергохранилища");
+        add("tooltip.trd.machine_battery.energy", "§eЭнергия: %s JE");
+        add("tooltip.trd.machine_battery.insert_cells", "§8Вставьте энергоячейки для увеличения параметров");
+
+        // ═══ Message: Fluid Barrel ═══
+        add("message.trd.fluid_barrel.filter_reset", "§eФильтр бочки сброшен (Закрыто)");
+        add("message.trd.fluid_barrel.filter_set", "§aФильтр бочки: §f%s");
+
+        // ═══ Tooltip: Fluid Barrel ═══
+        add("tooltip.trd.fluid_barrel.capacity", "Ёмкость: ");
+        add("tooltip.trd.fluid_barrel.melting_point", "Точка плавления: ");
+        add("tooltip.trd.fluid_barrel.corrosion_resistance", "Коррозионная стойкость: ");
+        add("tooltip.trd.fluid_barrel.leaking", "⚠ Протекает: ");
+        add("tooltip.trd.fluid_barrel.leak_rate_unit", "мБ/сек");
+        add("tooltip.trd.fluid_barrel.fluid", "§bЖидкость: §f%s");
+        add("tooltip.trd.fluid_barrel.amount", "§eОбъём: §f%s / %s мБ");
+        add("tooltip.trd.fluid_barrel.empty", "§bЖидкость: §7Пусто");
+        add("tooltip.trd.fluid_barrel.filter", "§aФильтр: §f%s");
+        add("tooltip.trd.fluid_barrel.filter_closed", "§aФильтр: §cЗакрыто");
+
+        // ═══ Tooltip: Fluid Pipe ═══
+        add("tooltip.trd.fluid_pipe.max_temp", "Макс. температура: ");
+        add("tooltip.trd.fluid_pipe.max_corrosion", "Макс. коррозия: ");
+
+        // ═══ Message: Fluid Pipe ═══
+        add("message.trd.fluid_pipe.filter_line_reset", "§aФильтр линии труб сброшен. §7(%s труб)");
+        add("message.trd.fluid_pipe.filter_line_set", "§aФильтр линии труб установлен: §f%s §7(%s труб)");
+        add("message.trd.fluid_pipe.filter_reset", "§eФильтр сброшен (Труба принимает всё)");
+        add("message.trd.fluid_pipe.filter_set", "§aФильтр: §f%s");
+
+        // ═══ Tooltip: Low Pressure Steam Condenser ═══
+        add("tooltip.trd.condenser.steam_in", "⬇ Пар Н.Д. (вход): ");
+        add("tooltip.trd.condenser.water_out", "⬆ Вода (выход): ");
+        add("tooltip.trd.condenser.cooling", "❄ Охлаждение: ");
+
+        // ═══ Message: Valve ═══
+        add("message.trd.valve.filter_reset", "§eФильтр клапана сброшен");
+        add("message.trd.valve.filter_set", "§aФильтр клапана: §f%s");
+
+        // ═══ Tooltip: Steel Storage ═══
+        add("tooltip.trd.steel_storage.empty", "Пусто");
+        add("tooltip.trd.steel_storage.contains", "Содержит: %s/%s");
+        add("tooltip.trd.steel_storage.and_more", "... и ещё %s");
+        add("tooltip.trd.steel_storage.item", "• %s x%s");
+
+        // ═══ Tooltip & Message: Fuel Tank (shared) ═══
+        add("message.trd.fuel_tank.filter_reset", "§eФильтр сброшен (цистерна закрыта)");
+        add("message.trd.fuel_tank.filter_set", "§aФильтр установлен: §f%s");
+        add("tooltip.trd.fuel_tank.capacity", "Ёмкость: %s мБ");
+        add("tooltip.trd.fuel_tank.resistant", "Устойчив к коррозии и нагреву");
+        add("tooltip.trd.fuel_tank.fluid", "§bЖидкость: §f%s");
+        add("tooltip.trd.fuel_tank.amount", "§eОбъём: §f%s / %s мБ");
+        add("tooltip.trd.fuel_tank.empty", "§bЖидкость: §7Пусто");
+        add("tooltip.trd.fuel_tank.type", "§aТип: §f%s");
+        add("tooltip.trd.fuel_tank.type_not_set", "§aТип: §cне задан");
+
+        // ═══ Tooltip: Conglomerate ═══
+        add("tooltip.trd.conglomerate.empty", "§7Пустой кусок");
+        add("tooltip.trd.conglomerate.contains_fractions", "§eСодержит фракции:");
+        add("tooltip.trd.conglomerate.fraction", "%s: %d%%");
+        add("tooltip.trd.conglomerate.ou", "§8OU: %d");
+        add("tooltip.trd.conglomerate.vein_type", "§8Тип жилы: %s");
+
+        // ═══ Tooltip: Energy Cell ═══
+        add("tooltip.trd.energy_cell.energy_stored", "§eЭнергия: %s / %s JE");
+        add("tooltip.trd.energy_cell.empty", "§7Энергия: Пусто");
+        add("tooltip.trd.energy_cell.capacity", "Ёмкость: %s JE");
+        add("tooltip.trd.energy_cell.charge_speed", "Скорость зарядки: %s JE/t");
+        add("tooltip.trd.energy_cell.discharge_speed", "Скорость разрядки: %s JE/t");
+
+        // ═══ Message: Wire Coil ═══
+        add("message.trd.wire_coil.cancelled", "§eСоединение отменено.");
+        add("message.trd.wire_coil.connector_full", "§cЭтот коннектор уже полностью занят!");
+        add("message.trd.wire_coil.started", "§aНачато соединение... Кликните по второму коннектору.");
+        add("message.trd.wire_coil.self_connect", "§cНельзя соединить коннектор с самим собой!");
+        add("message.trd.wire_coil.first_destroyed", "§cПервый коннектор был разрушен или потерян.");
+        add("message.trd.wire_coil.first_full", "§cПервый коннектор уже полностью занят!");
+        add("message.trd.wire_coil.second_full", "§cВторой коннектор уже полностью занят!");
+        add("message.trd.wire_coil.already_connected", "§cЭти коннекторы уже соединены!");
+        add("message.trd.wire_coil.too_far", "§cСлишком далеко! Максимальная длина: %s блоков.");
+        add("message.trd.wire_coil.blocked", "§cПуть заблокирован: %s");
+        add("message.trd.wire_coil.success", "§bСоединение успешно установлено!");
+
+        // ═══ Message: Belt ═══
+        add("message.trd.belt.pulleys_only", "§cРемень можно натянуть только на шкивы!");
+        add("message.trd.belt.already_connected", "§cЭтот шкив уже соединен ремнем!");
+        add("message.trd.belt.first_selected", "§aПервый шкив выбран. Кликните по второму.");
+        add("message.trd.belt.cancelled", "§eЛинковка отменена.");
+        add("message.trd.belt.too_far", "§cСлишком далеко! (Макс. %s блоков)");
+        add("message.trd.belt.first_destroyed", "§cПервый шкив был разрушен или снят.");
+        add("message.trd.belt.axis_mismatch", "§cОси шкивов не параллельны!");
+        add("message.trd.belt.not_coplanar", "§cШкивы должны лежать в одной плоскости!");
+        add("message.trd.belt.pulley_occupied", "§cОдин из шкивов уже занят!");
+        add("message.trd.belt.success", "§aРемень успешно натянут!");
+
+        // ═══ Tooltip: Protector ═══
+        add("tooltip.trd.protector.melting_point", "  +%s°C к точке плавления");
+        add("tooltip.trd.protector.corrosion", "  +%s к коррозионной стойкости");
+        add("tooltip.trd.protector.install", "§7Устанавливается в бочку");
+
+        // ═══ Message: Poker ═══
+        add("message.trd.poker.pot_empty", "§7Котёл пуст или содержит жидкий металл");
+        add("message.trd.poker.hot_item_extracted", "§6Достали горячий предмет! %d°C");
+        add("message.trd.poker.smelter_empty", "§7В плавильне нет металла");
+        add("message.trd.poker.slag_dumped", "§6Сброшено %d единиц шлака");
+
+        // ═══ Tooltip: Infinite Fluid Barrel ═══
+        add("tooltip.trd.infinite_barrel.slot", "§8Поместите в слот опустошения");
+        add("tooltip.trd.infinite_barrel.tank", "§8настроенной цистерны, чтобы");
+        add("tooltip.trd.infinite_barrel.fill", "§8бесконечно заполнять её.");
+        add("tooltip.trd.infinite_barrel.source", "§dБесконечный источник");
+
+        // ═══ Tooltip: Fluid Identifier ═══
+        add("tooltip.trd.fluid_identifier.fluid", "Жидкость: ");
+
+        // ═══ Message: Beam Placer ═══
+        add("message.trd.beam_placer.same_point", "§cТочки не могут совпадать! Сброс связи.");
+        add("message.trd.beam_placer.not_enough", "§cНедостаточно балок! Требуется: §e%s");
+        add("message.trd.beam_placer.placed", "§aБалка установлена! Потрачено: %s");
+        add("message.trd.beam_placer.first_set", "§aПервая точка (центр) закреплена.");
+
+        // ═══ Message: Cast Pickaxe ═══
+        add("message.trd.cast_pickaxe.cooldown", "§cПерезарядка...");
+        add("item.trd.cast_pickaxe.warning.twohanded", "§cНужны две руки!");
 
         // Секвойя
         add(ModBlocks.SEQUOIA_BARK.get(), "Кора секвойи");

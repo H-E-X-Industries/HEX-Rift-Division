@@ -70,22 +70,22 @@ public class ConglomerateItem extends Item {
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         Map<FractionType, Integer> fractions = getFractions(stack);
         if (fractions.isEmpty()) {
-            tooltip.add(Component.literal("§7Пустой кусок"));
+            tooltip.add(Component.translatable("tooltip.trd.conglomerate.empty"));
             return;
         }
 
-        tooltip.add(Component.literal("§eСодержит фракции:"));
+        tooltip.add(Component.translatable("tooltip.trd.conglomerate.contains_fractions"));
         fractions.forEach((fraction, percent) -> {
-            tooltip.add(Component.literal(String.format(" §7- %s: %d%%", fraction.getName(), percent))
+            tooltip.add(Component.translatable("tooltip.trd.conglomerate.fraction", fraction.getName(), percent)
                     .withStyle(style -> style.withColor(fraction.getColor())));
         });
 
         int ou = getOU(stack);
-        tooltip.add(Component.literal(String.format("§8OU: %d", ou)));
+        tooltip.add(Component.translatable("tooltip.trd.conglomerate.ou", ou));
 
         String type = getVeinType(stack);
         if (!type.equals("unknown")) {
-            tooltip.add(Component.literal("§8Тип жилы: " + type));
+            tooltip.add(Component.translatable("tooltip.trd.conglomerate.vein_type", type));
         }
     }
 }

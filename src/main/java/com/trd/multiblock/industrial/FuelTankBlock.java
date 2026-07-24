@@ -187,12 +187,12 @@ public class FuelTankBlock extends BaseEntityBlock implements IMultiblockControl
                     String selectedFluidId = FluidIdentifierItem.getSelectedFluid(stack);
                     tank.setFilter(selectedFluidId);
                     if (selectedFluidId.equals("none")) {
-                        player.displayClientMessage(Component.literal("§eФильтр сброшен (цистерна закрыта)"), true);
+                        player.displayClientMessage(Component.translatable("message.trd.fuel_tank.filter_reset"), true);
                         level.playSound(null, pos, net.minecraft.sounds.SoundEvents.ENDERMAN_TELEPORT, net.minecraft.sounds.SoundSource.BLOCKS, 1.0F, 0.8F);
                     } else {
                         Fluid fluid = net.minecraftforge.registries.ForgeRegistries.FLUIDS.getValue(new net.minecraft.resources.ResourceLocation(selectedFluidId));
                         String fluidName = fluid != null ? Component.translatable(fluid.getFluidType().getDescriptionId()).getString() : selectedFluidId;
-                        player.displayClientMessage(Component.literal("§aФильтр установлен: §f" + fluidName), true);
+                        player.displayClientMessage(Component.translatable("message.trd.fuel_tank.filter_set", fluidName), true);
                         level.playSound(null, pos, net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK.get(), net.minecraft.sounds.SoundSource.BLOCKS, 1.0F, 1.2F);
                     }
                 }
@@ -226,8 +226,8 @@ public class FuelTankBlock extends BaseEntityBlock implements IMultiblockControl
     @Override
     public void appendHoverText(ItemStack stack, @Nullable BlockGetter level, List<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, level, tooltip, flag);
-        tooltip.add(Component.literal("Ёмкость: 768 000 mB").withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.literal("Устойчив к коррозии и нагреву").withStyle(ChatFormatting.GREEN));
+        tooltip.add(Component.translatable("tooltip.trd.fuel_tank.capacity", "768 000").withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("tooltip.trd.fuel_tank.resistant").withStyle(ChatFormatting.GREEN));
 
         net.minecraft.nbt.CompoundTag nbt = stack.getTag();
         net.minecraft.nbt.CompoundTag beTag = (nbt != null && nbt.contains("BlockEntityTag")) ? nbt.getCompound("BlockEntityTag") : null;
@@ -247,18 +247,9 @@ public class FuelTankBlock extends BaseEntityBlock implements IMultiblockControl
         if (!displayId.isEmpty()) {
             Fluid fluid = net.minecraftforge.registries.ForgeRegistries.FLUIDS.getValue(new net.minecraft.resources.ResourceLocation(displayId));
             String loc = fluid != null ? Component.translatable(fluid.getFluidType().getDescriptionId()).getString() : displayId;
-            tooltip.add(Component.literal("§bЖидкость: §f" + loc));
-            tooltip.add(Component.literal("§eОбъём: §f" + amount + " / 768000 mB"));
-        } else {
-            tooltip.add(Component.literal("§bЖидкость: §7Пусто"));
-        }
+            tooltip.add(Component.translatable("tooltip.trd.fuel_tank.fluid", loc));
+            tooltip.add(Component.translatable("tooltip.trd.fuel_tank.amount", amount, "768000"));
 
-        if (hasFilter) {
-            Fluid f = net.minecraftforge.registries.ForgeRegistries.FLUIDS.getValue(new net.minecraft.resources.ResourceLocation(filter));
-            String fName = f != null ? Component.translatable(f.getFluidType().getDescriptionId()).getString() : filter;
-            tooltip.add(Component.literal("§aТип: §f" + fName));
-        } else {
-            tooltip.add(Component.literal("§aТип: §cне задан"));
         }
     }
 }

@@ -131,7 +131,7 @@ public class GUISmelter extends AbstractContainerScreen<SmelterMenu> {
         int temp = menu.getTemperature();
         float percent = temp / 1600f;
         int color = getTempColor(percent);
-        Component text = Component.literal(String.format("%d / %d °C", temp, 1600))
+        Component text = Component.translatable("gui.trd.smelter.temperature_format", temp, 1600)
                 .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(color)));
         gui.renderTooltip(this.font, text, mx, my);
     }
@@ -145,30 +145,31 @@ public class GUISmelter extends AbstractContainerScreen<SmelterMenu> {
 
         boolean hasEnough = currentTemp >= requiredTemp;
         int tempColor = hasEnough ? 0x00FF00 : (System.currentTimeMillis() / 500 % 2 == 0 ? 0x910000 : 0x808080);
-        lines.add(Component.literal(String.format("Температура: %d/%d °C", currentTemp, requiredTemp))
+        lines.add(Component.translatable("gui.trd.smelter.progress.temperature_format", currentTemp, requiredTemp)
                 .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(tempColor))));
 
         if (maxProgress > 0) {
             int remaining = maxProgress - progress;
             int heatPerTick = isTop ? menu.getTopHeatPerTick() : menu.getBottomHeatPerTick();
-            if (heatPerTick <= 0) heatPerTick = 10; // запасное значение
+            if (heatPerTick <= 0) heatPerTick = 10;
             float seconds = remaining / (heatPerTick * 20.0f);
-            lines.add(Component.literal(String.format("Осталось: %.1fс", Math.max(0, seconds)))
+            lines.add(Component.translatable("gui.trd.smelter.progress.remaining",
+                            String.format("%.1f", Math.max(0, seconds)))
                     .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAAAA))));
         }
 
         gui.renderComponentTooltip(this.font, lines, mx, my);
     }
+
     private void renderMetalTankTooltip(GuiGraphics gui, int mx, int my) {
         List<Component> lines = new ArrayList<>();
-        lines.add(Component.literal("§6§lРасплавленные металлы:"));
+        lines.add(Component.translatable("gui.trd.smelter.metal_tank.title"));
 
         List<SmelterBlockEntity.MetalStack> metals = menu.getBlockEntity().getMetalStacks();
         if (metals.isEmpty()) {
-            lines.add(Component.literal("§7Пусто"));
+            lines.add(Component.translatable("gui.trd.smelter.metal_tank.empty"));
         } else {
             boolean showExact = hasShiftDown();
-            
             List<SmelterBlockEntity.MetalStack> displayOrder = new ArrayList<>(metals);
             Collections.reverse(displayOrder);
 
@@ -182,9 +183,12 @@ public class GUISmelter extends AbstractContainerScreen<SmelterMenu> {
                             .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(stack.metal.getColor()))));
                 } else {
                     StringBuilder sb = new StringBuilder();
-                    if (converted.blocks() > 0) sb.append(converted.blocks()).append("блоки ");
-                    if (converted.ingots() > 0) sb.append(converted.ingots()).append("слитки ");
-                    if (converted.nuggets() > 0) sb.append(converted.nuggets()).append("самородки ");
+                    if (converted.blocks() > 0) sb.append(converted.blocks())
+                            .append(Component.translatable("gui.trd.smelter.metal_tank.block_abbr").getString()).append(" ");
+                    if (converted.ingots() > 0) sb.append(converted.ingots())
+                            .append(Component.translatable("gui.trd.smelter.metal_tank.ingot_abbr").getString()).append(" ");
+                    if (converted.nuggets() > 0) sb.append(converted.nuggets())
+                            .append(Component.translatable("gui.trd.smelter.metal_tank.nugget_abbr").getString()).append(" ");
                     if (sb.length() == 0) sb.append("0");
                     lines.add(Component.literal(name + ": " + sb.toString())
                             .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(stack.metal.getColor()))));
@@ -193,13 +197,15 @@ public class GUISmelter extends AbstractContainerScreen<SmelterMenu> {
             int total = menu.getBlockEntity().getTotalMetalAmount();
             int maxBlocks = menu.getBlockEntity().getBlockCapacity();
             if (showExact) {
-                lines.add(Component.literal(String.format("§7Всего: §f%d§7 ед. / §f%d§7 ед.", total, maxBlocks * 81)));
+                lines.add(Component.translatable("gui.trd.smelter.metal_tank.total_exact", total, maxBlocks * 81));
             } else {
                 MetalUnits2.MetalStack totalConv = MetalUnits2.convertFromUnits(total);
-                lines.add(Component.literal(String.format("§7Всего: §f%dб, %dсл, %dсм §8/ %d блоков",
-                        totalConv.blocks(), totalConv.ingots(), totalConv.nuggets(), maxBlocks)));
+                lines.add(Component.translatable("gui.trd.smelter.metal_tank.total_converted",
+                        totalConv.blocks(), totalConv.ingots(), totalConv.nuggets(), maxBlocks));
             }
-            lines.add(Component.literal(showExact ? "§8[Shift] скрыть точное значение" : "§8[Shift] точное значение"));
+            lines.add(Component.translatable(showExact
+                    ? "gui.trd.smelter.metal_tank.shift_hide"
+                    : "gui.trd.smelter.metal_tank.shift_show"));
         }
         gui.renderComponentTooltip(this.font, lines, mx, my);
     }

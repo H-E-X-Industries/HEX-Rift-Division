@@ -5,6 +5,7 @@ import com.trd.block.entity.industrial.rotation.TachometerBlockEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -42,7 +43,7 @@ public class TachometerOverlay {
 
         if (!tachometer.hasShaft()) {
             // Нет вала — показываем предупреждение
-            String noShaft = "⚠ No Shaft Inserted";
+            String noShaft = Component.translatable("hud.trd.tachometer.no_shaft").getString();
             int textWidth = mc.font.width(noShaft);
             if (centerX + textWidth + 4 > screenWidth) {
                 centerX = screenWidth / 2 - textWidth - 12;
@@ -50,16 +51,15 @@ public class TachometerOverlay {
             guiGraphics.fill(centerX - 4, centerY - 4, centerX + textWidth + 4, centerY + lineHeight + 2, bgColor);
             guiGraphics.drawString(mc.font, noShaft, centerX, centerY, noShaftColor, true);
         } else {
-            // Вал есть — отображаем параметры сети
-            String header = "▶ Network Analyzer";
-            String speedText = "Speed: " + Math.abs(tachometer.getNetworkSpeed()) + " RPM";
-            String torqueText = "Torque: " + tachometer.getNetworkConsumedTorque() + " / " + tachometer.getNetworkTorque() + " Nm";
-            String inertiaText = String.format("Inertia: %.2f", tachometer.getNetworkInertia());
+            String header = Component.translatable("hud.trd.tachometer.title").getString();
+            String speedText = Component.translatable("hud.trd.tachometer.speed", Math.abs(tachometer.getNetworkSpeed())).getString();
+            String torqueText = Component.translatable("hud.trd.tachometer.torque", tachometer.getNetworkConsumedTorque(), tachometer.getNetworkTorque()).getString();
+            String inertiaText = String.format(Component.translatable("hud.trd.tachometer.inertia").getString(), tachometer.getNetworkInertia());
 
             // Расчет стресса (нагрузки)
             double load = tachometer.getNetworkLoad();
             double stressValue = Math.max(0, (load - 1.0) / 0.25);
-            String stressText = String.format("Stress: %.1f%%", stressValue * 100.0);
+            String stressText = String.format(Component.translatable("hud.trd.tachometer.stress").getString(), stressValue * 100.0);
             int stressColor = valueColor;
             if (load >= 1.25) {
                 stressColor = noShaftColor; // Красный (критично)

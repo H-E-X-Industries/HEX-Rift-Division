@@ -110,12 +110,6 @@ public class ModFluids {
                     new ResourceLocation("trd", "textures/gui/fluid/smoke.png"),
                     0xFF3A3A3A, 20, 0));
 
-    public static final RegistryObject<FlowingFluid> SMOKE_SOURCE = FLUIDS.register("smoke",
-            () -> new ForgeFlowingFluid.Source(ModFluids.SMOKE_PROPS));
-    public static final RegistryObject<FlowingFluid> SMOKE_FLOWING = FLUIDS.register("flowing_smoke",
-            () -> new ForgeFlowingFluid.Flowing(ModFluids.SMOKE_PROPS));
-    private static final ForgeFlowingFluid.Properties SMOKE_PROPS = new ForgeFlowingFluid.Properties(
-            SMOKE_TYPE, SMOKE_SOURCE, SMOKE_FLOWING);
 
     public static final RegistryObject<Item> FLUID_DROP_NONE = FLUID_DROP_ITEMS.register("fluid_drop_none", () -> new Item(new Item.Properties()));
     public static final RegistryObject<Item> FLUID_DROP_WATER = FLUID_DROP_ITEMS.register("fluid_drop_water",
@@ -139,7 +133,6 @@ public class ModFluids {
         registerDrop("natural_gas", NATURAL_GAS_TYPE);
         registerDrop("steam", STEAM_TYPE);
         registerDrop("low_pressure_steam", LOW_PRESSURE_STEAM_TYPE);
-        registerDrop("smoke", SMOKE_TYPE);
     }
 
     private static void registerDrop(String name, RegistryObject<FluidType> fluidTypeObj) {

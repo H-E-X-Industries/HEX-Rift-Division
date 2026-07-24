@@ -6,6 +6,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -65,7 +66,9 @@ public class SmallSmelterHudOverlay {
 
         // Статус работы
         if (smelter.isBurning() || smelter.isSmelting()) {
-            String status = smelter.isSmelting() ? "§6● §fПлавка" : "§6● §fНагрев";
+            String status = smelter.isSmelting()
+                    ? Component.translatable("hud.trd.temperature.smelting").getString()
+                    : Component.translatable("hud.trd.temperature.heating").getString();
             int statusWidth = font.width(status);
             int statusY = y + font.lineHeight + 3;
 

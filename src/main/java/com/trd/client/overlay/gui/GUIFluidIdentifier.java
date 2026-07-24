@@ -59,7 +59,7 @@ public class GUIFluidIdentifier extends Screen {
     private EditBox searchBox;
 
     public GUIFluidIdentifier(ItemStack stack) {
-        super(Component.literal("Fluid Identifier"));
+        super(Component.translatable("gui.trd.fluid_identifier.title"));
         this.identifierStack = stack;
     }
 
@@ -204,7 +204,7 @@ public class GUIFluidIdentifier extends Screen {
             if (mouseX >= drawX && mouseX < drawX + 16 && mouseY >= drawY && mouseY < drawY + 16) {
                 tooltipToRender = getFluidDisplayName(fluidId);
                 if (tooltipToRender.getString().trim().isEmpty()) {
-                    tooltipToRender = Component.literal("Unknown");
+                    tooltipToRender = Component.translatable("gui.trd.fluid_identifier.unknown");
                 }
             }
         }

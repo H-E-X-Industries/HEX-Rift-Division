@@ -69,10 +69,10 @@ public class GUITrombone extends AbstractContainerScreen<TromboneMenu> {
         this.uiState = STATE_RESULT_MSG;
         this.resultDuration = 40;
         if (success) {
-            this.resultMessage = "SUCCESS";
+            this.resultMessage = Component.translatable("gui.trd.turret.result.success").getString();
             this.resultColor = COLOR_GOOD;
         } else {
-            this.resultMessage = "ERROR 404";
+            this.resultMessage = Component.translatable("gui.trd.turret.result.error").getString();
             this.resultColor = COLOR_BAD;
         }
     }
@@ -141,9 +141,6 @@ public class GUITrombone extends AbstractContainerScreen<TromboneMenu> {
                     case STATE_STATS:
                         drawStats(guiGraphics, x + 10, y + 32, 95, 16);
                         break;
-                    case STATE_MISSILES:
-                        drawMissiles(guiGraphics, x + 10, y + 32, 95, 16);
-                        break;
                     case STATE_CHIP_LIST:
                         if (!hasChip()) { uiState = STATE_MAIN_MENU; break; }
                         drawChipUserList(guiGraphics, x + 10, y + 32, 95, 16);
@@ -182,13 +179,13 @@ public class GUITrombone extends AbstractContainerScreen<TromboneMenu> {
 
         switch (selectedIndex) {
             case 0 -> {
-                text = "CHIP CONTROL";
+                text = Component.translatable("gui.trd.turret.menu.chip_control").getString();
                 if (!hasChip()) color = COLOR_OFF;
             }
-            case 1 -> text = "ATTACK MODE";
-            case 2 -> text = "TURRET STATS";
+            case 1 -> text = Component.translatable("gui.trd.turret.menu.attack_mode").getString();
+            case 2 -> text = Component.translatable("gui.trd.turret.menu.stats").getString();
             case 3 -> {
-                text = "MISSILES";
+                text = Component.translatable("gui.trd.turret.menu.missiles").getString();
                 int missileCount = this.menu.getDataSlot(TromboneMenu.DATA_MISSILE_COUNT);
                 if (missileCount == 0) color = COLOR_BAD;
                 else color = COLOR_GOOD;
@@ -210,12 +207,14 @@ public class GUITrombone extends AbstractContainerScreen<TromboneMenu> {
         boolean isEnabled = false;
 
         switch (selectedIndex) {
-            case 0: name = "HOSTILES"; isEnabled = valHostile == 1; break;
-            case 1: name = "NEUTRALS"; isEnabled = valNeutral == 1; break;
-            case 2: name = "PLAYERS"; isEnabled = valPlayer == 1; break;
+            case 0: name = Component.translatable("gui.trd.turret.target.hostiles").getString(); isEnabled = valHostile == 1; break;
+            case 1: name = Component.translatable("gui.trd.turret.target.neutrals").getString(); isEnabled = valNeutral == 1; break;
+            case 2: name = Component.translatable("gui.trd.turret.target.players").getString(); isEnabled = valPlayer == 1; break;
         }
 
-        String symbol = isEnabled ? "[V]" : "[X]";
+        String symbol = isEnabled
+                ? Component.translatable("gui.trd.turret.toggle.on").getString()
+                : Component.translatable("gui.trd.turret.toggle.off").getString();
         int color = isEnabled ? COLOR_GOOD : COLOR_BAD;
 
         String text = "< " + name + " " + symbol + " >";
@@ -232,18 +231,18 @@ public class GUITrombone extends AbstractContainerScreen<TromboneMenu> {
         switch (selectedIndex) {
             case 0 -> {
                 int kills = this.menu.getDataSlot(TromboneMenu.DATA_KILLS);
-                text = "KILLS: " + kills;
+                text = Component.translatable("gui.trd.turret.stats.kills", kills).getString();
                 color = COLOR_BAD;
             }
             case 1 -> {
                 int secondsTotal = this.menu.getDataSlot(TromboneMenu.DATA_LIFETIME);
                 int hours = secondsTotal / 3600;
                 int minutes = (secondsTotal % 3600) / 60;
-                text = String.format("TIME: %dh %dm", hours, minutes);
+                text = Component.translatable("gui.trd.turret.stats.time", hours, minutes).getString();
                 color = COLOR_INFO;
             }
             case 2 -> {
-                text = "OWNER: [DATA]";
+                text = Component.translatable("gui.trd.turret.stats.owner").getString();
                 color = COLOR_WARN;
             }
         }
@@ -470,8 +469,9 @@ public class GUITrombone extends AbstractContainerScreen<TromboneMenu> {
         if (selectedIndex >= names.size()) selectedIndex = 0;
 
         String textToShow;
-        if (names.isEmpty()) textToShow = "EMPTY LIST";
-        else textToShow = (selectedIndex + 1) + "/" + names.size() + " " + names.get(selectedIndex);
+        if (names.isEmpty()) textToShow = Component.translatable("gui.trd.turret.chip.empty").getString();
+        else textToShow = Component.translatable("gui.trd.turret.chip.format",
+                (selectedIndex + 1), names.size(), names.get(selectedIndex)).getString();
 
         if (!names.isEmpty()) textToShow = "< " + textToShow + " >";
 
@@ -492,19 +492,38 @@ public class GUITrombone extends AbstractContainerScreen<TromboneMenu> {
     private void drawBootingText(GuiGraphics guiGraphics, int x, int y, int w, int h) {
         long time = System.currentTimeMillis() / 500;
         String dots = ".".repeat((int) (time % 4));
-        drawCenteredText(guiGraphics, "SYSTEM BOOT" + dots, COLOR_TEXT, x, y, w, h);
+        drawCenteredText(guiGraphics,
+                Component.translatable("gui.trd.turret.boot", dots).getString(), COLOR_TEXT, x, y, w, h);
     }
 
     private void drawStatusText(GuiGraphics guiGraphics, int x, int y, int w, int h, int status, int energy, int maxEnergy) {
         String msg;
         int color;
-        if (status == 1) { msg = "SYSTEM ONLINE"; color = COLOR_GOOD; }
-        else if (status >= 200 && status <= 300) { msg = "REPAIRING: " + (status - 200) + "%"; color = COLOR_WARN; }
-        else if (status >= 1000) { msg = "RELOADING: " + ((status - 1000) / 20) + "s"; color = COLOR_BAD; }
-        else if (status == 3000) { msg = "NO MISSILES"; color = COLOR_BAD; }
+        if (status == 1) {
+            msg = Component.translatable("gui.trd.turret.status.online").getString();
+            color = COLOR_GOOD;
+        }
+        else if (status >= 200 && status <= 300) {
+            msg = Component.translatable("gui.trd.turret.status.repairing", (status - 200)).getString();
+            color = COLOR_WARN;
+        }
+        else if (status >= 1000) {
+            msg = Component.translatable("gui.trd.turret.status.reloading", ((status - 1000) / 20)).getString();
+            color = COLOR_BAD;
+        }
+        else if (status == 3000) {
+            msg = Component.translatable("gui.trd.turret.status.no_missiles").getString();
+            color = COLOR_BAD;
+        }
         else {
-            if (energy < maxEnergy) { msg = "CHARGING..."; color = COLOR_WARN; }
-            else { msg = "STANDBY MODE"; color = COLOR_OFF; }
+            if (energy < maxEnergy) {
+                msg = Component.translatable("gui.trd.turret.status.charging").getString();
+                color = COLOR_WARN;
+            }
+            else {
+                msg = Component.translatable("gui.trd.turret.status.standby").getString();
+                color = COLOR_OFF;
+            }
         }
         if (!msg.isEmpty()) {
             drawCenteredText(guiGraphics, msg, color, x, y, w, h);
@@ -530,7 +549,8 @@ public class GUITrombone extends AbstractContainerScreen<TromboneMenu> {
         if (isHovering(180, 27, 16, 52, mouseX, mouseY)) {
             int energy = this.menu.getDataSlot(0);
             int maxEnergy = this.menu.getDataSlot(1);
-            guiGraphics.renderTooltip(this.font, Component.literal(String.format("%d / %d JE", energy, maxEnergy)), mouseX, mouseY);
+            guiGraphics.renderTooltip(this.font,
+                    Component.translatable("gui.trd.turret.energy_tooltip", energy, maxEnergy), mouseX, mouseY);
         }
     }
 }

@@ -9,6 +9,7 @@ import com.trd.event.HotItemHandler;
 import com.trd.event.SlagItem;
 import com.trd.item.ModItems;
 import com.trd.menu.industrial.SmallSmelterMenu;
+import com.trd.multiblock.industrial.HeaterBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -187,7 +188,7 @@ public class SmallSmelterBlockEntity extends BlockEntity implements MenuProvider
             changed = true;
 
             if (be.burnTime == 0 && be.fuelTier >= 2) {
-                int chance = ASH_CHANCES[be.fuelTier];
+                int chance = HeaterBlockEntity.ASH_CHANCES[be.fuelTier];
                 if (level.random.nextInt(100) < chance) {
                     ItemStack ash = new ItemStack(ModItems.FUEL_ASH.get(), 1);
                     ItemStack remaining = be.inventory.insertItem(SLOT_ASH, ash, false);
@@ -450,34 +451,19 @@ public class SmallSmelterBlockEntity extends BlockEntity implements MenuProvider
         return getFuelTier(stack) >= 0;
     }
 
-    public int getFuelTier(ItemStack stack) {
-        Item item = stack.getItem();
-        // Тир 0: деревяшки
-        if (item == Items.STICK) return 0;
-        if (item == Items.SCAFFOLDING) return 0;
-        if (item == Items.OAK_PLANKS || item == Items.SPRUCE_PLANKS || item == Items.BIRCH_PLANKS ||
-                item == Items.JUNGLE_PLANKS || item == Items.ACACIA_PLANKS || item == Items.DARK_OAK_PLANKS ||
-                item == Items.MANGROVE_PLANKS || item == Items.CHERRY_PLANKS || item == Items.BAMBOO_PLANKS ||
-                item == Items.BAMBOO_MOSAIC) return 0;
-        if (item == Items.OAK_SLAB || item == Items.SPRUCE_SLAB || item == Items.BIRCH_SLAB ||
-                item == Items.JUNGLE_SLAB || item == Items.ACACIA_SLAB || item == Items.DARK_OAK_SLAB ||
-                item == Items.MANGROVE_SLAB || item == Items.CHERRY_SLAB || item == Items.BAMBOO_SLAB ||
-                item == Items.BAMBOO_MOSAIC_SLAB) return 0;
-        if (item == Items.OAK_LOG || item == Items.SPRUCE_LOG || item == Items.BIRCH_LOG ||
-                item == Items.JUNGLE_LOG || item == Items.ACACIA_LOG || item == Items.DARK_OAK_LOG ||
-                item == Items.MANGROVE_LOG || item == Items.CHERRY_LOG || item == Items.BAMBOO_BLOCK) return 0;
-        if (item == Items.CHARCOAL) return 1;
-        if (item == Items.COAL) return 1;
-        if (item == Items.BLAZE_POWDER) return 1;
-        if (item == Items.BLAZE_ROD) return 2;
-        if (item == Items.MAGMA_CREAM) return 2;
-        if (item == Items.PORKCHOP) return 2;
-        if (item == Items.COAL_BLOCK) return 3;
-        if (item == Items.LAVA_BUCKET) return 4;
-        if (item == ModItems.MORY_LAH.get() || item == Items.DRAGON_BREATH) return 5;
-        return -1;
+    public static int getFuelTier(ItemStack stack) {
+        return HeaterBlockEntity.getFuelTier(stack);
     }
-
+    public static List<HeaterBlockEntity.FuelTierInfo> getAllTierInfos() {
+        return List.of(
+                new HeaterBlockEntity.FuelTierInfo(0, TIER_STATS[0][0], (int) TIER_STATS[0][1], HeaterBlockEntity.ASH_CHANCES[0], Component.translatable("gui.trd.heater.tier0")),
+                new HeaterBlockEntity.FuelTierInfo(1, TIER_STATS[1][0], (int) TIER_STATS[1][1], HeaterBlockEntity.ASH_CHANCES[1], Component.translatable("gui.trd.heater.tier1")),
+                new HeaterBlockEntity.FuelTierInfo(2, TIER_STATS[2][0], (int) TIER_STATS[2][1], HeaterBlockEntity.ASH_CHANCES[2], Component.translatable("gui.trd.heater.tier2")),
+                new HeaterBlockEntity.FuelTierInfo(3, TIER_STATS[3][0], (int) TIER_STATS[3][1], HeaterBlockEntity.ASH_CHANCES[3], Component.translatable("gui.trd.heater.tier3")),
+                new HeaterBlockEntity.FuelTierInfo(4, TIER_STATS[4][0], (int) TIER_STATS[4][1], HeaterBlockEntity.ASH_CHANCES[4], Component.translatable("gui.trd.heater.tier4")),
+                new HeaterBlockEntity.FuelTierInfo(5, TIER_STATS[5][0], (int) TIER_STATS[5][1], HeaterBlockEntity.ASH_CHANCES[5], Component.translatable("gui.trd.heater.tier5"))
+        );
+    }
     // ========== РАБОТА С ТЕМПЕРАТУРОЙ ПРЕДМЕТОВ (HotItemHandler) ==========
     private float getItemTemperature(ItemStack stack) {
         if (HotItemHandler.isHot(stack)) {

@@ -77,8 +77,6 @@ public class ModItems {
     //ОБЫЧНЫЕ ПРЕДМЕТЫ
     public static final RegistryObject<Item> DEPTH_WORM_SPAWN_EGG = ITEMS.register("depth_worm_spawn_egg",
             () -> new DepthWormSpawnEggItem(new Item.Properties()));
-    public static final RegistryObject<Item> CONGLOMERATE_DETECTOR = ITEMS.register("conglomerate_detector",
-            () -> new ConglomerateDetectorItem(new Item.Properties()));
     public static final RegistryObject<Item> IRON_PLATE = ITEMS.register("iron_plate",
             () -> new Item(new Item.Properties()));
     public static final RegistryObject<Item> ALUMINUM_PLATE = ITEMS.register("aluminum_plate",

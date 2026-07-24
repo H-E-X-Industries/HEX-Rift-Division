@@ -108,7 +108,7 @@ public class CastPickaxeItem extends PickaxeItem implements GeoItem {
 
         if (!canUse(player)) {
             if (!player.level().isClientSide && player.getCooldowns().isOnCooldown(this)) {
-                player.displayClientMessage(Component.literal("§cПерезарядка..."), true);
+                player.displayClientMessage(Component.translatable("message.trd.cast_pickaxe.cooldown"), true);
             } else if (!player.level().isClientSide) {
                 player.displayClientMessage(
                         Component.translatable("item.trd.cast_pickaxe.warning.twohanded")
@@ -139,7 +139,7 @@ public class CastPickaxeItem extends PickaxeItem implements GeoItem {
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         if (!canUse(player)) {
             if (!level.isClientSide && player.getCooldowns().isOnCooldown(this)) {
-                player.displayClientMessage(Component.literal("§cПерезарядка..."), true);
+                player.displayClientMessage(Component.translatable("message.trd.cast_pickaxe.cooldown"), true);
             }
             return InteractionResultHolder.fail(player.getItemInHand(hand));
         }

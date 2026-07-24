@@ -38,7 +38,7 @@ public class BeamPlacerItem extends Item {
             BlockPos firstPos = NbtUtils.readBlockPos(nbt.getCompound("FirstPos"));
 
             if (firstPos.equals(currentPos)) {
-                player.sendSystemMessage(Component.literal("§cТочки не могут совпадать! Сброс связи."));
+                player.sendSystemMessage(Component.translatable("message.trd.beam_placer.same_point"));
                 nbt.remove("FirstPos");
                 return InteractionResult.FAIL;
             }
@@ -52,7 +52,7 @@ public class BeamPlacerItem extends Item {
             Item beamItem = ModBlocks.BEAM_BLOCK.get().asItem();
 
             if (!player.isCreative() && countItems(player, beamItem) < requiredBeams) {
-                player.sendSystemMessage(Component.literal("§cНедостаточно балок! Требуется: §e" + requiredBeams));
+                player.sendSystemMessage(Component.translatable("message.trd.beam_placer.not_enough", requiredBeams));
                 return InteractionResult.FAIL;
             }
 
@@ -136,12 +136,12 @@ public class BeamPlacerItem extends Item {
             }
 
             if (!player.isCreative()) consumeItems(player, beamItem, requiredBeams);
-            player.sendSystemMessage(Component.literal("§aБалка установлена! Потрачено: " + requiredBeams));
+            player.sendSystemMessage(Component.translatable("message.trd.beam_placer.placed", requiredBeams));
             nbt.remove("FirstPos");
 
         } else {
             nbt.put("FirstPos", NbtUtils.writeBlockPos(currentPos));
-            player.sendSystemMessage(Component.literal("§aПервая точка (центр) закреплена."));
+            player.sendSystemMessage(Component.translatable("message.trd.beam_placer.first_set"));
         }
 
         return InteractionResult.SUCCESS;

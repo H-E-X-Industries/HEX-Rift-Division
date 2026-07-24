@@ -63,10 +63,10 @@ public class GUITurretAmmo extends AbstractContainerScreen<TurretLightMenu> {
         this.uiState = STATE_RESULT_MSG;
         this.resultDuration = 40;
         if (success) {
-            this.resultMessage = "SUCCESS";
+            this.resultMessage = Component.translatable("gui.trd.turret.result.success").getString();
             this.resultColor = COLOR_GOOD;
         } else {
-            this.resultMessage = "ERROR 404";
+            this.resultMessage = Component.translatable("gui.trd.turret.result.error").getString();
             this.resultColor = COLOR_BAD;
         }
     }
@@ -169,15 +169,14 @@ public class GUITurretAmmo extends AbstractContainerScreen<TurretLightMenu> {
         int color = COLOR_TEXT;
 
         if (selectedIndex == 0) {
-            text = "CHIP CONTROL";
-            if (!hasChip()) color = COLOR_OFF; // Серый, если нет чипа
+            text = Component.translatable("gui.trd.turret.menu.chip_control").getString();
+            if (!hasChip()) color = COLOR_OFF;
         } else if (selectedIndex == 1) {
-            text = "ATTACK MODE";
+            text = Component.translatable("gui.trd.turret.menu.attack_mode").getString();
         } else {
-            text = "TURRET STATS";
+            text = Component.translatable("gui.trd.turret.menu.stats").getString();
         }
 
-        // Единый стиль стрелочек
         text = "< " + text + " >";
         drawCenteredText(guiGraphics, text, color, x, y, w, h);
     }
@@ -194,21 +193,21 @@ public class GUITurretAmmo extends AbstractContainerScreen<TurretLightMenu> {
         boolean isEnabled = false;
 
         switch (selectedIndex) {
-            case 0: name = "HOSTILES"; isEnabled = valHostile == 1; break;
-            case 1: name = "NEUTRALS"; isEnabled = valNeutral == 1; break;
-            case 2: name = "PLAYERS"; isEnabled = valPlayer == 1; break;
+            case 0: name = Component.translatable("gui.trd.turret.target.hostiles").getString(); isEnabled = valHostile == 1; break;
+            case 1: name = Component.translatable("gui.trd.turret.target.neutrals").getString(); isEnabled = valNeutral == 1; break;
+            case 2: name = Component.translatable("gui.trd.turret.target.players").getString(); isEnabled = valPlayer == 1; break;
         }
 
-        String symbol = isEnabled ? "[V]" : "[X]";
+        String symbol = isEnabled
+                ? Component.translatable("gui.trd.turret.toggle.on").getString()
+                : Component.translatable("gui.trd.turret.toggle.off").getString();
         int color = isEnabled ? COLOR_GOOD : COLOR_BAD;
 
-        // Стрелочки теперь тоже рисуются тут
         String text = "< " + name + " " + symbol + " >";
         drawCenteredText(guiGraphics, text, color, x, y, w, h);
     }
 
 
-    // 🔥 ДОБАВЛЕНО: Метод отрисовки статистики
     private void drawStats(GuiGraphics guiGraphics, int x, int y, int w, int h) {
         if (selectedIndex < 0) selectedIndex = 2;
         if (selectedIndex > 2) selectedIndex = 0;
@@ -219,23 +218,22 @@ public class GUITurretAmmo extends AbstractContainerScreen<TurretLightMenu> {
         switch (selectedIndex) {
             case 0:
                 int kills = this.menu.getDataSlot(TurretLightMenu.DATA_KILLS);
-                text = "KILLS: " + kills;
-                color = COLOR_BAD; // Красный для агрессии
+                text = Component.translatable("gui.trd.turret.stats.kills", kills).getString();
+                color = COLOR_BAD;
                 break;
             case 1:
                 int secondsTotal = this.menu.getDataSlot(TurretLightMenu.DATA_LIFETIME);
                 int hours = secondsTotal / 3600;
                 int minutes = (secondsTotal % 3600) / 60;
-                text = String.format("TIME: %dh %dm", hours, minutes);
-                color = COLOR_INFO; // Голубой для времени
+                text = Component.translatable("gui.trd.turret.stats.time", hours, minutes).getString();
+                color = COLOR_INFO;
                 break;
             case 2:
-                text = "OWNER: [DATA]";
-                color = COLOR_WARN; // Желтый для важного
+                text = Component.translatable("gui.trd.turret.stats.owner").getString();
+                color = COLOR_WARN;
                 break;
         }
 
-        // Исправленные стрелочки (как в главном меню)
         text = "< " + text + " >";
         drawCenteredText(guiGraphics, text, color, x, y, w, h);
     }
@@ -409,10 +407,10 @@ public class GUITurretAmmo extends AbstractContainerScreen<TurretLightMenu> {
         if (selectedIndex >= names.size()) selectedIndex = 0;
 
         String textToShow;
-        if (names.isEmpty()) textToShow = "EMPTY LIST";
-        else textToShow = (selectedIndex + 1) + "/" + names.size() + " " + names.get(selectedIndex);
+        if (names.isEmpty()) textToShow = Component.translatable("gui.trd.turret.chip.empty").getString();
+        else textToShow = Component.translatable("gui.trd.turret.chip.format",
+                (selectedIndex + 1), names.size(), names.get(selectedIndex)).getString();
 
-        // Стрелочки и тут добавим для красоты
         if (!names.isEmpty()) textToShow = "< " + textToShow + " >";
 
         drawCenteredText(guiGraphics, textToShow, COLOR_INFO, screenX, screenY, w, h);
@@ -433,18 +431,34 @@ public class GUITurretAmmo extends AbstractContainerScreen<TurretLightMenu> {
     private void drawBootingText(GuiGraphics guiGraphics, int x, int y, int w, int h) {
         long time = System.currentTimeMillis() / 500;
         String dots = ".".repeat((int) (time % 4));
-        drawCenteredText(guiGraphics, "SYSTEM BOOT" + dots, COLOR_TEXT, x, y, w, h);
+        drawCenteredText(guiGraphics,
+                Component.translatable("gui.trd.turret.boot", dots).getString(), COLOR_TEXT, x, y, w, h);
     }
 
     private void drawStatusText(GuiGraphics guiGraphics, int x, int y, int w, int h, int status, int energy, int maxEnergy) {
         String msg;
         int color;
-        if (status == 1) { msg = "SYSTEM ONLINE"; color = COLOR_GOOD; }
-        else if (status >= 200 && status <= 300) { msg = "REPAIRING: " + (status - 200) + "%"; color = COLOR_WARN; }
-        else if (status >= 1000) { msg = "RESPAWN: " + ((status - 1000) / 20) + "s"; color = COLOR_BAD; }
+        if (status == 1) {
+            msg = Component.translatable("gui.trd.turret.status.online").getString();
+            color = COLOR_GOOD;
+        }
+        else if (status >= 200 && status <= 300) {
+            msg = Component.translatable("gui.trd.turret.status.repairing", (status - 200)).getString();
+            color = COLOR_WARN;
+        }
+        else if (status >= 1000) {
+            msg = Component.translatable("gui.trd.turret.status.respawn", ((status - 1000) / 20)).getString();
+            color = COLOR_BAD;
+        }
         else {
-            if (energy < maxEnergy) { msg = "CHARGING..."; color = COLOR_WARN; }
-            else { msg = "STANDBY MODE"; color = COLOR_OFF; }
+            if (energy < maxEnergy) {
+                msg = Component.translatable("gui.trd.turret.status.charging").getString();
+                color = COLOR_WARN;
+            }
+            else {
+                msg = Component.translatable("gui.trd.turret.status.standby").getString();
+                color = COLOR_OFF;
+            }
         }
         drawCenteredText(guiGraphics, msg, color, x, y, w, h);
     }
@@ -468,7 +482,8 @@ public class GUITurretAmmo extends AbstractContainerScreen<TurretLightMenu> {
         if (isHovering(180, 27, 16, 52, mouseX, mouseY)) {
             int energy = this.menu.getDataSlot(0);
             int maxEnergy = this.menu.getDataSlot(1);
-            guiGraphics.renderTooltip(this.font, Component.literal(String.format("%d / %d JE", energy, maxEnergy)), mouseX, mouseY);
+            guiGraphics.renderTooltip(this.font,
+                    Component.translatable("gui.trd.turret.energy_tooltip", energy, maxEnergy), mouseX, mouseY);
         }
     }
 }

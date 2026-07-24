@@ -282,7 +282,8 @@ public class HeaterBlockEntity extends BlockEntity implements MenuProvider {
     };
 
     // Шансы выпадения золы по тирам (в процентах)
-    private static final int[] ASH_CHANCES = {0, 0, 40, 60, 80, 100};
+    public static final int[] ASH_CHANCES = {0, 0, 40, 60, 80, 100};
+
 
     // Данные для GUI (температура хранится как int * 10 для 1 знака после запятой)
     private final SimpleContainerData data = new SimpleContainerData(4);
@@ -427,10 +428,9 @@ public class HeaterBlockEntity extends BlockEntity implements MenuProvider {
         return getFuelTier(stack) >= 0;
     }
 
-    public int getFuelTier(ItemStack stack) {
+    public static int getFuelTier(ItemStack stack) {
         return ITEM_TO_TIER_MAP.getOrDefault(stack.getItem(), -1);
     }
-
     public ItemStackHandler getInventory() {
         return inventory;
     }

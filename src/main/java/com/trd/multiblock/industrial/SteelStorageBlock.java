@@ -196,7 +196,7 @@ public class SteelStorageBlock extends BaseEntityBlock implements IMultiblockCon
 
         CompoundTag blockEntityTag = stack.getTagElement("BlockEntityTag");
         if (blockEntityTag == null || !blockEntityTag.contains("Inventory")) {
-            tooltip.add(Component.literal("Пусто").withStyle(ChatFormatting.GRAY));
+            tooltip.add(Component.translatable("tooltip.trd.steel_storage.empty").withStyle(ChatFormatting.GRAY));
             return;
         }
 
@@ -227,16 +227,16 @@ public class SteelStorageBlock extends BaseEntityBlock implements IMultiblockCon
         ChatFormatting color = ratio < 0.33 ? ChatFormatting.GREEN
                 : (ratio < 0.66 ? ChatFormatting.YELLOW : ChatFormatting.RED);
 
-        tooltip.add(Component.literal("Содержит: " + filled + "/" + total).withStyle(color));
+        tooltip.add(Component.translatable("tooltip.trd.steel_storage.contains", filled, total).withStyle(color));
 
         // Первые 5 предметов
         int shown = 0;
         for (java.util.Map.Entry<String, Integer> entry : items.entrySet()) {
             if (shown >= 5) {
-                tooltip.add(Component.literal("... и ещё " + (items.size() - 5)).withStyle(ChatFormatting.GRAY));
+                tooltip.add(Component.translatable("tooltip.trd.steel_storage.and_more", items.size() - 5).withStyle(ChatFormatting.GRAY));
                 break;
             }
-            tooltip.add(Component.literal("• " + entry.getKey() + " x" + entry.getValue()).withStyle(ChatFormatting.GRAY));
+            tooltip.add(Component.translatable("tooltip.trd.steel_storage.item", entry.getKey(), entry.getValue()).withStyle(ChatFormatting.GRAY));
             shown++;
         }
     }

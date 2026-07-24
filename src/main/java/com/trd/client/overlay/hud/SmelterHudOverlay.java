@@ -7,6 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -74,7 +75,7 @@ public class SmelterHudOverlay {
 
         // Если печь работает - показываем прогресс
         if (smelter.getData().get(5) > 0 || smelter.getData().get(6) > 0) {
-            String status = "§6● §fПлавка";
+            String status = Component.translatable("hud.trd.temperature.smelting").getString();
             int statusWidth = font.width(status);
             int statusY = y + font.lineHeight + 3;
 

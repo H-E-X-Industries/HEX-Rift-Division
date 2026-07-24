@@ -37,7 +37,7 @@ public class BeltItem extends Item {
         if (level.getBlockEntity(posB) instanceof ShaftBlockEntity beB) {
             // ЗАЩИТА: Кликать можно только по валам СО ШКИВАМИ
             if (!beB.hasPulley()) {
-                if (!level.isClientSide) player.displayClientMessage(Component.literal("§cРемень можно натянуть только на шкивы!"), true);
+                if (!level.isClientSide) player.displayClientMessage(Component.translatable("message.trd.belt.pulleys_only"), true);
                 return InteractionResult.FAIL;
             }
 
@@ -48,11 +48,11 @@ public class BeltItem extends Item {
             // ШАГ 1: Запоминаем первый шкив
             if (!nbt.contains("SelectedPulley")) {
                 if (beB.getConnectedPulley() != null) {
-                    player.displayClientMessage(Component.literal("§cЭтот шкив уже соединен ремнем!"), true);
+                    player.displayClientMessage(Component.translatable("message.trd.belt.already_connected"), true);
                     return InteractionResult.FAIL;
                 }
                 nbt.put("SelectedPulley", NbtUtils.writeBlockPos(posB));
-                player.displayClientMessage(Component.literal("§aПервый шкив выбран. Кликните по второму."), true);
+                player.displayClientMessage(Component.translatable("message.trd.belt.first_selected"), true);
                 level.playSound(null, posB, SoundEvents.LEASH_KNOT_PLACE, SoundSource.BLOCKS, 1.0f, 1.0f);
                 return InteractionResult.SUCCESS;
             }
@@ -61,19 +61,19 @@ public class BeltItem extends Item {
             BlockPos posA = NbtUtils.readBlockPos(nbt.getCompound("SelectedPulley"));
 
             if (posA.equals(posB)) {
-                player.displayClientMessage(Component.literal("§eЛинковка отменена."), true);
+                player.displayClientMessage(Component.translatable("message.trd.belt.cancelled"), true);
                 nbt.remove("SelectedPulley");
                 return InteractionResult.SUCCESS;
             }
 
             if (posA.distSqr(posB) > MAX_BELT_LENGTH * MAX_BELT_LENGTH) {
-                player.displayClientMessage(Component.literal("§cСлишком далеко! (Макс. " + MAX_BELT_LENGTH + " блоков)"), true);
+                player.displayClientMessage(Component.translatable("message.trd.belt.too_far", MAX_BELT_LENGTH), true);
                 return InteractionResult.FAIL;
             }
 
             BlockState stateA = level.getBlockState(posA);
             if (!(stateA.getBlock() instanceof ShaftBlock) || !(level.getBlockEntity(posA) instanceof ShaftBlockEntity beA) || !beA.hasPulley()) {
-                player.displayClientMessage(Component.literal("§cПервый шкив был разрушен или снят."), true);
+                player.displayClientMessage(Component.translatable("message.trd.belt.first_destroyed"), true);
                 nbt.remove("SelectedPulley");
                 return InteractionResult.FAIL;
             }
@@ -82,7 +82,7 @@ public class BeltItem extends Item {
             Direction.Axis axisB = stateB.getValue(ShaftBlock.FACING).getAxis();
 
             if (axisA != axisB) {
-                player.displayClientMessage(Component.literal("§cОси шкивов не параллельны!"), true);
+                player.displayClientMessage(Component.translatable("message.trd.belt.axis_mismatch"), true);
                 return InteractionResult.FAIL;
             }
 
@@ -90,12 +90,12 @@ public class BeltItem extends Item {
             if ((axisA == Direction.Axis.X && posA.getX() != posB.getX()) ||
                     (axisA == Direction.Axis.Y && posA.getY() != posB.getY()) ||
                     (axisA == Direction.Axis.Z && posA.getZ() != posB.getZ())) {
-                player.displayClientMessage(Component.literal("§cШкивы должны лежать в одной плоскости!"), true);
+                player.displayClientMessage(Component.translatable("message.trd.belt.not_coplanar"), true);
                 return InteractionResult.FAIL;
             }
 
             if (beB.getConnectedPulley() != null || beA.getConnectedPulley() != null) {
-                player.displayClientMessage(Component.literal("§cОдин из шкивов уже занят!"), true);
+                player.displayClientMessage(Component.translatable("message.trd.belt.pulley_occupied"), true);
                 nbt.remove("SelectedPulley");
                 return InteractionResult.FAIL;
             }
@@ -106,7 +106,7 @@ public class BeltItem extends Item {
                 nbt.remove("SelectedPulley");
                 if (!player.isCreative()) stack.shrink(1);
 
-                player.displayClientMessage(Component.literal("§aРемень успешно натянут!"), true);
+                player.displayClientMessage(Component.translatable("message.trd.belt.success"), true);
                 level.playSound(null, posB, SoundEvents.WOOL_PLACE, SoundSource.BLOCKS, 1.0f, 1.0f);
 
                 // Обновляем сеть

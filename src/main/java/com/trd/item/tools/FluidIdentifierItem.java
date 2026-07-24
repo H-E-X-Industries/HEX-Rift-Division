@@ -163,7 +163,7 @@ public class FluidIdentifierItem extends Item {
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         String fluid = getSelectedFluid(stack);
-        tooltip.add(Component.literal("Жидкость: ").withStyle(ChatFormatting.GOLD).append(getFluidDisplayName(fluid)));
+        tooltip.add(Component.translatable("tooltip.trd.fluid_identifier.fluid").withStyle(ChatFormatting.GOLD).append(getFluidDisplayName(fluid)));
         super.appendHoverText(stack, level, tooltip, flag);
     }
 

@@ -77,7 +77,7 @@ public class PokerItem extends Item {
         }
 
         // Нечего доставать
-        player.displayClientMessage(Component.literal("§7Котёл пуст или содержит жидкий металл"), true);
+        player.displayClientMessage(Component.translatable("message.trd.poker.pot_empty"), true);
         return InteractionResult.PASS;
     }
 
@@ -156,10 +156,7 @@ public class PokerItem extends Item {
         // Кочергой можно достать даже горячий
         if (HotItemHandler.isHot(item)) {
             int temp = HotItemHandler.getTemperature(item);
-            player.displayClientMessage(
-                    Component.literal(String.format("§6Достали горячий предмет! %d°C", temp)),
-                    true
-            );
+            player.displayClientMessage(Component.translatable("message.trd.poker.hot_item_extracted", temp), true);
         }
 
         if (!player.getInventory().add(item)) {
@@ -193,7 +190,7 @@ public class PokerItem extends Item {
     private InteractionResult dumpSmelterContents(Level level, BlockPos pos, Player player,
                                                   SmelterBlockEntity smelter, ItemStack poker) {
         if (!smelter.hasMetal()) {
-            player.displayClientMessage(Component.literal("§7В плавильне нет металла"), true);
+            player.displayClientMessage(Component.translatable("message.trd.poker.smelter_empty"), true);
             return InteractionResult.PASS;
         }
 
@@ -207,10 +204,7 @@ public class PokerItem extends Item {
         level.playSound(null, pos, SoundEvents.ITEM_PICKUP, SoundSource.BLOCKS, 1.0f, 0.8f);
         damagePoker(poker, player, slagItems.size());
 
-        player.displayClientMessage(
-                Component.literal(String.format("§6Сброшено %d единиц шлака", slagItems.size())),
-                true
-        );
+        player.displayClientMessage(Component.translatable("message.trd.poker.slag_dumped", slagItems.size()), true);
 
         return InteractionResult.CONSUME;
     }

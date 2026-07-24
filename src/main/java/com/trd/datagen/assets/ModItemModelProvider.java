@@ -67,7 +67,6 @@ public class ModItemModelProvider extends ItemModelProvider {
         simpleItem(ModItems.MOLD_PLATE);
         simpleItem(ModItems.CINNABAR);
         simpleItem(ModItems.ASBESTOS);
-        simpleItem(ModItems.CONGLOMERATE_DETECTOR);
         simpleItem(ModItems.TRASH);
         simpleItem(ModItems.CONGLOMERATE_POWDER);
         simpleItem(ModItems.LIGNITE);
@@ -125,8 +124,6 @@ public class ModItemModelProvider extends ItemModelProvider {
         simpleItem(ModItems.GRENADE_IF_SLIME);
         simpleItem(ModItems.GRENADE_IF);
         simpleItem(ModItems.MORY_FOOD);
-        simpleItem(ModItems.COFFEE);
-        simpleItem(ModItems.MORY_LAH);
         simpleItem(ModItems.MOLD_BLOCK);
         simpleItem(ModItems.MOLD_NUGGET);
         simpleItem(ModItems.FIREBRICK);
