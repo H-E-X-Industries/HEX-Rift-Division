@@ -17,9 +17,9 @@ public class InfiniteFluidBarrelItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.literal("§8Поместите в слот опустошения"));
-        tooltip.add(Component.literal("§8настроенной цистерны, чтобы"));
-        tooltip.add(Component.literal("§8бесконечно заполнять её."));
-        tooltip.add(Component.literal("§dБесконечный источник"));
+        tooltip.add(Component.translatable("tooltip.trd.infinite_barrel.slot"));
+        tooltip.add(Component.translatable("tooltip.trd.infinite_barrel.tank"));
+        tooltip.add(Component.translatable("tooltip.trd.infinite_barrel.fill"));
+        tooltip.add(Component.translatable("tooltip.trd.infinite_barrel.source"));
     }
 }

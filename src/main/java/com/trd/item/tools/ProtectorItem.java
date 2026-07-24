@@ -24,8 +24,8 @@ public class ProtectorItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.literal("  +" + corrosion + "°C к точке плавления").withStyle(ChatFormatting.GOLD));
-        tooltip.add(Component.literal("  +" + heat + " к коррозионной стойкости").withStyle(ChatFormatting.YELLOW));
-        tooltip.add(Component.literal("§7Устанавливается в бочку"));
+        tooltip.add(Component.translatable("tooltip.trd.protector.melting_point", corrosion).withStyle(ChatFormatting.GOLD));
+        tooltip.add(Component.translatable("tooltip.trd.protector.corrosion", heat).withStyle(ChatFormatting.YELLOW));
+        tooltip.add(Component.translatable("tooltip.trd.protector.install"));
     }
 }

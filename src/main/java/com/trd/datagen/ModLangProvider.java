@@ -434,6 +434,36 @@ public class ModLangProvider extends LanguageProvider {
         add("message.trd.belt.pulley_occupied", "§cOne of the pulleys is already occupied!");
         add("message.trd.belt.success", "§aBelt successfully stretched!");
 
+        // ═══ Tooltip: Protector ═══
+        add("tooltip.trd.protector.melting_point", "  +%s°C to melting point");
+        add("tooltip.trd.protector.corrosion", "  +%s corrosion resistance");
+        add("tooltip.trd.protector.install", "§7Install in barrel");
+
+        // ═══ Message: Poker ═══
+        add("message.trd.poker.pot_empty", "§7Pot is empty or contains liquid metal");
+        add("message.trd.poker.hot_item_extracted", "§6Extracted hot item! %d°C");
+        add("message.trd.poker.smelter_empty", "§7No metal in smelter");
+        add("message.trd.poker.slag_dumped", "§6Dumped %d slag units");
+
+        // ═══ Tooltip: Infinite Fluid Barrel ═══
+        add("tooltip.trd.infinite_barrel.slot", "§8Place in emptying slot");
+        add("tooltip.trd.infinite_barrel.tank", "§8of configured tank to");
+        add("tooltip.trd.infinite_barrel.fill", "§8fill it infinitely.");
+        add("tooltip.trd.infinite_barrel.source", "§dInfinite source");
+
+        // ═══ Tooltip: Fluid Identifier ═══
+        add("tooltip.trd.fluid_identifier.fluid", "Fluid: ");
+
+        // ═══ Message: Beam Placer ═══
+        add("message.trd.beam_placer.same_point", "§cPoints cannot match! Link reset.");
+        add("message.trd.beam_placer.not_enough", "§cNot enough beams! Required: §e%s");
+        add("message.trd.beam_placer.placed", "§aBeam placed! Spent: %s");
+        add("message.trd.beam_placer.first_set", "§aFirst point (center) anchored.");
+
+        // ═══ Message: Cast Pickaxe ═══
+        add("message.trd.cast_pickaxe.cooldown", "§cCooldown...");
+        add("item.trd.cast_pickaxe.warning.twohanded", "§cRequires both hands!");
+
         // Sequoia
         add(ModBlocks.SEQUOIA_BARK.get(), "Sequoia Bark");
         add(ModBlocks.SEQUOIA_HEARTWOOD.get(), "Sequoia Heartwood");
@@ -1113,6 +1143,36 @@ public class ModLangProvider extends LanguageProvider {
         add("message.trd.belt.not_coplanar", "§cШкивы должны лежать в одной плоскости!");
         add("message.trd.belt.pulley_occupied", "§cОдин из шкивов уже занят!");
         add("message.trd.belt.success", "§aРемень успешно натянут!");
+
+        // ═══ Tooltip: Protector ═══
+        add("tooltip.trd.protector.melting_point", "  +%s°C к точке плавления");
+        add("tooltip.trd.protector.corrosion", "  +%s к коррозионной стойкости");
+        add("tooltip.trd.protector.install", "§7Устанавливается в бочку");
+
+        // ═══ Message: Poker ═══
+        add("message.trd.poker.pot_empty", "§7Котёл пуст или содержит жидкий металл");
+        add("message.trd.poker.hot_item_extracted", "§6Достали горячий предмет! %d°C");
+        add("message.trd.poker.smelter_empty", "§7В плавильне нет металла");
+        add("message.trd.poker.slag_dumped", "§6Сброшено %d единиц шлака");
+
+        // ═══ Tooltip: Infinite Fluid Barrel ═══
+        add("tooltip.trd.infinite_barrel.slot", "§8Поместите в слот опустошения");
+        add("tooltip.trd.infinite_barrel.tank", "§8настроенной цистерны, чтобы");
+        add("tooltip.trd.infinite_barrel.fill", "§8бесконечно заполнять её.");
+        add("tooltip.trd.infinite_barrel.source", "§dБесконечный источник");
+
+        // ═══ Tooltip: Fluid Identifier ═══
+        add("tooltip.trd.fluid_identifier.fluid", "Жидкость: ");
+
+        // ═══ Message: Beam Placer ═══
+        add("message.trd.beam_placer.same_point", "§cТочки не могут совпадать! Сброс связи.");
+        add("message.trd.beam_placer.not_enough", "§cНедостаточно балок! Требуется: §e%s");
+        add("message.trd.beam_placer.placed", "§aБалка установлена! Потрачено: %s");
+        add("message.trd.beam_placer.first_set", "§aПервая точка (центр) закреплена.");
+
+        // ═══ Message: Cast Pickaxe ═══
+        add("message.trd.cast_pickaxe.cooldown", "§cПерезарядка...");
+        add("item.trd.cast_pickaxe.warning.twohanded", "§cНужны две руки!");
 
         // Секвойя
         add(ModBlocks.SEQUOIA_BARK.get(), "Кора секвойи");
