@@ -238,6 +238,94 @@ public class ModLangProvider extends LanguageProvider {
         add("gui.trd.turret.missiles.fire", "FIRE: %s");
         add("gui.trd.turret.missiles.total", "TTL: %s");
 
+        // Battery
+        add("gui.trd.battery.priority.0", "Priority: Low");
+        add("gui.trd.battery.priority.0.desc", "Lowest priority. Will be drained first and filled last.");
+        add("gui.trd.battery.priority.1", "Priority: Normal");
+        add("gui.trd.battery.priority.1.desc", "Standard priority for energy transfer.");
+        add("gui.trd.battery.priority.2", "Priority: High");
+        add("gui.trd.battery.priority.2.desc", "Highest priority. Will be filled first and drained last.");
+        add("gui.trd.battery.priority.recommended", "(Recommended)");
+
+        add("gui.trd.battery.mode.both", "Mode: Input & Output");
+        add("gui.trd.battery.mode.both.desc", "All energy operations are allowed.");
+        add("gui.trd.battery.mode.input", "Mode: Input Only");
+        add("gui.trd.battery.mode.input.desc", "Only receiving energy is allowed.");
+        add("gui.trd.battery.mode.output", "Mode: Output Only");
+        add("gui.trd.battery.mode.output.desc", "Only sending energy is allowed.");
+        add("gui.trd.battery.mode.locked", "Mode: Locked");
+        add("gui.trd.battery.mode.locked.desc", "All energy operations are disabled.");
+
+        // ═══ HUD: Temperature ═══
+        add("hud.trd.temperature.format", "%.0f / %.0f °C");
+        add("hud.trd.temperature.heating", "§6● §fHeating");
+        add("hud.trd.temperature.smelting", "§6● §fSmelting");
+
+        // ═══ HUD: Low Pressure Steam Condenser ═══
+        add("hud.trd.condenser.steam_name", "L.P. Steam");
+        add("hud.trd.condenser.water_name", "Water");
+        add("hud.trd.condenser.arrow_in", "§a-> ");
+        add("hud.trd.condenser.arrow_out", "§c<- ");
+        add("hud.trd.condenser.amount", "§7%s/%s mB");
+        add("hud.trd.condenser.status.no_water", "§cRequires waterlogging!");
+        add("hud.trd.condenser.status.cooling", "§7Cooling: §b%.2fx");
+
+        // ═══ HUD: Motor Electro ═══
+        add("hud.trd.motor.title", "§e⚡ Motor §7[%s]");
+        add("hud.trd.motor.status.on", "§aON");
+        add("hud.trd.motor.status.off", "§cOFF");
+        add("hud.trd.motor.speed", "§7Speed:    §f%s RPM");
+        add("hud.trd.motor.torque", "§7Torque:      §f%s Nm");
+        add("hud.trd.motor.consumption", "§7Consumption: §f%s JE/s");
+        add("hud.trd.motor.charge", "§7Charge: %s%s§7/%s JE");
+
+        // ═══ HUD: Steel Storage ═══
+        add("hud.trd.storage.header", "%s/%s slots");
+        add("hud.trd.storage.empty", "Empty");
+        add("hud.trd.storage.item", "• %s x%s");
+        add("hud.trd.storage.more", "... and %s more");
+
+        // ═══ HUD: Tachometer ═══
+        add("hud.trd.tachometer.no_shaft", "⚠ No Shaft Inserted");
+        add("hud.trd.tachometer.title", "▶ Network Analyzer");
+        add("hud.trd.tachometer.speed", "Speed: %s RPM");
+        add("hud.trd.tachometer.torque", "Torque: %s / %s Nm");
+        add("hud.trd.tachometer.inertia", "Inertia: %.2f");
+        add("hud.trd.tachometer.stress", "Stress: %.1f%%");
+
+        // ═══ HUD: Boiler ═══
+        add("hud.trd.boiler.water", "Water");
+        add("hud.trd.boiler.steam", "Steam");
+        add("hud.trd.boiler.arrow_in", "§a-> §7");
+        add("hud.trd.boiler.arrow_out", "§c<- §7");
+        add("hud.trd.boiler.amount_suffix", " mB");
+        add("hud.trd.boiler.temperature", "Temperature: %.1f °C");
+
+        // ═══ HUD: Millstone ═══
+        add("hud.trd.millstone.result", "✓ %s");
+        add("hud.trd.millstone.result_extra", " + %s");
+        add("hud.trd.millstone.take", "RMB to collect");
+        add("hud.trd.millstone.progress", "%d/%d turns");
+        add("hud.trd.millstone.remaining", "Remaining: %s");
+        add("hud.trd.millstone.grind", "RMB to grind");
+        add("hud.trd.millstone.empty", "Millstone is empty");
+        add("hud.trd.millstone.insert", "Place mineral");
+
+        // ═══ HUD: Steam Engine ═══
+        add("hud.trd.engine.steam", "Steam");
+        add("hud.trd.engine.lp_steam", "L.P. Steam");
+        add("hud.trd.engine.arrow_in", "§a-> §7");
+        add("hud.trd.engine.arrow_out", "§c<- §7");
+        add("hud.trd.engine.amount_suffix", " mB");
+
+        // ═══ HUD: Stator ═══
+
+// English
+        add("hud.trd.stator.coils_label", "Coils: ");
+        add("hud.trd.stator.buffer_label", "Buffer: ");
+        add("hud.trd.stator.load_label", "Load: ");
+        add("hud.trd.stator.production_label", "Production: ");
+
         // Sequoia
         add(ModBlocks.SEQUOIA_BARK.get(), "Sequoia Bark");
         add(ModBlocks.SEQUOIA_HEARTWOOD.get(), "Sequoia Heartwood");
@@ -723,6 +811,93 @@ public class ModLangProvider extends LanguageProvider {
         add("gui.trd.turret.missiles.he", "ФУГ: %s");
         add("gui.trd.turret.missiles.fire", "ЗАЖ: %s");
         add("gui.trd.turret.missiles.total", "ВСЕГО: %s");
+
+        add("gui.trd.battery.priority.0", "Приоритет: Низкий");
+        add("gui.trd.battery.priority.0.desc", "Низший приоритет. Опустошается в первую очередь, заполняется в последнюю");
+        add("gui.trd.battery.priority.1", "Приоритет: Нормальный");
+        add("gui.trd.battery.priority.1.desc", "Стандартный приоритет для передачи энергии.");
+        add("gui.trd.battery.priority.2", "Приоритет: Высокий");
+        add("gui.trd.battery.priority.2.desc", "Высший приоритет. Заполняется первым, опустошается последним.");
+        add("gui.trd.battery.priority.recommended", "(Рекомендуется)");
+
+        add("gui.trd.battery.mode.both", "Режим: Приём и Передача");
+        add("gui.trd.battery.mode.both.desc", "Разрешены все операции с энергией.");
+        add("gui.trd.battery.mode.input", "Режим: Только Приём");
+        add("gui.trd.battery.mode.input.desc", "Разрешён только приём энергии.");
+        add("gui.trd.battery.mode.output", "Режим: Только Передача");
+        add("gui.trd.battery.mode.output.desc", "Разрешена только отдача энергии.");
+        add("gui.trd.battery.mode.locked", "Режим: Заблокировано");
+        add("gui.trd.battery.mode.locked.desc", "Все операции с энергией отключены.");
+
+
+        // ═══ HUD: Общая температура (Heater/Smelter/SmallSmelter) ═══
+        add("hud.trd.temperature.format", "%.0f / %.0f °C");
+        add("hud.trd.temperature.heating", "§6● §fНагрев");
+        add("hud.trd.temperature.smelting", "§6● §fПлавка");
+
+        // ═══ HUD: Low Pressure Steam Condenser ═══
+        add("hud.trd.condenser.steam_name", "Пар Н.Д.");
+        add("hud.trd.condenser.water_name", "Вода");
+        add("hud.trd.condenser.arrow_in", "§a-> ");
+        add("hud.trd.condenser.arrow_out", "§c<- ");
+        add("hud.trd.condenser.amount", "§7%s/%s mB");
+        add("hud.trd.condenser.status.no_water", "§cТребуется залить водой!");
+        add("hud.trd.condenser.status.cooling", "§7Охлаждение: §b%.2fx");
+
+        // ═══ HUD: Motor Electro ═══
+        add("hud.trd.motor.title", "§e⚡ Мотор §7[%s]");
+        add("hud.trd.motor.status.on", "§aON");
+        add("hud.trd.motor.status.off", "§cOFF");
+        add("hud.trd.motor.speed", "§7Скорость:    §f%s RPM");
+        add("hud.trd.motor.torque", "§7Момент:      §f%s Нм");
+        add("hud.trd.motor.consumption", "§7Потребление: §f%s JE/s");
+        add("hud.trd.motor.charge", "§7Заряд: %s%s§7/%s JE");
+
+        // ═══ HUD: Steel Storage ═══
+        add("hud.trd.storage.header", "%s/%s слотов");
+        add("hud.trd.storage.empty", "Пусто");
+        add("hud.trd.storage.item", "• %s x%s");
+        add("hud.trd.storage.more", "... и ещё %s");
+
+        // ═══ HUD: Tachometer ═══
+        add("hud.trd.tachometer.no_shaft", "⚠ Вал не вставлен");
+        add("hud.trd.tachometer.title", "▶ Анализатор сети");
+        add("hud.trd.tachometer.speed", "Скорость: %s RPM");
+        add("hud.trd.tachometer.torque", "Момент: %s / %s Нм");
+        add("hud.trd.tachometer.inertia", "Инерция: %.2f");
+        add("hud.trd.tachometer.stress", "Нагрузка: %.1f%%");
+
+        // ═══ HUD: Boiler ═══
+        add("hud.trd.boiler.water", "Вода");
+        add("hud.trd.boiler.steam", "Пар");
+        add("hud.trd.boiler.arrow_in", "§a-> §7");
+        add("hud.trd.boiler.arrow_out", "§c<- §7");
+        add("hud.trd.boiler.amount_suffix", " mB");
+        add("hud.trd.boiler.temperature", "Температура: %.1f °C");
+
+        // ═══ HUD: Millstone ═══
+        add("hud.trd.millstone.result", "✓ %s");
+        add("hud.trd.millstone.result_extra", " + %s");
+        add("hud.trd.millstone.take", "ПКМ чтобы забрать");
+        add("hud.trd.millstone.progress", "%d/%d оборотов");
+        add("hud.trd.millstone.remaining", "Осталось: %s");
+        add("hud.trd.millstone.grind", "ПКМ для помола");
+        add("hud.trd.millstone.empty", "Жернова пусты");
+        add("hud.trd.millstone.insert", "Положите минерал");
+
+        // ═══ HUD: Steam Engine ═══
+        add("hud.trd.engine.steam", "Пар");
+        add("hud.trd.engine.lp_steam", "Пар Н.Д.");
+        add("hud.trd.engine.arrow_in", "§a-> §7");
+        add("hud.trd.engine.arrow_out", "§c<- §7");
+        add("hud.trd.engine.amount_suffix", " mB");
+
+        // ═══ HUD: Stator ═══
+        add("hud.trd.stator.coils_label", "Катушки: ");
+        add("hud.trd.stator.buffer_label", "Буфер: ");
+        add("hud.trd.stator.load_label", "Нагрузка: ");
+        add("hud.trd.stator.production_label", "Производство: ");
+
 
         // Секвойя
         add(ModBlocks.SEQUOIA_BARK.get(), "Кора секвойи");

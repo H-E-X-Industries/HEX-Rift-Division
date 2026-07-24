@@ -6,6 +6,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
@@ -56,37 +57,32 @@ public class MillstoneHudOverlay {
         int subColor = 0xAAAAAA;
 
         if (!results.isEmpty()) {
-            // Готово к сбору
-            mainText = "✓ " + results.get(0).getHoverName().getString();
+            mainText = Component.translatable("hud.trd.millstone.result",
+                    results.get(0).getHoverName().getString()).getString();
             if (results.size() > 1) {
-                mainText += " + " + (results.size() - 1);
+                mainText += Component.translatable("hud.trd.millstone.result_extra",
+                        (results.size() - 1)).getString();
             }
-            mainColor = 0x55FF55; // Зелёный
-            subText = "ПКМ чтобы забрать";
+            mainColor = 0x55FF55;
+            subText = Component.translatable("hud.trd.millstone.take").getString();
 
         } else if (processing) {
-            // В процессе помола
-            mainText = String.format("%d/%d оборотов", current, required);
-
-            // Цвет от прогресса: серый -> оранжевый -> зелёный
+            mainText = Component.translatable("hud.trd.millstone.progress", current, required).getString();
             float progress = (float) current / required;
             mainColor = getProgressColor(progress);
-
             if (remaining > 0) {
-                subText = "Осталось: " + remaining;
+                subText = Component.translatable("hud.trd.millstone.remaining", remaining).getString();
             }
 
         } else if (!input.isEmpty()) {
-            // Есть вход, ждёт начала (редкий кейс)
             mainText = input.getHoverName().getString();
             mainColor = 0xFFAA00;
-            subText = "ПКМ для помола";
+            subText = Component.translatable("hud.trd.millstone.grind").getString();
 
         } else {
-            // Пусто
-            mainText = "Жернова пусты";
+            mainText = Component.translatable("hud.trd.millstone.empty").getString();
             mainColor = 0xAAAAAA;
-            subText = "Положите минерал";
+            subText = Component.translatable("hud.trd.millstone.insert").getString();
         }
 
         // Рендер основного текста

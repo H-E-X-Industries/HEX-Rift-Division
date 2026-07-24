@@ -9,6 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -57,16 +58,16 @@ public class BoilerOverlay implements IGuiOverlay {
 
         int waterAmount = boiler.getWaterTank().getFluidAmount();
         int waterCapacity = boiler.getWaterTank().getCapacity();
-        String waterPrefix = "Вода ";
-        String waterSuffix = "§a-> §7" + waterAmount + "/" + waterCapacity + " mB";
+        String waterPrefix = Component.translatable("hud.trd.boiler.water").getString() + " ";
+        String waterSuffix = Component.translatable("hud.trd.boiler.arrow_in").getString() + waterAmount + "/" + waterCapacity + Component.translatable("hud.trd.boiler.amount_suffix").getString();
 
         int steamAmount = boiler.getSteamTank().getFluidAmount();
         int steamCapacity = boiler.getSteamTank().getCapacity();
-        String steamPrefix = "Пар ";
-        String steamSuffix = "§c<- §7" + steamAmount + "/" + steamCapacity + " mB";
+        String steamPrefix = Component.translatable("hud.trd.boiler.steam").getString() + " ";
+        String steamSuffix = Component.translatable("hud.trd.boiler.arrow_out").getString() + steamAmount + "/" + steamCapacity + Component.translatable("hud.trd.boiler.amount_suffix").getString();
 
         float temp = boiler.getTemperature();
-        String tempText = String.format("Температура: %.1f °C", temp);
+        String tempText = String.format("%.1f / 600°C", temp);
 
         int waterColor = net.minecraftforge.client.extensions.common.IClientFluidTypeExtensions.of(net.minecraft.world.level.material.Fluids.WATER).getTintColor() | 0xFF000000;
         int steamColor = net.minecraftforge.client.extensions.common.IClientFluidTypeExtensions.of(com.trd.api.fluids.ModFluids.STEAM_SOURCE.get()).getTintColor() | 0xFF000000;

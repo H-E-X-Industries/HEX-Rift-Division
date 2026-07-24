@@ -7,6 +7,7 @@ import com.trd.multiblock.system.MultiblockPartBlock;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
@@ -86,16 +87,22 @@ public class StatorOverlay {
         int headerColor = 0xFFFFAA00;
         int whiteColor = 0xFFFFFFFF;
 
-        String header = "▶ Stator Network";
-
         String gray = net.minecraft.ChatFormatting.GRAY.toString();
         String white = net.minecraft.ChatFormatting.WHITE.toString();
-        String prodColStr = production > 0 ? net.minecraft.ChatFormatting.GREEN.toString() : net.minecraft.ChatFormatting.RED.toString();
+        String prodColStr = production > 0
+                ? net.minecraft.ChatFormatting.GREEN.toString()
+                : net.minecraft.ChatFormatting.RED.toString();
 
-        String coilsText = gray + "Coils: " + white + coilCount + " / 12";
-        String bufferText = gray + "Buffer: " + white + energyStored + " / " + maxEnergy + " JE";
-        String loadText = gray + "Load: " + white + load + " Nm";
-        String prodText = gray + "Production: " + prodColStr + production + " JE/t";
+        String header = Component.translatable("hud.trd.stator.title").getString();
+        String coilsLabel = Component.translatable("hud.trd.stator.coils_label").getString();
+        String bufferLabel = Component.translatable("hud.trd.stator.buffer_label").getString();
+        String loadLabel = Component.translatable("hud.trd.stator.load_label").getString();
+        String prodLabel = Component.translatable("hud.trd.stator.production_label").getString();
+
+        String coilsText = gray + coilsLabel + white + coilCount + " / 12";
+        String bufferText = gray + bufferLabel + white + energyStored + " / " + maxEnergy + " JE";
+        String loadText = gray + loadLabel + white + load + " Nm";
+        String prodText = gray + prodLabel + prodColStr + production + " JE/t";
 
         int maxWidth = Math.max(mc.font.width(header),
                 Math.max(mc.font.width(bufferText),

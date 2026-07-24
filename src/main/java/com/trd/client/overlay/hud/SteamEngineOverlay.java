@@ -9,6 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -57,13 +58,13 @@ public class SteamEngineOverlay implements IGuiOverlay {
 
         int steamAmount = engine.steamTank.getFluidAmount();
         int steamCapacity = engine.steamTank.getCapacity();
-        String steamPrefix = "Пар ";
-        String steamSuffix = "§a-> §7" + steamAmount + "/" + steamCapacity + " mB";
+        String steamPrefix = Component.translatable("hud.trd.engine.steam").getString() + " ";
+        String steamSuffix = Component.translatable("hud.trd.engine.arrow_in").getString() + steamAmount + "/" + steamCapacity + Component.translatable("hud.trd.engine.amount_suffix").getString();
 
         int lowPressureAmount = engine.lowPressureSteamTank.getFluidAmount();
         int lowPressureCapacity = engine.lowPressureSteamTank.getCapacity();
-        String lowPressurePrefix = "Пар Н.Д. ";
-        String lowPressureSuffix = "§c<- §7" + lowPressureAmount + "/" + lowPressureCapacity + " mB";
+        String lowPressurePrefix = Component.translatable("hud.trd.engine.lp_steam").getString() + " ";
+        String lowPressureSuffix = Component.translatable("hud.trd.engine.arrow_out").getString() + lowPressureAmount + "/" + lowPressureCapacity + Component.translatable("hud.trd.engine.amount_suffix").getString();
 
         int steamColor = net.minecraftforge.client.extensions.common.IClientFluidTypeExtensions.of(com.trd.api.fluids.ModFluids.STEAM_SOURCE.get()).getTintColor() | 0xFF000000;
 

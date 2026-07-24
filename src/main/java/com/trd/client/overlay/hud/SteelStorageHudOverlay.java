@@ -8,6 +8,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
@@ -82,7 +83,7 @@ public class SteelStorageHudOverlay {
         ChatFormatting headerColor = ratio < 0.33f ? ChatFormatting.GREEN
                 : (ratio < 0.66f ? ChatFormatting.YELLOW : ChatFormatting.RED);
 
-        String header = String.format("%d/%d слотов", filledSlots, totalSlots);
+        String header = Component.translatable("hud.trd.storage.header", filledSlots, totalSlots).getString();
         int headerWidth = font.width(header);
 
         // Считаем максимальную ширину текста для фона
@@ -91,15 +92,15 @@ public class SteelStorageHudOverlay {
         // Собираем строки контента
         java.util.List<String> lines = new java.util.ArrayList<>();
         if (filledSlots == 0) {
-            lines.add("Пусто");
+            lines.add(Component.translatable("hud.trd.storage.empty").getString());
         } else {
             int shown = 0;
             for (Map.Entry<String, Integer> entry : items.entrySet()) {
                 if (shown >= 8) {
-                    lines.add("... и ещё " + (items.size() - 8));
+                    lines.add(Component.translatable("hud.trd.storage.more", (items.size() - 8)).getString());
                     break;
                 }
-                String line = "• " + entry.getKey() + " x" + entry.getValue();
+                String line = Component.translatable("hud.trd.storage.item", entry.getKey(), entry.getValue()).getString();
                 lines.add(line);
                 maxTextWidth = Math.max(maxTextWidth, font.width(line));
                 shown++;

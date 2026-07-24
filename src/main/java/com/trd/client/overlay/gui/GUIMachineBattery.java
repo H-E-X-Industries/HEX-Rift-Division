@@ -218,8 +218,8 @@ public class GUIMachineBattery extends AbstractContainerScreen<MachineBatteryMen
                 default -> "both";
             };
 
-            String titleKey = "gui.smogline.battery.mode." + modeKey;
-            String descKey = "gui.smogline.battery.mode." + modeKey + ".desc";
+            String titleKey = "gui.trd.battery.mode." + modeKey;
+            String descKey = "gui.trd.battery.mode." + modeKey + ".desc";
 
             tooltip.add(Component.translatable(titleKey).withStyle(ChatFormatting.AQUA));
             tooltip.add(Component.translatable(descKey).withStyle(ChatFormatting.GRAY));
@@ -232,10 +232,10 @@ public class GUIMachineBattery extends AbstractContainerScreen<MachineBatteryMen
             List<Component> tooltip = new ArrayList<>();
 
             int priorityOrdinal = menu.getPriorityOrdinal();
-            String priorityKey = "gui.smogline.battery.priority." + priorityOrdinal;
+            String priorityKey = "gui.trd.battery.priority." + priorityOrdinal;
 
             tooltip.add(Component.translatable(priorityKey));
-            tooltip.add(Component.translatable("gui.smogline.battery.priority.recommended").withStyle(ChatFormatting.DARK_GRAY));
+            tooltip.add(Component.translatable("gui.trd.battery.priority.recommended").withStyle(ChatFormatting.DARK_GRAY));
             tooltip.add(Component.translatable(priorityKey + ".desc").withStyle(ChatFormatting.GRAY));
 
             pGuiGraphics.renderTooltip(this.font, tooltip, Optional.empty(), pMouseX, pMouseY);

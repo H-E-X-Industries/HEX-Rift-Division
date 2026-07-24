@@ -8,6 +8,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluids;
@@ -60,18 +61,18 @@ public class LowPressureSteamCondenserOverlay {
         int waterColor = IClientFluidTypeExtensions.of(Fluids.WATER).getTintColor() | 0xFF000000;
 
         // Строка пара: цветное название + зелёная стрелка + белые цифры
-        String steamPrefix = "Пар Н.Д. ";
-        String steamArrow  = "§a-> ";
-        String steamNums   = "§7" + steamAmount + "/" + steamCapacity + " mB";
+        String steamPrefix = Component.translatable("hud.trd.condenser.steam_name").getString() + " ";
+        String steamArrow  = Component.translatable("hud.trd.condenser.arrow_in").getString();
+        String steamNums   = Component.translatable("hud.trd.condenser.amount", steamAmount, steamCapacity).getString();
         int steamPrefixW = font.width(steamPrefix);
         int steamArrowW  = font.width(steamArrow);
         int steamNumsW   = font.width(steamNums);
         int steamTotalW  = steamPrefixW + steamArrowW + steamNumsW;
 
         // Строка воды: цветное название + красная стрелка + белые цифры
-        String waterPrefix = "Вода ";
-        String waterArrow  = "§c<- ";
-        String waterNums   = "§7" + waterAmount + "/" + waterCapacity + " mB";
+        String waterPrefix = Component.translatable("hud.trd.condenser.water_name").getString() + " ";
+        String waterArrow  = Component.translatable("hud.trd.condenser.arrow_out").getString();
+        String waterNums   = Component.translatable("hud.trd.condenser.amount", waterAmount, waterCapacity).getString();
         int waterPrefixW = font.width(waterPrefix);
         int waterArrowW  = font.width(waterArrow);
         int waterNumsW   = font.width(waterNums);
@@ -81,9 +82,9 @@ public class LowPressureSteamCondenserOverlay {
         boolean isWaterlogged = state.getValue(LowPressureSteamCondenserBlock.WATERLOGGED);
         String statusText;
         if (!isWaterlogged) {
-            statusText = "§cТребуется залить водой!";
+            statusText = Component.translatable("hud.trd.condenser.status.no_water").getString();
         } else {
-            statusText = String.format("§7Охлаждение: §b%.2fx", be.getCoolingMultiplier());
+            statusText = String.format(Component.translatable("hud.trd.condenser.status.cooling").getString(), be.getCoolingMultiplier());
         }
         int statusW = font.width(statusText);
 

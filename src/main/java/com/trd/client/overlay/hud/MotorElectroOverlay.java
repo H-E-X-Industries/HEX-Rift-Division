@@ -7,6 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraftforge.api.distmarker.Dist;
@@ -75,25 +76,19 @@ public class MotorElectroOverlay {
 
         // Заголовок
         String runColor = running ? "§a" : "§c";
-        String status   = running ? "ON" : "OFF";
-        graphics.drawString(font, "§e⚡ Мотор §7[" + runColor + status + "§7]", x, y, 0xFFFFFF, false);
+        String statusKey = running ? "hud.trd.motor.status.on" : "hud.trd.motor.status.off";
+        String status   = Component.translatable(statusKey).getString();
+        graphics.drawString(font, Component.translatable("hud.trd.motor.title", status).getString(), x, y, 0xFFFFFF, false);
         y += lineH;
 
-        // Скорость
-        graphics.drawString(font, "§7Скорость:    §f" + rpm + " RPM", x, y, 0xFFFFFF, false);
+        graphics.drawString(font, Component.translatable("hud.trd.motor.speed", rpm).getString(), x, y, 0xFFFFFF, false);
+        y += lineH;
+        graphics.drawString(font, Component.translatable("hud.trd.motor.torque", torque).getString(), x, y, 0xFFFFFF, false);
+        y += lineH;
+        graphics.drawString(font, Component.translatable("hud.trd.motor.consumption", consumption).getString(), x, y, 0xFFFFFF, false);
         y += lineH;
 
-        // Момент
-        graphics.drawString(font, "§7Момент:      §f" + torque + " Нм", x, y, 0xFFFFFF, false);
-        y += lineH;
-
-        // Потребление
-        graphics.drawString(font, "§7Потребление: §f" + consumption + " JE/s", x, y, 0xFFFFFF, false);
-        y += lineH;
-
-        // Заряд
         String chargeColor = energy > maxEnergy / 4 ? "§a" : "§c";
-        graphics.drawString(font, "§7Заряд: " + chargeColor + energy + "§7/" + maxEnergy + " JE",
-                x, y, 0xFFFFFF, false);
+        graphics.drawString(font, Component.translatable("hud.trd.motor.charge", chargeColor, energy, maxEnergy).getString(), x, y, 0xFFFFFF, false);
     }
 }
