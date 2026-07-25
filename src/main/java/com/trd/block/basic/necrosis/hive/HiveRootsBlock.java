@@ -32,8 +32,13 @@ public class HiveRootsBlock extends Block implements BonemealableBlock {
 
     // ⭐ НАСТРОЙКИ РОСТА
     private static final int GROWTH_CHANCE = 4; // 25% шанс (1/4) как у лиан
-    private static final int MAX_LENGTH = 25; // Как twisting/weeping vines
-    private static final int BONE_MEAL_GROWTH = 3; // Сколько блоков добавляет костная мука
+    private static final int MAX_LENGTH = 5; // Как twisting/weeping vines
+    private static final int BONE_MEAL_GROWTH = 2; // Сколько блоков добавляет костная мука
+
+    @Override
+    public boolean isRandomlyTicking(BlockState state) {
+        return true;
+    }
 
     public HiveRootsBlock(Properties properties) {
         super(properties);

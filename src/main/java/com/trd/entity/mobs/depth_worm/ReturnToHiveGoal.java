@@ -28,11 +28,10 @@ public class ReturnToHiveGoal extends Goal {
     private enum ApproachPhase { NAVIGATING, SLIDING, ENTERING }
     private ApproachPhase phase = ApproachPhase.NAVIGATING;
 
-    // ⭐ НОВОЕ: маршрутизатор
     private boolean routerActive = false;
     private BlockPos routerTarget = null;
-    private static final double ROUTER_DISABLE_DISTANCE_SQ = 256.0; // 16 blocks
-    private static final double ROUTER_ARRIVE_DISTANCE_SQ = 4.0;      // 2 blocks
+    private static final double ROUTER_DISABLE_DISTANCE_SQ = 256.0;
+    private static final double ROUTER_ARRIVE_DISTANCE_SQ = 4.0;
 
     public ReturnToHiveGoal(DepthWormEntity worm) {
         this.worm = worm;
@@ -43,22 +42,7 @@ public class ReturnToHiveGoal extends Goal {
     public boolean canUse() {
         if (worm.isRetreating()) {
             if (worm.getTarget() != null) worm.setTarget(null);
-
-            BlockPos boundNest = worm.getBoundNestPos();
-            if (boundNest != null && isValidEntryPoint(boundNest)) {
-                this.targetPos = boundNest;
-                this.targetIsSoil = isSoil(boundNest);
-                return true;
-            }
-
-            BlockPos entry = findNearestEntryPoint();
-            if (entry != null) {
-                this.targetPos = entry;
-                this.targetIsSoil = isSoil(entry);
-                worm.bindToNest(findNearestNest(entry));
-                return true;
-            }
-            return false;
+            return findAndSetNearestEntry();
         }
 
         LivingEntity target = worm.getTarget();
@@ -67,18 +51,30 @@ public class ReturnToHiveGoal extends Goal {
 
         nextSearchTick = worm.tickCount + 10 + worm.getRandom().nextInt(10);
 
+        // Если привязанное гнездо валидно и относительно близко — идём туда
         BlockPos boundNest = worm.getBoundNestPos();
         if (boundNest != null && isValidEntryPoint(boundNest)) {
-            this.targetPos = boundNest;
-            this.targetIsSoil = isSoil(boundNest);
-            return true;
+            double distSq = worm.distanceToSqr(boundNest.getX() + 0.5, boundNest.getY() + 0.5, boundNest.getZ() + 0.5);
+            if (distSq < 400.0) { // 20 блоков
+                this.targetPos = boundNest;
+                this.targetIsSoil = isSoil(boundNest);
+                return true;
+            }
         }
 
+        return findAndSetNearestEntry();
+    }
+
+    private boolean findAndSetNearestEntry() {
         BlockPos entry = findNearestEntryPoint();
         if (entry != null) {
             this.targetPos = entry;
             this.targetIsSoil = isSoil(entry);
-            worm.bindToNest(findNearestNest(entry));
+            if (!targetIsSoil) {
+                worm.bindToNest(entry);
+            } else {
+                worm.bindToNest(findNearestNest(entry));
+            }
             return true;
         }
         return false;
@@ -125,35 +121,37 @@ public class ReturnToHiveGoal extends Goal {
         BlockPos wormPos = worm.blockPosition();
         BlockPos bestEntry = null;
         double bestDist = Double.MAX_VALUE;
-        int radius = 20;
+        int radius = 24;
 
         for (int x = -radius; x <= radius; x++) {
-            for (int y = -8; y <= 8; y++) {
+            for (int y = -10; y <= 10; y++) {
                 for (int z = -radius; z <= radius; z++) {
                     BlockPos p = wormPos.offset(x, y, z);
-                    BlockEntity be = worm.level().getBlockEntity(p);
-                    if (be instanceof DepthWormNestBlockEntity nest && !nest.isFull()) {
-                        double d = worm.distanceToSqr(p.getX() + 0.5, p.getY() + 0.5, p.getZ() + 0.5);
-                        if (d < bestDist) { bestDist = d; bestEntry = p.immutable(); }
-                    }
-                }
-            }
-        }
+                    if (!isValidHiveEntry(p)) continue;
 
-        if (bestEntry == null) {
-            for (int x = -radius; x <= radius; x++) {
-                for (int y = -8; y <= 8; y++) {
-                    for (int z = -radius; z <= radius; z++) {
-                        BlockPos p = wormPos.offset(x, y, z);
-                        if (isValidSoilEntry(p)) {
-                            double d = worm.distanceToSqr(p.getX() + 0.5, p.getY() + 0.5, p.getZ() + 0.5);
-                            if (d < bestDist * 1.5) { bestDist = d; bestEntry = p.immutable(); }
-                        }
+                    double d = worm.distanceToSqr(p.getX() + 0.5, p.getY() + 0.5, p.getZ() + 0.5);
+                    if (d < bestDist) {
+                        bestDist = d;
+                        bestEntry = p.immutable();
                     }
                 }
             }
         }
         return bestEntry;
+    }
+
+    private boolean isValidHiveEntry(BlockPos pos) {
+        // ⭐ Явно исключаем корни — в них всасываться нельзя
+        if (worm.level().getBlockState(pos).is(ModBlocks.HIVE_ROOTS.get())) return false;
+
+        BlockEntity be = worm.level().getBlockEntity(pos);
+        if (be instanceof DepthWormNestBlockEntity nest) {
+            return !nest.isFull() && nest.getNetworkId() != null;
+        }
+        if (be instanceof HiveSoilBlockEntity soil) {
+            return isValidSoilEntry(pos);
+        }
+        return false;
     }
 
     private boolean isValidSoilEntry(BlockPos pos) {
@@ -190,7 +188,6 @@ public class ReturnToHiveGoal extends Goal {
         double distSq = wormPos.distanceToSqr(targetX, targetY, targetZ);
         BlockPos currentBlockPos = worm.blockPosition();
 
-        // ⭐ Если гнездо в зоне видимости (16 блоков) — отключаем маршрутизатор
         if (routerActive && distSq < ROUTER_DISABLE_DISTANCE_SQ) {
             routerActive = false;
             routerTarget = null;
@@ -216,10 +213,7 @@ public class ReturnToHiveGoal extends Goal {
             case NAVIGATING -> {
                 boolean pathFound;
                 if (routerActive && routerTarget != null) {
-                    // Идём на точку маршрутизатора
                     pathFound = worm.getNavigation().moveTo(routerTarget.getX() + 0.5, routerTarget.getY() + 0.5, routerTarget.getZ() + 0.5, 1.2D);
-
-                    // ⭐ Достигли точки маршрутизатора — отключаем и пробуем найти путь до гнезда
                     double routerDistSq = worm.distanceToSqr(routerTarget.getX() + 0.5, routerTarget.getY() + 0.5, routerTarget.getZ() + 0.5);
                     if (routerDistSq < ROUTER_ARRIVE_DISTANCE_SQ) {
                         routerActive = false;
@@ -228,14 +222,12 @@ public class ReturnToHiveGoal extends Goal {
                     }
                 } else {
                     pathFound = worm.getNavigation().moveTo(targetX, targetY, targetZ, 1.2D);
-
-                    // ⭐ Путь до гнезда не найден — активируем маршрутизатор
                     if (!pathFound) {
                         BlockPos lastExit = worm.getLastExitPos();
                         if (lastExit != null && !lastExit.equals(targetPos)) {
                             routerActive = true;
                             routerTarget = lastExit;
-                            System.out.println("[Worm] Router activated to last exit " + lastExit + " (cannot reach nest at " + targetPos + ")");
+                            // ⭐ Убран спам в логи
                             worm.getNavigation().moveTo(routerTarget.getX() + 0.5, routerTarget.getY() + 0.5, routerTarget.getZ() + 0.5, 1.2D);
                         }
                     }
@@ -245,24 +237,18 @@ public class ReturnToHiveGoal extends Goal {
 
             case SLIDING -> {
                 worm.getNavigation().stop();
-
                 Vec3 toTarget = new Vec3(targetX - wormPos.x, targetY - wormPos.y, targetZ - wormPos.z);
                 double dist = Math.sqrt(distSq);
-
                 double speed = Math.min(0.15, dist * 0.03);
-
                 Vec3 move = toTarget.normalize().scale(speed);
-
                 worm.setPos(wormPos.x + move.x, wormPos.y + move.y, wormPos.z + move.z);
                 worm.setDeltaMovement(Vec3.ZERO);
-
                 worm.getLookControl().setLookAt(targetX, targetY, targetZ, 30.0F, 30.0F);
             }
 
             case ENTERING -> {
                 worm.getNavigation().stop();
                 worm.setDeltaMovement(Vec3.ZERO);
-
                 if (stuckTicks > 15 || distSq < 0.8) {
                     enterNetwork(targetPos);
                 }
@@ -323,7 +309,6 @@ public class ReturnToHiveGoal extends Goal {
             return false;
         }
         if (stuckTicks > STUCK_THRESHOLD * 3) return false;
-
         return isValidEntryPoint(targetPos);
     }
 
