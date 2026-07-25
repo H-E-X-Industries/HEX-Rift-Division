@@ -25,6 +25,7 @@ import com.trd.item.weapons.grenades.GrenadeIfItem;
 import com.trd.item.weapons.grenades.GrenadeItem;
 import com.trd.item.weapons.grenades.GrenadeNucItem;
 import com.trd.item.weapons.missiles.MissileItem;
+import com.trd.item.weapons.turrets.PigTurretPlacerItem;
 import com.trd.multiblock.system.MultiblockBlockItem;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.item.ArmorItem;
@@ -77,6 +78,8 @@ public class ModItems {
     //ОБЫЧНЫЕ ПРЕДМЕТЫ
     public static final RegistryObject<Item> DEPTH_WORM_SPAWN_EGG = ITEMS.register("depth_worm_spawn_egg",
             () -> new DepthWormSpawnEggItem(new Item.Properties()));
+    public static final RegistryObject<Item> PIG_TURRET_PLACER = ITEMS.register("pig_turret_placer",
+            () -> new PigTurretPlacerItem(new Item.Properties()));
     public static final RegistryObject<Item> IRON_PLATE = ITEMS.register("iron_plate",
             () -> new Item(new Item.Properties()));
     public static final RegistryObject<Item> ALUMINUM_PLATE = ITEMS.register("aluminum_plate",

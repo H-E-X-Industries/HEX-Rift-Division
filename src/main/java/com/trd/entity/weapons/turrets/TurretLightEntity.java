@@ -63,7 +63,7 @@ public class TurretLightEntity extends Monster implements GeoEntity, RangedAttac
     private int lifetimeTicks = 3600;                            // 3 минуты = 3*60*20
     private boolean outOfAmmo = false;                           // флаг истощения БК
     private int outOfAmmoTimer = 0;                               // таймер до смерти (3 сек = 60 тиков)
-
+    private boolean pigMode = false;
     // Local state
     private int shootAnimTimer = 0;
     private int shotCooldown = 0;
@@ -124,6 +124,9 @@ public class TurretLightEntity extends Monster implements GeoEntity, RangedAttac
     public boolean isAlliedTo(Entity entity) {
         if (super.isAlliedTo(entity)) return true;
 
+        // НЕ АТАКУЕМ свинью-носителя
+        if (pigMode && this.getVehicle() != null && this.getVehicle() == entity) return true;
+
         UUID myOwner = this.getOwnerUUID();
         if (myOwner != null) {
             if (entity.getUUID().equals(myOwner)) return true;
@@ -149,8 +152,14 @@ public class TurretLightEntity extends Monster implements GeoEntity, RangedAttac
     public void tick() {
         super.tick();
 
-        this.yBodyRot = this.getYRot();
-        this.yBodyRotO = this.getYRot();
+        // Если турель сидит на свинье — не даём её телу крутиться вслед за свиньёй,
+        // иначе голова не сможет нормально наводиться
+        if (pigMode && this.getVehicle() != null) {
+            this.getNavigation().stop();
+        } else {
+            this.yBodyRot = this.getYRot();
+            this.yBodyRotO = this.getYRot();
+        }
 
         if (!this.level().isClientSide) {
             // --- Таймер развёртывания ---
@@ -228,9 +237,9 @@ public class TurretLightEntity extends Monster implements GeoEntity, RangedAttac
 
             // --- Переключение целей (каждые 10 тиков) ---
             if (this.tickCount % 10 == 0) {
-                // Ближайшая угроза в упор
+                // Ближайшая угроза в упор (игнорируем союзников и свинью-носителя)
                 LivingEntity closeThreat = computer.findClosestThreat(getOwnerUUID());
-                if (closeThreat != null && closeThreat != this.getTarget()) {
+                if (closeThreat != null && closeThreat != this.getTarget() && !isAlliedTo(closeThreat)) {
                     int newPriority = computer.calculateTargetPriority(closeThreat, getOwnerUUID());
                     if (newPriority < currentTargetPriority) {
                         this.setTarget(closeThreat);
@@ -282,7 +291,9 @@ public class TurretLightEntity extends Monster implements GeoEntity, RangedAttac
     public void performRangedAttack(LivingEntity target, float pullProgress) {
         if (!this.isDeployed()) return;
         if (this.shotCooldown > 0) return;
-        if (outOfAmmo) return;                     // патронов нет – не стреляем
+        if (outOfAmmo) return;
+        if (target == this.getVehicle()) return; // ← НЕ СТРЕЛЯЕМ в свинью-носителя
+        if (isAlliedTo(target)) return;          // ← и вообще в союзников
 
         // Проверка линии огня через компьютер
         Vec3 muzzlePos = getMuzzlePos();
@@ -404,11 +415,11 @@ public class TurretLightEntity extends Monster implements GeoEntity, RangedAttac
         if (this.getOwnerUUID() != null) tag.putUUID("Owner", this.getOwnerUUID());
         tag.putBoolean("Deployed", this.isDeployed());
         tag.putInt("DeployTimer", this.entityData.get(DEPLOY_TIMER));
-        // Новые поля
         tag.putInt("AmmoCount", ammoCount);
         tag.putInt("LifetimeTicks", lifetimeTicks);
         tag.putBoolean("OutOfAmmo", outOfAmmo);
         tag.putInt("OutOfAmmoTimer", outOfAmmoTimer);
+        tag.putBoolean("PigMode", pigMode); // ← новое
     }
 
     @Override
@@ -417,11 +428,11 @@ public class TurretLightEntity extends Monster implements GeoEntity, RangedAttac
         if (tag.hasUUID("Owner")) this.entityData.set(OWNER_UUID, Optional.of(tag.getUUID("Owner")));
         if (tag.contains("Deployed")) this.entityData.set(DEPLOYED, tag.getBoolean("Deployed"));
         if (tag.contains("DeployTimer")) this.entityData.set(DEPLOY_TIMER, tag.getInt("DeployTimer"));
-        // Чтение новых полей
         if (tag.contains("AmmoCount")) ammoCount = tag.getInt("AmmoCount");
         if (tag.contains("LifetimeTicks")) lifetimeTicks = tag.getInt("LifetimeTicks");
         if (tag.contains("OutOfAmmo")) outOfAmmo = tag.getBoolean("OutOfAmmo");
         if (tag.contains("OutOfAmmoTimer")) outOfAmmoTimer = tag.getInt("OutOfAmmoTimer");
+        if (tag.contains("PigMode")) pigMode = tag.getBoolean("PigMode"); // ← новое
     }
 
     @Override
@@ -433,7 +444,9 @@ public class TurretLightEntity extends Monster implements GeoEntity, RangedAttac
             @Override
             public boolean canUse() {
                 LivingEntity target = this.turret.getTarget();
-                return this.turret.isDeployed() && target != null && target.isAlive() && this.turret.distanceToSqr(target) < 1225.0D;
+                return this.turret.isDeployed() && target != null && target.isAlive()
+                        && target != this.turret.getVehicle() // ← не стреляем в свинью
+                        && this.turret.distanceToSqr(target) < 1225.0D;
             }
 
             @Override
@@ -496,9 +509,11 @@ public class TurretLightEntity extends Monster implements GeoEntity, RangedAttac
                 }));
 
         this.targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(this, Monster.class, 10, true, false,
-                entity -> !this.isAlliedTo(entity) && TurretLightEntity.this.isDeployed()));
+                entity -> entity != this.getVehicle() && !this.isAlliedTo(entity) && TurretLightEntity.this.isDeployed())); // ← не свинья
+
         this.targetSelector.addGoal(6, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
-                entity -> !this.isAlliedTo(entity) && TurretLightEntity.this.isDeployed()));
+                entity -> entity != this.getVehicle() && !this.isAlliedTo(entity) && TurretLightEntity.this.isDeployed())); // ← не свинья
+
     }
 
     // -------------------- ДОСТУП К ДЕБАГУ (через компьютер) --------------------
@@ -542,7 +557,13 @@ public class TurretLightEntity extends Monster implements GeoEntity, RangedAttac
     public boolean isDeployed() {
         return this.entityData.get(DEPLOYED);
     }
+    public void setPigMode(boolean pigMode) {
+        this.pigMode = pigMode;
+    }
 
+    public boolean isPigMode() {
+        return pigMode;
+    }
     @Override
     public boolean isPushable() { return false; }
 
