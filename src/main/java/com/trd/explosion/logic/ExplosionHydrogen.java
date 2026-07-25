@@ -24,7 +24,7 @@ public class ExplosionHydrogen {
     public static float CENTER_EXPLOSION_STRENGTH = 20.0f;
     public static int RAY_COUNT = 8000;
     public static float MAX_RANGE = 50.0f;
-    public static float MAX_PENETRATION = 50.0f;
+    public static float MAX_PENETRATION = 60.0f;
     public static float VERTICAL_PENALTY = 0.75f;
     public static float BRANCH_CHANCE = 0.40f;
     public static float BRANCH_ANGLE = (float) Math.toRadians(45);
@@ -167,34 +167,40 @@ public class ExplosionHydrogen {
                 float cost = Math.max(1.0f, hardness);
                 if (penetration >= cost) {
                     penetration -= cost;
-                    // === ИСПРАВЛЕНИЕ: неполные блоки (цветы, снег, трава) просто удаляем ===
                     if (!state.isCollisionShapeFullBlock(level, pos)) {
                         level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
                     } else {
                         level.setBlock(pos, ModBlocks.BASALT_ROUGH.get().defaultBlockState(), 3);
                     }
-                    // =======================================================================
                 } else {
-                    break;
+                    break; // блок не пробит — луч останавливается, урон за этот шаг не пойдёт
                 }
             }
 
-            for (LivingEntity entity : allEntities) {
-                if (entity == source || hitIds.contains(entity.getId())) continue;
-                if (entity.distanceToSqr(current.x, current.y, current.z) < 2.25) {
-                    float damage = penetration * 0.5f;
-                    entity.hurt(level.damageSources().explosion(source, source), damage);
-                    hitIds.add(entity.getId());
-                }
-            }
-
-            if (canBranch && distance < 1.0f && distance + 1.0f >= 1.0f) {
+            // Ветвление только на первом шаге
+            if (canBranch && distance < 1.0f) {
                 spawnBranches(level, origin, direction, source, allEntities, maxPenetration);
                 canBranch = false;
             }
 
+            // Оплачиваем проход шага луча
             distance += 1.0f;
             penetration -= 1.0f;
+
+            // Если пробитие кончилось — обрываем до нанесения урона
+            if (penetration <= 0) break;
+
+            // Урон мобам — только от РЕАЛЬНО оставшегося пробития
+            for (LivingEntity entity : allEntities) {
+                if (entity == source || hitIds.contains(entity.getId())) continue;
+                if (entity.distanceToSqr(current.x, current.y, current.z) < 2.25) {
+                    float damage = penetration * 0.5f;
+                    if (damage > 0) {
+                        entity.hurt(level.damageSources().explosion(source, source), damage);
+                        hitIds.add(entity.getId());
+                    }
+                }
+            }
         }
     }
 
