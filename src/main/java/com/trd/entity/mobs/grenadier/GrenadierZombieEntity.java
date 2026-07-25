@@ -35,7 +35,9 @@ public class GrenadierZombieEntity extends Zombie {
         IMPACT,
         HYDROGEN
     }
-
+    // === НОВЫЕ ПОЛЯ ДЛЯ ЗАРЯДКИ БРОСКА ===
+    private int throwChargeTicks = 0;
+    public static final int MAX_THROW_CHARGE = 40; // 2 секунды
     private static final EntityDataAccessor<String> GRENADIER_TYPE =
             SynchedEntityData.defineId(GrenadierZombieEntity.class, EntityDataSerializers.STRING);
 
@@ -170,6 +172,11 @@ public class GrenadierZombieEntity extends Zombie {
             this.grenadeCooldown--;
         }
 
+        // Тикаем зарядку броска
+        if (this.throwChargeTicks > 0) {
+            this.throwChargeTicks++;
+        }
+
         if (!this.level().isClientSide) {
             updateHeldItem();
         }
@@ -213,6 +220,27 @@ public class GrenadierZombieEntity extends Zombie {
     }
 
     // === ГЕТТЕРЫ/СЕТТЕРЫ ===
+    // === ГЕТТЕРЫ/СЕТТЕРЫ ЗАРЯДКИ ===
+
+    public boolean isChargingThrow() {
+        return this.throwChargeTicks > 0;
+    }
+
+    public void startThrowCharge() {
+        this.throwChargeTicks = 1;
+    }
+
+    public void resetThrowCharge() {
+        this.throwChargeTicks = 0;
+    }
+
+    public int getThrowChargeTicks() {
+        return this.throwChargeTicks;
+    }
+
+    public float getThrowChargePercent() {
+        return Math.min(1.0f, this.throwChargeTicks / (float) MAX_THROW_CHARGE);
+    }
 
     public boolean hasGrenades() {
         return this.entityData.get(GRENADES_LEFT) > 0;
@@ -244,6 +272,7 @@ public class GrenadierZombieEntity extends Zombie {
 
     // === БРОСОК ГРАНАТЫ ===
 
+
     public void throwGrenade(LivingEntity target) {
         if (!this.canThrowGrenade()) return;
 
@@ -271,10 +300,15 @@ public class GrenadierZombieEntity extends Zombie {
             double dz = target.getZ() - z;
 
             double distance = Math.sqrt(dx * dx + dz * dz);
-            double speed = type == GrenadierType.HYDROGEN ? 1.2 : 1.5;
+
+            // Скорость зависит от заряда (зомби всегда дозаряжает до конца, но формула универсальна)
+            float chargePercent = getThrowChargePercent();
+            float baseSpeed = type == GrenadierType.HYDROGEN ? 1.2f : 1.5f;
+            float velocity = 0.5f + (baseSpeed - 0.5f) * chargePercent;
+
             double arc = Math.max(0.1, distance * 0.08);
 
-            projectile.shoot(dx, dy + arc, dz, (float) speed, 1.0F);
+            projectile.shoot(dx, dy + arc, dz, velocity, 1.0F);
 
             level.addFreshEntity(projectile);
 
@@ -282,6 +316,7 @@ public class GrenadierZombieEntity extends Zombie {
             this.entityData.set(GRENADES_LEFT, newCount);
 
             this.grenadeCooldown = 60;
+            this.throwChargeTicks = 0;
         }
     }
 
@@ -345,6 +380,7 @@ public class GrenadierZombieEntity extends Zombie {
         tag.putInt("GrenadesLeft", this.entityData.get(GRENADES_LEFT));
         tag.putBoolean("Initialized", this.initialized);
         tag.putBoolean("InRetreatMode", this.isInRetreatMode());
+        tag.putInt("ThrowChargeTicks", this.throwChargeTicks);
         if (!this.hiddenGrenade.isEmpty()) {
             tag.put("HiddenGrenade", this.hiddenGrenade.save(new CompoundTag()));
         }
@@ -373,6 +409,10 @@ public class GrenadierZombieEntity extends Zombie {
 
         if (tag.contains("InRetreatMode")) {
             this.setInRetreatMode(tag.getBoolean("InRetreatMode"));
+        }
+
+        if (tag.contains("ThrowChargeTicks")) {
+            this.throwChargeTicks = tag.getInt("ThrowChargeTicks");
         }
 
         if (tag.contains("HiddenGrenade")) {

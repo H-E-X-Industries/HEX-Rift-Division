@@ -53,7 +53,7 @@ public class ExplosionFire {
             int r = (int) Math.ceil(currentRadius);
             BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
 
-            float stepCost = 0.2f; // базовое затухание за шаг
+            float stepCost = 0.2f;
             boolean blocked = false;
 
             for (int x = -r; x <= r; x++) {
@@ -65,22 +65,17 @@ public class ExplosionFire {
                         BlockState state = level.getBlockState(pos);
 
                         if (state.isAir()) {
-                            // Воздух → огонь, минимальный расход энергии
                             level.setBlock(pos, Blocks.FIRE.defaultBlockState(), 3);
                             stepCost += 0.1f;
                         } else if (state.isFlammable(level, pos, Direction.UP)) {
-                            // Горючее → огонь, небольшой расход
                             level.setBlock(pos, Blocks.FIRE.defaultBlockState(), 3);
                             stepCost += 0.3f;
                         } else {
-                            // Негорючий твёрдый блок — препятствие для луча
                             float hardness = state.getDestroySpeed(level, pos);
                             if (hardness < 0) {
-                                // Непробиваемый (бедрок и т.п.) — луч останавливается
                                 blocked = true;
                                 break;
                             }
-                            // Значительно слабее чем у водородного взрыва
                             stepCost += Math.max(0.3f, hardness * 0.15f);
                         }
                     }
@@ -94,15 +89,17 @@ public class ExplosionFire {
             penetration -= stepCost;
             if (penetration <= 0) break;
 
-            // Урон мобам в сечении
+            // Урон мобам — только если луч ещё «жив» и урон положителен
             for (LivingEntity entity : allEntities) {
                 if (entity == source || hitIds.contains(entity.getId())) continue;
                 double distToRay = entity.distanceToSqr(current.x, current.y, current.z);
                 if (distToRay < currentRadius * currentRadius * 2) {
                     float damage = penetration * 0.8f;
-                    entity.hurt(level.damageSources().explosion(source, source), damage);
-                    entity.setSecondsOnFire((int)(penetration * 1.5f));
-                    hitIds.add(entity.getId());
+                    if (damage > 0) {
+                        entity.hurt(level.damageSources().explosion(source, source), damage);
+                        entity.setSecondsOnFire((int)(penetration * 1.5f));
+                        hitIds.add(entity.getId());
+                    }
                 }
             }
 

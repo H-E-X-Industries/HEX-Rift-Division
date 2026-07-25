@@ -40,6 +40,7 @@ public class GrenadierCombatGoal extends Goal {
         // При остановке goal'а сбрасываем состояние
         zombie.setInRetreatMode(false);
         zombie.clearHiddenGrenade();
+        zombie.resetThrowCharge();
         if (!zombie.hasGrenades()) {
             zombie.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
         }
@@ -59,6 +60,7 @@ public class GrenadierCombatGoal extends Goal {
                 zombie.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
             }
             zombie.setInRetreatMode(false);
+            zombie.resetThrowCharge();
             return;
         }
 
@@ -70,33 +72,52 @@ public class GrenadierCombatGoal extends Goal {
                 // Достаточно далеко - выходим из паники, достаём гранату
                 zombie.setInRetreatMode(false);
                 zombie.restoreGrenadeInHand();
+                zombie.resetThrowCharge();
             } else {
-                // Продолжаем убегать, граната спрятана
+                // Продолжаем убегать, граната спрятана, зарядка сбрасывается
+                zombie.hideGrenadeForRetreat();
                 retreatFrom(target);
                 zombie.getLookControl().setLookAt(target, 30f, 30f);
+                zombie.resetThrowCharge();
             }
         } else {
             // Не в панике
             if (distSq < PANIC_DIST_SQ) {
-                // Слишком близко! Паникуем, убираем гранату из рук
+                // Слишком близко! Паникуем, убираем гранату из рук, сбрасываем прицел
                 zombie.setInRetreatMode(true);
                 zombie.hideGrenadeForRetreat();
+                zombie.resetThrowCharge();
                 retreatFrom(target);
             } else {
                 // Нормальная дистанция - достаём гранату и атакуем
                 zombie.restoreGrenadeInHand();
                 zombie.getLookControl().setLookAt(target, 30f, 30f);
 
-                // Кидаем гранату если можно и видим цель
                 if (zombie.canThrowGrenade() && zombie.getSensing().hasLineOfSight(target)) {
-                    zombie.throwGrenade(target);
-                }
+                    if (!zombie.isChargingThrow()) {
+                        // Начинаем прицеливание / зарядку броска
+                        zombie.startThrowCharge();
+                    }
 
-                // Поддерживаем дистанцию: если слишком далеко (>15) - подходим, иначе стоим на месте
-                if (distSq > 225.0) { // 15^2
-                    zombie.getNavigation().moveTo(target, CHASE_SPEED);
-                } else {
+                    // Пока целимся — стоим на месте
                     zombie.getNavigation().stop();
+
+                    // Если набрали полный заряд (2 сек) — бросаем
+                    if (zombie.getThrowChargeTicks() >= GrenadierZombieEntity.MAX_THROW_CHARGE) {
+                        zombie.throwGrenade(target);
+                    }
+                } else {
+                    // Не можем кинуть (кулдаун или нет линии видимости) — сбрасываем зарядку
+                    if (zombie.isChargingThrow()) {
+                        zombie.resetThrowCharge();
+                    }
+
+                    // Поддерживаем дистанцию: если слишком далеко (>15) - подходим, иначе стоим
+                    if (distSq > 225.0) { // 15^2
+                        zombie.getNavigation().moveTo(target, CHASE_SPEED);
+                    } else {
+                        zombie.getNavigation().stop();
+                    }
                 }
             }
         }
