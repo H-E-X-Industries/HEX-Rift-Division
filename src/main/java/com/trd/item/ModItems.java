@@ -52,6 +52,9 @@ public class ModItems {
     public static final DeferredRegister<Item> ITEMS =
             DeferredRegister.create(ForgeRegistries.ITEMS, MainRegistry.MOD_ID);
 
+    public static final RegistryObject<Item> HAMMER = ITEMS.register("hammer",
+            () -> new HammerItem());
+
 
     public static final RegistryObject<Item> CORRUPTED_BARREL_ITEM = ITEMS.register("corrupted_barrel",
             () -> new BlockItem(ModBlocks.CORRUPTED_BARREL.get(), new Item.Properties()));

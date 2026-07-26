@@ -165,7 +165,7 @@ public class WaterPumpBlockEntity extends KineticNodeBlockEntity {
 
     @Override
     public double getInertiaContribution() {
-        return 100.0;
+        return 10.0;
     }
 
     @Override

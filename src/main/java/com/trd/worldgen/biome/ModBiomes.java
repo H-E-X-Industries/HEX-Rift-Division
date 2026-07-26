@@ -30,6 +30,8 @@ public class ModBiomes {
     // 3. Фабрика биома: Настраиваем красоту
     private static Biome sequoiaGroveBiome(BootstapContext<Biome> context) {
         MobSpawnSettings.Builder spawnBuilder = new MobSpawnSettings.Builder();
+        BiomeDefaultFeatures.farmAnimals(spawnBuilder);
+        BiomeDefaultFeatures.commonSpawns(spawnBuilder);
 
         // Позже сюда мы добавим спавн нашей гигантской секвойи
         BiomeGenerationSettings.Builder biomeBuilder =

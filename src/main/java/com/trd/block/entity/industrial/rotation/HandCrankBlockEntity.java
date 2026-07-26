@@ -104,7 +104,7 @@ public class HandCrankBlockEntity extends KineticNodeBlockEntity {
     public boolean isSource() { return true; }
 
     @Override
-    public double getInertiaContribution() { return 5.0; } // Small inertia for the crank itself
+    public double getInertiaContribution() { return 0.5; } // Small inertia for the crank itself
 
     @Override
     public long getMaxTorqueTolerance() { return 128; } // Low structural tolerance, crank can break if attached to huge load maybe? Or high so it doesn't break easily. Let's make it robust enough for 128

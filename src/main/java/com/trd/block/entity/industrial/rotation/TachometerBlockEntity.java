@@ -169,7 +169,7 @@ public class TachometerBlockEntity extends KineticNodeBlockEntity {
         if (hasShaft && shaftMaterial != null && shaftDiameter != null) {
             return (double) (shaftMaterial.baseInertia() * shaftDiameter.inertiaMod);
         }
-        return 2.0; // Как у статора, если пустой
+        return 0.2; // Снижено как у пустого статора
     }
 
     @Override

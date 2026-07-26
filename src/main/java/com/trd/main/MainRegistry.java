@@ -145,7 +145,7 @@ public class MainRegistry {
         event.enqueueWork(() -> {
             ModMetallurgy.init(); // <-- регистрация металлов и рецептов
             ModPacketHandler.register();
-            Regions.register(new ModOverworldRegion(new ResourceLocation(MOD_ID, "overworld"), 5));
+            Regions.register(new ModOverworldRegion(new ResourceLocation(MOD_ID, "overworld"), 2));
             SurfaceRuleManager.addSurfaceRules(SurfaceRuleManager.RuleCategory.OVERWORLD, "trd",
                     ModSurfaceRules.makeRules());
         });
