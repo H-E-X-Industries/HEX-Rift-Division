@@ -162,28 +162,33 @@ public class HiveColonizationExpedition {
         return alive;
     }
 
+    private State retreat(HiveNetwork homeNetwork, Level level, List<DepthWormEntity> worms) {
+        state = State.RETURNING;
+        for (DepthWormEntity worm : worms) {
+            worm.setColonist(false, null);
+            worm.bindToNest(homePos);
+            worm.setRetreating(true);
+        }
+        return state;
+    }
+
     private State fail(HiveNetwork homeNetwork, Level level, List<DepthWormEntity> survivors) {
         state = State.FAILED;
         for (DepthWormEntity worm : survivors) {
             worm.setColonist(false, null);
+            worm.bindToNest(homePos);
+            worm.setRetreating(true);
         }
-        // На всякий случай сбрасываем флаг у всех, кого знали
         if (colonistRefs != null) {
             for (DepthWormEntity worm : colonistRefs) {
                 if (worm.isAlive() && !survivors.contains(worm)) {
                     worm.setColonist(false, null);
+                    worm.bindToNest(homePos);
+                    worm.setRetreating(true);
                 }
             }
         }
         homeNetwork.setColonizationCooldown(level.getGameTime() + 2400);
-        return state;
-    }
-
-    private State retreat(HiveNetwork homeNetwork, Level level, List<DepthWormEntity> worms) {
-        state = State.RETURNING;
-        for (DepthWormEntity worm : worms) {
-            worm.setColonist(true, homePos);
-        }
         return state;
     }
 

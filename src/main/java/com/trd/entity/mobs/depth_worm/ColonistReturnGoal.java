@@ -8,6 +8,7 @@ import java.util.EnumSet;
 public class ColonistReturnGoal extends Goal {
     private final DepthWormEntity worm;
     private static final double SPEED = 1.3D;
+    private boolean triggered = false;
 
     public ColonistReturnGoal(DepthWormEntity worm) {
         this.worm = worm;
@@ -16,15 +17,36 @@ public class ColonistReturnGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        if (!worm.isColonist()) return false;
+        if (!worm.isColonist()) {
+            triggered = false;
+            return false;
+        }
         BlockPos target = worm.getColonistTarget();
-        if (target == null) return false;
-        return worm.getHealth() < worm.getMaxHealth() * 0.66f;
+        if (target == null) {
+            triggered = false;
+            return false;
+        }
+        if (triggered) return true;
+        if (worm.getHealth() < worm.getMaxHealth() * 0.66f) {
+            triggered = true;
+            return true;
+        }
+        return false;
     }
 
     @Override
     public boolean canContinueToUse() {
-        return canUse();
+        if (!worm.isColonist()) return false;
+        BlockPos target = worm.getColonistTarget();
+        if (target == null) return false;
+        return triggered || worm.getHealth() < worm.getMaxHealth() * 0.66f;
+    }
+
+    @Override
+    public void start() {
+        // НЕ сбрасывать retreating — иначе ReturnToHiveGoal не поймает червя
+        worm.setTarget(null);
+        worm.setAttacking(false);
     }
 
     @Override
@@ -43,6 +65,7 @@ public class ColonistReturnGoal extends Goal {
 
     @Override
     public void stop() {
+        triggered = false;
         worm.getNavigation().stop();
     }
 }

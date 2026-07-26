@@ -257,8 +257,8 @@ public class HiveNetwork {
         long time = level.getGameTime();
         if (time % 40 == 0) {
             makeDecisions(level);
-            processColonization(level);
         }
+        processColonization(level); // ⭐ Expedition тикает каждый тик, иначе таймауты и ожидания ломаются
 
         if (time % 200 == 0) {
             int totalWorms = getTotalWormsIncludingActive(level);
@@ -389,19 +389,15 @@ public class HiveNetwork {
     }
     private void processColonization(Level level) {
         long time = level.getGameTime();
-        System.out.println("[COLONIZATION-DEBUG] Hive " + id + " | Phase: " + colonizationPhase
-                + " | Worms: " + getTotalWormsIncludingActive(level)
-                + " | Pool: " + killsPool);
+
 
         if (colonizationPhase == null) {
             colonizationPhase = ColonizationPhase.NONE;
-            System.out.println("[COLONIZATION-DEBUG] Phase was null, reset to NONE");
         }
 
         if (colonizationPhase == ColonizationPhase.COOLDOWN) {
             if (time >= colonizationCooldownEnd) {
                 colonizationPhase = ColonizationPhase.NONE;
-                System.out.println("[Hive " + id + "] Colonization cooldown ended");
             }
             return;
         }
@@ -429,9 +425,6 @@ public class HiveNetwork {
         }
 
         int totalWorms = getTotalWormsIncludingActive(level);
-        System.out.println("[COLONIZATION-DEBUG] Check NONE -> ACCUMULATING: worms="
-                + totalWorms + " (need>" + COLONIZATION_MIN_WORMS + ") pool="
-                + killsPool + " (need>" + COLONIZATION_ACCUMULATE_THRESHOLD + ")");
 
         if (colonizationPhase == ColonizationPhase.NONE) {
             if (totalWorms > COLONIZATION_MIN_WORMS && killsPool > COLONIZATION_ACCUMULATE_THRESHOLD) {
@@ -447,13 +440,11 @@ public class HiveNetwork {
                 return;
             }
             if (killsPool >= COLONIZATION_COST) {
-                System.out.println("[COLONIZATION-DEBUG] Attempting launch...");
                 if (tryLaunchColonization(level)) {
                     colonizationPhase = ColonizationPhase.EXPEDITION_MOVING;
                     killsPool -= COLONIZATION_COST;
                     System.out.println("[Hive " + id + "] Expedition launched! Points: " + killsPool);
                 } else {
-                    System.out.println("[COLONIZATION-DEBUG] tryLaunchColonization returned FALSE");
                 }
             }
         }

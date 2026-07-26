@@ -52,11 +52,10 @@ public class ReturnToHiveGoal extends Goal {
 
         nextSearchTick = worm.tickCount + 10 + worm.getRandom().nextInt(10);
 
-        // Если привязанное гнездо валидно и относительно близко — идём туда
         BlockPos boundNest = worm.getBoundNestPos();
         if (boundNest != null && isValidEntryPoint(boundNest)) {
             double distSq = worm.distanceToSqr(boundNest.getX() + 0.5, boundNest.getY() + 0.5, boundNest.getZ() + 0.5);
-            if (distSq < 400.0) { // 20 блоков
+            if (worm.isRetreating() || distSq < 400.0) { // ⭐ retreating — без лимита дистанции
                 this.targetPos = boundNest;
                 this.targetIsSoil = isSoil(boundNest);
                 return true;
@@ -178,6 +177,14 @@ public class ReturnToHiveGoal extends Goal {
         if (worm.isRetreating() && worm.getTarget() != null) {
             worm.setTarget(null);
         }
+// ⭐ Мгновенное всасывание, если червь уже внутри блока улья
+        BlockPos insidePos = worm.blockPosition();
+        if (isValidHiveEntry(insidePos)) {
+            this.targetPos = insidePos;
+            this.targetIsSoil = isSoil(insidePos);
+            enterNetwork(insidePos);
+            return;
+        }
 
         if (targetPos == null) return;
 
@@ -250,7 +257,7 @@ public class ReturnToHiveGoal extends Goal {
             case ENTERING -> {
                 worm.getNavigation().stop();
                 worm.setDeltaMovement(Vec3.ZERO);
-                if (stuckTicks > 15 || distSq < 0.8) {
+                if (stuckTicks > 5 || distSq < 2.0) { // ⭐ было 15 / 0.8
                     enterNetwork(targetPos);
                 }
             }

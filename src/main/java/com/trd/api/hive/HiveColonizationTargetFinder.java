@@ -82,6 +82,10 @@ public class HiveColonizationTargetFinder {
             Vec3 point = start.add(dir.scale(checkDist));
             BlockPos pos = BlockPos.containing(point);
             BlockState state = level.getBlockState(pos);
+
+            // ⭐ НЕЛЬЗЯ: путь проходит через жидкость
+            if (!state.getFluidState().isEmpty()) return false;
+
             if (state.isSolidRender(level, pos)) {
                 boolean hasGapNearby = false;
                 for (int dx = -1; dx <= 1 && !hasGapNearby; dx++) {
