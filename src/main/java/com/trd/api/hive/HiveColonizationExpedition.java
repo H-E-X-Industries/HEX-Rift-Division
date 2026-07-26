@@ -13,6 +13,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +27,7 @@ public class HiveColonizationExpedition {
     private final BlockPos homePos;
     private final UUID homeNetworkId;
     private final List<UUID> colonistIds = new ArrayList<>();
+    private transient List<DepthWormEntity> colonistRefs = new ArrayList<>();
     private final long startTime;
     private final long timeoutTime;
     private final int pointsPerWorm;
@@ -36,11 +38,13 @@ public class HiveColonizationExpedition {
     private static final int RETURN_TIMEOUT_EXTRA = 1200; // +60 сек
 
     public HiveColonizationExpedition(BlockPos targetPos, BlockPos homePos, UUID homeNetworkId,
-                                      List<UUID> colonistIds, long gameTime, int pointsPerWorm) {
+                                      List<UUID> colonistIds, List<DepthWormEntity> colonistRefs,
+                                      long gameTime, int pointsPerWorm) {
         this.targetPos = targetPos.immutable();
         this.homePos = homePos.immutable();
         this.homeNetworkId = homeNetworkId;
         this.colonistIds.addAll(colonistIds);
+        if (colonistRefs != null) this.colonistRefs.addAll(colonistRefs);
         this.startTime = gameTime;
         this.timeoutTime = gameTime + 1200; // 1 минута
         this.pointsPerWorm = pointsPerWorm;
@@ -51,19 +55,17 @@ public class HiveColonizationExpedition {
         if (state == State.SUCCESS || state == State.FAILED) return state;
 
         long time = level.getGameTime();
-        List<DepthWormEntity> alive = new ArrayList<>();
-        boolean someoneHurt = false;
+        List<DepthWormEntity> alive = collectAlive(level);
 
-        for (UUID id : colonistIds) {
-            if (id == null) continue;
-            Entity entity = ((ServerLevel) level).getEntity(id);
-            if (entity instanceof DepthWormEntity worm && worm.isAlive()) {
-                if (worm.getHealth() < worm.getMaxHealth() * 0.66f) {
-                    someoneHurt = true;
-                }
-                alive.add(worm);
-            } else {
-                return fail(homeNetwork, level, alive);
+        if (alive.size() < colonistIds.size()) {
+            return fail(homeNetwork, level, alive);
+        }
+
+        boolean someoneHurt = false;
+        for (DepthWormEntity worm : alive) {
+            if (worm.getHealth() < worm.getMaxHealth() * 0.66f) {
+                someoneHurt = true;
+                break;
             }
         }
 
@@ -84,7 +86,7 @@ public class HiveColonizationExpedition {
                     }
                 }
 
-                if (allArrived && alive.size() == colonistIds.size()) {
+                if (allArrived) {
                     state = State.WAITING;
                     waitingTicks = 0;
                 } else if (time > timeoutTime) {
@@ -140,10 +142,38 @@ public class HiveColonizationExpedition {
         return state;
     }
 
+    private List<DepthWormEntity> collectAlive(Level level) {
+        List<DepthWormEntity> alive = new ArrayList<>();
+        if (colonistRefs != null && !colonistRefs.isEmpty()) {
+            for (DepthWormEntity worm : colonistRefs) {
+                if (worm.isAlive()) alive.add(worm);
+            }
+        } else {
+            // Fallback после перезагрузки — ищем по UUID в радиусе 200 блоков
+            if (level instanceof ServerLevel sl) {
+                AABB box = new AABB(targetPos).inflate(200);
+                for (DepthWormEntity worm : sl.getEntitiesOfClass(DepthWormEntity.class, box)) {
+                    if (colonistIds.contains(worm.getUUID()) && worm.isAlive()) {
+                        alive.add(worm);
+                    }
+                }
+            }
+        }
+        return alive;
+    }
+
     private State fail(HiveNetwork homeNetwork, Level level, List<DepthWormEntity> survivors) {
         state = State.FAILED;
         for (DepthWormEntity worm : survivors) {
             worm.setColonist(false, null);
+        }
+        // На всякий случай сбрасываем флаг у всех, кого знали
+        if (colonistRefs != null) {
+            for (DepthWormEntity worm : colonistRefs) {
+                if (worm.isAlive() && !survivors.contains(worm)) {
+                    worm.setColonist(false, null);
+                }
+            }
         }
         homeNetwork.setColonizationCooldown(level.getGameTime() + 2400);
         return state;
@@ -270,7 +300,8 @@ public class HiveColonizationExpedition {
         for (int i = 0; i < list.size(); i++) ids.add(list.getCompound(i).getUUID("Id"));
         long start = tag.getLong("StartTime");
         int points = tag.getInt("PointsPerWorm");
-        HiveColonizationExpedition exp = new HiveColonizationExpedition(target, home, homeNet, ids, start, points);
+        HiveColonizationExpedition exp = new HiveColonizationExpedition(
+                target, home, homeNet, ids, null, start, points);
         try { exp.state = State.valueOf(tag.getString("State")); } catch (Exception ignored) {}
         return exp;
     }

@@ -102,8 +102,11 @@ public class HiveNetwork {
         return Math.max(50, wormCounts.size() * 50);
     }
 
+    public boolean canSpendReserve(Level level) {
+        return getTotalWormsIncludingActive(level) >= MIN_WORMS_FOR_RESERVE;
+    }
     public boolean canSpendReserve() {
-        return getTotalWormsIncludingActive(null) >= MIN_WORMS_FOR_RESERVE;
+        return canSpendReserve(null);
     }
 
     // ⭐ Убран автоспавн брутальных червей — они теперь эволюционируют из обычных
@@ -111,13 +114,7 @@ public class HiveNetwork {
         // Ничего не делаем — бруталы не спавнятся автоматически
     }
 
-    public int getAvailablePoints() {
-        int totalWorms = getTotalWormsIncludingActive(null);
-        if (totalWorms >= MIN_WORMS_FOR_RESERVE) {
-            return Math.max(0, killsPool - RESERVE_POINTS);
-        }
-        return killsPool;
-    }
+
 
     public void addPoints(int points, Level level) {
         boolean wasInactive = !isActive();
@@ -172,12 +169,6 @@ public class HiveNetwork {
     public void addActiveWorms(int count) { activeWorms += count; }
     public void removeActiveWorm() { if (activeWorms > 0) activeWorms--; }
 
-    public int getTotalWormsIncludingActive(Level level) {
-        int stored = getTotalWorms(level);
-        int maxPossible = wormCounts.size() * 3;
-        if (activeWorms > maxPossible) activeWorms = maxPossible;
-        return stored + activeWorms;
-    }
 
     public boolean isWithinExpansionLimit(BlockPos pos) {
         if (hiveCenter == null) return true;
@@ -215,17 +206,17 @@ public class HiveNetwork {
 
     private void processHealing(Level level) {
         if (killsPool <= 0) return;
-        int available = getAvailablePoints();
+        int available = getAvailablePoints(level);
 
         for (BlockPos nestPos : wormCounts.keySet()) {
-            if (available <= 0 && canSpendReserve()) return;
+            if (available <= 0 && !canSpendReserve(level)) return;
             if (!level.isLoaded(nestPos)) continue;
             BlockEntity be = level.getBlockEntity(nestPos);
             if (be instanceof DepthWormNestBlockEntity nest) {
-                while ((available > 0 || !canSpendReserve()) && nest.hasInjuredWorms()) {
+                while ((available > 0 || !canSpendReserve(level)) && nest.hasInjuredWorms()) {
                     if (nest.healOneWorm()) {
                         killsPool--;
-                        available = getAvailablePoints();
+                        available = getAvailablePoints(level);
                     } else break;
                 }
             }
@@ -257,49 +248,45 @@ public class HiveNetwork {
 
         int hungerTickRate = isAwakened ? 100 : 600;
         if (level.getGameTime() % hungerTickRate == 0) processHunger(level);
-        if (isAwakened && level.getGameTime() % 40 == 0) {
-            processColonization(level);
-        }
 
         if (!isAwakened) return;
         if (!hasAnyLoadedChunk(level)) return;
 
         pulsePhase = (int) (level.getGameTime() % PULSE_CYCLE);
 
-        if (level.getGameTime() % 200 == 0) {
+        long time = level.getGameTime();
+        if (time % 40 == 0) {
+            makeDecisions(level);
+            processColonization(level);
+        }
+
+        if (time % 200 == 0) {
             int totalWorms = getTotalWormsIncludingActive(level);
             boolean hasReserve = totalWorms >= MIN_WORMS_FOR_RESERVE;
             System.out.println("[Hive " + id + "] State: " + currentState + " | Scenario: " + currentScenario +
                     " | Points: " + killsPool + "/" + getMaxPoints() +
-                    " (Available: " + getAvailablePoints() + ", Reserve: " + (hasReserve ? "YES" : "NO") + ")" +
+                    " (Available: " + getAvailablePoints(level) + ", Reserve: " + (hasReserve ? "YES" : "NO") + ")" +
                     " | Worms: " + totalWorms + "/" + MIN_WORMS_FOR_RESERVE + "+" + activeWorms +
                     " | Nests: " + wormCounts.size() +
                     " | Members: " + members.size() +
+                    " | Colonization: " + colonizationPhase +
                     " | Momentum: " + getDominantDirection());
         }
-
-        if (level.getGameTime() % 40 == 0) makeDecisions(level);
     }
 
     private void makeDecisions(Level level) {
-
         if (colonizationPhase == ColonizationPhase.ACCUMULATING ||
                 colonizationPhase == ColonizationPhase.EXPEDITION_MOVING ||
                 colonizationPhase == ColonizationPhase.EXPEDITION_WAITING ||
-                colonizationPhase == ColonizationPhase.RETURNING) {
-            // В режиме колонизации строительство полностью заблокировано
-            // Разрешены только: хил, спавн (до лимита), выпуск на врагов (это в tick гнезда)
+                colonizationPhase == ColonizationPhase.RETURNING ||
+                colonizationPhase == ColonizationPhase.COOLDOWN) {
             processHealing(level);
             int totalWorms = getTotalWormsIncludingActive(level);
             int nests = wormCounts.size();
             int maxCapacity = nests * 3;
-            if (totalWorms < maxCapacity && getAvailablePoints() >= 10) {
+            if (totalWorms < maxCapacity && getAvailablePoints(level) >= 10) {
                 spawnNewWormOptimally(level);
             }
-            return; // Выходим — никакой экспаншн/корни/гнезда
-        }
-        if (colonizationPhase == ColonizationPhase.COOLDOWN) {
-            processHealing(level);
             return;
         }
 
@@ -313,7 +300,7 @@ public class HiveNetwork {
         boolean needMoreNests = totalWorms >= maxCapacity - 1 && nests < 8;
         int soilCount = Math.max(0, members.size() - nests);
 
-        boolean povertyTrap = soilCount >= SOIL_FOR_NEST * 2 && nests <= 2 && getAvailablePoints() < 15;
+        boolean povertyTrap = soilCount >= SOIL_FOR_NEST * 2 && nests <= 2 && getAvailablePoints(level) < 15;
 
         if (currentState == HiveState.STARVATION) {
             executeDefensiveBuildup(level, totalWorms, nests);
@@ -324,7 +311,7 @@ public class HiveNetwork {
             if (currentScenario != DevelopmentScenario.CONSOLIDATE) {
                 currentScenario = DevelopmentScenario.CONSOLIDATE;
                 System.out.println("[Hive " + id + "] 🚨 POVERTY TRAP detected! Switching to CONSOLIDATE. " +
-                        "Soil=" + soilCount + " Nests=" + nests + " Points=" + getAvailablePoints());
+                        "Soil=" + soilCount + " Nests=" + nests + " Points=" + getAvailablePoints(level));
             }
             if (killsPool >= 15 && soilCount >= SOIL_FOR_NEST) {
                 boolean upgraded = tryUpgradeSoilToNestEmergency(level);
@@ -344,7 +331,7 @@ public class HiveNetwork {
             if (tryBuildRootsSmart(level)) lastRootAttempt = time;
         }
 
-        if (needMoreNests && soilCount >= SOIL_FOR_NEST && getAvailablePoints() >= 15) {
+        if (needMoreNests && soilCount >= SOIL_FOR_NEST && getAvailablePoints(level) >= 15) {
             boolean upgraded = tryUpgradeSoilToNest(level, true);
             if (upgraded) {
                 soilBuilt = 0;
@@ -369,12 +356,12 @@ public class HiveNetwork {
             if (!expanded && needMoreNests && (time - lastStuckLog) > 200) {
                 lastStuckLog = time;
                 System.out.println("[Hive " + id + "] BUILD_NESTS stuck: cannot expand. " +
-                        "Available=" + getAvailablePoints() + " SoilCount=" + soilCount +
+                        "Available=" + getAvailablePoints(level) + " SoilCount=" + soilCount +
                         " Members=" + members.size() + " Nests=" + nests);
             }
         }
 
-        if (totalWorms < maxCapacity && getAvailablePoints() >= 10) {
+        if (totalWorms < maxCapacity && getAvailablePoints(level) >= 10) {
             spawnNewWormOptimally(level);
         }
     }
@@ -382,9 +369,34 @@ public class HiveNetwork {
     public void setColonizationCooldown(long time) {
         this.colonizationCooldownEnd = time;
     }
+    public int getAvailablePoints(Level level) {
+        int totalWorms = getTotalWormsIncludingActive(level);
+        if (totalWorms >= MIN_WORMS_FOR_RESERVE) {
+            return Math.max(0, killsPool - RESERVE_POINTS);
+        }
+        return killsPool;
+    }
 
+    public int getAvailablePoints() {
+        return getAvailablePoints(null);
+    }
+
+    public int getTotalWormsIncludingActive(Level level) {
+        int stored = getTotalWorms(level);
+        int maxPossible = wormCounts.size() * 3;
+        if (activeWorms > maxPossible) activeWorms = maxPossible;
+        return stored + activeWorms;
+    }
     private void processColonization(Level level) {
         long time = level.getGameTime();
+        System.out.println("[COLONIZATION-DEBUG] Hive " + id + " | Phase: " + colonizationPhase
+                + " | Worms: " + getTotalWormsIncludingActive(level)
+                + " | Pool: " + killsPool);
+
+        if (colonizationPhase == null) {
+            colonizationPhase = ColonizationPhase.NONE;
+            System.out.println("[COLONIZATION-DEBUG] Phase was null, reset to NONE");
+        }
 
         if (colonizationPhase == ColonizationPhase.COOLDOWN) {
             if (time >= colonizationCooldownEnd) {
@@ -417,6 +429,9 @@ public class HiveNetwork {
         }
 
         int totalWorms = getTotalWormsIncludingActive(level);
+        System.out.println("[COLONIZATION-DEBUG] Check NONE -> ACCUMULATING: worms="
+                + totalWorms + " (need>" + COLONIZATION_MIN_WORMS + ") pool="
+                + killsPool + " (need>" + COLONIZATION_ACCUMULATE_THRESHOLD + ")");
 
         if (colonizationPhase == ColonizationPhase.NONE) {
             if (totalWorms > COLONIZATION_MIN_WORMS && killsPool > COLONIZATION_ACCUMULATE_THRESHOLD) {
@@ -432,18 +447,21 @@ public class HiveNetwork {
                 return;
             }
             if (killsPool >= COLONIZATION_COST) {
+                System.out.println("[COLONIZATION-DEBUG] Attempting launch...");
                 if (tryLaunchColonization(level)) {
                     colonizationPhase = ColonizationPhase.EXPEDITION_MOVING;
                     killsPool -= COLONIZATION_COST;
                     System.out.println("[Hive " + id + "] Expedition launched! Points: " + killsPool);
+                } else {
+                    System.out.println("[COLONIZATION-DEBUG] tryLaunchColonization returned FALSE");
                 }
             }
         }
     }
 
     private boolean tryLaunchColonization(Level level) {
-        // Собираем кандидатов из storedWorms
         List<ColonistCandidate> candidates = new ArrayList<>();
+
         for (BlockPos nestPos : wormCounts.keySet()) {
             if (!level.isLoaded(nestPos)) continue;
             BlockEntity be = level.getBlockEntity(nestPos);
@@ -456,7 +474,6 @@ public class HiveNetwork {
                     candidates.add(new ColonistCandidate(nestPos, i, tag));
                 }
             }
-            if (candidates.size() >= 3) break;
         }
 
         if (candidates.size() < 3) return false;
@@ -465,8 +482,8 @@ public class HiveNetwork {
                 hiveCenter != null ? hiveCenter : new ArrayList<>(members).get(0));
         if (target == null) return false;
 
-        // Удаляем червей из гнёзд (с конца, чтобы индексы не съезжали)
         candidates.sort((a, b) -> Integer.compare(b.index(), a.index()));
+        List<DepthWormEntity> colonistEntities = new ArrayList<>();
         List<UUID> colonistIds = new ArrayList<>();
         BlockPos homePos = candidates.get(0).nestPos();
 
@@ -478,7 +495,6 @@ public class HiveNetwork {
             CompoundTag wormTag = nest.removeWormAt(cand.index());
             if (wormTag == null) return false;
 
-            // Спавним червя рядом с гнездом
             Entity entity = net.minecraft.world.entity.EntityType.loadEntityRecursive(wormTag, level, (e) -> {
                 BlockPos spawn = cand.nestPos().above();
                 e.moveTo(spawn.getX() + 0.5, spawn.getY(), spawn.getZ() + 0.5,
@@ -488,16 +504,18 @@ public class HiveNetwork {
             });
 
             if (entity instanceof DepthWormEntity worm) {
-                worm.setColonist(true, target); // метод добавим во 2-й части
+                worm.setColonist(true, target);
                 worm.setKills(33);
                 worm.setHomePos(cand.nestPos());
                 level.addFreshEntity(entity);
+                colonistEntities.add(worm);
                 colonistIds.add(worm.getUUID());
             }
         }
 
+        this.activeWorms += 3;
         currentExpedition = new HiveColonizationExpedition(target, homePos, this.id,
-                colonistIds, level.getGameTime(), 33);
+                colonistIds, colonistEntities, level.getGameTime(), 33);
         return true;
     }
 
@@ -506,7 +524,10 @@ public class HiveNetwork {
         String id = tag.getString("id");
         boolean isBrutal = id.contains("brutal");
         float maxHealth = isBrutal ? 45.0f : 15.0f;
-        if (health < maxHealth * 0.9f) return false;
+
+        // ⭐ Достаточно что не умирает (было 0.9f, слишком строго)
+        if (health < maxHealth * 0.5f) return false;
+
         if (tag.contains("ActiveEffects", 9)) {
             net.minecraft.nbt.ListTag effects = tag.getList("ActiveEffects", 10);
             if (!effects.isEmpty()) return false;
@@ -593,7 +614,7 @@ public class HiveNetwork {
 
     private boolean tryPlaceRootsOnBlock(Level level, BlockPos basePos) {
         if (basePos == null) return false;
-        if (getAvailablePoints() < 2 && killsPool < 2) return false;
+        if (getAvailablePoints(level) < 2 && killsPool < 2) return false;
 
         List<BlockPos> candidates = new ArrayList<>();
         BlockPos above = basePos.above();
@@ -624,7 +645,7 @@ public class HiveNetwork {
     }
 
     private boolean tryBuildRootsSmart(Level level) {
-        if (getAvailablePoints() < 2 || rootsBuilt >= ROOTS_FOR_SOIL) return false;
+        if (getAvailablePoints(level) < 2 || rootsBuilt >= ROOTS_FOR_SOIL) return false;
 
         int rootCount = 0;
         int surfaceCount = 0;
@@ -671,7 +692,7 @@ public class HiveNetwork {
     }
 
     private boolean tryExpandBiological(Level level) {
-        int available = getAvailablePoints();
+        int available = getAvailablePoints(level); // было getAvailablePoints()
         if (available < 5 && killsPool < 5) return false;
         if (members.isEmpty()) return false;
 
@@ -849,7 +870,7 @@ public class HiveNetwork {
     }
 
     private boolean tryUpgradeSoilToNest(Level level, boolean needSpaceForNewWorm) {
-        if (getAvailablePoints() < 15) return false;
+        if (getAvailablePoints(level) < 15) return false;
         if (wormCounts.size() >= 8) return false;
 
         int totalWorms = getTotalWormsIncludingActive(level);
@@ -925,21 +946,21 @@ public class HiveNetwork {
         int maxCapacity = nests * 3;
         int soilCount = Math.max(0, members.size() - nests);
 
-        boolean povertyTrap = soilCount >= SOIL_FOR_NEST * 2 && nests <= 2 && getAvailablePoints() < 15;
+        boolean povertyTrap = soilCount >= SOIL_FOR_NEST * 2 && nests <= 2 && getAvailablePoints(level) < 15;
 
         DevelopmentScenario newScenario = currentScenario;
 
         if (povertyTrap) {
             newScenario = DevelopmentScenario.CONSOLIDATE;
-        } else if (totalWorms >= maxCapacity - 1 && nests < 8 && getAvailablePoints() >= 15) {
+        } else if (totalWorms >= maxCapacity - 1 && nests < 8 && getAvailablePoints(level) >= 15) {
             newScenario = DevelopmentScenario.BUILD_NESTS;
         } else if (threatLevel > 15) {
             newScenario = DevelopmentScenario.DEFENSIVE_BUILDUP;
-        } else if (totalWorms < 4 && getAvailablePoints() >= 15 && nests > 0) {
+        } else if (totalWorms < 4 && getAvailablePoints(level) >= 15 && nests > 0) {
             newScenario = DevelopmentScenario.RAPID_GROWTH;
         } else if (nests == 1 && totalWorms < 3) {
             newScenario = DevelopmentScenario.STARTUP;
-        } else if (consecutiveSuccesses > 5 && getAvailablePoints() > 20) {
+        } else if (consecutiveSuccesses > 5 && getAvailablePoints(level) > 20) {
             newScenario = DevelopmentScenario.EXPAND_TERRITORY;
         } else {
             newScenario = DevelopmentScenario.CONSOLIDATE;
@@ -973,7 +994,7 @@ public class HiveNetwork {
                 }
             }
 
-            if (bestNest != null && getAvailablePoints() >= 10) {
+            if (bestNest != null && getAvailablePoints(level) >= 10) {
                 BlockEntity be = level.getBlockEntity(bestNest);
                 if (be instanceof DepthWormNestBlockEntity nest) {
                     CompoundTag newWorm = new CompoundTag();
@@ -1074,12 +1095,20 @@ public class HiveNetwork {
         net.activeWorms = tag.getInt("ActiveWorms");
         net.pulsePhase = tag.getInt("PulsePhase");
         net.consecutiveSuccesses = tag.getInt("ConsecutiveSuccesses");
-        try { net.colonizationPhase = ColonizationPhase.valueOf(tag.getString("ColonizationPhase")); } catch (Exception ignored) {}
+
+        if (tag.contains("ColonizationPhase")) {
+            try {
+                net.colonizationPhase = ColonizationPhase.valueOf(tag.getString("ColonizationPhase"));
+            } catch (Exception e) {
+                net.colonizationPhase = ColonizationPhase.NONE;
+            }
+        } else {
+            net.colonizationPhase = ColonizationPhase.NONE;
+        }
         net.colonizationCooldownEnd = tag.getLong("ColonizationCooldown");
         if (tag.contains("Expedition")) {
             net.currentExpedition = HiveColonizationExpedition.fromNBT(tag.getCompound("Expedition"));
         }
-
 
         if (tag.contains("LastExpansion")) {
             net.lastSuccessfulExpansion = BlockPos.of(tag.getLong("LastExpansion"));
