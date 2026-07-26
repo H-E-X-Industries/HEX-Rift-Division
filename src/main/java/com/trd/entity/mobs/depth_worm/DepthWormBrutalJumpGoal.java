@@ -65,6 +65,7 @@ public class DepthWormBrutalJumpGoal extends Goal {
 
     @Override
     public boolean canUse() {
+        if (this.worm.isColonist()) return false;
         if (failedJumpCooldown > 0) {
             failedJumpCooldown--;
             return false;
@@ -109,6 +110,7 @@ public class DepthWormBrutalJumpGoal extends Goal {
     public boolean canContinueToUse() {
         // ⭐ Сброс если отступаем
         if (this.worm.isRetreating()) return false;
+        if (this.worm.isColonist()) return false;
 
         if (this.target == null || !this.target.isAlive()) return false;
         if (this.worm.isInWater() || this.target.isInWater()) return false;

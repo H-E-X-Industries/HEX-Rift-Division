@@ -40,6 +40,7 @@ public class ReturnToHiveGoal extends Goal {
 
     @Override
     public boolean canUse() {
+        if (worm.isColonist()) return false;
         if (worm.isRetreating()) {
             if (worm.getTarget() != null) worm.setTarget(null);
             return findAndSetNearestEntry();
@@ -302,6 +303,7 @@ public class ReturnToHiveGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
+        if (worm.isColonist()) return false;
         if (targetPos == null) return false;
         if (worm.isRetreating()) {
             // продолжаем отступление

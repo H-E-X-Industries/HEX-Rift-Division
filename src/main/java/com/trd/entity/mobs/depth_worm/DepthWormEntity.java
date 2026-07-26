@@ -56,7 +56,10 @@ public class DepthWormEntity extends Monster implements GeoEntity {
     public void setOnDeathCallback(Runnable callback) {
         this.onDeathCallback = callback;
     }
-
+    private static final EntityDataAccessor<Boolean> IS_COLONIST =
+            SynchedEntityData.defineId(DepthWormEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<String> COLONIST_TARGET =
+            SynchedEntityData.defineId(DepthWormEntity.class, EntityDataSerializers.STRING);
     @Override
     public void die(DamageSource source) {
         super.die(source);
@@ -122,6 +125,11 @@ public class DepthWormEntity extends Monster implements GeoEntity {
         if (lastExit != null) {
             tag.putLong("LastExitPos", lastExit.asLong());
         }
+        tag.putBoolean("IsColonist", this.isColonist());
+        BlockPos colonistTarget = getColonistTarget();
+        if (colonistTarget != null) {
+            tag.putLong("ColonistTarget", colonistTarget.asLong());
+        }
     }
 
     @Override
@@ -144,8 +152,26 @@ public class DepthWormEntity extends Monster implements GeoEntity {
         if (tag.contains("LastExitPos")) {
             setLastExitPos(BlockPos.of(tag.getLong("LastExitPos")));
         }
+        if (tag.contains("IsColonist")) {
+            this.entityData.set(IS_COLONIST, tag.getBoolean("IsColonist"));
+        }
+        if (tag.contains("ColonistTarget")) {
+            this.entityData.set(COLONIST_TARGET, tag.getLong("ColonistTarget") + "");
+        }
+    }
+    @Override
+    public void setTarget(@Nullable LivingEntity target) {
+        if (target != null && this.isColonist()) {
+            return;
+        }
+        super.setTarget(target);
     }
 
+    @Override
+    public boolean canAttack(LivingEntity target) {
+        if (this.isColonist()) return false;
+        return !(target instanceof DepthWormEntity) && super.canAttack(target);
+    }
     public DepthWormEntity(EntityType<? extends Monster> entityType, Level level) {
         super(entityType, level);
         this.setPathfindingMalus(BlockPathTypes.DAMAGE_OTHER, -1.0F);
@@ -169,6 +195,8 @@ public class DepthWormEntity extends Monster implements GeoEntity {
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
+        this.entityData.define(IS_COLONIST, false);
+        this.entityData.define(COLONIST_TARGET, "");
         this.entityData.define(IS_ATTACKING, false);
         this.entityData.define(IS_FLYING, false);
         this.entityData.define(IS_ANGRY, false);
@@ -242,21 +270,36 @@ public class DepthWormEntity extends Monster implements GeoEntity {
         }
     }
 
-    // ⭐ НОВОЕ: блокируем установку цели во время отступления
-    @Override
-    public void setTarget(@Nullable LivingEntity target) {
-        if (target != null && this.isRetreating()) {
-            return;
-        }
-        super.setTarget(target);
-    }
 
     protected void checkBrutalTransformation() {
         if (getRawKills() >= 5) {
             transformToBrutal();
         }
     }
+    public boolean isColonist() {
+        return this.entityData.get(IS_COLONIST);
+    }
 
+    public void setColonist(boolean colonist, @Nullable BlockPos target) {
+        this.entityData.set(IS_COLONIST, colonist);
+        this.entityData.set(COLONIST_TARGET, target != null ? target.asLong() + "" : "");
+        if (colonist) {
+            this.setTarget(null);
+            this.setAttacking(false);
+            this.setRetreating(false);
+        }
+    }
+
+    @Nullable
+    public BlockPos getColonistTarget() {
+        String s = this.entityData.get(COLONIST_TARGET);
+        if (s == null || s.isEmpty()) return null;
+        try {
+            return BlockPos.of(Long.parseLong(s));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
     protected void transformToBrutal() {
         if (this.level().isClientSide) return;
 
@@ -342,6 +385,18 @@ public class DepthWormEntity extends Monster implements GeoEntity {
     @Override
     public void aiStep() {
         if (!this.level().isClientSide) {
+
+            if (this.isColonist()) {
+                if (this.isInWater()) {
+                    this.setDeltaMovement(this.getDeltaMovement().x, 0.35D, this.getDeltaMovement().z);
+                    this.setTarget(null);
+                }
+                super.aiStep();
+                if (this.meleeCooldown > 0) this.meleeCooldown--;
+                if (this.ignoreFallDamageTicks > 0) this.ignoreFallDamageTicks--;
+                return;
+            }
+
             // ⭐ Вода — всегда отступаем
             if (this.isInWater()) {
                 this.setDeltaMovement(this.getDeltaMovement().x, 0.35D, this.getDeltaMovement().z);
@@ -426,6 +481,9 @@ public class DepthWormEntity extends Monster implements GeoEntity {
 
     @Override
     protected void registerGoals() {
+        this.goalSelector.addGoal(-1, new ColonistReturnGoal(this));
+        this.goalSelector.addGoal(0, new ColonistMoveGoal(this));
+
         this.goalSelector.addGoal(0, new DepthWormJumpGoal(this, 1.5D, 5.0F, 10.0F));
         this.goalSelector.addGoal(1, new ReturnToHiveGoal(this));
         this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.2D, false));
@@ -449,12 +507,6 @@ public class DepthWormEntity extends Monster implements GeoEntity {
         return super.hurt(source, amount);
     }
 
-    // ⭐ НОВОЕ: во время отступления нельзя атаковать
-    @Override
-    public boolean canAttack(LivingEntity target) {
-        if (this.isRetreating()) return false;
-        return !(target instanceof DepthWormEntity) && super.canAttack(target);
-    }
 
     public void addKillPoints(Entity victim) {
         int points = 1;

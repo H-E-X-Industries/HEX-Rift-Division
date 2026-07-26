@@ -42,7 +42,16 @@ public class DepthWormNestBlockEntity extends BlockEntity implements HiveNetwork
         this.networkId = id;
         this.setChanged();
     }
-
+    public CompoundTag removeWormAt(int index) {
+        if (index < 0 || index >= storedWorms.size()) return null;
+        CompoundTag tag = storedWorms.remove(index);
+        setChanged();
+        if (!level.isClientSide && networkId != null) {
+            HiveNetworkManager manager = HiveNetworkManager.get(level);
+            if (manager != null) manager.updateWormCount(networkId, worldPosition, -1);
+        }
+        return tag;
+    }
     public boolean isFull() { return storedWorms.size() >= 3; }
 
     public void addWorm(DepthWormEntity worm) {
