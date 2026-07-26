@@ -730,7 +730,7 @@ public class ShaftBlockEntity extends KineticNodeBlockEntity {
 
     @Override
     public double getInertiaContribution() {
-        double inertia = 5.0;
+        double inertia = 0.0;
         if (getBlockState().getBlock() instanceof ShaftBlock shaft) {
             inertia = (double) (shaft.getMaterial().baseInertia() * shaft.getDiameter().inertiaMod);
         }

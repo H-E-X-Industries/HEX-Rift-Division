@@ -184,7 +184,7 @@ public class StatorBlockEntity extends KineticNodeBlockEntity implements IEnergy
     public boolean isSource() { return false; }
 
     @Override
-    public double getInertiaContribution() { return 2.0; }
+    public double getInertiaContribution() { return 0.2; }
 
     @Override
     public long getMaxTorqueTolerance() { return Long.MAX_VALUE; }

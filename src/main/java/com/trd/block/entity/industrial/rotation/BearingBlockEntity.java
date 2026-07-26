@@ -97,11 +97,7 @@ public class BearingBlockEntity extends KineticNodeBlockEntity {
 
     @Override
     public double getInertiaContribution() {
-        double baseInertia = 10.0;
-        if (hasShaft && shaftMaterial != null && shaftDiameter != null) {
-            baseInertia += (double) (shaftMaterial.baseInertia() * shaftDiameter.inertiaMod);
-        }
-        return baseInertia;
+        return 1.0;
     }
 
     @Override

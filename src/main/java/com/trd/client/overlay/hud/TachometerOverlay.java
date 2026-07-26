@@ -54,12 +54,24 @@ public class TachometerOverlay {
             String header = Component.translatable("hud.trd.tachometer.title").getString();
             String speedText = Component.translatable("hud.trd.tachometer.speed", Math.abs(tachometer.getNetworkSpeed())).getString();
             String torqueText = Component.translatable("hud.trd.tachometer.torque", tachometer.getNetworkConsumedTorque(), tachometer.getNetworkTorque()).getString();
-            String inertiaText = String.format(Component.translatable("hud.trd.tachometer.inertia").getString(), tachometer.getNetworkInertia());
+            String inertiaFormat = Component.translatable("hud.trd.tachometer.inertia").getString();
+            String inertiaText;
+            if (inertiaFormat.contains("%f")) {
+                inertiaText = String.format(inertiaFormat.replace("%f", "%.2f"), tachometer.getNetworkInertia());
+            } else {
+                inertiaText = String.format(inertiaFormat, String.format("%.2f", tachometer.getNetworkInertia()));
+            }
 
             // Расчет стресса (нагрузки)
             double load = tachometer.getNetworkLoad();
             double stressValue = Math.max(0, (load - 1.0) / 0.25);
-            String stressText = String.format(Component.translatable("hud.trd.tachometer.stress").getString(), stressValue * 100.0);
+            String stressFormat = Component.translatable("hud.trd.tachometer.stress").getString();
+            String stressText;
+            if (stressFormat.contains("%f")) {
+                stressText = String.format(stressFormat.replace("%f", "%.2f"), stressValue * 100.0);
+            } else {
+                stressText = String.format(stressFormat, String.format("%.2f", stressValue * 100.0));
+            }
             int stressColor = valueColor;
             if (load >= 1.25) {
                 stressColor = noShaftColor; // Красный (критично)
