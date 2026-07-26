@@ -189,7 +189,8 @@ public class DepthWormEntity extends Monster implements GeoEntity {
                 .add(Attributes.MAX_HEALTH, 15.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.25D)
                 .add(Attributes.ATTACK_DAMAGE, 2.5D)
-                .add(Attributes.FOLLOW_RANGE, 24.0D);
+                .add(Attributes.FOLLOW_RANGE, 24.0D)
+                .add(Attributes.ARMOR, 3.0D); // ⭐ +3 брони
     }
 
     @Override
@@ -438,6 +439,18 @@ public class DepthWormEntity extends Monster implements GeoEntity {
             if (target != null && target.isInWater()) {
                 this.setTarget(null);
             }
+
+            // ⭐ Любой негативный эффект — сразу домой
+            if (!this.isRetreating() && !this.isColonist()) {
+                for (net.minecraft.world.effect.MobEffectInstance effect : this.getActiveEffects()) {
+                    if (effect.getEffect().getCategory() == net.minecraft.world.effect.MobEffectCategory.HARMFUL) {
+                        this.setRetreating(true);
+                        this.setTarget(null);
+                        break;
+                    }
+                }
+            }
+
         }
 
         super.aiStep();
@@ -524,14 +537,8 @@ public class DepthWormEntity extends Monster implements GeoEntity {
 
     public void addKillPoints(Entity victim) {
         int points = 1;
-        if (victim instanceof Player) {
-            points = 30;
-        } else if (victim instanceof net.minecraft.world.entity.monster.Enemy) {
-            if (victim instanceof LivingEntity le && le.getMaxHealth() >= 50.0F) {
-                points = 10;
-            } else {
-                points = 3;
-            }
+        if (victim instanceof LivingEntity le) {
+            points = Math.max(1, (int) (le.getMaxHealth() / 2.0f));
         }
         this.entityData.set(KILLS, this.getKills() + points);
     }

@@ -70,7 +70,7 @@ public class HiveNetwork {
     private static final int COLONIZATION_ACCUMULATE_THRESHOLD = 60;
     private static final int COLONIZATION_COST = 99;
     private static final int COLONIZATION_COOLDOWN = 2400; // 2 минуты
-    public int maxExpansionRadius = 8;
+    public int maxExpansionRadius = 16;
     public BlockPos hiveCenter = null;
 
     public enum DevelopmentScenario {
@@ -297,7 +297,7 @@ public class HiveNetwork {
         int totalWorms = getTotalWormsIncludingActive(level);
         int nests = wormCounts.size();
         int maxCapacity = nests * 3;
-        boolean needMoreNests = totalWorms >= maxCapacity - 1 && nests < 8;
+        boolean needMoreNests = totalWorms >= maxCapacity - 1 && nests < 16;
         int soilCount = Math.max(0, members.size() - nests);
 
         boolean povertyTrap = soilCount >= SOIL_FOR_NEST * 2 && nests <= 2 && getAvailablePoints(level) < 15;
@@ -529,7 +529,7 @@ public class HiveNetwork {
     private record ColonistCandidate(BlockPos nestPos, int index, CompoundTag tag) {}
 
     private boolean tryUpgradeSoilToNestEmergency(Level level) {
-        if (wormCounts.size() >= 8) return false;
+        if (wormCounts.size() >= 16) return false;
         if (killsPool < 15) return false;
 
         int totalWorms = getTotalWormsIncludingActive(level);
@@ -691,7 +691,7 @@ public class HiveNetwork {
         int nests = wormCounts.size();
         int maxCapacity = nests * 3;
 
-        boolean needMoreNests = totalWorms >= maxCapacity - 1 && nests < 8;
+        boolean needMoreNests = totalWorms >= maxCapacity - 1 && nests < 16;
         boolean needMoreSoil = members.size() < nests * 4;
 
         if (!needMoreNests && !needMoreSoil) return false;
@@ -862,7 +862,7 @@ public class HiveNetwork {
 
     private boolean tryUpgradeSoilToNest(Level level, boolean needSpaceForNewWorm) {
         if (getAvailablePoints(level) < 15) return false;
-        if (wormCounts.size() >= 8) return false;
+        if (wormCounts.size() >= 16) return false;
 
         int totalWorms = getTotalWormsIncludingActive(level);
         int maxCapacity = wormCounts.size() * 3;
@@ -943,7 +943,7 @@ public class HiveNetwork {
 
         if (povertyTrap) {
             newScenario = DevelopmentScenario.CONSOLIDATE;
-        } else if (totalWorms >= maxCapacity - 1 && nests < 8 && getAvailablePoints(level) >= 15) {
+        } else if (totalWorms >= maxCapacity - 1 && nests < 16 && getAvailablePoints(level) >= 15) {
             newScenario = DevelopmentScenario.BUILD_NESTS;
         } else if (threatLevel > 15) {
             newScenario = DevelopmentScenario.DEFENSIVE_BUILDUP;
@@ -1117,7 +1117,7 @@ public class HiveNetwork {
 
         net.targetWormCount = tag.getInt("TargetWorms") == 0 ? 6 : tag.getInt("TargetWorms");
         net.targetNestCount = tag.getInt("TargetNests") == 0 ? 2 : tag.getInt("TargetNests");
-        net.maxExpansionRadius = tag.getInt("MaxRadius") == 0 ? 8 : tag.getInt("MaxRadius");
+        net.maxExpansionRadius = tag.getInt("MaxRadius") == 0 ? 16 : tag.getInt("MaxRadius");
         if (tag.contains("HiveCenter")) net.hiveCenter = BlockPos.of(tag.getLong("HiveCenter"));
 
         ListTag membersList = tag.getList("Members", 10);

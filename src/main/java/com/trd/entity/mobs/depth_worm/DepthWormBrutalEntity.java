@@ -48,7 +48,8 @@ public class DepthWormBrutalEntity extends DepthWormEntity {
                 .add(Attributes.MOVEMENT_SPEED, 0.35D)
                 .add(Attributes.ATTACK_DAMAGE, 4.0D)
                 .add(Attributes.FOLLOW_RANGE, 40.0D)
-                .add(Attributes.KNOCKBACK_RESISTANCE, 0.4D);
+                .add(Attributes.KNOCKBACK_RESISTANCE, 0.4D)
+                .add(Attributes.ARMOR, 7.0D); // ⭐ +7 брони
     }
 
     @Override
