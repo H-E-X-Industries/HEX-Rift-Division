@@ -79,8 +79,8 @@ public class GUITurretAmmo extends AbstractContainerScreen<TurretLightMenu> {
 
         guiGraphics.blit(TEXTURE, x, y, 0, 0, imageWidth, imageHeight);
 
-        int energy = this.menu.getDataSlot(TurretLightMenu.DATA_ENERGY);
-        int maxEnergy = this.menu.getDataSlot(TurretLightMenu.DATA_MAX_ENERGY);
+        long energy = this.menu.getEnergyStatic();
+        long maxEnergy = this.menu.getMaxEnergyStatic();
         int status = this.menu.getDataSlot(TurretLightMenu.DATA_STATUS);
         boolean isSwitchedOn = this.menu.getDataSlot(TurretLightMenu.DATA_SWITCH) == 1;
         int bootTimer = this.menu.getDataSlot(TurretLightMenu.DATA_BOOT_TIMER);
@@ -435,7 +435,7 @@ public class GUITurretAmmo extends AbstractContainerScreen<TurretLightMenu> {
                 Component.translatable("gui.trd.turret.boot", dots).getString(), COLOR_TEXT, x, y, w, h);
     }
 
-    private void drawStatusText(GuiGraphics guiGraphics, int x, int y, int w, int h, int status, int energy, int maxEnergy) {
+    private void drawStatusText(GuiGraphics guiGraphics, int x, int y, int w, int h, int status, long energy, long maxEnergy) {
         String msg;
         int color;
         if (status == 1) {
@@ -480,8 +480,8 @@ public class GUITurretAmmo extends AbstractContainerScreen<TurretLightMenu> {
         super.render(guiGraphics, mouseX, mouseY, delta);
         renderTooltip(guiGraphics, mouseX, mouseY);
         if (isHovering(180, 27, 16, 52, mouseX, mouseY)) {
-            int energy = this.menu.getDataSlot(0);
-            int maxEnergy = this.menu.getDataSlot(1);
+            long energy = this.menu.getEnergyStatic();
+            long maxEnergy = this.menu.getMaxEnergyStatic();
             guiGraphics.renderTooltip(this.font,
                     Component.translatable("gui.trd.turret.energy_tooltip", energy, maxEnergy), mouseX, mouseY);
         }

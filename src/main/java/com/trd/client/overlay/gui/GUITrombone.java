@@ -84,8 +84,8 @@ public class GUITrombone extends AbstractContainerScreen<TromboneMenu> {
 
         guiGraphics.blit(TEXTURE, x, y, 0, 0, imageWidth, imageHeight);
 
-        int energy = this.menu.getDataSlot(TromboneMenu.DATA_ENERGY);
-        int maxEnergy = this.menu.getDataSlot(TromboneMenu.DATA_MAX_ENERGY);
+        long energy = this.menu.getEnergyStatic();
+        long maxEnergy = this.menu.getMaxEnergyStatic();
         int status = this.menu.getDataSlot(TromboneMenu.DATA_STATUS);
         boolean isSwitchedOn = this.menu.getDataSlot(TromboneMenu.DATA_SWITCH) == 1;
         int bootTimer = this.menu.getDataSlot(TromboneMenu.DATA_BOOT_TIMER);
@@ -496,7 +496,7 @@ public class GUITrombone extends AbstractContainerScreen<TromboneMenu> {
                 Component.translatable("gui.trd.turret.boot", dots).getString(), COLOR_TEXT, x, y, w, h);
     }
 
-    private void drawStatusText(GuiGraphics guiGraphics, int x, int y, int w, int h, int status, int energy, int maxEnergy) {
+    private void drawStatusText(GuiGraphics guiGraphics, int x, int y, int w, int h, int status, long energy, long maxEnergy) {
         String msg;
         int color;
         if (status == 1) {
@@ -547,8 +547,8 @@ public class GUITrombone extends AbstractContainerScreen<TromboneMenu> {
         super.render(guiGraphics, mouseX, mouseY, delta);
         renderTooltip(guiGraphics, mouseX, mouseY);
         if (isHovering(180, 27, 16, 52, mouseX, mouseY)) {
-            int energy = this.menu.getDataSlot(0);
-            int maxEnergy = this.menu.getDataSlot(1);
+            long energy = this.menu.getEnergyStatic();
+            long maxEnergy = this.menu.getMaxEnergyStatic();
             guiGraphics.renderTooltip(this.font,
                     Component.translatable("gui.trd.turret.energy_tooltip", energy, maxEnergy), mouseX, mouseY);
         }

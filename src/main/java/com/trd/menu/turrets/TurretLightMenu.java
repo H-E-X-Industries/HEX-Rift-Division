@@ -13,15 +13,33 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.items.SlotItemHandler;
 import com.trd.block.entity.weapons.TurretAmmoContainer;
+import com.trd.block.entity.weapons.TurretLightPlacerBlockEntity;
 import com.trd.item.energy.EnergyCellItem;
 import com.trd.item.energy.ModBatteryItem;
 import com.trd.item.weapons.turrets.TurretChipItem;
+import com.trd.api.energy.ILongEnergyMenu;
+import com.trd.network.ModPacketHandler;
+import com.trd.network.packet.energy.PacketSyncEnergy;
+import net.minecraftforge.network.PacketDistributor;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.Level;
 
-public class TurretLightMenu extends AbstractContainerMenu {
+public class TurretLightMenu extends AbstractContainerMenu implements ILongEnergyMenu {
 
     private final TurretAmmoContainer ammoContainer;
     private final ContainerData data;
     private final BlockPos pos;
+    private final Player player;
+    private final Level level;
+
+    private long clientEnergy;
+    private long clientMaxEnergy;
+    private long clientDelta;
+
+    private long lastSyncedEnergy = -1;
+    private long lastSyncedMaxEnergy = -1;
+    private long lastSyncedDelta = -1;
 
     public static final int AMMO_SLOT_COUNT = 9;
     public static final int CHIP_SLOT_INDEX = 9;
@@ -48,6 +66,8 @@ public class TurretLightMenu extends AbstractContainerMenu {
         this.ammoContainer = ammoContainer;
         this.data = data;
         this.pos = pos;
+        this.player = playerInventory.player;
+        this.level = player.level();
         this.addDataSlots(data);
 
         // Слоты патронов 0-8
@@ -156,4 +176,62 @@ public class TurretLightMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) { return true; }
+
+    @Override
+    public void broadcastChanges() {
+        super.broadcastChanges();
+
+        if (this.level != null && !this.level.isClientSide) {
+            BlockEntity entity = this.level.getBlockEntity(this.pos);
+            if (entity instanceof TurretLightPlacerBlockEntity blockEntity) {
+                long currentEnergy = blockEntity.getEnergyStoredInt();
+                long currentMax = blockEntity.getMaxEnergyStoredInt();
+                long currentDelta = 0; // Or whatever delta if you have one.
+
+                if (currentEnergy != lastSyncedEnergy ||
+                        currentMax != lastSyncedMaxEnergy ||
+                        currentDelta != lastSyncedDelta) {
+
+                    ModPacketHandler.INSTANCE.send(
+                            PacketDistributor.PLAYER.with(() -> (ServerPlayer) this.player),
+                            new PacketSyncEnergy(
+                                    this.containerId,
+                                    currentEnergy,
+                                    currentMax,
+                                    currentDelta,
+                                    0, // chargingSpeed
+                                    0, // unchargingSpeed
+                                    0  // filledCellCount
+                            )
+                    );
+
+                    lastSyncedEnergy = currentEnergy;
+                    lastSyncedMaxEnergy = currentMax;
+                    lastSyncedDelta = currentDelta;
+                }
+            }
+        }
+    }
+
+    @Override
+    public void setEnergy(long energy, long maxEnergy, long delta) {
+        this.clientEnergy = energy;
+        this.clientMaxEnergy = maxEnergy;
+        this.clientDelta = delta;
+    }
+
+    @Override
+    public long getEnergyStatic() {
+        return this.level.isClientSide ? this.clientEnergy : 0;
+    }
+
+    @Override
+    public long getMaxEnergyStatic() {
+        return this.level.isClientSide ? this.clientMaxEnergy : 0;
+    }
+
+    @Override
+    public long getEnergyDeltaStatic() {
+        return this.level.isClientSide ? this.clientDelta : 0;
+    }
 }
