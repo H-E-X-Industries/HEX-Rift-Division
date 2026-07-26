@@ -405,7 +405,7 @@ public class DepthWormEntity extends Monster implements GeoEntity {
             } else if (this.isRetreating()) {
                 // Уже отступаем — продолжаем, цель сброшена в setTarget()
             } else {
-                // ⭐ Проверяем условия отступления ТОЛЬКО если есть цель (в бою)
+                // ⭐ Проверяем условия отступления в бою
                 LivingEntity currentTarget = this.getTarget();
                 if (currentTarget != null && currentTarget.isAlive()) {
                     float maxHealth = this.getMaxHealth();
@@ -415,6 +415,20 @@ public class DepthWormEntity extends Monster implements GeoEntity {
                     if (lowHp || tooManyKills) {
                         this.setRetreating(true);
                         this.setTarget(null);
+                    }
+                }
+
+                // ⭐ Авто-отступление если слишком далеко от дома
+                if (!this.isRetreating() && !this.isColonist()) {
+                    BlockPos bound = this.getBoundNestPos();
+                    if (bound != null) {
+                        double distSq = this.distanceToSqr(
+                                bound.getX() + 0.5, bound.getY() + 0.5, bound.getZ() + 0.5
+                        );
+                        if (distSq > 5000.0) {
+                            this.setRetreating(true);
+                            this.setTarget(null);
+                        }
                     }
                 }
             }

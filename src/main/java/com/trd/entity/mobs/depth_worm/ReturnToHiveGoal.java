@@ -45,16 +45,12 @@ public class ReturnToHiveGoal extends Goal {
 
         if (worm.isRetreating()) {
             if (worm.getTarget() != null) worm.setTarget(null);
-            return findAndSetNearestEntry();
+        } else {
+            LivingEntity target = worm.getTarget();
+            if (target != null && target.isAlive()) return false;
         }
 
-        LivingEntity target = worm.getTarget();
-        if (target != null && target.isAlive()) return false;
-        if (worm.tickCount < nextSearchTick) return false;
-
-        nextSearchTick = worm.tickCount + 10 + worm.getRandom().nextInt(10);
-
-        // ⭐ boundNest — с любого расстояния, без лимита 20 блоков
+        // ⭐ boundNest — приоритет №1, работает с ЛЮБОГО расстояния
         BlockPos boundNest = worm.getBoundNestPos();
         if (boundNest != null && isValidEntryPoint(boundNest)) {
             this.targetPos = boundNest;
@@ -62,6 +58,7 @@ public class ReturnToHiveGoal extends Goal {
             return true;
         }
 
+        // Локальный поиск только если boundNest нет
         return findAndSetNearestEntry();
     }
 
