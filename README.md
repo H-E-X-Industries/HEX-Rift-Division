@@ -1,127 +1,35 @@
-# Crustal Incursion 
+<div align="center">
 
-**Crustal Incursion** - это технический мод для Minecraft 1.20.1 (Forge), который полностью переосмысляет механики шахт и добычи ресурсов. Забудь о скучных туннелях и легкодоступных ресурсах: здесь глубина превращается в живой, враждебный организм, требующий серьёзной технологической подготовки.
+**🇺🇸 English** | [🇷🇺 Русский](README.ru.md)
 
-⚠️ **Статус проекта:** Ранняя разработка (Pre-Alpha). В текущей версии представлены экспериментальные механики и заготовки. Многие функции могут быть нестабильны или отсутствовать.
+</div>
 
----
+# The Rift Division
 
-## 📖 Концепция: Спуск в Бездну
+**The Rift Division** is a technical mod for Minecraft 1.20.1 (Forge).
 
-Мир под бедроком (ниже -64) теперь разделён на **4 слоя Некроза**. Каждый слой изолирован древней мембраной. Чтобы проникнуть глубже, тебе придётся «пробивать» путь, сталкиваясь с уникальной экосистемой, которая не рада гостям.
-
-### 🌌 Измерение: Некроз
-Чтобы не перегружать обычный мир, вся подземная экосистема вынесена в **отдельное измерение**.
-- **Вход:** Пробитие финальной мембраны под бедроком в Owerworld (-64) открывает портал в первый слой Некроза.
-- **Изоляция слоёв:** Каждый слой внутри измерения - замкнутая локация со своими правилами генерации, мобами и физическими условиями (температура, плотность воздуха).
-- **Оптимизация:** Монстры глубинных слоёв не существуют, пока ты не «вскроешь» проход к ним. Это сохраняет высокий FPS даже при такой сложной экосистеме.
+⚠️ **Project Status:** Early development (Pre-Alpha). The current version features experimental mechanics and placeholders. Many features may be unstable or missing. At this time, our mod is **NOT** published on public platforms such as CurseForge and Modrinth due to the project status.
 
 ---
 
-## ⛏️ Механики добычи
+## Project Concept
 
-### 🏗️ Модульное бурение
-Забудь про кирку. Глубинные породы обладают колоссальной плотностью.
-- **Сборка буров:** Тебе понадобятся модульные буровые установки со сменными головками, каркасами и вспомогательными модулями.
-- **Тепловой менеджмент:** Чем плотнее слой, тем сильнее греется оборудование. Строй системы радиаторов и активного охлаждения, иначе техника выйдет из строя.
-- **Шум и вибрации:** Тяжёлая техника привлекает внимание подземных обитателей. Тишина - твой главный союзник.
+Our mod combines two key mechanics: technical progression and dangerous expeditions into a new dimension. Early game stages represent pure industrialization - players develop their technologies, build bases, and explore the world. But closer to the beginning of the mid-game (middle of progression), the player will have enough resources to begin geological research of the depths. Soon they will discover that the world below bedrock (below Y-level -64) is divided into **4 layers of Necrosis**. Each layer is a unique ecosystem combining valuable resources and dangerous inhabitants who are not very fond of guests.
 
-### 💎 Жилы вместо блоков
-Руды и ресурсы не выпадают из одиночных блоков.
-- Ресурсы представлены в виде **массивных залежей**, добыча которых занимает игровые дни.
-- Тебе придётся разбивать лагерь и строить фортификации вокруг своей буровой площадки, чтобы защитить её от нападений.
+Necrosis is of high interest to the player as a place concentrating many useful minerals, various biological materials, and oil with a unique composition that seems to be begging for a couple of democratic expeditions =) But there is one catch - resources are presented in the form of massive deposits, mining which can take in-game days. It will require assembling special drills: modular drilling rigs with interchangeable heads, frames, and auxiliary modules. The player will have to set up camp and build fortifications around their drilling site to protect it from attacks. What a blessing that our mod kindly features various turrets and weapons that will make defense easier.
 
----
+## Dependencies
 
-## 🛠️ Ключевые технологические системы (Custom APIs)
+The mod requires the following libraries:
 
-Мод построен на трёх независимых, но интегрированных друг с другом API:
+* **GeckoLib** (version 4.8.2 for 1.20.1) - animations for creatures, armor, and tools.
+* **TerraBlender** (version `1.20.1-3.0.0.169`) - biome generation.
 
-### ⚡ Energy API
-Собственная высокопроизводительная система передачи энергии.
-- **Графовая оптимизация:** Использование сетевых узлов (`Nodes`) вместо ежетиковой проверки соседей.
-- **High-Tier Readiness:** Поддержка значений типа `long` для работы с колоссальными мощностями.
-- **Bridge Support:** Полная совместимость с Forge Energy (FE) через кастомные обёртки.
-
-### ⚙️ Rotation API
-Система передачи механической энергии (крутящего момента).
-- **Кинетическая сеть:** Передача вращения через валы, редукторы, сумматоры и многое другое.
-- **Электромеханика:** Конвертация электрической энергии в механическую через кастомные двигатели и конвертеры.
-- **Промышленное применение:** Механические буры и установки для добычи ресурсов в глубинных слоях Некроза.
-
-### 🧠 Hive Network API (Система Улья)
-Уникальный движок для управления коллективным разумом мобов.
-- **Nest Logic:** Мобы (например, **Глубинные черви**) привязаны к гнёздам и действуют сообща.
-- **Expansion:** Улей способен изменять ландшафт и почву вокруг себя.
-- **Advanced AI:** У всех мобов есть продвинутый интеллект, превращающий любые стычки в уникальные бои.
+**Recommended:**
+* **JEI (Just Enough Items)** (version 15.3.0.4) - for displaying recipes.
 
 ---
 
-## 🛡️ Военные технологии и баллистика
-**В моде уже реализованы первая боевая турель и огнестрельное оружие**
-- **Real-time Ballistics:** Турели используют сложный вычислитель для расчёта упреждения цели и траектории полёта снаряда.
-- **Universal Ammo Registry:** Единый реестр калибров. Одни и те же боеприпасы используются как в ручном огнестрельном оружии, так и в автоматизированных турелях. 
+## Contacts
 
----
-
-## 🧱 Зависимости
-
-Для работы мода требуются следующие библиотеки (они подключатся автоматически, если ты используешь менеджер зависимостей, например, при сборке через Gradle):
-
-*   **GeckoLib** (версия 4.8.2 для 1.20.1) - для анимаций существ и механизмов.
-*   **TerraBlender** (версия `1.20.1-3.0.0.169`) - для генерации биомов.
-*   **Mixin** (встроен в Forge) - используется для модификации кода игры.
-
-**Опционально:**
-*   **JEI (Just Enough Items)** (версия 15.3.0.4) - для отображения рецептов (включён в `runtimeOnly` в сборочных скриптах).
-
----
-
-## 🧪 Сборка из исходников
-
-Если ты хочешь собрать мод самостоятельно (например, чтобы протестировать последние изменения), выполни следующие шаги:
-
-1.  **Клонируй репозиторий:**
-    ```bash
-    git clone https://github.com/TONG-Industries/Crustal-Incursion.git
-    cd Crustal-Incursion
-    ```
-2.  **Убедись, что у тебя установлена Java 17** и переменная `JAVA_HOME` указывает на неё.
-3.  **Собери проект** с помощью Gradle:
-    *   Для Linux/macOS:
-        ```bash
-        ./gradlew build
-        ```
-    *   Для Windows:
-        ```bash
-        gradlew.bat build
-        ```
-4.  **Найди готовый `.jar` файл** в папке `build/libs/`. Он будет называться `trd-<версия>.jar`.
-
----
-
-## 📋 Технические требования (для разработчиков)
-
-Информация из `gradle.properties` и `build.gradle`:
-
-*   **Minecraft Version:** 1.20.1
-*   **Minecraft Version Range:** `[1.20.1,1.21)`
-*   **Forge Version:** 47.2.0 (рекомендуемая), диапазон: `[47,)`
-*   **Mappings:** Official (`official`) для версии 1.20.1
-*   **Mod ID:** `trd`
-*   **Mod Group:** `com.trd`
-*   **Текущая версия мода:** `0.0.1-alpha
-
----
-
-## 🤝 Вклад в разработку
-
-Проект находится в активной разработке. Если ты хочешь помочь (кодом, идеями, артами, текстурами), создавай **issue** или **pull request** в [репозитории на GitHub](https://github.com/TONG-Industries/Crustal-Incursion). Будем рады любой помощи!
-
----
-
-## 📬 Контакты
-
-*   **GitHub:** [TONG-Industries/Crustal-Incursion](https://github.com/TONG-Industries/Crustal-Incursion)
-*   **Discord:** *https://discord.gg/fnRfYfry7F*
----
+* **Discord:** *https://discord.gg/fnRfYfry7F*
