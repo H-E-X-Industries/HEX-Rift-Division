@@ -18,10 +18,14 @@ import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.level.pathfinder.PathFinder;
+import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
 import net.minecraft.world.phys.Vec3;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
@@ -82,7 +86,19 @@ public class DepthWormEntity extends Monster implements GeoEntity {
             this.nestPos = nestPos;
         }
     }
-
+    // DepthWormEntity.java
+    @Override
+    protected PathNavigation createNavigation(Level level) {
+        return new GroundPathNavigation(this, level) {
+            @Override
+            protected PathFinder createPathFinder(int pMaxVisitedNodes) {
+                // Стандарт: 1024. Увеличиваем в 4–8 раз для длинных путей.
+                this.nodeEvaluator = new WalkNodeEvaluator();
+                this.nodeEvaluator.setCanPassDoors(true);
+                return new PathFinder(this.nodeEvaluator, 4096);
+            }
+        };
+    }
     public BlockPos getBoundNestPos() {
         String id = this.entityData.get(BOUND_NEST_ID);
         if (id == null || id.isEmpty()) return null;

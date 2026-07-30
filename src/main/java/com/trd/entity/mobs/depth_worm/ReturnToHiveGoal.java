@@ -32,13 +32,73 @@ public class ReturnToHiveGoal extends Goal {
     private BlockPos routerTarget = null;
     private static final double ROUTER_DISABLE_DISTANCE_SQ = 256.0;
     private static final double ROUTER_ARRIVE_DISTANCE_SQ = 4.0;
-    private static final double LONG_RANGE_THRESHOLD_SQ = 1024.0; // 32^2
 
     public ReturnToHiveGoal(DepthWormEntity worm) {
         this.worm = worm;
         this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
+    // ⭐ НОВЫЕ ПОЛЯ
+    private BlockPos relayTarget = null;
+    private static final double RELAY_SWITCH_DISTANCE_SQ = 9.0; // 3 блока
+    private static final double LONG_RANGE_THRESHOLD_SQ = 4096.0; // 64^2 — увеличили с 32
 
+    // ⭐ НОВЫЙ МЕТОД: получить ID сети червя
+    private UUID getWormNetworkId() {
+        BlockPos bound = worm.getBoundNestPos();
+        if (bound != null) {
+            BlockEntity be = worm.level().getBlockEntity(bound);
+            if (be instanceof HiveNetworkMember member) return member.getNetworkId();
+        }
+        if (targetPos != null) {
+            BlockEntity be = worm.level().getBlockEntity(targetPos);
+            if (be instanceof HiveNetworkMember member) return member.getNetworkId();
+        }
+        return null;
+    }
+
+    // ⭐ НОВЫЙ МЕТОД: найти лучший промежуточный маяк
+    private BlockPos findNearestRelay() {
+        BlockPos lastExit = worm.getLastExitPos();
+        if (lastExit != null) {
+            double distToExit = worm.distanceToSqr(
+                    lastExit.getX()+0.5, lastExit.getY()+0.5, lastExit.getZ()+0.5);
+            double distToTarget = targetPos != null ? worm.distanceToSqr(
+                    targetPos.getX()+0.5, targetPos.getY()+0.5, targetPos.getZ()+0.5) : Double.MAX_VALUE;
+
+            if (distToExit < distToTarget && distToExit > 4.0 && worm.level().isLoaded(lastExit)) {
+                return lastExit;
+            }
+        }
+
+        UUID netId = getWormNetworkId();
+        if (netId == null) return null;
+        HiveNetworkManager manager = HiveNetworkManager.get(worm.level());
+        if (manager == null) return null;
+        HiveNetwork network = manager.getNetwork(netId);
+        if (network == null || network.members.isEmpty()) return null;
+
+        BlockPos best = null;
+        double bestScore = Double.MAX_VALUE;
+        Vec3 wormPos = worm.position();
+
+        for (BlockPos member : network.members) {
+            if (!worm.level().isLoaded(member)) continue;
+
+            double distToWorm = wormPos.distanceToSqr(
+                    member.getX()+0.5, member.getY()+0.5, member.getZ()+0.5);
+
+            if (distToWorm < 4.0) continue; // ⭐ Убрали верхний лимит
+
+            double distToTarget = targetPos != null ? targetPos.distSqr(member) : 0;
+            double score = distToWorm + distToTarget * 0.3;
+
+            if (score < bestScore) {
+                bestScore = score;
+                best = member;
+            }
+        }
+        return best;
+    }
     @Override
     public boolean canUse() {
         if (worm.isColonist()) return false;
@@ -50,15 +110,21 @@ public class ReturnToHiveGoal extends Goal {
             if (target != null && target.isAlive()) return false;
         }
 
-        // ⭐ boundNest — приоритет №1, работает с ЛЮБОГО расстояния
         BlockPos boundNest = worm.getBoundNestPos();
-        if (boundNest != null && isValidEntryPoint(boundNest)) {
-            this.targetPos = boundNest;
-            this.targetIsSoil = isSoil(boundNest);
-            return true;
+        if (boundNest != null) {
+            if (worm.level().isLoaded(boundNest)) {
+                if (isValidEntryPoint(boundNest)) {
+                    this.targetPos = boundNest;
+                    this.targetIsSoil = isSoil(boundNest);
+                    return true;
+                }
+            } else {
+                this.targetPos = boundNest;
+                this.targetIsSoil = false;
+                return true;
+            }
         }
 
-        // Локальный поиск только если boundNest нет
         return findAndSetNearestEntry();
     }
 
@@ -166,6 +232,7 @@ public class ReturnToHiveGoal extends Goal {
         this.lastPos = worm.blockPosition();
         this.routerActive = false;
         this.routerTarget = null;
+        this.relayTarget = null; // ⭐
     }
 
     @Override
@@ -192,13 +259,28 @@ public class ReturnToHiveGoal extends Goal {
             return;
         }
 
-        // ⭐ ДАЛЬНИЕ РАССТОЯНИЯ: прямое движение без pathfinding
         if (distSq > LONG_RANGE_THRESHOLD_SQ) {
             stuckTicks = 0;
-            worm.getMoveControl().setWantedPosition(targetX, targetY, targetZ, 1.2D);
-            worm.getLookControl().setLookAt(targetX, targetY + 0.5, targetZ, 30.0F, 30.0F);
+
+            if (relayTarget == null ||
+                    worm.distanceToSqr(relayTarget.getX()+0.5, relayTarget.getY()+0.5, relayTarget.getZ()+0.5) < RELAY_SWITCH_DISTANCE_SQ) {
+                relayTarget = findNearestRelay();
+            }
+
+            if (relayTarget != null) {
+                worm.getNavigation().moveTo(
+                        relayTarget.getX()+0.5, relayTarget.getY()+0.5, relayTarget.getZ()+0.5, 1.2D);
+                // ⭐ Смотрим на маяк
+                worm.getLookControl().setLookAt(
+                        relayTarget.getX()+0.5, relayTarget.getY()+0.5, relayTarget.getZ()+0.5,
+                        30.0F, 30.0F);
+            } else {
+                worm.getMoveControl().setWantedPosition(targetX, targetY, targetZ, 1.2D);
+                worm.getLookControl().setLookAt(targetX, targetY + 0.5, targetZ);
+            }
             return;
         }
+
 
         if (routerActive && distSq < ROUTER_DISABLE_DISTANCE_SQ) {
             routerActive = false;
@@ -244,6 +326,13 @@ public class ReturnToHiveGoal extends Goal {
                     }
                 }
                 worm.getLookControl().setLookAt(targetX, targetY + 0.5, targetZ);
+
+                if (stuckTicks > STUCK_THRESHOLD && phase == ApproachPhase.NAVIGATING) {
+                    if (worm.onGround()) {
+                        worm.getJumpControl().jump();
+                    }
+                    relayTarget = null;
+                }
             }
 
             case SLIDING -> {
@@ -316,11 +405,10 @@ public class ReturnToHiveGoal extends Goal {
         if (worm.isColonist()) return false;
         if (targetPos == null) return false;
         if (worm.isRetreating()) {
-            // продолжаем отступление
         } else if (worm.getTarget() != null && worm.getTarget().isAlive()) {
             return false;
         }
-        if (stuckTicks > STUCK_THRESHOLD * 3) return false;
+        if (stuckTicks > STUCK_THRESHOLD * 5) return false; // ⭐ 10 сек
         return isValidEntryPoint(targetPos);
     }
 
@@ -333,6 +421,7 @@ public class ReturnToHiveGoal extends Goal {
         this.phase = ApproachPhase.NAVIGATING;
         this.routerActive = false;
         this.routerTarget = null;
+        relayTarget = null; // ⭐ СБРОС
         worm.getNavigation().stop();
     }
 }
