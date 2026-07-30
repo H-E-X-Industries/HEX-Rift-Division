@@ -554,7 +554,7 @@ public class DepthWormEntity extends Monster implements GeoEntity {
     public void addKillPoints(Entity victim) {
         int points = 1;
         if (victim instanceof LivingEntity le) {
-            points = Math.max(1, (int) (le.getMaxHealth() / 2.0f));
+            points = Math.max(1, (int) (le.getMaxHealth()));
         }
         this.entityData.set(KILLS, this.getKills() + points);
     }

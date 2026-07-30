@@ -72,7 +72,11 @@ public class HiveNetwork {
     private static final int COLONIZATION_COOLDOWN = 2400; // 2 минуты
     public int maxExpansionRadius = 16;
     public BlockPos hiveCenter = null;
-
+    // ⭐ НОВЫЕ ПОЛЯ (в начало класса)
+    private UUID bridgeTargetId = null;
+    private BlockPos bridgeCursor = null;
+    private long lastBridgeBuildTime = 0;
+    private static final long BRIDGE_BUILD_INTERVAL = 200; // 10 сек
     public enum DevelopmentScenario {
         STARTUP, RAPID_GROWTH, EXPAND_TERRITORY, BUILD_NESTS,
         CONSOLIDATE, AGGRESSIVE_PUSH, DEFENSIVE_BUILDUP, SURVIVAL
@@ -259,7 +263,9 @@ public class HiveNetwork {
             makeDecisions(level);
         }
         processColonization(level); // ⭐ Expedition тикает каждый тик, иначе таймауты и ожидания ломаются
-
+        if (time % 20 == 0) {
+            processBridgeBuilding(level);
+        }
         if (time % 200 == 0) {
             int totalWorms = getTotalWormsIncludingActive(level);
             boolean hasReserve = totalWorms >= MIN_WORMS_FOR_RESERVE;
@@ -271,6 +277,187 @@ public class HiveNetwork {
                     " | Members: " + members.size() +
                     " | Colonization: " + colonizationPhase +
                     " | Momentum: " + getDominantDirection());
+        }
+    }
+
+    private void processBridgeBuilding(Level level) {
+        if (!isAwakened || currentState == HiveState.DEAD) return;
+        if (hiveCenter == null) return;
+
+        HiveNetworkManager manager = HiveNetworkManager.get(level);
+        if (manager == null) return;
+
+        if (manager.getNetwork(this.id) != this) return;
+
+        // Поиск цели для моста
+        if (bridgeTargetId == null) {
+            HiveNetwork bestTarget = null;
+            double bestDist = Double.MAX_VALUE;
+
+            for (HiveNetwork other : manager.getNetworks()) {
+                if (other.id.equals(this.id)) continue;
+                if (other.hiveCenter == null) continue;
+                double dist = Math.sqrt(this.hiveCenter.distSqr(other.hiveCenter));
+                if (dist <= 15.0 && dist < bestDist) {
+                    bestDist = dist;
+                    bestTarget = other;
+                }
+            }
+
+            if (bestTarget != null) {
+                bridgeTargetId = bestTarget.id;
+                bridgeCursor = findNearestMemberTo(bestTarget.hiveCenter);
+                lastBridgeBuildTime = level.getGameTime();
+                System.out.println("[Hive " + id + "] Starting bridge to " + bestTarget.id + " at " + bestTarget.hiveCenter);
+            }
+        }
+
+        if (bridgeTargetId == null) return;
+
+        long time = level.getGameTime();
+        if (time - lastBridgeBuildTime < BRIDGE_BUILD_INTERVAL) return;
+
+        HiveNetwork targetNet = manager.getNetwork(bridgeTargetId);
+        if (targetNet == null || targetNet.hiveCenter == null) {
+            bridgeTargetId = null;
+            bridgeCursor = null;
+            return;
+        }
+
+        if (this.id.equals(targetNet.id)) {
+            bridgeTargetId = null;
+            bridgeCursor = null;
+            return;
+        }
+
+        if (Math.sqrt(this.hiveCenter.distSqr(targetNet.hiveCenter)) > 15.0) {
+            bridgeTargetId = null;
+            bridgeCursor = null;
+            return;
+        }
+
+        // Защита: bridgeCursor должен быть валиден
+        if (bridgeCursor == null) {
+            bridgeCursor = findNearestMemberTo(targetNet.hiveCenter);
+            if (bridgeCursor == null) {
+                bridgeTargetId = null;
+                return;
+            }
+        }
+
+        BlockPos targetPos = targetNet.hiveCenter;
+        int dx = Integer.compare(targetPos.getX() - bridgeCursor.getX(), 0);
+        int dy = Integer.compare(targetPos.getY() - bridgeCursor.getY(), 0);
+        int dz = Integer.compare(targetPos.getZ() - bridgeCursor.getZ(), 0);
+
+        Direction primaryDir;
+        if (dx != 0 && Math.abs(targetPos.getX() - bridgeCursor.getX()) >= Math.abs(targetPos.getZ() - bridgeCursor.getZ())) {
+            primaryDir = dx > 0 ? Direction.EAST : Direction.WEST;
+        } else if (dz != 0) {
+            primaryDir = dz > 0 ? Direction.SOUTH : Direction.NORTH;
+        } else if (dy != 0) {
+            primaryDir = dy > 0 ? Direction.UP : Direction.DOWN;
+        } else {
+            manager.mergeNetworks(this.id, targetNet.id, level);
+            System.out.println("[Hive " + id + "] Bridge reached target! Merged with " + bridgeTargetId);
+            bridgeTargetId = null;
+            bridgeCursor = null;
+            return;
+        }
+
+        BlockPos nextPos = bridgeCursor.relative(primaryDir);
+
+        // Если заблокировано — пробуем обойти (БЕЗОПАСНО для UP/DOWN)
+        if (!canPlaceBridgeBlock(level, nextPos)) {
+            Direction[] alternates = getSafeAlternates(primaryDir);
+            boolean placed = false;
+            for (Direction alt : alternates) {
+                BlockPos altPos = bridgeCursor.relative(alt);
+                if (canPlaceBridgeBlock(level, altPos)) {
+                    nextPos = altPos;
+                    placed = true;
+                    break;
+                }
+            }
+            if (!placed) return; // Застряли, ждём следующего цикла
+        }
+
+        placeBridgeSoil(level, nextPos);
+        bridgeCursor = nextPos;
+        lastBridgeBuildTime = time;
+
+        System.out.println("[Hive " + id + "] Bridge block at " + nextPos + " towards " + targetPos);
+
+        // Проверяем контакт с чужой сетью
+        for (Direction dir : Direction.values()) {
+            BlockPos neighbor = nextPos.relative(dir);
+            BlockEntity be = level.getBlockEntity(neighbor);
+            if (be instanceof HiveNetworkMember member) {
+                UUID neighborId = member.getNetworkId();
+                if (neighborId != null && neighborId.equals(bridgeTargetId)) {
+                    manager.mergeNetworks(this.id, bridgeTargetId, level);
+                    System.out.println("[Hive " + id + "] Bridge connected! Merged with " + bridgeTargetId);
+                    bridgeTargetId = null;
+                    bridgeCursor = null;
+                    return;
+                }
+            }
+        }
+
+        if (nextPos.distSqr(targetPos) <= 1) {
+            manager.mergeNetworks(this.id, bridgeTargetId, level);
+            bridgeTargetId = null;
+            bridgeCursor = null;
+        }
+    }
+
+    // ⭐ БЕЗОПАСНАЯ замена getClockWise/getCounterClockWise
+    private Direction[] getSafeAlternates(Direction primary) {
+        if (primary.getAxis().isHorizontal()) {
+            return new Direction[] {
+                    primary.getClockWise(),
+                    primary.getCounterClockWise(),
+                    Direction.UP,
+                    Direction.DOWN
+            };
+        } else {
+            // UP/DOWN — обходим по горизонтали
+            return new Direction[] {
+                    Direction.NORTH,
+                    Direction.SOUTH,
+                    Direction.EAST,
+                    Direction.WEST
+            };
+        }
+    }
+
+    private BlockPos findNearestMemberTo(BlockPos target) {
+        BlockPos best = hiveCenter;
+        double bestDist = Double.MAX_VALUE;
+        for (BlockPos member : members) {
+            double d = member.distSqr(target);
+            if (d < bestDist) {
+                bestDist = d;
+                best = member;
+            }
+        }
+        return best;
+    }
+
+    private boolean canPlaceBridgeBlock(Level level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        return state.isAir();
+    }
+
+    private void placeBridgeSoil(Level level, BlockPos pos) {
+        level.setBlock(pos, ModBlocks.HIVE_SOIL.get().defaultBlockState(), 3);
+        // HiveSoilBlock.onPlace() автоматически подхватит сеть через соседа-bridgeCursor
+        // Но на всякий случай явно регистрируем:
+        BlockEntity be = level.getBlockEntity(pos);
+        if (be instanceof HiveSoilBlockEntity soil) {
+            soil.setNetworkId(this.id);
+            HiveNetworkManager manager = HiveNetworkManager.get(level);
+            if (manager != null) manager.addNode(this.id, pos, false);
         }
     }
 
@@ -1051,6 +1238,11 @@ public class HiveNetwork {
             tag.put("Expedition", currentExpedition.toNBT());
         }
 
+        if (bridgeTargetId != null) {
+            tag.putUUID("BridgeTarget", bridgeTargetId);
+            tag.putLong("BridgeCursor", bridgeCursor.asLong());
+            tag.putLong("LastBridgeBuild", lastBridgeBuildTime);
+        }
 
         if (lastSuccessfulExpansion != null) {
             tag.putLong("LastExpansion", lastSuccessfulExpansion.asLong());
@@ -1110,6 +1302,12 @@ public class HiveNetwork {
             if (momentumTag.contains(dir.getName())) {
                 net.growthMomentum.put(dir, momentumTag.getInt(dir.getName()));
             }
+        }
+
+        if (tag.contains("BridgeTarget")) {
+            net.bridgeTargetId = tag.getUUID("BridgeTarget");
+            net.bridgeCursor = BlockPos.of(tag.getLong("BridgeCursor"));
+            net.lastBridgeBuildTime = tag.getLong("LastBridgeBuild");
         }
 
         try { net.currentScenario = DevelopmentScenario.valueOf(tag.getString("Scenario")); } catch (Exception ignored) {}
