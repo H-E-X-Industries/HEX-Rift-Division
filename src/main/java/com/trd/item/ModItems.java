@@ -82,7 +82,7 @@ public class ModItems {
     public static final RegistryObject<Item> DEPTH_WORM_SPAWN_EGG = ITEMS.register("depth_worm_spawn_egg",
             () -> new DepthWormSpawnEggItem(new Item.Properties()));
     public static final RegistryObject<Item> PIG_TURRET_PLACER = ITEMS.register("pig_turret_placer",
-            () -> new PigTurretPlacerItem(new Item.Properties()));
+            () -> new PigTurretPlacerItem(new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> IRON_PLATE = ITEMS.register("iron_plate",
             () -> new Item(new Item.Properties()));
     public static final RegistryObject<Item> ALUMINUM_PLATE = ITEMS.register("aluminum_plate",

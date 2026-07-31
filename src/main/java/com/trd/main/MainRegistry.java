@@ -221,6 +221,7 @@ public class MainRegistry {
             event.accept(ModItems.BEAM_PLACER.get());
             event.accept(ModItems.SCREWDRIVER.get());
             event.accept(ModItems.POKER.get());
+            event.accept(ModItems.HAMMER.get());
 
             event.accept(ModItems.BELT.get());
             event.accept(ModItems.WIRE_COIL);
