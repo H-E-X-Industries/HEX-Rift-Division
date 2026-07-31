@@ -93,17 +93,7 @@ public class ConglomerateVeinFeature extends Feature<ConglomerateVeinConfigurati
     }
 
     private ServerLevel getServerLevel(WorldGenLevel level) {
-        if (level instanceof ServerLevel sl) return sl;
-        if (level instanceof WorldGenRegion region) {
-            try {
-                Field levelField = WorldGenRegion.class.getDeclaredField("level");
-                levelField.setAccessible(true);
-                return (ServerLevel) levelField.get(region);
-            } catch (Exception e) {
-                return null;
-            }
-        }
-        return null;
+        return level.getLevel();
     }
 
     private boolean isReplaceable(BlockState state) {
