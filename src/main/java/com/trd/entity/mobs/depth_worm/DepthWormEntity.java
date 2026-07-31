@@ -11,6 +11,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
@@ -22,7 +23,10 @@ import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.level.pathfinder.PathFinder;
 import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
@@ -86,19 +90,50 @@ public class DepthWormEntity extends Monster implements GeoEntity {
             this.nestPos = nestPos;
         }
     }
-    // DepthWormEntity.java
     @Override
     protected PathNavigation createNavigation(Level level) {
         return new GroundPathNavigation(this, level) {
             @Override
             protected PathFinder createPathFinder(int pMaxVisitedNodes) {
-                // Стандарт: 1024. Увеличиваем в 4–8 раз для длинных путей.
-                this.nodeEvaluator = new WalkNodeEvaluator();
+                this.nodeEvaluator = new WalkNodeEvaluator() {
+                    @Override
+                    public BlockPathTypes getBlockPathType(BlockGetter level, int x, int y, int z, Mob mob) {
+                        BlockPathTypes type = super.getBlockPathType(level, x, y, z, mob);
+                        if (type == BlockPathTypes.BLOCKED) return type;
+                        BlockPos checkPos = new BlockPos(x, y, z);
+                        BlockState state = level.getBlockState(checkPos);
+                        if (isPathBlockingPlant(level, state, checkPos)) {
+                            return BlockPathTypes.BLOCKED;
+                        }
+                        return type;
+                    }
+
+                    @Override
+                    public BlockPathTypes getBlockPathType(BlockGetter level, int x, int y, int z) {
+                        BlockPathTypes type = super.getBlockPathType(level, x, y, z);
+                        if (type == BlockPathTypes.BLOCKED) return type;
+                        BlockPos checkPos = new BlockPos(x, y, z);
+                        BlockState state = level.getBlockState(checkPos);
+                        if (isPathBlockingPlant(level, state, checkPos)) {
+                            return BlockPathTypes.BLOCKED;
+                        }
+                        return type;
+                    }
+
+                    private boolean isPathBlockingPlant(BlockGetter level, BlockState state, BlockPos pos) {
+                        Block block = state.getBlock();
+                        // Только растения (BushBlock) с физической коллизией заставляют застревать
+                        if (!(block instanceof net.minecraft.world.level.block.BushBlock)) return false;
+                        // Если нет коллизии — проходим насквозь (трава, цветы)
+                        return !state.getCollisionShape(level, pos).isEmpty();
+                    }
+                };
                 this.nodeEvaluator.setCanPassDoors(true);
                 return new PathFinder(this.nodeEvaluator, 4096);
             }
         };
     }
+
     public BlockPos getBoundNestPos() {
         String id = this.entityData.get(BOUND_NEST_ID);
         if (id == null || id.isEmpty()) return null;
@@ -414,11 +449,21 @@ public class DepthWormEntity extends Monster implements GeoEntity {
                 return;
             }
 
-            // ⭐ Вода — всегда отступаем
+            // ⭐ Вода — всегда отступаем + пытаемся выбраться
             if (this.isInWater()) {
                 this.setDeltaMovement(this.getDeltaMovement().x, 0.35D, this.getDeltaMovement().z);
                 this.setTarget(null);
                 this.setRetreating(true);
+
+                // ⭐ Ищем сушу каждые 10 тиков
+                if (this.tickCount % 10 == 0) {
+                    BlockPos land = findNearestLand(8);
+                    if (land != null) {
+                        this.getNavigation().moveTo(
+                                land.getX() + 0.5, land.getY() + 0.5, land.getZ() + 0.5, 1.2D
+                        );
+                    }
+                }
             } else if (this.isRetreating()) {
                 // Уже отступаем — продолжаем, цель сброшена в setTarget()
             } else {
@@ -503,6 +548,34 @@ public class DepthWormEntity extends Monster implements GeoEntity {
         if (!level().isClientSide) {
             checkBrutalTransformation();
         }
+    }
+
+    @Nullable
+    private BlockPos findNearestLand(int radius) {
+        BlockPos pos = this.blockPosition();
+        BlockPos best = null;
+        double bestDist = Double.MAX_VALUE;
+
+        for (int y = -2; y <= 3; y++) {
+            for (int x = -radius; x <= radius; x++) {
+                for (int z = -radius; z <= radius; z++) {
+                    BlockPos check = pos.offset(x, y, z);
+                    BlockState state = this.level().getBlockState(check);
+                    if (!state.getFluidState().isEmpty()) continue;
+                    if (state.isAir()) continue;
+
+                    BlockPos above = check.above();
+                    if (this.level().getBlockState(above).isAir()) {
+                        double d = pos.distSqr(above);
+                        if (d < bestDist) {
+                            bestDist = d;
+                            best = above;
+                        }
+                    }
+                }
+            }
+        }
+        return best;
     }
 
     @Override

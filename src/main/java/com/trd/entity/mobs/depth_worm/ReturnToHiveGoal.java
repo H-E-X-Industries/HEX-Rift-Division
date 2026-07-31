@@ -27,7 +27,7 @@ public class ReturnToHiveGoal extends Goal {
 
     private enum ApproachPhase { NAVIGATING, SLIDING, ENTERING }
     private ApproachPhase phase = ApproachPhase.NAVIGATING;
-
+    private int slidingTicks = 0;
     private boolean routerActive = false;
     private BlockPos routerTarget = null;
     private static final double ROUTER_DISABLE_DISTANCE_SQ = 256.0;
@@ -229,10 +229,11 @@ public class ReturnToHiveGoal extends Goal {
     public void start() {
         this.phase = ApproachPhase.NAVIGATING;
         this.stuckTicks = 0;
+        this.slidingTicks = 0; // ⭐
         this.lastPos = worm.blockPosition();
         this.routerActive = false;
         this.routerTarget = null;
-        this.relayTarget = null; // ⭐
+        this.relayTarget = null;
     }
 
     @Override
@@ -244,14 +245,18 @@ public class ReturnToHiveGoal extends Goal {
         if (targetPos == null) return;
 
         double targetX = targetPos.getX() + 0.5;
-        double targetY = targetPos.getY() + (targetIsSoil ? 0.5 : 0.8);
         double targetZ = targetPos.getZ() + 0.5;
+        // ⭐ Для sliding/look/enter — центр блока (куда физически ползём)
+        double targetY = targetPos.getY() + 0.5;
+        // ⭐ Для pathfinding — уровень пола блока (куда pathfinder может дойти)
+        double navTargetY = targetPos.getY();
 
         Vec3 wormPos = worm.position();
         double distSq = wormPos.distanceToSqr(targetX, targetY, targetZ);
+        double navDistSq = wormPos.distanceToSqr(targetX, navTargetY, targetZ);
         BlockPos currentBlockPos = worm.blockPosition();
 
-        // ⭐ Мгновенное всасывание, если червь уже внутри блока улья
+        // Мгновенное всасывание, если червь уже внутри блока улья
         if (isValidHiveEntry(currentBlockPos)) {
             this.targetPos = currentBlockPos;
             this.targetIsSoil = isSoil(currentBlockPos);
@@ -259,7 +264,8 @@ public class ReturnToHiveGoal extends Goal {
             return;
         }
 
-        if (distSq > LONG_RANGE_THRESHOLD_SQ) {
+        // Дальние расстояния — relay-навигация
+        if (navDistSq > LONG_RANGE_THRESHOLD_SQ) {
             stuckTicks = 0;
 
             if (relayTarget == null ||
@@ -270,19 +276,17 @@ public class ReturnToHiveGoal extends Goal {
             if (relayTarget != null) {
                 worm.getNavigation().moveTo(
                         relayTarget.getX()+0.5, relayTarget.getY()+0.5, relayTarget.getZ()+0.5, 1.2D);
-                // ⭐ Смотрим на маяк
                 worm.getLookControl().setLookAt(
                         relayTarget.getX()+0.5, relayTarget.getY()+0.5, relayTarget.getZ()+0.5,
                         30.0F, 30.0F);
             } else {
-                worm.getMoveControl().setWantedPosition(targetX, targetY, targetZ, 1.2D);
-                worm.getLookControl().setLookAt(targetX, targetY + 0.5, targetZ);
+                worm.getMoveControl().setWantedPosition(targetX, navTargetY, targetZ, 1.2D);
+                worm.getLookControl().setLookAt(targetX, targetY, targetZ);
             }
             return;
         }
 
-
-        if (routerActive && distSq < ROUTER_DISABLE_DISTANCE_SQ) {
+        if (routerActive && navDistSq < ROUTER_DISABLE_DISTANCE_SQ) {
             routerActive = false;
             routerTarget = null;
             phase = ApproachPhase.NAVIGATING;
@@ -295,12 +299,17 @@ public class ReturnToHiveGoal extends Goal {
             lastPos = currentBlockPos;
         }
 
+        // ⭐ Определение фаз: sliding только если почти на том же Y
+        double dy = Math.abs(targetY - wormPos.y);
         if (distSq < 1.5) {
             phase = ApproachPhase.ENTERING;
-        } else if (distSq < 8.0) {
+            slidingTicks = 0;
+        } else if (distSq < 8.0 && dy < 2.5) {
+            if (phase != ApproachPhase.SLIDING) slidingTicks = 0;
             phase = ApproachPhase.SLIDING;
         } else {
             phase = ApproachPhase.NAVIGATING;
+            slidingTicks = 0;
         }
 
         switch (phase) {
@@ -312,22 +321,30 @@ public class ReturnToHiveGoal extends Goal {
                     if (routerDistSq < ROUTER_ARRIVE_DISTANCE_SQ) {
                         routerActive = false;
                         routerTarget = null;
-                        pathFound = worm.getNavigation().moveTo(targetX, targetY, targetZ, 1.2D);
+                        pathFound = worm.getNavigation().moveTo(targetX, navTargetY, targetZ, 1.2D);
                     }
                 } else {
-                    pathFound = worm.getNavigation().moveTo(targetX, targetY, targetZ, 1.2D);
+                    pathFound = worm.getNavigation().moveTo(targetX, navTargetY, targetZ, 1.2D);
                     if (!pathFound) {
-                        BlockPos lastExit = worm.getLastExitPos();
-                        if (lastExit != null && !lastExit.equals(targetPos)) {
-                            routerActive = true;
-                            routerTarget = lastExit;
-                            worm.getNavigation().moveTo(routerTarget.getX() + 0.5, routerTarget.getY() + 0.5, routerTarget.getZ() + 0.5, 1.2D);
+                        // ⭐ Если цель прямо над/под (по горизонтали < 4 блоков), но pathfinder не справляется — форсируем sliding
+                        double horizDistSq = (targetX - wormPos.x) * (targetX - wormPos.x)
+                                + (targetZ - wormPos.z) * (targetZ - wormPos.z);
+                        if (horizDistSq < 16.0) {
+                            phase = ApproachPhase.SLIDING;
+                            slidingTicks = 0;
+                        } else {
+                            BlockPos lastExit = worm.getLastExitPos();
+                            if (lastExit != null && !lastExit.equals(targetPos)) {
+                                routerActive = true;
+                                routerTarget = lastExit;
+                                worm.getNavigation().moveTo(routerTarget.getX() + 0.5, routerTarget.getY() + 0.5, routerTarget.getZ() + 0.5, 1.2D);
+                            }
                         }
                     }
                 }
-                worm.getLookControl().setLookAt(targetX, targetY + 0.5, targetZ);
+                worm.getLookControl().setLookAt(targetX, targetY, targetZ);
 
-                if (stuckTicks > STUCK_THRESHOLD && phase == ApproachPhase.NAVIGATING) {
+                if (stuckTicks > STUCK_THRESHOLD) {
                     if (worm.onGround()) {
                         worm.getJumpControl().jump();
                     }
@@ -336,6 +353,19 @@ public class ReturnToHiveGoal extends Goal {
             }
 
             case SLIDING -> {
+                slidingTicks++;
+                if (slidingTicks > 40) {
+                    enterNetwork(targetPos);
+                    return;
+                }
+
+                // ⭐ Если цель заметно выше и мы на земле — прыгаем к ней
+                if (worm.onGround() && targetY - wormPos.y > 1.2) {
+                    worm.getJumpControl().jump();
+                    Vec3 toTargetHoriz = new Vec3(targetX - wormPos.x, 0, targetZ - wormPos.z).normalize();
+                    worm.setDeltaMovement(toTargetHoriz.scale(0.3).x, 0.4, toTargetHoriz.scale(0.3).z);
+                }
+
                 worm.getNavigation().stop();
                 Vec3 toTarget = new Vec3(targetX - wormPos.x, targetY - wormPos.y, targetZ - wormPos.z);
                 double dist = Math.sqrt(distSq);
@@ -417,11 +447,12 @@ public class ReturnToHiveGoal extends Goal {
         this.targetPos = null;
         this.targetIsSoil = false;
         this.stuckTicks = 0;
+        this.slidingTicks = 0; // ⭐
         this.lastPos = BlockPos.ZERO;
         this.phase = ApproachPhase.NAVIGATING;
         this.routerActive = false;
         this.routerTarget = null;
-        relayTarget = null; // ⭐ СБРОС
+        relayTarget = null;
         worm.getNavigation().stop();
     }
 }
