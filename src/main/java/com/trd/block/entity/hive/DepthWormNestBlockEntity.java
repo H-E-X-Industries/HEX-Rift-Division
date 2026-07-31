@@ -42,7 +42,16 @@ public class DepthWormNestBlockEntity extends BlockEntity implements HiveNetwork
         this.networkId = id;
         this.setChanged();
     }
-
+    public CompoundTag removeWormAt(int index) {
+        if (index < 0 || index >= storedWorms.size()) return null;
+        CompoundTag tag = storedWorms.remove(index);
+        setChanged();
+        if (!level.isClientSide && networkId != null) {
+            HiveNetworkManager manager = HiveNetworkManager.get(level);
+            if (manager != null) manager.updateWormCount(networkId, worldPosition, -1);
+        }
+        return tag;
+    }
     public boolean isFull() { return storedWorms.size() >= 3; }
 
     public void addWorm(DepthWormEntity worm) {
@@ -147,7 +156,6 @@ public class DepthWormNestBlockEntity extends BlockEntity implements HiveNetwork
     public void releaseWorms(BlockPos spawnPos, LivingEntity target, boolean forceAll) {
         if (this.level == null || this.level.isClientSide) return;
 
-        // ⭐ НОВОЕ: разделяем червей на готовых к выпуску и остающихся
         List<CompoundTag> readyWorms = new ArrayList<>();
         List<CompoundTag> stayingWorms = new ArrayList<>();
 
@@ -159,47 +167,58 @@ public class DepthWormNestBlockEntity extends BlockEntity implements HiveNetwork
             }
         }
 
-        int countBefore = readyWorms.size();
-        if (countBefore == 0) {
+        if (readyWorms.isEmpty()) {
             this.storedWorms.clear();
             this.storedWorms.addAll(stayingWorms);
             this.setChanged();
             return;
         }
 
-        if (this.level.getGameTime() - lastReleaseTime < 5) return; // Защита от спама
+        // ⭐ ПАЧКАМИ ПО 10
+        int releaseCount = Math.min(10, readyWorms.size());
+        List<CompoundTag> toRelease = new ArrayList<>(readyWorms.subList(0, releaseCount));
+        List<CompoundTag> remaining = new ArrayList<>(readyWorms.subList(releaseCount, readyWorms.size()));
+        stayingWorms.addAll(remaining);
+
+        if (this.level.getGameTime() - lastReleaseTime < 5) return;
         lastReleaseTime = this.level.getGameTime();
 
         if (this.networkId != null) {
             HiveNetworkManager manager = HiveNetworkManager.get(this.level);
             if (manager != null) {
                 HiveNetwork network = manager.getNetwork(this.networkId);
-                if (network != null) network.addActiveWorms(countBefore);
+                if (network != null) network.addActiveWorms(releaseCount);
             }
         }
 
-        for (CompoundTag wormTag : readyWorms) {
+        // ⭐ РАСПРЕДЕЛЯЕМ ПО ТОЧКАМ
+        List<BlockPos> spawnPoints = findMultipleSpawnPoints(spawnPos, releaseCount);
+
+        for (int i = 0; i < toRelease.size(); i++) {
+            CompoundTag wormTag = toRelease.get(i);
+            BlockPos actualSpawn = spawnPoints.get(i % spawnPoints.size());
+
             if (!wormTag.contains("id")) {
                 wormTag.putString("id", "trd:depth_worm");
             }
             wormTag.remove("UUID");
-            if (!wormTag.contains("BoundNest")) wormTag.putLong("BoundNest", this.worldPosition.asLong());
-            if (!wormTag.contains("BoundNest")) wormTag.putLong("BoundNest", this.worldPosition.asLong());
+            if (!wormTag.contains("BoundNest")) {
+                wormTag.putLong("BoundNest", this.worldPosition.asLong());
+            }
 
             final UUID netId = this.networkId;
+            final BlockPos nestPos = this.worldPosition;
 
             Entity entity = EntityType.loadEntityRecursive(wormTag, level, (e) -> {
-                BlockPos actualSpawn = findSpawnPos(spawnPos);
-                e.moveTo(actualSpawn.getX() + 0.5, actualSpawn.getY(), actualSpawn.getZ() + 0.5, level.random.nextFloat() * 360F, 0);
+                e.moveTo(actualSpawn.getX() + 0.5, actualSpawn.getY(), actualSpawn.getZ() + 0.5,
+                        level.random.nextFloat() * 360F, 0);
                 e.setUUID(UUID.randomUUID());
 
                 if (e instanceof DepthWormEntity worm) {
                     worm.setHomePos(actualSpawn);
-                    worm.bindToNest(this.worldPosition);
+                    worm.bindToNest(nestPos);
                     worm.setLastExitPos(actualSpawn);
-                    // ⭐ КРИТИЧНО: сбрасываем retreating при выпуске из гнезда
                     worm.setRetreating(false);
-                    // ⭐ КРИТИЧНО: сбрасываем kills (очки сети) при выпуске — они уже переданы в сеть
                     worm.setKills(0);
 
                     worm.setOnDeathCallback(() -> {
@@ -207,10 +226,7 @@ public class DepthWormNestBlockEntity extends BlockEntity implements HiveNetwork
                             HiveNetworkManager mgr = HiveNetworkManager.get(worm.level());
                             if (mgr != null) {
                                 HiveNetwork net = mgr.getNetwork(netId);
-                                if (net != null) {
-                                    net.removeActiveWorm();
-                                    System.out.println("[Hive] Active worm died. Active total: " + net.activeWorms);
-                                }
+                                if (net != null) net.removeActiveWorm();
                             }
                         }
                     });
@@ -221,14 +237,54 @@ public class DepthWormNestBlockEntity extends BlockEntity implements HiveNetwork
 
             if (entity != null) {
                 level.addFreshEntity(entity);
-                ((ServerLevel)level).sendParticles(ParticleTypes.POOF, entity.getX(), entity.getY(), entity.getZ(), 5, 0.2, 0.2, 0.2, 0.02);
+                ((ServerLevel)level).sendParticles(ParticleTypes.POOF,
+                        entity.getX(), entity.getY(), entity.getZ(), 5, 0.2, 0.2, 0.2, 0.02);
             }
         }
 
         this.storedWorms.clear();
         this.storedWorms.addAll(stayingWorms);
         this.setChanged();
-        System.out.println("[Hive] Nest at " + this.worldPosition + " released " + countBefore + " worms.");
+        System.out.println("[Hive] Nest at " + this.worldPosition + " released batch of " + releaseCount + " worms.");
+    }
+
+    private List<BlockPos> findMultipleSpawnPoints(BlockPos center, int needed) {
+        List<BlockPos> points = new ArrayList<>();
+
+        // Спираль от центра: ищем воздух над твёрдым блоком
+        for (int radius = 1; radius <= 4 && points.size() < needed; radius++) {
+            for (int x = -radius; x <= radius && points.size() < needed; x++) {
+                for (int z = -radius; z <= radius && points.size() < needed; z++) {
+                    if (Math.abs(x) != radius && Math.abs(z) != radius) continue;
+
+                    for (int y = 0; y <= 2 && points.size() < needed; y++) {
+                        BlockPos p = center.offset(x, y, z);
+                        if (level.getBlockState(p).isAir() &&
+                                !level.getBlockState(p.below()).isAir() &&
+                                level.getBlockState(p.below()).getFluidState().isEmpty()) {
+                            points.add(p);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Fallback: если не нашли достаточно твёрдых поверхностей — хотя бы воздух
+        if (points.size() < needed) {
+            for (int y = 1; y <= 5 && points.size() < needed; y++) {
+                BlockPos p = center.above(y);
+                if (level.getBlockState(p).isAir()) {
+                    points.add(p);
+                }
+            }
+        }
+
+        // Если совсем ничего — спавним прямо в центре (и выше)
+        while (points.size() < needed) {
+            points.add(center.above(points.size()));
+        }
+
+        return points;
     }
 
     @Override

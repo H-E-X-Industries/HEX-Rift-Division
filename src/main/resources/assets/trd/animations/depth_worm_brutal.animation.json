@@ -267,6 +267,42 @@
 				}
 			}
 		},
+      "death": {
+        "loop": "hold_on_last_frame",
+        "animation_length": 1.5,
+        "bones": {
+          "7": {
+            "position": {
+              "0.0": {
+                "vector": [0, 0, 0]
+              },
+              "1.5": {
+                "vector": [0, 0, -6]
+              }
+            }
+          },
+          "8": {
+            "position": {
+              "0.0": {
+                "vector": [0, 0, 0]
+              },
+              "1.5": {
+                "vector": [0, 0, -4]
+              }
+            }
+          },
+          "9": {
+            "position": {
+              "0.0": {
+                "vector": [0, 0, 0]
+              },
+              "1.5": {
+                "vector": [0, 0, -2]
+              }
+            }
+          }
+        }
+      },
 		"jump": {
 			"loop": "hold_on_last_frame",
 			"animation_length": 0.5,

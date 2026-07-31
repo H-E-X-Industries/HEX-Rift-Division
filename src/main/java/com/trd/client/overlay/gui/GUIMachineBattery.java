@@ -44,7 +44,7 @@ public class GUIMachineBattery extends AbstractContainerScreen<MachineBatteryMen
 
         // Увеличиваем высоту GUI на 28 пикселей (инвентарь сдвинут вниз)
         this.imageWidth = 176;
-        this.imageHeight = 194; // было 166, +28
+        this.imageHeight = 195; // было 166, +28
     }
 
     @Override

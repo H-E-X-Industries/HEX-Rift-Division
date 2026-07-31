@@ -117,7 +117,7 @@ public class ModItemModelProvider extends ItemModelProvider {
 
         simpleItem(ModItems.MOLD_INGOT);
         simpleItem(ModItems.BELT);
-
+        simpleItem(ModItems.PIG_TURRET_PLACER);
         simpleItem(ModItems.GRENADE_NUC);
         simpleItem(ModItems.GRENADE_IF_HE);
         simpleItem(ModItems.GRENADE_IF_FIRE);

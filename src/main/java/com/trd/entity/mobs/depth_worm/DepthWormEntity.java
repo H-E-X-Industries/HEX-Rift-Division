@@ -11,6 +11,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
@@ -18,10 +19,17 @@ import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.level.pathfinder.PathFinder;
+import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
 import net.minecraft.world.phys.Vec3;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
@@ -56,7 +64,10 @@ public class DepthWormEntity extends Monster implements GeoEntity {
     public void setOnDeathCallback(Runnable callback) {
         this.onDeathCallback = callback;
     }
-
+    private static final EntityDataAccessor<Boolean> IS_COLONIST =
+            SynchedEntityData.defineId(DepthWormEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<String> COLONIST_TARGET =
+            SynchedEntityData.defineId(DepthWormEntity.class, EntityDataSerializers.STRING);
     @Override
     public void die(DamageSource source) {
         super.die(source);
@@ -78,6 +89,49 @@ public class DepthWormEntity extends Monster implements GeoEntity {
             this.entityData.set(BOUND_NEST_ID, nestPos.asLong() + "");
             this.nestPos = nestPos;
         }
+    }
+    @Override
+    protected PathNavigation createNavigation(Level level) {
+        return new GroundPathNavigation(this, level) {
+            @Override
+            protected PathFinder createPathFinder(int pMaxVisitedNodes) {
+                this.nodeEvaluator = new WalkNodeEvaluator() {
+                    @Override
+                    public BlockPathTypes getBlockPathType(BlockGetter level, int x, int y, int z, Mob mob) {
+                        BlockPathTypes type = super.getBlockPathType(level, x, y, z, mob);
+                        if (type == BlockPathTypes.BLOCKED) return type;
+                        BlockPos checkPos = new BlockPos(x, y, z);
+                        BlockState state = level.getBlockState(checkPos);
+                        if (isPathBlockingPlant(level, state, checkPos)) {
+                            return BlockPathTypes.BLOCKED;
+                        }
+                        return type;
+                    }
+
+                    @Override
+                    public BlockPathTypes getBlockPathType(BlockGetter level, int x, int y, int z) {
+                        BlockPathTypes type = super.getBlockPathType(level, x, y, z);
+                        if (type == BlockPathTypes.BLOCKED) return type;
+                        BlockPos checkPos = new BlockPos(x, y, z);
+                        BlockState state = level.getBlockState(checkPos);
+                        if (isPathBlockingPlant(level, state, checkPos)) {
+                            return BlockPathTypes.BLOCKED;
+                        }
+                        return type;
+                    }
+
+                    private boolean isPathBlockingPlant(BlockGetter level, BlockState state, BlockPos pos) {
+                        Block block = state.getBlock();
+                        // Только растения (BushBlock) с физической коллизией заставляют застревать
+                        if (!(block instanceof net.minecraft.world.level.block.BushBlock)) return false;
+                        // Если нет коллизии — проходим насквозь (трава, цветы)
+                        return !state.getCollisionShape(level, pos).isEmpty();
+                    }
+                };
+                this.nodeEvaluator.setCanPassDoors(true);
+                return new PathFinder(this.nodeEvaluator, 4096);
+            }
+        };
     }
 
     public BlockPos getBoundNestPos() {
@@ -122,6 +176,11 @@ public class DepthWormEntity extends Monster implements GeoEntity {
         if (lastExit != null) {
             tag.putLong("LastExitPos", lastExit.asLong());
         }
+        tag.putBoolean("IsColonist", this.isColonist());
+        BlockPos colonistTarget = getColonistTarget();
+        if (colonistTarget != null) {
+            tag.putLong("ColonistTarget", colonistTarget.asLong());
+        }
     }
 
     @Override
@@ -144,8 +203,26 @@ public class DepthWormEntity extends Monster implements GeoEntity {
         if (tag.contains("LastExitPos")) {
             setLastExitPos(BlockPos.of(tag.getLong("LastExitPos")));
         }
+        if (tag.contains("IsColonist")) {
+            this.entityData.set(IS_COLONIST, tag.getBoolean("IsColonist"));
+        }
+        if (tag.contains("ColonistTarget")) {
+            this.entityData.set(COLONIST_TARGET, tag.getLong("ColonistTarget") + "");
+        }
+    }
+    @Override
+    public void setTarget(@Nullable LivingEntity target) {
+        if (target != null && this.isColonist()) {
+            return;
+        }
+        super.setTarget(target);
     }
 
+    @Override
+    public boolean canAttack(LivingEntity target) {
+        if (this.isColonist()) return false;
+        return !(target instanceof DepthWormEntity) && super.canAttack(target);
+    }
     public DepthWormEntity(EntityType<? extends Monster> entityType, Level level) {
         super(entityType, level);
         this.setPathfindingMalus(BlockPathTypes.DAMAGE_OTHER, -1.0F);
@@ -163,12 +240,15 @@ public class DepthWormEntity extends Monster implements GeoEntity {
                 .add(Attributes.MAX_HEALTH, 15.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.25D)
                 .add(Attributes.ATTACK_DAMAGE, 2.5D)
-                .add(Attributes.FOLLOW_RANGE, 24.0D);
+                .add(Attributes.FOLLOW_RANGE, 24.0D)
+                .add(Attributes.ARMOR, 3.0D); // ⭐ +3 брони
     }
 
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
+        this.entityData.define(IS_COLONIST, false);
+        this.entityData.define(COLONIST_TARGET, "");
         this.entityData.define(IS_ATTACKING, false);
         this.entityData.define(IS_FLYING, false);
         this.entityData.define(IS_ANGRY, false);
@@ -242,21 +322,36 @@ public class DepthWormEntity extends Monster implements GeoEntity {
         }
     }
 
-    // ⭐ НОВОЕ: блокируем установку цели во время отступления
-    @Override
-    public void setTarget(@Nullable LivingEntity target) {
-        if (target != null && this.isRetreating()) {
-            return;
-        }
-        super.setTarget(target);
-    }
 
     protected void checkBrutalTransformation() {
         if (getRawKills() >= 5) {
             transformToBrutal();
         }
     }
+    public boolean isColonist() {
+        return this.entityData.get(IS_COLONIST);
+    }
 
+    public void setColonist(boolean colonist, @Nullable BlockPos target) {
+        this.entityData.set(IS_COLONIST, colonist);
+        this.entityData.set(COLONIST_TARGET, target != null ? target.asLong() + "" : "");
+        if (colonist) {
+            this.setTarget(null);
+            this.setAttacking(false);
+            this.setRetreating(false);
+        }
+    }
+
+    @Nullable
+    public BlockPos getColonistTarget() {
+        String s = this.entityData.get(COLONIST_TARGET);
+        if (s == null || s.isEmpty()) return null;
+        try {
+            return BlockPos.of(Long.parseLong(s));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
     protected void transformToBrutal() {
         if (this.level().isClientSide) return;
 
@@ -342,15 +437,37 @@ public class DepthWormEntity extends Monster implements GeoEntity {
     @Override
     public void aiStep() {
         if (!this.level().isClientSide) {
-            // ⭐ Вода — всегда отступаем
+
+            if (this.isColonist()) {
+                if (this.isInWater()) {
+                    this.setDeltaMovement(this.getDeltaMovement().x, 0.35D, this.getDeltaMovement().z);
+                    this.setTarget(null);
+                }
+                super.aiStep();
+                if (this.meleeCooldown > 0) this.meleeCooldown--;
+                if (this.ignoreFallDamageTicks > 0) this.ignoreFallDamageTicks--;
+                return;
+            }
+
+            // ⭐ Вода — всегда отступаем + пытаемся выбраться
             if (this.isInWater()) {
                 this.setDeltaMovement(this.getDeltaMovement().x, 0.35D, this.getDeltaMovement().z);
                 this.setTarget(null);
                 this.setRetreating(true);
+
+                // ⭐ Ищем сушу каждые 10 тиков
+                if (this.tickCount % 10 == 0) {
+                    BlockPos land = findNearestLand(8);
+                    if (land != null) {
+                        this.getNavigation().moveTo(
+                                land.getX() + 0.5, land.getY() + 0.5, land.getZ() + 0.5, 1.2D
+                        );
+                    }
+                }
             } else if (this.isRetreating()) {
                 // Уже отступаем — продолжаем, цель сброшена в setTarget()
             } else {
-                // ⭐ Проверяем условия отступления ТОЛЬКО если есть цель (в бою)
+                // ⭐ Проверяем условия отступления в бою
                 LivingEntity currentTarget = this.getTarget();
                 if (currentTarget != null && currentTarget.isAlive()) {
                     float maxHealth = this.getMaxHealth();
@@ -362,6 +479,20 @@ public class DepthWormEntity extends Monster implements GeoEntity {
                         this.setTarget(null);
                     }
                 }
+
+                // ⭐ Авто-отступление если слишком далеко от дома
+                if (!this.isRetreating() && !this.isColonist()) {
+                    BlockPos bound = this.getBoundNestPos();
+                    if (bound != null) {
+                        double distSq = this.distanceToSqr(
+                                bound.getX() + 0.5, bound.getY() + 0.5, bound.getZ() + 0.5
+                        );
+                        if (distSq > 5000.0) {
+                            this.setRetreating(true);
+                            this.setTarget(null);
+                        }
+                    }
+                }
             }
 
             // ⭐ Цель в воде — сбрасываем (но НЕ начинаем отступление автоматически)
@@ -369,6 +500,18 @@ public class DepthWormEntity extends Monster implements GeoEntity {
             if (target != null && target.isInWater()) {
                 this.setTarget(null);
             }
+
+            // ⭐ Любой негативный эффект — сразу домой
+            if (!this.isRetreating() && !this.isColonist()) {
+                for (net.minecraft.world.effect.MobEffectInstance effect : this.getActiveEffects()) {
+                    if (effect.getEffect().getCategory() == net.minecraft.world.effect.MobEffectCategory.HARMFUL) {
+                        this.setRetreating(true);
+                        this.setTarget(null);
+                        break;
+                    }
+                }
+            }
+
         }
 
         super.aiStep();
@@ -407,6 +550,34 @@ public class DepthWormEntity extends Monster implements GeoEntity {
         }
     }
 
+    @Nullable
+    private BlockPos findNearestLand(int radius) {
+        BlockPos pos = this.blockPosition();
+        BlockPos best = null;
+        double bestDist = Double.MAX_VALUE;
+
+        for (int y = -2; y <= 3; y++) {
+            for (int x = -radius; x <= radius; x++) {
+                for (int z = -radius; z <= radius; z++) {
+                    BlockPos check = pos.offset(x, y, z);
+                    BlockState state = this.level().getBlockState(check);
+                    if (!state.getFluidState().isEmpty()) continue;
+                    if (state.isAir()) continue;
+
+                    BlockPos above = check.above();
+                    if (this.level().getBlockState(above).isAir()) {
+                        double d = pos.distSqr(above);
+                        if (d < bestDist) {
+                            bestDist = d;
+                            best = above;
+                        }
+                    }
+                }
+            }
+        }
+        return best;
+    }
+
     @Override
     public void push(net.minecraft.world.entity.Entity entity) {
         super.push(entity);
@@ -426,6 +597,9 @@ public class DepthWormEntity extends Monster implements GeoEntity {
 
     @Override
     protected void registerGoals() {
+        this.goalSelector.addGoal(-1, new ColonistReturnGoal(this));
+        this.goalSelector.addGoal(0, new ColonistMoveGoal(this));
+
         this.goalSelector.addGoal(0, new DepthWormJumpGoal(this, 1.5D, 5.0F, 10.0F));
         this.goalSelector.addGoal(1, new ReturnToHiveGoal(this));
         this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.2D, false));
@@ -449,23 +623,11 @@ public class DepthWormEntity extends Monster implements GeoEntity {
         return super.hurt(source, amount);
     }
 
-    // ⭐ НОВОЕ: во время отступления нельзя атаковать
-    @Override
-    public boolean canAttack(LivingEntity target) {
-        if (this.isRetreating()) return false;
-        return !(target instanceof DepthWormEntity) && super.canAttack(target);
-    }
 
     public void addKillPoints(Entity victim) {
         int points = 1;
-        if (victim instanceof Player) {
-            points = 30;
-        } else if (victim instanceof net.minecraft.world.entity.monster.Enemy) {
-            if (victim instanceof LivingEntity le && le.getMaxHealth() >= 50.0F) {
-                points = 10;
-            } else {
-                points = 3;
-            }
+        if (victim instanceof LivingEntity le) {
+            points = Math.max(1, (int) (le.getMaxHealth()));
         }
         this.entityData.set(KILLS, this.getKills() + points);
     }

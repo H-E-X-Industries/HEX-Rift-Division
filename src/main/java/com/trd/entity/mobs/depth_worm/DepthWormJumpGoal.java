@@ -25,6 +25,7 @@ public class DepthWormJumpGoal extends Goal {
 
     @Override
     public boolean canUse() {
+        if (this.worm.isColonist()) return false;
         // ⭐ Не прыгаем во время отступления
         if (this.worm.isRetreating()) return false;
 
@@ -37,6 +38,7 @@ public class DepthWormJumpGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
+        if (this.worm.isColonist()) return false;
         if (this.worm.isRetreating()) return false;
         return !jumpPerformed && jumpTimer > 0;
     }

@@ -28,7 +28,10 @@ public class HiveNetworkManager {
             network.update(level);
         }
     }
-
+    // Добавь в класс HiveNetworkManager
+    public Collection<HiveNetwork> getNetworks() {
+        return new ArrayList<>(networks.values());
+    }
     public static HiveNetworkManager get(Level level) {
         return level.getCapability(HiveNetworkManagerProvider.HIVE_NETWORK_MANAGER).orElse(null);
     }
