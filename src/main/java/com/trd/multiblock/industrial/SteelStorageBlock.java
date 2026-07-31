@@ -54,6 +54,10 @@ public class SteelStorageBlock extends BaseEntityBlock implements IMultiblockCon
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(FACING);
     }
+    @Override
+    public ItemStack getCloneItemStack(BlockState state, net.minecraft.world.phys.HitResult target, BlockGetter level, BlockPos pos, Player player) {
+        return getDropStack((Level) level, pos, state);
+    }
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
