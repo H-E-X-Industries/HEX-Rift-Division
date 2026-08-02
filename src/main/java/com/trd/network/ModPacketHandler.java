@@ -186,5 +186,12 @@ public class ModPacketHandler {
                 PacketToggleExtraButton::toBytes,
                 PacketToggleExtraButton::new,
                 (msg, ctx) -> { msg.handle(ctx); ctx.get().setPacketHandled(true); });
+                
+        INSTANCE.registerMessage(id++,
+                com.trd.network.packet.conveyor.SyncConveyorNetworkPacket.class,
+                com.trd.network.packet.conveyor.SyncConveyorNetworkPacket::toBytes,
+                com.trd.network.packet.conveyor.SyncConveyorNetworkPacket::new,
+                (msg, ctx) -> { msg.handle(ctx); ctx.get().setPacketHandled(true); }
+        );
     }
 }

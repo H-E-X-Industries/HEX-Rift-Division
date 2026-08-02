@@ -106,24 +106,30 @@ public class ConveyorBufferBlockEntity extends BlockEntity implements MenuProvid
         }
 
         // 2. Передаём на конвейер спереди — до 3 за раз
-        BlockEntity frontBe = level.getBlockEntity(worldPosition.relative(facing));
-        if (frontBe instanceof ConveyorBlockEntity conveyor) {
-            int pushed = 0;
-            int i = 0;
-            while (i < inventory.getSlots() && pushed < 3) {
-                ItemStack stack = inventory.getStackInSlot(i);
-                if (!stack.isEmpty()) {
-                    ItemStack single = stack.split(1);
-                    if (conveyor.tryAcceptItem(single)) {
-                        pushed++;
-                        setChanged();
-                        // НЕ инкрементируем i — проверяем тот же слот ещё раз
-                    } else {
-                        stack.grow(1); // не принял — возвращаем
-                        i++; // идём к следующему слоту
+        BlockPos frontPos = worldPosition.relative(facing);
+        if (level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            com.trd.api.conveyor.ConveyorNetwork net = com.trd.api.conveyor.ConveyorNetworkManager.get(serverLevel).getNetworkFor(frontPos);
+            if (net != null) {
+                double index = net.getPath().indexOf(frontPos);
+                if (index >= 0) {
+                    int pushed = 0;
+                    int i = 0;
+                    while (i < inventory.getSlots() && pushed < 3) {
+                        ItemStack stack = inventory.getStackInSlot(i);
+                        if (!stack.isEmpty()) {
+                            ItemStack single = stack.split(1);
+                            if (net.tryInsertItem(single, index)) {
+                                pushed++;
+                                setChanged();
+                                // НЕ инкрементируем i — проверяем тот же слот ещё раз
+                            } else {
+                                stack.grow(1); // не принял — возвращаем
+                                i++; // идём к следующему слоту
+                            }
+                        } else {
+                            i++; // пустой слот — следующий
+                        }
                     }
-                } else {
-                    i++; // пустой слот — следующий
                 }
             }
         }

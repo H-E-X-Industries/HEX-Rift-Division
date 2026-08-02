@@ -10,9 +10,11 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.List;
 
@@ -28,64 +30,71 @@ public class ConveyorRenderer implements BlockEntityRenderer<ConveyorBlockEntity
     public void render(ConveyorBlockEntity be, float partialTick, PoseStack poseStack,
                        MultiBufferSource buffer, int packedLight, int packedOverlay) {
 
-        List<ConveyorBlockEntity.ConveyorItem> currentItems = be.getClientItems();
-        List<ConveyorBlockEntity.ConveyorItem> prevItems = be.getPrevClientItems();
-        if (currentItems.isEmpty()) return;
+        com.trd.api.conveyor.client.ClientConveyorManager.ClientNetworkData netData = com.trd.api.conveyor.client.ClientConveyorManager.getNetworkFor(be.getBlockPos());
+        if (netData == null || netData.items.isEmpty()) return;
+
+        double blockIndex = netData.getIndexFor(be.getBlockPos());
+        if (blockIndex < 0) return;
 
         Direction facing = be.getBlockState().getValue(ConveyorBlock.FACING);
-
-        int size = Math.min(currentItems.size(), prevItems.size());
-        for (int i = 0; i < currentItems.size(); i++) {
-            ConveyorBlockEntity.ConveyorItem curr = currentItems.get(i);
-            ConveyorBlockEntity.ConveyorItem prev = (i < prevItems.size()) ? prevItems.get(i) : curr;
-
-            ItemStack stack = curr.stack;
-            if (stack.isEmpty()) continue;
-
-            // Интерполяция прогресса
-            double progress = prev.progress + (curr.progress - prev.progress) * partialTick;
-            progress = Math.max(0.0, Math.min(1.0, progress));
-
-            // Позиция: центрируем по ширине, смещаем по направлению движения
-            double offset = (progress - 0.5) * 0.9; // от -0.45 до +0.45
-            float x = 0.5f + facing.getStepX() * (float) offset;
-            float z = 0.5f + facing.getStepZ() * (float) offset;
-            float y = 0.5f + (float) ConveyorBlockEntity.ITEM_Y_OFFSET; // 0.65625
-
-            poseStack.pushPose();
-            poseStack.translate(x, y, z);
-
-            // Поворот по направлению конвейера, затем кладём плашмя
-            float rotY = facing.toYRot();
-            poseStack.mulPose(Axis.YP.rotationDegrees(-rotY + 90));
-            poseStack.mulPose(Axis.XP.rotationDegrees(90));
-
-            // Увеличиваем размер (было 0.875 → теперь 1.0)
-            float scale = 1.0f;
-            poseStack.scale(scale, scale, scale);
-
-            BakedModel model = itemRenderer.getModel(stack, be.getLevel(), null, 0);
-            itemRenderer.render(stack, ItemDisplayContext.GROUND, false, poseStack, buffer,
-                    packedLight, packedOverlay, model);
-
-            // Дополнительные предметы для стака > 1
-            int count = stack.getCount();
-            if (count > 1) {
-                int copies = Math.min(count - 1, 3);
-                for (int j = 0; j < copies; j++) {
-                    poseStack.pushPose();
-                    double angle = (j * 0.8 + 0.2) * Math.PI * 2;
-                    float dx = (float) (Math.cos(angle) * 0.08);
-                    float dz = (float) (Math.sin(angle) * 0.08);
-                    poseStack.translate(dx, 0.0, dz);
-                    poseStack.mulPose(Axis.ZP.rotationDegrees((float) (Math.random() * 10 - 5)));
-                    itemRenderer.render(stack, ItemDisplayContext.GROUND, false, poseStack, buffer,
-                            packedLight, packedOverlay, model);
-                    poseStack.popPose();
+        BlockPos currentPos = be.getBlockPos();
+        
+        BlockPos prevPos = null;
+        if (blockIndex > 0) {
+            prevPos = netData.path.get((int) blockIndex - 1);
+        } else {
+            // Пытаемся найти конвейер, который смотрит в нас, чтобы построить правильную дугу
+            for (Direction d : Direction.values()) {
+                if (d.getAxis().isVertical()) continue;
+                BlockPos p = currentPos.relative(d);
+                BlockState s = be.getLevel().getBlockState(p);
+                if (s.getBlock() instanceof ConveyorBlock && s.getValue(ConveyorBlock.FACING) == d.getOpposite()) {
+                    prevPos = p;
+                    break;
                 }
             }
+            if (prevPos == null) {
+                prevPos = currentPos.relative(facing.getOpposite());
+            }
+        }
+        
+        BlockPos nextPos = blockIndex < netData.path.size() - 1 ? netData.path.get((int) blockIndex + 1) : currentPos.relative(facing);
 
-            poseStack.popPose();
+        for (com.trd.api.conveyor.ConveyorItem item : netData.items) {
+            double globalProgress = item.getProgress() + (com.trd.api.conveyor.ConveyorNetwork.SPEED * partialTick);
+            globalProgress = Math.min(globalProgress, netData.path.size() - 0.01);
+            
+            // Если предмет находится на текущем блоке (от index до index + 1)
+            if (globalProgress >= blockIndex && globalProgress < blockIndex + 1) {
+                double localProgress = globalProgress - blockIndex;
+                ItemStack stack = item.getStack();
+                if (stack.isEmpty()) continue;
+
+                double[] pose = com.trd.api.conveyor.PathMath.calculatePathPoint(prevPos, currentPos, nextPos, localProgress);
+
+                poseStack.pushPose();
+                
+                // pose = [x (абсолютный), y, z, rotY]
+                // PathMath.center.y равен Y + 0.5. Опускаем предметы на 2 пикселя (0.125) по просьбе.
+                // 0.05 - 0.125 = -0.075
+                poseStack.translate(pose[0] - currentPos.getX(), (pose[1] - currentPos.getY()) - 0.075, pose[2] - currentPos.getZ());
+
+                poseStack.mulPose(Axis.YP.rotationDegrees((float) -pose[3]));
+
+                boolean isBlock = item.getStack().getItem() instanceof net.minecraft.world.item.BlockItem;
+                if (!isBlock) {
+                    poseStack.mulPose(Axis.XP.rotationDegrees(90));
+                }
+
+                float scale = 0.75f;
+                poseStack.scale(scale, scale, scale);
+
+                BakedModel model = itemRenderer.getModel(stack, be.getLevel(), null, 0);
+                itemRenderer.render(stack, ItemDisplayContext.FIXED, false, poseStack, buffer,
+                        packedLight, packedOverlay, model);
+
+                poseStack.popPose();
+            }
         }
     }
 }
