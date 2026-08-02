@@ -33,7 +33,7 @@ public class ConveyorBlock extends BaseEntityBlock {
 
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return createTickerHelper(type, ModBlockEntities.CONVEYOR_BE.get(), ConveyorBlockEntity::tick);
+        return null; // Убрали тиканье, теперь всем управляет ConveyorNetworkManager
     }
 
     public ConveyorBlock(Properties properties) {
@@ -49,6 +49,14 @@ public class ConveyorBlock extends BaseEntityBlock {
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         return this.defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
+    }
+
+    @Override
+    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        if (!oldState.is(state.getBlock()) && !level.isClientSide() && level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            com.trd.api.conveyor.ConveyorNetworkManager.get(serverLevel).addBlock(pos, state.getValue(FACING));
+        }
+        super.onPlace(state, level, pos, oldState, isMoving);
     }
 
     @Override
@@ -75,14 +83,19 @@ public class ConveyorBlock extends BaseEntityBlock {
     // 4. Возможность забрать предмет ПКМ пустой рукой
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        if (!level.isClientSide) {
+        if (!level.isClientSide && level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
             if (player.getItemInHand(hand).isEmpty()) {
-                BlockEntity be = level.getBlockEntity(pos);
-                if (be instanceof ConveyorBlockEntity conveyor) {
-                    ItemStack stack = conveyor.popItem();
-                    if (!stack.isEmpty()) {
-                        player.setItemInHand(hand, stack);
-                        return InteractionResult.SUCCESS;
+                com.trd.api.conveyor.ConveyorNetwork net = com.trd.api.conveyor.ConveyorNetworkManager.get(serverLevel).getNetworkFor(pos);
+                if (net != null) {
+                    double index = net.getPath().indexOf(pos);
+                    java.util.Iterator<com.trd.api.conveyor.ConveyorItem> iterator = net.getItems().iterator();
+                    while (iterator.hasNext()) {
+                        com.trd.api.conveyor.ConveyorItem item = iterator.next();
+                        if (item.getProgress() >= index && item.getProgress() < index + 1) {
+                            player.setItemInHand(hand, item.getStack());
+                            iterator.remove();
+                            return InteractionResult.SUCCESS;
+                        }
                     }
                 }
             }
@@ -90,13 +103,29 @@ public class ConveyorBlock extends BaseEntityBlock {
         return InteractionResult.PASS;
     }
 
-    // 5. При разрушении конвейера все предметы выпадают
+    // 5. При столкновении с предметом, забираем его на ленту
+    @Override
+    public void entityInside(BlockState state, Level level, BlockPos pos, net.minecraft.world.entity.Entity entity) {
+        if (!level.isClientSide && entity instanceof net.minecraft.world.entity.item.ItemEntity itemEntity && level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            com.trd.api.conveyor.ConveyorNetwork net = com.trd.api.conveyor.ConveyorNetworkManager.get(serverLevel).getNetworkFor(pos);
+            if (net != null) {
+                double index = net.getPath().indexOf(pos);
+                if (index >= 0) {
+                    if (net.tryInsertItem(itemEntity.getItem().copy(), index + 0.5)) {
+                        itemEntity.discard();
+                    }
+                }
+            }
+        }
+        super.entityInside(state, level, pos, entity);
+    }
+
+    // 6. При разрушении конвейера предметы выпадают (обрабатывается в менеджере)
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         if (!state.is(newState.getBlock())) {
-            BlockEntity be = level.getBlockEntity(pos);
-            if (be instanceof ConveyorBlockEntity conveyor) {
-                conveyor.dropAllItems(level, pos);
+            if (!level.isClientSide() && level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+                com.trd.api.conveyor.ConveyorNetworkManager.get(serverLevel).removeBlock(pos);
             }
             super.onRemove(state, level, pos, newState, isMoving);
         }
