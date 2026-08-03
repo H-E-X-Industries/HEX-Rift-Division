@@ -4,7 +4,7 @@ package com.trd.client.gecko.item.guns;
 import com.trd.main.MainRegistry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import com.trd.item.guns.MachineGunItem;
+import com.trd.item.weapons.guns.MachineGunItem;
 import software.bernie.geckolib.renderer.GeoItemRenderer;
 
 public class MachineGunRenderer extends GeoItemRenderer<MachineGunItem> {

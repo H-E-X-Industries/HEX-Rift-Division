@@ -5,7 +5,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import com.trd.item.guns.MachineGunItem;
+import com.trd.item.weapons.guns.MachineGunItem;
 
 public class ClientRenderHandler {
 

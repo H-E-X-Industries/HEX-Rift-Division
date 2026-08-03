@@ -4,7 +4,7 @@ import com.trd.api.metallurgy.system.Metal;
 import com.trd.api.metallurgy.system.MetallurgyRegistry;
 import com.trd.api.metallurgy.system.recipe.MoldRecipe;
 import com.trd.api.metallurgy.system.recipe.MoldRecipeRegistry;
-import com.trd.item.HammerItem;
+import com.trd.item.industrial.HammerItem;
 import com.trd.item.ModItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;

@@ -9,7 +9,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.client.gui.overlay.ForgeGui;
 import net.minecraftforge.client.gui.overlay.IGuiOverlay;
 import net.minecraftforge.registries.ForgeRegistries;
-import com.trd.item.guns.MachineGunItem;
+import com.trd.item.weapons.guns.MachineGunItem;
 
 public class OverlayAmmoHud {
 
