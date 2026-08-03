@@ -2,7 +2,7 @@ package com.trd.client.gecko.item.guns;
 
 
 import net.minecraft.resources.ResourceLocation;
-import com.trd.item.guns.MachineGunItem;
+import com.trd.item.weapons.guns.MachineGunItem;
 import com.trd.main.MainRegistry;
 import software.bernie.geckolib.model.GeoModel;
 

@@ -201,6 +201,44 @@ public class ModLangProvider extends LanguageProvider {
         add("gui.trd.smelter.metal_tank.shift_hide", "§8[Shift] hide exact value");
         add("gui.trd.smelter.metal_tank.shift_show", "§8[Shift] exact value");
 
+        // ═══ GRENADE TOOLTIPS ═══
+
+// Global charge hint for all chargable grenades
+        add("tooltip.trd.grenade.charge_hint", "§8Hold RMB to adjust throw impulse");
+
+// Standard grenades (bouncing)
+        add("tooltip.trd.grenade.common.line1", "§7Hand anti-personnel grenade");
+        add("tooltip.trd.grenade.standard.line2", "§8Type: §fFragmentation §8| Bounces: §f3 §8| Radius: §f3.5 §8| Damage: §f20");
+        add("tooltip.trd.grenade.he.line2", "§8Type: §fHigh Explosive §8| Bounces: §f3 §8| Radius: §f7.0 §8| Damage: §f40");
+        add("tooltip.trd.grenade.fire.line2", "§8Type: §cIncendiary §8| Bounces: §f3 §8| Radius: §f3.0 §8| Damage: §f30");
+        add("tooltip.trd.grenade.slime.line2", "§8Type: §aSticky §8| Bounces: §f4 §8| Radius: §f3.5 §8| Damage: §f30 §8[Sticks to targets]");
+        add("tooltip.trd.grenade.smart.line2", "§8Type: §eSmart §8| Bounces: §f3 §8| Radius: §f3.5/7.0 §8| Damage: §f20/40 §8[Detonates on contact]");
+        add("tooltip.trd.grenade.default.line2", "§8Standard fragmentation grenade");
+
+// Impact grenades (inertial fuze)
+        add("tooltip.trd.grenade_if.common.line1", "§7Impact grenade with inertial fuze");
+        add("tooltip.trd.grenade_if.standard.line2", "§8Type: §fFragmentation §8| Radius: §f5.0 §8| Damage: §f45 §8| Delay: §f4s");
+        add("tooltip.trd.grenade_if.he.line2", "§8Type: §fHigh Explosive §8| Radius: §f8.0 §8| Damage: §f80 §8| Delay: §f4s");
+        add("tooltip.trd.grenade_if.slime.line2", "§8Type: §aSticky §8| Radius: §f6.0 §8| Damage: §f60 §8| Delay: §f4s §8[Sticks to targets]");
+        add("tooltip.trd.grenade_if.fire.line2", "§8Type: §cIncendiary §8| Radius: §f6.0 §8| Damage: §f60 §8| Delay: §f4s");
+        add("tooltip.trd.grenade_if.default.line2", "§8Impact fragmentation grenade");
+
+// Gravity grenade
+        add("tooltip.trd.gravity_grenade.line1", "§d§lEXPERIMENTAL §7gravity weapon");
+        add("tooltip.trd.gravity_grenade.line2", "§8Creates a gravity vortex, then scatters targets");
+
+// Nuclear (hydrogen) grenade
+        add("tooltip.trd.grenade_nuc.line1", "§4§lTACTICAL HYDROGEN CHARGE");
+        add("tooltip.trd.grenade_nuc.line2", "§cRadius 25 §8| Damage 200 §8| Delay 7s");
+        add("tooltip.trd.grenade_nuc.line3", "§8Penetrates cover. Use with extreme caution.");
+
+        // ═══ BATTERY TOOLTIPS (ModBatteryItem) ═══
+        add("tooltip.trd.battery.stored", "§7Charge:");
+        add("tooltip.trd.battery.transfer_rate", "§aInput: §f%s JE/t");
+        add("tooltip.trd.battery.discharge_rate", "§cOutput: §f%s JE/t");
+
+
+
 
         // ═══ GUI: Turret (shared) ═══
         add("gui.trd.turret.boot", "SYSTEM BOOT%s");
@@ -464,7 +502,11 @@ public class ModLangProvider extends LanguageProvider {
         add("message.trd.cast_pickaxe.cooldown", "§cCooldown...");
         add("item.trd.cast_pickaxe.warning.twohanded", "§cRequires both hands!");
 
+        add("tooltip.hbm_m.creative_battery_desc","Provides an infinite amount of power");
+        add("tooltip.hbm_m.creative_battery_flavor","Pure Zamaz!");
+
         // Sequoia
+        add(ModItems.PIG_TURRET_PLACER.get(), "Oink-o-Turret");
         add(ModBlocks.SEQUOIA_BARK.get(), "Sequoia Bark");
         add(ModBlocks.SEQUOIA_HEARTWOOD.get(), "Sequoia Heartwood");
         add(ModBlocks.SEQUOIA_PLANKS.get(), "Sequoia Planks");
@@ -1174,7 +1216,48 @@ public class ModLangProvider extends LanguageProvider {
         add("message.trd.cast_pickaxe.cooldown", "§cПерезарядка...");
         add("item.trd.cast_pickaxe.warning.twohanded", "§cНужны две руки!");
 
+        // ═══ ТУЛТИПЫ ГРАНАТ ═══
+
+// Общий hint для всех заряжаемых гранат
+        add("tooltip.trd.grenade.charge_hint", "§8Удерживайте ПКМ для регулировки импульса броска");
+
+// Обычные гранаты (с отскоком)
+        add("tooltip.trd.grenade.common.line1", "§7Ручная противопехотная граната");
+        add("tooltip.trd.grenade.standard.line2", "§8Тип: §fОсколочная §8| Отскоков: §f3 §8| Радиус: §f3.5 §8| Урон: §f20");
+        add("tooltip.trd.grenade.he.line2", "§8Тип: §fФугасная §8| Отскоков: §f3 §8| Радиус: §f7.0 §8| Урон: §f40");
+        add("tooltip.trd.grenade.fire.line2", "§8Тип: §cЗажигательная §8| Отскоков: §f3 §8| Радиус: §f3.0 §8| Урон: §f30");
+        add("tooltip.trd.grenade.slime.line2", "§8Тип: §aЛипучка §8| Отскоков: §f4 §8| Радиус: §f3.5 §8| Урон: §f30 §8[Прилипает к целям]");
+        add("tooltip.trd.grenade.smart.line2", "§8Тип: §eУмная §8| Отскоков: §f3 §8| Радиус: §f3.5/7.0 §8| Урон: §f20/40 §8[Детонация при контакте]");
+        add("tooltip.trd.grenade.default.line2", "§8Стандартная осколочная граната");
+
+// Ударные гранаты (инерционный взрыватель)
+        add("tooltip.trd.grenade_if.common.line1", "§7Ударная граната с инерционным взрывателем");
+        add("tooltip.trd.grenade_if.standard.line2", "§8Тип: §fОсколочная §8| Радиус: §f5.0 §8| Урон: §f45 §8| Задержка: §f4с");
+        add("tooltip.trd.grenade_if.he.line2", "§8Тип: §fФугасная §8| Радиус: §f8.0 §8| Урон: §f80 §8| Задержка: §f4с");
+        add("tooltip.trd.grenade_if.slime.line2", "§8Тип: §aЛипучка §8| Радиус: §f6.0 §8| Урон: §f60 §8| Задержка: §f4с §8[Прилипает к целям]");
+        add("tooltip.trd.grenade_if.fire.line2", "§8Тип: §cЗажигательная §8| Радиус: §f6.0 §8| Урон: §f60 §8| Задержка: §f4с");
+        add("tooltip.trd.grenade_if.default.line2", "§8Ударная осколочная граната");
+
+// Грави-граната
+        add("tooltip.trd.gravity_grenade.line1", "§d§lЭКСПЕРИМЕНТАЛЬНОЕ §7гравитационное оружие");
+        add("tooltip.trd.gravity_grenade.line2", "§8Создаёт вихрь притяжения, затем разбрасывает цели");
+
+// Ядерная (водородная) граната
+        add("tooltip.trd.grenade_nuc.line1", "§4§lТАКТИЧЕСКИЙ ВОДОРОДНЫЙ ЗАРЯД");
+        add("tooltip.trd.grenade_nuc.line2", "§cРадиус 25 §8| Урон 200 §8| Задержка 7с");
+        add("tooltip.trd.grenade_nuc.line3", "§8Пробивает укрепления. Использовать с огромной осторожностью.");
+
+// ═══ ТУЛТИПЫ АККУМУЛЯТОРОВ (ModBatteryItem) ═══
+        add("tooltip.trd.battery.stored", "§7Заряд:");
+        add("tooltip.trd.battery.transfer_rate", "§aВход: §f%s JE/t");
+        add("tooltip.trd.battery.discharge_rate", "§cВыход: §f%s JE/t");
+
+        add("tooltip.hbm_m.creative_battery_desc","Аккумулятор прямиком из Бехлендса готов запитать любой механизм");
+        add("tooltip.hbm_m.creative_battery_flavor","Вот это замаз!");
+
+
         // Секвойя
+        add(ModItems.PIG_TURRET_PLACER.get(), "Наф-Наф с турелью");
         add(ModBlocks.SEQUOIA_BARK.get(), "Кора секвойи");
         add(ModBlocks.SEQUOIA_HEARTWOOD.get(), "Бревно секвойи");
         add(ModBlocks.SEQUOIA_PLANKS.get(), "Доски из секвойи");

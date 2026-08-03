@@ -1,4 +1,4 @@
-package com.trd.item.guns;
+package com.trd.item.weapons.guns;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;

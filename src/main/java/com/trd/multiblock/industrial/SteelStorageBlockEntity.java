@@ -96,7 +96,7 @@ public class SteelStorageBlockEntity extends BlockEntity implements MenuProvider
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag) {
+    public void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         tag.put("Inventory", inventory.serializeNBT());
     }

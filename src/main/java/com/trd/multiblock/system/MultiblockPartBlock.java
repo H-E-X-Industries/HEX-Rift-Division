@@ -145,13 +145,22 @@ public class MultiblockPartBlock extends BaseEntityBlock implements net.minecraf
                     if (!player.isCreative()) {
                         ItemStack ctrlDrop = new ItemStack(ctrlState.getBlock());
                         BlockEntity ctrlBe = level.getBlockEntity(ctrlPos);
+
                         if (ctrlBe instanceof com.trd.block.entity.industrial.fluids.FluidBarrelBlockEntity) {
                             net.minecraft.nbt.CompoundTag beNbt = ctrlBe.saveWithoutMetadata();
                             beNbt.remove("Inventory");
                             ctrlDrop.addTagElement("BlockEntityTag", beNbt);
                         }
+                        // ═══ НОВОЕ: сохраняем инвентарь стального хранилища ═══
+                        else if (ctrlBe instanceof com.trd.multiblock.industrial.SteelStorageBlockEntity storage) {
+                            net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
+                            storage.saveAdditional(tag);
+                            ctrlDrop.addTagElement("BlockEntityTag", tag);
+                        }
+
                         Block.popResource(level, ctrlPos, ctrlDrop);
                     }
+
                     net.minecraft.core.Direction facing = ctrlState.hasProperty(HorizontalDirectionalBlock.FACING)
                             ? ctrlState.getValue(HorizontalDirectionalBlock.FACING) : net.minecraft.core.Direction.NORTH;
                     controller.getStructureHelper().destroyStructure(level, ctrlPos, facing);
@@ -171,11 +180,19 @@ public class MultiblockPartBlock extends BaseEntityBlock implements net.minecraf
             if (ctrlState.getBlock() instanceof IMultiblockController) {
                 ItemStack ctrlDrop = new ItemStack(ctrlState.getBlock());
                 BlockEntity ctrlBe = level.getBlockEntity(ctrlPos);
+
                 if (ctrlBe instanceof com.trd.block.entity.industrial.fluids.FluidBarrelBlockEntity) {
                     net.minecraft.nbt.CompoundTag beNbt = ctrlBe.saveWithoutMetadata();
                     beNbt.remove("Inventory");
                     ctrlDrop.addTagElement("BlockEntityTag", beNbt);
                 }
+                // ═══ НОВОЕ ═══
+                else if (ctrlBe instanceof com.trd.multiblock.industrial.SteelStorageBlockEntity storage) {
+                    net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
+                    storage.saveAdditional(tag);
+                    ctrlDrop.addTagElement("BlockEntityTag", tag);
+                }
+
                 return ctrlDrop;
             }
         }
