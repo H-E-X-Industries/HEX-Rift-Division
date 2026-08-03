@@ -119,6 +119,7 @@ public class ConveyorNetwork {
                         ConveyorNetwork nextNet = manager.getNetworkFor(targetPos);
                         if (nextNet != null && nextNet != this) {
                             if (nextNet.tryInsertItem(item.getStack().copy(), 0.0)) {
+                                manager.markForSync(nextNet);
                                 iterator.remove();
                                 changed = true;
                                 continue;
