@@ -74,14 +74,14 @@ public class ConveyorRenderer implements BlockEntityRenderer<ConveyorBlockEntity
 
                 poseStack.pushPose();
                 
+                boolean isBlock = item.getStack().getItem() instanceof net.minecraft.world.item.BlockItem;
+                double yOffset = isBlock ? 0.05 : -0.075;
+                
                 // pose = [x (абсолютный), y, z, rotY]
-                // PathMath.center.y равен Y + 0.5. Опускаем предметы на 2 пикселя (0.125) по просьбе.
-                // 0.05 - 0.125 = -0.075
-                poseStack.translate(pose[0] - currentPos.getX(), (pose[1] - currentPos.getY()) - 0.075, pose[2] - currentPos.getZ());
+                poseStack.translate(pose[0] - currentPos.getX(), (pose[1] - currentPos.getY()) + yOffset, pose[2] - currentPos.getZ());
 
                 poseStack.mulPose(Axis.YP.rotationDegrees((float) -pose[3]));
 
-                boolean isBlock = item.getStack().getItem() instanceof net.minecraft.world.item.BlockItem;
                 if (!isBlock) {
                     poseStack.mulPose(Axis.XP.rotationDegrees(90));
                 }

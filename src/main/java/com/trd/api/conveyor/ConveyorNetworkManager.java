@@ -58,22 +58,32 @@ public class ConveyorNetworkManager extends SavedData {
         return manager;
     }
 
+    private final Set<ConveyorNetwork> networksToSync = new HashSet<>();
+
+    public void markForSync(ConveyorNetwork net) {
+        networksToSync.add(net);
+    }
+
+    public void syncNetwork(ConveyorNetwork net) {
+        com.trd.network.ModPacketHandler.INSTANCE.send(
+            PacketDistributor.DIMENSION.with(() -> level.dimension()),
+            new com.trd.network.packet.conveyor.SyncConveyorNetworkPacket(net.getId(), net.getItems(), net.getPath())
+        );
+    }
+
     public void tickAll() {
         boolean changed = false;
+        networksToSync.clear();
         for (ConveyorNetwork net : networks) {
             if (net.tick(level, this)) {
                 changed = true;
-                
-                // Синхронизация с клиентами (с каждым тиком, если есть изменения)
-                // Оптимальнее всего отправлять пакет всем игрокам в измерении или трекающим чанк,
-                // но для простоты шлем всем в мире. (В идеале: PacketDistributor.TRACKING_CHUNK)
-                com.trd.network.ModPacketHandler.INSTANCE.send(
-                    PacketDistributor.DIMENSION.with(() -> level.dimension()),
-                    new com.trd.network.packet.conveyor.SyncConveyorNetworkPacket(net.getId(), net.getItems(), net.getPath())
-                );
+                markForSync(net);
             }
         }
-        if (changed) {
+        for (ConveyorNetwork net : networksToSync) {
+            syncNetwork(net);
+        }
+        if (changed || !networksToSync.isEmpty()) {
             this.setDirty();
         }
     }

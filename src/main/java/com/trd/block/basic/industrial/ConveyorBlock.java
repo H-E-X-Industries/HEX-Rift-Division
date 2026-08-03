@@ -83,19 +83,36 @@ public class ConveyorBlock extends BaseEntityBlock {
     // 4. Возможность забрать предмет ПКМ пустой рукой
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        if (!level.isClientSide && level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
-            if (player.getItemInHand(hand).isEmpty()) {
-                com.trd.api.conveyor.ConveyorNetwork net = com.trd.api.conveyor.ConveyorNetworkManager.get(serverLevel).getNetworkFor(pos);
-                if (net != null) {
-                    double index = net.getPath().indexOf(pos);
-                    java.util.Iterator<com.trd.api.conveyor.ConveyorItem> iterator = net.getItems().iterator();
-                    while (iterator.hasNext()) {
-                        com.trd.api.conveyor.ConveyorItem item = iterator.next();
-                        if (item.getProgress() >= index && item.getProgress() < index + 1) {
+        if (hand != InteractionHand.MAIN_HAND) return InteractionResult.PASS;
+
+        if (!level.isClientSide() && level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+            com.trd.api.conveyor.ConveyorNetworkManager manager = com.trd.api.conveyor.ConveyorNetworkManager.get(serverLevel);
+            com.trd.api.conveyor.ConveyorNetwork net = manager.getNetworkFor(pos);
+            if (net != null) {
+                double index = net.getPath().indexOf(pos);
+                java.util.Iterator<com.trd.api.conveyor.ConveyorItem> iterator = net.getItems().iterator();
+                while (iterator.hasNext()) {
+                    com.trd.api.conveyor.ConveyorItem item = iterator.next();
+                    if (item.getProgress() >= index && item.getProgress() < index + 1) {
+                        if (player.getItemInHand(hand).isEmpty()) {
                             player.setItemInHand(hand, item.getStack());
-                            iterator.remove();
-                            return InteractionResult.SUCCESS;
+                        } else if (!player.getInventory().add(item.getStack())) {
+                            player.drop(item.getStack(), false);
                         }
+                        iterator.remove();
+                        manager.syncNetwork(net);
+                        manager.setDirty();
+                        return InteractionResult.SUCCESS;
+                    }
+                }
+            }
+        } else {
+            com.trd.api.conveyor.client.ClientConveyorManager.ClientNetworkData netData = com.trd.api.conveyor.client.ClientConveyorManager.getNetworkFor(pos);
+            if (netData != null) {
+                double index = netData.getIndexFor(pos);
+                for (com.trd.api.conveyor.ConveyorItem item : netData.items) {
+                    if (item.getProgress() >= index && item.getProgress() < index + 1) {
+                        return InteractionResult.SUCCESS;
                     }
                 }
             }
@@ -111,7 +128,7 @@ public class ConveyorBlock extends BaseEntityBlock {
             if (net != null) {
                 double index = net.getPath().indexOf(pos);
                 if (index >= 0) {
-                    if (net.tryInsertItem(itemEntity.getItem().copy(), index + 0.5)) {
+                    if (!itemEntity.isRemoved() && net.tryInsertItem(itemEntity.getItem().copy(), index + 0.5)) {
                         itemEntity.discard();
                     }
                 }
