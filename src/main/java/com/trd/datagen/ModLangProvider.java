@@ -502,8 +502,8 @@ public class ModLangProvider extends LanguageProvider {
         add("message.trd.cast_pickaxe.cooldown", "§cCooldown...");
         add("item.trd.cast_pickaxe.warning.twohanded", "§cRequires both hands!");
 
-        add("tooltip.hbm_m.creative_battery_desc","Provides an infinite amount of power");
-        add("tooltip.hbm_m.creative_battery_flavor","Pure Zamaz!");
+        add("tooltip.trd.creative_battery_desc","Provides an infinite amount of power");
+        add("tooltip.trd.creative_battery_flavor","Pure Zamaz!");
 
         // Sequoia
         add(ModItems.PIG_TURRET_PLACER.get(), "Oink-o-Turret");
@@ -1252,8 +1252,8 @@ public class ModLangProvider extends LanguageProvider {
         add("tooltip.trd.battery.transfer_rate", "§aВход: §f%s JE/t");
         add("tooltip.trd.battery.discharge_rate", "§cВыход: §f%s JE/t");
 
-        add("tooltip.hbm_m.creative_battery_desc","Аккумулятор прямиком из Бехлендса готов запитать любой механизм");
-        add("tooltip.hbm_m.creative_battery_flavor","Вот это замаз!");
+        add("tooltip.trd.creative_battery_desc","Аккумулятор прямиком из Бехлендса готов запитать любой механизм");
+        add("tooltip.trd.creative_battery_flavor","Вот это замаз!");
 
 
         // Секвойя
