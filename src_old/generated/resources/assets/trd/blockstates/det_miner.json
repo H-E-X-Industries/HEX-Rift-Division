@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "trd:block/det_miner",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "trd:block/det_miner"
+    },
+    "facing=south": {
+      "model": "trd:block/det_miner",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "trd:block/det_miner",
+      "y": 270
+    }
+  }
+}

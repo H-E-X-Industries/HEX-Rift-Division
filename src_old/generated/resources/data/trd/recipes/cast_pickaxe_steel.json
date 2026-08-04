@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": {
+      "item": "trd:rope"
+    },
+    "$": {
+      "item": "trd:wooden_handle"
+    },
+    "@": {
+      "item": "trd:cast_pickaxe_steel_base"
+    }
+  },
+  "pattern": [
+    " @#",
+    " $@",
+    "$  "
+  ],
+  "result": {
+    "item": "trd:cast_pickaxe_steel"
+  },
+  "show_notification": true
+}

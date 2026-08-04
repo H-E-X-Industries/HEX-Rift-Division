@@ -1,0 +1,10 @@
+{
+  "parent": "trd:item/pulley_template",
+  "flip_v": true,
+  "loader": "forge:obj",
+  "model": "trd:models/block/pulley.obj",
+  "textures": {
+    "particle": "trd:block/pulley",
+    "pulley_texture": "trd:block/pulley"
+  }
+}

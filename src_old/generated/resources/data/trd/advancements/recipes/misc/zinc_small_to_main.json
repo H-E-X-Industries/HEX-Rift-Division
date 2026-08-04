@@ -1,0 +1,35 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "trd:zinc_small_to_main"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    },
+    "has_zinc_nugget": {
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "trd:zinc_nugget"
+            ]
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "requirements": [
+    [
+      "has_zinc_nugget",
+      "has_the_recipe"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "trd:zinc_small_to_main"
+    ]
+  },
+  "sends_telemetry_event": false
+}

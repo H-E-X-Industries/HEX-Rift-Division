@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "trd:block/electro_furnace_top",
+    "east": "trd:block/electro_furnace_side",
+    "north": "trd:block/electro_furnace_back",
+    "particle": "trd:block/electro_furnace_side",
+    "south": "trd:block/electro_furnace_front",
+    "up": "trd:block/electro_furnace_top",
+    "west": "trd:block/electro_furnace_side"
+  }
+}

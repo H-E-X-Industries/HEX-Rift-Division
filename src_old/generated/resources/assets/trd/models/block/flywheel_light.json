@@ -1,0 +1,8 @@
+{
+  "flip_v": true,
+  "loader": "forge:obj",
+  "model": "trd:models/block/flywheel_light.obj",
+  "textures": {
+    "pulley_texture": "trd:block/flywheel_light"
+  }
+}

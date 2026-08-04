@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "trd:block/firebrick_slab"
+    },
+    "type=double": {
+      "model": "trd:block/firebrick_block"
+    },
+    "type=top": {
+      "model": "trd:block/firebrick_slab_top"
+    }
+  }
+}

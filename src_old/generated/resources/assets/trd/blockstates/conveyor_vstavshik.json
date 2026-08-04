@@ -1,0 +1,27 @@
+{
+  "variants": {
+    "facing=down": {
+      "model": "trd:block/conveyor_vstavshik",
+      "x": 90
+    },
+    "facing=east": {
+      "model": "trd:block/conveyor_vstavshik",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "trd:block/conveyor_vstavshik"
+    },
+    "facing=south": {
+      "model": "trd:block/conveyor_vstavshik",
+      "y": 180
+    },
+    "facing=up": {
+      "model": "trd:block/conveyor_vstavshik",
+      "x": -90
+    },
+    "facing=west": {
+      "model": "trd:block/conveyor_vstavshik",
+      "y": 270
+    }
+  }
+}

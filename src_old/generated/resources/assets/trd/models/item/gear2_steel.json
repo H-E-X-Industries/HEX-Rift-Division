@@ -1,0 +1,10 @@
+{
+  "parent": "trd:item/gear_template",
+  "flip_v": true,
+  "loader": "forge:obj",
+  "model": "trd:models/block/gear2.obj",
+  "textures": {
+    "gear_texture": "trd:block/gear2_steel",
+    "particle": "trd:block/gear2_steel"
+  }
+}

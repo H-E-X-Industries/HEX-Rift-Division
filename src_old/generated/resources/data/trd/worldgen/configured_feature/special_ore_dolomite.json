@@ -1,0 +1,34 @@
+{
+  "type": "trd:special_vein",
+  "config": {
+    "density": 0.6,
+    "max_size": 8,
+    "max_y": 70,
+    "min_size": 5,
+    "min_y": -64,
+    "respect_air": true,
+    "state": {
+      "Name": "trd:dolomite"
+    },
+    "targets": [
+      {
+        "state": {
+          "Name": "trd:dolomite"
+        },
+        "target": {
+          "predicate_type": "minecraft:tag_match",
+          "tag": "minecraft:stone_ore_replaceables"
+        }
+      },
+      {
+        "state": {
+          "Name": "trd:dolomite"
+        },
+        "target": {
+          "predicate_type": "minecraft:tag_match",
+          "tag": "minecraft:deepslate_ore_replaceables"
+        }
+      }
+    ]
+  }
+}

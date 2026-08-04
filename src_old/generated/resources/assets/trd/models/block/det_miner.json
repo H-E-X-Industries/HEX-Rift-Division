@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "trd:block/det_miner_top",
+    "east": "trd:block/det_miner_side",
+    "north": "trd:block/det_miner_front",
+    "particle": "trd:block/det_miner_side",
+    "south": "trd:block/det_miner_front",
+    "up": "trd:block/det_miner_top",
+    "west": "trd:block/det_miner_side"
+  }
+}

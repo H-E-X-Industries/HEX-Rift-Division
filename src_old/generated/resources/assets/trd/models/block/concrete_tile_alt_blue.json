@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "trd:block/concrete_tile_alt_blue"
+  }
+}

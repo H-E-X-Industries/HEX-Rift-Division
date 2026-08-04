@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "trd:block/small_smelter",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "trd:block/small_smelter"
+    },
+    "facing=south": {
+      "model": "trd:block/small_smelter",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "trd:block/small_smelter",
+      "y": 270
+    }
+  }
+}

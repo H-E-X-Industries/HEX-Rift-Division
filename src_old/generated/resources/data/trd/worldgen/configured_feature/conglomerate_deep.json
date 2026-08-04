@@ -1,0 +1,11 @@
+{
+  "type": "trd:conglomerate_vein",
+  "config": {
+    "density": 0.85,
+    "depletion_chance": 0.5,
+    "max_size": 7,
+    "max_y": -20,
+    "min_size": 4,
+    "min_y": -64
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/slab",
+  "textures": {
+    "bottom": "trd:block/concrete_hazard_new",
+    "side": "trd:block/concrete_hazard_new",
+    "top": "trd:block/concrete_hazard_new"
+  }
+}

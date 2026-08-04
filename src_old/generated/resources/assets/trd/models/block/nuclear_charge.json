@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "bottom": "trd:block/nuclear_charge",
+    "side": "trd:block/nuclear_charge",
+    "top": "trd:block/nuclear_charge_top"
+  }
+}

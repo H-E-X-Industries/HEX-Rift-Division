@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "trd:block/deco_steel",
+    "east": "trd:block/adder_side",
+    "north": "trd:block/cargo_port",
+    "particle": "trd:block/adder_side",
+    "south": "trd:block/gear_port",
+    "up": "trd:block/adder_top_alt",
+    "west": "trd:block/adder_side"
+  }
+}

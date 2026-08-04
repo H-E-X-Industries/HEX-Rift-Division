@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "bottom": "trd:block/waste_log_top",
+    "side": "trd:block/waste_log_side",
+    "top": "trd:block/waste_log_top"
+  }
+}

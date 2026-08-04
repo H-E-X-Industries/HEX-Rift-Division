@@ -1,0 +1,34 @@
+{
+  "type": "trd:special_vein",
+  "config": {
+    "density": 0.9,
+    "max_size": 10,
+    "max_y": 150,
+    "min_size": 6,
+    "min_y": -20,
+    "respect_air": false,
+    "state": {
+      "Name": "trd:limestone"
+    },
+    "targets": [
+      {
+        "state": {
+          "Name": "trd:limestone"
+        },
+        "target": {
+          "predicate_type": "minecraft:tag_match",
+          "tag": "minecraft:stone_ore_replaceables"
+        }
+      },
+      {
+        "state": {
+          "Name": "trd:limestone"
+        },
+        "target": {
+          "predicate_type": "minecraft:tag_match",
+          "tag": "minecraft:deepslate_ore_replaceables"
+        }
+      }
+    ]
+  }
+}

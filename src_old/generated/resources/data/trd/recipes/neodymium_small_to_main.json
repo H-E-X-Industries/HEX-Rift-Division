@@ -1,0 +1,36 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "trd:neodymium_nugget"
+    },
+    {
+      "item": "trd:neodymium_nugget"
+    },
+    {
+      "item": "trd:neodymium_nugget"
+    },
+    {
+      "item": "trd:neodymium_nugget"
+    },
+    {
+      "item": "trd:neodymium_nugget"
+    },
+    {
+      "item": "trd:neodymium_nugget"
+    },
+    {
+      "item": "trd:neodymium_nugget"
+    },
+    {
+      "item": "trd:neodymium_nugget"
+    },
+    {
+      "item": "trd:neodymium_nugget"
+    }
+  ],
+  "result": {
+    "item": "trd:neodymium_ingot"
+  }
+}

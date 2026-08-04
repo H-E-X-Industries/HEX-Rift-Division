@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/door_bottom_right_open",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "bottom": "trd:block/sequoia_door_bottom",
+    "top": "trd:block/sequoia_door_top"
+  }
+}

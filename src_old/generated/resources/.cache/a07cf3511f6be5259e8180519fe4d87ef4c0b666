@@ -1,0 +1,8 @@
+// 1.20.1	2026-07-25T22:56:13.4679088	Tags for minecraft:block mod id trd
+212650fc80f9aafbdad783ad743db011efed2d9a data/minecraft/tags/blocks/dirt.json
+edaa2edb8689758c6fb3ee0c03812936a3772937 data/minecraft/tags/blocks/leaves.json
+27931a32ec4819a659a9a09910b36c378c96d1ab data/minecraft/tags/blocks/logs.json
+c302c5e5ad0dbcff075b31eb3e7391bd756790c7 data/minecraft/tags/blocks/logs_that_burn.json
+edaa2edb8689758c6fb3ee0c03812936a3772937 data/minecraft/tags/blocks/mineable/hoe.json
+9133977b87c3b04f3ec34b8e2654d71be176a1ce data/minecraft/tags/blocks/mineable/pickaxe.json
+9133977b87c3b04f3ec34b8e2654d71be176a1ce data/minecraft/tags/blocks/needs_iron_tool.json

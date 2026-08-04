@@ -1,0 +1,100 @@
+{
+  "variants": {
+    "age=0,down=false,hanging=false,up=false": {
+      "model": "trd:block/hive_roots_top"
+    },
+    "age=0,down=false,hanging=false,up=true": {
+      "model": "trd:block/hive_roots_bottom"
+    },
+    "age=0,down=false,hanging=true,up=false": {
+      "model": "trd:block/hive_roots_hanging_end"
+    },
+    "age=0,down=false,hanging=true,up=true": {
+      "model": "trd:block/hive_roots_hanging_end"
+    },
+    "age=0,down=true,hanging=false,up=false": {
+      "model": "trd:block/hive_roots_top"
+    },
+    "age=0,down=true,hanging=false,up=true": {
+      "model": "trd:block/hive_roots_middle"
+    },
+    "age=0,down=true,hanging=true,up=false": {
+      "model": "trd:block/hive_roots_hanging_top"
+    },
+    "age=0,down=true,hanging=true,up=true": {
+      "model": "trd:block/hive_roots_hanging_middle"
+    },
+    "age=1,down=false,hanging=false,up=false": {
+      "model": "trd:block/hive_roots_top"
+    },
+    "age=1,down=false,hanging=false,up=true": {
+      "model": "trd:block/hive_roots_bottom"
+    },
+    "age=1,down=false,hanging=true,up=false": {
+      "model": "trd:block/hive_roots_hanging_end"
+    },
+    "age=1,down=false,hanging=true,up=true": {
+      "model": "trd:block/hive_roots_hanging_end"
+    },
+    "age=1,down=true,hanging=false,up=false": {
+      "model": "trd:block/hive_roots_top"
+    },
+    "age=1,down=true,hanging=false,up=true": {
+      "model": "trd:block/hive_roots_middle"
+    },
+    "age=1,down=true,hanging=true,up=false": {
+      "model": "trd:block/hive_roots_hanging_top"
+    },
+    "age=1,down=true,hanging=true,up=true": {
+      "model": "trd:block/hive_roots_hanging_middle"
+    },
+    "age=2,down=false,hanging=false,up=false": {
+      "model": "trd:block/hive_roots_top"
+    },
+    "age=2,down=false,hanging=false,up=true": {
+      "model": "trd:block/hive_roots_bottom"
+    },
+    "age=2,down=false,hanging=true,up=false": {
+      "model": "trd:block/hive_roots_hanging_end"
+    },
+    "age=2,down=false,hanging=true,up=true": {
+      "model": "trd:block/hive_roots_hanging_end"
+    },
+    "age=2,down=true,hanging=false,up=false": {
+      "model": "trd:block/hive_roots_top"
+    },
+    "age=2,down=true,hanging=false,up=true": {
+      "model": "trd:block/hive_roots_middle"
+    },
+    "age=2,down=true,hanging=true,up=false": {
+      "model": "trd:block/hive_roots_hanging_top"
+    },
+    "age=2,down=true,hanging=true,up=true": {
+      "model": "trd:block/hive_roots_hanging_middle"
+    },
+    "age=3,down=false,hanging=false,up=false": {
+      "model": "trd:block/hive_roots_top"
+    },
+    "age=3,down=false,hanging=false,up=true": {
+      "model": "trd:block/hive_roots_bottom"
+    },
+    "age=3,down=false,hanging=true,up=false": {
+      "model": "trd:block/hive_roots_hanging_end"
+    },
+    "age=3,down=false,hanging=true,up=true": {
+      "model": "trd:block/hive_roots_hanging_end"
+    },
+    "age=3,down=true,hanging=false,up=false": {
+      "model": "trd:block/hive_roots_top"
+    },
+    "age=3,down=true,hanging=false,up=true": {
+      "model": "trd:block/hive_roots_middle"
+    },
+    "age=3,down=true,hanging=true,up=false": {
+      "model": "trd:block/hive_roots_hanging_top"
+    },
+    "age=3,down=true,hanging=true,up=true": {
+      "model": "trd:block/hive_roots_hanging_middle"
+    }
+  }
+}

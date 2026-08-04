@@ -1,0 +1,9 @@
+{
+  "flip_v": true,
+  "loader": "forge:obj",
+  "model": "trd:models/block/base_pipe_core.obj",
+  "textures": {
+    "particle": "trd:block/bronze_pipe",
+    "pipe_texture": "trd:block/bronze_pipe"
+  }
+}
