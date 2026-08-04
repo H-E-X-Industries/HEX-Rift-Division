@@ -96,7 +96,7 @@ public class DrobitelBlockEntity extends BlockEntity implements MenuProvider {
     private int hasBlade1 = 0;
     private int hasBlade2 = 0;
 
-    private final LazyOptional<IItemHandler> handler = LazyOptional.of(() -> inventory);
+    private final LazyOptional<IItemHandler> internalHandler = LazyOptional.of(() -> inventory);
 
     private static final Map<net.minecraft.world.item.Item, net.minecraft.world.item.ItemStack> RECIPES = new HashMap<>();
     static {
@@ -109,16 +109,69 @@ public class DrobitelBlockEntity extends BlockEntity implements MenuProvider {
         super(ModBlockEntities.DROBITEL_BE.get(), pos, state);
     }
 
+
+    private final LazyOptional<IItemHandler> externalHandler = LazyOptional.of(() -> new IItemHandler() {
+        @Override
+        public int getSlots() {
+            return inventory.getSlots();
+        }
+
+        @Override
+        public ItemStack getStackInSlot(int slot) {
+            return inventory.getStackInSlot(slot);
+        }
+
+        @Override
+        public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+            return inventory.insertItem(slot, stack, simulate);
+        }
+
+        @Override
+        public ItemStack extractItem(int slot, int amount, boolean simulate) {
+            // Воронки не трогают входные слоты
+            if (slot < INPUT_SLOTS) {
+                return ItemStack.EMPTY;
+            }
+
+            // Лезвия отдаём только если прочность < 3
+            int bladeSlot1 = INPUT_SLOTS + OUTPUT_SLOTS;
+            int bladeSlot2 = INPUT_SLOTS + OUTPUT_SLOTS + 1;
+            if (slot == bladeSlot1 || slot == bladeSlot2) {
+                ItemStack blade = inventory.getStackInSlot(slot);
+                if (!blade.isEmpty()) {
+                    int remaining = blade.getMaxDamage() - blade.getDamageValue();
+                    if (remaining >= 3) {
+                        return ItemStack.EMPTY;
+                    }
+                }
+            }
+
+            return inventory.extractItem(slot, amount, simulate);
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return inventory.getSlotLimit(slot);
+        }
+
+        @Override
+        public boolean isItemValid(int slot, ItemStack stack) {
+            return inventory.isItemValid(slot, stack);
+        }
+    });
+
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
-        handler.invalidate();
+        internalHandler.invalidate();
+        externalHandler.invalidate();
     }
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
         if (cap == ForgeCapabilities.ITEM_HANDLER) {
-            return handler.cast();
+            // side == null — вызов из GUI/внутриигровой логики, side != null — воронки/трубы
+            return side == null ? internalHandler.cast() : externalHandler.cast();
         }
         return super.getCapability(cap, side);
     }
@@ -129,6 +182,13 @@ public class DrobitelBlockEntity extends BlockEntity implements MenuProvider {
 
         if (be.canProcess()) {
             be.progress++;
+
+            // Замедленный звук вагонетки каждые 10 тиков (~0.5 сек)
+            if (be.progress % 10 == 0) {
+                level.playSound(null, pos, net.minecraft.sounds.SoundEvents.MINECART_RIDING,
+                        net.minecraft.sounds.SoundSource.BLOCKS, 0.5f, 0.6f);
+            }
+
             if (be.progress >= be.maxProgress) {
                 be.finishProcessing();
                 be.progress = 0;

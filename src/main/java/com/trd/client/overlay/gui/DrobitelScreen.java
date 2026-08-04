@@ -19,12 +19,8 @@ public class DrobitelScreen extends AbstractContainerScreen<DrobitelMenu> {
     }
 
     @Override
-    protected void init() {
-        super.init();
-        this.titleLabelX = 8;
-        this.titleLabelY = 6;
-        this.inventoryLabelX = 44;
-        this.inventoryLabelY = 81;
+    protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        // Пусто — убираем title и "Inventory"
     }
 
     @Override
@@ -34,7 +30,7 @@ public class DrobitelScreen extends AbstractContainerScreen<DrobitelMenu> {
 
         guiGraphics.blit(GUI, x, y, 0, 0, this.imageWidth, this.imageHeight);
 
-        // Прогрессбар: рендер 62,53 | текстура 1,195 | 52x6
+        // Прогрессбар: 62,53 | текстура 1,195 | 52×6
         int progress = menu.getProgress();
         int maxProgress = menu.getMaxProgress();
         if (maxProgress > 0 && progress > 0) {
@@ -42,31 +38,31 @@ public class DrobitelScreen extends AbstractContainerScreen<DrobitelMenu> {
             guiGraphics.blit(GUI, x + 62, y + 53, 1, 195, w, 6);
         }
 
-        // Индикатор лезвия 1: 67,36 | текстура 0,181 | 42x10
+        // Индикатор лезвия 1: 67,36 | 42×10
         if (menu.hasBlade1()) {
             guiGraphics.blit(GUI, x + 67, y + 36, 0, 181, 42, 10);
         }
 
-        // Индикатор лезвия 2: 67,64 | текстура 0,181 | 42x10
+        // Индикатор лезвия 2: 67,64 | 42×10
         if (menu.hasBlade2()) {
             guiGraphics.blit(GUI, x + 67, y + 64, 0, 181, 42, 10);
         }
 
-        // Полоска прочности 1: рендер 66,29 | текстура 0,192 | уменьшается справа налево
+        // Полоска прочности 1: 66,29 | 44×2 | уменьшается справа налево (левая часть на месте)
         if (menu.hasBlade1()) {
             int dur = menu.getBlade1Durability();
-            int w = (int) ((dur / 256f) * 42);
+            int w = (int) ((dur / 256f) * 44);
             if (w > 0) {
-                guiGraphics.blit(GUI, x + 66 + (42 - w), y + 29, 0, 192, w, 4);
+                guiGraphics.blit(GUI, x + 66, y + 29, 0, 192, w, 2);
             }
         }
 
-        // Полоска прочности 2: рендер 66,79 | текстура 0,192 | уменьшается справа налево
+        // Полоска прочности 2: 66,79 | 44×2 | уменьшается справа налево
         if (menu.hasBlade2()) {
             int dur = menu.getBlade2Durability();
-            int w = (int) ((dur / 256f) * 42);
+            int w = (int) ((dur / 256f) * 44);
             if (w > 0) {
-                guiGraphics.blit(GUI, x + 66 + (42 - w), y + 79, 0, 192, w, 4);
+                guiGraphics.blit(GUI, x + 66, y + 79, 0, 192, w, 2);
             }
         }
     }
