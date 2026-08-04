@@ -6,8 +6,10 @@ import com.trd.item.ModItems;
 import com.trd.multiblock.system.IMultiblockController;
 import com.trd.multiblock.system.MultiblockStructureHelper;
 import com.trd.multiblock.system.PartRole;
+import com.trd.api.rotation.KineticNetworkManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -18,6 +20,7 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
@@ -100,6 +103,7 @@ public class DrobitelBlock extends BaseEntityBlock implements IMultiblockControl
         if (!level.isClientSide) {
             Direction facing = state.getValue(FACING);
             getStructureHelper().placeStructure(level, pos, facing, this);
+            KineticNetworkManager.get((ServerLevel) level).updateNetworkAfterPlace(pos);
         }
     }
 
@@ -110,6 +114,7 @@ public class DrobitelBlock extends BaseEntityBlock implements IMultiblockControl
             if (be instanceof DrobitelBlockEntity drobitel) {
                 drobitel.dropContents();
             }
+            KineticNetworkManager.get((ServerLevel) level).updateNetworkAfterRemove(pos);
             Direction facing = state.getValue(FACING);
             getStructureHelper().destroyStructure(level, pos, facing);
         }
@@ -124,7 +129,6 @@ public class DrobitelBlock extends BaseEntityBlock implements IMultiblockControl
 
         ItemStack held = player.getItemInHand(hand);
 
-        // ПКМ отвёрткой — вынуть лезвие
         if (held.is(ModItems.SCREWDRIVER.get())) {
             BlockEntity be = level.getBlockEntity(pos);
             if (be instanceof DrobitelBlockEntity drobitel) {
@@ -133,7 +137,6 @@ public class DrobitelBlock extends BaseEntityBlock implements IMultiblockControl
             return InteractionResult.CONSUME;
         }
 
-        // ПКМ с лезвием — вставить лезвие
         if (held.is(ModItems.BLADE.get())) {
             BlockEntity be = level.getBlockEntity(pos);
             if (be instanceof DrobitelBlockEntity drobitel) {
@@ -142,7 +145,6 @@ public class DrobitelBlock extends BaseEntityBlock implements IMultiblockControl
             return InteractionResult.CONSUME;
         }
 
-        // Обычное открытие GUI
         BlockEntity be = level.getBlockEntity(pos);
         if (be instanceof DrobitelBlockEntity drobitel) {
             NetworkHooks.openScreen((ServerPlayer) player, drobitel, pos);

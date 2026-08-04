@@ -1,7 +1,9 @@
 package com.trd.multiblock.industrial.drobitel;
 
+import com.trd.block.basic.ModBlocks;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.block.entity.industrial.MillstoneBlockEntity;
+import com.trd.block.entity.industrial.rotation.KineticNodeBlockEntity;
 import com.trd.item.ModItems;
 import com.trd.menu.industrial.DrobitelMenu;
 import net.minecraft.core.BlockPos;
@@ -22,6 +24,7 @@ import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -38,13 +41,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class DrobitelBlockEntity extends BlockEntity implements MenuProvider {
+public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuProvider {
 
     public static final int INPUT_SLOTS = 9;
     public static final int OUTPUT_SLOTS = 21;
     public static final int BLADE_SLOTS = 2;
     public static final int TOTAL_SLOTS = INPUT_SLOTS + OUTPUT_SLOTS + BLADE_SLOTS;
-    public static final int MAX_PROGRESS = 60;
+    public static final int MAX_PROGRESS = 60; // 3 секунды
 
     private final ItemStackHandler inventory = new ItemStackHandler(TOTAL_SLOTS) {
         @Override
@@ -127,6 +130,75 @@ public class DrobitelBlockEntity extends BlockEntity implements MenuProvider {
     public DrobitelBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.DROBITEL_BE.get(), pos, state);
     }
+
+    // ===================== КИНЕТИКА =====================
+
+    @Override
+    public long getMaxTorqueTolerance() { return 4096L; }
+
+    @Override
+    public long getMaxTorque() { return 4096L; }
+
+    @Override
+    public double getInertiaContribution() { return 20.0; }
+
+    @Override
+    public long getMaxSpeed() { return 512L; }
+
+    @Override
+    public long getTorque() { return 0L; }
+
+    @Override
+    public boolean isSource() { return false; }
+
+    @Override
+    public long getConsumedTorque() {
+        if (Math.abs(getSpeed()) < 1) return 0;
+        ItemStack b1 = inventory.getStackInSlot(INPUT_SLOTS + OUTPUT_SLOTS);
+        ItemStack b2 = inventory.getStackInSlot(INPUT_SLOTS + OUTPUT_SLOTS + 1);
+        if (b1.isEmpty() || b2.isEmpty()) return 2L;
+        for (int i = 0; i < INPUT_SLOTS; i++) {
+            if (!inventory.getStackInSlot(i).isEmpty() && RECIPES.containsKey(inventory.getStackInSlot(i).getItem())) {
+                return 24L;
+            }
+        }
+        return 2L;
+    }
+
+    @Override
+    public Direction[] getPropagationDirections() {
+        BlockState state = getBlockState();
+        if (state.hasProperty(DrobitelBlock.FACING)) {
+            Direction facing = state.getValue(DrobitelBlock.FACING);
+            return new Direction[] { facing, facing.getOpposite() };
+        }
+        return new Direction[0];
+    }
+
+    @Override
+    public List<BlockPos> getPotentialConnections(Level level, BlockPos myPos) {
+        List<BlockPos> list = new ArrayList<>();
+        BlockState state = getBlockState();
+        if (state.hasProperty(DrobitelBlock.FACING)) {
+            Direction facing = state.getValue(DrobitelBlock.FACING);
+            list.add(myPos.relative(facing));
+            list.add(myPos.relative(facing.getOpposite()));
+        }
+        return list;
+    }
+
+    @Override
+    public long getVisualSpeed() {
+        BlockState state = getBlockState();
+        if (!state.hasProperty(DrobitelBlock.FACING)) return this.speed;
+        Direction facing = state.getValue(DrobitelBlock.FACING);
+        if (facing == Direction.SOUTH || facing == Direction.EAST || facing == Direction.UP) {
+            return -this.speed;
+        }
+        return this.speed;
+    }
+
+    // ===================== ЛОГИКА =====================
 
     private final LazyOptional<IItemHandler> externalHandler = LazyOptional.of(() -> new IItemHandler() {
         @Override
@@ -259,6 +331,7 @@ public class DrobitelBlockEntity extends BlockEntity implements MenuProvider {
 
     private boolean canProcess() {
         if (hasBlade1 == 0 || hasBlade2 == 0) return false;
+        if (Math.abs(getSpeed()) < 1) return false; // <-- нужно вращение
 
         boolean hasInput = false;
         for (int i = 0; i < INPUT_SLOTS; i++) {
@@ -440,11 +513,7 @@ public class DrobitelBlockEntity extends BlockEntity implements MenuProvider {
         return tag;
     }
 
-    @Nullable
-    @Override
-    public Packet<ClientGamePacketListener> getUpdatePacket() {
-        return ClientboundBlockEntityDataPacket.create(this);
-    }
+
 
     @Override
     public Component getDisplayName() {

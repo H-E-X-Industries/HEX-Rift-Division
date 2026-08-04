@@ -17,6 +17,7 @@ import com.trd.client.render.flywheel.ModModels;
 import com.trd.client.render.flywheel.ShaftVisual;
 import com.trd.client.renderer.*;
 
+import com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity;
 import com.trd.multiblock.industrial.fueltanks.FuelTankBlockEntity;
 import com.trd.multiblock.industrial.boiler.BoilerBlockEntity;
 import com.trd.multiblock.industrial.fueltanks.small.FuelTankSmallBlockEntity;
@@ -287,6 +288,22 @@ public class ClientModEvents {
                     return true;
                 }
             });
+
+            VisualizerRegistry.setVisualizer(ModBlockEntities.DROBITEL_BE.get(),
+                    new dev.engine_room.flywheel.api.visualization.BlockEntityVisualizer<DrobitelBlockEntity>() {
+                        @Override
+                        public dev.engine_room.flywheel.api.visual.BlockEntityVisual<? super DrobitelBlockEntity> createVisual(
+                                VisualizationContext ctx,
+                                DrobitelBlockEntity be,
+                                float partialTick) {
+                            return new com.trd.client.render.visual.DrobitelVisual(ctx, be, partialTick);
+                        }
+
+                        @Override
+                        public boolean skipVanillaRender(DrobitelBlockEntity be) {
+                            return false; // <-- false! Чтобы JSON-модель корпуса рендерилась ванильно, а Flywheel добавит только вал
+                        }
+                    });
 
             VisualizerRegistry.setVisualizer(ModBlockEntities.HAND_CRANK_BE.get(), new dev.engine_room.flywheel.api.visualization.BlockEntityVisualizer<com.trd.block.entity.industrial.rotation.HandCrankBlockEntity>() {
                 @Override
