@@ -1,0 +1,364 @@
+package com.trd.multiblock.industrial;
+
+import com.trd.block.entity.ModBlockEntities;
+import com.trd.item.ModItems;
+import com.trd.menu.industrial.DrobitelMenu;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.Containers;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerData;
+import net.minecraft.world.inventory.SimpleContainerData;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemStackHandler;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class DrobitelBlockEntity extends BlockEntity implements MenuProvider {
+
+    public static final int INPUT_SLOTS = 9;
+    public static final int OUTPUT_SLOTS = 21;
+    public static final int BLADE_SLOTS = 2;
+    public static final int TOTAL_SLOTS = INPUT_SLOTS + OUTPUT_SLOTS + BLADE_SLOTS;
+    public static final int MAX_PROGRESS = 60; // 3 секунды
+
+    private final ItemStackHandler inventory = new ItemStackHandler(TOTAL_SLOTS) {
+        @Override
+        protected void onContentsChanged(int slot) {
+            setChanged();
+            if (level != null && !level.isClientSide) {
+                level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 3);
+            }
+        }
+
+        @Override
+        public boolean isItemValid(int slot, ItemStack stack) {
+            if (slot < INPUT_SLOTS) {
+                return !stack.is(ModItems.BLADE.get()); // лезвия во вход не кладём
+            }
+            if (slot < INPUT_SLOTS + OUTPUT_SLOTS) return false; // выход только на выдачу
+            return stack.is(ModItems.BLADE.get());
+        }
+    };
+
+    private final ContainerData data = new SimpleContainerData(6) {
+        @Override
+        public void set(int index, int value) {
+            switch (index) {
+                case 0 -> progress = value;
+                case 1 -> maxProgress = value;
+                case 2 -> blade1Durability = value;
+                case 3 -> blade2Durability = value;
+                case 4 -> hasBlade1 = value;
+                case 5 -> hasBlade2 = value;
+            }
+        }
+
+        @Override
+        public int get(int index) {
+            return switch (index) {
+                case 0 -> progress;
+                case 1 -> maxProgress;
+                case 2 -> blade1Durability;
+                case 3 -> blade2Durability;
+                case 4 -> hasBlade1;
+                case 5 -> hasBlade2;
+                default -> 0;
+            };
+        }
+    };
+
+    private int progress = 0;
+    private int maxProgress = MAX_PROGRESS;
+    private int blade1Durability = 0;
+    private int blade2Durability = 0;
+    private int hasBlade1 = 0;
+    private int hasBlade2 = 0;
+
+    private final LazyOptional<IItemHandler> handler = LazyOptional.of(() -> inventory);
+
+    private static final Map<net.minecraft.world.item.Item, net.minecraft.world.item.ItemStack> RECIPES = new HashMap<>();
+    static {
+        RECIPES.put(Items.STONE, new ItemStack(Items.COBBLESTONE));
+        RECIPES.put(Items.COBBLESTONE, new ItemStack(Items.GRAVEL));
+        RECIPES.put(Items.GRAVEL, new ItemStack(Items.SAND));
+    }
+
+    public DrobitelBlockEntity(BlockPos pos, BlockState state) {
+        super(ModBlockEntities.DROBITEL_BE.get(), pos, state);
+    }
+
+    @Override
+    public void invalidateCaps() {
+        super.invalidateCaps();
+        handler.invalidate();
+    }
+
+    @Override
+    public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
+        if (cap == ForgeCapabilities.ITEM_HANDLER) {
+            return handler.cast();
+        }
+        return super.getCapability(cap, side);
+    }
+
+    public static void serverTick(Level level, BlockPos pos, BlockState state, DrobitelBlockEntity be) {
+        boolean changed = false;
+        be.updateBladeData();
+
+        if (be.canProcess()) {
+            be.progress++;
+            if (be.progress >= be.maxProgress) {
+                be.finishProcessing();
+                be.progress = 0;
+                changed = true;
+            }
+        } else {
+            if (be.progress > 0) {
+                be.progress = 0;
+                changed = true;
+            }
+        }
+
+        if (changed || be.progress > 0) {
+            be.setChanged();
+            level.sendBlockUpdated(pos, state, state, 3);
+        }
+    }
+
+    private void updateBladeData() {
+        int slot1 = INPUT_SLOTS + OUTPUT_SLOTS;
+        int slot2 = INPUT_SLOTS + OUTPUT_SLOTS + 1;
+
+        ItemStack b1 = inventory.getStackInSlot(slot1);
+        ItemStack b2 = inventory.getStackInSlot(slot2);
+
+        hasBlade1 = !b1.isEmpty() ? 1 : 0;
+        hasBlade2 = !b2.isEmpty() ? 1 : 0;
+        blade1Durability = hasBlade1 == 1 ? b1.getMaxDamage() - b1.getDamageValue() : 0;
+        blade2Durability = hasBlade2 == 1 ? b2.getMaxDamage() - b2.getDamageValue() : 0;
+    }
+
+    private boolean canProcess() {
+        if (hasBlade1 == 0 || hasBlade2 == 0) return false;
+
+        boolean hasInput = false;
+        for (int i = 0; i < INPUT_SLOTS; i++) {
+            ItemStack input = inventory.getStackInSlot(i);
+            if (!input.isEmpty()) {
+                hasInput = true;
+                ItemStack result = getResult(input);
+                if (!result.isEmpty() && !canInsertResult(result)) {
+                    return false;
+                }
+            }
+        }
+        return hasInput;
+    }
+
+    private ItemStack getResult(ItemStack input) {
+        if (input.isEmpty()) return ItemStack.EMPTY;
+        ItemStack result = RECIPES.get(input.getItem());
+        if (result == null) {
+            return new ItemStack(ModItems.TRASH.get());
+        }
+        return result.copy();
+    }
+
+    private boolean canInsertResult(ItemStack result) {
+        if (result.isEmpty()) return true;
+        for (int i = INPUT_SLOTS; i < INPUT_SLOTS + OUTPUT_SLOTS; i++) {
+            ItemStack slot = inventory.getStackInSlot(i);
+            if (slot.isEmpty()) return true;
+            if (ItemStack.isSameItemSameTags(slot, result) && slot.getCount() + result.getCount() <= slot.getMaxStackSize()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void finishProcessing() {
+        for (int i = 0; i < INPUT_SLOTS; i++) {
+            ItemStack input = inventory.getStackInSlot(i);
+            if (input.isEmpty()) continue;
+
+            ItemStack result = getResult(input);
+            if (result.isEmpty()) continue;
+
+            input.shrink(1);
+            insertResult(result.copy());
+        }
+
+        damageBlade(INPUT_SLOTS + OUTPUT_SLOTS);
+        damageBlade(INPUT_SLOTS + OUTPUT_SLOTS + 1);
+    }
+
+    private void insertResult(ItemStack result) {
+        if (result.isEmpty()) return;
+
+        for (int i = INPUT_SLOTS; i < INPUT_SLOTS + OUTPUT_SLOTS; i++) {
+            ItemStack slot = inventory.getStackInSlot(i);
+            if (!slot.isEmpty() && ItemStack.isSameItemSameTags(slot, result)) {
+                int canAdd = Math.min(result.getCount(), slot.getMaxStackSize() - slot.getCount());
+                if (canAdd > 0) {
+                    slot.grow(canAdd);
+                    result.shrink(canAdd);
+                    if (result.isEmpty()) return;
+                }
+            }
+        }
+
+        for (int i = INPUT_SLOTS; i < INPUT_SLOTS + OUTPUT_SLOTS; i++) {
+            if (inventory.getStackInSlot(i).isEmpty()) {
+                inventory.setStackInSlot(i, result);
+                return;
+            }
+        }
+
+        if (!result.isEmpty() && level != null) {
+            Containers.dropItemStack(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), result);
+        }
+    }
+
+    private void damageBlade(int slot) {
+        ItemStack blade = inventory.getStackInSlot(slot);
+        if (blade.isEmpty() || !blade.is(ModItems.BLADE.get())) return;
+        blade.hurt(1, level.random, null);
+        if (blade.getDamageValue() >= blade.getMaxDamage()) {
+            inventory.setStackInSlot(slot, ItemStack.EMPTY);
+        }
+    }
+
+    public InteractionResult handleScrewdriver(Player player, InteractionHand hand) {
+        if (level == null || level.isClientSide) {
+            return InteractionResult.sidedSuccess(level != null && level.isClientSide);
+        }
+
+        int slot1 = INPUT_SLOTS + OUTPUT_SLOTS;
+        int slot2 = INPUT_SLOTS + OUTPUT_SLOTS + 1;
+
+        ItemStack toExtract = ItemStack.EMPTY;
+        int extractSlot = -1;
+
+        if (!inventory.getStackInSlot(slot2).isEmpty()) {
+            toExtract = inventory.getStackInSlot(slot2);
+            extractSlot = slot2;
+        } else if (!inventory.getStackInSlot(slot1).isEmpty()) {
+            toExtract = inventory.getStackInSlot(slot1);
+            extractSlot = slot1;
+        }
+
+        if (!toExtract.isEmpty()) {
+            inventory.setStackInSlot(extractSlot, ItemStack.EMPTY);
+            if (!player.getInventory().add(toExtract)) {
+                Containers.dropItemStack(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), toExtract);
+            }
+            setChanged();
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+            return InteractionResult.CONSUME;
+        }
+        return InteractionResult.PASS;
+    }
+
+    public InteractionResult handleBladeInsertion(Player player, InteractionHand hand) {
+        if (level == null || level.isClientSide) {
+            return InteractionResult.sidedSuccess(level != null && level.isClientSide);
+        }
+
+        ItemStack held = player.getItemInHand(hand);
+        if (!held.is(ModItems.BLADE.get())) return InteractionResult.PASS;
+
+        int slot1 = INPUT_SLOTS + OUTPUT_SLOTS;
+        int slot2 = INPUT_SLOTS + OUTPUT_SLOTS + 1;
+
+        if (inventory.getStackInSlot(slot1).isEmpty()) {
+            inventory.setStackInSlot(slot1, held.split(1));
+            setChanged();
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+            return InteractionResult.CONSUME;
+        } else if (inventory.getStackInSlot(slot2).isEmpty()) {
+            inventory.setStackInSlot(slot2, held.split(1));
+            setChanged();
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+            return InteractionResult.CONSUME;
+        }
+        return InteractionResult.PASS;
+    }
+
+    public void dropContents() {
+        if (level == null || level.isClientSide) return;
+        for (int i = 0; i < TOTAL_SLOTS; i++) {
+            ItemStack stack = inventory.getStackInSlot(i);
+            if (!stack.isEmpty()) {
+                Containers.dropItemStack(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), stack);
+            }
+        }
+    }
+
+    @Override
+    protected void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
+        tag.put("Inventory", inventory.serializeNBT());
+        tag.putInt("Progress", progress);
+    }
+
+    @Override
+    public void load(CompoundTag tag) {
+        super.load(tag);
+        inventory.deserializeNBT(tag.getCompound("Inventory"));
+        progress = tag.getInt("Progress");
+    }
+
+    @Override
+    public CompoundTag getUpdateTag() {
+        CompoundTag tag = super.getUpdateTag();
+        saveAdditional(tag);
+        return tag;
+    }
+
+    @Nullable
+    @Override
+    public Packet<ClientGamePacketListener> getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public Component getDisplayName() {
+        return Component.translatable("block.trd.drobitel");
+    }
+
+    @Nullable
+    @Override
+    public AbstractContainerMenu createMenu(int id, Inventory inv, Player player) {
+        return new DrobitelMenu(id, inv, this, data);
+    }
+
+    public ItemStackHandler getInventory() {
+        return inventory;
+    }
+
+    public ContainerData getData() {
+        return data;
+    }
+}

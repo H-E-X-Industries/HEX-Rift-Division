@@ -262,6 +262,7 @@ public class MainRegistry {
             event.accept(ModBlocks.TACHOMETER);
             event.accept(ModItems.STEAM_ENGINE_ITEM);
             event.accept(ModBlocks.DROBITEL);
+            event.accept(ModItems.BLADE.get());
             event.accept(ModBlocks.STATOR_BLOCK);
             event.accept(ModItems.COPPER_COIL.get());
 

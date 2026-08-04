@@ -79,8 +79,7 @@ public class ModBlocks {
     public static final RegistryObject<Block> VALVE = registerBlock("valve",
             () -> new com.trd.block.basic.industrial.fluids.ValveBlock(
                     BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion()));
-    public static final RegistryObject<Block> DROBITEL = registerBlock("drobitel",
-            () -> new Block(BlockBehaviour.Properties.copy(Blocks.STONE).noOcclusion()));
+
 
     public static final RegistryObject<Block> CORRUPTED_BARREL = BLOCKS.register("corrupted_barrel",
             () -> new FluidBarrelBlock(BarrelTier.CORRUPTED, BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GRAY).strength(1.5f).sound(SoundType.METAL)));
@@ -289,6 +288,9 @@ public class ModBlocks {
                     .noOcclusion()));
     public static final RegistryObject<Block> SMELTER = BLOCKS.register("smelter",
             () -> new SmelterBlock(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
+    public static final RegistryObject<Block> DROBITEL = BLOCKS.register("drobitel",
+            () -> new DrobitelBlock(BlockBehaviour.Properties.of()
                     .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
     public static final RegistryObject<Block> CONCRETE_RED = registerBlock("concrete_red",
             () -> new Block(BlockBehaviour.Properties.of()

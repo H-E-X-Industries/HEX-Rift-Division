@@ -1,4 +1,4 @@
-package com.trd.client.gui;
+package com.trd.client.overlay.hud;
 
 import com.trd.block.entity.industrial.WaterPumpBlockEntity;
 import com.trd.block.industrial.WaterPumpBlock;

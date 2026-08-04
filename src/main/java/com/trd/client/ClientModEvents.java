@@ -4,6 +4,7 @@ import com.trd.api.fluids.system.FluidDropItem;
 import com.trd.api.fluids.ModFluids;
 import com.trd.api.metallurgy.system.ItemHeatColorRegistry;
 import com.trd.client.gecko.entity.mobs.DepthWormBrutalRenderer;
+import com.trd.client.overlay.hud.WaterPumpHUD;
 import com.trd.client.render.ber.ConveyorRenderer;
 import com.trd.item.tools.FluidIdentifierItem;
 import com.trd.main.ResourceRegistry;
@@ -24,7 +25,6 @@ import dev.engine_room.flywheel.api.visualization.VisualizerRegistry;
 
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.block.BlockModelShaper;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.client.renderer.entity.ThrownItemRenderer;
 import net.minecraft.client.renderer.entity.ZombieRenderer;
@@ -105,6 +105,7 @@ public class ClientModEvents {
         MenuScreens.register(ModMenuTypes.FUEL_TANK_MENU.get(), GUIFuelTank::new);
         MenuScreens.register(ModMenuTypes.TROMBONE_MENU.get(), GUITrombone::new);
         MenuScreens.register(ModMenuTypes.CONVEYOR_BUFFER.get(), ConveyorBufferScreen::new);
+        MenuScreens.register(ModMenuTypes.DROBITEL_MENU.get(), DrobitelScreen::new);
 
         event.registerBlockEntityRenderer(ModBlockEntities.MOTOR_ELECTRO_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.SHAFT_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
@@ -379,7 +380,7 @@ public class ClientModEvents {
         event.registerAbove(VanillaGuiOverlay.CROSSHAIR.id(), "stator_hud", StatorOverlay.HUD_STATOR);
         event.registerAbove(VanillaGuiOverlay.CROSSHAIR.id(), "boiler_hud", com.trd.client.overlay.hud.BoilerOverlay.INSTANCE);
         event.registerAbove(VanillaGuiOverlay.CROSSHAIR.id(), "steam_engine_hud", com.trd.client.overlay.hud.SteamEngineOverlay.INSTANCE);
-        event.registerAboveAll("water_pump_hud", new com.trd.client.gui.WaterPumpHUD());
+        event.registerAboveAll("water_pump_hud", new WaterPumpHUD());
         MinecraftForge.EVENT_BUS.register(com.trd.client.overlay.hud.LowPressureSteamCondenserOverlay.class);
     }
 

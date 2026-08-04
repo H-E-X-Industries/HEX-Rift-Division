@@ -71,6 +71,7 @@ public class ModItemModelProvider extends ItemModelProvider {
         simpleItem(ModItems.CONGLOMERATE_POWDER);
         simpleItem(ModItems.LIGNITE);
         simpleItem(ModItems.LEAD_PLATE);
+        simpleItem(ModItems.BLADE);
         simpleItem(ModItems.TITANIUM_PLATE);
         simpleItem(ModItems.TUNGSTEN_PLATE);
         simpleItem(ModItems.LIQUID_METAL);

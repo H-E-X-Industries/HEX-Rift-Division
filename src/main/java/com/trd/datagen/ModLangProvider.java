@@ -1282,7 +1282,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModItems.BATTERY_TRIXITE.get(), "Продвинутый аккумулятор");
         add(ModBlocks.MACHINE_BATTERY.get(), "Модульное энергохранилище");
         add(ModBlocks.CONVERTER_BLOCK.get(), "Энергетический конвертер");
-        add(ModBlocks.WIRE_COATED.get(), "Провод из красной меди");
+        add(ModBlocks.WIRE_COATED.get(), "Провод из промышленной меди");
         add(ModBlocks.PAINTABLE_WIRE.get(), "Окрашиваемый провод");
         add(ModBlocks.CONNECTOR.get(), "Малый коннектор");
         add(ModBlocks.MEDIUM_CONNECTOR.get(), "Средний коннектор");
