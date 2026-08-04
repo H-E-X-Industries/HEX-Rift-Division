@@ -5,6 +5,7 @@ import com.trd.api.rotation.ShaftDiameter;
 import com.trd.api.rotation.ShaftMaterial;
 import com.trd.block.entity.industrial.rotation.ShaftBlockEntity;
 import com.trd.item.ModItems;
+import com.trd.multiblock.industrial.steam_engine.SteamEngineBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -351,8 +352,8 @@ public class ShaftBlock extends BaseEntityBlock {
         if (block instanceof MotorElectroBlock) {
             return state.getValue(MotorElectroBlock.FACING) == axisDir.getOpposite();
         }
-        if (block instanceof com.trd.multiblock.industrial.SteamEngineBlock) {
-            return state.getValue(com.trd.multiblock.industrial.SteamEngineBlock.FACING).getAxis() == axisDir.getAxis();
+        if (block instanceof SteamEngineBlock) {
+            return state.getValue(SteamEngineBlock.FACING).getAxis() == axisDir.getAxis();
         }
         if (block instanceof TachometerBlock) {
             return state.getValue(TachometerBlock.FACING).getAxis() == axisDir.getAxis();

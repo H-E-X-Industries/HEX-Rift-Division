@@ -1,7 +1,7 @@
 package com.trd.client.overlay.hud;
 
 import com.trd.main.MainRegistry;
-import com.trd.multiblock.industrial.SteelStorageBlockEntity;
+import com.trd.multiblock.industrial.steel_storage.SteelStorageBlockEntity;
 import com.trd.multiblock.system.IMultiblockPart;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;

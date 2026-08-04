@@ -7,36 +7,28 @@ import com.trd.api.metallurgy.ModMetallurgy;
 import com.trd.api.metallurgy.system.Metal;
 import com.trd.api.metallurgy.system.MetalUnits2;
 import com.trd.api.metallurgy.system.MetallurgyRegistry;
-import com.trd.api.vein.VeinManager;
-import com.trd.block.entity.conglomerate.ConglomerateBlockEntity;
 import com.trd.datagen.stats.ModBlockLootTableProvider;
 import com.trd.entity.mobs.depth_worm.DepthWormBrutalEntity;
 import com.trd.entity.mobs.grenadier.GrenadierZombieEntity;
 import com.trd.event.SlagItem;
+import com.trd.multiblock.industrial.drobitel.DrobitelRecipes;
 import com.trd.worldgen.feature.ModFeatures;
 import com.mojang.logging.LogUtils;
-import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.MobSpawnEvent;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.furnace.FurnaceFuelBurnTimeEvent;
 import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -69,10 +61,7 @@ import com.trd.item.ModItems;
 import terrablender.api.Regions;
 import terrablender.api.SurfaceRuleManager;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.UUID;
 
 @Mod(MainRegistry.MOD_ID)
 public class MainRegistry {
@@ -143,7 +132,8 @@ public class MainRegistry {
 
     private void commonSetup(final FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
-            ModMetallurgy.init(); // <-- регистрация металлов и рецептов
+            ModMetallurgy.init();
+            DrobitelRecipes.register();// <-- регистрация металлов и рецептов
             ModPacketHandler.register();
             Regions.register(new ModOverworldRegion(new ResourceLocation(MOD_ID, "overworld"), 2));
             SurfaceRuleManager.addSurfaceRules(SurfaceRuleManager.RuleCategory.OVERWORLD, "trd",
@@ -535,62 +525,6 @@ public class MainRegistry {
         }
     }
 
-    @SubscribeEvent
-    public void onRightClick(PlayerInteractEvent.RightClickBlock event) {
-        if (event.getLevel().isClientSide)
-            return;
-        if (event.getItemStack().is(Items.STICK)) {
-            ServerLevel level = (ServerLevel) event.getLevel();
-            BlockPos origin = event.getPos().above();
-
-            RandomSource rand = level.random;
-            int radius = 5 + rand.nextInt(4);
-            int height = 5 + rand.nextInt(4);
-
-            Set<BlockPos> veinBlocks = new HashSet<>();
-
-            for (int x = -radius; x <= radius; x++) {
-                for (int y = -height / 2; y < height / 2 + height % 2; y++) {
-                    for (int z = -radius; z <= radius; z++) {
-                        double halfHeight = height / 2.0;
-                        double yOffset = y;
-                        double dist = (x * x) / (double) (radius * radius) +
-                                (yOffset * yOffset) / (halfHeight * halfHeight) +
-                                (z * z) / (double) (radius * radius);
-                        if (dist > 1.0)
-                            continue;
-
-                        BlockPos pos = origin.offset(x, y, z);
-                        BlockState existing = level.getBlockState(pos);
-                        if (!existing.is(net.minecraft.world.level.block.Blocks.BEDROCK)) {
-                            veinBlocks.add(pos.immutable());
-                        }
-                    }
-                }
-            }
-
-            if (veinBlocks.size() < 30) {
-                event.getEntity().displayClientMessage(Component.literal("§cСлишком мало места для жилы!"), true);
-                return;
-            }
-
-            var composition = com.trd.api.vein.VeinCompositionGenerator.generate(origin.getY(), rand);
-            UUID veinId = VeinManager.get(level).registerVein(veinBlocks, composition, origin.getY());
-
-            for (BlockPos pos : veinBlocks) {
-                level.setBlock(pos, ModBlocks.CONGLOMERATE.get().defaultBlockState(), 2);
-                BlockEntity be = level.getBlockEntity(pos);
-                if (be instanceof ConglomerateBlockEntity conglomerateBe) {
-                    conglomerateBe.setVeinId(veinId);
-                }
-            }
-
-            event.getEntity().displayClientMessage(
-                    Component.literal("§aЖила: " + veinBlocks.size() + " блоков, основной металл: "
-                            + composition.getPrimaryMetal()),
-                    false);
-        }
-    }
 
     // ═══════════════════════════════════════════════════════
     // ОПЫТ ПРИ ДОБЫЧЕ РУД

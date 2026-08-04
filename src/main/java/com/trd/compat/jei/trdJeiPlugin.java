@@ -13,6 +13,7 @@ import com.trd.block.entity.industrial.MillstoneBlockEntity;
 import com.trd.event.SlagItem;
 import com.trd.item.ModItems;
 import com.trd.main.MainRegistry;
+import com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.constants.VanillaTypes;
@@ -45,7 +46,9 @@ import java.util.Map;
 public class trdJeiPlugin implements IModPlugin {
 
     public static final ResourceLocation UID = new ResourceLocation(MainRegistry.MOD_ID, "jei_plugin");
-
+    public static final RecipeType<DrobitelWrapper> DROBITEL_TYPE =
+            RecipeType.create(MainRegistry.MOD_ID, "drobitel", DrobitelWrapper.class);
+    public record DrobitelWrapper(Item input, List<ItemStack> outputs) {}
     public static final RecipeType<SmeltingWrapper> SMELTING_TYPE =
             RecipeType.create(MainRegistry.MOD_ID, "smelting", SmeltingWrapper.class);
     public static final RecipeType<CastingWrapper> CASTING_TYPE =
@@ -83,6 +86,7 @@ public class trdJeiPlugin implements IModPlugin {
         registration.addRecipeCategories(new BoilingCategory(guiHelper));
         registration.addRecipeCategories(new SteamEngineCategory(guiHelper));
         registration.addRecipeCategories(new CondensingCategory(guiHelper));
+        registration.addRecipeCategories(new DrobitelCategory(guiHelper));
     }
 
     @Override
@@ -161,6 +165,16 @@ public class trdJeiPlugin implements IModPlugin {
         }
         registration.addRecipes(MILLSTONE_TYPE, millstoneRecipes);
 
+        // === ДРОБИТЕЛЬ ===
+        List<DrobitelWrapper> drobitelRecipes = new ArrayList<>();
+        for (Map.Entry<Item, List<ItemStack>> entry : DrobitelBlockEntity.RECIPES.entrySet()) {
+            drobitelRecipes.add(new DrobitelWrapper(
+                    entry.getKey(),
+                    entry.getValue().stream().map(ItemStack::copy).toList()
+            ));
+        }
+        registration.addRecipes(DROBITEL_TYPE, drobitelRecipes);
+
         // === ЭЛЕКТРО-ПЕЧЬ ===
         List<ElectricFurnaceWrapper> electricRecipes = new ArrayList<>();
         var recipeManager = Minecraft.getInstance().level.getRecipeManager();
@@ -204,6 +218,7 @@ public class trdJeiPlugin implements IModPlugin {
         registration.addRecipeCatalyst(new ItemStack(ModItems.BOILER_ITEM.get()), BOILING_TYPE);
         registration.addRecipeCatalyst(new ItemStack(ModItems.STEAM_ENGINE_ITEM.get()), STEAM_ENGINE_TYPE);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.LOW_PRESSURE_STEAM_CONDENSER.get()), CONDENSING_TYPE);
+        registration.addRecipeCatalyst(new ItemStack(ModBlocks.DROBITEL.get()), DROBITEL_TYPE);
     }
 
     private static ItemStack createLiquidMetalStack(Metal metal, int amount) {
@@ -559,6 +574,51 @@ public class trdJeiPlugin implements IModPlugin {
 
             String info = String.format("%.1fs | %d JE/t", cookTime / 20f, recipe.energyPerTick());
             gg.drawString(font, info, 5, 43, 0xFF555555, false);
+        }
+    }
+
+    public static class DrobitelCategory implements IRecipeCategory<DrobitelWrapper> {
+        private final IDrawable background;
+        private final IDrawable icon;
+        private final Component title;
+
+        public DrobitelCategory(IGuiHelper guiHelper) {
+            this.background = guiHelper.createDrawable(
+                    new ResourceLocation(MainRegistry.MOD_ID, "textures/gui/jei/jei_universal_gui.png"),
+                    0, 0, 140, 62);
+            this.icon = guiHelper.createDrawableIngredient(VanillaTypes.ITEM_STACK,
+                    new ItemStack(ModBlocks.DROBITEL.get()));
+            this.title = Component.translatable("jei.category.trd.drobitel");
+        }
+
+        @Override public RecipeType<DrobitelWrapper> getRecipeType() { return DROBITEL_TYPE; }
+        @Override public Component getTitle() { return title; }
+        @Override public IDrawable getBackground() { return background; }
+        @Override public IDrawable getIcon() { return icon; }
+
+        @Override
+        public void setRecipe(IRecipeLayoutBuilder builder, DrobitelWrapper recipe, IFocusGroup focuses) {
+            builder.addSlot(RecipeIngredientRole.INPUT, 5, 5)
+                    .addItemStack(new ItemStack(recipe.input()));
+
+            int[][] rightSlots = {
+                    {83, 5}, {101, 5}, {119, 5},
+                    {83, 23}, {101, 23}, {119, 23},
+                    {83, 41}, {101, 41}, {119, 41}
+            };
+            List<ItemStack> outputs = recipe.outputs();
+            for (int i = 0; i < outputs.size() && i < rightSlots.length; i++) {
+                ItemStack stack = outputs.get(i);
+                if (!stack.isEmpty()) {
+                    builder.addSlot(RecipeIngredientRole.OUTPUT, rightSlots[i][0], rightSlots[i][1])
+                            .addItemStack(stack.copy());
+                }
+            }
+        }
+
+        @Override
+        public void draw(DrobitelWrapper recipe, IRecipeSlotsView view, GuiGraphics gg, double mx, double my) {
+            // Автоматизирован — обороты не показываем
         }
     }
 }

@@ -1,7 +1,7 @@
 package com.trd.client.overlay.hud;
 
 import com.trd.main.MainRegistry;
-import com.trd.multiblock.industrial.HeaterBlockEntity;
+import com.trd.multiblock.industrial.heaters.HeaterBlockEntity;
 import com.trd.multiblock.system.IMultiblockPart;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;

@@ -1,5 +1,6 @@
 package com.trd.multiblock.system;
 
+import com.trd.multiblock.industrial.steel_storage.SteelStorageBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -152,7 +153,7 @@ public class MultiblockPartBlock extends BaseEntityBlock implements net.minecraf
                             ctrlDrop.addTagElement("BlockEntityTag", beNbt);
                         }
                         // ═══ НОВОЕ: сохраняем инвентарь стального хранилища ═══
-                        else if (ctrlBe instanceof com.trd.multiblock.industrial.SteelStorageBlockEntity storage) {
+                        else if (ctrlBe instanceof SteelStorageBlockEntity storage) {
                             net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
                             storage.saveAdditional(tag);
                             ctrlDrop.addTagElement("BlockEntityTag", tag);
@@ -187,7 +188,7 @@ public class MultiblockPartBlock extends BaseEntityBlock implements net.minecraf
                     ctrlDrop.addTagElement("BlockEntityTag", beNbt);
                 }
                 // ═══ НОВОЕ ═══
-                else if (ctrlBe instanceof com.trd.multiblock.industrial.SteelStorageBlockEntity storage) {
+                else if (ctrlBe instanceof SteelStorageBlockEntity storage) {
                     net.minecraft.nbt.CompoundTag tag = new net.minecraft.nbt.CompoundTag();
                     storage.saveAdditional(tag);
                     ctrlDrop.addTagElement("BlockEntityTag", tag);

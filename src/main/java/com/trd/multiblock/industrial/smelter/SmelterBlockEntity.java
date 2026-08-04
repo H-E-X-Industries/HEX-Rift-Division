@@ -1,4 +1,4 @@
-package com.trd.multiblock.industrial;
+package com.trd.multiblock.industrial.smelter;
 
 import com.trd.api.metallurgy.system.ISmelter;
 import com.trd.api.metallurgy.system.Metal;
@@ -11,6 +11,7 @@ import com.trd.block.entity.ModBlockEntities;
 import com.trd.event.HotItemHandler;
 import com.trd.event.SlagItem;
 import com.trd.menu.industrial.SmelterMenu;
+import com.trd.multiblock.industrial.heaters.HeaterBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;

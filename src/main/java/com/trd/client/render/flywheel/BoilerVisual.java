@@ -1,7 +1,7 @@
 package com.trd.client.render.flywheel;
 
-import com.trd.multiblock.industrial.BoilerBlock;
-import com.trd.multiblock.industrial.BoilerBlockEntity;
+import com.trd.multiblock.industrial.boiler.BoilerBlock;
+import com.trd.multiblock.industrial.boiler.BoilerBlockEntity;
 import dev.engine_room.flywheel.api.instance.Instance;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
 import dev.engine_room.flywheel.lib.instance.InstanceTypes;

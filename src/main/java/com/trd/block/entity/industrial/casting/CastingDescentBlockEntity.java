@@ -6,8 +6,6 @@ import com.trd.api.metallurgy.system.MetallurgyRegistry;
 import com.trd.block.basic.industrial.casting.CastingDescentBlock;
 import com.trd.block.basic.industrial.casting.SmallSmelterBlock;
 import com.trd.block.entity.ModBlockEntities;
-import com.trd.multiblock.industrial.SmelterBlockEntity;
-import com.trd.multiblock.system.MultiblockPartEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;

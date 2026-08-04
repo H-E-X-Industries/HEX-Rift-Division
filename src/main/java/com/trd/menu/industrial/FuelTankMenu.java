@@ -3,8 +3,6 @@ package com.trd.menu.industrial;
 import com.trd.block.entity.industrial.fluids.FluidBarrelBlockEntity;
 
 import com.trd.menu.ModMenuTypes;
-import com.trd.multiblock.industrial.FuelTankBlock;
-import com.trd.multiblock.industrial.FuelTankBlockEntity;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;

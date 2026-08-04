@@ -1,6 +1,7 @@
-package com.trd.multiblock.industrial;
+package com.trd.multiblock.industrial.drobitel;
 
 import com.trd.block.entity.ModBlockEntities;
+import com.trd.block.entity.industrial.MillstoneBlockEntity;
 import com.trd.item.ModItems;
 import com.trd.menu.industrial.DrobitelMenu;
 import net.minecraft.core.BlockPos;
@@ -19,8 +20,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.SimpleContainerData;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -32,7 +33,9 @@ import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class DrobitelBlockEntity extends BlockEntity implements MenuProvider {
@@ -41,7 +44,7 @@ public class DrobitelBlockEntity extends BlockEntity implements MenuProvider {
     public static final int OUTPUT_SLOTS = 21;
     public static final int BLADE_SLOTS = 2;
     public static final int TOTAL_SLOTS = INPUT_SLOTS + OUTPUT_SLOTS + BLADE_SLOTS;
-    public static final int MAX_PROGRESS = 60; // 3 секунды
+    public static final int MAX_PROGRESS = 60;
 
     private final ItemStackHandler inventory = new ItemStackHandler(TOTAL_SLOTS) {
         @Override
@@ -55,9 +58,9 @@ public class DrobitelBlockEntity extends BlockEntity implements MenuProvider {
         @Override
         public boolean isItemValid(int slot, ItemStack stack) {
             if (slot < INPUT_SLOTS) {
-                return !stack.is(ModItems.BLADE.get()); // лезвия во вход не кладём
+                return !stack.is(ModItems.BLADE.get());
             }
-            if (slot < INPUT_SLOTS + OUTPUT_SLOTS) return false; // выход только на выдачу
+            if (slot < INPUT_SLOTS + OUTPUT_SLOTS) return false;
             return stack.is(ModItems.BLADE.get());
         }
     };
@@ -98,17 +101,32 @@ public class DrobitelBlockEntity extends BlockEntity implements MenuProvider {
 
     private final LazyOptional<IItemHandler> internalHandler = LazyOptional.of(() -> inventory);
 
-    private static final Map<net.minecraft.world.item.Item, net.minecraft.world.item.ItemStack> RECIPES = new HashMap<>();
-    static {
-        RECIPES.put(Items.STONE, new ItemStack(Items.COBBLESTONE));
-        RECIPES.put(Items.COBBLESTONE, new ItemStack(Items.GRAVEL));
-        RECIPES.put(Items.GRAVEL, new ItemStack(Items.SAND));
+    public static final Map<Item, List<ItemStack>> RECIPES = new HashMap<>();
+
+    public static void addRecipe(Item input, ItemStack... outputs) {
+        if (outputs.length == 0) return;
+        List<ItemStack> list = new ArrayList<>();
+        for (ItemStack stack : outputs) {
+            if (!stack.isEmpty()) list.add(stack.copy());
+        }
+        if (!list.isEmpty()) RECIPES.put(input, list);
+    }
+
+    public static void addRecipe(Item input, Item output, int count) {
+        addRecipe(input, new ItemStack(output, count));
+    }
+
+    public static void copyMillstoneRecipes() {
+        for (var entry : MillstoneBlockEntity.RECIPES.entrySet()) {
+            List<ItemStack> out = new ArrayList<>();
+            for (ItemStack s : entry.getValue().outputs()) out.add(s.copy());
+            RECIPES.put(entry.getKey(), out);
+        }
     }
 
     public DrobitelBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.DROBITEL_BE.get(), pos, state);
     }
-
 
     private final LazyOptional<IItemHandler> externalHandler = LazyOptional.of(() -> new IItemHandler() {
         @Override
@@ -123,17 +141,38 @@ public class DrobitelBlockEntity extends BlockEntity implements MenuProvider {
 
         @Override
         public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+            if (slot >= 0 && slot < INPUT_SLOTS && !stack.isEmpty()) {
+                int bestSlot = -1;
+                int bestCount = Integer.MAX_VALUE;
+
+                for (int i = 0; i < INPUT_SLOTS; i++) {
+                    ItemStack existing = inventory.getStackInSlot(i);
+                    if (existing.isEmpty()) {
+                        bestSlot = i;
+                        break;
+                    } else if (ItemStack.isSameItemSameTags(existing, stack)) {
+                        int count = existing.getCount();
+                        if (count < existing.getMaxStackSize() && count < bestCount) {
+                            bestCount = count;
+                            bestSlot = i;
+                        }
+                    }
+                }
+
+                if (bestSlot != -1) {
+                    return inventory.insertItem(bestSlot, stack, simulate);
+                }
+                return stack;
+            }
             return inventory.insertItem(slot, stack, simulate);
         }
 
         @Override
         public ItemStack extractItem(int slot, int amount, boolean simulate) {
-            // Воронки не трогают входные слоты
             if (slot < INPUT_SLOTS) {
                 return ItemStack.EMPTY;
             }
 
-            // Лезвия отдаём только если прочность < 3
             int bladeSlot1 = INPUT_SLOTS + OUTPUT_SLOTS;
             int bladeSlot2 = INPUT_SLOTS + OUTPUT_SLOTS + 1;
             if (slot == bladeSlot1 || slot == bladeSlot2) {
@@ -170,7 +209,6 @@ public class DrobitelBlockEntity extends BlockEntity implements MenuProvider {
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
         if (cap == ForgeCapabilities.ITEM_HANDLER) {
-            // side == null — вызов из GUI/внутриигровой логики, side != null — воронки/трубы
             return side == null ? internalHandler.cast() : externalHandler.cast();
         }
         return super.getCapability(cap, side);
@@ -183,10 +221,9 @@ public class DrobitelBlockEntity extends BlockEntity implements MenuProvider {
         if (be.canProcess()) {
             be.progress++;
 
-            // Замедленный звук вагонетки каждые 10 тиков (~0.5 сек)
             if (be.progress % 10 == 0) {
                 level.playSound(null, pos, net.minecraft.sounds.SoundEvents.MINECART_RIDING,
-                        net.minecraft.sounds.SoundSource.BLOCKS, 0.5f, 0.6f);
+                        net.minecraft.sounds.SoundSource.BLOCKS, 0.7f, 0.6f);
             }
 
             if (be.progress >= be.maxProgress) {
@@ -228,22 +265,26 @@ public class DrobitelBlockEntity extends BlockEntity implements MenuProvider {
             ItemStack input = inventory.getStackInSlot(i);
             if (!input.isEmpty()) {
                 hasInput = true;
-                ItemStack result = getResult(input);
-                if (!result.isEmpty() && !canInsertResult(result)) {
-                    return false;
+                List<ItemStack> results = getResults(input);
+                if (!results.isEmpty()) {
+                    for (ItemStack result : results) {
+                        if (!canInsertResult(result)) {
+                            return false;
+                        }
+                    }
                 }
             }
         }
         return hasInput;
     }
 
-    private ItemStack getResult(ItemStack input) {
-        if (input.isEmpty()) return ItemStack.EMPTY;
-        ItemStack result = RECIPES.get(input.getItem());
+    private List<ItemStack> getResults(ItemStack input) {
+        if (input.isEmpty()) return List.of();
+        List<ItemStack> result = RECIPES.get(input.getItem());
         if (result == null) {
-            return new ItemStack(ModItems.TRASH.get());
+            return List.of(new ItemStack(ModItems.TRASH.get()));
         }
-        return result.copy();
+        return result.stream().map(ItemStack::copy).toList();
     }
 
     private boolean canInsertResult(ItemStack result) {
@@ -263,11 +304,13 @@ public class DrobitelBlockEntity extends BlockEntity implements MenuProvider {
             ItemStack input = inventory.getStackInSlot(i);
             if (input.isEmpty()) continue;
 
-            ItemStack result = getResult(input);
-            if (result.isEmpty()) continue;
+            List<ItemStack> results = getResults(input);
+            if (results.isEmpty()) continue;
 
             input.shrink(1);
-            insertResult(result.copy());
+            for (ItemStack result : results) {
+                insertResult(result.copy());
+            }
         }
 
         damageBlade(INPUT_SLOTS + OUTPUT_SLOTS);

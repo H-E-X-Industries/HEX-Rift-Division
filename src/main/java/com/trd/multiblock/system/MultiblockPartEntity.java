@@ -2,6 +2,9 @@ package com.trd.multiblock.system;
 
 import com.trd.api.fluids.system.FluidNetworkManager;
 import com.trd.block.entity.ModBlockEntities;
+import com.trd.multiblock.industrial.boiler.BoilerBlockEntity;
+import com.trd.multiblock.industrial.fueltanks.small.FuelTankSmallBlockEntity;
+import com.trd.multiblock.industrial.steam_engine.SteamEngineBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -118,11 +121,11 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
             // === FLUID ===
             if (cap == ForgeCapabilities.FLUID_HANDLER && (role == PartRole.FLUID_CONNECTOR || role == PartRole.UNIVERSAL_CONNECTOR || role == PartRole.FLUID_INPUT || role == PartRole.FLUID_OUTPUT || role == PartRole.FLUID_LADDER)) {
                 BlockEntity be = level.getBlockEntity(controllerPos);
-                if (be instanceof com.trd.multiblock.industrial.BoilerBlockEntity boiler) {
+                if (be instanceof BoilerBlockEntity boiler) {
                     return boiler.getCapabilityForPart(cap, side, role);
-                } else if (be instanceof com.trd.multiblock.industrial.FuelTankSmallBlockEntity smallTank) {
+                } else if (be instanceof FuelTankSmallBlockEntity smallTank) {
                     return smallTank.getCapabilityForPart(cap, side, role);
-                } else if (be instanceof com.trd.multiblock.industrial.SteamEngineBlockEntity steamEngine) {
+                } else if (be instanceof SteamEngineBlockEntity steamEngine) {
                     return steamEngine.getCapabilityForPart(cap, side, role);
                 } else if (be instanceof IFluidTankProvider provider) {
                     return provider.getFluidHandlerCapability().cast();

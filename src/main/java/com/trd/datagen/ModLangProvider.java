@@ -642,7 +642,6 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.MOTOR_ELECTRO.get(), "Electric Motor");
         add(ModBlocks.TACHOMETER.get(), "Tachometer");
         add(ModItems.STEAM_ENGINE_ITEM.get(), "Steam Engine");
-        add(ModBlocks.DROBITEL.get(), "Crusher");
         add(ModBlocks.STATOR_BLOCK.get(), "Stator");
 
         // Barrels, Tanks & Fluids
@@ -762,7 +761,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModItems.PROTECTOR_LEAD.get(), "Lead Internal Wall Protector");
         add(ModItems.PROTECTOR_STEEL.get(), "Steel Internal Wall Protector");
         add(ModItems.PROTECTOR_TUNGSTEN.get(), "Tungsten Internal Wall Protector");
-
+        add(ModBlocks.DROBITEL.get(), "Ore Crusher");
         // Fluid pipes
         add(ModBlocks.BRONZE_FLUID_PIPE.get(), "Bronze Fluid Pipe");
         add(ModBlocks.STEEL_FLUID_PIPE.get(), "Steel Fluid Pipe");
@@ -823,7 +822,7 @@ public class ModLangProvider extends LanguageProvider {
         add("entity.trd.grenade_if_slime_projectile", "Slime Impact Grenade");
         add("entity.trd.grenade_if_he_projectile", "HE Impact Grenade");
         add("entity.trd.grenade_nuc_projectile", "Nuclear Grenade");
-
+        add("jei.category.trd.drobitel", "Crushing");
         // Misc Tooltips
         add("item.trd.hot_ingot.tooltip", "§6§lHOT! §r§7(%s%%)");
         add("item.trd.grenadier_goggles.desc.explosion_resist", "Explosion Resistance: +%s%%");
@@ -840,6 +839,7 @@ public class ModLangProvider extends LanguageProvider {
         // JEI Категории
         add("jei.category.trd.smelting", "Плавка");
         add("jei.category.trd.casting", "Литьё");
+        add("jei.category.trd.drobitel", "Дробление");
         add("jei.category.trd.alloying", "Сплавление");
         add("jei.category.trd.millstone", "Жернов");
         add("jei.category.trd.boiling", "Бойлер");
@@ -1302,6 +1302,7 @@ public class ModLangProvider extends LanguageProvider {
 
         // Плавильные установки
         add(ModBlocks.SMALL_SMELTER.get(), "Малая плавильня");
+        add(ModBlocks.DROBITEL.get(), "Рудный дробитель");
         add(ModBlocks.SMELTER.get(), "Плавильня");
         add(ModBlocks.JERNOVA.get(), "Каменные жернова");
         add(ModBlocks.CASTING_DESCENT.get(), "Литейный желоб");
@@ -1417,7 +1418,6 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.MOTOR_ELECTRO.get(), "Электромотор");
         add(ModBlocks.TACHOMETER.get(), "Тахометр");
         add(ModItems.STEAM_ENGINE_ITEM.get(), "Паровой двигатель");
-        add(ModBlocks.DROBITEL.get(), "Дробитель");
         add(ModBlocks.STATOR_BLOCK.get(), "Статор");
 
         // Бочки, баки и жидкости

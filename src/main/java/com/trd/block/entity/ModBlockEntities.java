@@ -1,6 +1,5 @@
 package com.trd.block.entity;
 
-import com.trd.api.energy.EnergyNetworkManager;
 import com.trd.block.entity.conglomerate.ConglomerateBlockEntity;
 import com.trd.block.entity.deco.BeamCollisionBlockEntity;
 import com.trd.block.entity.industrial.ConveyorBlockEntity;
@@ -19,12 +18,19 @@ import com.trd.block.entity.industrial.rotation.MotorElectroBlockEntity;
 import com.trd.block.entity.industrial.rotation.HandCrankBlockEntity;
 import com.trd.block.entity.industrial.rotation.ShaftBlockEntity;
 import com.trd.block.entity.weapons.MissileTurretBlockEntity;
-import com.trd.multiblock.industrial.*;
 
 import com.trd.block.entity.industrial.casting.CastingDescentBlockEntity;
 import com.trd.block.entity.industrial.casting.CastingPotBlockEntity;
 import com.trd.block.entity.industrial.energy.*;
 
+import com.trd.multiblock.industrial.boiler.BoilerBlockEntity;
+import com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity;
+import com.trd.multiblock.industrial.fueltanks.FuelTankBlockEntity;
+import com.trd.multiblock.industrial.fueltanks.small.FuelTankSmallBlockEntity;
+import com.trd.multiblock.industrial.heaters.HeaterBlockEntity;
+import com.trd.multiblock.industrial.smelter.SmelterBlockEntity;
+import com.trd.multiblock.industrial.steam_engine.SteamEngineBlockEntity;
+import com.trd.multiblock.industrial.steel_storage.SteelStorageBlockEntity;
 import com.trd.multiblock.system.MultiblockPartEntity;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -65,9 +71,9 @@ public class ModBlockEntities {
             BLOCK_ENTITIES.register("drobitel",
                     () -> BlockEntityType.Builder.of(DrobitelBlockEntity::new, ModBlocks.DROBITEL.get()).build(null));
 
-    public static final RegistryObject<BlockEntityType<com.trd.multiblock.industrial.FuelTankSmallBlockEntity>> FUEL_TANK_SMALL_BE =
+    public static final RegistryObject<BlockEntityType<FuelTankSmallBlockEntity>> FUEL_TANK_SMALL_BE =
             BLOCK_ENTITIES.register("fuel_tank_small",
-                    () -> BlockEntityType.Builder.of(com.trd.multiblock.industrial.FuelTankSmallBlockEntity::new,
+                    () -> BlockEntityType.Builder.of(FuelTankSmallBlockEntity::new,
                             ModBlocks.FUEL_TANK_SMALL.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<MillstoneBlockEntity>> MILLSTONE =
@@ -147,8 +153,8 @@ public class ModBlockEntities {
     public static final RegistryObject<BlockEntityType<BoilerBlockEntity>> BOILER_BE = BLOCK_ENTITIES.register("boiler_be",
             () -> BlockEntityType.Builder.of(BoilerBlockEntity::new, ModBlocks.BOILER.get()).build(null));
 
-    public static final RegistryObject<BlockEntityType<com.trd.multiblock.industrial.SteamEngineBlockEntity>> STEAM_ENGINE_BE = BLOCK_ENTITIES.register("steam_engine_be",
-            () -> BlockEntityType.Builder.of(com.trd.multiblock.industrial.SteamEngineBlockEntity::new, ModBlocks.STEAM_ENGINE.get()).build(null));
+    public static final RegistryObject<BlockEntityType<SteamEngineBlockEntity>> STEAM_ENGINE_BE = BLOCK_ENTITIES.register("steam_engine_be",
+            () -> BlockEntityType.Builder.of(SteamEngineBlockEntity::new, ModBlocks.STEAM_ENGINE.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<SmelterBlockEntity>> SMELTER_BE = BLOCK_ENTITIES.register("smelter_be",
             () -> BlockEntityType.Builder.of(SmelterBlockEntity::new, ModBlocks.SMELTER.get()).build(null));

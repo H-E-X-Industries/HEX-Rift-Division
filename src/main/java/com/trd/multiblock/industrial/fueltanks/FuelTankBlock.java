@@ -1,4 +1,4 @@
-package com.trd.multiblock.industrial;
+package com.trd.multiblock.industrial.fueltanks;
 
 import com.trd.block.basic.ModBlocks;
 import com.trd.block.entity.ModBlockEntities;
@@ -41,12 +41,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public class FuelTankSmallBlock extends BaseEntityBlock implements IMultiblockController {
+public class FuelTankBlock extends BaseEntityBlock implements IMultiblockController {
 
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
     private static MultiblockStructureHelper helper;
 
-    public FuelTankSmallBlock(Properties properties) {
+    public FuelTankBlock(Properties properties) {
+        // ФИКС: noOcclusion() отключает затемнение граней, не ломая lightmap
         super(properties.noOcclusion());
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
@@ -76,11 +77,14 @@ public class FuelTankSmallBlock extends BaseEntityBlock implements IMultiblockCo
         return 1.0F;
     }
 
+    // ФИКС: пустой occlusion shape — блок не считается сплошным для соседей
     @Override
     public VoxelShape getOcclusionShape(BlockState state, BlockGetter level, BlockPos pos) {
         return Shapes.empty();
     }
 
+    // Возвращаем объединённый shape всего мультиблока — так любая часть структуры
+    // выделяется целиком чёрной обводкой (как у Heater).
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         Direction facing = state.getValue(FACING);
@@ -101,22 +105,25 @@ public class FuelTankSmallBlock extends BaseEntityBlock implements IMultiblockCo
                     '#', PartRole.DEFAULT,
                     '@', PartRole.CONTROLLER,
                     '$', PartRole.FLUID_CONNECTOR,
-                    'L', PartRole.FLUID_LADDER
+                    'L', PartRole.LADDER
             );
 
             String[][] layers = {
                     {
-                            "$@$",
-                            "<L#$"
-
+                            "##$L$##",
+                            "###@###",
+                            "##$L$##"
                     },
                     {
-                            "###",
-                            "<L##"
-
-                    }
-            };
-
+                            "###L###",
+                            "#######",
+                            "###L###"
+                    },
+                    {
+                            "###L###",
+                            "#######",
+                            "###L###"
+                    }};
             helper = MultiblockStructureHelper.createFromLayersWithRoles(
                     layers,
                     symbols,
@@ -141,7 +148,7 @@ public class FuelTankSmallBlock extends BaseEntityBlock implements IMultiblockCo
 
             // восстанавливаем тип/жидкость из предмета
             BlockEntity be = level.getBlockEntity(pos);
-            if (be instanceof FuelTankSmallBlockEntity tank) {
+            if (be instanceof FuelTankBlockEntity tank) {
                 net.minecraft.nbt.CompoundTag itemNbt = stack.getTag();
                 if (itemNbt != null && itemNbt.contains("BlockEntityTag")) {
                     tank.load(itemNbt.getCompound("BlockEntityTag"));
@@ -155,7 +162,7 @@ public class FuelTankSmallBlock extends BaseEntityBlock implements IMultiblockCo
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         if (!state.is(newState.getBlock()) && !level.isClientSide) {
             BlockEntity be = level.getBlockEntity(pos);
-            if (be instanceof FuelTankSmallBlockEntity tank) {
+            if (be instanceof FuelTankBlockEntity tank) {
                 ItemStackHandler inv = tank.getInventory();
                 for (int i = 0; i < inv.getSlots(); i++) {
                     ItemStack stack = inv.getStackInSlot(i);
@@ -176,7 +183,7 @@ public class FuelTankSmallBlock extends BaseEntityBlock implements IMultiblockCo
         if (stack.getItem() instanceof FluidIdentifierItem) {
             if (!level.isClientSide) {
                 BlockEntity be = level.getBlockEntity(pos);
-                if (be instanceof FuelTankSmallBlockEntity tank) {
+                if (be instanceof FuelTankBlockEntity tank) {
                     String selectedFluidId = FluidIdentifierItem.getSelectedFluid(stack);
                     tank.setFilter(selectedFluidId);
                     if (selectedFluidId.equals("none")) {
@@ -197,7 +204,7 @@ public class FuelTankSmallBlock extends BaseEntityBlock implements IMultiblockCo
             return InteractionResult.sidedSuccess(true);
         }
         BlockEntity be = level.getBlockEntity(pos);
-        if (be instanceof FuelTankSmallBlockEntity tank) {
+        if (be instanceof FuelTankBlockEntity tank) {
             net.minecraftforge.network.NetworkHooks.openScreen((ServerPlayer) player, tank, pos);
             return InteractionResult.CONSUME;
         }
@@ -207,19 +214,19 @@ public class FuelTankSmallBlock extends BaseEntityBlock implements IMultiblockCo
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new FuelTankSmallBlockEntity(pos, state);
+        return new FuelTankBlockEntity(pos, state);
     }
 
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return level.isClientSide ? null : createTickerHelper(type, ModBlockEntities.FUEL_TANK_SMALL_BE.get(), FuelTankSmallBlockEntity::tick);
+        return level.isClientSide ? null : createTickerHelper(type, ModBlockEntities.FUEL_TANK_BE.get(), FuelTankBlockEntity::tick);
     }
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable BlockGetter level, List<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, level, tooltip, flag);
-        tooltip.add(Component.translatable("tooltip.trd.fuel_tank.capacity", "288 000").withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("tooltip.trd.fuel_tank.capacity", "768 000").withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.trd.fuel_tank.resistant").withStyle(ChatFormatting.GREEN));
 
         net.minecraft.nbt.CompoundTag nbt = stack.getTag();
@@ -241,7 +248,8 @@ public class FuelTankSmallBlock extends BaseEntityBlock implements IMultiblockCo
             Fluid fluid = net.minecraftforge.registries.ForgeRegistries.FLUIDS.getValue(new net.minecraft.resources.ResourceLocation(displayId));
             String loc = fluid != null ? Component.translatable(fluid.getFluidType().getDescriptionId()).getString() : displayId;
             tooltip.add(Component.translatable("tooltip.trd.fuel_tank.fluid", loc));
-            tooltip.add(Component.translatable("tooltip.trd.fuel_tank.amount", amount, "288000"));
+            tooltip.add(Component.translatable("tooltip.trd.fuel_tank.amount", amount, "768000"));
+
         }
     }
 }

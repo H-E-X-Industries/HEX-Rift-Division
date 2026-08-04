@@ -1,16 +1,20 @@
-package com.trd.multiblock.industrial;
+package com.trd.multiblock.industrial.drobitel;
 
 import com.trd.block.basic.ModBlocks;
 import com.trd.block.entity.ModBlockEntities;
+import com.trd.item.ModItems;
 import com.trd.multiblock.system.IMultiblockController;
 import com.trd.multiblock.system.MultiblockStructureHelper;
 import com.trd.multiblock.system.PartRole;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
@@ -22,21 +26,20 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
-import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.phys.shapes.Shapes;
-import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraftforge.network.NetworkHooks;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.function.Supplier;
 
-public class SteamEngineBlock extends BaseEntityBlock implements IMultiblockController {
-    
+public class DrobitelBlock extends BaseEntityBlock implements IMultiblockController {
+
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
     private static MultiblockStructureHelper helper;
 
-    public SteamEngineBlock(Properties properties) {
-        super(properties.noOcclusion());
+    public DrobitelBlock(Properties properties) {
+        super(properties.noOcclusion().strength(3.0f, 10.0f));
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
@@ -52,26 +55,11 @@ public class SteamEngineBlock extends BaseEntityBlock implements IMultiblockCont
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.ENTITYBLOCK_ANIMATED;
+        return RenderShape.MODEL;
     }
 
     @Override
-    public boolean propagatesSkylightDown(BlockState state, BlockGetter reader, BlockPos pos) {
-        return true;
-    }
-
-    @Override
-    public float getShadeBrightness(BlockState state, BlockGetter worldIn, BlockPos pos) {
-        return 1.0F;
-    }
-
-    @Override
-    public VoxelShape getOcclusionShape(BlockState state, BlockGetter level, BlockPos pos) {
-        return Shapes.empty();
-    }
-
-    @Override
-    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+    public net.minecraft.world.phys.shapes.VoxelShape getShape(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos pos, net.minecraft.world.phys.shapes.CollisionContext context) {
         Direction facing = state.getValue(FACING);
         return getStructureHelper().generateShapeFromParts(facing);
     }
@@ -81,32 +69,18 @@ public class SteamEngineBlock extends BaseEntityBlock implements IMultiblockCont
         if (helper == null) {
             Map<Character, Supplier<BlockState>> symbols = Map.of(
                     '#', () -> ModBlocks.MULTIBLOCK_PART.get().defaultBlockState(),
-                    '@', () -> this.defaultBlockState(),
-                    'O', () -> ModBlocks.MULTIBLOCK_PART.get().defaultBlockState(),
-                    'I', () -> ModBlocks.MULTIBLOCK_PART.get().defaultBlockState()
+                    '@', () -> this.defaultBlockState()
             );
-
             Map<Character, PartRole> roles = Map.of(
                     '#', PartRole.DEFAULT,
-                    '@', PartRole.CONTROLLER,
-                    'O', PartRole.FLUID_OUTPUT,
-                    'I', PartRole.FLUID_INPUT
+                    '@', PartRole.CONTROLLER
             );
 
-            String[][] layers = {
-                    {
-                            "#@#"
-                    },
-                    {
-                            " O "
-                    },
-                    {
-                            " I "
-                    }
-            };
-
             helper = MultiblockStructureHelper.createFromLayersWithRoles(
-                    layers,
+                    new String[][]{
+                            {"###", "#@#", "###"},
+                            {"###", "###", "###"}
+                    },
                     symbols,
                     () -> ModBlocks.MULTIBLOCK_PART.get().defaultBlockState(),
                     roles
@@ -126,31 +100,66 @@ public class SteamEngineBlock extends BaseEntityBlock implements IMultiblockCont
         if (!level.isClientSide) {
             Direction facing = state.getValue(FACING);
             getStructureHelper().placeStructure(level, pos, facing, this);
-            
-            // Notify network for the controller
-            com.trd.api.rotation.KineticNetworkManager.get((net.minecraft.server.level.ServerLevel) level).updateNetworkAfterPlace(pos);
         }
     }
 
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         if (!state.is(newState.getBlock()) && !level.isClientSide) {
+            BlockEntity be = level.getBlockEntity(pos);
+            if (be instanceof DrobitelBlockEntity drobitel) {
+                drobitel.dropContents();
+            }
             Direction facing = state.getValue(FACING);
             getStructureHelper().destroyStructure(level, pos, facing);
-            com.trd.api.rotation.KineticNetworkManager.get((net.minecraft.server.level.ServerLevel) level).updateNetworkAfterRemove(pos);
         }
         super.onRemove(state, level, pos, newState, isMoving);
+    }
+
+    @Override
+    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+        if (level.isClientSide) {
+            return InteractionResult.sidedSuccess(true);
+        }
+
+        ItemStack held = player.getItemInHand(hand);
+
+        // ПКМ отвёрткой — вынуть лезвие
+        if (held.is(ModItems.SCREWDRIVER.get())) {
+            BlockEntity be = level.getBlockEntity(pos);
+            if (be instanceof DrobitelBlockEntity drobitel) {
+                return drobitel.handleScrewdriver(player, hand);
+            }
+            return InteractionResult.CONSUME;
+        }
+
+        // ПКМ с лезвием — вставить лезвие
+        if (held.is(ModItems.BLADE.get())) {
+            BlockEntity be = level.getBlockEntity(pos);
+            if (be instanceof DrobitelBlockEntity drobitel) {
+                return drobitel.handleBladeInsertion(player, hand);
+            }
+            return InteractionResult.CONSUME;
+        }
+
+        // Обычное открытие GUI
+        BlockEntity be = level.getBlockEntity(pos);
+        if (be instanceof DrobitelBlockEntity drobitel) {
+            NetworkHooks.openScreen((ServerPlayer) player, drobitel, pos);
+            return InteractionResult.CONSUME;
+        }
+        return InteractionResult.PASS;
     }
 
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new SteamEngineBlockEntity(pos, state);
+        return new DrobitelBlockEntity(pos, state);
     }
 
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return level.isClientSide ? null : createTickerHelper(type, ModBlockEntities.STEAM_ENGINE_BE.get(), SteamEngineBlockEntity::tick);
+        return level.isClientSide ? null : createTickerHelper(type, ModBlockEntities.DROBITEL_BE.get(), DrobitelBlockEntity::serverTick);
     }
 }

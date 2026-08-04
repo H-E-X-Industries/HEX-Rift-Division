@@ -1,10 +1,9 @@
 package com.trd.item.tools;
 
-import com.trd.api.metallurgy.system.Metal;
 import com.trd.block.entity.industrial.casting.CastingPotBlockEntity;
 import com.trd.event.HotItemHandler;
 import com.trd.event.SlagItem;
-import com.trd.multiblock.industrial.SmelterBlockEntity;
+import com.trd.multiblock.industrial.smelter.SmelterBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;

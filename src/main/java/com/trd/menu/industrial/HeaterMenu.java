@@ -2,7 +2,7 @@ package com.trd.menu.industrial;
 
 import com.trd.block.basic.ModBlocks;
 import com.trd.menu.ModMenuTypes;
-import com.trd.multiblock.industrial.HeaterBlockEntity;
+import com.trd.multiblock.industrial.heaters.HeaterBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;

@@ -2,8 +2,8 @@ package com.trd.client.render.ber;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import com.trd.multiblock.industrial.FuelTankBlock;
-import com.trd.multiblock.industrial.FuelTankBlockEntity;
+import com.trd.multiblock.industrial.fueltanks.FuelTankBlock;
+import com.trd.multiblock.industrial.fueltanks.FuelTankBlockEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;

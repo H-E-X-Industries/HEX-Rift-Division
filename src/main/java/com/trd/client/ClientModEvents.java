@@ -17,7 +17,10 @@ import com.trd.client.render.flywheel.ModModels;
 import com.trd.client.render.flywheel.ShaftVisual;
 import com.trd.client.renderer.*;
 
-import com.trd.multiblock.industrial.FuelTankBlockEntity;
+import com.trd.multiblock.industrial.fueltanks.FuelTankBlockEntity;
+import com.trd.multiblock.industrial.boiler.BoilerBlockEntity;
+import com.trd.multiblock.industrial.fueltanks.small.FuelTankSmallBlockEntity;
+import com.trd.multiblock.industrial.steam_engine.SteamEngineBlockEntity;
 import dev.engine_room.flywheel.api.visual.BlockEntityVisual;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
 import dev.engine_room.flywheel.api.visualization.VisualizerRegistry;
@@ -315,42 +318,42 @@ public class ClientModEvents {
                 });
 
         VisualizerRegistry.setVisualizer(ModBlockEntities.FUEL_TANK_SMALL_BE.get(),
-                new dev.engine_room.flywheel.api.visualization.BlockEntityVisualizer<com.trd.multiblock.industrial.FuelTankSmallBlockEntity>() {
+                new dev.engine_room.flywheel.api.visualization.BlockEntityVisualizer<FuelTankSmallBlockEntity>() {
 
                     @Override
-                    public BlockEntityVisual<? super com.trd.multiblock.industrial.FuelTankSmallBlockEntity> createVisual(
-                            VisualizationContext ctx, com.trd.multiblock.industrial.FuelTankSmallBlockEntity be, float partialTick) {
+                    public BlockEntityVisual<? super FuelTankSmallBlockEntity> createVisual(
+                            VisualizationContext ctx, FuelTankSmallBlockEntity be, float partialTick) {
                         return new com.trd.client.render.flywheel.FuelTankSmallVisual(ctx, be, partialTick);
                     }
 
                     @Override
-                    public boolean skipVanillaRender(com.trd.multiblock.industrial.FuelTankSmallBlockEntity be) {
+                    public boolean skipVanillaRender(FuelTankSmallBlockEntity be) {
                         return false; // Позволяем BER рендерить текст
                     }
                 });
 
         VisualizerRegistry.setVisualizer(ModBlockEntities.BOILER_BE.get(),
-                new dev.engine_room.flywheel.api.visualization.BlockEntityVisualizer<com.trd.multiblock.industrial.BoilerBlockEntity>() {
+                new dev.engine_room.flywheel.api.visualization.BlockEntityVisualizer<BoilerBlockEntity>() {
                     @Override
-                    public BlockEntityVisual<? super com.trd.multiblock.industrial.BoilerBlockEntity> createVisual(
-                            VisualizationContext ctx, com.trd.multiblock.industrial.BoilerBlockEntity be, float partialTick) {
+                    public BlockEntityVisual<? super BoilerBlockEntity> createVisual(
+                            VisualizationContext ctx, BoilerBlockEntity be, float partialTick) {
                         return new com.trd.client.render.flywheel.BoilerVisual(ctx, be, partialTick);
                     }
                     @Override
-                    public boolean skipVanillaRender(com.trd.multiblock.industrial.BoilerBlockEntity be) {
+                    public boolean skipVanillaRender(BoilerBlockEntity be) {
                         return true;
                     }
                 });
 
         VisualizerRegistry.setVisualizer(ModBlockEntities.STEAM_ENGINE_BE.get(),
-                new dev.engine_room.flywheel.api.visualization.BlockEntityVisualizer<com.trd.multiblock.industrial.SteamEngineBlockEntity>() {
+                new dev.engine_room.flywheel.api.visualization.BlockEntityVisualizer<SteamEngineBlockEntity>() {
                     @Override
-                    public BlockEntityVisual<? super com.trd.multiblock.industrial.SteamEngineBlockEntity> createVisual(
-                            VisualizationContext ctx, com.trd.multiblock.industrial.SteamEngineBlockEntity be, float partialTick) {
+                    public BlockEntityVisual<? super SteamEngineBlockEntity> createVisual(
+                            VisualizationContext ctx, SteamEngineBlockEntity be, float partialTick) {
                         return new com.trd.client.render.flywheel.SteamEngineVisual(ctx, be, partialTick);
                     }
                     @Override
-                    public boolean skipVanillaRender(com.trd.multiblock.industrial.SteamEngineBlockEntity be) {
+                    public boolean skipVanillaRender(SteamEngineBlockEntity be) {
                         return true;
                     }
                 });

@@ -1,7 +1,7 @@
 package com.trd.menu.industrial;
 
 import com.trd.menu.ModMenuTypes;
-import com.trd.multiblock.industrial.SteelStorageBlockEntity;
+import com.trd.multiblock.industrial.steel_storage.SteelStorageBlockEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;

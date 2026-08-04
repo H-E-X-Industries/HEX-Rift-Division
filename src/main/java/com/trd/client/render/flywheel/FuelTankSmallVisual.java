@@ -1,8 +1,8 @@
 package com.trd.client.render.flywheel;
 
 
-import com.trd.multiblock.industrial.FuelTankSmallBlock;
-import com.trd.multiblock.industrial.FuelTankSmallBlockEntity;
+import com.trd.multiblock.industrial.fueltanks.small.FuelTankSmallBlock;
+import com.trd.multiblock.industrial.fueltanks.small.FuelTankSmallBlockEntity;
 import dev.engine_room.flywheel.api.instance.Instance;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
 import dev.engine_room.flywheel.lib.instance.InstanceTypes;

@@ -3,10 +3,9 @@ package com.trd.client.overlay.gui;
 
 import com.trd.api.metallurgy.system.MetalUnits2;
 import com.trd.block.entity.industrial.casting.SmallSmelterBlockEntity;
-import com.trd.item.ModItems;
 import com.trd.main.MainRegistry;
 import com.trd.menu.industrial.SmallSmelterMenu;
-import com.trd.multiblock.industrial.HeaterBlockEntity;
+import com.trd.multiblock.industrial.heaters.HeaterBlockEntity;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -15,10 +14,8 @@ import net.minecraft.network.chat.TextColor;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
