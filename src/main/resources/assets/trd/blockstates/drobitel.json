@@ -1,7 +1,8 @@
 {
   "variants": {
-    "": {
-      "model": "trd:block/drobitel"
-    }
+    "facing=north": { "model": "trd:block/drobitel" },
+    "facing=south": { "model": "trd:block/drobitel", "y": 180 },
+    "facing=west":  { "model": "trd:block/drobitel", "y": 270 },
+    "facing=east":  { "model": "trd:block/drobitel", "y": 90 }
   }
 }

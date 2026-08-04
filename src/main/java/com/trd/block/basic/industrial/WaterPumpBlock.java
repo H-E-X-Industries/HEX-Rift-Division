@@ -1,4 +1,4 @@
-package com.trd.block.industrial;
+package com.trd.block.basic.industrial;
 
 import com.trd.block.basic.ModBlocks;
 import com.trd.multiblock.system.IMultiblockController;

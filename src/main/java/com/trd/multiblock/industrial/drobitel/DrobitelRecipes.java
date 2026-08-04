@@ -10,6 +10,10 @@ public class DrobitelRecipes {
 
     public static void register() {
         // --- Базовые цепочки ---
+        DrobitelBlockEntity.addRecipe(Items.PORKCHOP, ModBlocks.ANTON_CHIGUR.get().asItem(), 1);
+        DrobitelBlockEntity.addRecipe(Items.COOKED_PORKCHOP, ModBlocks.MORY_BLOCK.get().asItem(), 1);
+        DrobitelBlockEntity.addRecipe(Items.DEEPSLATE, Items.COBBLED_DEEPSLATE, 1);
+        DrobitelBlockEntity.addRecipe(Items.COBBLED_DEEPSLATE, Items.COBBLESTONE, 1);
         DrobitelBlockEntity.addRecipe(Items.STONE, Items.COBBLESTONE, 1);
         DrobitelBlockEntity.addRecipe(Items.COBBLESTONE, Items.GRAVEL, 1);
         DrobitelBlockEntity.addRecipe(Items.GRAVEL, Items.SAND, 1);

@@ -1,7 +1,7 @@
 package com.trd.block.entity.industrial;
 
 import com.trd.block.entity.industrial.rotation.KineticNodeBlockEntity;
-import com.trd.block.industrial.WaterPumpBlock;
+import com.trd.block.basic.industrial.WaterPumpBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;

@@ -686,7 +686,7 @@ public class ModBlocks {
 
 
     public static final RegistryObject<Block> WATER_PUMP = registerBlockWithoutItem("water_pump",
-            () -> new com.trd.block.industrial.WaterPumpBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion()));
+            () -> new WaterPumpBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion()));
     public static final RegistryObject<Item> WATER_PUMP_ITEM = ModItems.ITEMS.register("water_pump",
             () -> new com.trd.multiblock.system.MultiblockBlockItem(WATER_PUMP.get(), new Item.Properties()));
 
