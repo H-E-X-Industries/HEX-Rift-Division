@@ -1,7 +1,8 @@
 package com.trd.client.render.visual;
 
-import com.trd.block.entity.industrial.WaterPumpBlockEntity;
-import com.trd.block.basic.industrial.WaterPumpBlock;
+
+import com.trd.multiblock.industrial.drobitel.DrobitelBlock;
+import com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity;
 import dev.engine_room.flywheel.api.instance.Instance;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
 import dev.engine_room.flywheel.lib.instance.InstanceTypes;
@@ -15,10 +16,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 
-public class WaterPumpVisual extends AbstractBlockEntityVisual<WaterPumpBlockEntity> implements SimpleDynamicVisual {
-    private final TransformedInstance base;
-    private final TransformedInstance shaft;
-    
+public class DrobitelVisual extends AbstractBlockEntityVisual<DrobitelBlockEntity> implements SimpleDynamicVisual {
+    private final TransformedInstance shaftFront;
+    private final TransformedInstance shaftBack;
+
     private final Direction facing;
     private final float localX;
     private final float localY;
@@ -28,11 +29,11 @@ public class WaterPumpVisual extends AbstractBlockEntityVisual<WaterPumpBlockEnt
     private float currentAngle = 0f;
     private float lastFrameTime = -1.0f;
 
-    public WaterPumpVisual(VisualizationContext ctx, WaterPumpBlockEntity blockEntity, float partialTick) {
+    public DrobitelVisual(VisualizationContext ctx, DrobitelBlockEntity blockEntity, float partialTick) {
         super(ctx, blockEntity, partialTick);
 
-        if (blockState.hasProperty(WaterPumpBlock.FACING)) {
-            this.facing = blockState.getValue(WaterPumpBlock.FACING);
+        if (blockState.hasProperty(DrobitelBlock.FACING)) {
+            this.facing = blockState.getValue(DrobitelBlock.FACING);
         } else {
             this.facing = Direction.NORTH;
         }
@@ -42,27 +43,11 @@ public class WaterPumpVisual extends AbstractBlockEntityVisual<WaterPumpBlockEnt
         this.localY = pos.getY() - origin.getY();
         this.localZ = pos.getZ() - origin.getZ();
 
-        this.base = instancerProvider().instancer(InstanceTypes.TRANSFORMED, Models.partial(com.trd.client.render.flywheel.ModModels.WATER_PUMP)).createInstance();
-        this.shaft = instancerProvider().instancer(InstanceTypes.TRANSFORMED, Models.partial(com.trd.client.render.flywheel.ModModels.SHAFT_MODELS.get("shaft_light_iron"))).createInstance();
+        var model = Models.partial(com.trd.client.render.flywheel.ModModels.SHAFT_MODELS.get("shaft_light_iron"));
+        this.shaftFront = instancerProvider().instancer(InstanceTypes.TRANSFORMED, model).createInstance();
+        this.shaftBack = instancerProvider().instancer(InstanceTypes.TRANSFORMED, model).createInstance();
 
-        setupStaticBase();
         updateLight(partialTick);
-    }
-
-    private void setupStaticBase() {
-        base.setIdentityTransform()
-                .translate(localX, localY, localZ)
-                .translate(0.5f, 0.5f, 0.5f);
-
-        Direction.Axis axis = facing.getAxis();
-        if (axis == Direction.Axis.X) {
-            base.rotateY((float) Math.toRadians(facing == Direction.EAST ? 270 : 90));
-        } else if (facing == Direction.SOUTH) {
-            base.rotateY((float) Math.toRadians(180));
-        }
-
-        base.translate(-0.5f + (0.6f / 16.0f), -1.5f, -0.5f);
-        base.setChanged();
     }
 
     @Override
@@ -75,7 +60,7 @@ public class WaterPumpVisual extends AbstractBlockEntityVisual<WaterPumpBlockEnt
         float deltaSeconds = timeInSeconds - this.lastFrameTime;
         this.lastFrameTime = timeInSeconds;
 
-        float maxRenderSpeed = 300f; 
+        float maxRenderSpeed = 300f;
         float targetSpeed = physicalTargetSpeed;
         if (Math.abs(targetSpeed) > maxRenderSpeed) {
             targetSpeed = Math.signum(targetSpeed) * maxRenderSpeed;
@@ -114,7 +99,7 @@ public class WaterPumpVisual extends AbstractBlockEntityVisual<WaterPumpBlockEnt
             float PI_OVER_4 = (float) (Math.PI / 4.0);
             float targetSnap = Math.round(this.currentAngle / PI_OVER_4) * PI_OVER_4;
             float snapDiff = targetSnap - this.currentAngle;
-            
+
             if (Math.abs(snapDiff) > 0.001f) {
                 float pull = 8.0f * (1.0f - (Math.abs(this.smoothedSpeed) / 5.0f));
                 this.currentAngle += snapDiff * pull * deltaSeconds;
@@ -123,8 +108,16 @@ public class WaterPumpVisual extends AbstractBlockEntityVisual<WaterPumpBlockEnt
             }
         }
 
+        // --- Передний вал (в структурном блоке по направлению facing) ---
+        updateShaft(shaftFront, facing.getStepX(), facing.getStepZ());
+
+        // --- Задний вал (в структурном блоке против направления facing) ---
+        updateShaft(shaftBack, -facing.getStepX(), -facing.getStepZ());
+    }
+
+    private void updateShaft(TransformedInstance shaft, int offsetX, int offsetZ) {
         shaft.setIdentityTransform()
-                .translate(localX, localY, localZ)
+                .translate(localX + offsetX, localY, localZ + offsetZ)
                 .translate(0.5f, 0.5f, 0.5f);
 
         Direction.Axis axis = facing.getAxis();
@@ -141,18 +134,19 @@ public class WaterPumpVisual extends AbstractBlockEntityVisual<WaterPumpBlockEnt
 
     @Override
     public void updateLight(float partialTick) {
-        relight(pos, base, shaft);
+        relight(pos.relative(facing), shaftFront);
+        relight(pos.relative(facing.getOpposite()), shaftBack);
     }
 
     @Override
     protected void _delete() {
-        base.delete();
-        shaft.delete();
+        shaftFront.delete();
+        shaftBack.delete();
     }
 
     @Override
     public void collectCrumblingInstances(Consumer<@Nullable Instance> consumer) {
-        consumer.accept(base);
-        consumer.accept(shaft);
+        consumer.accept(shaftFront);
+        consumer.accept(shaftBack);
     }
 }

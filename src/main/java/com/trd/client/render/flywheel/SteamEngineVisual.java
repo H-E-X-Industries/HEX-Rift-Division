@@ -1,7 +1,7 @@
 package com.trd.client.render.flywheel;
 
-import com.trd.multiblock.industrial.SteamEngineBlock;
-import com.trd.multiblock.industrial.SteamEngineBlockEntity;
+import com.trd.multiblock.industrial.steam_engine.SteamEngineBlock;
+import com.trd.multiblock.industrial.steam_engine.SteamEngineBlockEntity;
 import dev.engine_room.flywheel.api.instance.Instance;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
 import dev.engine_room.flywheel.lib.instance.InstanceTypes;

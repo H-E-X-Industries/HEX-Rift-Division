@@ -10,7 +10,6 @@ import com.trd.block.basic.deco.BeamBlock;
 import com.trd.block.basic.deco.BeamCollisionBlock;
 import com.trd.block.basic.deco.LampBlock;
 import com.trd.block.basic.deco.SteelPropsBlock;
-import com.trd.block.basic.direction.SideOBlock;
 import com.trd.block.basic.industrial.*;
 import com.trd.block.basic.industrial.fluids.FluidBarrelBlock;
 
@@ -30,8 +29,15 @@ import com.trd.block.basic.industrial.rotation.ShaftBlock;
 import com.trd.block.basic.necrosis.hive.HiveRootsBlock;
 
 import com.trd.block.basic.weapons.MissileTurretBlock;
-import com.trd.multiblock.industrial.*;
 
+import com.trd.multiblock.industrial.boiler.BoilerBlock;
+import com.trd.multiblock.industrial.drobitel.DrobitelBlock;
+import com.trd.multiblock.industrial.fueltanks.FuelTankBlock;
+import com.trd.multiblock.industrial.fueltanks.small.FuelTankSmallBlock;
+import com.trd.multiblock.industrial.heaters.HeaterBlock;
+import com.trd.multiblock.industrial.smelter.SmelterBlock;
+import com.trd.multiblock.industrial.steam_engine.SteamEngineBlock;
+import com.trd.multiblock.industrial.steel_storage.SteelStorageBlock;
 import com.trd.multiblock.system.MultiblockPartBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -79,8 +85,7 @@ public class ModBlocks {
     public static final RegistryObject<Block> VALVE = registerBlock("valve",
             () -> new com.trd.block.basic.industrial.fluids.ValveBlock(
                     BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion()));
-    public static final RegistryObject<Block> DROBITEL = registerBlock("drobitel",
-            () -> new Block(BlockBehaviour.Properties.copy(Blocks.STONE).noOcclusion()));
+
 
     public static final RegistryObject<Block> CORRUPTED_BARREL = BLOCKS.register("corrupted_barrel",
             () -> new FluidBarrelBlock(BarrelTier.CORRUPTED, BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GRAY).strength(1.5f).sound(SoundType.METAL)));
@@ -229,7 +234,7 @@ public class ModBlocks {
                     .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
 
     public static final RegistryObject<Block> FUEL_TANK_SMALL = BLOCKS.register("fuel_tank_small",
-            () -> new com.trd.multiblock.industrial.FuelTankSmallBlock(BlockBehaviour.Properties.of()
+            () -> new FuelTankSmallBlock(BlockBehaviour.Properties.of()
                     .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
 
     public static final RegistryObject<Block> SMALL_SMELTER = registerBlock("small_smelter",
@@ -289,6 +294,9 @@ public class ModBlocks {
                     .noOcclusion()));
     public static final RegistryObject<Block> SMELTER = BLOCKS.register("smelter",
             () -> new SmelterBlock(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
+    public static final RegistryObject<Block> DROBITEL = BLOCKS.register("drobitel",
+            () -> new DrobitelBlock(BlockBehaviour.Properties.of()
                     .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
     public static final RegistryObject<Block> CONCRETE_RED = registerBlock("concrete_red",
             () -> new Block(BlockBehaviour.Properties.of()
@@ -670,7 +678,7 @@ public class ModBlocks {
 
    //ZAMAZ
    public static final RegistryObject<Block> STEAM_ENGINE = BLOCKS.register("steam_engine",
-           () -> new com.trd.multiblock.industrial.SteamEngineBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion()));
+           () -> new SteamEngineBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion()));
    
    public static final RegistryObject<Block> LOW_PRESSURE_STEAM_CONDENSER = registerBlock("low_pressure_steam_condenser",
            () -> new LowPressureSteamCondenserBlock(BlockBehaviour.Properties.of()
@@ -678,7 +686,7 @@ public class ModBlocks {
 
 
     public static final RegistryObject<Block> WATER_PUMP = registerBlockWithoutItem("water_pump",
-            () -> new com.trd.block.industrial.WaterPumpBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion()));
+            () -> new WaterPumpBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion()));
     public static final RegistryObject<Item> WATER_PUMP_ITEM = ModItems.ITEMS.register("water_pump",
             () -> new com.trd.multiblock.system.MultiblockBlockItem(WATER_PUMP.get(), new Item.Properties()));
 

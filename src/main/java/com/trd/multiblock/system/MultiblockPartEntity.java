@@ -1,7 +1,11 @@
 package com.trd.multiblock.system;
 
 import com.trd.api.fluids.system.FluidNetworkManager;
+import com.trd.api.rotation.Rotational;
 import com.trd.block.entity.ModBlockEntities;
+import com.trd.multiblock.industrial.boiler.BoilerBlockEntity;
+import com.trd.multiblock.industrial.fueltanks.small.FuelTankSmallBlockEntity;
+import com.trd.multiblock.industrial.steam_engine.SteamEngineBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -9,6 +13,7 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
@@ -20,12 +25,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.EnumSet;
 import java.util.Set;
 
-public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart {
+public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart, Rotational {
 
     private BlockPos controllerPos;
     private PartRole role = PartRole.DEFAULT;
     private Set<Direction> allowedClimbSides = EnumSet.noneOf(Direction.class);
-
+    private long kineticSpeed = 0;
+    private float kineticNetworkScale = 1.0f;
     public MultiblockPartEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.MULTIBLOCK_PART.get(), pos, state);
     }
@@ -86,6 +92,136 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
         }
     }
 
+    // ==================== Rotational (только для KINETIC_PORT) ====================
+
+    private boolean isKineticPort() {
+        return this.role == PartRole.KINETIC_PORT;
+    }
+
+    private Rotational getControllerRotational() {
+        if (controllerPos == null || level == null) return null;
+        BlockEntity be = level.getBlockEntity(controllerPos);
+        return be instanceof Rotational r ? r : null;
+    }
+
+    @Override
+    public long getSpeed() {
+        if (!isKineticPort()) return 0;
+        return this.kineticSpeed;
+    }
+
+    @Override
+    public void setSpeed(long speed) {
+        if (!isKineticPort()) return;
+        this.kineticSpeed = (long) (speed * this.kineticNetworkScale);
+    }
+
+    @Override
+    public long getTorque() {
+        return 0;
+    }
+
+    @Override
+    public long getMaxSpeed() {
+        Rotational ctrl = getControllerRotational();
+        return ctrl != null ? ctrl.getMaxSpeed() : 0;
+    }
+
+    @Override
+    public long getMaxTorque() {
+        Rotational ctrl = getControllerRotational();
+        return ctrl != null ? ctrl.getMaxTorque() : 0;
+    }
+
+    @Override
+    public double getInertiaContribution() {
+        return isKineticPort() ? 0.5 : 0;
+    }
+
+    @Override
+    public long getMaxTorqueTolerance() {
+        Rotational ctrl = getControllerRotational();
+        return ctrl != null ? ctrl.getMaxTorqueTolerance() : 0;
+    }
+
+    @Override
+    public long getConsumedTorque() {
+        return 0;
+    }
+
+    @Override
+    public boolean isSource() {
+        return false;
+    }
+
+    @Override
+    public long getVisualSpeed() {
+        Rotational ctrl = getControllerRotational();
+        if (ctrl != null) return ctrl.getVisualSpeed();
+        return getSpeed();
+    }
+
+    @Override
+    public Direction[] getPropagationDirections() {
+        if (!isKineticPort() || controllerPos == null || level == null) return new Direction[0];
+        BlockState ctrlState = level.getBlockState(controllerPos);
+
+        // ❌ Было: if (!(ctrlState.getBlock() instanceof HorizontalDirectionalBlock)) return new Direction[0];
+        // ✅ Стало: проверяем наличие свойства, а не класс блока
+        if (!ctrlState.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING))
+            return new Direction[0];
+
+        Direction facing = ctrlState.getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING);
+        BlockPos front = controllerPos.relative(facing);
+        BlockPos back = controllerPos.relative(facing.getOpposite());
+
+        if (worldPosition.equals(front)) return new Direction[]{facing, facing.getOpposite()};
+        if (worldPosition.equals(back)) return new Direction[]{facing.getOpposite(), facing};
+        return new Direction[0];
+    }
+
+    @Override
+    public java.util.List<BlockPos> getPotentialConnections(net.minecraft.world.level.Level level, net.minecraft.core.BlockPos myPos) {
+        java.util.List<BlockPos> list = new java.util.ArrayList<>();
+        if (!isKineticPort()) return list;
+        if (controllerPos != null) list.add(controllerPos);
+        for (Direction dir : getPropagationDirections()) {
+            if (dir != null) list.add(myPos.relative(dir));
+        }
+        return list;
+    }
+
+    @Override
+    public boolean canConnectMechanically(net.minecraft.core.BlockPos myPos, net.minecraft.core.BlockPos neighborPos, Rotational neighbor) {
+        if (!isKineticPort()) return false;
+        // Соединение с контроллером дробителя
+        if (controllerPos != null && neighborPos.equals(controllerPos)) {
+            return neighbor instanceof com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity;
+        }
+        // Соединение с внешними кинетическими блоками (вал, подшипник, мотор и т.д.)
+        for (Direction dir : getPropagationDirections()) {
+            if (myPos.relative(dir).equals(neighborPos)) {
+                return neighbor instanceof com.trd.block.entity.industrial.rotation.KineticNodeBlockEntity;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public float calculateTransmissionRatio(net.minecraft.core.BlockPos myPos, net.minecraft.core.BlockPos neighborPos, Rotational neighbor) {
+        return 1.0f;
+    }
+
+    @Override
+    public void setNetworkScale(float scale) {
+        if (isKineticPort()) this.kineticNetworkScale = scale;
+    }
+
+    @Override
+    public float getNetworkScale() {
+        return isKineticPort() ? this.kineticNetworkScale : 1.0f;
+    }
+
     @Override
     public void setRemoved() {
         super.setRemoved();
@@ -109,6 +245,11 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
             climbMask |= (1 << d.ordinal());
         }
         tag.putByte("ClimbSides", climbMask);
+
+        if (isKineticPort()) {
+            tag.putLong("KineticSpeed", this.kineticSpeed);
+            tag.putFloat("KineticScale", this.kineticNetworkScale);
+        }
     }
 
     @NotNull
@@ -118,11 +259,11 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
             // === FLUID ===
             if (cap == ForgeCapabilities.FLUID_HANDLER && (role == PartRole.FLUID_CONNECTOR || role == PartRole.UNIVERSAL_CONNECTOR || role == PartRole.FLUID_INPUT || role == PartRole.FLUID_OUTPUT || role == PartRole.FLUID_LADDER)) {
                 BlockEntity be = level.getBlockEntity(controllerPos);
-                if (be instanceof com.trd.multiblock.industrial.BoilerBlockEntity boiler) {
+                if (be instanceof BoilerBlockEntity boiler) {
                     return boiler.getCapabilityForPart(cap, side, role);
-                } else if (be instanceof com.trd.multiblock.industrial.FuelTankSmallBlockEntity smallTank) {
+                } else if (be instanceof FuelTankSmallBlockEntity smallTank) {
                     return smallTank.getCapabilityForPart(cap, side, role);
-                } else if (be instanceof com.trd.multiblock.industrial.SteamEngineBlockEntity steamEngine) {
+                } else if (be instanceof SteamEngineBlockEntity steamEngine) {
                     return steamEngine.getCapabilityForPart(cap, side, role);
                 } else if (be instanceof IFluidTankProvider provider) {
                     return provider.getFluidHandlerCapability().cast();
@@ -167,6 +308,9 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
                 }
             }
         }
+
+        if (tag.contains("KineticSpeed")) this.kineticSpeed = tag.getLong("KineticSpeed");
+        if (tag.contains("KineticScale")) this.kineticNetworkScale = tag.getFloat("KineticScale");
     }
 
     @Nullable

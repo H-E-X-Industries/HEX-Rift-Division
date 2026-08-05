@@ -5,6 +5,7 @@ import com.trd.api.rotation.ShaftDiameter;
 import com.trd.api.rotation.ShaftMaterial;
 import com.trd.block.entity.industrial.rotation.ShaftBlockEntity;
 import com.trd.item.ModItems;
+import com.trd.multiblock.industrial.steam_engine.SteamEngineBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -285,6 +286,24 @@ public class ShaftBlock extends BaseEntityBlock {
         } else if (stateAgainst.getBlock() instanceof MotorElectroBlock) {
             // Перенимаем ось мотора
             placementFacing = stateAgainst.getValue(MotorElectroBlock.FACING);
+        } else if (stateAgainst.getBlock() instanceof com.trd.multiblock.system.MultiblockPartBlock) {
+            BlockEntity be = level.getBlockEntity(posAgainst);
+            if (be instanceof com.trd.multiblock.system.IMultiblockPart part
+                    && part.getPartRole() == com.trd.multiblock.system.PartRole.KINETIC_PORT
+                    && part.getControllerPos() != null) {
+                BlockState ctrlState = level.getBlockState(part.getControllerPos());
+                if (ctrlState.getBlock() instanceof com.trd.multiblock.industrial.drobitel.DrobitelBlock
+                        && ctrlState.hasProperty(com.trd.multiblock.industrial.drobitel.DrobitelBlock.FACING)) {
+                    Direction facing = ctrlState.getValue(com.trd.multiblock.industrial.drobitel.DrobitelBlock.FACING);
+                    // Разрешаем кликать только в торец порта (по оси дробителя)
+                    if (clickedFace.getAxis() != facing.getAxis()) {
+                        return null;
+                    }
+                    placementFacing = facing;
+                }
+            } else {
+                return null;
+            }
         }
 
         // --- ЗАЩИТА ОТ СОСЕДЕЙ ---
@@ -351,11 +370,19 @@ public class ShaftBlock extends BaseEntityBlock {
         if (block instanceof MotorElectroBlock) {
             return state.getValue(MotorElectroBlock.FACING) == axisDir.getOpposite();
         }
-        if (block instanceof com.trd.multiblock.industrial.SteamEngineBlock) {
-            return state.getValue(com.trd.multiblock.industrial.SteamEngineBlock.FACING).getAxis() == axisDir.getAxis();
+        if (block instanceof SteamEngineBlock) {
+            return state.getValue(SteamEngineBlock.FACING).getAxis() == axisDir.getAxis();
         }
         if (block instanceof TachometerBlock) {
             return state.getValue(TachometerBlock.FACING).getAxis() == axisDir.getAxis();
+        }
+        // <-- НОВОЕ: порт дробителя считается опорой для вала
+        if (block instanceof com.trd.multiblock.system.MultiblockPartBlock) {
+            BlockEntity be = level.getBlockEntity(pos);
+            if (be instanceof com.trd.multiblock.system.IMultiblockPart part
+                    && part.getPartRole() == com.trd.multiblock.system.PartRole.KINETIC_PORT) {
+                return true;
+            }
         }
         return false;
     }

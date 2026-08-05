@@ -5,7 +5,7 @@ import com.trd.menu.industrial.*;
 import com.trd.menu.rotation.MotorElectroMenu;
 import com.trd.menu.turrets.TromboneMenu;
 import com.trd.menu.turrets.TurretLightMenu;
-import com.trd.multiblock.industrial.SteelStorageBlockEntity;
+import com.trd.multiblock.industrial.steel_storage.SteelStorageBlockEntity;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraftforge.common.extensions.IForgeMenuType;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -32,6 +32,10 @@ public class ModMenuTypes {
                 // Вызываем конструктор: TurretLightMenu(int, Inventory, FriendlyByteBuf)
                 return new TurretLightMenu(windowId, inv, data);
             }));
+
+
+    public static final RegistryObject<MenuType<DrobitelMenu>> DROBITEL_MENU =
+            MENUS.register("drobitel_menu", () -> IForgeMenuType.create(DrobitelMenu::new));
 
     public static final RegistryObject<MenuType<FuelTankMenu>> FUEL_TANK_MENU =
             MENUS.register("fuel_tank_big",

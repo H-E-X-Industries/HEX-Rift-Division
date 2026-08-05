@@ -1,10 +1,8 @@
 package com.trd.client.overlay.hud;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.trd.multiblock.industrial.SteamEngineBlock;
-import com.trd.multiblock.industrial.SteamEngineBlockEntity;
+import com.trd.multiblock.industrial.steam_engine.SteamEngineBlockEntity;
 import com.trd.multiblock.system.MultiblockPartEntity;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;

@@ -1,7 +1,8 @@
-package com.trd.multiblock.industrial;
+package com.trd.multiblock.industrial.boiler;
 
 import com.trd.api.fluids.ModFluids;
 import com.trd.block.entity.ModBlockEntities;
+import com.trd.multiblock.industrial.heaters.HeaterBlockEntity;
 import com.trd.multiblock.system.PartRole;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

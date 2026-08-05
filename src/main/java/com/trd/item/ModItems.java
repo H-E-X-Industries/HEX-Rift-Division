@@ -281,6 +281,9 @@ public class ModItems {
     public static final RegistryObject<Item> DOLOMITE_POWDER= ITEMS.register("dolomite_powder",
             () -> new Item(new Item.Properties()));
 
+    public static final RegistryObject<Item> BLADE = ITEMS.register("blade",
+            () -> new com.trd.item.tools.BladeItem(new Item.Properties().stacksTo(1)));
+
     // BlockItems
     public static final RegistryObject<Item> CONGLOMERATE_BLOCK_ITEM = ITEMS.register("conglomerate",
             () -> new BlockItem(ModBlocks.CONGLOMERATE.get(), new Item.Properties()));
@@ -318,6 +321,9 @@ public class ModItems {
 
     public static final RegistryObject<Item> SMELTER_ITEM = ITEMS.register("smelter",
             () -> new MultiblockBlockItem(ModBlocks.SMELTER.get(), new Item.Properties()));
+
+    public static final RegistryObject<Item> DROBITEL_ITEM = ITEMS.register("drobitel",
+            () -> new MultiblockBlockItem(ModBlocks.DROBITEL.get(), new Item.Properties()));
 
     public static final RegistryObject<Item> STEEL_STORAGE_ITEM = ITEMS.register("steel_storage",
             () -> new MultiblockBlockItem(ModBlocks.STEEL_STORAGE.get(), new Item.Properties()));

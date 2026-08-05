@@ -1,7 +1,6 @@
-package com.trd.multiblock.industrial;
+package com.trd.block.basic.industrial;
 
 import com.trd.block.basic.ModBlocks;
-import com.trd.block.entity.ModBlockEntities;
 import com.trd.multiblock.system.IMultiblockController;
 import com.trd.multiblock.system.MultiblockStructureHelper;
 import com.trd.multiblock.system.PartRole;
@@ -26,16 +25,16 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
+import com.trd.block.entity.industrial.WaterPumpBlockEntity;
 
 import java.util.Map;
 import java.util.function.Supplier;
 
-public class SteamEngineBlock extends BaseEntityBlock implements IMultiblockController {
-    
+public class WaterPumpBlock extends BaseEntityBlock implements IMultiblockController {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
     private static MultiblockStructureHelper helper;
 
-    public SteamEngineBlock(Properties properties) {
+    public WaterPumpBlock(Properties properties) {
         super(properties.noOcclusion());
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
@@ -45,6 +44,7 @@ public class SteamEngineBlock extends BaseEntityBlock implements IMultiblockCont
         builder.add(FACING);
     }
 
+    @Nullable
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         return this.defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
@@ -53,6 +53,12 @@ public class SteamEngineBlock extends BaseEntityBlock implements IMultiblockCont
     @Override
     public RenderShape getRenderShape(BlockState state) {
         return RenderShape.ENTITYBLOCK_ANIMATED;
+    }
+
+    @Override
+    public boolean canSurvive(BlockState state, net.minecraft.world.level.LevelReader level, BlockPos pos) {
+        BlockState belowState = level.getBlockState(pos.below());
+        return belowState.canBeReplaced() || belowState.getFluidState().isSource();
     }
 
     @Override
@@ -76,33 +82,36 @@ public class SteamEngineBlock extends BaseEntityBlock implements IMultiblockCont
         return getStructureHelper().generateShapeFromParts(facing);
     }
 
+    @Nullable
+    @Override
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new WaterPumpBlockEntity(pos, state);
+    }
+
+    @Nullable
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
+        return createTickerHelper(type, com.trd.block.entity.ModBlockEntities.WATER_PUMP_BE.get(), WaterPumpBlockEntity::tick);
+    }
+
+    // --- IMultiblockController API ---
+
     @Override
     public MultiblockStructureHelper getStructureHelper() {
         if (helper == null) {
             Map<Character, Supplier<BlockState>> symbols = Map.of(
                     '#', () -> ModBlocks.MULTIBLOCK_PART.get().defaultBlockState(),
-                    '@', () -> this.defaultBlockState(),
-                    'O', () -> ModBlocks.MULTIBLOCK_PART.get().defaultBlockState(),
-                    'I', () -> ModBlocks.MULTIBLOCK_PART.get().defaultBlockState()
+                    '@', () -> this.defaultBlockState()
             );
 
             Map<Character, PartRole> roles = Map.of(
                     '#', PartRole.DEFAULT,
-                    '@', PartRole.CONTROLLER,
-                    'O', PartRole.FLUID_OUTPUT,
-                    'I', PartRole.FLUID_INPUT
+                    '@', PartRole.CONTROLLER
             );
 
             String[][] layers = {
-                    {
-                            "#@#"
-                    },
-                    {
-                            " O "
-                    },
-                    {
-                            " I "
-                    }
+                    { "#" }, // y=0: Нижний парт
+                    { "@" }  // y=1: Контроллер
             };
 
             helper = MultiblockStructureHelper.createFromLayersWithRoles(
@@ -117,6 +126,11 @@ public class SteamEngineBlock extends BaseEntityBlock implements IMultiblockCont
 
     @Override
     public PartRole getPartRole(BlockPos localOffset) {
+        // Локальные координаты относительно контроллера (y=0, x=0, z=0)
+        // Правая сторона в локальных координатах: x=-1 (для NORTH), что преобразуется в FACING.getCounterClockwise()
+        if (localOffset.equals(new BlockPos(-1, 0, 0))) {
+            return PartRole.FLUID_OUTPUT;
+        }
         return PartRole.DEFAULT;
     }
 
@@ -127,7 +141,6 @@ public class SteamEngineBlock extends BaseEntityBlock implements IMultiblockCont
             Direction facing = state.getValue(FACING);
             getStructureHelper().placeStructure(level, pos, facing, this);
             
-            // Notify network for the controller
             com.trd.api.rotation.KineticNetworkManager.get((net.minecraft.server.level.ServerLevel) level).updateNetworkAfterPlace(pos);
         }
     }
@@ -140,17 +153,5 @@ public class SteamEngineBlock extends BaseEntityBlock implements IMultiblockCont
             com.trd.api.rotation.KineticNetworkManager.get((net.minecraft.server.level.ServerLevel) level).updateNetworkAfterRemove(pos);
         }
         super.onRemove(state, level, pos, newState, isMoving);
-    }
-
-    @Nullable
-    @Override
-    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new SteamEngineBlockEntity(pos, state);
-    }
-
-    @Nullable
-    @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return level.isClientSide ? null : createTickerHelper(type, ModBlockEntities.STEAM_ENGINE_BE.get(), SteamEngineBlockEntity::tick);
     }
 }

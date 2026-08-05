@@ -1,4 +1,4 @@
-package com.trd.multiblock.industrial;
+package com.trd.multiblock.industrial.heaters;
 
 import com.trd.block.basic.ModBlocks;
 import com.trd.block.entity.ModBlockEntities;

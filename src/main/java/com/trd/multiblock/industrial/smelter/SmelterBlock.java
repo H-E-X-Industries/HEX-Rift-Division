@@ -1,12 +1,14 @@
-package com.trd.multiblock.industrial;
+package com.trd.multiblock.industrial.smelter;
 
 import com.trd.block.basic.ModBlocks;
 import com.trd.block.entity.ModBlockEntities;
+import com.trd.item.ModItems;
 import com.trd.multiblock.system.IMultiblockController;
 import com.trd.multiblock.system.MultiblockStructureHelper;
 import com.trd.multiblock.system.PartRole;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -14,7 +16,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
@@ -27,21 +28,20 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public class HeaterBlock extends BaseEntityBlock implements IMultiblockController {
+public class SmelterBlock extends BaseEntityBlock implements IMultiblockController {
 
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
     private static MultiblockStructureHelper helper;
 
-    public HeaterBlock(Properties properties) {
-        super(properties.noOcclusion());
+    public SmelterBlock(Properties properties) {
+        super(properties.noOcclusion().strength(3.0f, 10.0f));
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
@@ -60,24 +60,22 @@ public class HeaterBlock extends BaseEntityBlock implements IMultiblockControlle
         return RenderShape.MODEL;
     }
 
-    // === ИНИЦИАЛИЗАЦИЯ ПАТТЕРНА ===
     @Override
     public MultiblockStructureHelper getStructureHelper() {
         if (helper == null) {
-            // Карта блоков
             Map<Character, Supplier<BlockState>> symbols = Map.of(
                     '#', () -> ModBlocks.MULTIBLOCK_PART.get().defaultBlockState(),
                     'O', () -> this.defaultBlockState()
             );
-            // Карта ролей
             Map<Character, PartRole> roles = Map.of(
                     '#', PartRole.DEFAULT,
                     'O', PartRole.CONTROLLER
             );
-            // Создаем структуру 3x1x3 с контроллером в центре
+
             helper = MultiblockStructureHelper.createFromLayersWithRoles(
                     new String[][]{
-                            {"###", "#O#", "###"}
+                            {"###", "#O#", "###"},
+                            {"###", "###", "###"}
                     },
                     symbols,
                     () -> ModBlocks.MULTIBLOCK_PART.get().defaultBlockState(),
@@ -94,12 +92,10 @@ public class HeaterBlock extends BaseEntityBlock implements IMultiblockControlle
 
     @Override
     public net.minecraft.world.phys.shapes.VoxelShape getShape(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos pos, net.minecraft.world.phys.shapes.CollisionContext context) {
-        net.minecraft.core.Direction facing = state.getValue(FACING);
-        // Берем готовую объединенную форму из Ядра
+        Direction facing = state.getValue(FACING);
         return getStructureHelper().generateShapeFromParts(facing);
     }
 
-    // === ПОСТРОЕНИЕ И РАЗРУШЕНИЕ ===
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         super.setPlacedBy(level, pos, state, placer, stack);
@@ -112,48 +108,74 @@ public class HeaterBlock extends BaseEntityBlock implements IMultiblockControlle
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         if (!state.is(newState.getBlock()) && !level.isClientSide) {
-            BlockEntity blockEntity = level.getBlockEntity(pos);
-            if (blockEntity instanceof HeaterBlockEntity heater) {
-                // Дропаем содержимое инвентаря вручную
-                ItemStackHandler inventory = heater.getInventory();
-                for (int i = 0; i < inventory.getSlots(); i++) {
-                    ItemStack stack = inventory.getStackInSlot(i);
-                    if (!stack.isEmpty()) {
-                        Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), stack);
+            BlockEntity be = level.getBlockEntity(pos);
+            if (be instanceof SmelterBlockEntity smelter) {
+                // Выбрасываем инвентарь
+                ItemStackHandler inv = smelter.getInventory();
+                for (int i = 0; i < inv.getSlots(); i++) {
+                    if (!inv.getStackInSlot(i).isEmpty()) {
+                        Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), inv.getStackInSlot(i));
+                    }
+                }
+
+                // Выбрасываем металл как шлак
+                if (smelter.hasMetal()) {
+                    List<ItemStack> slagItems = smelter.dumpMetalAsSlag();
+                    for (ItemStack slag : slagItems) {
+                        Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), slag);
                     }
                 }
             }
-
-            // Удаляем структуру мультиблока
             Direction facing = state.getValue(FACING);
             getStructureHelper().destroyStructure(level, pos, facing);
         }
         super.onRemove(state, level, pos, newState, isMoving);
     }
 
-    // === ВЗАИМОДЕЙСТВИЕ И TILE ENTITY ===
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        if (!level.isClientSide && level.getBlockEntity(pos) instanceof HeaterBlockEntity heater) {
-            net.minecraftforge.network.NetworkHooks.openScreen(
-                    (net.minecraft.server.level.ServerPlayer) player,
-                    heater,
-                    pos
-            );
-            return InteractionResult.CONSUME;
+        if (level.isClientSide) {
+            return InteractionResult.sidedSuccess(true);
         }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+
+        BlockEntity be = level.getBlockEntity(pos);
+        if (!(be instanceof SmelterBlockEntity smelter)) {
+            return InteractionResult.PASS;
+        }
+
+        ItemStack heldItem = player.getItemInHand(hand);
+
+        // === КОЧЕРГА - обрабатывается в PokerItem.useOn() ===
+        // Важно: возвращаем PASS чтобы сработал useOn у кочерги
+        if (heldItem.is(ModItems.POKER.get())) {
+            return InteractionResult.PASS;
+        }
+
+        // === Shift + ПКМ без кочерги - сообщение о необходимости кочерги ===
+        // Но только если это НЕ кочерга (выше уже проверили)
+        if (player.isShiftKeyDown()) {
+            player.displayClientMessage(Component.literal("§cДля сброса металла нужна кочерга!"), true);
+            return InteractionResult.CONSUME; // CONSUME чтобы не открылся GUI
+        }
+
+        // Обычное открытие GUI
+        net.minecraftforge.network.NetworkHooks.openScreen(
+                (net.minecraft.server.level.ServerPlayer) player,
+                smelter,
+                pos
+        );
+        return InteractionResult.CONSUME;
     }
 
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new HeaterBlockEntity(pos, state);
+        return new SmelterBlockEntity(pos, state);
     }
 
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return level.isClientSide ? null : createTickerHelper(type, ModBlockEntities.HEATER_BE.get(), HeaterBlockEntity::serverTick);
+        return level.isClientSide ? null : createTickerHelper(type, ModBlockEntities.SMELTER_BE.get(), SmelterBlockEntity::serverTick);
     }
 }

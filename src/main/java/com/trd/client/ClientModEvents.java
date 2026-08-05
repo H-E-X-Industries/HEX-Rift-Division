@@ -4,6 +4,7 @@ import com.trd.api.fluids.system.FluidDropItem;
 import com.trd.api.fluids.ModFluids;
 import com.trd.api.metallurgy.system.ItemHeatColorRegistry;
 import com.trd.client.gecko.entity.mobs.DepthWormBrutalRenderer;
+import com.trd.client.overlay.hud.WaterPumpHUD;
 import com.trd.client.render.ber.ConveyorRenderer;
 import com.trd.item.tools.FluidIdentifierItem;
 import com.trd.main.ResourceRegistry;
@@ -16,7 +17,11 @@ import com.trd.client.render.flywheel.ModModels;
 import com.trd.client.render.flywheel.ShaftVisual;
 import com.trd.client.renderer.*;
 
-import com.trd.multiblock.industrial.FuelTankBlockEntity;
+import com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity;
+import com.trd.multiblock.industrial.fueltanks.FuelTankBlockEntity;
+import com.trd.multiblock.industrial.boiler.BoilerBlockEntity;
+import com.trd.multiblock.industrial.fueltanks.small.FuelTankSmallBlockEntity;
+import com.trd.multiblock.industrial.steam_engine.SteamEngineBlockEntity;
 import dev.engine_room.flywheel.api.visual.BlockEntityVisual;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
 import dev.engine_room.flywheel.api.visualization.VisualizerRegistry;
@@ -24,7 +29,6 @@ import dev.engine_room.flywheel.api.visualization.VisualizerRegistry;
 
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.block.BlockModelShaper;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.client.renderer.entity.ThrownItemRenderer;
 import net.minecraft.client.renderer.entity.ZombieRenderer;
@@ -105,6 +109,7 @@ public class ClientModEvents {
         MenuScreens.register(ModMenuTypes.FUEL_TANK_MENU.get(), GUIFuelTank::new);
         MenuScreens.register(ModMenuTypes.TROMBONE_MENU.get(), GUITrombone::new);
         MenuScreens.register(ModMenuTypes.CONVEYOR_BUFFER.get(), ConveyorBufferScreen::new);
+        MenuScreens.register(ModMenuTypes.DROBITEL_MENU.get(), DrobitelScreen::new);
 
         event.registerBlockEntityRenderer(ModBlockEntities.MOTOR_ELECTRO_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.SHAFT_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
@@ -284,6 +289,22 @@ public class ClientModEvents {
                 }
             });
 
+            VisualizerRegistry.setVisualizer(ModBlockEntities.DROBITEL_BE.get(),
+                    new dev.engine_room.flywheel.api.visualization.BlockEntityVisualizer<DrobitelBlockEntity>() {
+                        @Override
+                        public dev.engine_room.flywheel.api.visual.BlockEntityVisual<? super DrobitelBlockEntity> createVisual(
+                                VisualizationContext ctx,
+                                DrobitelBlockEntity be,
+                                float partialTick) {
+                            return new com.trd.client.render.visual.DrobitelVisual(ctx, be, partialTick);
+                        }
+
+                        @Override
+                        public boolean skipVanillaRender(DrobitelBlockEntity be) {
+                            return false; // <-- false! Чтобы JSON-модель корпуса рендерилась ванильно, а Flywheel добавит только вал
+                        }
+                    });
+
             VisualizerRegistry.setVisualizer(ModBlockEntities.HAND_CRANK_BE.get(), new dev.engine_room.flywheel.api.visualization.BlockEntityVisualizer<com.trd.block.entity.industrial.rotation.HandCrankBlockEntity>() {
                 @Override
                 public dev.engine_room.flywheel.api.visual.BlockEntityVisual<? super com.trd.block.entity.industrial.rotation.HandCrankBlockEntity> createVisual(dev.engine_room.flywheel.api.visualization.VisualizationContext ctx, com.trd.block.entity.industrial.rotation.HandCrankBlockEntity be, float partialTick) {
@@ -314,42 +335,42 @@ public class ClientModEvents {
                 });
 
         VisualizerRegistry.setVisualizer(ModBlockEntities.FUEL_TANK_SMALL_BE.get(),
-                new dev.engine_room.flywheel.api.visualization.BlockEntityVisualizer<com.trd.multiblock.industrial.FuelTankSmallBlockEntity>() {
+                new dev.engine_room.flywheel.api.visualization.BlockEntityVisualizer<FuelTankSmallBlockEntity>() {
 
                     @Override
-                    public BlockEntityVisual<? super com.trd.multiblock.industrial.FuelTankSmallBlockEntity> createVisual(
-                            VisualizationContext ctx, com.trd.multiblock.industrial.FuelTankSmallBlockEntity be, float partialTick) {
+                    public BlockEntityVisual<? super FuelTankSmallBlockEntity> createVisual(
+                            VisualizationContext ctx, FuelTankSmallBlockEntity be, float partialTick) {
                         return new com.trd.client.render.flywheel.FuelTankSmallVisual(ctx, be, partialTick);
                     }
 
                     @Override
-                    public boolean skipVanillaRender(com.trd.multiblock.industrial.FuelTankSmallBlockEntity be) {
+                    public boolean skipVanillaRender(FuelTankSmallBlockEntity be) {
                         return false; // Позволяем BER рендерить текст
                     }
                 });
 
         VisualizerRegistry.setVisualizer(ModBlockEntities.BOILER_BE.get(),
-                new dev.engine_room.flywheel.api.visualization.BlockEntityVisualizer<com.trd.multiblock.industrial.BoilerBlockEntity>() {
+                new dev.engine_room.flywheel.api.visualization.BlockEntityVisualizer<BoilerBlockEntity>() {
                     @Override
-                    public BlockEntityVisual<? super com.trd.multiblock.industrial.BoilerBlockEntity> createVisual(
-                            VisualizationContext ctx, com.trd.multiblock.industrial.BoilerBlockEntity be, float partialTick) {
+                    public BlockEntityVisual<? super BoilerBlockEntity> createVisual(
+                            VisualizationContext ctx, BoilerBlockEntity be, float partialTick) {
                         return new com.trd.client.render.flywheel.BoilerVisual(ctx, be, partialTick);
                     }
                     @Override
-                    public boolean skipVanillaRender(com.trd.multiblock.industrial.BoilerBlockEntity be) {
+                    public boolean skipVanillaRender(BoilerBlockEntity be) {
                         return true;
                     }
                 });
 
         VisualizerRegistry.setVisualizer(ModBlockEntities.STEAM_ENGINE_BE.get(),
-                new dev.engine_room.flywheel.api.visualization.BlockEntityVisualizer<com.trd.multiblock.industrial.SteamEngineBlockEntity>() {
+                new dev.engine_room.flywheel.api.visualization.BlockEntityVisualizer<SteamEngineBlockEntity>() {
                     @Override
-                    public BlockEntityVisual<? super com.trd.multiblock.industrial.SteamEngineBlockEntity> createVisual(
-                            VisualizationContext ctx, com.trd.multiblock.industrial.SteamEngineBlockEntity be, float partialTick) {
+                    public BlockEntityVisual<? super SteamEngineBlockEntity> createVisual(
+                            VisualizationContext ctx, SteamEngineBlockEntity be, float partialTick) {
                         return new com.trd.client.render.flywheel.SteamEngineVisual(ctx, be, partialTick);
                     }
                     @Override
-                    public boolean skipVanillaRender(com.trd.multiblock.industrial.SteamEngineBlockEntity be) {
+                    public boolean skipVanillaRender(SteamEngineBlockEntity be) {
                         return true;
                     }
                 });
@@ -379,7 +400,7 @@ public class ClientModEvents {
         event.registerAbove(VanillaGuiOverlay.CROSSHAIR.id(), "stator_hud", StatorOverlay.HUD_STATOR);
         event.registerAbove(VanillaGuiOverlay.CROSSHAIR.id(), "boiler_hud", com.trd.client.overlay.hud.BoilerOverlay.INSTANCE);
         event.registerAbove(VanillaGuiOverlay.CROSSHAIR.id(), "steam_engine_hud", com.trd.client.overlay.hud.SteamEngineOverlay.INSTANCE);
-        event.registerAboveAll("water_pump_hud", new com.trd.client.gui.WaterPumpHUD());
+        event.registerAboveAll("water_pump_hud", new WaterPumpHUD());
         MinecraftForge.EVENT_BUS.register(com.trd.client.overlay.hud.LowPressureSteamCondenserOverlay.class);
     }
 

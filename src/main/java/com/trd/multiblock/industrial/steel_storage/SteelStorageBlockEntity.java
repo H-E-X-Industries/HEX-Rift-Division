@@ -1,4 +1,4 @@
-package com.trd.multiblock.industrial;
+package com.trd.multiblock.industrial.steel_storage;
 
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.menu.industrial.SteelStorageMenu;

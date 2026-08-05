@@ -1,4 +1,4 @@
-package com.trd.multiblock.industrial;
+package com.trd.multiblock.industrial.steam_engine;
 
 import com.trd.api.rotation.KineticNetwork;
 import com.trd.api.rotation.KineticNetworkManager;
