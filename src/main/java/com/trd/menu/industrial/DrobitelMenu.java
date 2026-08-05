@@ -18,7 +18,9 @@ public class DrobitelMenu extends AbstractContainerMenu {
 
     private final ContainerData data;
     private final BlockEntity blockEntity;
-
+    public boolean isNetworkConnected() {
+        return this.data.get(6) > 0;
+    }
     // Серверный конструктор (вызывается из DrobitelBlockEntity.createMenu)
     public DrobitelMenu(int id, Inventory inv, BlockEntity entity, ContainerData data) {
         super(ModMenuTypes.DROBITEL_MENU.get(), id);
@@ -63,7 +65,7 @@ public class DrobitelMenu extends AbstractContainerMenu {
 
     // Клиентский конструктор (вызывается Forge при открытии GUI)
     public DrobitelMenu(int id, Inventory inv, FriendlyByteBuf extraData) {
-        this(id, inv, getBlockEntity(inv, extraData), new SimpleContainerData(6));
+        this(id, inv, getBlockEntity(inv, extraData), new SimpleContainerData(7));
     }
 
     private static BlockEntity getBlockEntity(Inventory inv, FriendlyByteBuf data) {

@@ -49,7 +49,7 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
     public static final int BLADE_SLOTS = 2;
     public static final int TOTAL_SLOTS = INPUT_SLOTS + OUTPUT_SLOTS + BLADE_SLOTS;
     public static final int MAX_PROGRESS = 60; // 3 секунды
-
+    private int networkConnected = 0;
     private final ItemStackHandler inventory = new ItemStackHandler(TOTAL_SLOTS) {
         @Override
         protected void onContentsChanged(int slot) {
@@ -69,7 +69,7 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
         }
     };
 
-    private final ContainerData data = new SimpleContainerData(6) {
+    private final ContainerData data = new SimpleContainerData(7) {
         @Override
         public void set(int index, int value) {
             switch (index) {
@@ -79,6 +79,7 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
                 case 3 -> blade2Durability = value;
                 case 4 -> hasBlade1 = value;
                 case 5 -> hasBlade2 = value;
+                case 6 -> networkConnected = value;
             }
         }
 
@@ -91,6 +92,7 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
                 case 3 -> blade2Durability;
                 case 4 -> hasBlade1;
                 case 5 -> hasBlade2;
+                case 6 -> networkConnected;
                 default -> 0;
             };
         }
@@ -299,6 +301,13 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
     public static void serverTick(Level level, BlockPos pos, BlockState state, DrobitelBlockEntity be) {
         boolean changed = false;
         be.updateBladeData();
+
+        // <-- НОВОЕ: флаг подключения к кинетической сети
+        int newConnected = Math.abs(be.getSpeed()) > 0 ? 1 : 0;
+        if (newConnected != be.networkConnected) {
+            be.networkConnected = newConnected;
+            changed = true;
+        }
 
         if (be.canProcess()) {
             be.progress++;

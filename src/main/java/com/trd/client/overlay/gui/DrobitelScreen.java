@@ -65,6 +65,11 @@ public class DrobitelScreen extends AbstractContainerScreen<DrobitelMenu> {
                 guiGraphics.blit(GUI, x + 66, y + 79, 0, 192, w, 2);
             }
         }
+
+        // <-- НОВОЕ: светодиод подключения к кинетической сети
+        if (menu.isNetworkConnected()) {
+            guiGraphics.blit(GUI, x + 11, y + 12, 0, 174, 6, 6);
+        }
     }
 
     @Override
