@@ -1,5 +1,6 @@
 package com.trd.multiblock.industrial.drobitel;
 
+import com.trd.api.rotation.Rotational;
 import com.trd.block.basic.ModBlocks;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.block.entity.industrial.MillstoneBlockEntity;
@@ -174,7 +175,16 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
         }
         return new Direction[0];
     }
-
+    @Override
+    public boolean canConnectMechanically(BlockPos myPos, BlockPos neighborPos, Rotational neighbor) {
+        // Контроллер принимает вращение ТОЛЬКО через свои кинетические порты
+        if (neighbor instanceof com.trd.multiblock.system.MultiblockPartEntity part) {
+            return part.getPartRole() == com.trd.multiblock.system.PartRole.KINETIC_PORT
+                    && part.getControllerPos() != null
+                    && part.getControllerPos().equals(myPos);
+        }
+        return false;
+    }
     @Override
     public List<BlockPos> getPotentialConnections(Level level, BlockPos myPos) {
         List<BlockPos> list = new ArrayList<>();

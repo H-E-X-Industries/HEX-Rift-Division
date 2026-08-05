@@ -72,16 +72,21 @@ public class DrobitelBlock extends BaseEntityBlock implements IMultiblockControl
         if (helper == null) {
             Map<Character, Supplier<BlockState>> symbols = Map.of(
                     '#', () -> ModBlocks.MULTIBLOCK_PART.get().defaultBlockState(),
+                    'F', () -> ModBlocks.MULTIBLOCK_PART.get().defaultBlockState(),
+                    'B', () -> ModBlocks.MULTIBLOCK_PART.get().defaultBlockState(),
                     '@', () -> this.defaultBlockState()
             );
             Map<Character, PartRole> roles = Map.of(
                     '#', PartRole.DEFAULT,
+                    'F', PartRole.KINETIC_PORT,
+                    'B', PartRole.KINETIC_PORT,
                     '@', PartRole.CONTROLLER
             );
 
             helper = MultiblockStructureHelper.createFromLayersWithRoles(
                     new String[][]{
-                            {"###", "#@#", "###"},
+                            // y=0: F — передний порт, B — задний порт
+                            {"#F#", "#@#", "#B#"},
                             {"###", "###", "###"}
                     },
                     symbols,
