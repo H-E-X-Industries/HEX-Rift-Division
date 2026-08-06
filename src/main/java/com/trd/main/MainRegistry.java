@@ -346,6 +346,10 @@ public class MainRegistry {
             event.accept(ModBlocks.CONVEYOR_VSTAVSHIK.get());
             event.accept(ModBlocks.CONVEYOR_IZVLEKATEL.get());
             event.accept(ModBlocks.CONVEYOR.get());
+
+            event.accept(ModBlocks.CHEMICAL_PLANT_REACTION_CHAMBER.get());
+            event.accept(ModBlocks.CHEMICAL_PLANT_PORT.get());
+            event.accept(ModBlocks.CHEMICAL_PLANT_HEATER.get());
         }
 
         if (event.getTab() == ModCreativeTabs.trd_WEAPONS_TAB.get()) {
