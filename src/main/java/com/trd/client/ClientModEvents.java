@@ -113,6 +113,7 @@ public class ClientModEvents {
         MenuScreens.register(ModMenuTypes.CHEMICAL_PLANT_REACTION_CHAMBER_MENU.get(), GUIChemicalPlantReactionChamber::new);
         MenuScreens.register(ModMenuTypes.CHEMICAL_PLANT_PORT_MENU.get(), GUIChemicalPlantPort::new);
 
+        MinecraftForge.EVENT_BUS.register(com.trd.client.overlay.hud.ChemicalPlantReactionChamberOverlay.class);
         event.registerBlockEntityRenderer(ModBlockEntities.MOTOR_ELECTRO_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.SHAFT_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.BEARING_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);

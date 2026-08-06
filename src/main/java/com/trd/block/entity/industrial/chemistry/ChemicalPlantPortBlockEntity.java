@@ -110,11 +110,12 @@ public class ChemicalPlantPortBlockEntity extends BlockEntity implements MenuPro
         IFluidHandler chamberFluid = chamber.getCapability(ForgeCapabilities.FLUID_HANDLER, chamberSide).orElse(null);
         IItemHandler chamberItem = chamber.getCapability(ForgeCapabilities.ITEM_HANDLER, chamberSide).orElse(null);
 
-        if (be.mode == 0) {
-            // Input mode: port -> chamber
+        boolean changed = false;
+
+        if (be.mode == 0) { // INPUT
             if (chamberFluid != null) {
-                transferFluid(be.tankA, chamberFluid, 200);
-                transferFluid(be.tankB, chamberFluid, 200);
+                changed |= transferFluid(be.tankA, chamberFluid, 200);
+                changed |= transferFluid(be.tankB, chamberFluid, 200);
             }
             if (chamberItem != null) {
                 for (int i = 0; i < ITEM_SLOTS; i++) {
@@ -125,26 +126,25 @@ public class ChemicalPlantPortBlockEntity extends BlockEntity implements MenuPro
                     for (int j = 0; j < ChemicalPlantReactionChamberBlockEntity.INPUT_SLOTS; j++) {
                         ItemStack remainder = chamberItem.insertItem(j, toInsert, false);
                         if (remainder.isEmpty()) {
-                            be.itemHandler.extractItem(i, 1, false); // <-- правильно
+                            be.itemHandler.extractItem(i, 1, false);
+                            changed = true;
                             break;
                         }
                     }
                 }
             }
-        } else {
-            // Output mode: chamber -> port
+        } else { // OUTPUT
             if (chamberFluid != null) {
                 ChemicalPlantRecipe recipe = null;
                 ResourceLocation recipeId = chamber.getCurrentRecipeId();
-                if (recipeId != null) {
-                    recipe = ChemicalPlantRecipeRegistry.getById(recipeId);
-                }
-                // Забираем жидкости из камеры
-                for (int i = 0; i < ChemicalPlantReactionChamberBlockEntity.TANK_COUNT; i++) {
-                    FluidStack available = chamberFluid.getFluidInTank(i);
-                    if (available.isEmpty()) continue;
-                    // Если рецепт выбран, не забираем входные жидкости
-                    if (recipe != null) {
+                if (recipeId != null) recipe = ChemicalPlantRecipeRegistry.getById(recipeId);
+
+                // НЕ забираем жидкости если рецепта нет
+                if (recipe != null) {
+                    for (int i = 0; i < ChemicalPlantReactionChamberBlockEntity.TANK_COUNT; i++) {
+                        FluidStack available = chamberFluid.getFluidInTank(i);
+                        if (available.isEmpty()) continue;
+
                         boolean isInput = false;
                         for (FluidStack input : recipe.getFluidInputs()) {
                             if (input.getFluid() == available.getFluid()) {
@@ -153,19 +153,22 @@ public class ChemicalPlantPortBlockEntity extends BlockEntity implements MenuPro
                             }
                         }
                         if (isInput) continue;
-                    }
-                    FluidStack toDrain = available.copy();
-                    toDrain.setAmount(Math.min(toDrain.getAmount(), 200));
-                    FluidStack drained = chamberFluid.drain(toDrain, IFluidHandler.FluidAction.SIMULATE);
-                    if (!drained.isEmpty()) {
-                        int filled = be.fluidHandler.map(h -> h.fill(drained, IFluidHandler.FluidAction.SIMULATE)).orElse(0);
-                        if (filled > 0) {
-                            FluidStack realDrain = chamberFluid.drain(new FluidStack(drained.getFluid(), filled), IFluidHandler.FluidAction.EXECUTE);
-                            be.fluidHandler.ifPresent(h -> h.fill(realDrain, IFluidHandler.FluidAction.EXECUTE));
+
+                        FluidStack toDrain = available.copy();
+                        toDrain.setAmount(Math.min(toDrain.getAmount(), 200));
+                        FluidStack drained = chamberFluid.drain(toDrain, IFluidHandler.FluidAction.SIMULATE);
+                        if (!drained.isEmpty()) {
+                            int filled = be.fluidHandler.map(h -> h.fill(drained, IFluidHandler.FluidAction.SIMULATE)).orElse(0);
+                            if (filled > 0) {
+                                FluidStack real = chamberFluid.drain(new FluidStack(drained.getFluid(), filled), IFluidHandler.FluidAction.EXECUTE);
+                                be.fluidHandler.ifPresent(h -> h.fill(real, IFluidHandler.FluidAction.EXECUTE));
+                                changed = true;
+                            }
                         }
                     }
                 }
             }
+
             if (chamberItem != null) {
                 for (int j = ChemicalPlantReactionChamberBlockEntity.INPUT_SLOTS;
                      j < ChemicalPlantReactionChamberBlockEntity.INPUT_SLOTS + ChemicalPlantReactionChamberBlockEntity.OUTPUT_SLOTS; j++) {
@@ -182,25 +185,33 @@ public class ChemicalPlantPortBlockEntity extends BlockEntity implements MenuPro
                         if (leftover.isEmpty()) break;
                     }
 
-                    // Если в порт не влезло — вернуть обратно в камеру
                     if (!leftover.isEmpty()) {
-                        chamberItem.insertItem(j, leftover, false);
+                        chamberItem.insertItem(j, leftover, false); // вернуть если не влезло
+                    } else {
+                        changed = true;
                     }
                 }
             }
         }
+
+        if (changed) be.setChanged();
     }
 
-    private static void transferFluid(FluidTank from, IFluidHandler to, int maxAmount) {
-        if (from.isEmpty()) return;
+    private static boolean transferFluid(FluidTank from, IFluidHandler to, int maxAmount) {
+        if (from.isEmpty()) return false;
         FluidStack toTransfer = from.getFluid().copy();
         toTransfer.setAmount(Math.min(toTransfer.getAmount(), maxAmount));
         int filled = to.fill(toTransfer, IFluidHandler.FluidAction.SIMULATE);
         if (filled > 0) {
             FluidStack drained = from.drain(filled, IFluidHandler.FluidAction.EXECUTE);
-            to.fill(drained, IFluidHandler.FluidAction.EXECUTE);
+            if (!drained.isEmpty()) {
+                to.fill(drained, IFluidHandler.FluidAction.EXECUTE);
+                return true;
+            }
         }
+        return false;
     }
+
 
     public void setMode(int mode) {
         this.mode = mode;

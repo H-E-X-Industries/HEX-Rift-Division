@@ -886,7 +886,12 @@ public class ModLangProvider extends LanguageProvider {
 
         add("item.trd.hot_ingot.tooltip", "§6§lРАСКАЛЁННЫЙ! §r§7(%s%%)");
 
-
+        add("hud.trd.chamber.no_recipe", "Нет рецепта");
+                add("hud.trd.chamber.arrow_in", "-->");
+                add( "hud.trd.chamber.arrow_out", "<--");
+                add("hud.trd.chamber.input", "вход");
+                add("hud.trd.chamber.output", "выход");
+                add( "hud.trd.chamber.progress", "Прогресс: %s%%");
         add("block.trd.chemical_plant_reaction_chamber", "Реакционная камера");
         add("block.trd.chemical_plant_port", "Порт хим. установки");
         add("recipe.trd.hydrogen_peroxide", "Пероксид водорода");

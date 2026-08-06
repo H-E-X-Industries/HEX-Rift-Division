@@ -80,15 +80,25 @@ public class GUIChemicalPlantPort extends AbstractContainerScreen<ChemicalPlantP
 
         graphics.blit(TEXTURE, x, y, 0, 0, this.imageWidth, this.imageHeight);
 
-        // Render mode button
         int mode = menu.getMode();
         int u = 177;
         int v = mode == 0 ? 1 : 17;
         graphics.blit(TEXTURE, x + MODE_X, y + MODE_Y, u, v, MODE_SIZE, MODE_SIZE);
 
-        // Render fluids
         renderFluid(graphics, menu.getFluidA(), x + FLUID_1_X, y + FLUID_1_Y, FLUID_W, FLUID_H);
         renderFluid(graphics, menu.getFluidB(), x + FLUID_2_X, y + FLUID_2_Y, FLUID_W, FLUID_H);
+
+        renderFluidAmount(graphics, menu.getFluidA(), x + FLUID_1_X, y + FLUID_1_Y, FLUID_W);
+        renderFluidAmount(graphics, menu.getFluidB(), x + FLUID_2_X, y + FLUID_2_Y, FLUID_W);
+    }
+
+    private void renderFluidAmount(GuiGraphics graphics, FluidStack fluid, int x, int y, int width) {
+        if (fluid.isEmpty()) return;
+        String text = fluid.getAmount() + " mB";
+        int textWidth = this.font.width(text);
+        int textX = x + (width - textWidth) / 2;
+        int textY = y - 10;
+        graphics.drawString(this.font, text, textX, textY, 0xFFFFFF, true);
     }
 
     private void renderFluid(GuiGraphics gui, FluidStack fluid, int x, int y, int width, int height) {
