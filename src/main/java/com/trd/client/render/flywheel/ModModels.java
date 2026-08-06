@@ -40,6 +40,7 @@ public class ModModels {
 
     public static final PartialModel WATER_PUMP = PartialModel.of(new ResourceLocation("trd", "block/water_pump"));
     public static final PartialModel HAND_CRANK = PartialModel.of(new ResourceLocation("trd", "block/handle"));
+    public static final PartialModel CRUSHER_BLADES = PartialModel.of(new ResourceLocation("trd", "block/crusher_blades"));
 
     // Статический блок вызывается самым первым, как только Java видит этот класс!
     // Flywheel 100% получит эти модели вовремя.
