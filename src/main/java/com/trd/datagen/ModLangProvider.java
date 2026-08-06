@@ -887,6 +887,14 @@ public class ModLangProvider extends LanguageProvider {
         add("item.trd.hot_ingot.tooltip", "§6§lРАСКАЛЁННЫЙ! §r§7(%s%%)");
 
 
+        add("block.trd.chemical_plant_reaction_chamber", "Реакционная камера");
+        add("block.trd.chemical_plant_port", "Порт хим. установки");
+        add("recipe.trd.hydrogen_peroxide", "Пероксид водорода");
+        add(  "gui.trd.chemistry.empty", "Пусто");
+        add(  "gui.trd.chemistry.inputs", "Входы:");
+        add(  "gui.trd.chemistry.outputs", "Выходы:");
+        add("gui.trd.chemistry.time", "Время: %s сек");
+
         // ═══ GUI: Electric Furnace ═══
         add("gui.trd.electric_furnace.energy_tooltip", "%s / %s JE");
         add("gui.trd.electric_furnace.progress_tooltip", "§6Осталось: §f%s сек");

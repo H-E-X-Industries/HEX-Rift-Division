@@ -6,9 +6,11 @@ import com.trd.menu.rotation.MotorElectroMenu;
 import com.trd.menu.turrets.TromboneMenu;
 import com.trd.menu.turrets.TurretLightMenu;
 import com.trd.multiblock.industrial.steel_storage.SteelStorageBlockEntity;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraftforge.common.extensions.IForgeMenuType;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.network.IContainerFactory;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
@@ -33,6 +35,13 @@ public class ModMenuTypes {
                 return new TurretLightMenu(windowId, inv, data);
             }));
 
+    public static final RegistryObject<MenuType<ChemicalPlantReactionChamberMenu>> CHEMICAL_PLANT_REACTION_CHAMBER_MENU =
+            registerMenuType("chemical_plant_reaction_chamber_menu",
+                    (IContainerFactory<ChemicalPlantReactionChamberMenu>) ChemicalPlantReactionChamberMenu::new);
+
+    public static final RegistryObject<MenuType<ChemicalPlantPortMenu>> CHEMICAL_PLANT_PORT_MENU =
+            registerMenuType("chemical_plant_port_menu",
+                    (IContainerFactory<ChemicalPlantPortMenu>) ChemicalPlantPortMenu::new);
 
     public static final RegistryObject<MenuType<DrobitelMenu>> DROBITEL_MENU =
             MENUS.register("drobitel_menu", () -> IForgeMenuType.create(DrobitelMenu::new));
@@ -85,5 +94,8 @@ public class ModMenuTypes {
 
     public static void register(IEventBus eventBus) {
         MENUS.register(eventBus);
+    }
+    private static <T extends AbstractContainerMenu> RegistryObject<MenuType<T>> registerMenuType(String name, IContainerFactory<T> factory) {
+        return MENUS.register(name, () -> IForgeMenuType.create(factory));
     }
 }

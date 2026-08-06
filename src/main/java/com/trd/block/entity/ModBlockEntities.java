@@ -5,6 +5,8 @@ import com.trd.block.entity.deco.BeamCollisionBlockEntity;
 import com.trd.block.entity.industrial.ConveyorBlockEntity;
 import com.trd.block.entity.industrial.ConveyorBufferBlockEntity;
 import com.trd.block.entity.industrial.ElectricFurnaceBlockEntity;
+import com.trd.block.entity.industrial.chemistry.ChemicalPlantPortBlockEntity;
+import com.trd.block.entity.industrial.chemistry.ChemicalPlantReactionChamberBlockEntity;
 import com.trd.block.entity.industrial.fluids.FluidBarrelBlockEntity;
 
 import com.trd.block.entity.industrial.fluids.FluidPipeBlockEntity;
@@ -92,6 +94,16 @@ public class ModBlockEntities {
     public static final RegistryObject<BlockEntityType<SteelStorageBlockEntity>> STEEL_STORAGE_BE =
             BLOCK_ENTITIES.register("steel_storage",
                     () -> BlockEntityType.Builder.of(SteelStorageBlockEntity::new, ModBlocks.STEEL_STORAGE.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<ChemicalPlantReactionChamberBlockEntity>> CHEMICAL_PLANT_REACTION_CHAMBER_BE =
+            BLOCK_ENTITIES.register("chemical_plant_reaction_chamber_be",
+                    () -> BlockEntityType.Builder.of(ChemicalPlantReactionChamberBlockEntity::new,
+                            ModBlocks.CHEMICAL_PLANT_REACTION_CHAMBER.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<ChemicalPlantPortBlockEntity>> CHEMICAL_PLANT_PORT_BE =
+            BLOCK_ENTITIES.register("chemical_plant_port_be",
+                    () -> BlockEntityType.Builder.of(ChemicalPlantPortBlockEntity::new,
+                            ModBlocks.CHEMICAL_PLANT_PORT.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<ElectricFurnaceBlockEntity>> ELECTRIC_FURNACE_BE =
             BLOCK_ENTITIES.register("electric_furnace",

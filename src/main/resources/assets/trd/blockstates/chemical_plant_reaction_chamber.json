@@ -1,8 +1,8 @@
+
 {
   "variants": {
-    "facing=north": { "model": "trd:block/chemical_plant_reaction_chamber" },
-    "facing=east":  { "model": "trd:block/chemical_plant_reaction_chamber", "y": 90 },
-    "facing=south": { "model": "trd:block/chemical_plant_reaction_chamber", "y": 180 },
-    "facing=west":  { "model": "trd:block/chemical_plant_reaction_chamber", "y": 270 }
+    "": {
+      "model": "trd:block/chemical_plant_reaction_chamber"
+    }
   }
 }
