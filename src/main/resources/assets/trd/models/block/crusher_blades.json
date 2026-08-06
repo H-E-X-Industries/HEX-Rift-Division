@@ -1,0 +1,5 @@
+{
+  "loader": "forge:obj",
+  "model": "trd:models/block/crusher_blades.obj",
+  "flip_v": true
+}

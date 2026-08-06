@@ -50,6 +50,8 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
     public static final int TOTAL_SLOTS = INPUT_SLOTS + OUTPUT_SLOTS + BLADE_SLOTS;
     public static final int MAX_PROGRESS = 60; // 3 секунды
     private int networkConnected = 0;
+    public boolean isOverstressed = false;
+    public boolean isTooSlow = false;
     private final ItemStackHandler inventory = new ItemStackHandler(TOTAL_SLOTS) {
         @Override
         protected void onContentsChanged(int slot) {
@@ -69,7 +71,7 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
         }
     };
 
-    private final ContainerData data = new SimpleContainerData(7) {
+    private final ContainerData data = new SimpleContainerData(9) {
         @Override
         public void set(int index, int value) {
             switch (index) {
@@ -80,6 +82,8 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
                 case 4 -> hasBlade1 = value;
                 case 5 -> hasBlade2 = value;
                 case 6 -> networkConnected = value;
+                case 7 -> isOverstressed = (value == 1);
+                case 8 -> isTooSlow = (value == 1);
             }
         }
 
@@ -93,6 +97,8 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
                 case 4 -> hasBlade1;
                 case 5 -> hasBlade2;
                 case 6 -> networkConnected;
+                case 7 -> isOverstressed ? 1 : 0;
+                case 8 -> isTooSlow ? 1 : 0;
                 default -> 0;
             };
         }
@@ -104,6 +110,9 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
     private int blade2Durability = 0;
     private int hasBlade1 = 0;
     private int hasBlade2 = 0;
+    
+    public int getHasBlade1() { return hasBlade1; }
+    public int getHasBlade2() { return hasBlade2; }
 
     private final LazyOptional<IItemHandler> internalHandler = LazyOptional.of(() -> inventory);
 
@@ -201,6 +210,7 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
 
     @Override
     public long getVisualSpeed() {
+        if (this.isOverstressed || this.isTooSlow || this.hasBlade1 == 0 || this.hasBlade2 == 0) return 0;
         BlockState state = getBlockState();
         if (!state.hasProperty(DrobitelBlock.FACING)) return this.speed;
         Direction facing = state.getValue(DrobitelBlock.FACING);
@@ -302,14 +312,45 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
         boolean changed = false;
         be.updateBladeData();
 
-        // <-- НОВОЕ: флаг подключения к кинетической сети
         int newConnected = Math.abs(be.getSpeed()) > 0 ? 1 : 0;
         if (newConnected != be.networkConnected) {
             be.networkConnected = newConnected;
             changed = true;
         }
 
-        if (be.canProcess()) {
+        long absSpeed = Math.abs(be.getSpeed());
+        boolean wasOverstressed = be.isOverstressed;
+        boolean wasTooSlow = be.isTooSlow;
+        
+        be.isOverstressed = false;
+        be.isTooSlow = false;
+
+        if (absSpeed > 0 && be.hasBlade1 == 1 && be.hasBlade2 == 1) {
+            long minSpeed = 50;
+            long maxSpeed = 350;
+            long minLimit = 25; // minSpeed / 2
+            long maxLimit = 420; // maxSpeed * 1.2
+            
+            if (absSpeed < minLimit) {
+                be.isTooSlow = true;
+            } else if (absSpeed > maxLimit) {
+                be.isOverstressed = true;
+            } else {
+                float bladeMultiplier = (absSpeed < minSpeed || absSpeed > maxSpeed) ? 0.5f : 1.0f;
+                float baseMultiplier = absSpeed / 100.0f;
+                float totalEfficiency = baseMultiplier * bladeMultiplier;
+                if (totalEfficiency <= 0.05f) totalEfficiency = 0.05f;
+                
+                be.maxProgress = (int)(60.0f / totalEfficiency);
+                if (be.maxProgress < 1) be.maxProgress = 1;
+            }
+        }
+
+        if (wasOverstressed != be.isOverstressed || wasTooSlow != be.isTooSlow) {
+            changed = true;
+        }
+
+        if (!be.isOverstressed && !be.isTooSlow && be.canProcess()) {
             be.progress++;
 
             if (be.progress % 10 == 0) {
@@ -516,6 +557,8 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
         super.saveAdditional(tag);
         tag.put("Inventory", inventory.serializeNBT());
         tag.putInt("Progress", progress);
+        tag.putBoolean("IsOverstressed", isOverstressed);
+        tag.putBoolean("IsTooSlow", isTooSlow);
     }
 
     @Override
@@ -523,6 +566,9 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
         super.load(tag);
         inventory.deserializeNBT(tag.getCompound("Inventory"));
         progress = tag.getInt("Progress");
+        isOverstressed = tag.getBoolean("IsOverstressed");
+        isTooSlow = tag.getBoolean("IsTooSlow");
+        updateBladeData();
     }
 
     @Override
@@ -530,6 +576,11 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
         CompoundTag tag = super.getUpdateTag();
         saveAdditional(tag);
         return tag;
+    }
+
+    @Override
+    public net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket.create(this);
     }
 
 
