@@ -1,5 +1,6 @@
 package com.trd.main;
 
+import com.trd.api.chemistry.ChemicalPlantRecipeRegistry;
 import com.trd.api.fluids.ModFluids;
 import com.trd.api.fuel.ModFuels;
 import com.trd.api.hive.HiveNetworkManager;
@@ -133,7 +134,8 @@ public class MainRegistry {
     private void commonSetup(final FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
             ModMetallurgy.init();
-            DrobitelRecipes.register();// <-- регистрация металлов и рецептов
+            DrobitelRecipes.register();// <-- регистрация металлов и
+            ChemicalPlantRecipeRegistry.init();
             ModPacketHandler.register();
             Regions.register(new ModOverworldRegion(new ResourceLocation(MOD_ID, "overworld"), 2));
             SurfaceRuleManager.addSurfaceRules(SurfaceRuleManager.RuleCategory.OVERWORLD, "trd",
@@ -346,6 +348,10 @@ public class MainRegistry {
             event.accept(ModBlocks.CONVEYOR_VSTAVSHIK.get());
             event.accept(ModBlocks.CONVEYOR_IZVLEKATEL.get());
             event.accept(ModBlocks.CONVEYOR.get());
+
+            event.accept(ModBlocks.CHEMICAL_PLANT_REACTION_CHAMBER.get());
+            event.accept(ModBlocks.CHEMICAL_PLANT_PORT.get());
+            event.accept(ModBlocks.CHEMICAL_PLANT_HEATER.get());
         }
 
         if (event.getTab() == ModCreativeTabs.trd_WEAPONS_TAB.get()) {

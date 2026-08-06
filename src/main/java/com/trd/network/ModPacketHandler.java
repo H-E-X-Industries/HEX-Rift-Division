@@ -1,6 +1,9 @@
 package com.trd.network;
 
 
+import com.trd.network.packet.chemistry.ClearChemicalRecipePacket;
+import com.trd.network.packet.chemistry.SelectChemicalRecipePacket;
+import com.trd.network.packet.chemistry.UpdatePortModePacket;
 import com.trd.network.packet.fluids.*;
 //import com.trd.network.packet.rotation.PacketToggleRetractMode;
 import com.trd.network.packet.turrets.*;
@@ -186,7 +189,14 @@ public class ModPacketHandler {
                 PacketToggleExtraButton::toBytes,
                 PacketToggleExtraButton::new,
                 (msg, ctx) -> { msg.handle(ctx); ctx.get().setPacketHandled(true); });
-                
+
+        INSTANCE.registerMessage(id++, SelectChemicalRecipePacket.class,
+                SelectChemicalRecipePacket::encode, SelectChemicalRecipePacket::decode, SelectChemicalRecipePacket::handle);
+        INSTANCE.registerMessage(id++, ClearChemicalRecipePacket.class,
+                ClearChemicalRecipePacket::encode, ClearChemicalRecipePacket::decode, ClearChemicalRecipePacket::handle);
+        INSTANCE.registerMessage(id++, UpdatePortModePacket.class,
+                UpdatePortModePacket::encode, UpdatePortModePacket::decode, UpdatePortModePacket::handle);
+
         INSTANCE.registerMessage(id++,
                 com.trd.network.packet.conveyor.SyncConveyorNetworkPacket.class,
                 com.trd.network.packet.conveyor.SyncConveyorNetworkPacket::toBytes,

@@ -10,7 +10,10 @@ import com.trd.block.basic.deco.BeamBlock;
 import com.trd.block.basic.deco.BeamCollisionBlock;
 import com.trd.block.basic.deco.LampBlock;
 import com.trd.block.basic.deco.SteelPropsBlock;
+import com.trd.block.basic.direction.SideOBlock;
 import com.trd.block.basic.industrial.*;
+import com.trd.block.basic.industrial.chemistry.ChemicalPlantPortBlock;
+import com.trd.block.basic.industrial.chemistry.ChemicalPlantReactionChamberBlock;
 import com.trd.block.basic.industrial.fluids.FluidBarrelBlock;
 
 import com.trd.block.basic.industrial.fluids.FluidPipeBlock;
@@ -292,6 +295,22 @@ public class ModBlocks {
                     .sound(SoundType.STONE)
                     .requiresCorrectToolForDrops()
                     .noOcclusion()));
+
+    public static final RegistryObject<Block> CHEMICAL_PLANT_HEATER = registerBlock("chemical_plant_heater",
+            () -> new SideOBlock(BlockBehaviour.Properties.of()
+                    .strength(2.0F, 6.0F)
+                    .sound(SoundType.STONE)
+                    .requiresCorrectToolForDrops()
+                    .noOcclusion()));
+
+    public static final RegistryObject<Block> CHEMICAL_PLANT_REACTION_CHAMBER = registerBlock("chemical_plant_reaction_chamber",
+            () -> new ChemicalPlantReactionChamberBlock(BlockBehaviour.Properties.of()
+                    .strength(2.0F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
+
+    public static final RegistryObject<Block> CHEMICAL_PLANT_PORT = registerBlock("chemical_plant_port",
+            () -> new ChemicalPlantPortBlock(BlockBehaviour.Properties.of()
+                    .strength(2.0F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
+
     public static final RegistryObject<Block> SMELTER = BLOCKS.register("smelter",
             () -> new SmelterBlock(BlockBehaviour.Properties.of()
                     .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
