@@ -5,14 +5,22 @@ import com.trd.main.MainRegistry;
 import com.trd.menu.industrial.ChemicalPlantPortMenu;
 import com.trd.network.ModPacketHandler;
 import com.trd.network.packet.chemistry.UpdatePortModePacket;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraftforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.minecraftforge.fluids.FluidStack;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class GUIChemicalPlantPort extends AbstractContainerScreen<ChemicalPlantPortMenu> {
 
@@ -56,20 +64,33 @@ public class GUIChemicalPlantPort extends AbstractContainerScreen<ChemicalPlantP
         int relY = mouseY - this.topPos;
 
         if (relX >= FLUID_1_X && relX < FLUID_1_X + FLUID_W && relY >= FLUID_1_Y && relY < FLUID_1_Y + FLUID_H) {
+            List<Component> tooltip = new ArrayList<>();
             FluidStack fluid = menu.getFluidA();
             if (!fluid.isEmpty()) {
-                graphics.renderTooltip(this.font, fluid.getDisplayName(), mouseX, mouseY);
+                MutableComponent fluidName = fluid.getDisplayName().copy();
+                int tintColor = IClientFluidTypeExtensions.of(fluid.getFluid()).getTintColor() | 0xFF000000;
+                fluidName = fluidName.withStyle(Style.EMPTY.withColor(TextColor.fromRgb(tintColor)));
+                tooltip.add(fluidName);
+                tooltip.add(Component.translatable("gui.trd.fluid_barrel.amount", fluid.getAmount(), 8000).withStyle(ChatFormatting.GRAY));
             } else {
-                graphics.renderTooltip(this.font, Component.translatable("gui.trd.chemistry.empty"), mouseX, mouseY);
+                tooltip.add(Component.translatable("gui.trd.chemistry.empty").withStyle(ChatFormatting.GRAY));
             }
+            graphics.renderComponentTooltip(this.font, tooltip, mouseX, mouseY);
         }
+
         if (relX >= FLUID_2_X && relX < FLUID_2_X + FLUID_W && relY >= FLUID_2_Y && relY < FLUID_2_Y + FLUID_H) {
+            List<Component> tooltip = new ArrayList<>();
             FluidStack fluid = menu.getFluidB();
             if (!fluid.isEmpty()) {
-                graphics.renderTooltip(this.font, fluid.getDisplayName(), mouseX, mouseY);
+                MutableComponent fluidName = fluid.getDisplayName().copy();
+                int tintColor = IClientFluidTypeExtensions.of(fluid.getFluid()).getTintColor() | 0xFF000000;
+                fluidName = fluidName.withStyle(Style.EMPTY.withColor(TextColor.fromRgb(tintColor)));
+                tooltip.add(fluidName);
+                tooltip.add(Component.translatable("gui.trd.fluid_barrel.amount", fluid.getAmount(), 8000).withStyle(ChatFormatting.GRAY));
             } else {
-                graphics.renderTooltip(this.font, Component.translatable("gui.trd.chemistry.empty"), mouseX, mouseY);
+                tooltip.add(Component.translatable("gui.trd.chemistry.empty").withStyle(ChatFormatting.GRAY));
             }
+            graphics.renderComponentTooltip(this.font, tooltip, mouseX, mouseY);
         }
     }
 
@@ -88,18 +109,8 @@ public class GUIChemicalPlantPort extends AbstractContainerScreen<ChemicalPlantP
         renderFluid(graphics, menu.getFluidA(), x + FLUID_1_X, y + FLUID_1_Y, FLUID_W, FLUID_H);
         renderFluid(graphics, menu.getFluidB(), x + FLUID_2_X, y + FLUID_2_Y, FLUID_W, FLUID_H);
 
-        renderFluidAmount(graphics, menu.getFluidA(), x + FLUID_1_X, y + FLUID_1_Y, FLUID_W);
-        renderFluidAmount(graphics, menu.getFluidB(), x + FLUID_2_X, y + FLUID_2_Y, FLUID_W);
     }
 
-    private void renderFluidAmount(GuiGraphics graphics, FluidStack fluid, int x, int y, int width) {
-        if (fluid.isEmpty()) return;
-        String text = fluid.getAmount() + " mB";
-        int textWidth = this.font.width(text);
-        int textX = x + (width - textWidth) / 2;
-        int textY = y - 10;
-        graphics.drawString(this.font, text, textX, textY, 0xFFFFFF, true);
-    }
 
     private void renderFluid(GuiGraphics gui, FluidStack fluid, int x, int y, int width, int height) {
         if (fluid.isEmpty()) return;

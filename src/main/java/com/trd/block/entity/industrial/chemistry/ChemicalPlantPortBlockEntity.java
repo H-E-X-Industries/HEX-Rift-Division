@@ -72,17 +72,19 @@ public class ChemicalPlantPortBlockEntity extends BlockEntity implements MenuPro
             }
             @Override public boolean isFluidValid(int tank, @NotNull FluidStack stack) { return true; }
             @Override public int fill(FluidStack resource, FluidAction action) {
-                if (resource.isEmpty()) return 0;
+                if (mode != 0 || resource.isEmpty()) return 0;
                 int filledA = tankA.fill(resource, action);
                 if (filledA > 0) return filledA;
                 return tankB.fill(resource, action);
             }
             @Override public @NotNull FluidStack drain(FluidStack resource, FluidAction action) {
+                if (mode != 1) return FluidStack.EMPTY;
                 FluidStack drainedA = tankA.drain(resource, action);
                 if (!drainedA.isEmpty()) return drainedA;
                 return tankB.drain(resource, action);
             }
             @Override public @NotNull FluidStack drain(int maxDrain, FluidAction action) {
+                if (mode != 1) return FluidStack.EMPTY;
                 FluidStack drainedA = tankA.drain(maxDrain, action);
                 if (!drainedA.isEmpty()) return drainedA;
                 return tankB.drain(maxDrain, action);
@@ -107,7 +109,7 @@ public class ChemicalPlantPortBlockEntity extends BlockEntity implements MenuPro
         if (!(beTarget instanceof ChemicalPlantReactionChamberBlockEntity chamber)) return;
 
         Direction chamberSide = facing.getOpposite();
-        IFluidHandler chamberFluid = chamber.getCapability(ForgeCapabilities.FLUID_HANDLER, chamberSide).orElse(null);
+        IFluidHandler chamberFluid = chamber.getFluidHandler();
         IItemHandler chamberItem = chamber.getCapability(ForgeCapabilities.ITEM_HANDLER, chamberSide).orElse(null);
 
         boolean changed = false;
@@ -158,10 +160,10 @@ public class ChemicalPlantPortBlockEntity extends BlockEntity implements MenuPro
                         toDrain.setAmount(Math.min(toDrain.getAmount(), 200));
                         FluidStack drained = chamberFluid.drain(toDrain, IFluidHandler.FluidAction.SIMULATE);
                         if (!drained.isEmpty()) {
-                            int filled = be.fluidHandler.map(h -> h.fill(drained, IFluidHandler.FluidAction.SIMULATE)).orElse(0);
+                            int filled = be.internalFill(drained, IFluidHandler.FluidAction.SIMULATE);
                             if (filled > 0) {
                                 FluidStack real = chamberFluid.drain(new FluidStack(drained.getFluid(), filled), IFluidHandler.FluidAction.EXECUTE);
-                                be.fluidHandler.ifPresent(h -> h.fill(real, IFluidHandler.FluidAction.EXECUTE));
+                                be.internalFill(real, IFluidHandler.FluidAction.EXECUTE);
                                 changed = true;
                             }
                         }
@@ -194,7 +196,12 @@ public class ChemicalPlantPortBlockEntity extends BlockEntity implements MenuPro
             }
         }
 
-        if (changed) be.setChanged();
+        if (changed) {
+            be.setChanged();
+            if (level != null) {
+                level.sendBlockUpdated(pos, state, state, 3);
+            }
+        }
     }
 
     private static boolean transferFluid(FluidTank from, IFluidHandler to, int maxAmount) {
@@ -212,6 +219,18 @@ public class ChemicalPlantPortBlockEntity extends BlockEntity implements MenuPro
         return false;
     }
 
+    private int internalFill(FluidStack resource, IFluidHandler.FluidAction action) {
+        if (resource.isEmpty()) return 0;
+        if (!tankA.isEmpty() && tankA.getFluid().getFluid() == resource.getFluid()) {
+            return tankA.fill(resource, action);
+        }
+        if (!tankB.isEmpty() && tankB.getFluid().getFluid() == resource.getFluid()) {
+            return tankB.fill(resource, action);
+        }
+        if (tankA.isEmpty()) return tankA.fill(resource, action);
+        if (tankB.isEmpty()) return tankB.fill(resource, action);
+        return 0;
+    }
 
     public void setMode(int mode) {
         this.mode = mode;
@@ -261,6 +280,8 @@ public class ChemicalPlantPortBlockEntity extends BlockEntity implements MenuPro
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
+        Direction facing = getBlockState().getValue(HorizontalDirectionalBlock.FACING);
+        if (side == facing) return LazyOptional.empty();
         if (cap == ForgeCapabilities.FLUID_HANDLER) return fluidHandler.cast();
         if (cap == ForgeCapabilities.ITEM_HANDLER) return itemCapability.cast();
         return super.getCapability(cap, side);
