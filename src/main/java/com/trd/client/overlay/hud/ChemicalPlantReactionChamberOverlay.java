@@ -70,13 +70,17 @@ public class ChemicalPlantReactionChamberOverlay {
         // Входы
         for (FluidStack in : recipe.getFluidInputs()) {
             int cur = 0;
+            int tankCap = ChemicalPlantReactionChamberBlockEntity.TANK_CAPACITY;
             for (int i = 0; i < ChemicalPlantReactionChamberBlockEntity.TANK_COUNT; i++) {
                 FluidStack f = be.getTanks()[i].getFluid();
-                if (!f.isEmpty() && f.getFluid() == in.getFluid()) cur += f.getAmount();
+                if (!f.isEmpty() && f.getFluid() == in.getFluid()) {
+                    cur += f.getAmount();
+                    tankCap = be.getTanks()[i].getCapacity();
+                }
             }
             String arrow = Component.translatable("hud.trd.chamber.arrow_in").getString(); // -->
             String line = arrow + " " + Component.translatable("hud.trd.chamber.input").getString()
-                    + " " + cur + "/" + in.getAmount() + " mB " + in.getDisplayName().getString();
+                    + " " + cur + "/" + tankCap + " mB " + in.getDisplayName().getString();
             lines.add(line);
             colors.add(IClientFluidTypeExtensions.of(in.getFluid()).getTintColor() | 0xFF000000);
             maxW = Math.max(maxW, font.width(line));
@@ -85,13 +89,17 @@ public class ChemicalPlantReactionChamberOverlay {
         // Выходы
         for (FluidStack out : recipe.getFluidOutputs()) {
             int cur = 0;
+            int tankCap = ChemicalPlantReactionChamberBlockEntity.TANK_CAPACITY;
             for (int i = 0; i < ChemicalPlantReactionChamberBlockEntity.TANK_COUNT; i++) {
                 FluidStack f = be.getTanks()[i].getFluid();
-                if (!f.isEmpty() && f.getFluid() == out.getFluid()) cur += f.getAmount();
+                if (!f.isEmpty() && f.getFluid() == out.getFluid()) {
+                    cur += f.getAmount();
+                    tankCap = be.getTanks()[i].getCapacity();
+                }
             }
             String arrow = Component.translatable("hud.trd.chamber.arrow_out").getString(); // <--
             String line = Component.translatable("hud.trd.chamber.output").getString()
-                    + " " + arrow + " " + cur + "/" + out.getAmount() + " mB " + out.getDisplayName().getString();
+                    + " " + arrow + " " + cur + "/" + tankCap + " mB " + out.getDisplayName().getString();
             lines.add(line);
             colors.add(IClientFluidTypeExtensions.of(out.getFluid()).getTintColor() | 0xFF000000);
             maxW = Math.max(maxW, font.width(line));

@@ -41,7 +41,7 @@ public class ChemicalPlantReactionChamberBlockEntity extends BlockEntity impleme
     public static final int TANK_CAPACITY = 16000;
     public static final int INPUT_SLOTS = 3;
     public static final int OUTPUT_SLOTS = 3;
-
+    private IFluidHandler internalFluidHandler;
     private final FluidTank[] tanks = new FluidTank[TANK_COUNT];
     private final ItemStackHandler itemHandler = new ItemStackHandler(INPUT_SLOTS + OUTPUT_SLOTS) {
         @Override
@@ -89,19 +89,52 @@ public class ChemicalPlantReactionChamberBlockEntity extends BlockEntity impleme
     public ChemicalPlantReactionChamberBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.CHEMICAL_PLANT_REACTION_CHAMBER_BE.get(), pos, state);
         for (int i = 0; i < TANK_COUNT; i++) {
+            final int tankIndex = i;
             tanks[i] = new FluidTank(TANK_CAPACITY) {
                 @Override
                 protected void onContentsChanged() {
                     ChemicalPlantReactionChamberBlockEntity.this.setChanged();
                 }
+                @Override
+                public boolean isFluidValid(FluidStack stack) {
+                    return isFluidValidForTank(tankIndex, stack);
+                }
             };
         }
+    }
+
+    public IFluidHandler getFluidHandler() {
+        return internalFluidHandler;
+    }
+
+    private boolean isFluidValidForTank(int tank, FluidStack stack) {
+        if (currentRecipeId.isEmpty()) return false;
+        ChemicalPlantRecipe recipe = ChemicalPlantRecipeRegistry.getById(new ResourceLocation(currentRecipeId));
+        if (recipe == null) return false;
+        boolean validForRecipe = false;
+        for (FluidStack input : recipe.getFluidInputs()) {
+            if (input.getFluid() == stack.getFluid()) { validForRecipe = true; break; }
+        }
+        if (!validForRecipe) {
+            for (FluidStack output : recipe.getFluidOutputs()) {
+                if (output.getFluid() == stack.getFluid()) { validForRecipe = true; break; }
+            }
+        }
+        if (!validForRecipe) return false;
+        for (int i = 0; i < TANK_COUNT; i++) {
+            if (i == tank) continue;
+            FluidStack existing = tanks[i].getFluid();
+            if (!existing.isEmpty() && existing.getFluid() == stack.getFluid()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
     public void onLoad() {
         super.onLoad();
-        fluidHandler = LazyOptional.of(() -> new IFluidHandler() {
+        IFluidHandler handler = new IFluidHandler() {
             @Override
             public int getTanks() { return TANK_COUNT; }
 
@@ -117,31 +150,24 @@ public class ChemicalPlantReactionChamberBlockEntity extends BlockEntity impleme
 
             @Override
             public boolean isFluidValid(int tank, @NotNull FluidStack stack) {
-                if (currentRecipeId.isEmpty()) return false;
-                ChemicalPlantRecipe recipe = ChemicalPlantRecipeRegistry.getById(new ResourceLocation(currentRecipeId));
-                if (recipe == null) return false;
-                for (FluidStack input : recipe.getFluidInputs()) {
-                    if (input.getFluid() == stack.getFluid()) return true;
-                }
-                for (FluidStack output : recipe.getFluidOutputs()) {
-                    if (output.getFluid() == stack.getFluid()) return true;
-                }
-                return false;
+                return isFluidValidForTank(tank, stack);
             }
 
             @Override
             public int fill(FluidStack resource, FluidAction action) {
                 if (resource.isEmpty()) return 0;
-                int totalFilled = 0;
-                FluidStack remaining = resource.copy();
-                for (int i = 0; i < TANK_COUNT && remaining.getAmount() > 0; i++) {
-                    if (isFluidValid(i, remaining)) {
-                        int filled = tanks[i].fill(remaining, action);
-                        totalFilled += filled;
-                        remaining.shrink(filled);
+                for (int i = 0; i < TANK_COUNT; i++) {
+                    FluidStack existing = tanks[i].getFluid();
+                    if (!existing.isEmpty() && existing.getFluid() == resource.getFluid() && isFluidValid(i, resource)) {
+                        return tanks[i].fill(resource, action);
                     }
                 }
-                return totalFilled;
+                for (int i = 0; i < TANK_COUNT; i++) {
+                    if (tanks[i].isEmpty() && isFluidValid(i, resource)) {
+                        return tanks[i].fill(resource, action);
+                    }
+                }
+                return 0;
             }
 
             @Override
@@ -171,7 +197,10 @@ public class ChemicalPlantReactionChamberBlockEntity extends BlockEntity impleme
                 }
                 return FluidStack.EMPTY;
             }
-        });
+        };
+        internalFluidHandler = handler;
+        fluidHandler = LazyOptional.of(() -> handler);
+
         itemCapability = LazyOptional.of(() -> new IItemHandler() {
             @Override
             public int getSlots() { return itemHandler.getSlots(); }
@@ -224,6 +253,9 @@ public class ChemicalPlantReactionChamberBlockEntity extends BlockEntity impleme
             be.currentRecipeId = "";
             be.progress = 0;
             be.setChanged();
+            if (level != null) {
+                level.sendBlockUpdated(pos, state, state, 3);
+            }
             return;
         }
 
@@ -251,10 +283,16 @@ public class ChemicalPlantReactionChamberBlockEntity extends BlockEntity impleme
                 be.progress = 0;
             }
             be.setChanged();
+            if (level != null) {
+                level.sendBlockUpdated(pos, state, state, 3);
+            }
         } else {
             if (be.progress > 0) {
                 be.progress = 0;
                 be.setChanged();
+                if (level != null) {
+                    level.sendBlockUpdated(pos, state, state, 3);
+                }
             }
         }
     }
@@ -376,7 +414,6 @@ public class ChemicalPlantReactionChamberBlockEntity extends BlockEntity impleme
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
-        if (cap == ForgeCapabilities.FLUID_HANDLER) return fluidHandler.cast();
         if (cap == ForgeCapabilities.ITEM_HANDLER) return itemCapability.cast();
         return super.getCapability(cap, side);
     }
