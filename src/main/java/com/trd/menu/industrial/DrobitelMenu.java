@@ -65,7 +65,7 @@ public class DrobitelMenu extends AbstractContainerMenu {
 
     // Клиентский конструктор (вызывается Forge при открытии GUI)
     public DrobitelMenu(int id, Inventory inv, FriendlyByteBuf extraData) {
-        this(id, inv, getBlockEntity(inv, extraData), new SimpleContainerData(7));
+        this(id, inv, getBlockEntity(inv, extraData), new SimpleContainerData(9));
     }
 
     private static BlockEntity getBlockEntity(Inventory inv, FriendlyByteBuf data) {
@@ -116,4 +116,6 @@ public class DrobitelMenu extends AbstractContainerMenu {
     public int getBlade2Durability() { return data.get(3); }
     public boolean hasBlade1() { return data.get(4) == 1; }
     public boolean hasBlade2() { return data.get(5) == 1; }
+    public boolean isOverstressed() { return data.get(7) == 1; }
+    public boolean isTooSlow() { return data.get(8) == 1; }
 }

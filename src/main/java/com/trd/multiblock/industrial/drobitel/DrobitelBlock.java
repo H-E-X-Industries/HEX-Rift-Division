@@ -35,6 +35,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.function.Supplier;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.BooleanOp;
 
 public class DrobitelBlock extends BaseEntityBlock implements IMultiblockController {
 
@@ -62,9 +65,12 @@ public class DrobitelBlock extends BaseEntityBlock implements IMultiblockControl
     }
 
     @Override
-    public net.minecraft.world.phys.shapes.VoxelShape getShape(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos pos, net.minecraft.world.phys.shapes.CollisionContext context) {
+    public VoxelShape getShape(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos pos, net.minecraft.world.phys.shapes.CollisionContext context) {
         Direction facing = state.getValue(FACING);
-        return getStructureHelper().generateShapeFromParts(facing);
+        VoxelShape fullShape = getStructureHelper().generateShapeFromParts(facing);
+        VoxelShape hole = Block.box(-8, 8, -12, 24, 32, 28);
+        VoxelShape rotatedHole = MultiblockStructureHelper.rotateShape(hole, facing);
+        return Shapes.join(fullShape, rotatedHole, BooleanOp.ONLY_FIRST);
     }
 
     @Override
@@ -108,7 +114,11 @@ public class DrobitelBlock extends BaseEntityBlock implements IMultiblockControl
         if (!level.isClientSide) {
             Direction facing = state.getValue(FACING);
             getStructureHelper().placeStructure(level, pos, facing, this);
-            KineticNetworkManager.get((ServerLevel) level).updateNetworkAfterPlace(pos);
+            
+            com.trd.api.rotation.KineticNetworkManager manager = com.trd.api.rotation.KineticNetworkManager.get((net.minecraft.server.level.ServerLevel) level);
+            manager.updateNetworkAfterPlace(pos);
+            manager.updateNetworkAfterPlace(pos.relative(facing));
+            manager.updateNetworkAfterPlace(pos.relative(facing.getOpposite()));
         }
     }
 
@@ -119,8 +129,13 @@ public class DrobitelBlock extends BaseEntityBlock implements IMultiblockControl
             if (be instanceof DrobitelBlockEntity drobitel) {
                 drobitel.dropContents();
             }
-            KineticNetworkManager.get((ServerLevel) level).updateNetworkAfterRemove(pos);
             Direction facing = state.getValue(FACING);
+            
+            com.trd.api.rotation.KineticNetworkManager manager = com.trd.api.rotation.KineticNetworkManager.get((net.minecraft.server.level.ServerLevel) level);
+            manager.updateNetworkAfterRemove(pos.relative(facing));
+            manager.updateNetworkAfterRemove(pos.relative(facing.getOpposite()));
+            manager.updateNetworkAfterRemove(pos);
+            
             getStructureHelper().destroyStructure(level, pos, facing);
         }
         super.onRemove(state, level, pos, newState, isMoving);

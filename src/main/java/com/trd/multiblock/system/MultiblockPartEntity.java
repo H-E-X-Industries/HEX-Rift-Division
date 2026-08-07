@@ -84,10 +84,19 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
     @Override
     public void onLoad() {
         super.onLoad();
-        if (this.level != null && !this.level.isClientSide && isNetworkedRole(this.role)) {
-            if (role == PartRole.ENERGY_CONNECTOR || role == PartRole.UNIVERSAL_CONNECTOR) {
-                com.trd.api.energy.EnergyNetworkManager energyManager = com.trd.api.energy.EnergyNetworkManager.get((ServerLevel) this.level);
-                if (!energyManager.hasNode(this.getBlockPos())) energyManager.addNode(this.getBlockPos());
+        if (this.level != null && !this.level.isClientSide) {
+            if (isNetworkedRole(this.role)) {
+                if (role == PartRole.ENERGY_CONNECTOR || role == PartRole.UNIVERSAL_CONNECTOR) {
+                    com.trd.api.energy.EnergyNetworkManager energyManager = com.trd.api.energy.EnergyNetworkManager.get((net.minecraft.server.level.ServerLevel) this.level);
+                    if (!energyManager.hasNode(this.getBlockPos())) energyManager.addNode(this.getBlockPos());
+                }
+            }
+            if (isKineticPort()) {
+                com.trd.api.rotation.KineticNetwork net = com.trd.api.rotation.KineticNetworkManager.get((net.minecraft.server.level.ServerLevel) this.level).getNetworkFor(worldPosition);
+                if (net != null) {
+                    this.kineticSpeed = (long) (net.getSpeed() * this.kineticNetworkScale);
+                    net.requestRecalculation();
+                }
             }
         }
     }

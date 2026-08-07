@@ -23,8 +23,10 @@ public class DrobitelVisual extends AbstractBlockEntityVisual<DrobitelBlockEntit
     @Nullable private TransformedInstance rightBlade;
     @Nullable private TransformedInstance leftShaft1;
     @Nullable private TransformedInstance leftShaft2;
+    @Nullable private TransformedInstance leftShaft3;
     @Nullable private TransformedInstance rightShaft1;
     @Nullable private TransformedInstance rightShaft2;
+    @Nullable private TransformedInstance rightShaft3;
 
     private boolean hasBlade1Prev = false;
     private boolean hasBlade2Prev = false;
@@ -55,6 +57,12 @@ public class DrobitelVisual extends AbstractBlockEntityVisual<DrobitelBlockEntit
         var shaftModel = Models.partial(com.trd.client.render.flywheel.ModModels.SHAFT_MODELS.get("shaft_light_iron"));
         this.shaftFront = instancerProvider().instancer(InstanceTypes.TRANSFORMED, shaftModel).createInstance();
         this.shaftBack = instancerProvider().instancer(InstanceTypes.TRANSFORMED, shaftModel).createInstance();
+        this.leftShaft1 = instancerProvider().instancer(InstanceTypes.TRANSFORMED, shaftModel).createInstance();
+        this.leftShaft2 = instancerProvider().instancer(InstanceTypes.TRANSFORMED, shaftModel).createInstance();
+        this.leftShaft3 = instancerProvider().instancer(InstanceTypes.TRANSFORMED, shaftModel).createInstance();
+        this.rightShaft1 = instancerProvider().instancer(InstanceTypes.TRANSFORMED, shaftModel).createInstance();
+        this.rightShaft2 = instancerProvider().instancer(InstanceTypes.TRANSFORMED, shaftModel).createInstance();
+        this.rightShaft3 = instancerProvider().instancer(InstanceTypes.TRANSFORMED, shaftModel).createInstance();
 
         updateBlades();
         updateLight(partialTick);
@@ -64,24 +72,15 @@ public class DrobitelVisual extends AbstractBlockEntityVisual<DrobitelBlockEntit
         boolean hasBlade1 = blockEntity.getHasBlade1() == 1; // Left blade (slot 1)
         boolean hasBlade2 = blockEntity.getHasBlade2() == 1; // Right blade (slot 2)
 
-        var shaftModel = Models.partial(com.trd.client.render.flywheel.ModModels.SHAFT_MODELS.get("shaft_light_iron"));
         var bladeModel = Models.partial(com.trd.client.render.flywheel.ModModels.CRUSHER_BLADES);
 
         if (hasBlade1 != hasBlade1Prev) {
             if (hasBlade1) {
                 this.leftBlade = instancerProvider().instancer(InstanceTypes.TRANSFORMED, bladeModel).createInstance();
-                this.leftShaft1 = instancerProvider().instancer(InstanceTypes.TRANSFORMED, shaftModel).createInstance();
-                this.leftShaft2 = instancerProvider().instancer(InstanceTypes.TRANSFORMED, shaftModel).createInstance();
                 if (this.leftBlade != null) relight(pos, this.leftBlade);
-                if (this.leftShaft1 != null) relight(pos, this.leftShaft1);
-                if (this.leftShaft2 != null) relight(pos, this.leftShaft2);
             } else {
                 if (this.leftBlade != null) this.leftBlade.delete();
-                if (this.leftShaft1 != null) this.leftShaft1.delete();
-                if (this.leftShaft2 != null) this.leftShaft2.delete();
                 this.leftBlade = null;
-                this.leftShaft1 = null;
-                this.leftShaft2 = null;
             }
             hasBlade1Prev = hasBlade1;
         }
@@ -89,18 +88,10 @@ public class DrobitelVisual extends AbstractBlockEntityVisual<DrobitelBlockEntit
         if (hasBlade2 != hasBlade2Prev) {
             if (hasBlade2) {
                 this.rightBlade = instancerProvider().instancer(InstanceTypes.TRANSFORMED, bladeModel).createInstance();
-                this.rightShaft1 = instancerProvider().instancer(InstanceTypes.TRANSFORMED, shaftModel).createInstance();
-                this.rightShaft2 = instancerProvider().instancer(InstanceTypes.TRANSFORMED, shaftModel).createInstance();
                 if (this.rightBlade != null) relight(pos, this.rightBlade);
-                if (this.rightShaft1 != null) relight(pos, this.rightShaft1);
-                if (this.rightShaft2 != null) relight(pos, this.rightShaft2);
             } else {
                 if (this.rightBlade != null) this.rightBlade.delete();
-                if (this.rightShaft1 != null) this.rightShaft1.delete();
-                if (this.rightShaft2 != null) this.rightShaft2.delete();
                 this.rightBlade = null;
-                this.rightShaft1 = null;
-                this.rightShaft2 = null;
             }
             hasBlade2Prev = hasBlade2;
         }
@@ -179,6 +170,10 @@ public class DrobitelVisual extends AbstractBlockEntityVisual<DrobitelBlockEntit
             // Front shaft (near North)
             updatePart(rightShaft1, -0.1f, 1.3225f, -0.275f, currentAngle, true, 0f);
         }
+        if (rightShaft3 != null) {
+            // Middle shaft
+            updatePart(rightShaft3, -0.1f, 1.3225f, 0.525f, currentAngle, true, 0f);
+        }
         if (rightShaft2 != null) {
             // Back shaft (near South)
             updatePart(rightShaft2, -0.1f, 1.3225f, 1.325f, currentAngle, true, 0f);
@@ -190,6 +185,9 @@ public class DrobitelVisual extends AbstractBlockEntityVisual<DrobitelBlockEntit
         }
         if (leftShaft1 != null) {
             updatePart(leftShaft1, 1.1f, 1.3225f, -0.275f, -currentAngle, true, 0f);
+        }
+        if (leftShaft3 != null) {
+            updatePart(leftShaft3, 1.1f, 1.3225f, 0.525f, -currentAngle, true, 0f);
         }
         if (leftShaft2 != null) {
             updatePart(leftShaft2, 1.1f, 1.3225f, 1.325f, -currentAngle, true, 0f);
@@ -260,8 +258,10 @@ public class DrobitelVisual extends AbstractBlockEntityVisual<DrobitelBlockEntit
         if (rightBlade != null) relight(pos, rightBlade);
         if (leftShaft1 != null) relight(pos, leftShaft1);
         if (leftShaft2 != null) relight(pos, leftShaft2);
+        if (leftShaft3 != null) relight(pos, leftShaft3);
         if (rightShaft1 != null) relight(pos, rightShaft1);
         if (rightShaft2 != null) relight(pos, rightShaft2);
+        if (rightShaft3 != null) relight(pos, rightShaft3);
     }
 
     @Override
@@ -272,8 +272,10 @@ public class DrobitelVisual extends AbstractBlockEntityVisual<DrobitelBlockEntit
         if (rightBlade != null) rightBlade.delete();
         if (leftShaft1 != null) leftShaft1.delete();
         if (leftShaft2 != null) leftShaft2.delete();
+        if (leftShaft3 != null) leftShaft3.delete();
         if (rightShaft1 != null) rightShaft1.delete();
         if (rightShaft2 != null) rightShaft2.delete();
+        if (rightShaft3 != null) rightShaft3.delete();
     }
 
     @Override
@@ -284,7 +286,9 @@ public class DrobitelVisual extends AbstractBlockEntityVisual<DrobitelBlockEntit
         if (rightBlade != null) consumer.accept(rightBlade);
         if (leftShaft1 != null) consumer.accept(leftShaft1);
         if (leftShaft2 != null) consumer.accept(leftShaft2);
+        if (leftShaft3 != null) consumer.accept(leftShaft3);
         if (rightShaft1 != null) consumer.accept(rightShaft1);
         if (rightShaft2 != null) consumer.accept(rightShaft2);
+        if (rightShaft3 != null) consumer.accept(rightShaft3);
     }
 }

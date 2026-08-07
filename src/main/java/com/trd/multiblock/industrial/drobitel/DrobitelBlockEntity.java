@@ -41,6 +41,20 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageType;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.ItemParticleOption;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.world.level.block.Blocks;
 
 public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuProvider {
 
@@ -49,15 +63,21 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
     public static final int BLADE_SLOTS = 2;
     public static final int TOTAL_SLOTS = INPUT_SLOTS + OUTPUT_SLOTS + BLADE_SLOTS;
     public static final int MAX_PROGRESS = 60; // 3 секунды
+    public static final ResourceKey<DamageType> CRUSHER_DAMAGE = ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("trd", "crusher"));
     private int networkConnected = 0;
     public boolean isOverstressed = false;
     public boolean isTooSlow = false;
-    private final ItemStackHandler inventory = new ItemStackHandler(TOTAL_SLOTS) {
+    private final ItemStackHandler inventory = new ItemStackHandler(INPUT_SLOTS + OUTPUT_SLOTS + 2) {
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
             if (level != null && !level.isClientSide) {
                 level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 3);
+                updateBladeData();
+                com.trd.api.rotation.KineticNetwork net = com.trd.api.rotation.KineticNetworkManager.get((net.minecraft.server.level.ServerLevel) level).getNetworkFor(worldPosition);
+                if (net != null) {
+                    net.requestRecalculation();
+                }
             }
         }
 
@@ -165,16 +185,14 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
 
     @Override
     public long getConsumedTorque() {
-        if (Math.abs(getSpeed()) < 1) return 0;
-        ItemStack b1 = inventory.getStackInSlot(INPUT_SLOTS + OUTPUT_SLOTS);
-        ItemStack b2 = inventory.getStackInSlot(INPUT_SLOTS + OUTPUT_SLOTS + 1);
-        if (b1.isEmpty() || b2.isEmpty()) return 2L;
+        if (hasBlade1 == 0 || hasBlade2 == 0) return 0;
+        long activeSlots = 0;
         for (int i = 0; i < INPUT_SLOTS; i++) {
-            if (!inventory.getStackInSlot(i).isEmpty() && RECIPES.containsKey(inventory.getStackInSlot(i).getItem())) {
-                return 24L;
+            if (!inventory.getStackInSlot(i).isEmpty()) {
+                activeSlots++;
             }
         }
-        return 2L;
+        return activeSlots * 100L;
     }
 
     @Override
@@ -188,7 +206,6 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
     }
     @Override
     public boolean canConnectMechanically(BlockPos myPos, BlockPos neighborPos, Rotational neighbor) {
-        // Контроллер принимает вращение ТОЛЬКО через свои кинетические порты
         if (neighbor instanceof com.trd.multiblock.system.MultiblockPartEntity part) {
             return part.getPartRole() == com.trd.multiblock.system.PartRole.KINETIC_PORT
                     && part.getControllerPos() != null
@@ -210,7 +227,7 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
 
     @Override
     public long getVisualSpeed() {
-        if (this.isOverstressed || this.isTooSlow || this.hasBlade1 == 0 || this.hasBlade2 == 0) return 0;
+        if (this.isOverstressed || this.isTooSlow) return 0;
         BlockState state = getBlockState();
         if (!state.hasProperty(DrobitelBlock.FACING)) return this.speed;
         Direction facing = state.getValue(DrobitelBlock.FACING);
@@ -238,12 +255,12 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
             if (slot >= 0 && slot < INPUT_SLOTS && !stack.isEmpty()) {
                 int bestSlot = -1;
                 int bestCount = Integer.MAX_VALUE;
+                int emptySlot = -1;
 
                 for (int i = 0; i < INPUT_SLOTS; i++) {
                     ItemStack existing = inventory.getStackInSlot(i);
-                    if (existing.isEmpty()) {
-                        bestSlot = i;
-                        break;
+                    if (existing.isEmpty() && emptySlot == -1) {
+                        emptySlot = i;
                     } else if (ItemStack.isSameItemSameTags(existing, stack)) {
                         int count = existing.getCount();
                         if (count < existing.getMaxStackSize() && count < bestCount) {
@@ -251,6 +268,10 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
                             bestSlot = i;
                         }
                     }
+                }
+
+                if (bestSlot == -1 && emptySlot != -1) {
+                    bestSlot = emptySlot;
                 }
 
                 if (bestSlot != -1) {
@@ -326,10 +347,10 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
         be.isTooSlow = false;
 
         if (absSpeed > 0 && be.hasBlade1 == 1 && be.hasBlade2 == 1) {
-            long minSpeed = 50;
-            long maxSpeed = 350;
-            long minLimit = 25; // minSpeed / 2
-            long maxLimit = 420; // maxSpeed * 1.2
+            long minSpeed = 60;
+            long maxSpeed = 120;
+            long minLimit = 30;
+            long maxLimit = 144;
             
             if (absSpeed < minLimit) {
                 be.isTooSlow = true;
@@ -367,6 +388,59 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
             if (be.progress > 0) {
                 be.progress = 0;
                 changed = true;
+            }
+        }
+
+        if (!be.isTooSlow && !be.isOverstressed && be.hasBlade1 == 1 && be.hasBlade2 == 1 && absSpeed > 0) {
+            AABB area = new AABB(pos).inflate(1.0, 1.0, 1.0).move(0, 1.5, 0);
+            List<Entity> entities = level.getEntitiesOfClass(Entity.class, area);
+            for (Entity entity : entities) {
+                if (entity instanceof ItemEntity itemEntity) {
+                    double dx = (pos.getX() + 0.5) - itemEntity.getX();
+                    double dz = (pos.getZ() + 0.5) - itemEntity.getZ();
+                    
+                    if (Math.abs(dx) < 0.6 && Math.abs(dz) < 0.6 && itemEntity.getY() <= pos.getY() + 0.55) {
+                        ItemStack stack = itemEntity.getItem();
+                        IItemHandler handler = be.externalHandler.orElse(null);
+                        ItemStack remainder = (handler != null) ? net.minecraftforge.items.ItemHandlerHelper.insertItemStacked(handler, stack, false) : stack;
+                        
+                        if (remainder.isEmpty()) {
+                            itemEntity.discard();
+                        } else {
+                            itemEntity.setItem(remainder);
+                        }
+                    }
+                } else if (entity instanceof LivingEntity livingEntity) {
+                    double dx = (pos.getX() + 0.5) - livingEntity.getX();
+                    double dz = (pos.getZ() + 0.5) - livingEntity.getZ();
+                    
+                    if (Math.abs(dx) < 1.2 && Math.abs(dz) < 1.2 && livingEntity.getY() >= pos.getY()) {
+                        livingEntity.setDeltaMovement(livingEntity.getDeltaMovement().multiply(0.5, 0, 0.5).add(0, -0.1, 0));
+                        
+                        livingEntity.hurt(new net.minecraft.world.damagesource.DamageSource(level.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.DAMAGE_TYPE).getHolderOrThrow(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DAMAGE_TYPE, new net.minecraft.resources.ResourceLocation("trd", "crusher")))), 5.0f);
+                    }
+                }
+            }
+        }
+
+        if (!be.isTooSlow && !be.isOverstressed && be.hasBlade1 == 1 && be.hasBlade2 == 1 && absSpeed > 0 && be.canProcess()) {
+            if (level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+                for (int i = 0; i < INPUT_SLOTS; i++) {
+                    ItemStack input = be.inventory.getStackInSlot(i);
+                    if (!input.isEmpty()) {
+                        if (level.random.nextFloat() < 0.2f) {
+                            double px = pos.getX() + 0.5 + (level.random.nextDouble() - 0.5) * 0.4;
+                            double py = pos.getY() + 1.4;
+                            double pz = pos.getZ() + 0.5 + (level.random.nextDouble() - 0.5) * 0.4;
+                            
+                            double vx = (level.random.nextDouble() - 0.5) * 0.05;
+                            double vy = level.random.nextDouble() * 0.2;
+                            double vz = (level.random.nextDouble() - 0.5) * 0.05;
+                            
+                            serverLevel.sendParticles(new net.minecraft.core.particles.ItemParticleOption(ParticleTypes.ITEM, input), px, py, pz, 1, vx, vy, vz, 0.05);
+                        }
+                    }
+                }
             }
         }
 
