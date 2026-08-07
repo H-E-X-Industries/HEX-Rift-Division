@@ -60,6 +60,9 @@ public class ModLangProvider extends LanguageProvider {
     }
 
     private void addEnglish() {
+        // Death messages
+        add("death.attack.crusher", "%1$s became minced meat");
+
         // Creative Tabs
         add("itemGroup.trd.trd_build_tab", "Building Blocks");
         add("itemGroup.trd.trd_tech_tab", "Technology");
@@ -829,7 +832,10 @@ public class ModLangProvider extends LanguageProvider {
     }
 
     private void addRussian() {
-        // Вкладки креатива
+        // Death messages
+        add("death.attack.crusher", "%1$s стал фаршем");
+
+        // Креативные вкладки
         add("itemGroup.trd.trd_build_tab", "Строительные блоки");
         add("itemGroup.trd.trd_tech_tab", "Технологии");
         add("itemGroup.trd.trd_weapons_tab", "Арсенал");
