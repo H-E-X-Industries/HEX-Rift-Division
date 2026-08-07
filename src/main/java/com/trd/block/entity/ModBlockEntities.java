@@ -221,6 +221,11 @@ public class ModBlockEntities {
                     () -> BlockEntityType.Builder.of(com.trd.block.entity.industrial.rotation.TachometerBlockEntity::new, ModBlocks.TACHOMETER.get())
                             .build(null));
 
+    public static final RegistryObject<BlockEntityType<com.trd.block.entity.industrial.rotation.ClutchBlockEntity>> CLUTCH_BE =
+            BLOCK_ENTITIES.register("clutch_be",
+                    () -> BlockEntityType.Builder.of(com.trd.block.entity.industrial.rotation.ClutchBlockEntity::new, ModBlocks.CLUTCH.get())
+                            .build(null));
+
     public static final RegistryObject<BlockEntityType<MotorElectroBlockEntity>> MOTOR_ELECTRO_BE =
             BLOCK_ENTITIES.register("motor_electro",
                     () -> BlockEntityType.Builder.of(MotorElectroBlockEntity::new, ModBlocks.MOTOR_ELECTRO.get()).build(null));

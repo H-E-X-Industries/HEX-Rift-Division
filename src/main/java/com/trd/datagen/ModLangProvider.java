@@ -644,6 +644,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.BEARING_BLOCK.get(), "Bearing");
         add(ModBlocks.MOTOR_ELECTRO.get(), "Electric Motor");
         add(ModBlocks.TACHOMETER.get(), "Tachometer");
+        add(ModBlocks.CLUTCH.get(), "Clutch");
         add(ModItems.STEAM_ENGINE_ITEM.get(), "Steam Engine");
         add(ModBlocks.STATOR_BLOCK.get(), "Stator");
 
@@ -1436,6 +1437,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.BEARING_BLOCK.get(), "Подшипник");
         add(ModBlocks.MOTOR_ELECTRO.get(), "Электромотор");
         add(ModBlocks.TACHOMETER.get(), "Тахометр");
+        add(ModBlocks.CLUTCH.get(), "Сцепление");
         add(ModItems.STEAM_ENGINE_ITEM.get(), "Паровой двигатель");
         add(ModBlocks.STATOR_BLOCK.get(), "Статор");
 

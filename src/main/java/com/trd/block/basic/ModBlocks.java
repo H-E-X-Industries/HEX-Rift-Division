@@ -532,6 +532,12 @@ public class ModBlocks {
                     .strength(5.0f, 6.0f)
                     .requiresCorrectToolForDrops()));
 
+    public static final RegistryObject<Block> CLUTCH = registerBlock("clutch",
+            () -> new com.trd.block.basic.industrial.rotation.ClutchBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)
+                    .noOcclusion()
+                    .strength(5.0f, 6.0f)
+                    .requiresCorrectToolForDrops()));
+
     public static final RegistryObject<Block> MOTOR_ELECTRO = registerBlock("motor_electro",
             () -> new MotorElectroBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion()));
 
@@ -572,6 +578,30 @@ public class ModBlocks {
         String name = "shaft_" + dia.name + "_" + mat.name();
         // ТЕПЕРЬ ИСПОЛЬЗУЕМ registerBlock, чтобы создались и блок, и предмет!
         return registerBlock(name, () -> new ShaftBlock(BlockBehaviour.Properties.of().strength(2.0f), mat, dia));
+    }
+
+    public static RegistryObject<Block> getShaft(ShaftMaterial mat, ShaftDiameter dia) {
+        if (mat == ShaftMaterial.IRON && dia == ShaftDiameter.LIGHT) return SHAFT_LIGHT_IRON;
+        if (mat == ShaftMaterial.IRON && dia == ShaftDiameter.MEDIUM) return SHAFT_MEDIUM_IRON;
+        if (mat == ShaftMaterial.IRON && dia == ShaftDiameter.HEAVY) return SHAFT_HEAVY_IRON;
+
+        if (mat == ShaftMaterial.DURALUMIN && dia == ShaftDiameter.LIGHT) return SHAFT_LIGHT_DURALUMIN;
+        if (mat == ShaftMaterial.DURALUMIN && dia == ShaftDiameter.MEDIUM) return SHAFT_MEDIUM_DURALUMIN;
+        if (mat == ShaftMaterial.DURALUMIN && dia == ShaftDiameter.HEAVY) return SHAFT_HEAVY_DURALUMIN;
+
+        if (mat == ShaftMaterial.STEEL && dia == ShaftDiameter.LIGHT) return SHAFT_LIGHT_STEEL;
+        if (mat == ShaftMaterial.STEEL && dia == ShaftDiameter.MEDIUM) return SHAFT_MEDIUM_STEEL;
+        if (mat == ShaftMaterial.STEEL && dia == ShaftDiameter.HEAVY) return SHAFT_HEAVY_STEEL;
+
+        if (mat == ShaftMaterial.TITANIUM && dia == ShaftDiameter.LIGHT) return SHAFT_LIGHT_TITANIUM;
+        if (mat == ShaftMaterial.TITANIUM && dia == ShaftDiameter.MEDIUM) return SHAFT_MEDIUM_TITANIUM;
+        if (mat == ShaftMaterial.TITANIUM && dia == ShaftDiameter.HEAVY) return SHAFT_HEAVY_TITANIUM;
+
+        if (mat == ShaftMaterial.TUNGSTEN_CARBIDE && dia == ShaftDiameter.LIGHT) return SHAFT_LIGHT_TUNGSTEN_CARBIDE;
+        if (mat == ShaftMaterial.TUNGSTEN_CARBIDE && dia == ShaftDiameter.MEDIUM) return SHAFT_MEDIUM_TUNGSTEN_CARBIDE;
+        if (mat == ShaftMaterial.TUNGSTEN_CARBIDE && dia == ShaftDiameter.HEAVY) return SHAFT_HEAVY_TUNGSTEN_CARBIDE;
+
+        return SHAFT_LIGHT_IRON;
     }
 
     //декоративные блоки
