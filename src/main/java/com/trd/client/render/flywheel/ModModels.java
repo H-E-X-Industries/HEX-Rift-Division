@@ -17,6 +17,7 @@ public class ModModels {
     public static final PartialModel BEARING = PartialModel.of(new ResourceLocation("trd", "block/bearing"));
     public static final PartialModel BEVEL_GEAR = PartialModel.of(new ResourceLocation("trd", "block/bevel_gear"));
     public static final PartialModel TACHOMETER = PartialModel.of(new ResourceLocation("trd", "block/tachometr"));
+    public static final PartialModel CLUTCH_BLOCK = PartialModel.of(new ResourceLocation("trd", "block/clutch"));
     public static final Map<String, PartialModel> PULLEY_MODELS = new HashMap<>();
     public static final PartialModel BELT_SEGMENT = PartialModel.of(new ResourceLocation("trd", "block/belt_segment"));
 

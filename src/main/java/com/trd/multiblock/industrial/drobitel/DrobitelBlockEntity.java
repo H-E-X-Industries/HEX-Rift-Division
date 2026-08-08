@@ -192,7 +192,7 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
                 activeSlots++;
             }
         }
-        return activeSlots * 100L;
+        return activeSlots * 50L;
     }
 
     @Override
@@ -255,23 +255,27 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
             if (slot >= 0 && slot < INPUT_SLOTS && !stack.isEmpty()) {
                 int bestSlot = -1;
                 int bestCount = Integer.MAX_VALUE;
-                int emptySlot = -1;
 
+                // Сначала ищем пустой слот для равномерного распределения
                 for (int i = 0; i < INPUT_SLOTS; i++) {
-                    ItemStack existing = inventory.getStackInSlot(i);
-                    if (existing.isEmpty() && emptySlot == -1) {
-                        emptySlot = i;
-                    } else if (ItemStack.isSameItemSameTags(existing, stack)) {
-                        int count = existing.getCount();
-                        if (count < existing.getMaxStackSize() && count < bestCount) {
-                            bestCount = count;
-                            bestSlot = i;
-                        }
+                    if (inventory.getStackInSlot(i).isEmpty()) {
+                        bestSlot = i;
+                        break;
                     }
                 }
 
-                if (bestSlot == -1 && emptySlot != -1) {
-                    bestSlot = emptySlot;
+                // Если пустых нет, стакаем с наименьшим стаком
+                if (bestSlot == -1) {
+                    for (int i = 0; i < INPUT_SLOTS; i++) {
+                        ItemStack existing = inventory.getStackInSlot(i);
+                        if (ItemStack.isSameItemSameTags(existing, stack)) {
+                            int count = existing.getCount();
+                            if (count < existing.getMaxStackSize() && count < bestCount) {
+                                bestCount = count;
+                                bestSlot = i;
+                            }
+                        }
+                    }
                 }
 
                 if (bestSlot != -1) {

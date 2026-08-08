@@ -118,6 +118,7 @@ public class ClientModEvents {
         event.registerBlockEntityRenderer(ModBlockEntities.SHAFT_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.BEARING_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.TACHOMETER_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.CLUTCH_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.FUEL_TANK_BE.get(), com.trd.client.render.ber.FuelTankRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.PAINTABLE_PIPE_BE.get(), com.trd.client.render.ber.PaintableConduitRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.PAINTABLE_WIRE_BE.get(), com.trd.client.render.ber.PaintableConduitRenderer::new);
@@ -255,6 +256,19 @@ public class ClientModEvents {
 
                 @Override
                 public boolean skipVanillaRender(com.trd.block.entity.industrial.rotation.TachometerBlockEntity be) {
+                    return true;
+                }
+            });
+
+            VisualizerRegistry.setVisualizer(ModBlockEntities.CLUTCH_BE.get(), new dev.engine_room.flywheel.api.visualization.BlockEntityVisualizer<com.trd.block.entity.industrial.rotation.ClutchBlockEntity>() {
+
+                @Override
+                public dev.engine_room.flywheel.api.visual.BlockEntityVisual<? super com.trd.block.entity.industrial.rotation.ClutchBlockEntity> createVisual(dev.engine_room.flywheel.api.visualization.VisualizationContext ctx, com.trd.block.entity.industrial.rotation.ClutchBlockEntity be, float partialTick) {
+                    return new com.trd.client.render.flywheel.ClutchVisual(ctx, be, partialTick);
+                }
+
+                @Override
+                public boolean skipVanillaRender(com.trd.block.entity.industrial.rotation.ClutchBlockEntity be) {
                     return true;
                 }
             });

@@ -1,0 +1,28 @@
+{
+  "variants": {
+    "facing=north,has_shaft=false,powered=false": { "model": "trd:block/clutch", "x": 90 },
+    "facing=north,has_shaft=true,powered=false":  { "model": "trd:block/clutch", "x": 90 },
+    "facing=south,has_shaft=false,powered=false": { "model": "trd:block/clutch", "x": 90, "y": 180 },
+    "facing=south,has_shaft=true,powered=false":  { "model": "trd:block/clutch", "x": 90, "y": 180 },
+    "facing=west,has_shaft=false,powered=false":  { "model": "trd:block/clutch", "x": 90, "y": 270 },
+    "facing=west,has_shaft=true,powered=false":   { "model": "trd:block/clutch", "x": 90, "y": 270 },
+    "facing=east,has_shaft=false,powered=false":  { "model": "trd:block/clutch", "x": 90, "y": 90 },
+    "facing=east,has_shaft=true,powered=false":   { "model": "trd:block/clutch", "x": 90, "y": 90 },
+    "facing=up,has_shaft=false,powered=false":    { "model": "trd:block/clutch" },
+    "facing=up,has_shaft=true,powered=false":     { "model": "trd:block/clutch" },
+    "facing=down,has_shaft=false,powered=false":  { "model": "trd:block/clutch", "x": 180 },
+    "facing=down,has_shaft=true,powered=false":   { "model": "trd:block/clutch", "x": 180 },
+    "facing=north,has_shaft=false,powered=true": { "model": "trd:block/clutch", "x": 90 },
+    "facing=north,has_shaft=true,powered=true":  { "model": "trd:block/clutch", "x": 90 },
+    "facing=south,has_shaft=false,powered=true": { "model": "trd:block/clutch", "x": 90, "y": 180 },
+    "facing=south,has_shaft=true,powered=true":  { "model": "trd:block/clutch", "x": 90, "y": 180 },
+    "facing=west,has_shaft=false,powered=true":  { "model": "trd:block/clutch", "x": 90, "y": 270 },
+    "facing=west,has_shaft=true,powered=true":   { "model": "trd:block/clutch", "x": 90, "y": 270 },
+    "facing=east,has_shaft=false,powered=true":  { "model": "trd:block/clutch", "x": 90, "y": 90 },
+    "facing=east,has_shaft=true,powered=true":   { "model": "trd:block/clutch", "x": 90, "y": 90 },
+    "facing=up,has_shaft=false,powered=true":    { "model": "trd:block/clutch" },
+    "facing=up,has_shaft=true,powered=true":     { "model": "trd:block/clutch" },
+    "facing=down,has_shaft=false,powered=true":  { "model": "trd:block/clutch", "x": 180 },
+    "facing=down,has_shaft=true,powered=true":   { "model": "trd:block/clutch", "x": 180 }
+  }
+}
