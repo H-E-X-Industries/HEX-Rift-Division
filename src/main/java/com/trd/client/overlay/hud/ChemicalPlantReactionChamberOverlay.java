@@ -67,6 +67,12 @@ public class ChemicalPlantReactionChamberOverlay {
         List<Integer> colors = new ArrayList<>();
         int maxW = 0;
 
+        // Рецепт
+        String recipeName = "§e" + Component.translatable("recipe.trd." + recipe.getId().getPath()).getString();
+        lines.add(recipeName);
+        colors.add(0xFFFFFF);
+        maxW = Math.max(maxW, font.width(recipeName));
+
         // Входы
         for (FluidStack in : recipe.getFluidInputs()) {
             int cur = 0;
@@ -83,6 +89,19 @@ public class ChemicalPlantReactionChamberOverlay {
                     + " " + cur + "/" + tankCap + " mB " + in.getDisplayName().getString();
             lines.add(line);
             colors.add(IClientFluidTypeExtensions.of(in.getFluid()).getTintColor() | 0xFF000000);
+            maxW = Math.max(maxW, font.width(line));
+        }
+        for (net.minecraft.world.item.ItemStack in : recipe.getItemInputs()) {
+            int cur = 0;
+            for (int i = 0; i < ChemicalPlantReactionChamberBlockEntity.INPUT_SLOTS; i++) {
+                net.minecraft.world.item.ItemStack slot = be.getItemHandler().getStackInSlot(i);
+                if (net.minecraft.world.item.ItemStack.isSameItemSameTags(slot, in)) {
+                    cur += slot.getCount();
+                }
+            }
+            String line = in.getHoverName().getString() + ": " + cur + "/" + in.getCount();
+            lines.add(line);
+            colors.add(0xFFFF00); // Yellow
             maxW = Math.max(maxW, font.width(line));
         }
 
@@ -104,14 +123,50 @@ public class ChemicalPlantReactionChamberOverlay {
             colors.add(IClientFluidTypeExtensions.of(out.getFluid()).getTintColor() | 0xFF000000);
             maxW = Math.max(maxW, font.width(line));
         }
+        for (net.minecraft.world.item.ItemStack out : recipe.getItemOutputs()) {
+            int cur = 0;
+            for (int i = ChemicalPlantReactionChamberBlockEntity.INPUT_SLOTS; i < ChemicalPlantReactionChamberBlockEntity.INPUT_SLOTS + ChemicalPlantReactionChamberBlockEntity.OUTPUT_SLOTS; i++) {
+                net.minecraft.world.item.ItemStack slot = be.getItemHandler().getStackInSlot(i);
+                if (net.minecraft.world.item.ItemStack.isSameItemSameTags(slot, out)) {
+                    cur += slot.getCount();
+                }
+            }
+            String line = out.getHoverName().getString() + " (выход): " + cur;
+            lines.add(line);
+            colors.add(0xFFFF00); // Yellow
+            maxW = Math.max(maxW, font.width(line));
+        }
 
         // Прогресс
-        if (be.getMaxProgress() > 0) {
-            String p = Component.translatable("hud.trd.chamber.progress",
-                    (int) (be.getProgress() * 100.0 / be.getMaxProgress())).getString();
+        int maxProgress = recipe.getProcessTime();
+        if (maxProgress > 0) {
+            double percent = (double) be.getProgress() / maxProgress;
+            int totalBars = 20;
+            int greenBars = (int) (percent * totalBars);
+            int grayBars = totalBars - greenBars;
+
+            StringBuilder bar = new StringBuilder();
+            bar.append("§a");
+            for (int i = 0; i < greenBars; i++) bar.append("|");
+            bar.append("§7");
+            for (int i = 0; i < grayBars; i++) bar.append("|");
+
+            String progressText = Component.translatable("hud.trd.chamber.progress", (int) (percent * 100)).getString();
+            String p = progressText + " [" + bar.toString() + "§r]";
+            
             lines.add(p);
             colors.add(0xFFFFFF);
             maxW = Math.max(maxW, font.width(p));
+        }
+        
+        // Температура
+        if (recipe.getMinTemperature() > 0) {
+            int curTemp = be.getCurrentTemperature();
+            int reqTemp = recipe.getMinTemperature();
+            String t = "Температура: " + curTemp + "/" + reqTemp + " C";
+            lines.add(t);
+            colors.add(curTemp >= reqTemp ? 0x00FF00 : 0xFF0000);
+            maxW = Math.max(maxW, font.width(t));
         }
 
         int lh = font.lineHeight + 2;

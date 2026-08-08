@@ -129,10 +129,16 @@ public class ModLangProvider extends LanguageProvider {
         add("metal.trd.neodymium", "Neodymium");
 
         // Cast Pickaxe Tooltips
+        // Cast Pickaxe Tooltips
         add("item.trd.cast_pickaxe.desc.charge", "§7Hold RMB for a powerful strike");
         add("item.trd.cast_pickaxe.desc.mining_power", "§6Power: %s");
         add("item.trd.cast_pickaxe.desc.vein_miner_info", "Vein Miner: %s");
         add("item.trd.cast_pickaxe.desc.tunnel_miner", "Tunnel Miner: %s");
+
+        // ═══ Chemistry ═══
+        add("recipe.trd.hydrogen_peroxide", "Hydrogen Peroxide");
+        add("recipe.trd.sulfuric_acid", "Sulfuric Acid");
+        add("recipe.trd.obsidian", "Obsidian");
 
 
         // ═══ GUI: Electric Furnace ═══
@@ -154,6 +160,12 @@ public class ModLangProvider extends LanguageProvider {
         add("gui.trd.fluid_identifier.unknown", "Unknown");
 
         // ═══ GUI: Heater ═══
+        add("hud.trd.chem_heater.title", "Chemical Heater");
+        add("hud.trd.chem_heater.mode", "Mode");
+        add("hud.trd.chem_heater.mode.off", "Off");
+        add("hud.trd.chem_heater.consumption", "Consumption");
+        add("hud.trd.chem_heater.charge", "Charge");
+        
         add("gui.trd.heater.fuel_tiers_title", "§6§lFuel Tiers:");
         add("gui.trd.heater.fuel_tier_format", "§8Tier %s: §f%s°C, §f%s§7s.");
         add("gui.trd.heater.temperature_format", "%s / %s °C");
@@ -902,6 +914,8 @@ public class ModLangProvider extends LanguageProvider {
         add("block.trd.chemical_plant_reaction_chamber", "Реакционная камера");
         add("block.trd.chemical_plant_port", "Порт хим. установки");
         add("recipe.trd.hydrogen_peroxide", "Пероксид водорода");
+        add("recipe.trd.sulfuric_acid", "Серная кислота");
+        add("recipe.trd.obsidian", "Обсидиан");
         add(  "gui.trd.chemistry.empty", "Пусто");
         add(  "gui.trd.chemistry.inputs", "Входы:");
         add(  "gui.trd.chemistry.outputs", "Выходы:");
@@ -926,6 +940,12 @@ public class ModLangProvider extends LanguageProvider {
         add("gui.trd.fluid_identifier.unknown", "Неизвестно");
 
         // ═══ GUI: Heater ═══
+        add("hud.trd.chem_heater.title", "Хим. Нагреватель");
+        add("hud.trd.chem_heater.mode", "Режим");
+        add("hud.trd.chem_heater.mode.off", "Выкл");
+        add("hud.trd.chem_heater.consumption", "Расход");
+        add("hud.trd.chem_heater.charge", "Заряд");
+        
         add("gui.trd.heater.fuel_tiers_title", "§6§lТопливные тиры:");
         add("gui.trd.heater.fuel_tier_format", "§8Тир %s: §f%s°C, §f%s§7с.");
         add("gui.trd.heater.temperature_format", "%s / %s °C");

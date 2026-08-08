@@ -160,7 +160,7 @@ public class GUIChemicalPlantReactionChamber extends AbstractContainerScreen<Che
         if (this.font.width(fullText) > SEARCH_W - 4) {
             fullText = this.font.plainSubstrByWidth(fullText, SEARCH_W - 4, true);
         }
-        graphics.drawString(this.font, fullText, searchBox.getX(), searchBox.getY(), 0xAEC6CF, false);
+        graphics.drawString(this.font, fullText, searchBox.getX() + 2, searchBox.getY() + 4, 0xAEC6CF, false);
     }
 
     private void renderRecipeList(GuiGraphics graphics, int x, int y, int mouseX, int mouseY) {
@@ -212,14 +212,10 @@ public class GUIChemicalPlantReactionChamber extends AbstractContainerScreen<Che
                 graphics.pose().popPose();
             }
 
-            if (!amountText.isEmpty()) {
-                graphics.drawString(this.font, amountText, listX + ICON_X + 18, entryY + ICON_Y + 4, 0xFFAAAAAA, false);
-            }
-
             // Render recipe name
             Component name = Component.translatable("recipe.trd." + recipe.getId().getPath());
             int color = getRecipeColor(recipe);
-            graphics.drawString(this.font, name, listX + ICON_X + 18, entryY + ICON_Y + (amountText.isEmpty() ? 4 : 14), color, false);
+            graphics.drawString(this.font, name, listX + ICON_X + 23, entryY + ICON_Y + 4, color, false);
 
             // Hover detection
             if (mouseX >= listX && mouseX < listX + LIST_W && mouseY >= entryY && mouseY < entryY + ENTRY_H) {

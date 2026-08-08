@@ -24,7 +24,7 @@ public class ChemicalPlantReactionChamberMenu extends AbstractContainerMenu {
     }
 
     public ChemicalPlantReactionChamberMenu(int id, Inventory inv, FriendlyByteBuf extraData) {
-        this(id, inv, inv.player.level().getBlockEntity(extraData.readBlockPos()), new SimpleContainerData(2));
+        this(id, inv, inv.player.level().getBlockEntity(extraData.readBlockPos()), new SimpleContainerData(3));
     }
 
     public int getProgress() {
@@ -33,6 +33,10 @@ public class ChemicalPlantReactionChamberMenu extends AbstractContainerMenu {
 
     public int getMaxProgress() {
         return data.get(1);
+    }
+
+    public int getCurrentTemperature() {
+        return data.get(2);
     }
 
     @Override

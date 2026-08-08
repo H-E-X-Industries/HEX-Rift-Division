@@ -47,17 +47,30 @@ public class ChemicalPlantReactionChamberBlockEntity extends BlockEntity impleme
         @Override
         protected void onContentsChanged(int slot) {
             setChanged();
+            if (level != null && !level.isClientSide) {
+                level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+            }
         }
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            return slot < INPUT_SLOTS;
+            if (slot >= INPUT_SLOTS) return false;
+            if (currentRecipeId.isEmpty()) return false;
+            ChemicalPlantRecipe recipe = ChemicalPlantRecipeRegistry.getById(new ResourceLocation(currentRecipeId));
+            if (recipe == null) return false;
+            for (ItemStack input : recipe.getItemInputs()) {
+                if (ItemStack.isSameItemSameTags(input, stack)) {
+                    return true;
+                }
+            }
+            return false;
         }
     };
 
     private String currentRecipeId = "";
     private int progress = 0;
     private int maxProgress = 0;
+    private int currentTemperature = 0;
 
     private final ContainerData data = new ContainerData() {
         @Override
@@ -65,6 +78,7 @@ public class ChemicalPlantReactionChamberBlockEntity extends BlockEntity impleme
             return switch (index) {
                 case 0 -> progress;
                 case 1 -> maxProgress;
+                case 2 -> currentTemperature;
                 default -> 0;
             };
         }
@@ -74,12 +88,13 @@ public class ChemicalPlantReactionChamberBlockEntity extends BlockEntity impleme
             switch (index) {
                 case 0 -> progress = value;
                 case 1 -> maxProgress = value;
+                case 2 -> currentTemperature = value;
             }
         }
 
         @Override
         public int getCount() {
-            return 2;
+            return 3;
         }
     };
 
@@ -94,6 +109,9 @@ public class ChemicalPlantReactionChamberBlockEntity extends BlockEntity impleme
                 @Override
                 protected void onContentsChanged() {
                     ChemicalPlantReactionChamberBlockEntity.this.setChanged();
+                    if (level != null && !level.isClientSide) {
+                        level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+                    }
                 }
                 @Override
                 public boolean isFluidValid(FluidStack stack) {
@@ -156,6 +174,19 @@ public class ChemicalPlantReactionChamberBlockEntity extends BlockEntity impleme
             @Override
             public int fill(FluidStack resource, FluidAction action) {
                 if (resource.isEmpty()) return 0;
+                if (currentRecipeId.isEmpty()) return 0;
+                ChemicalPlantRecipe recipe = ChemicalPlantRecipeRegistry.getById(new ResourceLocation(currentRecipeId));
+                if (recipe == null) return 0;
+                
+                boolean isInput = false;
+                for (FluidStack in : recipe.getFluidInputs()) {
+                    if (in.getFluid() == resource.getFluid()) {
+                        isInput = true;
+                        break;
+                    }
+                }
+                if (!isInput) return 0;
+
                 for (int i = 0; i < TANK_COUNT; i++) {
                     FluidStack existing = tanks[i].getFluid();
                     if (!existing.isEmpty() && existing.getFluid() == resource.getFluid() && isFluidValid(i, resource)) {
@@ -242,6 +273,20 @@ public class ChemicalPlantReactionChamberBlockEntity extends BlockEntity impleme
     public static void tick(Level level, BlockPos pos, BlockState state, ChemicalPlantReactionChamberBlockEntity be) {
         if (level.isClientSide) return;
 
+        // Calculate current temperature
+        int tempSum = 0;
+        for (Direction dir : Direction.Plane.HORIZONTAL) {
+            BlockEntity neighbor = level.getBlockEntity(pos.relative(dir));
+            if (neighbor instanceof ChemicalPlantHeaterBlockEntity heater) {
+                tempSum += heater.getActiveTemperature();
+            }
+        }
+        if (be.currentTemperature != tempSum) {
+            be.currentTemperature = tempSum;
+            be.setChanged();
+            level.sendBlockUpdated(pos, state, state, 3);
+        }
+
         if (be.currentRecipeId.isEmpty()) {
             be.progress = 0;
             be.maxProgress = 0;
@@ -276,15 +321,17 @@ public class ChemicalPlantReactionChamberBlockEntity extends BlockEntity impleme
                 return;
             }
 
-            be.progress++;
-            if (be.progress >= be.maxProgress) {
-                be.consumeInputs(recipe);
-                be.produceOutputs(recipe);
-                be.progress = 0;
-            }
-            be.setChanged();
-            if (level != null) {
-                level.sendBlockUpdated(pos, state, state, 3);
+            if (be.currentTemperature >= recipe.getMinTemperature()) {
+                be.progress++;
+                if (be.progress >= be.maxProgress) {
+                    be.consumeInputs(recipe);
+                    be.produceOutputs(recipe);
+                    be.progress = 0;
+                }
+                be.setChanged();
+                if (level != null) {
+                    level.sendBlockUpdated(pos, state, state, 3);
+                }
             }
         } else {
             if (be.progress > 0) {
@@ -357,6 +404,14 @@ public class ChemicalPlantReactionChamberBlockEntity extends BlockEntity impleme
     public void setRecipe(@Nullable ResourceLocation recipeId) {
         this.currentRecipeId = recipeId != null ? recipeId.toString() : "";
         this.progress = 0;
+        
+        for (int i = 0; i < TANK_COUNT; i++) {
+            tanks[i].setFluid(FluidStack.EMPTY);
+        }
+        for (int i = 0; i < INPUT_SLOTS + OUTPUT_SLOTS; i++) {
+            itemHandler.setStackInSlot(i, ItemStack.EMPTY);
+        }
+
         this.setChanged();
         if (level != null && !level.isClientSide) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
@@ -370,6 +425,7 @@ public class ChemicalPlantReactionChamberBlockEntity extends BlockEntity impleme
 
     public int getProgress() { return progress; }
     public int getMaxProgress() { return maxProgress; }
+    public int getCurrentTemperature() { return currentTemperature; }
     public FluidTank[] getTanks() { return tanks; }
     public ItemStackHandler getItemHandler() { return itemHandler; }
 
@@ -384,6 +440,7 @@ public class ChemicalPlantReactionChamberBlockEntity extends BlockEntity impleme
         tag.put("Items", itemHandler.serializeNBT());
         tag.putString("Recipe", currentRecipeId);
         tag.putInt("Progress", progress);
+        tag.putInt("Temperature", currentTemperature);
     }
 
     @Override
@@ -399,6 +456,7 @@ public class ChemicalPlantReactionChamberBlockEntity extends BlockEntity impleme
         }
         currentRecipeId = tag.getString("Recipe");
         progress = tag.getInt("Progress");
+        currentTemperature = tag.getInt("Temperature");
     }
 
     @Override
@@ -414,6 +472,7 @@ public class ChemicalPlantReactionChamberBlockEntity extends BlockEntity impleme
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
+        if (cap == ForgeCapabilities.FLUID_HANDLER) return fluidHandler.cast();
         if (cap == ForgeCapabilities.ITEM_HANDLER) return itemCapability.cast();
         return super.getCapability(cap, side);
     }
