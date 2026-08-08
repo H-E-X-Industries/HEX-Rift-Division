@@ -297,7 +297,7 @@ public class ModBlocks {
                     .noOcclusion()));
 
     public static final RegistryObject<Block> CHEMICAL_PLANT_HEATER = registerBlock("chemical_plant_heater",
-            () -> new SideOBlock(BlockBehaviour.Properties.of()
+            () -> new com.trd.block.basic.industrial.chemistry.ChemicalPlantHeaterBlock(BlockBehaviour.Properties.of()
                     .strength(2.0F, 6.0F)
                     .sound(SoundType.STONE)
                     .requiresCorrectToolForDrops()

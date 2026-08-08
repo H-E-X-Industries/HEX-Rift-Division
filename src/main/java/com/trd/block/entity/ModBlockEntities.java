@@ -102,8 +102,10 @@ public class ModBlockEntities {
 
     public static final RegistryObject<BlockEntityType<ChemicalPlantPortBlockEntity>> CHEMICAL_PLANT_PORT_BE =
             BLOCK_ENTITIES.register("chemical_plant_port_be",
-                    () -> BlockEntityType.Builder.of(ChemicalPlantPortBlockEntity::new,
-                            ModBlocks.CHEMICAL_PLANT_PORT.get()).build(null));
+                    () -> BlockEntityType.Builder.of(ChemicalPlantPortBlockEntity::new, ModBlocks.CHEMICAL_PLANT_PORT.get()).build(null));
+    public static final RegistryObject<BlockEntityType<com.trd.block.entity.industrial.chemistry.ChemicalPlantHeaterBlockEntity>> CHEMICAL_PLANT_HEATER_BE =
+            BLOCK_ENTITIES.register("chemical_plant_heater_be",
+                    () -> BlockEntityType.Builder.of(com.trd.block.entity.industrial.chemistry.ChemicalPlantHeaterBlockEntity::new, ModBlocks.CHEMICAL_PLANT_HEATER.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<ElectricFurnaceBlockEntity>> ELECTRIC_FURNACE_BE =
             BLOCK_ENTITIES.register("electric_furnace",

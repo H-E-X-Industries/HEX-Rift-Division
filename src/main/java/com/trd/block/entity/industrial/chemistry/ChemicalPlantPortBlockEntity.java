@@ -73,9 +73,7 @@ public class ChemicalPlantPortBlockEntity extends BlockEntity implements MenuPro
             @Override public boolean isFluidValid(int tank, @NotNull FluidStack stack) { return true; }
             @Override public int fill(FluidStack resource, FluidAction action) {
                 if (mode != 0 || resource.isEmpty()) return 0;
-                int filledA = tankA.fill(resource, action);
-                if (filledA > 0) return filledA;
-                return tankB.fill(resource, action);
+                return internalFill(resource, action);
             }
             @Override public @NotNull FluidStack drain(FluidStack resource, FluidAction action) {
                 if (mode != 1) return FluidStack.EMPTY;
@@ -162,7 +160,9 @@ public class ChemicalPlantPortBlockEntity extends BlockEntity implements MenuPro
                         if (!drained.isEmpty()) {
                             int filled = be.internalFill(drained, IFluidHandler.FluidAction.SIMULATE);
                             if (filled > 0) {
-                                FluidStack real = chamberFluid.drain(new FluidStack(drained.getFluid(), filled), IFluidHandler.FluidAction.EXECUTE);
+                                FluidStack realDrain = drained.copy();
+                                realDrain.setAmount(filled);
+                                FluidStack real = chamberFluid.drain(realDrain, IFluidHandler.FluidAction.EXECUTE);
                                 be.internalFill(real, IFluidHandler.FluidAction.EXECUTE);
                                 changed = true;
                             }
