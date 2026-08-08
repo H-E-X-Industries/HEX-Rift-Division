@@ -144,8 +144,8 @@ public class ClutchVisual extends AbstractBlockEntityVisual<ClutchBlockEntity> i
             targetSpeedFront = blockEntity.getVisualSpeed();
             targetSpeedBack = targetSpeedFront;
         } else {
-            BlockEntity beFront = level.getBlockEntity(pos.relative(facing));
-            BlockEntity beBack = level.getBlockEntity(pos.relative(facing.getOpposite()));
+            BlockEntity beFront = level.getBlockEntity(pos.relative(facing.getOpposite()));
+            BlockEntity beBack = level.getBlockEntity(pos.relative(facing));
             
             if (beFront instanceof Rotational rotFront) {
                 targetSpeedFront = rotFront.getVisualSpeed();
@@ -236,9 +236,9 @@ public class ClutchVisual extends AbstractBlockEntityVisual<ClutchBlockEntity> i
         instance.scale(1f, 1f, 0.5f);
         
         if (isFront) {
-            instance.translate(0f, 0f, 0.25f);
+            instance.translate(0f, 0f, 0.5f);
         } else {
-            instance.translate(0f, 0f, -0.25f);
+            instance.translate(0f, 0f, -0.5f);
         }
 
         instance.translate(-0.5f, -0.5f, -0.5f);
