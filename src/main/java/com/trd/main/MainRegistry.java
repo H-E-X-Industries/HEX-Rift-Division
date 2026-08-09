@@ -251,6 +251,7 @@ public class MainRegistry {
 
             event.accept(ModBlocks.BEARING_BLOCK);
             event.accept(ModBlocks.MOTOR_ELECTRO);
+            event.accept(ModBlocks.CLUTCH);
             event.accept(ModBlocks.TACHOMETER);
             event.accept(ModItems.STEAM_ENGINE_ITEM);
             event.accept(ModBlocks.DROBITEL);
