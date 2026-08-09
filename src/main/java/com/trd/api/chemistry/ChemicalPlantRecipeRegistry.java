@@ -25,12 +25,12 @@ public class ChemicalPlantRecipeRegistry {
         // Sulfuric Acid: 3 Sulfur + 1000mB Water = 1000mB Sulfuric Acid. 5s (100 ticks), 50°C
         register(new ChemicalPlantRecipe(
                 new ResourceLocation("trd", "sulfuric_acid"),
-                List.of(new FluidStack(Fluids.WATER, 1000)),
+                List.of(new FluidStack(ModFluids.HYDROGEN_PEROXIDE_SOURCE.get(), 1000)),
                 List.of(new FluidStack(ModFluids.SULFURIC_ACID_SOURCE.get(), 1000)),
                 List.of(new ItemStack(com.trd.item.ModItems.SULFUR.get(), 3)),
                 List.of(),
-                100,
-                50
+                60,
+                125
         ));
 
         // Obsidian: 1000mB Water + 1000mB Lava = 1 Obsidian. 3s (60 ticks), 150°C
@@ -40,8 +40,8 @@ public class ChemicalPlantRecipeRegistry {
                 List.of(),
                 List.of(),
                 List.of(new ItemStack(net.minecraft.world.item.Items.OBSIDIAN, 1)),
-                60,
-                150
+                100,
+                200
         ));
     }
 
