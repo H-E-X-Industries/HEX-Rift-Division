@@ -2,8 +2,10 @@ package com.trd.block.basic.industrial.chemistry;
 
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.block.entity.industrial.chemistry.ChemicalPlantHeaterBlockEntity;
+import com.trd.api.energy.EnergyNetworkManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -54,7 +56,7 @@ public class ChemicalPlantHeaterBlock extends BaseEntityBlock {
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return this.defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, context.getHorizontalDirection().getOpposite());
+        return this.defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, context.getHorizontalDirection());
     }
 
     @Nullable
@@ -68,6 +70,22 @@ public class ChemicalPlantHeaterBlock extends BaseEntityBlock {
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         return createTickerHelper(type, ModBlockEntities.CHEMICAL_PLANT_HEATER_BE.get(),
                 ChemicalPlantHeaterBlockEntity::tick);
+    }
+
+    @Override
+    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        super.onPlace(state, level, pos, oldState, isMoving);
+        if (!level.isClientSide) {
+            EnergyNetworkManager.get((ServerLevel) level).addNode(pos);
+        }
+    }
+
+    @Override
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!level.isClientSide && state.getBlock() != newState.getBlock()) {
+            EnergyNetworkManager.get((ServerLevel) level).removeNode(pos);
+        }
+        super.onRemove(state, level, pos, newState, isMoving);
     }
 
     @Override

@@ -19,6 +19,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
@@ -261,6 +262,10 @@ public class ChemicalPlantReactionChamberBlockEntity extends BlockEntity impleme
                 return itemHandler.isItemValid(slot, stack);
             }
         });
+        // Принудительно уведомляем соседей (порты) о готовности capability после загрузки мира
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+        }
     }
 
     @Override
@@ -318,6 +323,17 @@ public class ChemicalPlantReactionChamberBlockEntity extends BlockEntity impleme
             for (int i = INPUT_SLOTS; i < INPUT_SLOTS + OUTPUT_SLOTS; i++) outItems.add(be.itemHandler.getStackInSlot(i));
 
             if (!recipe.canFitOutputs(outFluids, outItems, TANK_COUNT, OUTPUT_SLOTS)) {
+                return;
+            }
+
+            // Проверяем, что у выходных портов есть место для жидких продуктов реакции
+            if (!canOutputPortsAcceptFluids(level, pos, recipe)) {
+                // Нет места в выходных буферах — останавливаем рецепт
+                if (be.progress > 0) {
+                    be.progress = 0;
+                    be.setChanged();
+                    if (level != null) level.sendBlockUpdated(pos, state, state, 3);
+                }
                 return;
             }
 
@@ -401,16 +417,47 @@ public class ChemicalPlantReactionChamberBlockEntity extends BlockEntity impleme
         }
     }
 
+    /**
+     * Проверяет, есть ли у соседних OUTPUT-портов место для всех жидких продуктов рецепта.
+     * Возвращает false (останавливает рецепт) если хотя бы один жидкий продукт некуда деть.
+     */
+    private static boolean canOutputPortsAcceptFluids(Level level, BlockPos pos, ChemicalPlantRecipe recipe) {
+        for (FluidStack outputFluid : recipe.getFluidOutputs()) {
+            if (outputFluid.isEmpty()) continue;
+            boolean canFit = false;
+            for (Direction dir : Direction.values()) {
+                BlockEntity neighbor = level.getBlockEntity(pos.relative(dir));
+                if (!(neighbor instanceof ChemicalPlantPortBlockEntity port)) continue;
+                if (port.getMode() != 1) continue; // только выходные порты
+                BlockState portState = level.getBlockState(pos.relative(dir));
+                if (!portState.hasProperty(HorizontalDirectionalBlock.FACING)) continue;
+                Direction portFacing = portState.getValue(HorizontalDirectionalBlock.FACING);
+                if (portFacing.getOpposite() != dir) continue; // порт не смотрит на камеру
+                if (port.canAcceptFluid(outputFluid)) {
+                    canFit = true;
+                    break;
+                }
+            }
+            if (!canFit) return false; // нет места для этого продукта — блокируем рецепт
+        }
+        return true;
+    }
+
     public void setRecipe(@Nullable ResourceLocation recipeId) {
         this.currentRecipeId = recipeId != null ? recipeId.toString() : "";
         this.progress = 0;
-        
+
+        // Очистить баки камеры
         for (int i = 0; i < TANK_COUNT; i++) {
             tanks[i].setFluid(FluidStack.EMPTY);
         }
         for (int i = 0; i < INPUT_SLOTS + OUTPUT_SLOTS; i++) {
             itemHandler.setStackInSlot(i, ItemStack.EMPTY);
         }
+
+        // Буферы портов НЕ очищаются при смене рецепта — игрок управляет ими вручную.
+        // OUTPUT-порт: игрок сам выкачивает остатки если нужно.
+        // INPUT-порт: переключить в режим OUTPUT и выкачать лишнее.
 
         this.setChanged();
         if (level != null && !level.isClientSide) {
@@ -472,7 +519,8 @@ public class ChemicalPlantReactionChamberBlockEntity extends BlockEntity impleme
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
-        if (cap == ForgeCapabilities.FLUID_HANDLER) return fluidHandler.cast();
+        // Трубы не могут подключаться напрямую к камере — только через порты!
+        // FLUID_HANDLER намеренно не выставляем наружу.
         if (cap == ForgeCapabilities.ITEM_HANDLER) return itemCapability.cast();
         return super.getCapability(cap, side);
     }
