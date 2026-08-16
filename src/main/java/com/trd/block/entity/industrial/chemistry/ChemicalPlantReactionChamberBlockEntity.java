@@ -322,18 +322,9 @@ public class ChemicalPlantReactionChamberBlockEntity extends BlockEntity impleme
             List<ItemStack> outItems = new ArrayList<>();
             for (int i = INPUT_SLOTS; i < INPUT_SLOTS + OUTPUT_SLOTS; i++) outItems.add(be.itemHandler.getStackInSlot(i));
 
+            // Рецепт останавливается только когда баки камеры полны и продуктам некуда выходить.
+            // Пока в камере есть место — реакция идёт; порты откачивают продукты по мере наполнения.
             if (!recipe.canFitOutputs(outFluids, outItems, TANK_COUNT, OUTPUT_SLOTS)) {
-                return;
-            }
-
-            // Проверяем, что у выходных портов есть место для жидких продуктов реакции
-            if (!canOutputPortsAcceptFluids(level, pos, recipe)) {
-                // Нет места в выходных буферах — останавливаем рецепт
-                if (be.progress > 0) {
-                    be.progress = 0;
-                    be.setChanged();
-                    if (level != null) level.sendBlockUpdated(pos, state, state, 3);
-                }
                 return;
             }
 
