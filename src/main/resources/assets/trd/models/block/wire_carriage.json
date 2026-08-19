@@ -1,0 +1,16 @@
+﻿{
+  "loader": "forge:composite",
+  "textures": {
+    "particle": "trd:block/wire_carriage"
+  },
+  "children": {
+    "main": {
+      "loader": "forge:obj",
+      "model": "trd:models/block/wire_carriage.obj",
+      "flip_v": true,
+      "textures": {
+        "default": "trd:block/wire_carriage"
+      }
+    }
+  }
+}

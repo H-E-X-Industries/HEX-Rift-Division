@@ -1,0 +1,16 @@
+﻿{
+  "loader": "forge:composite",
+  "textures": {
+    "particle": "trd:block/freza_attachment"
+  },
+  "children": {
+    "main": {
+      "loader": "forge:obj",
+      "model": "trd:models/block/freza_attachment.obj",
+      "flip_v": true,
+      "textures": {
+        "default": "trd:block/freza_attachment"
+      }
+    }
+  }
+}

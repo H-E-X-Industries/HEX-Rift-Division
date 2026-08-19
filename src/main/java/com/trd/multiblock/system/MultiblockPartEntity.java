@@ -173,6 +173,19 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
     @Override
     public Direction[] getPropagationDirections() {
         if (!isKineticPort() || controllerPos == null || level == null) return new Direction[0];
+
+        // Проверяем контроллер станка (боковые порты: запад-восток)
+        net.minecraft.world.level.block.entity.BlockEntity ctrlBe = level.getBlockEntity(controllerPos);
+        if (ctrlBe instanceof com.trd.multiblock.industrial.stanok.StanokBlockEntity) {
+            // Порты станка расположены на WEST и EAST от контроллера
+            // Каждый порт пропускает кинетику наружу по своей стороне
+            BlockPos westPort = controllerPos.west();
+            BlockPos eastPort = controllerPos.east();
+            if (worldPosition.equals(westPort)) return new Direction[]{Direction.WEST, Direction.EAST};
+            if (worldPosition.equals(eastPort)) return new Direction[]{Direction.EAST, Direction.WEST};
+            return new Direction[0];
+        }
+
         BlockState ctrlState = level.getBlockState(controllerPos);
 
         // ❌ Было: if (!(ctrlState.getBlock() instanceof HorizontalDirectionalBlock)) return new Direction[0];
@@ -203,9 +216,10 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
     @Override
     public boolean canConnectMechanically(net.minecraft.core.BlockPos myPos, net.minecraft.core.BlockPos neighborPos, Rotational neighbor) {
         if (!isKineticPort()) return false;
-        // Соединение с контроллером дробителя
+        // Соединение с контроллером мультиблока (дробитель или станок)
         if (controllerPos != null && neighborPos.equals(controllerPos)) {
-            return neighbor instanceof com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity;
+            return neighbor instanceof com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity
+                    || neighbor instanceof com.trd.multiblock.industrial.stanok.StanokBlockEntity;
         }
         // Соединение с внешними кинетическими блоками (вал, подшипник, мотор и т.д.)
         for (Direction dir : getPropagationDirections()) {

@@ -73,6 +73,12 @@ public class ModBlockEntities {
             BLOCK_ENTITIES.register("drobitel",
                     () -> BlockEntityType.Builder.of(DrobitelBlockEntity::new, ModBlocks.DROBITEL.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<com.trd.multiblock.industrial.stanok.StanokBlockEntity>> STANOK_BE =
+            BLOCK_ENTITIES.register("stanok",
+                    () -> BlockEntityType.Builder.of(
+                            com.trd.multiblock.industrial.stanok.StanokBlockEntity::new,
+                            ModBlocks.STANOK.get()).build(null));
+
     public static final RegistryObject<BlockEntityType<FuelTankSmallBlockEntity>> FUEL_TANK_SMALL_BE =
             BLOCK_ENTITIES.register("fuel_tank_small",
                     () -> BlockEntityType.Builder.of(FuelTankSmallBlockEntity::new,

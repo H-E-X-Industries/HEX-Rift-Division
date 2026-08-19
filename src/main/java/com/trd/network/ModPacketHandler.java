@@ -197,6 +197,18 @@ public class ModPacketHandler {
         INSTANCE.registerMessage(id++, UpdatePortModePacket.class,
                 UpdatePortModePacket::encode, UpdatePortModePacket::decode, UpdatePortModePacket::handle);
 
+        // ─── Станок ───
+        INSTANCE.registerMessage(id++,
+                com.trd.network.packet.rotation.SelectStanokRecipePacket.class,
+                com.trd.network.packet.rotation.SelectStanokRecipePacket::encode,
+                com.trd.network.packet.rotation.SelectStanokRecipePacket::decode,
+                com.trd.network.packet.rotation.SelectStanokRecipePacket::handle);
+        INSTANCE.registerMessage(id++,
+                com.trd.network.packet.rotation.ClearStanokRecipePacket.class,
+                com.trd.network.packet.rotation.ClearStanokRecipePacket::encode,
+                com.trd.network.packet.rotation.ClearStanokRecipePacket::decode,
+                com.trd.network.packet.rotation.ClearStanokRecipePacket::handle);
+
         INSTANCE.registerMessage(id++,
                 com.trd.network.packet.conveyor.SyncConveyorNetworkPacket.class,
                 com.trd.network.packet.conveyor.SyncConveyorNetworkPacket::toBytes,

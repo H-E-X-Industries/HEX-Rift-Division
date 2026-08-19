@@ -43,6 +43,20 @@ public class ModModels {
     public static final PartialModel HAND_CRANK = PartialModel.of(new ResourceLocation("trd", "block/handle"));
     public static final PartialModel CRUSHER_BLADES = PartialModel.of(new ResourceLocation("trd", "block/crusher_blades"));
 
+    // ─── Станок (stanok) ───
+    public static final PartialModel STANOK_BASE             = PartialModel.of(new ResourceLocation("trd", "block/stanok"));
+    // Валы станка берутся из SHAFT_MODELS.get("shaft_light_titanium") — отдельные PartialModel не нужны
+    // Насадка: Пресс
+    public static final PartialModel STANOK_PRESS_CARRIAGE   = PartialModel.of(new ResourceLocation("trd", "block/press_carriage"));
+    public static final PartialModel STANOK_PRESS_HEAD       = PartialModel.of(new ResourceLocation("trd", "block/press_head"));
+    // Насадка: Барабаны (провода)
+    public static final PartialModel STANOK_WIRE_CARRIAGE    = PartialModel.of(new ResourceLocation("trd", "block/wire_carriage"));
+    public static final PartialModel STANOK_WIRE_DRUM        = PartialModel.of(new ResourceLocation("trd", "block/wire_drum"));
+    // Насадка: Фреза
+    public static final PartialModel STANOK_FREZA_CARRIAGE   = PartialModel.of(new ResourceLocation("trd", "block/freza_carriage"));
+    public static final PartialModel STANOK_FREZA_ATTACHMENT = PartialModel.of(new ResourceLocation("trd", "block/freza_attachment"));
+    public static final PartialModel STANOK_FREZA            = PartialModel.of(new ResourceLocation("trd", "block/freza"));
+
     // Статический блок вызывается самым первым, как только Java видит этот класс!
     // Flywheel 100% получит эти модели вовремя.
     static {
