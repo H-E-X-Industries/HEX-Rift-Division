@@ -296,6 +296,27 @@ public class ModBlocks {
                     .requiresCorrectToolForDrops()
                     .noOcclusion()));
 
+    public static final RegistryObject<Block> CENTRIFUGE_MOTOR = registerBlock("centrifuge_motor",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(2.0F, 6.0F)
+                    .sound(SoundType.STONE)
+                    .requiresCorrectToolForDrops()
+                    .noOcclusion()));
+
+    public static final RegistryObject<Block> CENTRIFUGE_CONUS = registerBlock("centrifuge_conus",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(2.0F, 6.0F)
+                    .sound(SoundType.STONE)
+                    .requiresCorrectToolForDrops()
+                    .noOcclusion()));
+
+    public static final RegistryObject<Block> VISHELASHIVATEL = registerBlock("vishelashivatel",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(2.0F, 6.0F)
+                    .sound(SoundType.STONE)
+                    .requiresCorrectToolForDrops()
+                    .noOcclusion()));
+
     public static final RegistryObject<Block> CHEMICAL_PLANT_HEATER = registerBlock("chemical_plant_heater",
             () -> new com.trd.block.basic.industrial.chemistry.ChemicalPlantHeaterBlock(BlockBehaviour.Properties.of()
                     .strength(2.0F, 6.0F)
