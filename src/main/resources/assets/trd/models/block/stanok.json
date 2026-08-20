@@ -14,5 +14,7 @@
       "render_type": "minecraft:cutout"
     }
   },
-  "render_type": "minecraft:cutout"
+  "render_type": "minecraft:cutout",
+  "ambientocclusion": true,
+  "gui_light": "front"
 }

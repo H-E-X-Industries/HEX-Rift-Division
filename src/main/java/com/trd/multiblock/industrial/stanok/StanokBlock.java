@@ -76,8 +76,8 @@ public class StanokBlock extends BaseEntityBlock implements IMultiblockControlle
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        // Контроллер смотрит на игрока (facing = противоположное направление взгляда)
-        return this.defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
+        // Контроллер смотрит на игрока
+        return this.defaultBlockState().setValue(FACING, context.getHorizontalDirection());
     }
 
     @Override

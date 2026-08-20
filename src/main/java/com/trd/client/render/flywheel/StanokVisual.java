@@ -53,7 +53,6 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
     @Nullable private TransformedInstance freza;
 
     // ─── Общее состояние ───
-    private final float localX, localY, localZ;
     private float shaftAngle    = 0f;
     private float lastFrameTime = -1f;
     private float smoothedSpeed = 0f;
@@ -67,18 +66,18 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
     private float frezaStage2Time = 0f; // 0.0–4.0 секунды в этапе 2
 
     // Константы координат барабанов (Blender→MC: swap Y↔Z, /16 для блоков)
-    // Blender left drum:  x=1.0618, y=1.2997, z=1.3301  → MC: x=1.0618/16, y=1.3301/16, z=1.2997/16
-    // Blender right drum: x=1.0618, y=1.6627, z=1.3301  → MC: x=1.0618/16, y=1.3301/16, z=1.6627/16
-    private static final float DRUM_X       = 1.0618f / 16f;
-    private static final float DRUM_Y       = 1.3301f / 16f;  // MC Y = Blender Z
-    private static final float DRUM_LEFT_Z  = 1.2997f / 16f;  // MC Z = Blender Y (left)
-    private static final float DRUM_RIGHT_Z = 1.6627f / 16f;  // MC Z = Blender Y (right)
+    // Blender left drum:  x=1.0618, y=1.2997, z=1.3301
+    // Blender right drum: x=1.0618, y=1.6627, z=1.3301
+    private static final float DRUM_X       = 1.0618f;
+    private static final float DRUM_Y       = 1.3301f;  // MC Y = Blender Z
+    private static final float DRUM_LEFT_Z  = 1.2997f;  // MC Z = Blender Y (left)
+    private static final float DRUM_RIGHT_Z = 1.6627f;  // MC Z = Blender Y (right)
 
     // Константы координат фрезы (Blender→MC: swap Y↔Z)
-    // Blender: x=0.95635, y=1.2372, z=1.2281 → MC: x=0.95635/16, y=1.2281/16, z=1.2372/16
-    private static final float FREZA_X = 0.95635f / 16f;
-    private static final float FREZA_Y = 1.2281f  / 16f;  // MC Y = Blender Z
-    private static final float FREZA_Z = 1.2372f  / 16f;  // MC Z = Blender Y
+    // Blender: x=0.95635, y=1.2372, z=1.2281
+    private static final float FREZA_X = 0.95635f;
+    private static final float FREZA_Y = 1.2281f;  // MC Y = Blender Z
+    private static final float FREZA_Z = 1.2372f;  // MC Z = Blender Y
 
     // Максимальный ход каретки фрезы по X
     private static final float FREZA_TRAVEL_X = 0.5f;
@@ -87,14 +86,32 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
     // Максимальный подъём крепления по Y
     private static final float FREZA_TRAVEL_Y_UP = 0.0449f;
 
+    private final net.minecraft.core.Vec3i renderOrigin;
+
+    private TransformedInstance startTransform(TransformedInstance inst) {
+        net.minecraft.core.Direction facing = blockEntity.getBlockState().getValue(com.trd.multiblock.industrial.stanok.StanokBlock.FACING);
+        float facingRot = 0f;
+        switch (facing) {
+            case NORTH: facingRot = 0f; break;
+            case EAST: facingRot = -90f; break;
+            case SOUTH: facingRot = 180f; break;
+            case WEST: facingRot = 90f; break;
+        }
+
+        float px = pos.getX() - renderOrigin.getX();
+        float py = pos.getY() - renderOrigin.getY();
+        float pz = pos.getZ() - renderOrigin.getZ();
+
+        return inst.setIdentityTransform()
+                .translate(px + 0.5f, py, pz + 0.5f)
+                .rotateY((float) Math.toRadians(facingRot))
+                .translate(-0.5f, 0, -0.5f)
+                .translate(2.0f, 0f, 1.0f);
+    }
+
     public StanokVisual(VisualizationContext ctx, StanokBlockEntity blockEntity, float partialTick) {
         super(ctx, blockEntity, partialTick);
-
-        Vec3i origin = ctx.renderOrigin();
-        // 1. Сдвиг всего рендера на 2 блока на восток (+2) и 1 блок на юг (+1)
-        this.localX = pos.getX() - origin.getX() + 2.0f;
-        this.localY = pos.getY() - origin.getY();
-        this.localZ = pos.getZ() - origin.getZ() + 1.0f;
+        this.renderOrigin = ctx.renderOrigin();
 
         // Статичные части
         this.base       = createInstance(ModModels.STANOK_BASE);
@@ -135,8 +152,8 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
 
     /** Устанавливает статичную позицию части (без поворота, только смещение от origin) */
     private void setupStaticPart(TransformedInstance inst, float dx, float dy, float dz) {
-        inst.setIdentityTransform()
-                .translate(localX + dx, localY + dy, localZ + dz)
+        startTransform(inst)
+                .translate(dx, dy, dz)
                 .translate(0.5f, 0.5f, 0.5f)
                 .translate(-0.5f, -0.5f, -0.5f);
         inst.setChanged();
@@ -144,8 +161,8 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
 
     /** Устанавливает статичную позицию с поворотом вокруг Y */
     private void setupStaticPartRotated(TransformedInstance inst, float dx, float dy, float dz, float rotYDegrees) {
-        inst.setIdentityTransform()
-                .translate(localX + dx, localY + dy, localZ + dz)
+        startTransform(inst)
+                .translate(dx, dy, dz)
                 .translate(0.5f, 0.5f, 0.5f)
                 .rotateY((float) Math.toRadians(rotYDegrees))
                 .translate(-0.5f, -0.5f, -0.5f);
@@ -190,8 +207,7 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
         // Каретка (статична, просто показываем/скрываем)
         if (pressCarriage != null) {
             if (active) {
-                pressCarriage.setIdentityTransform()
-                        .translate(localX, localY, localZ)
+                startTransform(pressCarriage)
                         .translate(0.5f, 0.5f, 0.5f)
                         .translate(-0.5f, -0.5f, -0.5f);
                 pressCarriage.setChanged();
@@ -221,8 +237,8 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
                 headOffsetY = -((1.0f - phase) / 0.5f) * 0.22f; // вверх
             }
 
-            pressHead.setIdentityTransform()
-                    .translate(localX, localY + headOffsetY, localZ)
+            startTransform(pressHead)
+                    .translate(0, headOffsetY, 0)
                     .translate(0.5f, 0.5f, 0.5f)
                     .translate(-0.5f, -0.5f, -0.5f);
             pressHead.setChanged();
@@ -238,8 +254,7 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
 
         if (wireCarriage != null) {
             if (active) {
-                wireCarriage.setIdentityTransform()
-                        .translate(localX, localY, localZ)
+                startTransform(wireCarriage)
                         .translate(0.5f, 0.5f, 0.5f)
                         .translate(-0.5f, -0.5f, -0.5f);
                 wireCarriage.setChanged();
@@ -257,15 +272,11 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
         if (drum == null) return;
         if (!active) { hideInstance(drum); return; }
 
-        // Барабан вращается вокруг оси X (вдоль ширины станка)
-        drum.setIdentityTransform()
-                .translate(localX, localY, localZ)
-                // Переходим в центр барабана
+        // Барабан экспортирован в (0,0,0) (в центре мира Blender), 
+        // поэтому мы просто смещаем его на dx, dy, dz и вращаем на месте.
+        startTransform(drum)
                 .translate(dx, dy, dz)
-                // Вращаем вокруг оси X
-                .rotateX(shaftAngle)
-                // Возвращаем из центра
-                .translate(-dx, -dy, -dz);
+                .rotateX(shaftAngle);
         drum.setChanged();
     }
 
@@ -352,15 +363,16 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
         }
 
         // Применяем иерархию: каретка → крепление+фреза
+        float frezaSpin = shaftAngle * 5.0f; // Вращение зависит от скорости валов (shaftAngle в радианах)
         applyFrezaCarriage(shiftX);
         applyFrezaAttachment(shiftZ, shiftY, shiftX);
-        applyFreza(shiftX, shiftZ, shiftY);
+        applyFreza(shiftX, shiftZ, shiftY, frezaSpin);
     }
 
     private void applyFrezaCarriage(float shiftX) {
         if (frezaCarriage == null) return;
-        frezaCarriage.setIdentityTransform()
-                .translate(localX + shiftX, localY, localZ)
+        startTransform(frezaCarriage)
+                .translate(shiftX, 0, 0)
                 .translate(0.5f, 0.5f, 0.5f)
                 .translate(-0.5f, -0.5f, -0.5f);
         frezaCarriage.setChanged();
@@ -368,24 +380,21 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
 
     private void applyFrezaAttachment(float shiftZ, float shiftY, float shiftX) {
         if (frezaAttachment == null) return;
-        frezaAttachment.setIdentityTransform()
-                .translate(localX + shiftX, localY + shiftY, localZ + shiftZ)
+        startTransform(frezaAttachment)
+                .translate(shiftX, shiftY, shiftZ)
                 .translate(0.5f, 0.5f, 0.5f)
                 .translate(-0.5f, -0.5f, -0.5f);
         frezaAttachment.setChanged();
     }
 
-    private void applyFreza(float shiftX, float shiftZ, float shiftY) {
+    private void applyFreza(float shiftX, float shiftZ, float shiftY, float frezaSpin) {
         if (freza == null) return;
-        // Фреза следует крепленію + вращается по оси Y (MC)
-        freza.setIdentityTransform()
-                .translate(localX + shiftX, localY + shiftY, localZ + shiftZ)
-                // Переходим в центр вращения фрезы
+        startTransform(freza)
+                .translate(shiftX, shiftY, shiftZ)
                 .translate(FREZA_X, FREZA_Y, FREZA_Z)
-                // Вращаем по Y
-                .rotateY(shaftAngle)
-                // Возвращаем из центра
-                .translate(-FREZA_X, -FREZA_Y, -FREZA_Z);
+                .translate(0.5f, 0.5f, 0.5f)
+                .translate(-0.5f, -0.5f, -0.5f)
+                .rotateY(frezaSpin); // frezaSpin теперь в радианах (основан на shaftAngle)
         freza.setChanged();
     }
 
