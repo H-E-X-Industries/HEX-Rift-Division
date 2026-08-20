@@ -186,6 +186,7 @@ public class MainRegistry {
             event.accept(ModBlocks.SEQUOIA_SLAB.get());
             event.accept(ModBlocks.SEQUOIA_STAIRS.get());
 
+            event.accept(ModBlocks.CONCRETE_NET.get());
             event.accept(ModBlocks.MORY_BLOCK);
             event.accept(ModBlocks.ANTON_CHIGUR);
             event.accept(ModBlocks.MINERAL_BLOCK2.get());
@@ -194,7 +195,6 @@ public class MainRegistry {
             event.accept(ModBlocks.TILE_LIGHT.get());
             event.accept(ModBlocks.SULFUR_TILE.get());
             event.accept(ModBlocks.SULFUR_BRICKS.get());
-            event.accept(ModBlocks.CONCRETE_NET.get());
             event.accept(ModBlocks.DECO_STEEL.get());
             event.accept(ModBlocks.DECO_STEEL_DARK.get());
             event.accept(ModBlocks.DECO_STEEL_SMOG.get());
@@ -293,6 +293,8 @@ public class MainRegistry {
 
             event.accept(ModBlocks.ELECTRO_FURNACE);
 
+            event.accept(ModBlocks.CENTRIFUGE_MOTOR);
+            event.accept(ModBlocks.CENTRIFUGE_CONUS);
 
 
 
@@ -316,10 +318,16 @@ public class MainRegistry {
 
             event.accept(ModBlocks.PAINTABLE_PIPE);
 
+            event.accept(ModBlocks.CHEMICAL_PLANT_REACTION_CHAMBER.get());
+            event.accept(ModBlocks.CHEMICAL_PLANT_PORT.get());
+            event.accept(ModBlocks.CHEMICAL_PLANT_HEATER.get());
+
             event.accept(ModItems.BOILER_ITEM);
 
             event.accept(ModBlocks.LOW_PRESSURE_STEAM_CONDENSER.get());
             event.accept(ModBlocks.WATER_PUMP_ITEM.get());
+
+            event.accept(ModBlocks.VISHELASHIVATEL.get());
 
 
             for (var entry : com.trd.api.fluids.ModFluids.getAllFluidDrops().values()) {
@@ -350,10 +358,10 @@ public class MainRegistry {
             event.accept(ModBlocks.CONVEYOR_IZVLEKATEL.get());
             event.accept(ModBlocks.CONVEYOR.get());
 
-            event.accept(ModBlocks.CHEMICAL_PLANT_REACTION_CHAMBER.get());
-            event.accept(ModBlocks.CHEMICAL_PLANT_PORT.get());
-            event.accept(ModBlocks.CHEMICAL_PLANT_HEATER.get());
         }
+
+
+
 
         if (event.getTab() == ModCreativeTabs.trd_WEAPONS_TAB.get()) {
             event.accept(ModItems.CAST_PICKAXE_IRON);

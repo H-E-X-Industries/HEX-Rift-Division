@@ -1,5 +1,6 @@
 package com.trd.main;
 
+import com.trd.api.tooltip.ExplosionTooltipRegistry;
 import com.trd.block.basic.ModBlocks;
 import com.trd.item.ModItems;
 import net.minecraft.world.item.BlockItem;
@@ -36,58 +37,58 @@ public class ResourceRegistry {
 
         registerFull("aluminum", ResourceType.METAL,
                 BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)
-                        .strength(3.0f, 5.0f)
+                        .strength(6.0f, 20.0f)
                         .requiresCorrectToolForDrops());
 
         registerFull("bronze", ResourceType.METAL,
                 BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)
-                        .strength(2.0f, 4.0f)
+                        .strength(16.0f, 28.0f)
                         .requiresCorrectToolForDrops());
 
         registerFull("zinc", ResourceType.METAL,
                 BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)
-                        .strength(2.0f, 4.0f)
+                        .strength(10.0f, 23.0f)
                         .requiresCorrectToolForDrops());
 
         registerFull("tin", ResourceType.METAL,
                 BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)
-                        .strength(1.0f, 2.0f)
+                        .strength(6.0f, 10.0f)
                         .requiresCorrectToolForDrops());
 
         registerFull("titanium", ResourceType.METAL,
                 BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)
-                        .strength(12.0f, 15.0f)
+                        .strength(12.0f, 100.0f)
                         .requiresCorrectToolForDrops());
 
         registerFull("beryllium", ResourceType.METAL,
                 BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)
-                        .strength(4.0f, 7.0f)
+                        .strength(19.0f, 30.0f)
                         .requiresCorrectToolForDrops());
 
         registerFull("lead", ResourceType.METAL,
                 BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)
-                        .strength(4.0f, 5.0f)
+                        .strength(45.0f, 150.0f)
                         .requiresCorrectToolForDrops());
 
         registerFull("industrial_copper", ResourceType.METAL,
                 BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)
-                        .strength(4.0f, 6.0f)
+                        .strength(4.0f, 15.0f)
                         .requiresCorrectToolForDrops());
 
         registerFull("steel", ResourceType.METAL,
                 BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)
-                        .strength(8.0f, 10.0f)
+                        .strength(15.0f, 80.0f)
                         .requiresCorrectToolForDrops());
 
 
         registerFull("tungsten", ResourceType.METAL,
                 BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)
-                        .strength(15.0f, 20.0f)
+                        .strength(50.0f, 230.0f)
                         .requiresCorrectToolForDrops());
 
         registerFull("neodymium", ResourceType.METAL,
                 BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)
-                        .strength(4.0f, 6.0f)
+                        .strength(8.0f, 20.0f)
                         .requiresCorrectToolForDrops());
 
 //        // ============ ПОЛИМЕРЫ ============
@@ -105,7 +106,11 @@ public class ResourceRegistry {
 //                BlockBehaviour.Properties.copy(Blocks.AMETHYST_BLOCK)
 //                        .strength(4.0f, 6.0f)
 //                        .requiresCorrectToolForDrops());
-
+        for (ResourceEntry entry : RESOURCES) {
+            if (entry.block != null) {
+                ExplosionTooltipRegistry.register(entry.block);
+            }
+        }
         initialized = true;
         MainRegistry.LOGGER.info("ResourceRegistry initialized with {} resources", RESOURCES.size());
     }
