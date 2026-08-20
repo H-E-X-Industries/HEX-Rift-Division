@@ -428,6 +428,7 @@ public class ModLangProvider extends LanguageProvider {
         add("tooltip.trd.condenser.cooling", "❄ Cooling: ");
 
         // ═══ Message: Valve ═══
+        add("tooltip.trd.explosion_resistance", "Blast Resistance: %s");
         add("message.trd.valve.filter_reset", "§eValve filter reset");
         add("message.trd.valve.filter_set", "§aValve filter: §f%s");
 
@@ -926,6 +927,7 @@ public class ModLangProvider extends LanguageProvider {
         add("gui.trd.electric_furnace.progress_tooltip", "§6Осталось: §f%s сек");
 
         // ═══ GUI: Fluid Barrel / Fuel Tank (shared) ═══
+        add("tooltip.trd.explosion_resistance", "Взрывоустойчивость: %s");
         add("gui.trd.fluid_barrel.empty", "Пусто");
         add("gui.trd.fluid_barrel.amount", "%s / %s mB");
         add("gui.trd.fluid_barrel.mode.title", "Режим:");
