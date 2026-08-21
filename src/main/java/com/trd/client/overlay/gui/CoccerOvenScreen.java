@@ -1,5 +1,6 @@
 package com.trd.client.overlay.gui;
 
+import com.trd.api.fluids.ModFluids;
 import com.trd.main.MainRegistry;
 import com.trd.menu.industrial.CoccerOvenMenu;
 import com.trd.multiblock.industrial.coccer.CoccerOvenBlockEntity;
@@ -7,6 +8,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.resources.ResourceLocation;
@@ -32,7 +34,6 @@ public class CoccerOvenScreen extends AbstractContainerScreen<CoccerOvenMenu> {
         int y = (this.height - this.imageHeight) / 2;
         gui.blit(TEXTURE, x, y, 0, 0, this.imageWidth, this.imageHeight);
 
-        // Температурная полоска (снизу вверх)
         float temp = menu.getTemperature();
         int filledHeight = (int) ((temp / CoccerOvenBlockEntity.MAX_TEMP) * 51);
         if (filledHeight > 0) {
@@ -40,7 +41,6 @@ public class CoccerOvenScreen extends AbstractContainerScreen<CoccerOvenMenu> {
                     178, 1 + (51 - filledHeight), 15, filledHeight);
         }
 
-        // Прогресс рецепта (слева направо)
         if (menu.getMaxProgress() > 0) {
             int fillWidth = (int) ((menu.getProgress() / (float) menu.getMaxProgress()) * 16);
             if (fillWidth > 0) {
@@ -48,7 +48,6 @@ public class CoccerOvenScreen extends AbstractContainerScreen<CoccerOvenMenu> {
             }
         }
 
-        // Жидкостный бак
         renderFluidTank(gui, x + 106, y + 9, 15, 51);
     }
 
@@ -63,14 +62,23 @@ public class CoccerOvenScreen extends AbstractContainerScreen<CoccerOvenMenu> {
         int fillH = (int) ((amount * h) / (float) capacity);
         if (fillH <= 0) return;
 
-        int color = IClientFluidTypeExtensions.of(fluid.getFluid()).getTintColor();
-        float r = ((color >> 16) & 0xFF) / 255f;
-        float g = ((color >> 8) & 0xFF) / 255f;
-        float b = (color & 0xFF) / 255f;
+        ResourceLocation guiTexture = ModFluids.getGuiTexture(fluid.getFluid());
+        gui.setColor(1.0F, 1.0F, 1.0F, 1.0F);
 
-        gui.setColor(r, g, b, 1.0f);
-        gui.blit(TEXTURE, x, y + h - fillH, 194, 19, w, fillH);
-        gui.setColor(1.0f, 1.0f, 1.0f, 1.0f);
+        int top = y + h - fillH;
+        for (int j = 0; j < fillH; j += 16) {
+            int segH = Math.min(fillH - j, 16);
+            int drawY = top + j;
+            for (int i = 0; i < w; i += 16) {
+                int segW = Math.min(w - i, 16);
+                int drawX = x + i;
+                gui.blit(guiTexture, drawX, drawY, 0, 0, segW, segH, 16, 16);
+            }
+        }
+
+        int surfaceY = y + h - fillH;
+        gui.fill(x, surfaceY, x + w, surfaceY + 1, 0x40FFFFFF);
+        gui.setColor(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
     @Override
@@ -80,9 +88,6 @@ public class CoccerOvenScreen extends AbstractContainerScreen<CoccerOvenMenu> {
     public void render(GuiGraphics gui, int mouseX, int mouseY, float delta) {
         this.renderBackground(gui);
         super.render(gui, mouseX, mouseY, delta);
-
-        int x = (this.width - this.imageWidth) / 2;
-        int y = (this.height - this.imageHeight) / 2;
 
         if (isHovering(55, 9, 15, 51, mouseX, mouseY)) {
             renderTemperatureTooltip(gui, mouseX, mouseY);
@@ -98,7 +103,7 @@ public class CoccerOvenScreen extends AbstractContainerScreen<CoccerOvenMenu> {
     private void renderTemperatureTooltip(GuiGraphics gui, int mx, int my) {
         int temp = menu.getTemperature();
         int color = getSmoothTemperatureColor(temp / (float) CoccerOvenBlockEntity.MAX_TEMP);
-        Component text = Component.translatable("gui.trd.coccer_oven.temperature", temp, CoccerOvenBlockEntity.MAX_TEMP)
+        MutableComponent text = Component.translatable("gui.trd.coccer_oven.temperature", temp, CoccerOvenBlockEntity.MAX_TEMP)
                 .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(color)));
         gui.renderTooltip(this.font, text, mx, my);
     }
@@ -106,26 +111,43 @@ public class CoccerOvenScreen extends AbstractContainerScreen<CoccerOvenMenu> {
     private void renderProgressTooltip(GuiGraphics gui, int mx, int my) {
         List<Component> lines = new ArrayList<>();
 
-        if (menu.hasRecipe()) {
-            lines.add(Component.translatable("gui.trd.coccer_oven.required_temp", menu.getRequiredTemp()));
+        if (!menu.hasRecipe()) {
+            lines.add(Component.translatable("gui.trd.coccer_oven.progress.temperature", 0, 0)
+                    .withStyle(ChatFormatting.GRAY));
+        } else {
+            int currentTemp = menu.getTemperature();
+            int reqTemp = menu.getRequiredTemp();
+
+            MutableComponent tempLine = Component.translatable("gui.trd.coccer_oven.progress.temperature", currentTemp, reqTemp);
+            if (currentTemp < reqTemp) {
+                int blinkColor = (System.currentTimeMillis() / 500 % 2 == 0) ? 0xAAAAAA : 0xFF2222;
+                tempLine = tempLine.withStyle(Style.EMPTY.withColor(TextColor.fromRgb(blinkColor)));
+            } else {
+                int color = getSmoothTemperatureColor(currentTemp / (float) CoccerOvenBlockEntity.MAX_TEMP);
+                tempLine = tempLine.withStyle(Style.EMPTY.withColor(TextColor.fromRgb(color)));
+            }
+            lines.add(tempLine);
 
             if (menu.isProcessing()) {
                 float remaining = menu.getMaxProgress() - menu.getProgress();
                 float multiplier = Math.min(2.0f, menu.getTemperature() / (float) menu.getRequiredTemp());
                 if (multiplier > 0) {
                     float seconds = remaining / (multiplier * 20.0f);
-                    lines.add(Component.translatable("gui.trd.coccer_oven.remaining", String.format("%.1f", Math.max(0, seconds))));
+                    lines.add(Component.translatable("gui.trd.coccer_oven.progress.remaining",
+                                    String.format("%.1f", Math.max(0, seconds)))
+                            .withStyle(ChatFormatting.GRAY));
                 }
                 int bonus = (int) ((multiplier - 1.0f) * 100);
-                lines.add(Component.translatable("gui.trd.coccer_oven.bonus", bonus));
+                int bonusColor = lerpColor(0xAAAAAA, 0xFF2222, Math.min(1.0f, bonus / 100f));
+                lines.add(Component.translatable("gui.trd.coccer_oven.bonus", bonus)
+                        .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(bonusColor))));
             } else if (menu.getTemperature() < menu.getRequiredTemp()) {
                 int gray = (System.currentTimeMillis() / 500 % 2 == 0) ? 0x404040 : 0x808080;
                 lines.add(Component.translatable("gui.trd.coccer_oven.too_cold")
                         .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(gray))));
             }
-        } else {
-            lines.add(Component.translatable("gui.trd.coccer_oven.no_recipe"));
         }
+
         gui.renderComponentTooltip(this.font, lines, mx, my);
     }
 
@@ -133,12 +155,20 @@ public class CoccerOvenScreen extends AbstractContainerScreen<CoccerOvenMenu> {
         CoccerOvenBlockEntity be = menu.getBlockEntity();
         if (be == null) return;
         FluidStack fluid = be.getFluidTank().getFluid();
+
         if (fluid.isEmpty()) {
-            gui.renderTooltip(this.font, Component.translatable("gui.trd.coccer_oven.empty_tank"), mx, my);
+            gui.renderTooltip(this.font,
+                    Component.translatable("gui.trd.coccer_oven.empty_tank").withStyle(ChatFormatting.GRAY), mx, my);
         } else {
-            Component name = Component.translatable(fluid.getFluid().getFluidType().getDescriptionId());
-            gui.renderTooltip(this.font, Component.translatable("gui.trd.coccer_oven.fluid_amount",
-                    name.getString(), fluid.getAmount(), be.getFluidTank().getCapacity()), mx, my);
+            List<Component> lines = new ArrayList<>();
+            MutableComponent fluidName = fluid.getDisplayName().copy();
+            int tint = IClientFluidTypeExtensions.of(fluid.getFluid()).getTintColor() | 0xFF000000;
+            fluidName = fluidName.withStyle(Style.EMPTY.withColor(TextColor.fromRgb(tint)));
+            lines.add(fluidName);
+            lines.add(Component.translatable("gui.trd.coccer_oven.fluid_amount",
+                            fluid.getAmount(), be.getFluidTank().getCapacity())
+                    .withStyle(ChatFormatting.GRAY));
+            gui.renderComponentTooltip(this.font, lines, mx, my);
         }
     }
 

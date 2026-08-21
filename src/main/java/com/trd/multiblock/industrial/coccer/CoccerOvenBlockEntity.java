@@ -88,7 +88,22 @@ public class CoccerOvenBlockEntity extends BlockEntity implements MenuProvider, 
         @Override public int getSlotLimit(int slot) { return inventory.getSlotLimit(slot); }
         @Override public boolean isItemValid(int slot, ItemStack stack) { return inventory.isItemValid(slot, stack); }
     });
-    private final LazyOptional<IFluidHandler> fluidHandler = LazyOptional.of(() -> fluidTank);
+    private final LazyOptional<IFluidHandler> fluidHandler = LazyOptional.of(() -> new IFluidHandler() {
+        @Override public int getTanks() { return fluidTank.getTanks(); }
+        @Override public FluidStack getFluidInTank(int tank) { return fluidTank.getFluidInTank(tank); }
+        @Override public int getTankCapacity(int tank) { return fluidTank.getTankCapacity(tank); }
+        @Override public boolean isFluidValid(int tank, FluidStack stack) { return fluidTank.isFluidValid(tank, stack); }
+
+        // Запрещаем влив извне — бак только для выхода продукта рецепта
+        @Override public int fill(FluidStack resource, FluidAction action) { return 0; }
+
+        @Override public FluidStack drain(FluidStack resource, FluidAction action) {
+            return fluidTank.drain(resource, action);
+        }
+        @Override public FluidStack drain(int maxDrain, FluidAction action) {
+            return fluidTank.drain(maxDrain, action);
+        }
+    });
 
     private final ContainerData data = new ContainerData() {
         @Override public int get(int index) {

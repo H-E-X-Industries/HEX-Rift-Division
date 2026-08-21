@@ -870,11 +870,37 @@ public class ModLangProvider extends LanguageProvider {
 
         add("item.trd.hot_ingot.tooltip", "§6§lHOT! §r§7(%s%%)");
         add("item.trd.grenadier_goggles.desc.explosion_resist", "Explosion Resistance: +%s%%");
+
+        // ═══ Coccer Oven ═══
+        add(ModBlocks.COCCER_OVEN.get(), "Coking Oven");
+        add("gui.trd.coccer_oven.temperature", "%s / %s °C");
+        add("gui.trd.coccer_oven.required_temp", "Required: %s°C");
+        add("gui.trd.coccer_oven.remaining", "Remaining: %ss");
+        add("gui.trd.coccer_oven.bonus", "Speed bonus: +%s%%");
+        add("gui.trd.coccer_oven.too_cold", "Too cold!");
+        add("gui.trd.coccer_oven.no_recipe", "No recipe");
+        add("gui.trd.coccer_oven.empty_tank", "Empty");
+        add("gui.trd.coccer_oven.fluid_amount", "%s / %s mB");
+        add("gui.trd.coccer_oven.progress.temperature", "Temperature: %d/%d °C");
+        add("gui.trd.coccer_oven.progress.remaining", "Remaining: %ss");
     }
 
     private void addRussian() {
         // Death messages
         add("death.attack.crusher", "%1$s стал фаршем");
+
+        // ═══ Коксовая печь ═══
+        add(ModBlocks.COCCER_OVEN.get(), "Коксовая печь");
+        add("gui.trd.coccer_oven.temperature", "%s / %s °C");
+        add("gui.trd.coccer_oven.required_temp", "Требуется: %s°C");
+        add("gui.trd.coccer_oven.remaining", "Осталось: %ss");
+        add("gui.trd.coccer_oven.bonus", "Бонус скорости: +%s%%");
+        add("gui.trd.coccer_oven.too_cold", "Слишком холодно!");
+        add("gui.trd.coccer_oven.no_recipe", "Нет рецепта");
+        add("gui.trd.coccer_oven.empty_tank", "Пусто");
+        add("gui.trd.coccer_oven.fluid_amount", "%s / %s мБ");
+        add("gui.trd.coccer_oven.progress.temperature", "Температура: %d/%d °C");
+        add("gui.trd.coccer_oven.progress.remaining", "Осталось: %sс");
 
         // Креативные вкладки
         add("itemGroup.trd.trd_build_tab", "Строительные блоки");
