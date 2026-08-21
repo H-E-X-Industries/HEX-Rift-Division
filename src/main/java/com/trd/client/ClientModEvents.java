@@ -129,7 +129,7 @@ public class ClientModEvents {
         event.registerBlockEntityRenderer(ModBlockEntities.STEAM_ENGINE_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.STATOR_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.MILLSTONE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
-        event.registerBlockEntityRenderer(ModBlockEntities.STANOK_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.STANOK_BE.get(), com.trd.client.render.StanokRenderer::new);
 
 
 
@@ -343,7 +343,7 @@ public class ClientModEvents {
 
                         @Override
                         public boolean skipVanillaRender(com.trd.multiblock.industrial.stanok.StanokBlockEntity be) {
-                            return true; // Весь рендер через Flywheel
+                            return false; // Отключаем пропуск ванильного рендера, чтобы работал StanokRenderer для предметов
                         }
                     });
 

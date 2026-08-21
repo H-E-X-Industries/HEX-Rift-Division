@@ -110,7 +110,8 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
 
     @Override
     public long getVisualSpeed() {
-        if (speedStatus == 1 || speedStatus == 2) return 0;
+        // Валы вращаются всегда при наличии скорости в сети,
+        // независимо от наличия насадки или материала для крафта
         return this.speed;
     }
 
@@ -172,6 +173,11 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
                 case 2 -> getCarriageTypeOrdinal();
                 case 3 -> speedStatus;
                 case 4 -> currentRecipeId != null ? currentRecipeId.hashCode() : 0;
+                // 5 = hasInputs: 1 если есть нужный материал (для рецепта), 0 если нет
+                case 5 -> {
+                    StanokRecipe r = getCurrentRecipe();
+                    yield (r != null && hasRequiredInputs(r)) ? 1 : 0;
+                }
                 default -> 0;
             };
         }
@@ -186,8 +192,9 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
         }
 
         @Override
-        public int getCount() { return 5; }
+        public int getCount() { return 6; }
     };
+
 
     // ────── Capability ──────
     private final LazyOptional<IItemHandler> itemHandlerOpt = LazyOptional.of(() -> inventory);
@@ -248,12 +255,12 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
 
         long absSpeed = Math.abs(be.getSpeed());
 
-        // Обновить speedStatus
-        int newStatus = 0;
+        // Обновить speedStatus: 0 = OK (крафт возможен), 1 = слишком медленно/не готов, 2 = слишком быстро
         StanokRecipe recipe = be.getCurrentRecipe();
         CarriageType carriage = be.getCurrentCarriageType();
-
+        int newStatus;
         if (recipe != null && carriage != null && recipe.getCarriageType() == carriage && absSpeed > 0) {
+
             long req = recipe.getRequiredRpm();
             long tolerance = (long)(req * 0.25);
             if (absSpeed < req - tolerance) {
@@ -261,10 +268,13 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
             } else if (absSpeed > req + tolerance) {
                 newStatus = 2; // слишком быстро
             } else {
-                newStatus = 0; // OK
+                // Скорость в норме — проверяем что крафт реально возможен (есть материалы и место)
+                newStatus = (be.hasRequiredInputs(recipe) && be.canFitOutputs(recipe)) ? 0 : 3;
             }
-        } else if (absSpeed == 0) {
-            newStatus = 1;
+        } else if (absSpeed == 0 || recipe == null || carriage == null) {
+            newStatus = 1; // не готов к крафту
+        } else {
+            newStatus = 1; // насадка не соответствует рецепту
         }
 
         if (newStatus != be.speedStatus) {
@@ -335,6 +345,10 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
             if (!inventory.getStackInSlot(i).isEmpty()) return true;
         }
         return false;
+    }
+
+    public boolean hasRequiredInputsPublic(StanokRecipe recipe) {
+        return hasRequiredInputs(recipe);
     }
 
     private boolean hasRequiredInputs(StanokRecipe recipe) {

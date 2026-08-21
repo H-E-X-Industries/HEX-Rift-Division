@@ -44,9 +44,9 @@ public class GUIStanok extends AbstractContainerScreen<StanokMenu> {
     private static final int LED_X        = 10;
     private static final int LED_Y        = 11;
     private static final int LED_SIZE     = 6;
-    private static final int LED_RED_U    = 0;
-    private static final int LED_GREEN_U  = 6;
-    private static final int LED_V        = 177;
+    // Красный диод нарисован прямо на фоне GUI, зелёный — в атласной зоне (u=178, v=0)
+    private static final int LED_GREEN_U  = 178;
+    private static final int LED_GREEN_V  = 0;
 
     // Прогресс-бар
     private static final int BAR_X  = 64;
@@ -106,10 +106,13 @@ public class GUIStanok extends AbstractContainerScreen<StanokMenu> {
         // Фон GUI
         graphics.blit(TEXTURE, x, y, 0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
 
-        // Светодиод
+        // Светодиод: красный — часть фона GUI (нарисован на текстуре).
+        // Зелёный рисуется поверх когда speedStatus == 0 (OK).
         int speedStatus = menu.getSpeedStatus();
-        int ledU = (speedStatus == 0) ? LED_GREEN_U : LED_RED_U;
-        graphics.blit(TEXTURE, x + LED_X, y + LED_Y, ledU, LED_V, LED_SIZE, LED_SIZE);
+        if (speedStatus == 0) {
+            graphics.blit(TEXTURE, x + LED_X, y + LED_Y, LED_GREEN_U, LED_GREEN_V, LED_SIZE, LED_SIZE);
+        }
+
 
         // Прогресс-бар
         int prog    = menu.getProgress();

@@ -93,9 +93,13 @@ public class StanokHudOverlay {
         long absSpeed = Math.abs(be.getSpeed());
         long req      = recipe.getRequiredRpm();
         int speedStatus = be.speedStatus;
+
+        // Определяем: есть ли материал
+        boolean hasInput = be.hasRequiredInputsPublic(recipe);
+
         int speedColor;
         String speedLabel;
-        if (speedStatus == 0) {
+        if (speedStatus == 0 || speedStatus == 3) {
             speedColor = 0x00FF00;
             speedLabel = Component.translatable("hud.trd.stanok.speed_ok").getString();
         } else if (speedStatus == 1) {
@@ -110,10 +114,19 @@ public class StanokHudOverlay {
         colors.add(speedColor);
         maxW = Math.max(maxW, font.width(speedLine));
 
+        // Отдельная строка "Нет материала" — показываем только если скорость OK
+        // но материала нет (или выходные слоты заполнены)
+        if (!hasInput) {
+            String noMatLine = Component.translatable("hud.trd.stanok.no_material").getString();
+            lines.add(noMatLine);
+            colors.add(0xFF4444); // красный
+            maxW = Math.max(maxW, font.width(noMatLine));
+        }
+
         // Прогресс
         int prog    = be.getData().get(0);
         int maxProg = be.getData().get(1);
-        if (maxProg > 0) {
+        if (maxProg > 0 && prog > 0) {
             double pct = (double) prog / maxProg;
             int totalBars = 20;
             int green = (int)(pct * totalBars);
@@ -142,3 +155,4 @@ public class StanokHudOverlay {
         }
     }
 }
+

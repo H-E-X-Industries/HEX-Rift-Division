@@ -127,6 +127,7 @@ public class StanokMenu extends AbstractContainerMenu {
     public int getMaxProgress()   { return data.get(1); }
     public int getCarriageType()  { return data.get(2); } // ordinal или -1
     public int getSpeedStatus()   { return data.get(3); } // 0=OK,1=slow,2=fast
+    public boolean hasInputs()    { return data.get(5) == 1; } // есть ли нужный материал
 
     public BlockEntity getBlockEntity() { return blockEntity; }
 }

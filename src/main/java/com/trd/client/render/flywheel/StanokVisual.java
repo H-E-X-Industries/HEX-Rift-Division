@@ -189,10 +189,13 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
         if (Math.abs(speedDiff) > 0.1f) smoothedSpeed += speedDiff * 4.0f * delta;
         else smoothedSpeed = targetSpeed;
 
-        // Вращение
+        // Вращение накапливаем каждый кадр через delta (интерполированное время)
         shaftAngle += smoothedSpeed * ((float) Math.PI / 30.0f) * delta;
         shaftAngle %= (float)(2 * Math.PI);
         if (shaftAngle < 0) shaftAngle += (float) Math.PI * 2;
+
+        // Обновляем валы с вращением
+        updateShaftInstances();
 
         // Определяем насадку
         CarriageType carriage = blockEntity.getCurrentCarriageType();
@@ -204,10 +207,34 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
     }
 
     // ════════════════════════════════════════════════════════════
+    //  ВАЛЫ
+    // ════════════════════════════════════════════════════════════
+
+    /** Обновляет вращение валов в кинетических портах, синхронизируя с shaftAngle */
+    private void updateShaftInstances() {
+        float shaftOffsetX = -2.0f;
+        float shaftOffsetZ = -1.0f;
+        updateShaftInstance(shaftWest, -1f + shaftOffsetX, 0, shaftOffsetZ);
+        updateShaftInstance(shaftEast,  1f + shaftOffsetX, 0, shaftOffsetZ);
+    }
+
+    /** Рендерит вал с вращением вокруг его оси (запад-восток = ось X, модель повёрнута rotateY(90°)) */
+    private void updateShaftInstance(TransformedInstance inst, float dx, float dy, float dz) {
+        startTransform(inst)
+                .translate(dx, dy, dz)
+                .translate(0.5f, 0.5f, 0.5f)
+                .rotateY((float) Math.toRadians(90f))   // ориентация вала по оси X
+                .rotateZ(-shaftAngle)                    // ИНВЕРСИЯ: вращение в правильную сторону относительно сети
+                .translate(-0.5f, -0.5f, -0.5f);
+        inst.setChanged();
+    }
+
+    // ════════════════════════════════════════════════════════════
     //  ПРЕСС
     // ════════════════════════════════════════════════════════════
 
     private void updatePressVisual(CarriageType carriage, float delta, float partialTick) {
+
         boolean active = carriage == CarriageType.PRESS;
 
         // Каретка (статична, просто показываем/скрываем)
@@ -282,14 +309,19 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
         if (drum == null) return;
         if (!active) { hideInstance(drum); return; }
 
-        // Барабан экспортирован в (0,0,0)
-        // Анимируем и сдвигаем
+        // ВАЖНО: барабан должен иметь пивот в центре меша при экспорте из Blockbench!
+        // Порядок трансформаций:
+        // 1. Повернуть саму модель барабана на 90 градусов (rotateY)
+        // 2. Вращать вокруг собственной оси Z (rotateZ)
+        // 3. Переместить к позиции на станке (translate)
         startTransform(drum)
                 .translate(dx, dy, dz)
-                .rotateX(shaftAngle)
-                .rotateY((float) Math.toRadians(90f));
+                .rotateZ(shaftAngle) // ось вращения
+                .rotateY((float) Math.toRadians(90)); // поворот модели на 90 градусов
         drum.setChanged();
     }
+
+
 
     // ════════════════════════════════════════════════════════════
     //  ФРЕЗА
@@ -318,6 +350,7 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
             if (prog > 0 && blockEntity.getSpeed() != 0) interp += partialTick;
             phase = Math.min(1f, interp / maxProg);
         }
+
 
         // Абсолютное время в текущей операции (в секундах)
         float opElapsed = phase * recipeSeconds;
