@@ -88,8 +88,18 @@ public class GUIStanok extends AbstractContainerScreen<StanokMenu> {
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(graphics);
-        super.render(graphics, mouseX, mouseY, partialTick);
-        this.renderTooltip(graphics, mouseX, mouseY);
+
+        int rMouseX = mouseX;
+        int rMouseY = mouseY;
+        
+        // Если мышь поверх панели рецептов, обманываем стандартный рендер, чтобы не подсвечивать слоты
+        if (recipeScreenOpen && recipeScreen != null && recipeScreen.isInsidePanel(mouseX, mouseY)) {
+            rMouseX = -1000;
+            rMouseY = -1000;
+        }
+
+        super.render(graphics, rMouseX, rMouseY, partialTick);
+        this.renderTooltip(graphics, rMouseX, rMouseY);
 
         if (recipeScreenOpen && recipeScreen != null) {
             recipeScreen.renderOverlay(graphics, mouseX, mouseY, partialTick);

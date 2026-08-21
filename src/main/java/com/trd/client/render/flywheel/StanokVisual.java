@@ -300,12 +300,12 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
             }
         }
 
-        updateDrum(wireDrumLeft,  active, DRUM_LEFT_X, DRUM_Y, DRUM_Z);
-        updateDrum(wireDrumRight, active, DRUM_RIGHT_X, DRUM_Y, DRUM_Z);
+        updateDrum(wireDrumLeft,  active, DRUM_LEFT_X, DRUM_Y, DRUM_Z, false);
+        updateDrum(wireDrumRight, active, DRUM_RIGHT_X, DRUM_Y, DRUM_Z, true);
     }
 
     private void updateDrum(@Nullable TransformedInstance drum, boolean active,
-                             float dx, float dy, float dz) {
+                             float dx, float dy, float dz, boolean reverse) {
         if (drum == null) return;
         if (!active) { hideInstance(drum); return; }
 
@@ -314,9 +314,10 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
         // 1. Повернуть саму модель барабана на 90 градусов (rotateY)
         // 2. Вращать вокруг собственной оси Z (rotateZ)
         // 3. Переместить к позиции на станке (translate)
+        float angle = reverse ? -shaftAngle : shaftAngle;
         startTransform(drum)
                 .translate(dx, dy, dz)
-                .rotateZ(shaftAngle) // ось вращения
+                .rotateZ(angle) // ось вращения
                 .rotateY((float) Math.toRadians(90)); // поворот модели на 90 градусов
         drum.setChanged();
     }

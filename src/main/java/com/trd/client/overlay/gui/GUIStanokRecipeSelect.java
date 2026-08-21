@@ -149,10 +149,10 @@ public class GUIStanokRecipeSelect {
             cursorTimer++;
         }
 
-        // Полупрозрачный фон
-        graphics.fill(panelX - 2, panelY - 2, panelX + PANEL_W + 2, panelY + PANEL_H + 2, 0xAA000000);
+        graphics.pose().pushPose();
+        graphics.pose().translate(0, 0, 400); // Отрисовка поверх слотов инвентаря
 
-        // Текстура панели
+        // Текстура панели (затенение экрана убрано по просьбе)
         graphics.blit(TEXTURE, panelX, panelY, 0, 0, PANEL_W, PANEL_H);
 
         // Кнопка сброса (нажатое состояние)
@@ -177,6 +177,8 @@ public class GUIStanokRecipeSelect {
         }
         graphics.drawString(font, full,
                 panelX + SEARCH_X + 2, panelY + SEARCH_Y + 4, 0xAEC6CF, false);
+
+        graphics.pose().popPose();
     }
 
     private void renderList(GuiGraphics graphics, int mouseX, int mouseY) {
@@ -214,7 +216,31 @@ public class GUIStanokRecipeSelect {
 
             // Название
             Component name = Component.translatable("recipe.trd." + recipe.getId().getPath());
-            graphics.drawString(font, name, lx + ICON_X + 23, ey + ICON_Y + 4, 0xFFFFFF, false);
+            int maxTextW = LIST_W - (ICON_X + 23) - 2;
+            int tW = font.width(name);
+            int tX = lx + ICON_X + 23;
+            int tY = ey + ICON_Y + 4;
+            
+            if (tW > maxTextW) {
+                int scrollRange = tW - maxTextW;
+                double cycle = (net.minecraft.Util.getMillis() % 4000) / 4000.0;
+                int offset = 0;
+                if (cycle > 0.1 && cycle < 0.4) {
+                    offset = (int)((cycle - 0.1) / 0.3 * scrollRange);
+                } else if (cycle >= 0.4 && cycle <= 0.6) {
+                    offset = scrollRange;
+                } else if (cycle > 0.6 && cycle < 0.9) {
+                    offset = (int)((0.9 - cycle) / 0.3 * scrollRange);
+                }
+                
+                graphics.disableScissor();
+                graphics.enableScissor(tX, ey, tX + maxTextW, ey + ENTRY_H);
+                graphics.drawString(font, name, tX - offset, tY, 0xFFFFFF, false);
+                graphics.disableScissor();
+                graphics.enableScissor(lx, ly, lx + LIST_W, ly + LIST_H);
+            } else {
+                graphics.drawString(font, name, tX, tY, 0xFFFFFF, false);
+            }
 
             // Тултип
             if (mouseX >= lx && mouseX < lx + LIST_W && mouseY >= ey && mouseY < ey + ENTRY_H) {

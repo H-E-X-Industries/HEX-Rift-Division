@@ -57,8 +57,8 @@ public class StanokRenderer implements BlockEntityRenderer<StanokBlockEntity> {
         poseStack.translate(-0.5, 0, -0.5);
 
         // Координаты из Blockbench: -23.2269, 18.2554, -15.4183
-        // Смещение по просьбе: -2 по X, -3 по Z
-        float bbX = (-23.2269f - 2.0f) / 16f;
+        // Смещение по просьбе: 0 по X, -3 по Z
+        float bbX = -23.2269f / 16f;
         float bbY = 18.2554f / 16f;
         float bbZ = (-15.4183f - 3.0f) / 16f;
         
