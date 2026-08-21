@@ -1,0 +1,20 @@
+{
+  "loader": "forge:composite",
+  "textures": {
+    "particle": "trd:block/stanok"
+  },
+  "children": {
+    "main": {
+      "loader": "forge:obj",
+      "model": "trd:models/block/stanok.obj",
+      "flip_v": true,
+      "textures": {
+        "default": "trd:block/stanok"
+      },
+      "render_type": "minecraft:cutout"
+    }
+  },
+  "render_type": "minecraft:cutout",
+  "ambientocclusion": true,
+  "gui_light": "front"
+}

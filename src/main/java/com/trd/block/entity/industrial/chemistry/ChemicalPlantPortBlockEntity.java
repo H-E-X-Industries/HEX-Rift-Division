@@ -38,10 +38,20 @@ public class ChemicalPlantPortBlockEntity extends BlockEntity implements MenuPro
     public static final int ITEM_SLOTS = 9;
 
     private final FluidTank tankA = new FluidTank(TANK_CAPACITY) {
-        @Override protected void onContentsChanged() { setChanged(); }
+        @Override protected void onContentsChanged() {
+            setChanged();
+            if (level != null && !level.isClientSide) {
+                level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+            }
+        }
     };
     private final FluidTank tankB = new FluidTank(TANK_CAPACITY) {
-        @Override protected void onContentsChanged() { setChanged(); }
+        @Override protected void onContentsChanged() {
+            setChanged();
+            if (level != null && !level.isClientSide) {
+                level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+            }
+        }
     };
     private final ItemStackHandler itemHandler = new ItemStackHandler(ITEM_SLOTS) {
         @Override
@@ -89,6 +99,10 @@ public class ChemicalPlantPortBlockEntity extends BlockEntity implements MenuPro
             }
         });
         itemCapability = LazyOptional.of(() -> itemHandler);
+        // Принудительно уведомляем соседей о готовности capability после загрузки мира
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+        }
     }
 
     @Override
@@ -244,6 +258,36 @@ public class ChemicalPlantPortBlockEntity extends BlockEntity implements MenuPro
     public FluidTank getTankA() { return tankA; }
     public FluidTank getTankB() { return tankB; }
     public ItemStackHandler getItemHandler() { return itemHandler; }
+
+    /** Очищает жидкостные баки и предметный инвентарь порта. Вызывается при смене рецепта. */
+    public void clearBuffers() {
+        tankA.setFluid(FluidStack.EMPTY);
+        tankB.setFluid(FluidStack.EMPTY);
+        for (int i = 0; i < ITEM_SLOTS; i++) {
+            itemHandler.setStackInSlot(i, ItemStack.EMPTY);
+        }
+        setChanged();
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+        }
+    }
+
+    /**
+     * Проверяет, может ли порт принять жидкость данного типа.
+     * Возвращает true если есть место в баке с этой жидкостью, или есть пустой бак.
+     */
+    public boolean canAcceptFluid(FluidStack stack) {
+        if (stack.isEmpty()) return true;
+        // Совпадающий бак с местом
+        if (!tankA.isEmpty() && tankA.getFluid().getFluid() == stack.getFluid()
+                && tankA.getFluidAmount() < tankA.getCapacity()) return true;
+        if (!tankB.isEmpty() && tankB.getFluid().getFluid() == stack.getFluid()
+                && tankB.getFluidAmount() < tankB.getCapacity()) return true;
+        // Пустой бак
+        if (tankA.isEmpty()) return true;
+        if (tankB.isEmpty()) return true;
+        return false;
+    }
 
     @Override
     protected void saveAdditional(CompoundTag tag) {

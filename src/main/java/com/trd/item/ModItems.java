@@ -235,6 +235,14 @@ public class ModItems {
     public static final RegistryObject<Item> COPPER_COIL = ITEMS.register("copper_coil",
             () -> new StatorCoilItem(new Item.Properties().stacksTo(64), "copper", 1, 500, 20, 3.0f));
 
+    // ─── Насадки для станка (stanok) ───
+    public static final RegistryObject<Item> PRESS_CARRIAGE = ITEMS.register("press_carriage",
+            () -> new Item(new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> WIRE_CARRIAGE = ITEMS.register("wire_carriage",
+            () -> new Item(new Item.Properties().stacksTo(1)));
+    public static final RegistryObject<Item> FREZA_CARRIAGE = ITEMS.register("freza_carriage",
+            () -> new Item(new Item.Properties().stacksTo(1)));
+
     public static final RegistryObject<Item> BEAM_PLACER = ITEMS.register("beam_placer",
             () -> new BeamPlacerItem(new Item.Properties().stacksTo(1)));
 
@@ -330,6 +338,9 @@ public class ModItems {
 
     public static final RegistryObject<Item> DROBITEL_ITEM = ITEMS.register("drobitel",
             () -> new MultiblockBlockItem(ModBlocks.DROBITEL.get(), new Item.Properties()));
+
+    public static final RegistryObject<Item> STANOK_ITEM = ITEMS.register("stanok",
+            () -> new MultiblockBlockItem(ModBlocks.STANOK.get(), new Item.Properties()));
 
     public static final RegistryObject<Item> STEEL_STORAGE_ITEM = ITEMS.register("steel_storage",
             () -> new MultiblockBlockItem(ModBlocks.STEEL_STORAGE.get(), new Item.Properties()));

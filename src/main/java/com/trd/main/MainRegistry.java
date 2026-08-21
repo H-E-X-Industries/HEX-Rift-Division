@@ -137,6 +137,7 @@ public class MainRegistry {
             ModMetallurgy.init();
             DrobitelRecipes.register();// <-- регистрация металлов и
             CoccerOvenRecipeRegistry.init();
+            com.trd.multiblock.industrial.stanok.StanokRecipes.register();
             ChemicalPlantRecipeRegistry.init();
             ModPacketHandler.register();
             Regions.register(new ModOverworldRegion(new ResourceLocation(MOD_ID, "overworld"), 2));
@@ -266,6 +267,11 @@ public class MainRegistry {
             event.accept(ModItems.BLADE.get());
             event.accept(ModBlocks.STATOR_BLOCK);
             event.accept(ModItems.COPPER_COIL.get());
+            // ─── Станок ───
+            event.accept(ModBlocks.STANOK);
+            event.accept(ModItems.PRESS_CARRIAGE.get());
+            event.accept(ModItems.WIRE_CARRIAGE.get());
+            event.accept(ModItems.FREZA_CARRIAGE.get());
 
 
 
