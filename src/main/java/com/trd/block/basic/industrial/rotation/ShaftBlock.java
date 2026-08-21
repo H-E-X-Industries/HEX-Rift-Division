@@ -258,11 +258,26 @@ public class ShaftBlock extends BaseEntityBlock {
         BlockState stateAgainst = level.getBlockState(posAgainst);
         BlockEntity beAgainst = level.getBlockEntity(posAgainst);
 
-        // 1. ЖЕСТКИЙ ЗАПРЕТ: Разрешаем ставить только на кинетические блоки!
-        // Поскольку все наши механизмы (мотор, подшипник, вал) имеют BlockEntity
-        // с интерфейсом Rotational, эта проверка отсекает вообще всё лишнее (землю, камень, воздух).
-        if (!(beAgainst instanceof com.trd.api.rotation.Rotational)) {
+        if (!(beAgainst instanceof com.trd.api.rotation.Rotational rotational)) {
             return null; // Отменяем установку
+        }
+
+        // Запрет установки валов на неверные стороны кинетических узлов станка
+        if (beAgainst instanceof com.trd.multiblock.system.MultiblockPartEntity part) {
+            if (part.isKineticPort()) {
+                boolean canConnect = false;
+                for (Direction dir : part.getPropagationDirections()) {
+                    if (dir == clickedFace) {
+                        canConnect = true;
+                        break;
+                    }
+                }
+                if (!canConnect) return null;
+            } else {
+                return null; // На обычные части мультиблока нельзя ставить валы
+            }
+        } else if (beAgainst instanceof com.trd.multiblock.industrial.stanok.StanokBlockEntity) {
+            return null; // На сам контроллер станка нельзя ставить валы
         }
 
         // Изначально предполагаем направление по взгляду игрока

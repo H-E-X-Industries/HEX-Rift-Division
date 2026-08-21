@@ -46,6 +46,9 @@ public class ModMenuTypes {
     public static final RegistryObject<MenuType<DrobitelMenu>> DROBITEL_MENU =
             MENUS.register("drobitel_menu", () -> IForgeMenuType.create(DrobitelMenu::new));
 
+    public static final RegistryObject<MenuType<StanokMenu>> STANOK_MENU =
+            MENUS.register("stanok_menu", () -> IForgeMenuType.create(StanokMenu::new));
+
     public static final RegistryObject<MenuType<FuelTankMenu>> FUEL_TANK_MENU =
             MENUS.register("fuel_tank_big",
                     () -> IForgeMenuType.create((windowId, inv, data) -> new FuelTankMenu(windowId, inv, data)));

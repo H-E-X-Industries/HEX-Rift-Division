@@ -112,9 +112,11 @@ public class ClientModEvents {
         MenuScreens.register(ModMenuTypes.DROBITEL_MENU.get(), DrobitelScreen::new);
         MenuScreens.register(ModMenuTypes.CHEMICAL_PLANT_REACTION_CHAMBER_MENU.get(), GUIChemicalPlantReactionChamber::new);
         MenuScreens.register(ModMenuTypes.CHEMICAL_PLANT_PORT_MENU.get(), GUIChemicalPlantPort::new);
+        MenuScreens.register(ModMenuTypes.STANOK_MENU.get(), GUIStanok::new);
 
         MinecraftForge.EVENT_BUS.register(com.trd.client.overlay.hud.ChemicalPlantReactionChamberOverlay.class);
         MinecraftForge.EVENT_BUS.register(com.trd.client.overlay.hud.ChemicalPlantHeaterOverlay.class);
+        MinecraftForge.EVENT_BUS.register(com.trd.client.overlay.hud.StanokHudOverlay.class);
         event.registerBlockEntityRenderer(ModBlockEntities.MOTOR_ELECTRO_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.SHAFT_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.BEARING_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
@@ -127,6 +129,7 @@ public class ClientModEvents {
         event.registerBlockEntityRenderer(ModBlockEntities.STEAM_ENGINE_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.STATOR_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.MILLSTONE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.STANOK_BE.get(), com.trd.client.render.StanokRenderer::new);
 
 
 
@@ -200,6 +203,9 @@ public class ClientModEvents {
     public static void onClientSetup(final FMLClientSetupEvent event) {
         // Устанавливаем RenderType для технических блоков балок, чтобы Sodium не применял к ним агрессивное отсечение
         net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(ModBlocks.BEAM_COLLISION.get(), net.minecraft.client.renderer.RenderType.cutout());
+        
+        // Для станка нужна прозрачность стёкол крышки
+        net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(ModBlocks.STANOK.get(), net.minecraft.client.renderer.RenderType.cutout());
 
         // 1. Инициализируем загрузку кастомной 3D модели для Flywheel
         event.enqueueWork(() -> {
@@ -322,6 +328,22 @@ public class ClientModEvents {
                         @Override
                         public boolean skipVanillaRender(DrobitelBlockEntity be) {
                             return false; // <-- false! Чтобы JSON-модель корпуса рендерилась ванильно, а Flywheel добавит только вал
+                        }
+                    });
+
+            VisualizerRegistry.setVisualizer(ModBlockEntities.STANOK_BE.get(),
+                    new dev.engine_room.flywheel.api.visualization.BlockEntityVisualizer<com.trd.multiblock.industrial.stanok.StanokBlockEntity>() {
+                        @Override
+                        public dev.engine_room.flywheel.api.visual.BlockEntityVisual<? super com.trd.multiblock.industrial.stanok.StanokBlockEntity> createVisual(
+                                VisualizationContext ctx,
+                                com.trd.multiblock.industrial.stanok.StanokBlockEntity be,
+                                float partialTick) {
+                            return new com.trd.client.render.flywheel.StanokVisual(ctx, be, partialTick);
+                        }
+
+                        @Override
+                        public boolean skipVanillaRender(com.trd.multiblock.industrial.stanok.StanokBlockEntity be) {
+                            return false; // Отключаем пропуск ванильного рендера, чтобы работал StanokRenderer для предметов
                         }
                     });
 

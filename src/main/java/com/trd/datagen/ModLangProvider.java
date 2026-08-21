@@ -139,7 +139,25 @@ public class ModLangProvider extends LanguageProvider {
         add("recipe.trd.hydrogen_peroxide", "Hydrogen Peroxide");
         add("recipe.trd.sulfuric_acid", "Sulfuric Acid");
         add("recipe.trd.obsidian", "Obsidian");
-
+        // ═══ Stanok ═══
+        add("block.trd.stanok", "Machine Tool");
+        add("item.trd.press_carriage", "Press Carriage");
+        add("item.trd.wire_carriage", "Wire Winder Carriage");
+        add("item.trd.freza_carriage", "Milling Carriage");
+        add("recipe.trd.press_copper_plate", "Press Copper Plate");
+        add("recipe.trd.wire_copper_coil", "Wind Copper Coil");
+        add("recipe.trd.freza_titanium_shaft", "Mill Titanium Shaft");
+        add("gui.trd.stanok.tooltip.inputs", "§7Inputs:§r");
+        add("gui.trd.stanok.tooltip.outputs", "§7Outputs:§r");
+        add("gui.trd.stanok.tooltip.time", "§7Time: §e%s s§r");
+        add("gui.trd.stanok.tooltip.rpm", "§7Required Speed: §b%s RPM§r");
+        add("gui.trd.stanok.tooltip.torque", "§7Required Torque: §c%s Nm§r");
+        add("gui.trd.stanok.tooltip.carriage", "§7Carriage:§r");
+        add("hud.trd.stanok.no_recipe", "§cNo Recipe§r");
+        add("hud.trd.stanok.speed_ok", "§aSpeed OK§r");
+        add("hud.trd.stanok.speed_slow", "§cSpeed too low§r");
+        add("hud.trd.stanok.speed_fast", "§cSpeed too high!§r");
+        add("hud.trd.stanok.progress", "Progress: %s%%");
 
         // ═══ GUI: Electric Furnace ═══
         add("gui.trd.electric_furnace.energy_tooltip", "%s / %s JE");
@@ -948,6 +966,26 @@ public class ModLangProvider extends LanguageProvider {
         add(  "gui.trd.chemistry.inputs", "Входы:");
         add(  "gui.trd.chemistry.outputs", "Выходы:");
         add("gui.trd.chemistry.time", "Время: %s сек");
+        
+        // ═══ Stanok ═══
+        add("block.trd.stanok", "Станок");
+        add("item.trd.press_carriage", "Насадка пресса");
+        add("item.trd.wire_carriage", "Насадка для намотки");
+        add("item.trd.freza_carriage", "Насадка фрезы");
+        add("recipe.trd.press_copper_plate", "Прессовка медной пластины");
+        add("recipe.trd.wire_copper_coil", "Намотка медной катушки");
+        add("recipe.trd.freza_titanium_shaft", "Фрезеровка титанового вала");
+        add("gui.trd.stanok.tooltip.inputs", "§7Входы:§r");
+        add("gui.trd.stanok.tooltip.outputs", "§7Выходы:§r");
+        add("gui.trd.stanok.tooltip.time", "§7Время: §e%s сек§r");
+        add("gui.trd.stanok.tooltip.rpm", "§7Требуемая скорость: §b%s об/мин§r");
+        add("gui.trd.stanok.tooltip.torque", "§7Крутящий момент: §c%s Нм§r");
+        add("gui.trd.stanok.tooltip.carriage", "§7Насадка:§r");
+        add("hud.trd.stanok.no_recipe", "§cНет рецепта§r");
+        add("hud.trd.stanok.speed_ok", "§aСкорость в норме§r");
+        add("hud.trd.stanok.speed_slow", "§cНедостаточно скорости§r");
+        add("hud.trd.stanok.speed_fast", "§cСкорость превышена!§r");
+        add("hud.trd.stanok.progress", "Прогресс: %s%%");
 
         add("tooltip.trd.machine.hold_shift", "Удерживайте Shift для подробного описания");
         add("tooltip.trd.machine.stator.desc", "|Статор| - основа генератора, для выработки |JE энергии|, которая будет вырабатываться, за счет взаимодействия магнитных полей |статора| с магнитными полями |ротора|, под действием |крутящего момента|. |Энергия JE| выводится через 4 порта на спрямленных внешних сторонах. Для работы требует наличия специальных |катушек статора|.");

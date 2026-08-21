@@ -101,9 +101,9 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
         }
     }
 
-    // ==================== Rotational (только для KINETIC_PORT) ====================
+    // ==================== Rotational (Только для KINETIC_PORT) ====================
 
-    private boolean isKineticPort() {
+    public boolean isKineticPort() {
         return this.role == PartRole.KINETIC_PORT;
     }
 
@@ -173,6 +173,23 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
     @Override
     public Direction[] getPropagationDirections() {
         if (!isKineticPort() || controllerPos == null || level == null) return new Direction[0];
+
+        // Проверяем контроллер станка (боковые порты: запад-восток)
+        net.minecraft.world.level.block.entity.BlockEntity ctrlBe = level.getBlockEntity(controllerPos);
+        if (ctrlBe instanceof com.trd.multiblock.industrial.stanok.StanokBlockEntity sbe) {
+            BlockPos westPort = sbe.getWestPortPos();
+            BlockPos eastPort = sbe.getEastPortPos();
+            
+            Direction facing = Direction.NORTH;
+            if (sbe.getBlockState().hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING)) {
+                facing = sbe.getBlockState().getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING);
+            }
+            
+            if (worldPosition.equals(westPort)) return new Direction[]{facing.getCounterClockWise(), facing.getClockWise()};
+            if (worldPosition.equals(eastPort)) return new Direction[]{facing.getClockWise(), facing.getCounterClockWise()};
+            return new Direction[0];
+        }
+
         BlockState ctrlState = level.getBlockState(controllerPos);
 
         // ❌ Было: if (!(ctrlState.getBlock() instanceof HorizontalDirectionalBlock)) return new Direction[0];
@@ -203,9 +220,10 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
     @Override
     public boolean canConnectMechanically(net.minecraft.core.BlockPos myPos, net.minecraft.core.BlockPos neighborPos, Rotational neighbor) {
         if (!isKineticPort()) return false;
-        // Соединение с контроллером дробителя
+        // Соединение с контроллером мультиблока (дробитель или станок)
         if (controllerPos != null && neighborPos.equals(controllerPos)) {
-            return neighbor instanceof com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity;
+            return neighbor instanceof com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity
+                    || neighbor instanceof com.trd.multiblock.industrial.stanok.StanokBlockEntity;
         }
         // Соединение с внешними кинетическими блоками (вал, подшипник, мотор и т.д.)
         for (Direction dir : getPropagationDirections()) {
