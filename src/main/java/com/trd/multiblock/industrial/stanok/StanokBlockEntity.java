@@ -75,21 +75,33 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
      * Станок принимает кинетику с запада и востока (ось X).
      * Контроллер смотрит на север, порты % — слева (WEST) и справа (EAST).
      */
+    private Direction getFacing() {
+        if (getBlockState().hasProperty(StanokBlock.FACING)) {
+            return getBlockState().getValue(StanokBlock.FACING);
+        }
+        return Direction.NORTH;
+    }
+
     @Override
     public Direction[] getPropagationDirections() {
-        return new Direction[]{Direction.WEST, Direction.EAST};
+        Direction facing = getFacing();
+        return new Direction[]{facing.getCounterClockWise(), facing.getClockWise()};
     }
 
     @Override
     public java.util.List<BlockPos> getPotentialConnections(Level level, BlockPos myPos) {
-        return List.of(myPos.west(), myPos.east());
+        return List.of(
+                getWestPortPos(),
+                getEastPortPos()
+        );
     }
 
     @Override
     public boolean canConnectMechanically(BlockPos myPos, BlockPos neighborPos,
                                           com.trd.api.rotation.Rotational neighbor) {
+        // Контроллер соединяется только со своими кинетическими портами
         if (neighbor instanceof com.trd.multiblock.system.MultiblockPartEntity part) {
-            return part.getPartRole() == com.trd.multiblock.system.PartRole.KINETIC_PORT
+            return part.isKineticPort()
                     && part.getControllerPos() != null
                     && part.getControllerPos().equals(myPos);
         }
@@ -196,6 +208,8 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
         this.currentRecipeId = id;
         this.progress = 0;
         this.pressOperationCount = 0;
+        StanokRecipe r = getCurrentRecipe();
+        this.maxProgress = r != null ? r.getProcessTicks() : 60;
         setChanged();
         if (level != null && !level.isClientSide) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
@@ -487,7 +501,17 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
 
     // ────── Кинетические методы для StanokBlock ──────
 
-    /** Позиции кинетических портов (для обновления сети при size/remove) */
-    public BlockPos getWestPortPos()  { return worldPosition.west(); }
-    public BlockPos getEastPortPos()  { return worldPosition.east(); }
+    /** Позиции кинетических портов (для обновления сети при size/remove и поиска связей) */
+    public BlockPos getWestPortPos() {
+        if (getBlockState().getBlock() instanceof StanokBlock sb) {
+            return sb.getStructureHelper().getRotatedPos(worldPosition, new BlockPos(-1, 0, 0), getFacing());
+        }
+        return worldPosition.west();
+    }
+    public BlockPos getEastPortPos() {
+        if (getBlockState().getBlock() instanceof StanokBlock sb) {
+            return sb.getStructureHelper().getRotatedPos(worldPosition, new BlockPos(1, 0, 0), getFacing());
+        }
+        return worldPosition.east();
+    }
 }

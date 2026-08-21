@@ -101,9 +101,9 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
         }
     }
 
-    // ==================== Rotational (только для KINETIC_PORT) ====================
+    // ==================== Rotational (Только для KINETIC_PORT) ====================
 
-    private boolean isKineticPort() {
+    public boolean isKineticPort() {
         return this.role == PartRole.KINETIC_PORT;
     }
 
@@ -176,13 +176,17 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
 
         // Проверяем контроллер станка (боковые порты: запад-восток)
         net.minecraft.world.level.block.entity.BlockEntity ctrlBe = level.getBlockEntity(controllerPos);
-        if (ctrlBe instanceof com.trd.multiblock.industrial.stanok.StanokBlockEntity) {
-            // Порты станка расположены на WEST и EAST от контроллера
-            // Каждый порт пропускает кинетику наружу по своей стороне
-            BlockPos westPort = controllerPos.west();
-            BlockPos eastPort = controllerPos.east();
-            if (worldPosition.equals(westPort)) return new Direction[]{Direction.WEST, Direction.EAST};
-            if (worldPosition.equals(eastPort)) return new Direction[]{Direction.EAST, Direction.WEST};
+        if (ctrlBe instanceof com.trd.multiblock.industrial.stanok.StanokBlockEntity sbe) {
+            BlockPos westPort = sbe.getWestPortPos();
+            BlockPos eastPort = sbe.getEastPortPos();
+            
+            Direction facing = Direction.NORTH;
+            if (sbe.getBlockState().hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING)) {
+                facing = sbe.getBlockState().getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING);
+            }
+            
+            if (worldPosition.equals(westPort)) return new Direction[]{facing.getCounterClockWise(), facing.getClockWise()};
+            if (worldPosition.equals(eastPort)) return new Direction[]{facing.getClockWise(), facing.getCounterClockWise()};
             return new Direction[0];
         }
 

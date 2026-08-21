@@ -138,10 +138,12 @@ public class StanokBlock extends BaseEntityBlock implements IMultiblockControlle
             getStructureHelper().placeStructure(level, pos, facing, this);
 
             KineticNetworkManager manager = KineticNetworkManager.get((ServerLevel) level);
-            // Обновить сеть у обоих портов (запад и восток от контроллера)
             manager.updateNetworkAfterPlace(pos);
-            manager.updateNetworkAfterPlace(pos.west());
-            manager.updateNetworkAfterPlace(pos.east());
+            BlockEntity be = level.getBlockEntity(pos);
+            if (be instanceof StanokBlockEntity sbe) {
+                manager.updateNetworkAfterPlace(sbe.getWestPortPos());
+                manager.updateNetworkAfterPlace(sbe.getEastPortPos());
+            }
         }
     }
 
@@ -150,13 +152,13 @@ public class StanokBlock extends BaseEntityBlock implements IMultiblockControlle
                          BlockState newState, boolean isMoving) {
         if (!state.is(newState.getBlock()) && !level.isClientSide) {
             BlockEntity be = level.getBlockEntity(pos);
+            KineticNetworkManager manager = KineticNetworkManager.get((ServerLevel) level);
+            
             if (be instanceof StanokBlockEntity stanok) {
                 stanok.dropContents();
+                manager.updateNetworkAfterRemove(stanok.getWestPortPos());
+                manager.updateNetworkAfterRemove(stanok.getEastPortPos());
             }
-
-            KineticNetworkManager manager = KineticNetworkManager.get((ServerLevel) level);
-            manager.updateNetworkAfterRemove(pos.west());
-            manager.updateNetworkAfterRemove(pos.east());
             manager.updateNetworkAfterRemove(pos);
 
             Direction facing = state.getValue(FACING);

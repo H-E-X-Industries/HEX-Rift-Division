@@ -1,4 +1,4 @@
-﻿{
+{
   "loader": "forge:composite",
   "textures": {
     "particle": "trd:block/freza_attachment"
@@ -9,7 +9,9 @@
       "model": "trd:models/block/freza_attachment.obj",
       "flip_v": true,
       "textures": {
-        "default": "trd:block/freza_attachment"
+        "default": "trd:block/freza_attachment",
+        "gomicon": "trd:block/freza_attachment",
+        "none": "trd:block/freza_attachment"
       }
     }
   }

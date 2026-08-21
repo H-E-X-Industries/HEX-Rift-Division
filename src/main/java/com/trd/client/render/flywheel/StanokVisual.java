@@ -67,17 +67,16 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
 
     // Константы координат барабанов (Blender→MC: swap Y↔Z, /16 для блоков)
     // Blender left drum:  x=1.0618, y=1.2997, z=1.3301
-    // Blender right drum: x=1.0618, y=1.6627, z=1.3301
-    private static final float DRUM_X       = 1.0618f;
-    private static final float DRUM_Y       = 1.3301f;  // MC Y = Blender Z
-    private static final float DRUM_LEFT_Z  = 1.2997f;  // MC Z = Blender Y (left)
-    private static final float DRUM_RIGHT_Z = 1.6627f;  // MC Z = Blender Y (right)
+    // Blockbench: Left X=-26.65, Right X=-20.77, Y=21.3, Z=-18.55 (сдвиг +2px на юг)
+    private static final float DRUM_LEFT_X  = -1.66570625f;
+    private static final float DRUM_RIGHT_X = -1.29851875f;
+    private static final float DRUM_Y       = 1.33125f;
+    private static final float DRUM_Z       = -1.034375f; // -1.159375 + 0.125
 
-    // Константы координат фрезы (Blender→MC: swap Y↔Z)
-    // Blender: x=0.95635, y=1.2372, z=1.2281
-    private static final float FREZA_X = 0.95635f;
-    private static final float FREZA_Y = 1.2281f;  // MC Y = Blender Z
-    private static final float FREZA_Z = 1.2372f;  // MC Z = Blender Y
+    // Blender/Blockbench: x=-1.23125, y=1.225, z=-0.9296875
+    private static final float FREZA_X = -1.23125f;
+    private static final float FREZA_Y = 1.225f;
+    private static final float FREZA_Z = -0.9296875f;
 
     // Максимальный ход каретки фрезы по X
     private static final float FREZA_TRAVEL_X = 0.5f;
@@ -92,10 +91,10 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
         net.minecraft.core.Direction facing = blockEntity.getBlockState().getValue(com.trd.multiblock.industrial.stanok.StanokBlock.FACING);
         float facingRot = 0f;
         switch (facing) {
-            case NORTH: facingRot = 0f; break;
-            case EAST: facingRot = -90f; break;
-            case SOUTH: facingRot = 180f; break;
-            case WEST: facingRot = 90f; break;
+            case NORTH: facingRot = 180f; break;
+            case EAST: facingRot = 90f; break;
+            case SOUTH: facingRot = 0f; break;
+            case WEST: facingRot = -90f; break;
         }
 
         float px = pos.getX() - renderOrigin.getX();
@@ -106,7 +105,7 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
                 .translate(px + 0.5f, py, pz + 0.5f)
                 .rotateY((float) Math.toRadians(facingRot))
                 .translate(-0.5f, 0, -0.5f)
-                .translate(2.0f, 0f, 1.0f);
+                .translate(2.0f, 0f, 2.0f);
     }
 
     public StanokVisual(VisualizationContext ctx, StanokBlockEntity blockEntity, float partialTick) {
@@ -178,30 +177,37 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
         float delta = timeInSeconds - lastFrameTime;
         lastFrameTime = timeInSeconds;
 
-        // Обновить сглаженную скорость
+        // Синхронизация фазы с остальной кинетической сетью
         float targetSpeed = blockEntity.getVisualSpeed();
+        if (this.smoothedSpeed == 0 && targetSpeed != 0) {
+            this.smoothedSpeed = targetSpeed;
+            this.shaftAngle = (timeInSeconds * targetSpeed * ((float) Math.PI / 30.0f)) % ((float) Math.PI * 2);
+            if (this.shaftAngle < 0) this.shaftAngle += (float) Math.PI * 2;
+        }
+
         float speedDiff = targetSpeed - smoothedSpeed;
         if (Math.abs(speedDiff) > 0.1f) smoothedSpeed += speedDiff * 4.0f * delta;
         else smoothedSpeed = targetSpeed;
 
-        // Угол вала (оборотов в секунду = speed/60, радиан/сек = speed * PI/30)
+        // Вращение
         shaftAngle += smoothedSpeed * ((float) Math.PI / 30.0f) * delta;
         shaftAngle %= (float)(2 * Math.PI);
+        if (shaftAngle < 0) shaftAngle += (float) Math.PI * 2;
 
         // Определяем насадку
         CarriageType carriage = blockEntity.getCurrentCarriageType();
 
-        // Обновляем насадки
-        updatePressVisual(carriage, delta);
-        updateWireVisual(carriage, delta);
-        updateFrezaVisual(carriage, timeInSeconds, delta);
+        // Обновляем визуалы
+        updatePressVisual(carriage, delta, partialTick);
+        updateWireVisual(carriage, delta, partialTick);
+        updateFrezaVisual(carriage, timeInSeconds, delta, partialTick);
     }
 
     // ════════════════════════════════════════════════════════════
     //  ПРЕСС
     // ════════════════════════════════════════════════════════════
 
-    private void updatePressVisual(CarriageType carriage, float delta) {
+    private void updatePressVisual(CarriageType carriage, float delta, float partialTick) {
         boolean active = carriage == CarriageType.PRESS;
 
         // Каретка (статична, просто показываем/скрываем)
@@ -226,7 +232,11 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
             float phase = 0f;
             int prog    = blockEntity.getData().get(0);
             int maxProg = blockEntity.getData().get(1);
-            if (maxProg > 0) phase = (float) prog / maxProg; // 0.0 – 1.0
+            if (maxProg > 0) {
+                float interp = prog;
+                if (prog > 0 && blockEntity.getSpeed() != 0) interp += partialTick;
+                phase = Math.min(1f, interp / maxProg);
+            }
 
             // Первая половина: голова идёт вниз (0 → 0.22)
             // Вторая половина: голова идёт вверх (0.22 → 0)
@@ -249,7 +259,7 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
     //  БАРАБАНЫ
     // ════════════════════════════════════════════════════════════
 
-    private void updateWireVisual(CarriageType carriage, float delta) {
+    private void updateWireVisual(CarriageType carriage, float delta, float partialTick) {
         boolean active = carriage == CarriageType.WIRE;
 
         if (wireCarriage != null) {
@@ -263,8 +273,8 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
             }
         }
 
-        updateDrum(wireDrumLeft,  active, DRUM_X, DRUM_Y, DRUM_LEFT_Z);
-        updateDrum(wireDrumRight, active, DRUM_X, DRUM_Y, DRUM_RIGHT_Z);
+        updateDrum(wireDrumLeft,  active, DRUM_LEFT_X, DRUM_Y, DRUM_Z);
+        updateDrum(wireDrumRight, active, DRUM_RIGHT_X, DRUM_Y, DRUM_Z);
     }
 
     private void updateDrum(@Nullable TransformedInstance drum, boolean active,
@@ -272,11 +282,12 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
         if (drum == null) return;
         if (!active) { hideInstance(drum); return; }
 
-        // Барабан экспортирован в (0,0,0) (в центре мира Blender), 
-        // поэтому мы просто смещаем его на dx, dy, dz и вращаем на месте.
+        // Барабан экспортирован в (0,0,0)
+        // Анимируем и сдвигаем
         startTransform(drum)
                 .translate(dx, dy, dz)
-                .rotateX(shaftAngle);
+                .rotateX(shaftAngle)
+                .rotateY((float) Math.toRadians(90f));
         drum.setChanged();
     }
 
@@ -284,7 +295,7 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
     //  ФРЕЗА
     // ════════════════════════════════════════════════════════════
 
-    private void updateFrezaVisual(CarriageType carriage, float timeInSeconds, float delta) {
+    private void updateFrezaVisual(CarriageType carriage, float timeInSeconds, float delta, float partialTick) {
         boolean active = carriage == CarriageType.FREZA;
 
         if (!active) {
@@ -302,7 +313,11 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
         float phase = 0f;
         int prog    = blockEntity.getData().get(0);
         int maxProg = blockEntity.getData().get(1);
-        if (maxProg > 0) phase = Math.min(1f, (float) prog / maxProg);
+        if (maxProg > 0) {
+            float interp = prog;
+            if (prog > 0 && blockEntity.getSpeed() != 0) interp += partialTick;
+            phase = Math.min(1f, interp / maxProg);
+        }
 
         // Абсолютное время в текущей операции (в секундах)
         float opElapsed = phase * recipeSeconds;
@@ -362,8 +377,12 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
             }
         }
 
-        // Применяем иерархию: каретка → крепление+фреза
-        float frezaSpin = shaftAngle * 5.0f; // Вращение зависит от скорости валов (shaftAngle в радианах)
+        // Инвертируем оси X и Z как просил игрок (вместо юг/запад будет север/восток)
+        shiftX = -shiftX;
+        shiftZ = -shiftZ;
+
+        // Вращение фрезы: в 5 раз быстрее вала
+        float frezaSpin = shaftAngle * 5.0f;
         applyFrezaCarriage(shiftX);
         applyFrezaAttachment(shiftZ, shiftY, shiftX);
         applyFreza(shiftX, shiftZ, shiftY, frezaSpin);
