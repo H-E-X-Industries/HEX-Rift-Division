@@ -12,6 +12,7 @@ import com.trd.datagen.stats.ModBlockLootTableProvider;
 import com.trd.entity.mobs.depth_worm.DepthWormBrutalEntity;
 import com.trd.entity.mobs.grenadier.GrenadierZombieEntity;
 import com.trd.event.SlagItem;
+import com.trd.multiblock.industrial.coccer.CoccerOvenRecipeRegistry;
 import com.trd.multiblock.industrial.drobitel.DrobitelRecipes;
 import com.trd.worldgen.feature.ModFeatures;
 import com.mojang.logging.LogUtils;
@@ -135,6 +136,7 @@ public class MainRegistry {
         event.enqueueWork(() -> {
             ModMetallurgy.init();
             DrobitelRecipes.register();// <-- регистрация металлов и
+            CoccerOvenRecipeRegistry.init();
             com.trd.multiblock.industrial.stanok.StanokRecipes.register();
             ChemicalPlantRecipeRegistry.init();
             ModPacketHandler.register();
@@ -349,11 +351,12 @@ public class MainRegistry {
 
 
 
-            //ПЛАВИЛЬНИ
+            //ПРОЧЕЕ
             event.accept(ModBlocks.SMALL_SMELTER);
 
             event.accept(ModItems.HEATER_ITEM);
             event.accept(ModBlocks.SMELTER);
+            event.accept(ModBlocks.COCCER_OVEN);
             event.accept(ModBlocks.CASTING_POT);
             event.accept(ModBlocks.CASTING_DESCENT);
             event.accept(ModItems.MOLD_EMPTY.get());
@@ -385,12 +388,12 @@ public class MainRegistry {
             event.accept(ModItems.GRENADE);
             event.accept(ModItems.GRENADEHE);
             event.accept(ModItems.GRENADEFIRE);
-            event.accept(ModItems.GRENADESMART);
             event.accept(ModItems.GRENADESLIME);
             event.accept(ModItems.GRENADE_IF);
             event.accept(ModItems.GRENADE_IF_HE);
             event.accept(ModItems.GRENADE_IF_SLIME);
             event.accept(ModItems.GRENADE_IF_FIRE);
+            event.accept(ModItems.GRENADESMART);
             event.accept(ModItems.GRAVITY_GRENADE.get());
             event.accept(ModItems.GRENADE_NUC);
             event.accept(ModItems.TURRET_LIGHT_PORTATIVE_PLACER);

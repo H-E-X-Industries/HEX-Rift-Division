@@ -425,6 +425,10 @@ public class ModBlocks {
                     .noOcclusion()
                     .lightLevel(state -> 15)));
 
+    public static final RegistryObject<Block> COCCER_OVEN = BLOCKS.register("coccer_oven",
+            () -> new com.trd.multiblock.industrial.coccer.CoccerOvenBlock(BlockBehaviour.Properties.of()
+                    .strength(2.0F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
+
     public static final RegistryObject<Block> MORY_BLOCK = registerBlock("mory_block",
             () -> new Block(BlockBehaviour.Properties.of()
                     .strength(2.0F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
