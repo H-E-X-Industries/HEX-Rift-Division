@@ -51,6 +51,8 @@ import com.trd.item.weapons.turrets.TurretLightPortativePlacer;
 import com.trd.item.weapons.turrets.TurretLightPlacerBlockItem;
 import com.trd.main.MainRegistry;
 
+import static com.trd.block.basic.ModBlocks.COCCER_OVEN;
+
 public class ModItems {
     public static final DeferredRegister<Item> ITEMS =
             DeferredRegister.create(ForgeRegistries.ITEMS, MainRegistry.MOD_ID);
@@ -322,6 +324,9 @@ public class ModItems {
 
     public static final RegistryObject<Item> SMELTER_ITEM = ITEMS.register("smelter",
             () -> new MultiblockBlockItem(ModBlocks.SMELTER.get(), new Item.Properties()));
+
+    public static final RegistryObject<Item> COCCER_OVEN_ITEM = ModItems.ITEMS.register("coccer_oven",
+            () -> new com.trd.multiblock.system.MultiblockBlockItem(COCCER_OVEN.get(), new Item.Properties()));
 
     public static final RegistryObject<Item> DROBITEL_ITEM = ITEMS.register("drobitel",
             () -> new MultiblockBlockItem(ModBlocks.DROBITEL.get(), new Item.Properties()));

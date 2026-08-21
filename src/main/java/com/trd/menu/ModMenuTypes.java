@@ -38,7 +38,15 @@ public class ModMenuTypes {
     public static final RegistryObject<MenuType<ChemicalPlantReactionChamberMenu>> CHEMICAL_PLANT_REACTION_CHAMBER_MENU =
             registerMenuType("chemical_plant_reaction_chamber_menu",
                     (IContainerFactory<ChemicalPlantReactionChamberMenu>) ChemicalPlantReactionChamberMenu::new);
-
+    public static final RegistryObject<net.minecraft.world.inventory.MenuType<com.trd.menu.industrial.CoccerOvenMenu>> COCCER_OVEN_MENU =
+            MENUS.register("coccer_oven",
+                    () -> new net.minecraft.world.inventory.MenuType<>((net.minecraftforge.network.IContainerFactory<com.trd.menu.industrial.CoccerOvenMenu>) (windowId, inv, data) -> {
+                        net.minecraft.core.BlockPos pos = data.readBlockPos();
+                        if (inv.player.level().getBlockEntity(pos) instanceof com.trd.multiblock.industrial.coccer.CoccerOvenBlockEntity be) {
+                            return new com.trd.menu.industrial.CoccerOvenMenu(windowId, inv, be, be.getContainerData());
+                        }
+                        return null;
+                    }, net.minecraft.world.flag.FeatureFlags.DEFAULT_FLAGS));
     public static final RegistryObject<MenuType<ChemicalPlantPortMenu>> CHEMICAL_PLANT_PORT_MENU =
             registerMenuType("chemical_plant_port_menu",
                     (IContainerFactory<ChemicalPlantPortMenu>) ChemicalPlantPortMenu::new);

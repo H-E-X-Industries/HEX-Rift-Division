@@ -1,0 +1,145 @@
+package com.trd.multiblock.industrial.coccer;
+
+import com.trd.block.basic.ModBlocks;
+import com.trd.block.entity.ModBlockEntities;
+import com.trd.multiblock.system.IMultiblockController;
+import com.trd.multiblock.system.MultiblockStructureHelper;
+import com.trd.multiblock.system.PartRole;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.Containers;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.phys.BlockHitResult;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
+import java.util.function.Supplier;
+
+public class CoccerOvenBlock extends BaseEntityBlock implements IMultiblockController {
+
+    public static final net.minecraft.world.level.block.state.properties.DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+    private static MultiblockStructureHelper helper;
+
+    public CoccerOvenBlock(Properties properties) {
+        super(properties.noOcclusion().strength(3.0f, 10.0f));
+        this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING);
+    }
+
+    @Override
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        return this.defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
+    }
+
+    @Override
+    public RenderShape getRenderShape(BlockState state) {
+        return RenderShape.MODEL;
+    }
+
+    @Override
+    public MultiblockStructureHelper getStructureHelper() {
+        if (helper == null) {
+            Map<Character, Supplier<BlockState>> symbols = Map.of(
+                    '#', () -> ModBlocks.MULTIBLOCK_PART.get().defaultBlockState(),
+                    '$', () -> ModBlocks.MULTIBLOCK_PART.get().defaultBlockState(),
+                    '@', () -> this.defaultBlockState()
+            );
+            Map<Character, PartRole> roles = Map.of(
+                    '#', PartRole.DEFAULT,
+                    '$', PartRole.FLUID_OUTPUT,
+                    '@', PartRole.CONTROLLER
+            );
+
+            helper = MultiblockStructureHelper.createFromLayersWithRoles(
+                    new String[][]{
+                            {"#$#", "$@$", "#$#"},
+                            {"###", "###", "###"}
+                    },
+                    symbols,
+                    () -> ModBlocks.MULTIBLOCK_PART.get().defaultBlockState(),
+                    roles
+            );
+        }
+        return helper;
+    }
+
+    @Override
+    public PartRole getPartRole(BlockPos localOffset) {
+        return PartRole.DEFAULT;
+    }
+
+    @Override
+    public net.minecraft.world.phys.shapes.VoxelShape getShape(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos pos, net.minecraft.world.phys.shapes.CollisionContext context) {
+        return getStructureHelper().generateShapeFromParts(state.getValue(FACING));
+    }
+
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        if (!level.isClientSide) {
+            Direction facing = state.getValue(FACING);
+            getStructureHelper().placeStructure(level, pos, facing, this);
+        }
+    }
+
+    @Override
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!state.is(newState.getBlock()) && !level.isClientSide) {
+            BlockEntity be = level.getBlockEntity(pos);
+            if (be instanceof CoccerOvenBlockEntity oven) {
+                for (int i = 0; i < oven.getInventory().getSlots(); i++) {
+                    ItemStack stack = oven.getInventory().getStackInSlot(i);
+                    if (!stack.isEmpty()) {
+                        Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), stack);
+                    }
+                }
+            }
+            Direction facing = state.getValue(FACING);
+            getStructureHelper().destroyStructure(level, pos, facing);
+        }
+        super.onRemove(state, level, pos, newState, isMoving);
+    }
+
+    @Override
+    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+        if (level.isClientSide) return InteractionResult.sidedSuccess(true);
+        if (level.getBlockEntity(pos) instanceof CoccerOvenBlockEntity oven) {
+            net.minecraftforge.network.NetworkHooks.openScreen(
+                    (net.minecraft.server.level.ServerPlayer) player, oven, pos
+            );
+        }
+        return InteractionResult.CONSUME;
+    }
+
+    @Nullable
+    @Override
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new CoccerOvenBlockEntity(pos, state);
+    }
+
+    @Nullable
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
+        return level.isClientSide ? null : createTickerHelper(type, ModBlockEntities.COCCER_OVEN_BE.get(), CoccerOvenBlockEntity::serverTick);
+    }
+}

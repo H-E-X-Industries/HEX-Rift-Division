@@ -70,6 +70,8 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
+import static com.trd.menu.ModMenuTypes.COCCER_OVEN_MENU;
+
 @Mod.EventBusSubscriber(modid = MainRegistry.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class ClientModEvents {
 
@@ -96,6 +98,7 @@ public class ClientModEvents {
         event.registerBlockEntityRenderer(ModBlockEntities.CONVEYOR_BE.get(), ConveyorRenderer::new);
         net.minecraft.client.gui.screens.MenuScreens.register(ModMenuTypes.STEEL_STORAGE_MENU.get(), SteelStorageScreen::new);
 
+        MenuScreens.register(COCCER_OVEN_MENU.get(), CoccerOvenScreen::new);
         MenuScreens.register(ModMenuTypes.ELECTRIC_FURNACE_MENU.get(), GUIElectricFurnace::new);
         MenuScreens.register(ModMenuTypes.SMALL_SMELTER_MENU.get(), GUISmallSmelter::new);
         MenuScreens.register(ModMenuTypes.MACHINE_BATTERY_MENU.get(), GUIMachineBattery::new);
