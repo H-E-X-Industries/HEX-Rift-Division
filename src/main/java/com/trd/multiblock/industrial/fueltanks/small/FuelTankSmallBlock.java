@@ -1,5 +1,6 @@
 package com.trd.multiblock.industrial.fueltanks.small;
 
+import com.trd.api.fluids.system.BaseFluidType;
 import com.trd.block.basic.ModBlocks;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.item.tools.FluidIdentifierItem;
@@ -8,6 +9,9 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
@@ -45,6 +49,7 @@ public class FuelTankSmallBlock extends BaseEntityBlock implements IMultiblockCo
 
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
     private static MultiblockStructureHelper helper;
+    private static final String CAPACITY = "288000";
 
     public FuelTankSmallBlock(Properties properties) {
         super(properties.noOcclusion());
@@ -139,7 +144,6 @@ public class FuelTankSmallBlock extends BaseEntityBlock implements IMultiblockCo
             Direction facing = state.getValue(FACING);
             getStructureHelper().placeStructure(level, pos, facing, this);
 
-            // восстанавливаем тип/жидкость из предмета
             BlockEntity be = level.getBlockEntity(pos);
             if (be instanceof FuelTankSmallBlockEntity tank) {
                 net.minecraft.nbt.CompoundTag itemNbt = stack.getTag();
@@ -216,32 +220,42 @@ public class FuelTankSmallBlock extends BaseEntityBlock implements IMultiblockCo
         return level.isClientSide ? null : createTickerHelper(type, ModBlockEntities.FUEL_TANK_SMALL_BE.get(), FuelTankSmallBlockEntity::tick);
     }
 
+    private int getFluidColor(@Nullable Fluid fluid) {
+        if (fluid == null) return 0xFFFFFF;
+        net.minecraftforge.fluids.FluidType type = fluid.getFluidType();
+        if (type instanceof BaseFluidType base) {
+            return base.getTintColor();
+        }
+        ResourceLocation id = net.minecraftforge.registries.ForgeRegistries.FLUIDS.getKey(fluid);
+        if (id == null) return 0xFFFFFF;
+        if (id.equals(new ResourceLocation("water"))) return 0x3F76E4;
+        if (id.equals(new ResourceLocation("lava"))) return 0xFF4500;
+        return 0xFFFFFF;
+    }
+
     @Override
     public void appendHoverText(ItemStack stack, @Nullable BlockGetter level, List<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, level, tooltip, flag);
-        tooltip.add(Component.translatable("tooltip.trd.fuel_tank.capacity", "288 000").withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("tooltip.trd.fuel_tank.resistant").withStyle(ChatFormatting.GREEN));
 
         net.minecraft.nbt.CompoundTag nbt = stack.getTag();
         net.minecraft.nbt.CompoundTag beTag = (nbt != null && nbt.contains("BlockEntityTag")) ? nbt.getCompound("BlockEntityTag") : null;
 
-        // Что реально налито
         String fluidName = beTag != null ? beTag.getString("FluidName") : "";
         int amount = beTag != null ? beTag.getInt("Amount") : 0;
         boolean hasFluid = !fluidName.isEmpty() && !fluidName.equals("minecraft:empty") && amount > 0;
 
-        // Заданный тип (фильтр)
         String filter = beTag != null ? beTag.getString("FluidFilter") : "";
         boolean hasFilter = filter != null && !filter.isEmpty() && !filter.equals("none");
 
-        // Показываем содержимое, иначе заданный тип
         String displayId = hasFluid ? fluidName : (hasFilter ? filter : "");
 
         if (!displayId.isEmpty()) {
-            Fluid fluid = net.minecraftforge.registries.ForgeRegistries.FLUIDS.getValue(new net.minecraft.resources.ResourceLocation(displayId));
+            Fluid fluid = net.minecraftforge.registries.ForgeRegistries.FLUIDS.getValue(new ResourceLocation(displayId));
             String loc = fluid != null ? Component.translatable(fluid.getFluidType().getDescriptionId()).getString() : displayId;
-            tooltip.add(Component.translatable("tooltip.trd.fuel_tank.fluid", loc));
-            tooltip.add(Component.translatable("tooltip.trd.fuel_tank.amount", amount, "288000"));
+            int color = getFluidColor(fluid);
+            tooltip.add(Component.translatable("tooltip.trd.fuel_tank.fluid_amount", loc, amount, CAPACITY)
+                    .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(color))));
         }
     }
 }

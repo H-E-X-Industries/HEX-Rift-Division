@@ -477,6 +477,33 @@ public class ModItems {
     // Бойлер
     MachineTooltipRegistry.register(BOILER_ITEM, "tooltip.trd.machine.boiler.desc");
 
+    MachineTooltipRegistry.register(DROBITEL_ITEM, "tooltip.trd.machine.drobitel.desc");
+    MachineTooltipRegistry.register(BLADE, "tooltip.trd.machine.blade.desc");
+    MachineTooltipRegistry.register(STEAM_ENGINE_ITEM, "tooltip.trd.machine.steam_engine.desc");
+    MachineTooltipRegistry.registerBlock(ModBlocks.JERNOVA, "tooltip.trd.machine.millstone.desc");
+    MachineTooltipRegistry.register(ModBlocks.WATER_PUMP_ITEM, "tooltip.trd.machine.water_pump.desc");
+    MachineTooltipRegistry.registerBlock(ModBlocks.LOW_PRESSURE_STEAM_CONDENSER, "tooltip.trd.machine.condenser.desc");
+
+    // ═══ Kinetic & Tools ═══
+    MachineTooltipRegistry.registerBlock(ModBlocks.CLUTCH, "tooltip.trd.machine.clutch.desc");
+    MachineTooltipRegistry.register(BEAM_PLACER, "tooltip.trd.machine.beam_placer.desc");
+    MachineTooltipRegistry.register(WIRE_COIL, "tooltip.trd.machine.wire_coil.desc");
+
+    // ═══ Connectors (all 3 tiers) ═══
+    MachineTooltipRegistry.registerBlock(ModBlocks.CONNECTOR, "tooltip.trd.machine.connector.desc");
+    MachineTooltipRegistry.registerBlock(ModBlocks.MEDIUM_CONNECTOR, "tooltip.trd.machine.connector.desc");
+    MachineTooltipRegistry.registerBlock(ModBlocks.LARGE_CONNECTOR, "tooltip.trd.machine.connector.desc");
+
+    // ═══ Weapons & Turrets ═══
+    MachineTooltipRegistry.register(TROMBONE_ITEM, "tooltip.trd.machine.trombone.desc");
+    MachineTooltipRegistry.register(TURRET_CHIP, "tooltip.trd.machine.turret_chip.desc");
+    MachineTooltipRegistry.register(MACHINEGUN, "tooltip.trd.machine.machinegun.desc");
+    MachineTooltipRegistry.register(TURRET_LIGHT_PLACER_ITEM, "tooltip.trd.machine.turret_light.desc");
+
+    // ═══ Misc ═══
+    MachineTooltipRegistry.register(BELT, "tooltip.trd.machine.belt.desc");
+    MachineTooltipRegistry.register(FLUID_IDENTIFIER, "tooltip.trd.machine.fluid_identifier.desc");
+
 
     }
 

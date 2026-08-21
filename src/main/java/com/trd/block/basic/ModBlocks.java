@@ -281,6 +281,17 @@ public class ModBlocks {
             () -> new Block(BlockBehaviour.Properties.of()
                     .strength(4.0F, 18.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
 
+    public static final RegistryObject<Block> ARMORED_GLASS = registerBlock("armored_glass",
+            () -> new GlassBlock(BlockBehaviour.Properties.of()
+                    .strength(3.0F, 12.0F)
+                    .sound(SoundType.STONE)
+                    .requiresCorrectToolForDrops()
+                    .noOcclusion()
+                    .isValidSpawn((state, level, pos, entity) -> false)
+                    .isRedstoneConductor((state, level, pos) -> false)
+                    .isSuffocating((state, level, pos) -> false)
+                    .isViewBlocking((state, level, pos) -> false)));
+
     public static final RegistryObject<Block> CONCRETE_HAZARD_NEW = registerBlock("concrete_hazard_new",
             () -> new Block(BlockBehaviour.Properties.of()
                     .strength(4.0F, 18.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
@@ -408,7 +419,7 @@ public class ModBlocks {
 
     public static final RegistryObject<Block> ROUND_LAMP = registerBlock("round_lamp",
             () -> new LampBlock(BlockBehaviour.Properties.of()
-                    .strength(1.5F, 3.0F)
+                    .strength(6F, 30F)
                     .sound(SoundType.STONE)
                     .requiresCorrectToolForDrops()
                     .noOcclusion()
@@ -417,6 +428,10 @@ public class ModBlocks {
     public static final RegistryObject<Block> MORY_BLOCK = registerBlock("mory_block",
             () -> new Block(BlockBehaviour.Properties.of()
                     .strength(2.0F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> DECO_BARREL = registerBlock("deco_barrel",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(2.0F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
 
     public static final RegistryObject<Block> ANTON_CHIGUR = registerBlock("anton_chigur",
             () -> new Block(BlockBehaviour.Properties.of()
@@ -601,13 +616,18 @@ public class ModBlocks {
 
     // ДВЕРИ
     public static final RegistryObject<Block> SEQUOIA_DOOR = registerBlock("sequoia_door",
-            () -> new net.minecraft.world.level.block.DoorBlock(
+            () -> new DoorBlock(
                     BlockBehaviour.Properties.copy(Blocks.DARK_OAK_DOOR).sound(SoundType.WOOD).noOcclusion(),
                     BlockSetType.DARK_OAK));
 
+    public static final RegistryObject<Block> STEEL_DOOR = registerBlock("steel_door",
+            () -> new DoorBlock(
+                    BlockBehaviour.Properties.of().strength(15.0F, 80.0F).sound(SoundType.METAL).noOcclusion(),
+                    BlockSetType.STONE));
+
     // ЛЮКИ
     public static final RegistryObject<Block> SEQUOIA_TRAPDOOR = registerBlock("sequoia_trapdoor",
-            () -> new net.minecraft.world.level.block.TrapDoorBlock( // <--- ВОТ ТУТ ИСПРАВЬ
+            () -> new TrapDoorBlock( // <--- ВОТ ТУТ ИСПРАВЬ
                     BlockBehaviour.Properties.copy(Blocks.DARK_OAK_DOOR).sound(SoundType.WOOD).noOcclusion(),
                     BlockSetType.DARK_OAK));
 
@@ -617,7 +637,7 @@ public class ModBlocks {
     public static final RegistryObject<Block> PIPE_SPOTS = BLOCKS.register("pipe_spots",
             () -> new FluidPipeBlock(
                     com.trd.api.fluids.system.PipeTier.BRONZE, // <--- Просто даем ему любой тир-заглушку
-                    net.minecraft.world.level.block.state.BlockBehaviour.Properties.copy(net.minecraft.world.level.block.Blocks.GLASS)
+                    BlockBehaviour.Properties.copy(net.minecraft.world.level.block.Blocks.GLASS)
                             .noCollission().noOcclusion().noLootTable()
             ));
 
@@ -887,6 +907,11 @@ public class ModBlocks {
         ExplosionTooltipRegistry.register(REINFORCEDBRICK_STAIRS);
         ExplosionTooltipRegistry.register(REINFORCEDBRICK_SLAB);
 
+        ExplosionTooltipRegistry.register(ARMORED_GLASS);
+
+        ExplosionTooltipRegistry.register(STEEL_DOOR);
+
+        ExplosionTooltipRegistry.register(ROUND_LAMP);
     }
 
     // Вспомогательный метод регистрации без предмета

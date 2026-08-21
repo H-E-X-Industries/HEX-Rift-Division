@@ -1,9 +1,15 @@
 package com.trd.block.basic.industrial.fluids;
 
 import com.trd.api.fluids.system.BarrelTier;
+import com.trd.api.fluids.system.BaseFluidType;
+import com.trd.block.entity.ModBlockEntities;
+import com.trd.block.entity.industrial.fluids.FluidBarrelBlockEntity;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Containers;
@@ -19,6 +25,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -26,8 +33,7 @@ import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.Nullable;
 
-import com.trd.block.entity.ModBlockEntities;
-import com.trd.block.entity.industrial.fluids.FluidBarrelBlockEntity;
+import java.util.List;
 
 public class FluidBarrelBlock extends BaseEntityBlock {
 
@@ -101,7 +107,6 @@ public class FluidBarrelBlock extends BaseEntityBlock {
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         if (!state.is(newState.getBlock())) {
-            // ФИКС ДЮПА: не дропаем предметы при переходе между типами бочек (повреждение)
             if (!(newState.getBlock() instanceof FluidBarrelBlock)) {
                 BlockEntity be = level.getBlockEntity(pos);
                 if (be instanceof FluidBarrelBlockEntity barrel) {
@@ -145,12 +150,22 @@ public class FluidBarrelBlock extends BaseEntityBlock {
         return super.getDrops(pState, pParams);
     }
 
+    private int getFluidColor(@Nullable Fluid fluid) {
+        if (fluid == null) return 0xFFFFFF;
+        net.minecraftforge.fluids.FluidType type = fluid.getFluidType();
+        if (type instanceof BaseFluidType base) {
+            return base.getTintColor();
+        }
+        ResourceLocation id = ForgeRegistries.FLUIDS.getKey(fluid);
+        if (id == null) return 0xFFFFFF;
+        if (id.equals(new ResourceLocation("water"))) return 0x3F76E4;
+        if (id.equals(new ResourceLocation("lava"))) return 0xFF4500;
+        return 0xFFFFFF;
+    }
+
     @Override
     public void appendHoverText(net.minecraft.world.item.ItemStack pStack, @org.jetbrains.annotations.Nullable net.minecraft.world.level.BlockGetter pLevel, java.util.List<net.minecraft.network.chat.Component> pTooltip, net.minecraft.world.item.TooltipFlag pFlag) {
         super.appendHoverText(pStack, pLevel, pTooltip, pFlag);
-
-        pTooltip.add(Component.translatable("tooltip.trd.fluid_barrel.capacity").withStyle(ChatFormatting.GRAY)
-                .append(Component.literal(tier.getCapacity() + "mB").withStyle(ChatFormatting.WHITE)));
 
         pTooltip.add(Component.translatable("tooltip.trd.fluid_barrel.melting_point").withStyle(ChatFormatting.GRAY)
                 .append(Component.literal(tier.getMeltingPoint() + "°C").withStyle(ChatFormatting.GOLD)));
@@ -166,25 +181,21 @@ public class FluidBarrelBlock extends BaseEntityBlock {
         net.minecraft.nbt.CompoundTag nbt = pStack.getTag();
         net.minecraft.nbt.CompoundTag beTag = (nbt != null && nbt.contains("BlockEntityTag")) ? nbt.getCompound("BlockEntityTag") : null;
 
-        // Что реально налито в бак
         String fluidName = beTag != null ? beTag.getString("FluidName") : "";
         int amount = beTag != null ? beTag.getInt("Amount") : 0;
         boolean hasFluid = !fluidName.isEmpty() && !fluidName.equals("minecraft:empty") && amount > 0;
 
-        // Заданный тип (фильтр)
         String filter = beTag != null ? beTag.getString("FluidFilter") : "";
         boolean hasFilter = filter != null && !filter.isEmpty() && !filter.equals("none");
 
-        // Какую жидкость показывать: сначала содержимое, иначе заданный тип-фильтр
         String displayId = hasFluid ? fluidName : (hasFilter ? filter : "");
 
         if (!displayId.isEmpty()) {
-            net.minecraft.world.level.material.Fluid fluid = net.minecraftforge.registries.ForgeRegistries.FLUIDS.getValue(new net.minecraft.resources.ResourceLocation(displayId));
-            String localizedName = fluid != null ? net.minecraft.network.chat.Component.translatable(fluid.getFluidType().getDescriptionId()).getString() : displayId;
-            pTooltip.add(Component.translatable("tooltip.trd.fluid_barrel.fluid", localizedName));
-            pTooltip.add(Component.translatable("tooltip.trd.fluid_barrel.amount", amount, tier.getCapacity()));
-        } else {
-            pTooltip.add(Component.translatable("tooltip.trd.fluid_barrel.empty"));
+            Fluid fluid = ForgeRegistries.FLUIDS.getValue(new ResourceLocation(displayId));
+            String localizedName = fluid != null ? Component.translatable(fluid.getFluidType().getDescriptionId()).getString() : displayId;
+            int color = getFluidColor(fluid);
+            pTooltip.add(Component.translatable("tooltip.trd.fluid_barrel.fluid_amount", localizedName, amount, tier.getCapacity())
+                    .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(color))));
         }
     }
 }

@@ -187,6 +187,8 @@ public class MainRegistry {
             event.accept(ModBlocks.SEQUOIA_STAIRS.get());
 
             event.accept(ModBlocks.CONCRETE_NET.get());
+            event.accept(ModBlocks.ARMORED_GLASS.get());
+
             event.accept(ModBlocks.MORY_BLOCK);
             event.accept(ModBlocks.ANTON_CHIGUR);
             event.accept(ModBlocks.MINERAL_BLOCK2.get());
@@ -202,7 +204,11 @@ public class MainRegistry {
             event.accept(ModBlocks.DECO_BEAM.get());
             event.accept(ModBlocks.BEAM_BLOCK.get());
             event.accept(ModBlocks.STEEL_PROPS.get());
+            event.accept(ModBlocks.DECO_BARREL.get());
             event.accept(ModBlocks.ROUND_LAMP.get());
+
+            event.accept(ModBlocks.STEEL_DOOR.get());
+            event.accept(ModBlocks.SEQUOIA_DOOR.get());
 
         }
 

@@ -40,9 +40,9 @@ public class DetMinerBlock extends Block implements IDetonatable {
 
     private static final int BLAST_RADIUS = 4;
     private static final float BLAST_NOISE = 0.2f;
-    private static final float HARDNESS_LIMIT = 30.0f;
+    private static final float HARDNESS_LIMIT = 10.0f;
     private static final float CONGLOMERATE_CHUNK_CHANCE = 0.50f;
-    private static final int CONGLOMERATE_OU_EXTRACT = 54;
+    private static final int CONGLOMERATE_OU_EXTRACT = 81;
 
     // Радиус цепной детонации
     private static final int CHAIN_RADIUS = 6;

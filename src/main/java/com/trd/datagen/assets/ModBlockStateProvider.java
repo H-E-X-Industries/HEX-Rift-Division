@@ -151,6 +151,7 @@ public class ModBlockStateProvider extends BlockStateProvider {
 
         //СТАТИЧНИЫЕ ПРОЗРАЧНЫЕ БЛОКИ, ПРИМЕР:
         // cutoutBlockWithItem(ModBlocks.REINFORCED_GLASS);
+        cutoutBlockWithItem(ModBlocks.ARMORED_GLASS);
         simpleBlock(ModBlocks.MULTIBLOCK_PART.get(),
                 models().withExistingParent(ModBlocks.MULTIBLOCK_PART.getId().getPath(), "minecraft:block/air"));
 
@@ -222,6 +223,9 @@ public class ModBlockStateProvider extends BlockStateProvider {
 
         doorBlockWithRenderType((net.minecraft.world.level.block.DoorBlock) ModBlocks.SEQUOIA_DOOR.get(),
                 modLoc("block/sequoia_door_bottom"), modLoc("block/sequoia_door_top"), "cutout");
+
+        doorBlockWithRenderType((net.minecraft.world.level.block.DoorBlock) ModBlocks.STEEL_DOOR.get(),
+                modLoc("block/steel_door_bottom"), modLoc("block/steel_door_top"), "cutout");
 
         trapdoorBlockWithRenderType((net.minecraft.world.level.block.TrapDoorBlock) ModBlocks.SEQUOIA_TRAPDOOR.get(),
                 modLoc("block/sequoia_trapdoor"), true, "cutout");
