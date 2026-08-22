@@ -113,6 +113,7 @@ public class ModLangProvider extends LanguageProvider {
         add("jei.category.trd.electric_furnace", "Electric Furnace");
         add("jei.category.trd.coccer_oven", "Coke Oven");
         add("jei.category.trd.chemical_plant", "Chemical Plant");
+        add("jei.category.trd.vishelashivatel", "Leacher");
 
         // Metals
         add("metal.trd.gold", "Gold");
@@ -920,6 +921,7 @@ public class ModLangProvider extends LanguageProvider {
 
         // ═══ Выщелащиватель ═══
         add(ModBlocks.VISHELASHIVATEL.get(), "Выщелащиватель");
+        add("jei.category.trd.vishelashivatel", "Выщелащиватель");
         add("recipe.trd.leather_from_rotten_flesh", "Производство кожи");
         add("gui.trd.vishelashivatel.empty_tank", "Пусто");
         add("gui.trd.vishelashivatel.fluid_amount", "%s / %s мБ");
