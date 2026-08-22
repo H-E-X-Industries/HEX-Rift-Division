@@ -32,8 +32,8 @@ public class GUICentrifuge extends AbstractContainerScreen<CentrifugeMenu> {
     private static final int BAR_H = 27;
     private static final int BAR_V = 1;
 
-    // Прогрессбар рецепта №2: рендер (98, 37), UV (202, 1), 14x27, слева направо
-    private static final int BAR2_X = 98;
+    // Прогрессбар рецепта №2: рендер (99, 37), UV (202, 1), 14x27, слева направо
+    private static final int BAR2_X = 99;
     private static final int BAR2_Y = 37;
     private static final int BAR2_U = 202;
 
@@ -95,8 +95,7 @@ public class GUICentrifuge extends AbstractContainerScreen<CentrifugeMenu> {
         if (isHovering(ENERGY_X, ENERGY_Y, ENERGY_W, ENERGY_H, mouseX, mouseY)) {
             gui.renderTooltip(this.font,
                     Component.translatable("gui.trd.centrifuge.energy_tooltip",
-                            String.format("%,d", this.menu.getEnergy()).replace(',', ' '),
-                            String.format("%,d", this.menu.getMaxEnergy()).replace(',', ' ')),
+                            this.menu.getEnergy(), this.menu.getMaxEnergy()),
                     mouseX, mouseY);
         }
 

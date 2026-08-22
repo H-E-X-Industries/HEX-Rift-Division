@@ -101,6 +101,8 @@ public class trdJeiPlugin implements IModPlugin {
             RecipeType.create(MainRegistry.MOD_ID, "chemical_plant", ChemicalPlantWrapper.class);
     public static final RecipeType<VishelashivatelWrapper> VISHELASHIVATEL_TYPE =
             RecipeType.create(MainRegistry.MOD_ID, "vishelashivatel", VishelashivatelWrapper.class);
+    public static final RecipeType<CentrifugeWrapper> CENTRIFUGE_TYPE =
+            RecipeType.create(MainRegistry.MOD_ID, "centrifuge", CentrifugeWrapper.class);
 
     public record ElectricFurnaceWrapper(net.minecraft.world.item.crafting.AbstractCookingRecipe recipe, int cookTime, int energyPerTick) {}
     public record SmeltingWrapper(ItemStack input, Metal metal, int outputUnits, int temp, float heatConsumption, int timeTicks) {}
@@ -113,6 +115,7 @@ public class trdJeiPlugin implements IModPlugin {
     public record CoccerOvenWrapper(CoccerOvenRecipe recipe) {}
     public record ChemicalPlantWrapper(ChemicalPlantRecipe recipe) {}
     public record VishelashivatelWrapper(com.trd.multiblock.industrial.vishelashivatel.VishelashivatelRecipe recipe) {}
+    public record CentrifugeWrapper(com.trd.multiblock.industrial.centrifuge.CentrifugeRecipe recipe) {}
 
     @Override
     public void registerCategories(IRecipeCategoryRegistration registration) {
@@ -129,6 +132,7 @@ public class trdJeiPlugin implements IModPlugin {
         registration.addRecipeCategories(new CoccerOvenCategory(guiHelper));
         registration.addRecipeCategories(new ChemicalPlantCategory(guiHelper));
         registration.addRecipeCategories(new VishelashivatelCategory(guiHelper));
+        registration.addRecipeCategories(new CentrifugeCategory(guiHelper));
     }
 
     @Override
@@ -271,6 +275,14 @@ public class trdJeiPlugin implements IModPlugin {
             vishelashivatelRecipes.add(new VishelashivatelWrapper(recipe));
         }
         registration.addRecipes(VISHELASHIVATEL_TYPE, vishelashivatelRecipes);
+
+        // === ЦЕНТРИФУГА ===
+        List<CentrifugeWrapper> centrifugeRecipes = new ArrayList<>();
+        for (com.trd.multiblock.industrial.centrifuge.CentrifugeRecipe recipe :
+                com.trd.multiblock.industrial.centrifuge.CentrifugeRecipes.getAllRecipes()) {
+            centrifugeRecipes.add(new CentrifugeWrapper(recipe));
+        }
+        registration.addRecipes(CENTRIFUGE_TYPE, centrifugeRecipes);
     }
 
     @Override
@@ -286,6 +298,8 @@ public class trdJeiPlugin implements IModPlugin {
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.COCCER_OVEN.get()), COCCER_OVEN_TYPE);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.CHEMICAL_PLANT_REACTION_CHAMBER.get()), CHEMICAL_PLANT_TYPE);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.VISHELASHIVATEL.get()), VISHELASHIVATEL_TYPE);
+        registration.addRecipeCatalyst(new ItemStack(ModBlocks.CENTRIFUGE_CONUS.get()), CENTRIFUGE_TYPE);
+        registration.addRecipeCatalyst(new ItemStack(ModBlocks.CENTRIFUGE_MOTOR.get()), CENTRIFUGE_TYPE);
     }
 
     private static ItemStack createLiquidMetalStack(Metal metal, int amount) {
@@ -846,6 +860,48 @@ public class trdJeiPlugin implements IModPlugin {
             var font = Minecraft.getInstance().font;
             gg.drawString(font, recipe.recipe().getMinRpm() + " об/мин", 4, 42, 0xFF555555, false);
             gg.drawString(font, String.format("%.1fs", recipe.recipe().getProcessTime() / 20f), 4, 50, 0xFF555555, false);
+        }
+    }
+
+    // Макет 102x60: вход на (5,22), выходы 2x2 на (63,13), текст на (24,33)
+    public static class CentrifugeCategory implements IRecipeCategory<CentrifugeWrapper> {
+        private final IDrawable background;
+        private final IDrawable icon;
+        private final Component title;
+
+        public CentrifugeCategory(IGuiHelper guiHelper) {
+            this.background = guiHelper.createDrawable(TEXTURE_UNIVERSAL_102x60, 0, 0, 102, 60);
+            this.icon = guiHelper.createDrawableIngredient(VanillaTypes.ITEM_STACK,
+                    new ItemStack(ModBlocks.CENTRIFUGE_CONUS.get()));
+            this.title = Component.translatable("jei.category.trd.centrifuge");
+        }
+
+        @Override public RecipeType<CentrifugeWrapper> getRecipeType() { return CENTRIFUGE_TYPE; }
+        @Override public Component getTitle() { return title; }
+        @Override public IDrawable getBackground() { return background; }
+        @Override public IDrawable getIcon() { return icon; }
+
+        @Override
+        public void setRecipe(IRecipeLayoutBuilder builder, CentrifugeWrapper wrapper, IFocusGroup focuses) {
+            com.trd.multiblock.industrial.centrifuge.CentrifugeRecipe recipe = wrapper.recipe();
+
+            builder.addSlot(RecipeIngredientRole.INPUT, 5, 22)
+                    .addItemStack(recipe.getInput().copy());
+
+            List<ItemStack> outputs = recipe.getOutputs();
+            for (int i = 0; i < outputs.size() && i < CHAMBER_OUTPUT_SLOTS.length; i++) {
+                ItemStack stack = outputs.get(i);
+                if (!stack.isEmpty()) {
+                    builder.addSlot(RecipeIngredientRole.OUTPUT, CHAMBER_OUTPUT_SLOTS[i][0], CHAMBER_OUTPUT_SLOTS[i][1])
+                            .addItemStack(stack.copy());
+                }
+            }
+        }
+
+        @Override
+        public void draw(CentrifugeWrapper recipe, IRecipeSlotsView view, GuiGraphics gg, double mx, double my) {
+            var font = Minecraft.getInstance().font;
+            gg.drawString(font, String.format("%.1fs", recipe.recipe().getProcessTime() / 20f), 24, 33, 0xFF555555, false);
         }
     }
 }

@@ -24,6 +24,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,11 +52,15 @@ public class CentrifugeConusBlock extends BaseEntityBlock implements IMultiblock
     }
 
     /**
-     * Единый хитбокс/обводка всей насадки (контроллер + парт).
+     * Единый хитбокс/обводка всей центрифуги: мотор + контроллер + парт.
      */
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return getStructureHelper().generateShapeFromParts(Direction.NORTH);
+        VoxelShape own = getStructureHelper().generateShapeFromParts(Direction.NORTH);
+        if (level.getBlockState(pos.below()).getBlock() instanceof CentrifugeMotorBlock) {
+            return Shapes.or(own, Shapes.block().move(0, -1, 0));
+        }
+        return own;
     }
 
     // ===================== МУЛЬТИБЛОК 1x1x2 =====================
