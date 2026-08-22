@@ -8,7 +8,11 @@ import com.trd.multiblock.system.MultiblockStructureHelper;
 import com.trd.multiblock.system.PartRole;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -38,6 +42,7 @@ import java.util.function.Supplier;
 public class SmelterBlock extends BaseEntityBlock implements IMultiblockController {
 
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+    private static final float EFFECTS_MIN_TEMP = 300.0F;
     private static MultiblockStructureHelper helper;
 
     public SmelterBlock(Properties properties) {
@@ -177,5 +182,31 @@ public class SmelterBlock extends BaseEntityBlock implements IMultiblockControll
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         return level.isClientSide ? null : createTickerHelper(type, ModBlockEntities.SMELTER_BE.get(), SmelterBlockEntity::serverTick);
+    }
+
+    @Override
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        if (!(level.getBlockEntity(pos) instanceof SmelterBlockEntity smelter) || smelter.getTemperature() < EFFECTS_MIN_TEMP) {
+            return;
+        }
+
+        if (random.nextDouble() < 0.1D) {
+            level.playLocalSound(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D,
+                    SoundEvents.FURNACE_FIRE_CRACKLE, SoundSource.BLOCKS, 1.0F, 1.0F, false);
+        }
+
+        double x = pos.getX() + 0.5D + (random.nextDouble() - 0.5D) * 0.6D;
+        double y = pos.getY() + 1.5D;
+        double z = pos.getZ() + 0.5D + (random.nextDouble() - 0.5D) * 0.6D;
+
+        if (random.nextDouble() < 0.4D) {
+            level.addParticle(ParticleTypes.LAVA, x, y, z, 0.0D, 0.0D, 0.0D);
+        }
+        if (random.nextDouble() < 0.6D) {
+            level.addParticle(ParticleTypes.FLAME, x, y, z,
+                    (random.nextDouble() - 0.5D) * 0.05D,
+                    0.01D + random.nextDouble() * 0.05D,
+                    (random.nextDouble() - 0.5D) * 0.05D);
+        }
     }
 }
