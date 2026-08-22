@@ -15,7 +15,8 @@ public enum PartRole implements StringRepresentable {
     FLUID_OUTPUT("fluid_output"),
     FLUID_LADDER("fluid_ladder"),
     KINETIC_GENERATOR("kinetic_generator"),
-    KINETIC_PORT("kinetic_port"); // <-- НОВАЯ РОЛЬ
+    KINETIC_PORT("kinetic_port"),
+    CARGO_PORT("cargo_port");
 
     private final String name;
 

@@ -197,7 +197,45 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
 
 
     // ────── Capability ──────
-    private final LazyOptional<IItemHandler> itemHandlerOpt = LazyOptional.of(() -> inventory);
+    private final LazyOptional<net.minecraftforge.items.IItemHandler> itemHandlerOpt = LazyOptional.of(() -> inventory);
+    private final LazyOptional<net.minecraftforge.items.IItemHandler> cargoPortHandlerOpt = LazyOptional.of(() -> new net.minecraftforge.items.IItemHandler() {
+        @Override
+        public int getSlots() {
+            return inventory.getSlots();
+        }
+
+        @NotNull
+        @Override
+        public ItemStack getStackInSlot(int slot) {
+            return inventory.getStackInSlot(slot);
+        }
+
+        @NotNull
+        @Override
+        public ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+            return inventory.insertItem(slot, stack, simulate);
+        }
+
+        @NotNull
+        @Override
+        public ItemStack extractItem(int slot, int amount, boolean simulate) {
+            // Разрешаем извлекать ТОЛЬКО из выходных слотов
+            if (slot >= INPUT_SLOTS && slot < INPUT_SLOTS + OUTPUT_SLOTS) {
+                return inventory.extractItem(slot, amount, simulate);
+            }
+            return ItemStack.EMPTY; // Запрет извлечения из входных слотов и слота насадки
+        }
+
+        @Override
+        public int getSlotLimit(int slot) {
+            return inventory.getSlotLimit(slot);
+        }
+
+        @Override
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            return inventory.isItemValid(slot, stack);
+        }
+    });
 
     public StanokBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.STANOK_BE.get(), pos, state);
@@ -490,14 +528,24 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
-        if (cap == ForgeCapabilities.ITEM_HANDLER) return itemHandlerOpt.cast();
+        if (cap == ForgeCapabilities.ITEM_HANDLER) {
+            // Строго блокируем любой доступ к инвентарю через сам блок контроллера!
+            // Все конвейеры должны работать только через Dummy-блоки с ролью CARGO_PORT.
+            return LazyOptional.empty();
+        }
         return super.getCapability(cap, side);
+    }
+    
+    // Специальный метод для карго-портов, чтобы они могли получать доступ
+    public LazyOptional<net.minecraftforge.items.IItemHandler> getCargoPortCapability() {
+        return cargoPortHandlerOpt;
     }
 
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
         itemHandlerOpt.invalidate();
+        cargoPortHandlerOpt.invalidate();
     }
 
     // ────── MenuProvider ──────

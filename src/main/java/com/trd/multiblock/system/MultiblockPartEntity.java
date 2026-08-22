@@ -308,6 +308,18 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
             else if (cap == ForgeCapabilities.ITEM_HANDLER) {
                 BlockEntity be = level.getBlockEntity(controllerPos);
                 if (be != null) {
+                    // Специальная логика для карго-портов станка
+                    if (be instanceof com.trd.multiblock.industrial.stanok.StanokBlockEntity sbe) {
+                        if (role == PartRole.CARGO_PORT) {
+                            Direction facing = sbe.getBlockState().getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING);
+                            // Порты должны работать строго по бокам! Убрал side == null, чтобы агрессивные трубы не обходили проверку.
+                            if (side == facing.getClockWise() || side == facing.getCounterClockWise()) {
+                                return sbe.getCargoPortCapability().cast();
+                            }
+                        }
+                        return LazyOptional.empty();
+                    }
+                    
                     return be.getCapability(cap, side);
                 }
             }

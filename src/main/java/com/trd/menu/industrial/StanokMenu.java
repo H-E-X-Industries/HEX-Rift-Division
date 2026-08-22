@@ -39,20 +39,20 @@ public class StanokMenu extends AbstractContainerMenu {
 
         if (entity != null) {
             entity.getCapability(ForgeCapabilities.ITEM_HANDLER).ifPresent(handler -> {
-                // Входные слоты: 2 строки × 3 столбца, шаг 20px
+                // Входные слоты: 2 строки × 3 столбца, шаг 18px (стандарт)
                 for (int row = 0; row < 2; row++) {
                     for (int col = 0; col < 3; col++) {
                         int slotIdx = row * 3 + col;
                         addSlot(new SlotItemHandler(handler, slotIdx,
-                                8 + col * 20, 21 + row * 20));
+                                8 + col * 18, 21 + row * 18));
                     }
                 }
-                // Выходные слоты: 2 строки × 3 столбца, шаг 20px (только extract)
+                // Выходные слоты: 2 строки × 3 столбца, шаг 18px (только extract)
                 for (int row = 0; row < 2; row++) {
                     for (int col = 0; col < 3; col++) {
                         int slotIdx = StanokBlockEntity.INPUT_SLOTS + row * 3 + col;
                         addSlot(new SlotItemHandler(handler, slotIdx,
-                                116 + col * 20, 21 + row * 20) {
+                                116 + col * 18, 21 + row * 18) {
                             @Override
                             public boolean mayPlace(ItemStack stack) { return false; }
                         });
