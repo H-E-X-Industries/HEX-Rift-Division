@@ -37,10 +37,10 @@ public class StanokMenu extends AbstractContainerMenu {
         this.blockEntity = entity;
         this.data = data;
 
-        if (entity != null) {
-            entity.getCapability(ForgeCapabilities.ITEM_HANDLER).ifPresent(handler -> {
-                // Входные слоты: 2 строки × 3 столбца, шаг 18px (стандарт)
-                for (int row = 0; row < 2; row++) {
+        if (entity instanceof StanokBlockEntity sbe) {
+            net.minecraftforge.items.IItemHandler handler = sbe.getInventory();
+            // Входные слоты: 2 строки × 3 столбца, шаг 18px (стандарт)
+            for (int row = 0; row < 2; row++) {
                     for (int col = 0; col < 3; col++) {
                         int slotIdx = row * 3 + col;
                         addSlot(new SlotItemHandler(handler, slotIdx,
@@ -60,8 +60,7 @@ public class StanokMenu extends AbstractContainerMenu {
                 }
                 // Слот насадки
                 addSlot(new SlotItemHandler(handler, StanokBlockEntity.CARRIAGE_SLOT, 80, 8));
-            });
-        }
+            }
 
         // Инвентарь игрока: x8, y65
         for (int row = 0; row < 3; row++) {

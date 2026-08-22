@@ -21,7 +21,7 @@ public class StanokRenderer implements BlockEntityRenderer<StanokBlockEntity> {
     @Override
     public void render(StanokBlockEntity be, float partialTick, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
         CarriageType carriage = be.getCurrentCarriageType();
-        if (carriage != CarriageType.PRESS) return;
+        if (carriage != CarriageType.PRESS && carriage != CarriageType.FREZA) return;
 
         StanokRecipe recipe = be.getCurrentRecipe();
         if (recipe == null) return;
@@ -57,20 +57,47 @@ public class StanokRenderer implements BlockEntityRenderer<StanokBlockEntity> {
         poseStack.translate(-0.5, 0, -0.5);
 
         // Координаты из Blockbench: -23.2269, 18.2554, -15.4183
-        // Смещение по просьбе: 0 по X, -3 по Z
-        float bbX = -23.2269f / 16f;
+        // Сдвиг на 1 пиксель вправо (вычитаем -1.0f по оси X станка)
+        float bbX = (-23.2269f - 1.0f) / 16f;
         float bbY = 18.2554f / 16f;
         float bbZ = (-15.4183f - 3.0f) / 16f;
-        
-        // Добавляем 2.0 по X и Z, так как модель станка смещена на (2, 0, 2)
-        poseStack.translate(2.0f + bbX, bbY, 2.0f + bbZ);
-        
-        poseStack.mulPose(Axis.XP.rotationDegrees(90));
-        poseStack.scale(0.5f, 0.5f, 0.5f);
 
-        Minecraft.getInstance().getItemRenderer().renderStatic(
-                toRender, ItemDisplayContext.GROUND, packedLight, packedOverlay, poseStack, buffer, be.getLevel(), 0
-        );
+        if (carriage == CarriageType.PRESS) {
+            // === РЕНДЕР ДЛЯ ПРЕССА (2D ПРЕДМЕТЫ / СЛИТКИ) ===
+            poseStack.pushPose();
+            poseStack.translate(2.0f + bbX, bbY, 2.0f + bbZ);
+            
+            // В Майнкрафте предметы типа GROUND по умолчанию стоят вертикально!
+            // Поэтому нам ОБЯЗАТЕЛЬНО нужен поворот по X на 90, чтобы слиток "упал" на стол.
+            poseStack.mulPose(Axis.XP.rotationDegrees(90));
+            poseStack.scale(0.5f, 0.5f, 0.5f);
+            
+            Minecraft.getInstance().getItemRenderer().renderStatic(
+                    toRender, ItemDisplayContext.GROUND, packedLight, packedOverlay, poseStack, buffer, be.getLevel(), 0
+            );
+            poseStack.popPose();
+            
+        } else if (carriage == CarriageType.FREZA) {
+            // === РЕНДЕР ДЛЯ ФРЕЗЫ ===
+            poseStack.pushPose();
+            poseStack.translate(2.0f + bbX, bbY, 2.0f + bbZ);
+            
+            if (phase < 0.5f) {
+                // В первой половине (сырьё/слиток) — рендерим В ТОЧНОСТИ как под прессом
+                poseStack.mulPose(Axis.XP.rotationDegrees(90));
+                poseStack.scale(0.5f, 0.5f, 0.5f);
+            } else {
+                // Во второй половине (готовый вал) — рендерим как 3D модель вала
+                poseStack.translate(0, -0.15f, 0); 
+                poseStack.mulPose(Axis.YP.rotationDegrees(90)); 
+                poseStack.scale(1.0f, 1.0f, 1.0f);
+            }
+            
+            Minecraft.getInstance().getItemRenderer().renderStatic(
+                    toRender, ItemDisplayContext.GROUND, packedLight, packedOverlay, poseStack, buffer, be.getLevel(), 0
+            );
+            poseStack.popPose();
+        }
 
         poseStack.popPose();
     }
