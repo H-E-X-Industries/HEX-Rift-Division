@@ -32,9 +32,14 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.BooleanOp;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -44,6 +49,7 @@ public class SmelterBlock extends BaseEntityBlock implements IMultiblockControll
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
     private static final float EFFECTS_MIN_TEMP = 300.0F;
     private static MultiblockStructureHelper helper;
+    private final Map<Direction, VoxelShape> shapeCache = new EnumMap<>(Direction.class);
 
     public SmelterBlock(Properties properties) {
         super(properties.noOcclusion().strength(3.0f, 10.0f));
@@ -96,9 +102,14 @@ public class SmelterBlock extends BaseEntityBlock implements IMultiblockControll
     }
 
     @Override
-    public net.minecraft.world.phys.shapes.VoxelShape getShape(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos pos, net.minecraft.world.phys.shapes.CollisionContext context) {
-        Direction facing = state.getValue(FACING);
-        return getStructureHelper().generateShapeFromParts(facing);
+    public net.minecraft.world.phys.shapes.VoxelShape getShape(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos pos, CollisionContext context) {
+        return shapeCache.computeIfAbsent(state.getValue(FACING), this::buildShape);
+    }
+
+    private VoxelShape buildShape(Direction facing) {
+        VoxelShape full = getStructureHelper().generateShapeFromParts(facing);
+        VoxelShape hole = MultiblockStructureHelper.rotateShape(Block.box(-2, 16, -2, 18, 32, 18), facing);
+        return Shapes.join(full, hole, BooleanOp.ONLY_FIRST);
     }
 
     @Override

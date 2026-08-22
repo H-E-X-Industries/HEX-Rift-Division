@@ -14,6 +14,8 @@ import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -22,6 +24,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
@@ -29,16 +32,19 @@ import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.templates.FluidTank;
 import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.util.List;
 
 public class CoccerOvenBlockEntity extends BlockEntity implements MenuProvider, IFluidTankProvider {
 
     public static final int MAX_TEMP = 2700;
     public static final int TANK_CAPACITY = 32000;
+    private static final float BURN_MIN_TEMP = 300.0F;
 
     private final ItemStackHandler inventory = new ItemStackHandler(2) {
         @Override
@@ -169,6 +175,9 @@ public class CoccerOvenBlockEntity extends BlockEntity implements MenuProvider, 
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, CoccerOvenBlockEntity be) {
+        be.pickupThrownItems(level, pos);
+        be.burnEntitiesInRecess(level, pos);
+
         // === ТЕПЛООБМЕН ===
         BlockEntity below = level.getBlockEntity(pos.below());
         if (below instanceof HeaterBlockEntity heater && heater.getTemperature() > be.temperature) {
@@ -251,6 +260,35 @@ public class CoccerOvenBlockEntity extends BlockEntity implements MenuProvider, 
         this.requiredTemp = 0;
         this.isProcessing = false;
         this.inputSnapshot = ItemStack.EMPTY;
+    }
+
+    private void pickupThrownItems(Level level, BlockPos pos) {
+        IItemHandler handler = automationHandler.orElse(null);
+        if (handler == null) return;
+
+        List<ItemEntity> items = level.getEntitiesOfClass(ItemEntity.class, new AABB(pos.above()));
+        for (ItemEntity itemEntity : items) {
+            if (itemEntity.getY() > pos.getY() + 1.5D) continue;
+            if (Math.abs(itemEntity.getX() - (pos.getX() + 0.5D)) >= 0.5D
+                    || Math.abs(itemEntity.getZ() - (pos.getZ() + 0.5D)) >= 0.5D) continue;
+
+            ItemStack remainder = ItemHandlerHelper.insertItemStacked(handler, itemEntity.getItem(), false);
+            if (remainder.isEmpty()) {
+                itemEntity.discard();
+            } else {
+                itemEntity.setItem(remainder);
+            }
+        }
+    }
+
+    private void burnEntitiesInRecess(Level level, BlockPos pos) {
+        if (temperature < BURN_MIN_TEMP || level.getGameTime() % 20L != 0L) return;
+
+        for (LivingEntity living : level.getEntitiesOfClass(LivingEntity.class, new AABB(pos.above()))) {
+            if (living instanceof Player player && (player.isCreative() || player.isSpectator())) continue;
+            living.setSecondsOnFire(2);
+            living.hurt(level.damageSources().inFire(), 2.0F);
+        }
     }
 
     @Override
