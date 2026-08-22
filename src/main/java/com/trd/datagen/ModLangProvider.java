@@ -100,6 +100,7 @@ public class ModLangProvider extends LanguageProvider {
         addFluidTranslations("low_pressure_steam", "Пар низкого давления", null, "Low Pressure Steam");
         addFluidTranslations("water", "Вода", "Вода", "Water");
         addFluidTranslations("lava", "Лава", "Лава", "Lava");
+        addFluidTranslations("mercury", "Ртуть", "Ртуть", "Mercury");
 
         // JEI Categories
         add("jei.category.trd.smelting", "Smelting");
@@ -1705,5 +1706,6 @@ public class ModLangProvider extends LanguageProvider {
         addFluidTranslations("low_pressure_steam", "Пар низкого давления", null, "Low Pressure Steam");
         addFluidTranslations("water", "Вода", "Вода", "Water");
         addFluidTranslations("lava", "Лава", "Лава", "Lava");
+        addFluidTranslations("mercury", "Ртуть", "Ртуть", "Mercury");
     }
 }
