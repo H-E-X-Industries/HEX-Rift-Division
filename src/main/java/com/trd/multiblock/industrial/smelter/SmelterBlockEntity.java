@@ -24,6 +24,8 @@ import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -34,10 +36,12 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -49,6 +53,7 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
     public static final int MAX_TEMP = 1600;
     public static final int BLOCK_CAPACITY = 4;
     public static final int TANK_CAPACITY = BLOCK_CAPACITY * MetalUnits2.UNITS_PER_BLOCK;
+    private static final float BURN_MIN_TEMP = 300.0F;
 
     private final ItemStackHandler inventory = new ItemStackHandler(8) {
         @Override
@@ -183,6 +188,9 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, SmelterBlockEntity be) {
+        be.pickupThrownItems(level, pos);
+        be.burnEntitiesInRecess(level, pos);
+
         // Раздельное отслеживание изменений
         int currentTopHash = be.calculateTopHash();
         int currentBottomHash = be.calculateBottomHash();
@@ -240,8 +248,38 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
         }
     }
 
-    // ==================== ВЕРХНИЙ РЯД (СПЛАВЫ) ====================
+    private void pickupThrownItems(Level level, BlockPos pos) {
+        IItemHandler handler = sideHandler.orElse(null);
+        if (handler == null) return;
 
+        AABB area = new AABB(pos.above()).inflate(0.125D, 0.0D, 0.125D);
+        List<ItemEntity> items = level.getEntitiesOfClass(ItemEntity.class, area);
+        for (ItemEntity itemEntity : items) {
+            if (itemEntity.getY() > pos.getY() + 1.5D) continue;
+            if (Math.abs(itemEntity.getX() - (pos.getX() + 0.5D)) >= 0.625D
+                    || Math.abs(itemEntity.getZ() - (pos.getZ() + 0.5D)) >= 0.625D) continue;
+
+            ItemStack remainder = ItemHandlerHelper.insertItemStacked(handler, itemEntity.getItem(), false);
+            if (remainder.isEmpty()) {
+                itemEntity.discard();
+            } else {
+                itemEntity.setItem(remainder);
+            }
+        }
+    }
+
+    private void burnEntitiesInRecess(Level level, BlockPos pos) {
+        if (temperature < BURN_MIN_TEMP || level.getGameTime() % 20L != 0L) return;
+
+        AABB area = new AABB(pos.above()).inflate(0.125D, 0.0D, 0.125D);
+        for (LivingEntity living : level.getEntitiesOfClass(LivingEntity.class, area)) {
+            if (living instanceof Player player && (player.isCreative() || player.isSpectator())) continue;
+            living.setSecondsOnFire(2);
+            living.hurt(level.damageSources().inFire(), 2.0F);
+        }
+    }
+
+    // ==================== ВЕРХНИЙ РЯД (СПЛАВЫ) ====================
     private void tickTopRow() {
         if (totalMetalAmount >= TANK_CAPACITY) {
             if (requiredTempTop != 0) requiredTempTop = 0;

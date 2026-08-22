@@ -38,8 +38,7 @@ public class ModFluids {
             () -> new BaseFluidType(FluidType.Properties.create().density(1450).viscosity(1100).temperature(300),
                     WATER_STILL, WATER_FLOW,
                     new ResourceLocation("trd", "textures/gui/fluid/hydrogen_peroxide.png"),
-                    0xc2b590, 20, 40));
-
+                    0xc2b590, 20, 20));
     public static final RegistryObject<FlowingFluid> HYDROGEN_PEROXIDE_SOURCE = FLUIDS.register("hydrogen_peroxide",
             () -> new ForgeFlowingFluid.Source(ModFluids.HYDROGEN_PEROXIDE_PROPS));
     public static final RegistryObject<FlowingFluid> HYDROGEN_PEROXIDE_FLOWING = FLUIDS.register("flowing_hydrogen_peroxide",
@@ -54,7 +53,6 @@ public class ModFluids {
                     WATER_STILL, WATER_FLOW,
                     new ResourceLocation("trd", "textures/gui/fluid/sulfuric_acid.png"),
                     0xbcc13f, 20, 80));
-
     public static final RegistryObject<FlowingFluid> SULFURIC_ACID_SOURCE = FLUIDS.register("sulfuric_acid",
             () -> new ForgeFlowingFluid.Source(ModFluids.SULFURIC_ACID_PROPS));
     public static final RegistryObject<FlowingFluid> SULFURIC_ACID_FLOWING = FLUIDS.register("flowing_sulfuric_acid",
@@ -69,7 +67,6 @@ public class ModFluids {
                     WATER_STILL, WATER_FLOW,
                     new ResourceLocation("trd", "textures/gui/fluid/natural_gas.png"),
                     0xa3b8c4, 20, 0));
-
     public static final RegistryObject<FlowingFluid> NATURAL_GAS_SOURCE = FLUIDS.register("natural_gas",
             () -> new ForgeFlowingFluid.Source(ModFluids.NATURAL_GAS_PROPS));
     public static final RegistryObject<FlowingFluid> NATURAL_GAS_FLOWING = FLUIDS.register("flowing_natural_gas",
@@ -82,7 +79,6 @@ public class ModFluids {
                     WATER_STILL, WATER_FLOW,
                     new ResourceLocation("trd", "textures/gui/fluid/steam.png"),
                     0x88FFFFFF, 100, 0));
-
     public static final RegistryObject<FlowingFluid> STEAM_SOURCE = FLUIDS.register("steam",
             () -> new ForgeFlowingFluid.Source(ModFluids.STEAM_PROPS));
     public static final RegistryObject<FlowingFluid> STEAM_FLOWING = FLUIDS.register("flowing_steam",
@@ -96,7 +92,6 @@ public class ModFluids {
                     WATER_STILL, WATER_FLOW,
                     new ResourceLocation("trd", "textures/gui/fluid/low_pressure_steam.png"),
                     0x636a7c, 20, 0));
-
     public static final RegistryObject<FlowingFluid> LOW_PRESSURE_STEAM_SOURCE = FLUIDS.register("low_pressure_steam",
             () -> new ForgeFlowingFluid.Source(ModFluids.LOW_PRESSURE_STEAM_PROPS));
     public static final RegistryObject<FlowingFluid> LOW_PRESSURE_STEAM_FLOWING = FLUIDS.register("flowing_low_pressure_steam",
@@ -104,11 +99,19 @@ public class ModFluids {
     private static final ForgeFlowingFluid.Properties LOW_PRESSURE_STEAM_PROPS = new ForgeFlowingFluid.Properties(
             LOW_PRESSURE_STEAM_TYPE, LOW_PRESSURE_STEAM_SOURCE, LOW_PRESSURE_STEAM_FLOWING);
 
-    public static final RegistryObject<FluidType> SMOKE_TYPE = FLUID_TYPES.register("smoke",
-            () -> new BaseFluidType(FluidType.Properties.create().density(-1200).viscosity(400).temperature(400),
+
+    public static final RegistryObject<FluidType> MERCURY_TYPE = FLUID_TYPES.register("mercury",
+            () -> new BaseFluidType(FluidType.Properties.create().density(-1000).viscosity(200).temperature(300),
                     WATER_STILL, WATER_FLOW,
-                    new ResourceLocation("trd", "textures/gui/fluid/smoke.png"),
-                    0xFF3A3A3A, 20, 0));
+                    new ResourceLocation("trd", "textures/gui/fluid/mercury.png"),
+                    0xaeaeae, 20, 60));
+    public static final RegistryObject<FlowingFluid> MERCURY_SOURCE = FLUIDS.register("mercury",
+            () -> new ForgeFlowingFluid.Source(ModFluids.MERCURY_PROPS));
+    public static final RegistryObject<FlowingFluid> MERCURY_FLOWING = FLUIDS.register("flowing_mercury",
+            () -> new ForgeFlowingFluid.Flowing(ModFluids.MERCURY_PROPS));
+    private static final ForgeFlowingFluid.Properties MERCURY_PROPS = new ForgeFlowingFluid.Properties(
+            MERCURY_TYPE, MERCURY_SOURCE, MERCURY_FLOWING);
+
 
 
     public static final RegistryObject<Item> FLUID_DROP_NONE = FLUID_DROP_ITEMS.register("fluid_drop_none", () -> new Item(new Item.Properties()));
@@ -132,6 +135,7 @@ public class ModFluids {
         registerDrop("sulfuric_acid", SULFURIC_ACID_TYPE);
         registerDrop("natural_gas", NATURAL_GAS_TYPE);
         registerDrop("steam", STEAM_TYPE);
+        registerDrop("mercury", MERCURY_TYPE);
         registerDrop("low_pressure_steam", LOW_PRESSURE_STEAM_TYPE);
     }
 

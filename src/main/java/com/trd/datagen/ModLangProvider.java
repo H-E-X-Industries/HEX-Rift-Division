@@ -100,6 +100,7 @@ public class ModLangProvider extends LanguageProvider {
         addFluidTranslations("low_pressure_steam", "Пар низкого давления", null, "Low Pressure Steam");
         addFluidTranslations("water", "Вода", "Вода", "Water");
         addFluidTranslations("lava", "Лава", "Лава", "Lava");
+        addFluidTranslations("mercury", "Ртуть", "Ртуть", "Mercury");
 
         // JEI Categories
         add("jei.category.trd.smelting", "Smelting");
@@ -110,6 +111,8 @@ public class ModLangProvider extends LanguageProvider {
         add("jei.category.trd.steam_engine", "Steam Engine");
         add("jei.category.trd.condensing", "Condensing");
         add("jei.category.trd.electric_furnace", "Electric Furnace");
+        add("jei.category.trd.coccer_oven", "Coke Oven");
+        add("jei.category.trd.chemical_plant", "Chemical Plant");
 
         // Metals
         add("metal.trd.gold", "Gold");
@@ -919,6 +922,8 @@ public class ModLangProvider extends LanguageProvider {
         add("jei.category.trd.steam_engine", "Паровой двигатель");
         add("jei.category.trd.condensing", "Конденсация");
         add("jei.category.trd.electric_furnace", "Электропечь");
+        add("jei.category.trd.coccer_oven", "Коксовая печь");
+        add("jei.category.trd.chemical_plant", "Химическая установка");
 
         // Литые кирки
 
@@ -1705,5 +1710,6 @@ public class ModLangProvider extends LanguageProvider {
         addFluidTranslations("low_pressure_steam", "Пар низкого давления", null, "Low Pressure Steam");
         addFluidTranslations("water", "Вода", "Вода", "Water");
         addFluidTranslations("lava", "Лава", "Лава", "Lava");
+        addFluidTranslations("mercury", "Ртуть", "Ртуть", "Mercury");
     }
 }
