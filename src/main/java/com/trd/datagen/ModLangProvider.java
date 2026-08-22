@@ -111,6 +111,8 @@ public class ModLangProvider extends LanguageProvider {
         add("jei.category.trd.steam_engine", "Steam Engine");
         add("jei.category.trd.condensing", "Condensing");
         add("jei.category.trd.electric_furnace", "Electric Furnace");
+        add("jei.category.trd.coccer_oven", "Coke Oven");
+        add("jei.category.trd.chemical_plant", "Chemical Plant");
 
         // Metals
         add("metal.trd.gold", "Gold");
@@ -920,6 +922,8 @@ public class ModLangProvider extends LanguageProvider {
         add("jei.category.trd.steam_engine", "Паровой двигатель");
         add("jei.category.trd.condensing", "Конденсация");
         add("jei.category.trd.electric_furnace", "Электропечь");
+        add("jei.category.trd.coccer_oven", "Коксовая печь");
+        add("jei.category.trd.chemical_plant", "Химическая установка");
 
         // Литые кирки
 

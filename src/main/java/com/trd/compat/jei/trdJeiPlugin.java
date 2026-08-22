@@ -1,5 +1,7 @@
 package com.trd.compat.jei;
 
+import com.trd.api.chemistry.ChemicalPlantRecipe;
+import com.trd.api.chemistry.ChemicalPlantRecipeRegistry;
 import com.trd.api.fluids.ModFluids;
 import com.trd.api.metallurgy.system.Metal;
 import com.trd.api.metallurgy.system.MetalUnits2;
@@ -13,6 +15,8 @@ import com.trd.block.entity.industrial.MillstoneBlockEntity;
 import com.trd.event.SlagItem;
 import com.trd.item.ModItems;
 import com.trd.main.MainRegistry;
+import com.trd.multiblock.industrial.coccer.CoccerOvenRecipe;
+import com.trd.multiblock.industrial.coccer.CoccerOvenRecipeRegistry;
 import com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
@@ -36,6 +40,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.fluids.FluidStack;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,6 +51,28 @@ import java.util.Map;
 public class trdJeiPlugin implements IModPlugin {
 
     public static final ResourceLocation UID = new ResourceLocation(MainRegistry.MOD_ID, "jei_plugin");
+
+    // Макет 140x44: сетка входов 2x3 на (5,5), сетка выходов 2x3 на (83,5), текст на (60,22) — химическая установка (gui4)
+    public static final ResourceLocation TEXTURE_UNIVERSAL_140x44 =
+            new ResourceLocation(MainRegistry.MOD_ID, "textures/gui/jei/jei_universal_gui4.png");
+    // Макет 102x60: вход на (5,22), выходы 2x2 на (63,13), текст на (24,33) — жернов и дробитель (gui3)
+    public static final ResourceLocation TEXTURE_UNIVERSAL_102x60 =
+            new ResourceLocation(MainRegistry.MOD_ID, "textures/gui/jei/jei_universal_gui3.png");
+    // Коксовая печь: файл 256x256, видимая часть 90x64
+    public static final ResourceLocation TEXTURE_COKE_OVEN =
+            new ResourceLocation(MainRegistry.MOD_ID, "textures/gui/jei/jei_universal_gui5.png");
+    private static final int[][] GRID_INPUT_SLOTS = {
+            {5, 5}, {23, 5}, {41, 5},
+            {5, 23}, {23, 23}, {41, 23}
+    };
+    private static final int[][] GRID_OUTPUT_SLOTS = {
+            {83, 5}, {101, 5}, {119, 5},
+            {83, 23}, {101, 23}, {119, 23}
+    };
+    private static final int[][] CHAMBER_OUTPUT_SLOTS = {
+            {63, 13}, {81, 13}, {63, 31}, {81, 31}
+    };
+
     public static final RecipeType<DrobitelWrapper> DROBITEL_TYPE =
             RecipeType.create(MainRegistry.MOD_ID, "drobitel", DrobitelWrapper.class);
     public record DrobitelWrapper(Item input, List<ItemStack> outputs) {}
@@ -65,6 +92,10 @@ public class trdJeiPlugin implements IModPlugin {
             RecipeType.create(MainRegistry.MOD_ID, "steam_engine", SteamEngineWrapper.class);
     public static final RecipeType<CondensingWrapper> CONDENSING_TYPE =
             RecipeType.create(MainRegistry.MOD_ID, "condensing", CondensingWrapper.class);
+    public static final RecipeType<CoccerOvenWrapper> COCCER_OVEN_TYPE =
+            RecipeType.create(MainRegistry.MOD_ID, "coccer_oven", CoccerOvenWrapper.class);
+    public static final RecipeType<ChemicalPlantWrapper> CHEMICAL_PLANT_TYPE =
+            RecipeType.create(MainRegistry.MOD_ID, "chemical_plant", ChemicalPlantWrapper.class);
 
     public record ElectricFurnaceWrapper(net.minecraft.world.item.crafting.AbstractCookingRecipe recipe, int cookTime, int energyPerTick) {}
     public record SmeltingWrapper(ItemStack input, Metal metal, int outputUnits, int temp, float heatConsumption, int timeTicks) {}
@@ -74,6 +105,8 @@ public class trdJeiPlugin implements IModPlugin {
     public record BoilingWrapper(ItemStack waterInput, ItemStack steamOutput, int tempC) {}
     public record SteamEngineWrapper(ItemStack steamInput, ItemStack lowPressureOutput) {}
     public record CondensingWrapper(ItemStack lowPressureInput, ItemStack waterOutput) {}
+    public record CoccerOvenWrapper(CoccerOvenRecipe recipe) {}
+    public record ChemicalPlantWrapper(ChemicalPlantRecipe recipe) {}
 
     @Override
     public void registerCategories(IRecipeCategoryRegistration registration) {
@@ -87,6 +120,8 @@ public class trdJeiPlugin implements IModPlugin {
         registration.addRecipeCategories(new SteamEngineCategory(guiHelper));
         registration.addRecipeCategories(new CondensingCategory(guiHelper));
         registration.addRecipeCategories(new DrobitelCategory(guiHelper));
+        registration.addRecipeCategories(new CoccerOvenCategory(guiHelper));
+        registration.addRecipeCategories(new ChemicalPlantCategory(guiHelper));
     }
 
     @Override
@@ -207,6 +242,20 @@ public class trdJeiPlugin implements IModPlugin {
         List<CondensingWrapper> condensingRecipes = new ArrayList<>();
         condensingRecipes.add(new CondensingWrapper(lowPressureDrop.copy(), waterDrop.copy()));
         registration.addRecipes(CONDENSING_TYPE, condensingRecipes);
+
+        // === КОКСОВАЯ ПЕЧЬ ===
+        List<CoccerOvenWrapper> coccerRecipes = new ArrayList<>();
+        for (CoccerOvenRecipe recipe : CoccerOvenRecipeRegistry.getAllRecipes()) {
+            coccerRecipes.add(new CoccerOvenWrapper(recipe));
+        }
+        registration.addRecipes(COCCER_OVEN_TYPE, coccerRecipes);
+
+        // === ХИМИЧЕСКАЯ УСТАНОВКА ===
+        List<ChemicalPlantWrapper> chemicalPlantRecipes = new ArrayList<>();
+        for (ChemicalPlantRecipe recipe : ChemicalPlantRecipeRegistry.getAllRecipes()) {
+            chemicalPlantRecipes.add(new ChemicalPlantWrapper(recipe));
+        }
+        registration.addRecipes(CHEMICAL_PLANT_TYPE, chemicalPlantRecipes);
     }
 
     @Override
@@ -219,6 +268,8 @@ public class trdJeiPlugin implements IModPlugin {
         registration.addRecipeCatalyst(new ItemStack(ModItems.STEAM_ENGINE_ITEM.get()), STEAM_ENGINE_TYPE);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.LOW_PRESSURE_STEAM_CONDENSER.get()), CONDENSING_TYPE);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.DROBITEL.get()), DROBITEL_TYPE);
+        registration.addRecipeCatalyst(new ItemStack(ModBlocks.COCCER_OVEN.get()), COCCER_OVEN_TYPE);
+        registration.addRecipeCatalyst(new ItemStack(ModBlocks.CHEMICAL_PLANT_REACTION_CHAMBER.get()), CHEMICAL_PLANT_TYPE);
     }
 
     private static ItemStack createLiquidMetalStack(Metal metal, int amount) {
@@ -227,6 +278,11 @@ public class trdJeiPlugin implements IModPlugin {
         stack.getTag().putInt("Amount", amount);
         stack.getTag().putInt("MetalColor", metal.getColor());
         return stack;
+    }
+
+    public static ItemStack fluidDropStack(FluidStack fluid) {
+        Item drop = ModFluids.getFluidDrop(fluid.getFluid().getFluidType());
+        return drop == null ? ItemStack.EMPTY : new ItemStack(drop);
     }
 
     // ==================== КАТЕГОРИИ ====================
@@ -341,9 +397,7 @@ public class trdJeiPlugin implements IModPlugin {
         private final Component title;
 
         public MillstoneCategory(IGuiHelper guiHelper) {
-            this.background = guiHelper.createDrawable(
-                    new ResourceLocation(MainRegistry.MOD_ID, "textures/gui/jei/jei_universal_gui.png"),
-                    0, 0, 140, 62);
+            this.background = guiHelper.createDrawable(TEXTURE_UNIVERSAL_102x60, 0, 0, 102, 60);
             this.icon = guiHelper.createDrawableIngredient(VanillaTypes.ITEM_STACK,
                     new ItemStack(com.trd.block.basic.ModBlocks.JERNOVA.get()));
             this.title = Component.translatable("jei.category.trd.millstone");
@@ -356,19 +410,14 @@ public class trdJeiPlugin implements IModPlugin {
 
         @Override
         public void setRecipe(IRecipeLayoutBuilder builder, MillstoneWrapper recipe, IFocusGroup focuses) {
-            builder.addSlot(RecipeIngredientRole.INPUT, 5, 5)
+            builder.addSlot(RecipeIngredientRole.INPUT, 5, 22)
                     .addItemStack(new ItemStack(recipe.input()));
 
-            int[][] rightSlots = {
-                    {83, 5}, {101, 5}, {119, 5},
-                    {83, 23}, {101, 23}, {119, 23},
-                    {83, 41}, {101, 41}, {119, 41}
-            };
             List<ItemStack> outputs = recipe.outputs();
-            for (int i = 0; i < outputs.size() && i < rightSlots.length; i++) {
+            for (int i = 0; i < outputs.size() && i < CHAMBER_OUTPUT_SLOTS.length; i++) {
                 ItemStack stack = outputs.get(i);
                 if (!stack.isEmpty()) {
-                    builder.addSlot(RecipeIngredientRole.OUTPUT, rightSlots[i][0], rightSlots[i][1])
+                    builder.addSlot(RecipeIngredientRole.OUTPUT, CHAMBER_OUTPUT_SLOTS[i][0], CHAMBER_OUTPUT_SLOTS[i][1])
                             .addItemStack(stack.copy());
                 }
             }
@@ -378,7 +427,7 @@ public class trdJeiPlugin implements IModPlugin {
         public void draw(MillstoneWrapper recipe, IRecipeSlotsView view, GuiGraphics gg, double mx, double my) {
             var font = Minecraft.getInstance().font;
             String grindsText = recipe.grindsRequired() + " об";
-            gg.drawString(font, grindsText, 60, 32, 0xFF555555, false);
+            gg.drawString(font, grindsText, 24, 33, 0xFF555555, false);
         }
     }
 
@@ -583,9 +632,7 @@ public class trdJeiPlugin implements IModPlugin {
         private final Component title;
 
         public DrobitelCategory(IGuiHelper guiHelper) {
-            this.background = guiHelper.createDrawable(
-                    new ResourceLocation(MainRegistry.MOD_ID, "textures/gui/jei/jei_universal_gui.png"),
-                    0, 0, 140, 62);
+            this.background = guiHelper.createDrawable(TEXTURE_UNIVERSAL_102x60, 0, 0, 102, 60);
             this.icon = guiHelper.createDrawableIngredient(VanillaTypes.ITEM_STACK,
                     new ItemStack(ModBlocks.DROBITEL.get()));
             this.title = Component.translatable("jei.category.trd.drobitel");
@@ -598,19 +645,14 @@ public class trdJeiPlugin implements IModPlugin {
 
         @Override
         public void setRecipe(IRecipeLayoutBuilder builder, DrobitelWrapper recipe, IFocusGroup focuses) {
-            builder.addSlot(RecipeIngredientRole.INPUT, 5, 5)
+            builder.addSlot(RecipeIngredientRole.INPUT, 5, 22)
                     .addItemStack(new ItemStack(recipe.input()));
 
-            int[][] rightSlots = {
-                    {83, 5}, {101, 5}, {119, 5},
-                    {83, 23}, {101, 23}, {119, 23},
-                    {83, 41}, {101, 41}, {119, 41}
-            };
             List<ItemStack> outputs = recipe.outputs();
-            for (int i = 0; i < outputs.size() && i < rightSlots.length; i++) {
+            for (int i = 0; i < outputs.size() && i < CHAMBER_OUTPUT_SLOTS.length; i++) {
                 ItemStack stack = outputs.get(i);
                 if (!stack.isEmpty()) {
-                    builder.addSlot(RecipeIngredientRole.OUTPUT, rightSlots[i][0], rightSlots[i][1])
+                    builder.addSlot(RecipeIngredientRole.OUTPUT, CHAMBER_OUTPUT_SLOTS[i][0], CHAMBER_OUTPUT_SLOTS[i][1])
                             .addItemStack(stack.copy());
                 }
             }
@@ -619,6 +661,122 @@ public class trdJeiPlugin implements IModPlugin {
         @Override
         public void draw(DrobitelWrapper recipe, IRecipeSlotsView view, GuiGraphics gg, double mx, double my) {
             // Автоматизирован — обороты не показываем
+        }
+    }
+
+    public static class CoccerOvenCategory implements IRecipeCategory<CoccerOvenWrapper> {
+        private final IDrawable background;
+        private final IDrawable icon;
+        private final Component title;
+
+        public CoccerOvenCategory(IGuiHelper guiHelper) {
+            this.background = guiHelper.createDrawable(TEXTURE_COKE_OVEN, 0, 0, 90, 64);
+            this.icon = guiHelper.createDrawableIngredient(VanillaTypes.ITEM_STACK,
+                    new ItemStack(ModBlocks.COCCER_OVEN.get()));
+            this.title = Component.translatable("jei.category.trd.coccer_oven");
+        }
+
+        @Override public RecipeType<CoccerOvenWrapper> getRecipeType() { return COCCER_OVEN_TYPE; }
+        @Override public Component getTitle() { return title; }
+        @Override public IDrawable getBackground() { return background; }
+        @Override public IDrawable getIcon() { return icon; }
+
+        @Override
+        public void setRecipe(IRecipeLayoutBuilder builder, CoccerOvenWrapper wrapper, IFocusGroup focuses) {
+            CoccerOvenRecipe recipe = wrapper.recipe();
+
+            builder.addSlot(RecipeIngredientRole.INPUT, 5, 22)
+                    .addItemStack(new ItemStack(recipe.getInput()));
+
+            int cell = 0;
+            if (recipe.hasItemOutput()) {
+                builder.addSlot(RecipeIngredientRole.OUTPUT, 55, 22)
+                        .addItemStack(recipe.getOutputItem().copy());
+                cell++;
+            }
+            if (recipe.hasFluidOutput() && cell < 2) {
+                ItemStack drop = fluidDropStack(recipe.getOutputFluid());
+                if (!drop.isEmpty()) {
+                    FluidStack fluid = recipe.getOutputFluid();
+                    builder.addSlot(RecipeIngredientRole.OUTPUT, 73, 22)
+                            .addItemStack(drop)
+                            .addTooltipCallback((view, tooltip) ->
+                                    tooltip.add(Component.literal(fluid.getAmount() + " mB")));
+                }
+            }
+        }
+
+        @Override
+        public void draw(CoccerOvenWrapper recipe, IRecipeSlotsView view, GuiGraphics gg, double mx, double my) {
+            var font = Minecraft.getInstance().font;
+            gg.drawString(font, recipe.recipe().getRequiredTemp() + "°C", 26, 33, 0xFF555555, false);
+            gg.drawString(font, String.format("%.1fs", recipe.recipe().getBaseTicks() / 20f), 26, 43, 0xFF555555, false);
+        }
+    }
+
+    public static class ChemicalPlantCategory implements IRecipeCategory<ChemicalPlantWrapper> {
+        private final IDrawable background;
+        private final IDrawable icon;
+        private final Component title;
+
+        public ChemicalPlantCategory(IGuiHelper guiHelper) {
+            this.background = guiHelper.createDrawable(TEXTURE_UNIVERSAL_140x44, 0, 0, 140, 44);
+            this.icon = guiHelper.createDrawableIngredient(VanillaTypes.ITEM_STACK,
+                    new ItemStack(ModBlocks.CHEMICAL_PLANT_REACTION_CHAMBER.get()));
+            this.title = Component.translatable("jei.category.trd.chemical_plant");
+        }
+
+        @Override public RecipeType<ChemicalPlantWrapper> getRecipeType() { return CHEMICAL_PLANT_TYPE; }
+        @Override public Component getTitle() { return title; }
+        @Override public IDrawable getBackground() { return background; }
+        @Override public IDrawable getIcon() { return icon; }
+
+        @Override
+        public void setRecipe(IRecipeLayoutBuilder builder, ChemicalPlantWrapper wrapper, IFocusGroup focuses) {
+            ChemicalPlantRecipe recipe = wrapper.recipe();
+
+            int cell = 0;
+            for (ItemStack stack : recipe.getItemInputs()) {
+                if (cell >= GRID_INPUT_SLOTS.length || stack.isEmpty()) continue;
+                builder.addSlot(RecipeIngredientRole.INPUT, GRID_INPUT_SLOTS[cell][0], GRID_INPUT_SLOTS[cell][1])
+                        .addItemStack(stack.copy());
+                cell++;
+            }
+            for (FluidStack fluid : recipe.getFluidInputs()) {
+                if (cell >= GRID_INPUT_SLOTS.length) break;
+                ItemStack drop = fluidDropStack(fluid);
+                if (drop.isEmpty()) continue;
+                builder.addSlot(RecipeIngredientRole.INPUT, GRID_INPUT_SLOTS[cell][0], GRID_INPUT_SLOTS[cell][1])
+                        .addItemStack(drop)
+                        .addTooltipCallback((view, tooltip) ->
+                                tooltip.add(Component.literal(fluid.getAmount() + " mB")));
+                cell++;
+            }
+
+            cell = 0;
+            for (ItemStack stack : recipe.getItemOutputs()) {
+                if (cell >= GRID_OUTPUT_SLOTS.length || stack.isEmpty()) continue;
+                builder.addSlot(RecipeIngredientRole.OUTPUT, GRID_OUTPUT_SLOTS[cell][0], GRID_OUTPUT_SLOTS[cell][1])
+                        .addItemStack(stack.copy());
+                cell++;
+            }
+            for (FluidStack fluid : recipe.getFluidOutputs()) {
+                if (cell >= GRID_OUTPUT_SLOTS.length) break;
+                ItemStack drop = fluidDropStack(fluid);
+                if (drop.isEmpty()) continue;
+                builder.addSlot(RecipeIngredientRole.OUTPUT, GRID_OUTPUT_SLOTS[cell][0], GRID_OUTPUT_SLOTS[cell][1])
+                        .addItemStack(drop)
+                        .addTooltipCallback((view, tooltip) ->
+                                tooltip.add(Component.literal(fluid.getAmount() + " mB")));
+                cell++;
+            }
+        }
+
+        @Override
+        public void draw(ChemicalPlantWrapper recipe, IRecipeSlotsView view, GuiGraphics gg, double mx, double my) {
+            var font = Minecraft.getInstance().font;
+            gg.drawString(font, recipe.recipe().getMinTemperature() + "°C", 60, 26, 0xFF555555, false);
+            gg.drawString(font, String.format("%.1fs", recipe.recipe().getProcessTime() / 20f), 60, 34, 0xFF555555, false);
         }
     }
 }
