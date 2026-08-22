@@ -97,22 +97,24 @@ public class StanokBlock extends BaseEntityBlock implements IMultiblockControlle
         if (helper == null) {
             // Строки массива = Z (от 0 до 1, то есть Z=0 ряд первый, Z=1 ряд второй)
             // Символы в строке = X (слева направо, от -1 до +1)
-            // %=кин. порт, #=пустышка, @=контроллер
+            // %=кин. порт, $=карго порт, #=пустышка, @=контроллер
             Map<Character, Supplier<BlockState>> symbols = Map.of(
                     '#', () -> ModBlocks.MULTIBLOCK_PART.get().defaultBlockState(),
                     '%', () -> ModBlocks.MULTIBLOCK_PART.get().defaultBlockState(),
+                    '$', () -> ModBlocks.MULTIBLOCK_PART.get().defaultBlockState(),
                     '@', () -> this.defaultBlockState()
             );
             Map<Character, PartRole> roles = Map.of(
                     '#', PartRole.DEFAULT,
                     '%', PartRole.KINETIC_PORT,
+                    '$', PartRole.CARGO_PORT,
                     '@', PartRole.CONTROLLER
             );
 
             helper = MultiblockStructureHelper.createFromLayersWithRoles(
                     new String[][]{
-                            // Y=0: Z=0 ряд, Z=1 ряд
-                            {"%#%", "#@#"},
+                            // Y=0: Z=0 ряд (спереди), Z=1 ряд (сзади)
+                            {"%#%", "$@$"},
                             // Y=1: все дефолт
                             {"###", "###"}
                     },
