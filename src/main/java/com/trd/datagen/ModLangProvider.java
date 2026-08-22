@@ -900,6 +900,20 @@ public class ModLangProvider extends LanguageProvider {
         add("hud.trd.leacher.input", "input");
         add("hud.trd.leacher.output", "output");
         add("hud.trd.leacher.progress", "Progress: %s%%");
+
+        // ═══ Centrifuge ═══
+        add(ModBlocks.CENTRIFUGE_MOTOR.get(), "Centrifuge Motor");
+        add(ModBlocks.CENTRIFUGE_CONUS.get(), "Centrifuge");
+        add("recipe.trd.dirt_centrifuging", "Dirt Centrifugation");
+        add("recipe.trd.gravel_centrifuging", "Gravel Centrifugation");
+        add("recipe.trd.bone_block_centrifuging", "Bone Block Centrifugation");
+        add("gui.trd.centrifuge.energy_tooltip", "%s / %s JE");
+        add("gui.trd.centrifuge.progress_tooltip", "Remaining: ~%ss");
+        add("hud.trd.centrifuge.no_attachment", "Install an attachment!");
+        add("hud.trd.centrifuge.energy", "Energy: %s / %s JE");
+        add("hud.trd.centrifuge.recipe", "Recipe: %s");
+        add("hud.trd.centrifuge.no_recipe", "No recipe");
+        add("hud.trd.centrifuge.progress", "Progress: %s%%");
         add("gui.trd.coccer_oven.empty_tank", "Empty");
         add("gui.trd.coccer_oven.fluid_amount", "%s / %s mB");
         add("gui.trd.coccer_oven.progress.temperature", "Temperature: %d/%d °C");
@@ -936,6 +950,20 @@ public class ModLangProvider extends LanguageProvider {
         add("hud.trd.leacher.input", "вход");
         add("hud.trd.leacher.output", "выход");
         add("hud.trd.leacher.progress", "Прогресс: %s%%");
+
+        // ═══ Центрифуга ═══
+        add(ModBlocks.CENTRIFUGE_MOTOR.get(), "Мотор центрифуги");
+        add(ModBlocks.CENTRIFUGE_CONUS.get(), "Центрифуга");
+        add("recipe.trd.dirt_centrifuging", "Центрифугирование земли");
+        add("recipe.trd.gravel_centrifuging", "Центрифугирование гравия");
+        add("recipe.trd.bone_block_centrifuging", "Центрифугирование костяного блока");
+        add("gui.trd.centrifuge.energy_tooltip", "%s / %s JE");
+        add("gui.trd.centrifuge.progress_tooltip", "Осталось: ~%sс");
+        add("hud.trd.centrifuge.no_attachment", "Для работы требуется насадка!");
+        add("hud.trd.centrifuge.energy", "Энергия: %s / %s JE");
+        add("hud.trd.centrifuge.recipe", "Рецепт: %s");
+        add("hud.trd.centrifuge.no_recipe", "Нет рецепта");
+        add("hud.trd.centrifuge.progress", "Прогресс: %s%%");
         add("gui.trd.coccer_oven.empty_tank", "Пусто");
         add("gui.trd.coccer_oven.fluid_amount", "%s / %s мБ");
         add("gui.trd.coccer_oven.progress.temperature", "Температура: %d/%d °C");

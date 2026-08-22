@@ -117,11 +117,13 @@ public class ClientModEvents {
         MenuScreens.register(ModMenuTypes.CHEMICAL_PLANT_PORT_MENU.get(), GUIChemicalPlantPort::new);
         MenuScreens.register(ModMenuTypes.STANOK_MENU.get(), GUIStanok::new);
         MenuScreens.register(ModMenuTypes.VISHELASHIVATEL_MENU.get(), GUIVishelashivatel::new);
+        MenuScreens.register(ModMenuTypes.CENTRIFUGE_MENU.get(), GUICentrifuge::new);
 
         MinecraftForge.EVENT_BUS.register(com.trd.client.overlay.hud.ChemicalPlantReactionChamberOverlay.class);
         MinecraftForge.EVENT_BUS.register(com.trd.client.overlay.hud.ChemicalPlantHeaterOverlay.class);
         MinecraftForge.EVENT_BUS.register(com.trd.client.overlay.hud.StanokHudOverlay.class);
         MinecraftForge.EVENT_BUS.register(com.trd.client.overlay.hud.VishelashivatelOverlay.class);
+        MinecraftForge.EVENT_BUS.register(com.trd.client.overlay.hud.CentrifugeHudOverlay.class);
         event.registerBlockEntityRenderer(ModBlockEntities.MOTOR_ELECTRO_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.SHAFT_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.BEARING_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);

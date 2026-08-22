@@ -453,14 +453,14 @@ public class ModBlocks {
                     .noOcclusion()));
 
     public static final RegistryObject<Block> CENTRIFUGE_MOTOR = registerBlock("centrifuge_motor",
-            () -> new Block(BlockBehaviour.Properties.of()
+            () -> new com.trd.multiblock.industrial.centrifuge.CentrifugeMotorBlock(BlockBehaviour.Properties.of()
                     .strength(2.0F, 6.0F)
                     .sound(SoundType.STONE)
                     .requiresCorrectToolForDrops()
                     .noOcclusion()));
 
     public static final RegistryObject<Block> CENTRIFUGE_CONUS = registerBlock("centrifuge_conus",
-            () -> new Block(BlockBehaviour.Properties.of()
+            () -> new com.trd.multiblock.industrial.centrifuge.CentrifugeConusBlock(BlockBehaviour.Properties.of()
                     .strength(2.0F, 6.0F)
                     .sound(SoundType.STONE)
                     .requiresCorrectToolForDrops()

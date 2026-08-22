@@ -100,6 +100,18 @@ public class ModBlockEntities {
                             com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlockEntity::new,
                             ModBlocks.VISHELASHIVATEL.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<com.trd.multiblock.industrial.centrifuge.CentrifugeMotorBlockEntity>> CENTRIFUGE_MOTOR_BE =
+            BLOCK_ENTITIES.register("centrifuge_motor_be",
+                    () -> BlockEntityType.Builder.of(
+                            com.trd.multiblock.industrial.centrifuge.CentrifugeMotorBlockEntity::new,
+                            ModBlocks.CENTRIFUGE_MOTOR.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<com.trd.multiblock.industrial.centrifuge.CentrifugeConusBlockEntity>> CENTRIFUGE_CONUS_BE =
+            BLOCK_ENTITIES.register("centrifuge_conus_be",
+                    () -> BlockEntityType.Builder.of(
+                            com.trd.multiblock.industrial.centrifuge.CentrifugeConusBlockEntity::new,
+                            ModBlocks.CENTRIFUGE_CONUS.get()).build(null));
+
     public static final RegistryObject<BlockEntityType<SmallSmelterBlockEntity>> SMALL_SMELTER_BE =
             BLOCK_ENTITIES.register("small_smelter",
                     () -> BlockEntityType.Builder.of(SmallSmelterBlockEntity::new, ModBlocks.SMALL_SMELTER.get()).build(null));
