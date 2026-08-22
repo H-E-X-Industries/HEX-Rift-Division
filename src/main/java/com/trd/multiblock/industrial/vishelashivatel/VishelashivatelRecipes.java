@@ -31,6 +31,15 @@ public class VishelashivatelRecipes {
         return null;
     }
 
+    /** Первый рецепт для данного входного предмета (без учёта жидкости). */
+    public static VishelashivatelRecipe findForInput(ItemStack input) {
+        if (input.isEmpty()) return null;
+        for (VishelashivatelRecipe recipe : RECIPES) {
+            if (ItemStack.isSameItemSameTags(input, recipe.getItemInput())) return recipe;
+        }
+        return null;
+    }
+
     /**
      * Разрешён ли тип жидкости к заливке: только те, что используются
      * хотя бы в одном рецепте.

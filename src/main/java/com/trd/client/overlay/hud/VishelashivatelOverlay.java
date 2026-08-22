@@ -43,6 +43,11 @@ public class VishelashivatelOverlay {
 
         BlockPos pos = blockHit.getBlockPos();
         BlockEntity be = mc.level.getBlockEntity(pos);
+
+        // Наведение на парт мультиблока — показываем HUD контроллера
+        if (be instanceof com.trd.multiblock.system.MultiblockPartEntity part && part.getControllerPos() != null) {
+            be = mc.level.getBlockEntity(part.getControllerPos());
+        }
         if (!(be instanceof VishelashivatelBlockEntity leacher)) return;
 
         renderHUD(event.getGuiGraphics(), leacher, event.getWindow().getGuiScaledWidth(),
@@ -54,10 +59,11 @@ public class VishelashivatelOverlay {
         int x = screenW / 2 + 12;
         int y = screenH / 2 + 4;
 
-        // На клиенте serverTick не вызывается — рецепт резолвим так же, как сервер
+        // На клиенте serverTick не вызывается — рецепт резолвим так же, как в тултипе GUI:
+        // по входному предмету, чтобы игрок видел требования до заливки жидкости
         FluidStack tankFluid = be.getFluidTank().getFluid();
         ItemStack input = be.getInventory().getStackInSlot(VishelashivatelBlockEntity.INPUT_SLOT);
-        VishelashivatelRecipe recipe = VishelashivatelRecipes.findMatching(input, tankFluid);
+        VishelashivatelRecipe recipe = VishelashivatelRecipes.findForInput(input);
 
         if (recipe == null) {
             String txt = Component.translatable("hud.trd.leacher.no_recipe").getString();
@@ -81,10 +87,9 @@ public class VishelashivatelOverlay {
         // Входная жидкость
         FluidStack required = recipe.getRequiredFluid();
         int cur = be.getFluidTank().getFluid().getAmount();
-        int cap = be.getFluidTank().getCapacity();
         String arrowIn = Component.translatable("hud.trd.leacher.arrow_in").getString(); // -->
         String fluidLine = arrowIn + " " + Component.translatable("hud.trd.leacher.input").getString()
-                + " " + cur + "/" + cap + " mB " + required.getDisplayName().getString();
+                + " " + cur + "/" + required.getAmount() + " mB " + required.getDisplayName().getString();
         lines.add(fluidLine);
         colors.add(IClientFluidTypeExtensions.of(required.getFluid()).getTintColor() | 0xFF000000);
         maxW = Math.max(maxW, font.width(fluidLine));
@@ -99,9 +104,16 @@ public class VishelashivatelOverlay {
 
         // Выходы
         for (ItemStack out : recipe.getItemOutputs()) {
-            String outArrow = Component.translatable("hud.trd.leacher.arrow_out").getString(); // <--
-            String line = out.getHoverName().getString() + " (" 
-                    + Component.translatable("hud.trd.leacher.output").getString() + ") " + outArrow;
+            int outCur = 0;
+            for (int i = VishelashivatelBlockEntity.FIRST_OUTPUT_SLOT;
+                 i < VishelashivatelBlockEntity.FIRST_OUTPUT_SLOT + VishelashivatelBlockEntity.OUTPUT_SLOTS; i++) {
+                ItemStack slot = be.getInventory().getStackInSlot(i);
+                if (!slot.isEmpty() && ItemStack.isSameItemSameTags(slot, out)) {
+                    outCur += slot.getCount();
+                }
+            }
+            String line = out.getHoverName().getString() + " ("
+                    + Component.translatable("hud.trd.leacher.output").getString() + "): " + outCur;
             lines.add(line);
             colors.add(0xFFFF00); // Yellow
             maxW = Math.max(maxW, font.width(line));

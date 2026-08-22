@@ -67,6 +67,17 @@ public class VishelashivatelBlock extends BaseEntityBlock implements IMultiblock
         return RenderShape.MODEL;
     }
 
+    /**
+     * Форма контроллера = объединение форм всех партов мультиблока.
+     * Парты (MultiblockPartBlock) делегируют сюда со сдвигом, поэтому
+     * форма обязана накрывать весь мультиблок — иначе у партов не будет
+     * коллизии и обводки.
+     */
+    @Override
+    public net.minecraft.world.phys.shapes.VoxelShape getShape(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos pos, net.minecraft.world.phys.shapes.CollisionContext context) {
+        return getStructureHelper().generateShapeFromParts(state.getValue(FACING));
+    }
+
     // ===================== МУЛЬТИБЛОК 3x3x1 =====================
 
     @Override

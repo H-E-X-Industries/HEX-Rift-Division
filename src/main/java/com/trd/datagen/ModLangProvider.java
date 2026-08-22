@@ -888,6 +888,11 @@ public class ModLangProvider extends LanguageProvider {
         add("recipe.trd.leather_from_rotten_flesh", "Leather from Rotten Flesh");
         add("gui.trd.vishelashivatel.empty_tank", "Empty");
         add("gui.trd.vishelashivatel.fluid_amount", "%s / %s mB");
+        add("gui.trd.vishelashivatel.fluid_req", "Fluid:");
+        add("gui.trd.vishelashivatel.item_input", "Input:");
+        add("gui.trd.vishelashivatel.item_output", "Output:");
+        add("gui.trd.vishelashivatel.min_rpm", "Min speed: %s RPM");
+        add("gui.trd.vishelashivatel.time", "Time: %ss");
         add("hud.trd.leacher.no_recipe", "No recipe");
         add("hud.trd.leacher.arrow_in", "-->");
         add("hud.trd.leacher.arrow_out", "<--");
@@ -915,9 +920,14 @@ public class ModLangProvider extends LanguageProvider {
 
         // ═══ Выщелащиватель ═══
         add(ModBlocks.VISHELASHIVATEL.get(), "Выщелащиватель");
-        add("recipe.trd.leather_from_rotten_flesh", "Кожа из гнилой плоти");
+        add("recipe.trd.leather_from_rotten_flesh", "Производство кожи");
         add("gui.trd.vishelashivatel.empty_tank", "Пусто");
         add("gui.trd.vishelashivatel.fluid_amount", "%s / %s мБ");
+        add("gui.trd.vishelashivatel.fluid_req", "Жидкость:");
+        add("gui.trd.vishelashivatel.item_input", "Вход:");
+        add("gui.trd.vishelashivatel.item_output", "Выход:");
+        add("gui.trd.vishelashivatel.min_rpm", "От %s об/мин");
+        add("gui.trd.vishelashivatel.time", "Время: %sс");
         add("hud.trd.leacher.no_recipe", "Нет рецепта");
         add("hud.trd.leacher.arrow_in", "-->");
         add("hud.trd.leacher.arrow_out", "<--");

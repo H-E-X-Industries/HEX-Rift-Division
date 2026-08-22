@@ -4,6 +4,8 @@ import com.trd.api.fluids.ModFluids;
 import com.trd.main.MainRegistry;
 import com.trd.menu.industrial.VishelashivatelMenu;
 import com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlockEntity;
+import com.trd.multiblock.industrial.vishelashivatel.VishelashivatelRecipe;
+import com.trd.multiblock.industrial.vishelashivatel.VishelashivatelRecipes;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -13,6 +15,8 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.minecraftforge.fluids.FluidStack;
 
@@ -96,22 +100,24 @@ public class GUIVishelashivatel extends AbstractContainerScreen<VishelashivatelM
 
         if (isHovering(FLUID_X, FLUID_Y, FLUID_W, FLUID_H, mouseX, mouseY)) {
             renderFluidTooltip(gui, mouseX, mouseY);
+        } else if (this.hoveredSlot != null && this.hoveredSlot.hasItem()
+                && this.hoveredSlot.getContainerSlot() == VishelashivatelBlockEntity.INPUT_SLOT) {
+            // Подсказка: что нужно для обработки предмета во входном слоте
+            renderInputRecipeTooltip(gui, mouseX, mouseY);
         } else {
             this.renderTooltip(gui, mouseX, mouseY);
         }
     }
 
-    /** Тултип жидкости — стиль жидкостной бочки. */
+    /** Тултип жидкости — стиль жидкостной бочки; пустой буфер показывает запомненный тип. */
     private void renderFluidTooltip(GuiGraphics gui, int mx, int my) {
         VishelashivatelBlockEntity be = menu.getBlockEntity();
         if (be == null) return;
         FluidStack fluid = be.getFluidTank().getFluid();
 
-        if (fluid.isEmpty()) {
-            gui.renderTooltip(this.font,
-                    Component.translatable("gui.trd.vishelashivatel.empty_tank").withStyle(ChatFormatting.GRAY), mx, my);
-        } else {
-            List<Component> lines = new ArrayList<>();
+        List<Component> lines = new ArrayList<>();
+
+        if (!fluid.isEmpty()) {
             MutableComponent fluidName = fluid.getDisplayName().copy();
             int tint = IClientFluidTypeExtensions.of(fluid.getFluid()).getTintColor() | 0xFF000000;
             fluidName = fluidName.withStyle(Style.EMPTY.withColor(TextColor.fromRgb(tint)));
@@ -119,7 +125,65 @@ public class GUIVishelashivatel extends AbstractContainerScreen<VishelashivatelM
             lines.add(Component.translatable("gui.trd.vishelashivatel.fluid_amount",
                             fluid.getAmount(), be.getFluidTank().getCapacity())
                     .withStyle(ChatFormatting.GRAY));
-            gui.renderComponentTooltip(this.font, lines, mx, my);
+        } else if (be.getTargetFluid() != Fluids.EMPTY) {
+            // Буфер запомнил тип жидкости — показываем его, даже если бак пуст
+            var target = be.getTargetFluid();
+            MutableComponent targetName = new FluidStack(target, 1000).getDisplayName().copy();
+            int tint = IClientFluidTypeExtensions.of(target).getTintColor() | 0xFF000000;
+            targetName = targetName.withStyle(Style.EMPTY.withColor(TextColor.fromRgb(tint)));
+            lines.add(targetName);
+            lines.add(Component.translatable("gui.trd.vishelashivatel.fluid_amount",
+                            0, be.getFluidTank().getCapacity())
+                    .withStyle(ChatFormatting.GRAY));
+        } else {
+            gui.renderTooltip(this.font,
+                    Component.translatable("gui.trd.vishelashivatel.empty_tank").withStyle(ChatFormatting.GRAY), mx, my);
+            return;
         }
+        gui.renderComponentTooltip(this.font, lines, mx, my);
+    }
+
+    /** Рецепты для предмета во входном слоте: жидкость, обороты, время. */
+    private void renderInputRecipeTooltip(GuiGraphics gui, int mx, int my) {
+        ItemStack input = this.hoveredSlot.getItem();
+        List<Component> lines = new ArrayList<>();
+        boolean any = false;
+
+        for (VishelashivatelRecipe recipe : VishelashivatelRecipes.getAllRecipes()) {
+            if (!ItemStack.isSameItemSameTags(input, recipe.getItemInput())) continue;
+            any = true;
+
+            lines.add(Component.translatable("recipe.trd." + recipe.getId().getPath())
+                    .withStyle(ChatFormatting.YELLOW));
+
+            FluidStack required = recipe.getRequiredFluid();
+            MutableComponent fluidName = required.getDisplayName().copy();
+            int tint = IClientFluidTypeExtensions.of(required.getFluid()).getTintColor() | 0xFF000000;
+            fluidName = fluidName.withStyle(Style.EMPTY.withColor(TextColor.fromRgb(tint)));
+            lines.add(Component.translatable("gui.trd.vishelashivatel.fluid_req").withStyle(ChatFormatting.GRAY)
+                    .append(" ").append(fluidName)
+                    .append(" x" + required.getAmount() + " mB"));
+
+            // Предметные входы
+            lines.add(Component.translatable("gui.trd.vishelashivatel.item_input").withStyle(ChatFormatting.GRAY)
+                    .append(" ").append(recipe.getItemInput().getHoverName())
+                    .append(" x" + recipe.getItemInput().getCount()));
+
+            // Предметные выходы
+            for (ItemStack out : recipe.getItemOutputs()) {
+                lines.add(Component.translatable("gui.trd.vishelashivatel.item_output").withStyle(ChatFormatting.GRAY)
+                        .append(" ").append(out.getHoverName())
+                        .append(" x" + out.getCount()));
+            }
+
+            lines.add(Component.translatable("gui.trd.vishelashivatel.min_rpm", recipe.getMinRpm())
+                    .withStyle(ChatFormatting.GRAY));
+            lines.add(Component.translatable("gui.trd.vishelashivatel.time",
+                            String.format("%.1f", recipe.getProcessTime() / 20f))
+                    .withStyle(ChatFormatting.GRAY));
+        }
+
+        if (!any) return;
+        gui.renderComponentTooltip(this.font, lines, mx, my);
     }
 }

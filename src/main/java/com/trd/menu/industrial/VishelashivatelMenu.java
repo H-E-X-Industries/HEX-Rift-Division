@@ -30,7 +30,7 @@ public class VishelashivatelMenu extends AbstractContainerMenu {
         this.addSlot(new SlotItemHandler(be.getInventory(), INPUT_SLOT_INDEX, 26, 45));
         // Выходные слоты — 3 в ряд
         for (int i = 0; i < OUTPUT_COUNT; i++) {
-            this.addSlot(new SlotItemHandler(be.getInventory(), FIRST_OUTPUT_INDEX + i, 99 + i * 18, 45) {
+            this.addSlot(new SlotItemHandler(be.getInventory(), FIRST_OUTPUT_INDEX + i, 98 + i * 18, 45) {
                 @Override
                 public boolean mayPlace(ItemStack stack) { return false; }
             });

@@ -153,20 +153,42 @@ public class VishelashivatelBlockEntity extends com.trd.block.entity.industrial.
 
     // ===================== ЖИДКОСТНЫЙ ИДЕНТИФИКАТОР =====================
 
+    /** Запомненный тип жидкости (сохраняется в NBT, копируется с идентификатора). */
+    private String storedFluidId = "";
+
     /**
-     * Читает выбранный тип жидкости с идентификатора в слоте и проверяет,
-     * что он используется хотя бы в одном рецепте.
+     * Копирует тип жидкости с идентификатора в слоте во внутреннюю память.
+     * Буфер запоминает тип: после извлечения идентификатора машина продолжает
+     * принимать запомненную жидкость. Принимаются только жидкости,
+     * используемые хотя бы в одном рецепте.
+     *
+     * @return true если тип изменился (нужна синхронизация клиенту)
      */
-    public Fluid getTargetFluid() {
+    private boolean updateStoredFluid() {
         ItemStack idStack = inventory.getStackInSlot(IDENTIFIER_SLOT);
-        if (idStack.isEmpty() || !(idStack.getItem() instanceof FluidIdentifierItem)) return Fluids.EMPTY;
+        if (idStack.isEmpty() || !(idStack.getItem() instanceof FluidIdentifierItem)) return false;
         String selected = FluidIdentifierItem.getSelectedFluid(idStack);
-        if (selected.isEmpty() || selected.equals("none")) return Fluids.EMPTY;
+        if (selected.isEmpty() || selected.equals("none")) return false;
+        if (selected.equals(storedFluidId)) return false;
         try {
             ResourceLocation rl = new ResourceLocation(selected);
             Fluid fluid = ForgeRegistries.FLUIDS.getValue(rl);
-            if (fluid == null || !VishelashivatelRecipes.isFluidUsed(fluid)) return Fluids.EMPTY;
-            return fluid;
+            if (fluid == null || !VishelashivatelRecipes.isFluidUsed(fluid)) return false;
+            storedFluidId = selected;
+            setChanged();
+            return true;
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    /** Тип жидкости, который буфер принимает сейчас. */
+    public Fluid getTargetFluid() {
+        if (storedFluidId.isEmpty()) return Fluids.EMPTY;
+        try {
+            ResourceLocation rl = new ResourceLocation(storedFluidId);
+            Fluid fluid = ForgeRegistries.FLUIDS.getValue(rl);
+            return fluid != null ? fluid : Fluids.EMPTY;
         } catch (Exception e) {
             return Fluids.EMPTY;
         }
@@ -241,14 +263,15 @@ public class VishelashivatelBlockEntity extends com.trd.block.entity.industrial.
             return fluidTank.fill(resource, action);
         }
 
+        // Сливать жидкость из буфера нельзя — только вливать
         @Override
         public FluidStack drain(FluidStack resource, FluidAction action) {
-            return fluidTank.drain(resource, action);
+            return FluidStack.EMPTY;
         }
 
         @Override
         public FluidStack drain(int maxDrain, FluidAction action) {
-            return fluidTank.drain(maxDrain, action);
+            return FluidStack.EMPTY;
         }
     });
 
@@ -345,6 +368,9 @@ public class VishelashivatelBlockEntity extends com.trd.block.entity.industrial.
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, VishelashivatelBlockEntity be) {
         boolean changed = false;
+
+        // Копируем тип жидкости с идентификатора (сразу при вставке в слот)
+        if (be.updateStoredFluid()) changed = true;
 
         ItemStack input = be.inventory.getStackInSlot(INPUT_SLOT);
         FluidStack tankFluid = be.fluidTank.getFluid();
@@ -459,6 +485,7 @@ public class VishelashivatelBlockEntity extends com.trd.block.entity.industrial.
         tag.put("FluidTank", fluidTank.writeToNBT(new CompoundTag()));
         tag.putInt("Progress", progress);
         tag.putInt("MaxProgress", maxProgress);
+        tag.putString("StoredFluid", storedFluidId);
     }
 
     @Override
@@ -468,6 +495,7 @@ public class VishelashivatelBlockEntity extends com.trd.block.entity.industrial.
         fluidTank.readFromNBT(tag.getCompound("FluidTank"));
         progress = tag.getInt("Progress");
         maxProgress = tag.getInt("MaxProgress");
+        storedFluidId = tag.getString("StoredFluid");
     }
 
     @Override
