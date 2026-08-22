@@ -94,6 +94,12 @@ public class ModBlockEntities {
                             com.trd.multiblock.industrial.coccer.CoccerOvenBlockEntity::new,
                             com.trd.block.basic.ModBlocks.COCCER_OVEN.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlockEntity>> VISHELASHIVATEL_BE =
+            BLOCK_ENTITIES.register("vishelashivatel",
+                    () -> BlockEntityType.Builder.of(
+                            com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlockEntity::new,
+                            ModBlocks.VISHELASHIVATEL.get()).build(null));
+
     public static final RegistryObject<BlockEntityType<SmallSmelterBlockEntity>> SMALL_SMELTER_BE =
             BLOCK_ENTITIES.register("small_smelter",
                     () -> BlockEntityType.Builder.of(SmallSmelterBlockEntity::new, ModBlocks.SMALL_SMELTER.get()).build(null));

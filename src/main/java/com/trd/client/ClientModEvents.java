@@ -116,10 +116,12 @@ public class ClientModEvents {
         MenuScreens.register(ModMenuTypes.CHEMICAL_PLANT_REACTION_CHAMBER_MENU.get(), GUIChemicalPlantReactionChamber::new);
         MenuScreens.register(ModMenuTypes.CHEMICAL_PLANT_PORT_MENU.get(), GUIChemicalPlantPort::new);
         MenuScreens.register(ModMenuTypes.STANOK_MENU.get(), GUIStanok::new);
+        MenuScreens.register(ModMenuTypes.VISHELASHIVATEL_MENU.get(), GUIVishelashivatel::new);
 
         MinecraftForge.EVENT_BUS.register(com.trd.client.overlay.hud.ChemicalPlantReactionChamberOverlay.class);
         MinecraftForge.EVENT_BUS.register(com.trd.client.overlay.hud.ChemicalPlantHeaterOverlay.class);
         MinecraftForge.EVENT_BUS.register(com.trd.client.overlay.hud.StanokHudOverlay.class);
+        MinecraftForge.EVENT_BUS.register(com.trd.client.overlay.hud.VishelashivatelOverlay.class);
         event.registerBlockEntityRenderer(ModBlockEntities.MOTOR_ELECTRO_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.SHAFT_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.BEARING_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
@@ -133,6 +135,7 @@ public class ClientModEvents {
         event.registerBlockEntityRenderer(ModBlockEntities.STATOR_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.MILLSTONE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.STANOK_BE.get(), com.trd.client.render.StanokRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.VISHELASHIVATEL_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
 
 
 
@@ -331,6 +334,22 @@ public class ClientModEvents {
                         @Override
                         public boolean skipVanillaRender(DrobitelBlockEntity be) {
                             return false; // <-- false! Чтобы JSON-модель корпуса рендерилась ванильно, а Flywheel добавит только вал
+                        }
+                    });
+
+            VisualizerRegistry.setVisualizer(ModBlockEntities.VISHELASHIVATEL_BE.get(),
+                    new dev.engine_room.flywheel.api.visualization.BlockEntityVisualizer<com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlockEntity>() {
+                        @Override
+                        public dev.engine_room.flywheel.api.visual.BlockEntityVisual<? super com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlockEntity> createVisual(
+                                VisualizationContext ctx,
+                                com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlockEntity be,
+                                float partialTick) {
+                            return new com.trd.client.render.flywheel.VishelashivatelVisual(ctx, be, partialTick);
+                        }
+
+                        @Override
+                        public boolean skipVanillaRender(com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlockEntity be) {
+                            return false; // JSON-модель корпуса рендерится ванильно, Flywheel добавляет только половинку вала
                         }
                     });
 

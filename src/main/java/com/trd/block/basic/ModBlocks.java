@@ -467,10 +467,8 @@ public class ModBlocks {
                     .noOcclusion()));
 
     public static final RegistryObject<Block> VISHELASHIVATEL = registerBlock("vishelashivatel",
-            () -> new Block(BlockBehaviour.Properties.of()
-                    .strength(2.0F, 6.0F)
-                    .sound(SoundType.STONE)
-                    .requiresCorrectToolForDrops()
+            () -> new com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlock(BlockBehaviour.Properties.of()
+                    .strength(3.0F, 10.0F)
                     .noOcclusion()));
 
     public static final RegistryObject<Block> CHEMICAL_PLANT_HEATER = registerBlock("chemical_plant_heater",
