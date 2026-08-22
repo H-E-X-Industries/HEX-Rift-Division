@@ -61,6 +61,9 @@ public class trdJeiPlugin implements IModPlugin {
     // Коксовая печь: файл 256x256, видимая часть 90x64
     public static final ResourceLocation TEXTURE_COKE_OVEN =
             new ResourceLocation(MainRegistry.MOD_ID, "textures/gui/jei/jei_universal_gui5.png");
+    // Выщелащиватель: макет 130x60: входы 2шт на (5,22), выходы 3шт на (73,22) — gui6
+    public static final ResourceLocation TEXTURE_UNIVERSAL_130x60 =
+            new ResourceLocation(MainRegistry.MOD_ID, "textures/gui/jei/jei_universal_gui6.png");
     private static final int[][] GRID_INPUT_SLOTS = {
             {5, 5}, {23, 5}, {41, 5},
             {5, 23}, {23, 23}, {41, 23}
@@ -96,6 +99,8 @@ public class trdJeiPlugin implements IModPlugin {
             RecipeType.create(MainRegistry.MOD_ID, "coccer_oven", CoccerOvenWrapper.class);
     public static final RecipeType<ChemicalPlantWrapper> CHEMICAL_PLANT_TYPE =
             RecipeType.create(MainRegistry.MOD_ID, "chemical_plant", ChemicalPlantWrapper.class);
+    public static final RecipeType<VishelashivatelWrapper> VISHELASHIVATEL_TYPE =
+            RecipeType.create(MainRegistry.MOD_ID, "vishelashivatel", VishelashivatelWrapper.class);
 
     public record ElectricFurnaceWrapper(net.minecraft.world.item.crafting.AbstractCookingRecipe recipe, int cookTime, int energyPerTick) {}
     public record SmeltingWrapper(ItemStack input, Metal metal, int outputUnits, int temp, float heatConsumption, int timeTicks) {}
@@ -107,6 +112,7 @@ public class trdJeiPlugin implements IModPlugin {
     public record CondensingWrapper(ItemStack lowPressureInput, ItemStack waterOutput) {}
     public record CoccerOvenWrapper(CoccerOvenRecipe recipe) {}
     public record ChemicalPlantWrapper(ChemicalPlantRecipe recipe) {}
+    public record VishelashivatelWrapper(com.trd.multiblock.industrial.vishelashivatel.VishelashivatelRecipe recipe) {}
 
     @Override
     public void registerCategories(IRecipeCategoryRegistration registration) {
@@ -122,6 +128,7 @@ public class trdJeiPlugin implements IModPlugin {
         registration.addRecipeCategories(new DrobitelCategory(guiHelper));
         registration.addRecipeCategories(new CoccerOvenCategory(guiHelper));
         registration.addRecipeCategories(new ChemicalPlantCategory(guiHelper));
+        registration.addRecipeCategories(new VishelashivatelCategory(guiHelper));
     }
 
     @Override
@@ -256,6 +263,14 @@ public class trdJeiPlugin implements IModPlugin {
             chemicalPlantRecipes.add(new ChemicalPlantWrapper(recipe));
         }
         registration.addRecipes(CHEMICAL_PLANT_TYPE, chemicalPlantRecipes);
+
+        // === ВЫЩЕЛАЩИВАТЕЛЬ ===
+        List<VishelashivatelWrapper> vishelashivatelRecipes = new ArrayList<>();
+        for (com.trd.multiblock.industrial.vishelashivatel.VishelashivatelRecipe recipe :
+                com.trd.multiblock.industrial.vishelashivatel.VishelashivatelRecipes.getAllRecipes()) {
+            vishelashivatelRecipes.add(new VishelashivatelWrapper(recipe));
+        }
+        registration.addRecipes(VISHELASHIVATEL_TYPE, vishelashivatelRecipes);
     }
 
     @Override
@@ -270,6 +285,7 @@ public class trdJeiPlugin implements IModPlugin {
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.DROBITEL.get()), DROBITEL_TYPE);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.COCCER_OVEN.get()), COCCER_OVEN_TYPE);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.CHEMICAL_PLANT_REACTION_CHAMBER.get()), CHEMICAL_PLANT_TYPE);
+        registration.addRecipeCatalyst(new ItemStack(ModBlocks.VISHELASHIVATEL.get()), VISHELASHIVATEL_TYPE);
     }
 
     private static ItemStack createLiquidMetalStack(Metal metal, int amount) {
@@ -777,6 +793,59 @@ public class trdJeiPlugin implements IModPlugin {
             var font = Minecraft.getInstance().font;
             gg.drawString(font, recipe.recipe().getMinTemperature() + "°C", 60, 26, 0xFF555555, false);
             gg.drawString(font, String.format("%.1fs", recipe.recipe().getProcessTime() / 20f), 60, 34, 0xFF555555, false);
+        }
+    }
+
+    public static class VishelashivatelCategory implements IRecipeCategory<VishelashivatelWrapper> {
+        private final IDrawable background;
+        private final IDrawable icon;
+        private final Component title;
+
+        public VishelashivatelCategory(IGuiHelper guiHelper) {
+            this.background = guiHelper.createDrawable(TEXTURE_UNIVERSAL_130x60, 0, 0, 130, 60);
+            this.icon = guiHelper.createDrawableIngredient(VanillaTypes.ITEM_STACK,
+                    new ItemStack(ModBlocks.VISHELASHIVATEL.get()));
+            this.title = Component.translatable("jei.category.trd.vishelashivatel");
+        }
+
+        @Override public RecipeType<VishelashivatelWrapper> getRecipeType() { return VISHELASHIVATEL_TYPE; }
+        @Override public Component getTitle() { return title; }
+        @Override public IDrawable getBackground() { return background; }
+        @Override public IDrawable getIcon() { return icon; }
+
+        @Override
+        public void setRecipe(IRecipeLayoutBuilder builder, VishelashivatelWrapper wrapper, IFocusGroup focuses) {
+            com.trd.multiblock.industrial.vishelashivatel.VishelashivatelRecipe recipe = wrapper.recipe();
+
+            // Входной предмет
+            builder.addSlot(RecipeIngredientRole.INPUT, 5, 22)
+                    .addItemStack(recipe.getItemInput().copy());
+
+            // Требуемая жидкость (каплей)
+            ItemStack fluidDrop = fluidDropStack(recipe.getRequiredFluid());
+            if (!fluidDrop.isEmpty()) {
+                builder.addSlot(RecipeIngredientRole.INPUT, 23, 22)
+                        .addItemStack(fluidDrop)
+                        .addTooltipCallback((view, tooltip) ->
+                                tooltip.add(Component.literal(recipe.getRequiredFluid().getAmount() + " mB")));
+            }
+
+            // Выходы — до 3 шт в ряд
+            List<ItemStack> outputs = recipe.getItemOutputs();
+            for (int i = 0; i < outputs.size() && i < 3; i++) {
+                ItemStack out = outputs.get(i);
+                if (!out.isEmpty()) {
+                    builder.addSlot(RecipeIngredientRole.OUTPUT, 73 + i * 18, 22)
+                            .addItemStack(out.copy());
+                }
+            }
+        }
+
+        @Override
+        public void draw(VishelashivatelWrapper recipe, IRecipeSlotsView view, GuiGraphics gg, double mx, double my) {
+            var font = Minecraft.getInstance().font;
+            gg.drawString(font, recipe.recipe().getMinRpm() + " об/мин", 4, 42, 0xFF555555, false);
+            gg.drawString(font, String.format("%.1fs", recipe.recipe().getProcessTime() / 20f), 4, 50, 0xFF555555, false);
         }
     }
 }

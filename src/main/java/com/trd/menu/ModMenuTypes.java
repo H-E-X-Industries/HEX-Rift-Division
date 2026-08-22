@@ -54,6 +54,9 @@ public class ModMenuTypes {
     public static final RegistryObject<MenuType<DrobitelMenu>> DROBITEL_MENU =
             MENUS.register("drobitel_menu", () -> IForgeMenuType.create(DrobitelMenu::new));
 
+    public static final RegistryObject<MenuType<VishelashivatelMenu>> VISHELASHIVATEL_MENU =
+            MENUS.register("vishelashivatel_menu", () -> IForgeMenuType.create(VishelashivatelMenu::new));
+
     public static final RegistryObject<MenuType<StanokMenu>> STANOK_MENU =
             MENUS.register("stanok_menu", () -> IForgeMenuType.create(StanokMenu::new));
 

@@ -113,6 +113,7 @@ public class ModLangProvider extends LanguageProvider {
         add("jei.category.trd.electric_furnace", "Electric Furnace");
         add("jei.category.trd.coccer_oven", "Coke Oven");
         add("jei.category.trd.chemical_plant", "Chemical Plant");
+        add("jei.category.trd.vishelashivatel", "Leacher");
 
         // Metals
         add("metal.trd.gold", "Gold");
@@ -882,6 +883,23 @@ public class ModLangProvider extends LanguageProvider {
         add("gui.trd.coccer_oven.bonus", "Speed bonus: +%s%%");
         add("gui.trd.coccer_oven.too_cold", "Too cold!");
         add("gui.trd.coccer_oven.no_recipe", "No recipe");
+
+        // ═══ Vishelashivater (Leacher) ═══
+        add(ModBlocks.VISHELASHIVATEL.get(), "Leacher");
+        add("recipe.trd.leather_from_rotten_flesh", "Leather from Rotten Flesh");
+        add("gui.trd.vishelashivatel.empty_tank", "Empty");
+        add("gui.trd.vishelashivatel.fluid_amount", "%s / %s mB");
+        add("gui.trd.vishelashivatel.fluid_req", "Fluid:");
+        add("gui.trd.vishelashivatel.item_input", "Input:");
+        add("gui.trd.vishelashivatel.item_output", "Output:");
+        add("gui.trd.vishelashivatel.min_rpm", "Min speed: %s RPM");
+        add("gui.trd.vishelashivatel.time", "Time: %ss");
+        add("hud.trd.leacher.no_recipe", "No recipe");
+        add("hud.trd.leacher.arrow_in", "-->");
+        add("hud.trd.leacher.arrow_out", "<--");
+        add("hud.trd.leacher.input", "input");
+        add("hud.trd.leacher.output", "output");
+        add("hud.trd.leacher.progress", "Progress: %s%%");
         add("gui.trd.coccer_oven.empty_tank", "Empty");
         add("gui.trd.coccer_oven.fluid_amount", "%s / %s mB");
         add("gui.trd.coccer_oven.progress.temperature", "Temperature: %d/%d °C");
@@ -900,6 +918,24 @@ public class ModLangProvider extends LanguageProvider {
         add("gui.trd.coccer_oven.bonus", "Бонус скорости: +%s%%");
         add("gui.trd.coccer_oven.too_cold", "Слишком холодно!");
         add("gui.trd.coccer_oven.no_recipe", "Нет рецепта");
+
+        // ═══ Выщелащиватель ═══
+        add(ModBlocks.VISHELASHIVATEL.get(), "Выщелащиватель");
+        add("jei.category.trd.vishelashivatel", "Выщелащиватель");
+        add("recipe.trd.leather_from_rotten_flesh", "Производство кожи");
+        add("gui.trd.vishelashivatel.empty_tank", "Пусто");
+        add("gui.trd.vishelashivatel.fluid_amount", "%s / %s мБ");
+        add("gui.trd.vishelashivatel.fluid_req", "Жидкость:");
+        add("gui.trd.vishelashivatel.item_input", "Вход:");
+        add("gui.trd.vishelashivatel.item_output", "Выход:");
+        add("gui.trd.vishelashivatel.min_rpm", "От %s об/мин");
+        add("gui.trd.vishelashivatel.time", "Время: %sс");
+        add("hud.trd.leacher.no_recipe", "Нет рецепта");
+        add("hud.trd.leacher.arrow_in", "-->");
+        add("hud.trd.leacher.arrow_out", "<--");
+        add("hud.trd.leacher.input", "вход");
+        add("hud.trd.leacher.output", "выход");
+        add("hud.trd.leacher.progress", "Прогресс: %s%%");
         add("gui.trd.coccer_oven.empty_tank", "Пусто");
         add("gui.trd.coccer_oven.fluid_amount", "%s / %s мБ");
         add("gui.trd.coccer_oven.progress.temperature", "Температура: %d/%d °C");
