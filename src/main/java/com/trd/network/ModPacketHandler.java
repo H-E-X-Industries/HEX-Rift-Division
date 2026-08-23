@@ -215,5 +215,17 @@ public class ModPacketHandler {
                 com.trd.network.packet.conveyor.SyncConveyorNetworkPacket::new,
                 (msg, ctx) -> { msg.handle(ctx); ctx.get().setPacketHandled(true); }
         );
+
+        // ─── Сортировщик ───
+        INSTANCE.registerMessage(id++,
+                com.trd.network.packet.conveyor.UpdateSortirovshikModeC2SPacket.class,
+                com.trd.network.packet.conveyor.UpdateSortirovshikModeC2SPacket::toBytes,
+                com.trd.network.packet.conveyor.UpdateSortirovshikModeC2SPacket::new,
+                com.trd.network.packet.conveyor.UpdateSortirovshikModeC2SPacket::handle);
+        INSTANCE.registerMessage(id++,
+                com.trd.network.packet.conveyor.UpdateSortirovshikFilterC2SPacket.class,
+                com.trd.network.packet.conveyor.UpdateSortirovshikFilterC2SPacket::toBytes,
+                com.trd.network.packet.conveyor.UpdateSortirovshikFilterC2SPacket::new,
+                com.trd.network.packet.conveyor.UpdateSortirovshikFilterC2SPacket::handle);
     }
 }

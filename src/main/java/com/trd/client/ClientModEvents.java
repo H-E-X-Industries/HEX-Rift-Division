@@ -112,6 +112,7 @@ public class ClientModEvents {
         MenuScreens.register(ModMenuTypes.FUEL_TANK_MENU.get(), GUIFuelTank::new);
         MenuScreens.register(ModMenuTypes.TROMBONE_MENU.get(), GUITrombone::new);
         MenuScreens.register(ModMenuTypes.CONVEYOR_BUFFER.get(), ConveyorBufferScreen::new);
+        MenuScreens.register(ModMenuTypes.SORTIROVSHIK_MENU.get(), GUISortirovshik::new);
         MenuScreens.register(ModMenuTypes.DROBITEL_MENU.get(), DrobitelScreen::new);
         MenuScreens.register(ModMenuTypes.CHEMICAL_PLANT_REACTION_CHAMBER_MENU.get(), GUIChemicalPlantReactionChamber::new);
         MenuScreens.register(ModMenuTypes.CHEMICAL_PLANT_PORT_MENU.get(), GUIChemicalPlantPort::new);

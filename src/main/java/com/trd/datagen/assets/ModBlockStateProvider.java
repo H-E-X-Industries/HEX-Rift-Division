@@ -189,6 +189,19 @@ public class ModBlockStateProvider extends BlockStateProvider {
                 modLoc("block/deco_steel")
         );
 
+        // Сортировщик: ориентация жёстко фиксирована (без FACING).
+        // Красный всегда сверху, маджента снизу, остальные по бокам.
+        ModelFile sortirovshik = models().withExistingParent("sortirovshik", "minecraft:block/cube")
+                .texture("particle", modLoc("block/sortirovshik_red"))
+                .texture("up", modLoc("block/sortirovshik_red"))
+                .texture("down", modLoc("block/sortirovshik_magenta"))
+                .texture("north", modLoc("block/sortirovshik_orange"))
+                .texture("south", modLoc("block/sortirovshik_yellow"))
+                .texture("west", modLoc("block/sortirovshik_green"))
+                .texture("east", modLoc("block/sortirovshik_cyan"));
+        simpleBlock(ModBlocks.SORTIROVSHIK.get(), sortirovshik);
+        simpleBlockItem(ModBlocks.SORTIROVSHIK.get(), sortirovshik);
+
 
         horizontalFurnaceBlockWithItem(ModBlocks.ELECTRO_FURNACE,
                 modLoc("block/electro_furnace_side"),
