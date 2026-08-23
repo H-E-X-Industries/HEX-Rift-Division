@@ -227,6 +227,7 @@ public class MainRegistry {
             event.accept(ModItems.HAMMER.get());
 
             event.accept(ModItems.BELT.get());
+            event.accept(ModItems.WIRE_COIL_EMPTY);
             event.accept(ModItems.WIRE_COIL);
 
             event.accept(ModItems.INFINITE_FLUID_BARREL);
@@ -374,6 +375,7 @@ public class MainRegistry {
             event.accept(ModBlocks.CONVEYOR_VSTAVSHIK.get());
             event.accept(ModBlocks.CONVEYOR_IZVLEKATEL.get());
             event.accept(ModBlocks.CONVEYOR.get());
+            event.accept(ModBlocks.SORTIROVSHIK.get());
 
         }
 
@@ -417,6 +419,8 @@ public class MainRegistry {
 
         if (event.getTab() == ModCreativeTabs.trd_RECOURSES_TAB.get()) {
 
+            event.accept(ModBlocks.LIGNITE_BLOCK);
+            
             event.accept(ModItems.IRON_PLATE.get());
             event.accept(ModItems.TITANIUM_PLATE.get());
             event.accept(ModItems.STEEL_PLATE.get());
@@ -425,6 +429,10 @@ public class MainRegistry {
             event.accept(ModItems.ALUMINUM_PLATE.get());
             event.accept(ModItems.INDUSTRIAL_COPPER_PLATE.get());
             event.accept(ModItems.GOLD_PLATE.get());
+
+            event.accept(ModItems.INDUSTRIAL_COPPER_WIRE.get());
+            event.accept(ModItems.GOLD_WIRE.get());
+            event.accept(ModItems.NEODYMIUM_WIRE.get());
 
             event.accept(ModItems.CAST_PICKAXE_IRON_BASE.get());
             event.accept(ModItems.CAST_PICKAXE_STEEL_BASE.get());
@@ -461,7 +469,6 @@ public class MainRegistry {
             event.accept(ModItems.FUEL_ASH.get());
             event.accept(ModItems.TRASH);
 
-            event.accept(ModBlocks.LIGNITE_BLOCK);
 
         }
 

@@ -269,9 +269,24 @@ public class ModItems {
             () -> new TurretLightPortativePlacer(new Item.Properties().stacksTo(1)));
 
 
+
+    public static final RegistryObject<Item> INDUSTRIAL_COPPER_WIRE = ITEMS.register("industrial_copper_wire",
+            () -> new Item(new Item.Properties()));
+
+    public static final RegistryObject<Item> GOLD_WIRE = ITEMS.register("gold_wire",
+            () -> new Item(new Item.Properties()));
+
+    public static final RegistryObject<Item> NEODYMIUM_WIRE = ITEMS.register("neodymium_wire",
+            () -> new Item(new Item.Properties()));
+
+    public static final RegistryObject<Item> WIRE_COIL_EMPTY = ITEMS.register("wire_coil_empty",
+            () -> new Item(new Item.Properties()));
+
     // Conglomerate items
     public static final RegistryObject<Item> CONGLOMERATE_CHUNK = ITEMS.register("conglomerate_chunk",
             () -> new ConglomerateItem(new Item.Properties()));
+
+
 
     public static final RegistryObject<Item> HARD_ROCK = ITEMS.register("hard_rock",
             () -> new Item(new Item.Properties()));

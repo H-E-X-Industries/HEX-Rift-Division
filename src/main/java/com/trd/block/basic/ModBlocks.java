@@ -826,6 +826,10 @@ public class ModBlocks {
             () -> new ConveyorExtractorBlock(BlockBehaviour.Properties.of()
                     .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
 
+    public static final RegistryObject<Block> SORTIROVSHIK = registerBlock("sortirovshik",
+            () -> new SortirovshikBlock(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
     //МУЛЬТИБЛОКИ
     public static final RegistryObject<Block> MULTIBLOCK_PART = BLOCKS.register("multiblock_part",
             () -> new MultiblockPartBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion()));

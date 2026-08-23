@@ -165,6 +165,11 @@ public class ModBlockEntities {
             BLOCK_ENTITIES.register("conveyor",
                     () -> BlockEntityType.Builder.of(ConveyorBlockEntity::new, ModBlocks.CONVEYOR.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<com.trd.block.entity.industrial.SortirovshikBlockEntity>> SORTIROVSHIK_BE =
+            BLOCK_ENTITIES.register("sortirovshik", () -> BlockEntityType.Builder.of(
+                    com.trd.block.entity.industrial.SortirovshikBlockEntity::new,
+                    ModBlocks.SORTIROVSHIK.get()).build(null));
+
     public static final RegistryObject<BlockEntityType<MachineBatteryBlockEntity>> MACHINE_BATTERY_BE =
             BLOCK_ENTITIES.register("machine_battery_be", () -> {
                 // Превращаем список RegistryObject в массив Block[]

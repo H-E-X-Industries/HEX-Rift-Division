@@ -76,6 +76,9 @@ public class ModMenuTypes {
     public static final RegistryObject<MenuType<ConveyorBufferMenu>> CONVEYOR_BUFFER =
             MENUS.register("conveyor_buffer", () -> net.minecraftforge.common.extensions.IForgeMenuType.create(ConveyorBufferMenu::new));
 
+    public static final RegistryObject<MenuType<SortirovshikMenu>> SORTIROVSHIK_MENU =
+            MENUS.register("sortirovshik_menu", () -> IForgeMenuType.create(SortirovshikMenu::new));
+
     public static final RegistryObject<MenuType<SteelStorageMenu>> STEEL_STORAGE_MENU =
             MENUS.register("steel_storage_menu", () -> net.minecraftforge.common.extensions.IForgeMenuType.create(
                     (windowId, inv, data) -> {

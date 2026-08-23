@@ -313,6 +313,16 @@ public class ModLangProvider extends LanguageProvider {
         add("gui.trd.battery.mode.locked", "Mode: Locked");
         add("gui.trd.battery.mode.locked.desc", "All energy operations are disabled.");
 
+        // ═══ GUI: Conveyor Sorter ═══
+        add("gui.trd.sortirovshik.mode.closed", "Direction Closed");
+        add("gui.trd.sortirovshik.mode.closed.desc", "The section is not used in sorting.");
+        add("gui.trd.sortirovshik.mode.blacklist", "Blacklist");
+        add("gui.trd.sortirovshik.mode.blacklist.desc", "Passes everything except the marked items.");
+        add("gui.trd.sortirovshik.mode.whitelist", "Whitelist");
+        add("gui.trd.sortirovshik.mode.whitelist.desc", "Passes only the marked items.");
+        add("gui.trd.sortirovshik.mode.universal", "Universal Direction");
+        add("gui.trd.sortirovshik.mode.universal.desc", "Passes only items that did not match any other section.");
+
         // ═══ HUD: Temperature ═══
         add("hud.trd.temperature.format", "%.0f / %.0f °C");
         add("hud.trd.temperature.heating", "§6● §fHeating");
@@ -678,6 +688,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.CONVEYOR_VSTAVSHIK.get(), "Conveyor Inserter");
         add(ModBlocks.CONVEYOR_IZVLEKATEL.get(), "Conveyor Extractor");
         add(ModBlocks.CONVEYOR.get(), "Conveyor");
+        add(ModBlocks.SORTIROVSHIK.get(), "Conveyor Sorter");
         add(ModBlocks.STEEL_STORAGE.get(), "Steel Storage");
 
         // Weapons & Ammo
@@ -1203,6 +1214,16 @@ public class ModLangProvider extends LanguageProvider {
         add("gui.trd.battery.mode.locked", "Режим: Заблокировано");
         add("gui.trd.battery.mode.locked.desc", "Все операции с энергией отключены.");
 
+        // ═══ GUI: Конвейерный сортировщик ═══
+        add("gui.trd.sortirovshik.mode.closed", "Направление закрыто");
+        add("gui.trd.sortirovshik.mode.closed.desc", "Секция не используется в сортировке.");
+        add("gui.trd.sortirovshik.mode.blacklist", "Чёрный список");
+        add("gui.trd.sortirovshik.mode.blacklist.desc", "Пропускает всё, кроме отмеченных предметов.");
+        add("gui.trd.sortirovshik.mode.whitelist", "Белый список");
+        add("gui.trd.sortirovshik.mode.whitelist.desc", "Пропускает только отмеченные предметы.");
+        add("gui.trd.sortirovshik.mode.universal", "Универсальное направление");
+        add("gui.trd.sortirovshik.mode.universal.desc", "Пропускает только предметы, не подошедшие ни одной другой секции.");
+
 
         // ═══ HUD: Общая температура (Heater/Smelter/SmallSmelter) ═══
         add("hud.trd.temperature.format", "%.0f / %.0f °C");
@@ -1641,6 +1662,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.CONVEYOR_VSTAVSHIK.get(), "Конвейерный вставщик");
         add(ModBlocks.CONVEYOR_IZVLEKATEL.get(), "Конвейерный извлекатель");
         add(ModBlocks.CONVEYOR.get(), "Конвейер");
+        add(ModBlocks.SORTIROVSHIK.get(), "Конвейерный сортировщик");
         add(ModBlocks.STEEL_STORAGE.get(), "Стальное хранилище");
 
         // Оружие и боеприпасы
