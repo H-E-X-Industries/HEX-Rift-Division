@@ -3,22 +3,18 @@ package com.trd.api.vein;
 import java.util.Collections;
 import java.util.Map;
 
-/**
- * Фракции конгломерата. Каждая фракция — это группа металлов в виде соединений,
- * которые требуют специфической переработки.
- */
 public enum FractionType {
     LIGHT_METAL("light_metal", 0xA0C4D9, Map.of(
-            "aluminum", 70,
-            "titanium", 20,
+            "copper", 50,
+            "aluminum", 25,
+            "titanium", 15,
             "beryllium", 10
     )),
     HEAVY_METAL("heavy_metal", 0x8B4513, Map.of(
-            "iron", 35,
-            "copper", 25,
-            "zinc", 15,
-            "lead", 12,
-            "tin", 10,
+            "iron", 40,
+            "zinc", 25,
+            "lead", 17,
+            "tin", 15,
             "tungsten", 3
     )),
     NOBLE_METAL("noble_metal", 0xFFD700, Map.of(
