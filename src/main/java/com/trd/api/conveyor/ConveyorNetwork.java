@@ -111,6 +111,14 @@ public class ConveyorNetwork {
                         }
                     }
 
+                    // Сортировщик: лента упирается в него торцом — отдаём предмет на сортировку.
+                    // Не принял (нет подходящей секции) — выбросится ниже как обычно.
+                    if (!transferred && targetBe instanceof com.trd.block.entity.industrial.SortirovshikBlockEntity sorter) {
+                        if (sorter.tryAcceptFromBelt(item.getStack().copy())) {
+                            transferred = true;
+                        }
+                    }
+
                     if (transferred) {
                         iterator.remove();
                         changed = true;

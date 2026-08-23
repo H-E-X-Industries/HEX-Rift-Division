@@ -29,6 +29,7 @@ import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -79,11 +80,13 @@ public class SortirovshikBlockEntity extends BlockEntity implements MenuProvider
     private final int[] modes = new int[SECTIONS];
     private final ItemStack[] filters = new ItemStack[TOTAL_FILTER_SLOTS];
 
-    private int cooldown = 0;
-    // Интервал между проверками ленты. Предмет движется на 1.5/20 блока за тик,
-    // поэтому интервал должен быть заметно меньше времени прохода одного блока (~13 тиков),
-    // иначе предмет можно пропустить. 3 тика — с запасом.
-    private static final int SORT_INTERVAL = 3;
+    /**
+     * Отложенная выдача предметов, принятых с тупиковой ленты (см. tryAcceptFromBelt).
+     * Нельзя менять список сети прямо во время её тика — выдаём в начале следующего тика сортировщика.
+     */
+    private final ArrayList<PendingOutput> pendingOutputs = new ArrayList<>();
+
+    private record PendingOutput(ItemStack stack, Direction direction) {}
 
     public SortirovshikBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.SORTIROVSHIK_BE.get(), pos, state);
@@ -131,18 +134,32 @@ public class SortirovshikBlockEntity extends BlockEntity implements MenuProvider
 
     // === Логика сортировки ===
 
+    /**
+     * Предмет с ленты, упирающейся торцом в сортировщик (вызывается из ConveyorNetwork
+     * в момент достижения предметом конца ленты).
+     * Принимает, если предмет прошёл чей-то фильтр; выдача откладывается до ближайшего
+     * тика сортировщика, чтобы не мутировать список сети во время её итерации.
+     */
+    public boolean tryAcceptFromBelt(ItemStack stack) {
+        if (stack.isEmpty()) return false;
+        if (!(level instanceof net.minecraft.server.level.ServerLevel)) return false;
+        int section = matchSection(stack);
+        if (section < 0) return false;
+        pendingOutputs.add(new PendingOutput(stack, Section.values()[section].direction));
+        return true;
+    }
+
     public static void tick(Level level, BlockPos pos, BlockState state, SortirovshikBlockEntity be) {
         if (!(level instanceof net.minecraft.server.level.ServerLevel serverLevel)) return;
-
-        if (be.cooldown > 0) {
-            be.cooldown--;
-            return;
-        }
-        be.cooldown = SORT_INTERVAL;
+        // Сканируем каждый тик: предмет не должен успеть визуально "застрять"
+        // напротив сортировщика (особенно в тупике ленты)
         be.sortTick(serverLevel);
     }
 
     private void sortTick(net.minecraft.server.level.ServerLevel serverLevel) {
+        // Сначала отдаём принятое с тупиковых лент — вне итераций сетей
+        flushPendingOutputs(serverLevel);
+
         ConveyorNetworkManager manager = ConveyorNetworkManager.get(serverLevel);
 
         // Ищем конвейерные сети среди всех 6 соседей (сеть примыкающая двумя сторонами обрабатывается один раз)
@@ -156,27 +173,42 @@ public class SortirovshikBlockEntity extends BlockEntity implements MenuProvider
             if (index < 0) continue;
 
             List<ConveyorItem> items = net.getItems();
-            boolean changed = false;
-            // Идём с конца — безопасно удаляем по ходу
-            for (int i = items.size() - 1; i >= 0; i--) {
-                ConveyorItem item = items.get(i);
+
+            // Сначала собираем совпавшие предметы и только потом мутируем список:
+            // выдача может вставить предмет обратно в ЭТУ же сеть (кольцевая схема),
+            // и нельзя переставлять список, пока мы его обходим
+            List<ConveyorItem> matched = new ArrayList<>(0);
+            for (ConveyorItem item : items) {
                 double progress = item.getProgress();
                 // Предмет находится напротив сортировщика (блок ленты, соседний с ним)
                 if (progress < index || progress >= index + 1.0) continue;
-
-                int section = matchSection(item.getStack());
-                if (section < 0) continue;
-
-                ItemStack moved = item.getStack().copy();
-                items.remove(i);
-                changed = true;
-                outputStack(serverLevel, manager, Section.values()[section].direction, moved);
+                if (matchSection(item.getStack()) < 0) continue;
+                matched.add(item);
             }
-            if (changed) {
+
+            if (!matched.isEmpty()) {
+                items.removeAll(matched); // equals не переопределён — сравнение по ссылке
+                for (ConveyorItem item : matched) {
+                    outputStack(serverLevel, manager, sectionOf(item.getStack()), item.getStack().copy());
+                }
                 manager.markForSync(net);
                 manager.setDirty();
             }
         }
+    }
+
+    /** Направление секции, принявшей предмет (вызывать только если matchSection >= 0). */
+    private Direction sectionOf(ItemStack stack) {
+        return Section.values()[matchSection(stack)].direction;
+    }
+
+    private void flushPendingOutputs(net.minecraft.server.level.ServerLevel serverLevel) {
+        if (pendingOutputs.isEmpty()) return;
+        ConveyorNetworkManager manager = ConveyorNetworkManager.get(serverLevel);
+        for (PendingOutput pending : pendingOutputs) {
+            outputStack(serverLevel, manager, pending.direction(), pending.stack());
+        }
+        pendingOutputs.clear();
     }
 
     /**
@@ -220,10 +252,13 @@ public class SortirovshikBlockEntity extends BlockEntity implements MenuProvider
                              Direction dir, ItemStack stack) {
         BlockPos target = worldPosition.relative(dir);
 
-        // 1. На соседний конвейер — в начало ленты
+        // 1. На соседний конвейер — ЗА сегмент, примыкающий к сортировщику.
+        // Если вставить в сам этот сегмент, предмет тут же снова попадёт в окно
+        // сканирования, повторно пройдёт фильтр и зациклится на первом блоке.
         ConveyorNetwork outNet = manager.getNetworkFor(target);
         if (outNet != null) {
-            outNet.tryInsertItem(stack, 0.0);
+            double insertAt = outNet.getPath().indexOf(target) + 1.0;
+            outNet.tryInsertItem(stack, insertAt);
             manager.markForSync(outNet);
             manager.setDirty();
             return;
@@ -279,7 +314,6 @@ public class SortirovshikBlockEntity extends BlockEntity implements MenuProvider
             list.add(filters[i].save(new CompoundTag()));
         }
         tag.put("Filters", list);
-        tag.putInt("Cooldown", cooldown);
     }
 
     @Override
@@ -294,7 +328,6 @@ public class SortirovshikBlockEntity extends BlockEntity implements MenuProvider
         for (int i = 0; i < TOTAL_FILTER_SLOTS; i++) {
             filters[i] = (i < list.size()) ? ItemStack.of(list.getCompound(i)) : ItemStack.EMPTY;
         }
-        cooldown = tag.getInt("Cooldown");
     }
 
     @Override
