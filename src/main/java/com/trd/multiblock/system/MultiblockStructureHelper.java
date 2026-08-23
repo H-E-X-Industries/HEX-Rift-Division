@@ -28,6 +28,9 @@ public class MultiblockStructureHelper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MultiblockStructureHelper.class);
     private static final ThreadLocal<Boolean> IS_DESTROYING = ThreadLocal.withInitial(() -> false);
+    public static boolean isDestroying() { return IS_DESTROYING.get(); }
+
+
 
     private final Map<BlockPos, Supplier<BlockState>> structureMap;
     private final Supplier<BlockState> phantomBlockState;
@@ -196,17 +199,60 @@ public class MultiblockStructureHelper {
         return state.is(BlockTags.REPLACEABLE_BY_TREES) || state.is(BlockTags.FLOWERS) || state.is(BlockTags.SAPLINGS);
     }
 
+            public boolean hasWireObstruction(Level level, BlockPos controllerPos, BlockState state) {
+        if (!(level instanceof net.minecraft.server.level.ServerLevel serverLevel)) return false;
+        com.trd.api.energy.EnergyNetworkManager manager = com.trd.api.energy.EnergyNetworkManager.get(serverLevel);
+        
+        // Check controller first!
+        if (manager.isBlockObstructingAnyWire(controllerPos)) {
+            return true;
+        }
+
+        net.minecraft.core.Direction facing = net.minecraft.core.Direction.NORTH;
+        net.minecraft.core.Direction.Axis axis = net.minecraft.core.Direction.Axis.Z;
+        boolean hasFacing = false;
+        boolean hasAxis = false;
+
+        if (state.hasProperty(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING)) {
+            facing = state.getValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING);
+            hasFacing = true;
+        } else if (state.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING)) {
+            facing = state.getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.FACING);
+            hasFacing = true;
+        }
+
+        if (state.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.AXIS)) {
+            axis = state.getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.AXIS);
+            hasAxis = true;
+        }
+
+        for (BlockPos relativePos : structureMap.keySet()) {
+            BlockPos worldPos;
+            if (hasFacing && hasAxis) {
+                worldPos = getRotatedStatorPos(controllerPos, relativePos, facing, axis);
+            } else if (hasAxis) {
+                worldPos = getRotatedPosAxis(controllerPos, relativePos, axis);
+            } else if (hasFacing) {
+                worldPos = getRotatedPos(controllerPos, relativePos, facing);
+            } else {
+                worldPos = controllerPos.offset(relativePos);
+            }
+
+            if (manager.isBlockObstructingAnyWire(worldPos)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public boolean checkPlacement(Level level, BlockPos controllerPos, Direction facing, Player player) {
         List<BlockPos> obstructions = new ArrayList<>();
         for (BlockPos relativePos : structureMap.keySet()) {
-            if (relativePos.equals(BlockPos.ZERO)) continue;
+            
             BlockPos worldPos = getRotatedPos(controllerPos, relativePos, facing);
             BlockState existingState = level.getBlockState(worldPos);
 
             if (!isBlockReplaceable(existingState)) {
-                obstructions.add(worldPos);
-            } else if (level instanceof ServerLevel serverLevel && EnergyNetworkManager.get(serverLevel).isBlockObstructingAnyWire(worldPos)) {
-                // Также проверяем, не проходит ли сквозь это место провод
                 obstructions.add(worldPos);
             }
         }
@@ -225,13 +271,11 @@ public class MultiblockStructureHelper {
     public boolean checkPlacement(Level level, BlockPos controllerPos, Direction.Axis axis, Player player) {
         List<BlockPos> obstructions = new ArrayList<>();
         for (BlockPos relativePos : structureMap.keySet()) {
-            if (relativePos.equals(BlockPos.ZERO)) continue;
+            
             BlockPos worldPos = getRotatedPosAxis(controllerPos, relativePos, axis);
             BlockState existingState = level.getBlockState(worldPos);
 
             if (!isBlockReplaceable(existingState)) {
-                obstructions.add(worldPos);
-            } else if (level instanceof ServerLevel serverLevel && EnergyNetworkManager.get(serverLevel).isBlockObstructingAnyWire(worldPos)) {
                 obstructions.add(worldPos);
             }
         }
@@ -249,13 +293,10 @@ public class MultiblockStructureHelper {
     public boolean checkPlacementStator(Level level, BlockPos controllerPos, Direction facing, Direction.Axis axis, Player player) {
         List<BlockPos> obstructions = new ArrayList<>();
         for (BlockPos relativePos : structureMap.keySet()) {
-            if (relativePos.equals(BlockPos.ZERO)) continue;
             BlockPos worldPos = getRotatedStatorPos(controllerPos, relativePos, facing, axis);
             BlockState existingState = level.getBlockState(worldPos);
 
             if (!isBlockReplaceable(existingState)) {
-                obstructions.add(worldPos);
-            } else if (level instanceof ServerLevel serverLevel && EnergyNetworkManager.get(serverLevel).isBlockObstructingAnyWire(worldPos)) {
                 obstructions.add(worldPos);
             }
         }
