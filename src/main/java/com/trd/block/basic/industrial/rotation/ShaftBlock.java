@@ -350,6 +350,16 @@ public class ShaftBlock extends BaseEntityBlock {
         return this.defaultBlockState().setValue(FACING, placementFacing);
     }
 
+    @Override
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        super.neighborChanged(state, level, pos, block, fromPos, isMoving);
+        if (!level.isClientSide) {
+            if (!canBeSupported(level, pos, state.getValue(FACING))) {
+                level.destroyBlock(pos, true);
+            }
+        }
+    }
+
     private boolean canBeSupported(Level level, BlockPos pos, Direction facing) {
         int maxDist = diameter.maxSupportDistance;
 
