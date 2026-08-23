@@ -103,8 +103,13 @@ public class ConnectorBlockEntity extends BlockEntity implements IEnergyConnecto
         double heightOffset = getTier().height() / 16.0;
         double offsetFromCenter = 0.5 - heightOffset;
 
-        // Добавляем смещение 0.01 по направлению фейса (наружу от блока)
-        double outwardOffset = 0.01;
+        // Сдвигаем точку контакта внутрь коннектора: 1.5 пикселя для малого, 2 пикселя для среднего/большого
+        double outwardOffset;
+        if (getTier().maxLength() <= 16) {
+            outwardOffset = -(1.5 / 16.0) - 0.01; // Малый коннектор
+        } else {
+            outwardOffset = -(2.0 / 16.0); // Средний и большой
+        }
 
         double lx = 0.5 - offsetFromCenter * facing.getStepX() + outwardOffset * facing.getStepX();
         double ly = 0.5 - offsetFromCenter * facing.getStepY() + outwardOffset * facing.getStepY();

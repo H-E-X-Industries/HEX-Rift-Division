@@ -114,12 +114,12 @@ public class ModBlocks {
     // Средний
     public static final RegistryObject<Block> MEDIUM_CONNECTOR = registerBlock("medium_connector",
             () -> new ConnectorBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK),
-                    new ConnectorTier(32, 7, 0.05f, 6, 8)));
+                    new ConnectorTier(32, 7, 0.035f, 6, 8)));
 
     // Большой
     public static final RegistryObject<Block> LARGE_CONNECTOR = registerBlock("large_connector",
             () -> new ConnectorBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK),
-                    new ConnectorTier(100, 11, 0.08f, 8, 13)));
+                    new ConnectorTier(200, 11, 0.055f, 8, 13)));
 
     //трубы
     public static final RegistryObject<Block> BRONZE_FLUID_PIPE = registerBlock("bronze_fluid_pipe",
@@ -466,10 +466,13 @@ public class ModBlocks {
                     .requiresCorrectToolForDrops()
                     .noOcclusion()));
 
-    public static final RegistryObject<Block> VISHELASHIVATEL = registerBlock("vishelashivatel",
+    public static final RegistryObject<Block> VISHELASHIVATEL = registerBlockWithoutItem("vishelashivatel",
             () -> new com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlock(BlockBehaviour.Properties.of()
                     .strength(3.0F, 10.0F)
                     .noOcclusion()));
+    public static final RegistryObject<net.minecraft.world.item.Item> VISHELASHIVATEL_ITEM = ModItems.ITEMS.register("vishelashivatel",
+            () -> new com.trd.multiblock.system.MultiblockBlockItem(VISHELASHIVATEL.get(), new net.minecraft.world.item.Item.Properties()));
+
 
     public static final RegistryObject<Block> CHEMICAL_PLANT_HEATER = registerBlock("chemical_plant_heater",
             () -> new com.trd.block.basic.industrial.chemistry.ChemicalPlantHeaterBlock(BlockBehaviour.Properties.of()

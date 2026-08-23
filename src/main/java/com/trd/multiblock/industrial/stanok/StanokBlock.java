@@ -197,4 +197,9 @@ public class StanokBlock extends BaseEntityBlock implements IMultiblockControlle
                 : createTickerHelper(type, ModBlockEntities.STANOK_BE.get(),
                 StanokBlockEntity::serverTick);
     }
+    @Override
+    public void appendHoverText(net.minecraft.world.item.ItemStack stack, @org.jetbrains.annotations.Nullable net.minecraft.world.level.BlockGetter level, java.util.List<net.minecraft.network.chat.Component> tooltip, net.minecraft.world.item.TooltipFlag flag) {
+        super.appendHoverText(stack, level, tooltip, flag);
+        tooltip.add(net.minecraft.network.chat.Component.literal("Максимальная скорость: 4000 RPM").withStyle(net.minecraft.ChatFormatting.GRAY));
+    }
 }

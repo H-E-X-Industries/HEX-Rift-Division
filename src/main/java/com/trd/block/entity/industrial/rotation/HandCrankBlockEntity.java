@@ -21,7 +21,7 @@ import java.util.List;
 
 public class HandCrankBlockEntity extends KineticNodeBlockEntity {
 
-    public static final int MAX_RPM = 64;
+    public static final int MAX_RPM = 500;
     public static final long MAX_TORQUE = 5L;
 
     private int scrollBuffer = 0;
@@ -107,13 +107,13 @@ public class HandCrankBlockEntity extends KineticNodeBlockEntity {
     public double getInertiaContribution() { return 0.5; } // Small inertia for the crank itself
 
     @Override
-    public long getMaxTorqueTolerance() { return 128; } // Low structural tolerance, crank can break if attached to huge load maybe? Or high so it doesn't break easily. Let's make it robust enough for 128
+    public long getMaxTorqueTolerance() { return Long.MAX_VALUE; } // Low structural tolerance, crank can break if attached to huge load maybe? Or high so it doesn't break easily. Let's make it robust enough for 128
 
     @Override
     public long getMaxSpeed() { return MAX_RPM; }
 
     @Override
-    public long getMaxTorque() { return 1024; }
+    public long getMaxTorque() { return Long.MAX_VALUE; }
 
     @Override
     public boolean canConnectMechanically(BlockPos myPos, BlockPos neighborPos, Rotational neighbor) {

@@ -20,24 +20,24 @@ public class EnergyPlacementEvents {
         if (level == null || level.isClientSide() || !(level instanceof ServerLevel serverLevel)) return;
 
         BlockPos placedPos = event.getPos();
+        net.minecraft.world.level.block.state.BlockState state = event.getPlacedBlock();
+        net.minecraft.world.phys.shapes.VoxelShape shape = state.getCollisionShape(serverLevel, placedPos);
         
         EnergyNetworkManager manager = EnergyNetworkManager.get(serverLevel);
-        if (manager.isBlockObstructingAnyWire(placedPos)) {
-            event.setCanceled(true);
+        
+        boolean obstructed = false;
+        if (state.getBlock() instanceof com.trd.multiblock.system.IMultiblockController controller) {
+            obstructed = controller.getStructureHelper().hasWireObstruction(serverLevel, placedPos, state);
+        } else {
+            obstructed = manager.isBlockObstructingAnyWire(shape, placedPos);
+        }
+
+        if (obstructed) {
+            event.setCanceled(false);
+            serverLevel.destroyBlock(placedPos, true);
             
             if (event.getEntity() instanceof Player player) {
-                player.displayClientMessage(Component.literal("§cЭто место занято электрическим проводом!"), true);
-                
-                if (!player.isCreative()) {
-                    net.minecraft.world.level.block.Block block = event.getPlacedBlock().getBlock();
-                    net.minecraft.world.InteractionHand hand = player.getMainHandItem().is(block.asItem()) ? net.minecraft.world.InteractionHand.MAIN_HAND : 
-                                                         (player.getOffhandItem().is(block.asItem()) ? net.minecraft.world.InteractionHand.OFF_HAND : null);
-                    
-                    if (hand != null) {
-                        player.getItemInHand(hand).shrink(1);
-                        net.minecraft.world.level.block.Block.popResource(serverLevel, placedPos, new net.minecraft.world.item.ItemStack(block.asItem()));
-                    }
-                }
+                player.displayClientMessage(Component.literal("\u00A7c\u0423\u0441\u0442\u0430\u043d\u043e\u0432\u043a\u0430 \u0437\u0430\u0431\u043b\u043e\u043a\u0438\u0440\u043e\u0432\u0430\u043d\u0430: \u0437\u0434\u0435\u0441\u044c \u043f\u0440\u043e\u0445\u043e\u0434\u0438\u0442 \u043f\u0440\u043e\u0432\u043e\u0434!"), true);
             }
         }
     }

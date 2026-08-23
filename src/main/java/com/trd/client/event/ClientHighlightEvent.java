@@ -21,6 +21,26 @@ import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber(modid = MainRegistry.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class ClientHighlightEvent {
+    @net.minecraftforge.eventbus.api.SubscribeEvent
+    public static void onRenderHand(net.minecraftforge.client.event.RenderHandEvent event) {
+        if (event.getItemStack().getItem() instanceof com.trd.item.weapons.guns.MachineGunItem) {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.options.bobView().get() && mc.getCameraEntity() instanceof Player player) {
+                float pPartialTicks = event.getPartialTick();
+                float f = player.walkDist - player.walkDistO;
+                float f1 = -(player.walkDist + f * pPartialTicks);
+                float f2 = net.minecraft.util.Mth.lerp(pPartialTicks, player.oBob, player.bob);
+
+                PoseStack poseStack = event.getPoseStack();
+                
+                // Inverse Bob View
+                poseStack.mulPose(com.mojang.math.Axis.XP.rotationDegrees(-(Math.abs(net.minecraft.util.Mth.cos(f1 * (float)Math.PI - 0.2F) * f2) * 5.0F)));
+                poseStack.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(-(net.minecraft.util.Mth.sin(f1 * (float)Math.PI) * f2 * 3.0F)));
+                poseStack.translate(-(double)(net.minecraft.util.Mth.sin(f1 * (float)Math.PI) * f2 * 0.5F), -((double)(-Math.abs(net.minecraft.util.Mth.cos(f1 * (float)Math.PI) * f2))), 0.0D);
+            }
+        }
+    }
+
 
     @SubscribeEvent
     public static void onRenderHighlight(RenderHighlightEvent.Block event) {

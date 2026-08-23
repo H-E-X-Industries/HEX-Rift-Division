@@ -395,26 +395,27 @@ public class EnergyNetworkManager extends SavedData {
     // ==================== ПРОВЕРКА ПРЕПЯТСТВИЙ ПРИ УСТАНОВКЕ БЛОКОВ ====================
 
     public boolean isBlockObstructingAnyWire(BlockPos placedPos) {
-        AABB blockBox = new AABB(placedPos);
+        return isBlockObstructingAnyWire(net.minecraft.world.phys.shapes.Shapes.block(), placedPos);
+    }
+
+    public boolean isBlockObstructingAnyWire(net.minecraft.world.phys.shapes.VoxelShape shape, BlockPos placedPos) {
+        if (shape.isEmpty()) return false;
+        
+        AABB blockBox = shape.bounds().move(placedPos);
 
         for (EnergyNode node : allNodes.values()) {
             BlockPos startPos = node.getPos();
 
-            // 1. Быстрая проверка расстояния
             if (startPos.distSqr(placedPos) > 1024) continue;
-
             if (!level.isLoaded(startPos)) continue;
 
             BlockEntity be = level.getBlockEntity(startPos);
             if (be instanceof ConnectorBlockEntity connector) {
                 for (BlockPos endPos : connector.getConnections()) {
-                    // 2. Проверяем каждый провод только один раз
                     if (startPos.asLong() < endPos.asLong()) {
-                        // 3. Быстрая проверка через AABB провода
                         AABB wireBox = new AABB(startPos).minmax(new AABB(endPos)).inflate(0.5);
                         if (wireBox.intersects(blockBox)) {
-                            // 4. Детальная проверка по точкам провисания
-                            if (wireIntersectsBlock(connector, endPos, blockBox)) {
+                            if (wireIntersectsShape(connector, endPos, shape, placedPos)) {
                                 return true;
                             }
                         }
@@ -425,7 +426,7 @@ public class EnergyNetworkManager extends SavedData {
         return false;
     }
 
-    private boolean wireIntersectsBlock(ConnectorBlockEntity startBe, BlockPos endPos, AABB blockBox) {
+    private boolean wireIntersectsShape(ConnectorBlockEntity startBe, BlockPos endPos, net.minecraft.world.phys.shapes.VoxelShape blockShape, BlockPos placedPos) {
         if (!level.isLoaded(endPos)) return false;
         BlockEntity be = level.getBlockEntity(endPos);
         if (!(be instanceof ConnectorBlockEntity endBe)) return false;
@@ -434,13 +435,14 @@ public class EnergyNetworkManager extends SavedData {
         Vec3 end = endBe.getWireAttachmentPoint();
 
         com.trd.util.CatenaryHelper.CatenaryData data = com.trd.util.CatenaryHelper.compute(start, end);
-        int segments = 12;
+        
+        double distance = start.distanceTo(end);
+        int segments = Math.max(12, (int) (distance * 3));
         Vec3 prev = start;
 
         for (int i = 1; i <= segments; i++) {
             Vec3 current = data.getPoint((double) i / segments);
-            // Если сегмент провода пересекает хитбокс блока
-            if (blockBox.clip(prev, current).isPresent()) {
+            if (blockShape.clip(prev, current, placedPos) != null) {
                 return true;
             }
             prev = current;

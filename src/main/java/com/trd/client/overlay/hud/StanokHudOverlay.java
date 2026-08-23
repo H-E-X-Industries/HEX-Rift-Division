@@ -75,10 +75,22 @@ public class StanokHudOverlay {
 
         if (recipe == null) {
             String txt = Component.translatable("hud.trd.stanok.no_recipe").getString();
-            int w = font.width(txt);
-            if (x + w + 4 > screenW) x = screenW / 2 - w - 12;
-            gui.fill(x - 3, y - 2, x + w + 3, y + font.lineHeight + 2, 0x90000000);
-            gui.drawString(font, txt, x, y, 0xAAAAAA, true);
+            lines.add(txt);
+            colors.add(0xAAAAAA);
+            maxW = Math.max(maxW, font.width(txt));
+            
+            if (!be.hasCarriage()) {
+                String carriageTxt = Component.translatable("hud.trd.stanok.no_carriage").getString();
+                lines.add(carriageTxt);
+                colors.add(0xFF4444);
+                maxW = Math.max(maxW, font.width(carriageTxt));
+            }
+
+            if (x + maxW + 4 > screenW) x = screenW / 2 - maxW - 12;
+            gui.fill(x - 3, y - 2, x + maxW + 3, y + lines.size() * font.lineHeight + 2, 0x90000000);
+            for (int i = 0; i < lines.size(); i++) {
+                gui.drawString(font, lines.get(i), x, y + (i * font.lineHeight), colors.get(i), true);
+            }
             return;
         }
 
@@ -89,20 +101,37 @@ public class StanokHudOverlay {
         colors.add(0xFFFFFF);
         maxW = Math.max(maxW, font.width(recipeName));
 
+        // Если нет насадки
+        if (!be.hasCarriage()) {
+            String noCarriageTxt = Component.translatable("hud.trd.stanok.no_carriage").getString();
+            lines.add(noCarriageTxt);
+            colors.add(0xFF4444);
+            maxW = Math.max(maxW, font.width(noCarriageTxt));
+        }
+
         // Скорость
         long absSpeed = Math.abs(be.getSpeed());
         long req      = recipe.getRequiredRpm();
-        int speedStatus = be.speedStatus;
+        long tolerance = (long)(req * 0.25);
+        
+        int displaySpeedStatus;
+        if (absSpeed < req - tolerance) {
+            displaySpeedStatus = 1;
+        } else if (absSpeed > req + tolerance) {
+            displaySpeedStatus = 2;
+        } else {
+            displaySpeedStatus = 0;
+        }
 
         // Определяем: есть ли материал
         boolean hasInput = be.hasRequiredInputsPublic(recipe);
 
         int speedColor;
         String speedLabel;
-        if (speedStatus == 0 || speedStatus == 3) {
+        if (displaySpeedStatus == 0) {
             speedColor = 0x00FF00;
             speedLabel = Component.translatable("hud.trd.stanok.speed_ok").getString();
-        } else if (speedStatus == 1) {
+        } else if (displaySpeedStatus == 1) {
             speedColor = 0xFF4444;
             speedLabel = Component.translatable("hud.trd.stanok.speed_slow").getString();
         } else {

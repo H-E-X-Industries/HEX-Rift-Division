@@ -17,6 +17,9 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Blocks;
 
 import javax.annotation.Nullable;
 import java.util.Map;
@@ -61,6 +64,21 @@ public class ConnectorBlock extends BaseEntityBlock {
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return shapes.get(state.getValue(FACING));
+    }
+
+    @Override
+    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        Direction facing = state.getValue(FACING);
+        BlockPos supportPos = pos.relative(facing.getOpposite());
+        return level.getBlockState(supportPos).isFaceSturdy(level, supportPos, facing);
+    }
+
+    @Override
+    public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState, LevelAccessor level, BlockPos currentPos, BlockPos neighborPos) {
+        if (direction == state.getValue(FACING).getOpposite() && !state.canSurvive(level, currentPos)) {
+            return Blocks.AIR.defaultBlockState();
+        }
+        return super.updateShape(state, direction, neighborState, level, currentPos, neighborPos);
     }
 
     @Override

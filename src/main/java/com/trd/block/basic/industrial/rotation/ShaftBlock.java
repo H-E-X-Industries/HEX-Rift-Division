@@ -350,6 +350,16 @@ public class ShaftBlock extends BaseEntityBlock {
         return this.defaultBlockState().setValue(FACING, placementFacing);
     }
 
+    @Override
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        super.neighborChanged(state, level, pos, block, fromPos, isMoving);
+        if (!level.isClientSide) {
+            if (!canBeSupported(level, pos, state.getValue(FACING))) {
+                level.destroyBlock(pos, true);
+            }
+        }
+    }
+
     private boolean canBeSupported(Level level, BlockPos pos, Direction facing) {
         int maxDist = diameter.maxSupportDistance;
 
@@ -381,7 +391,9 @@ public class ShaftBlock extends BaseEntityBlock {
     private boolean isSupport(Level level, BlockPos pos, Direction axisDir) {
         BlockState state = level.getBlockState(pos);
         net.minecraft.world.level.block.Block block = state.getBlock();
-        if (block instanceof BearingBlock) return true;
+        if (block instanceof BearingBlock) {
+            return state.getValue(BearingBlock.FACING).getAxis() == axisDir.getAxis();
+        }
         if (block instanceof MotorElectroBlock) {
             return state.getValue(MotorElectroBlock.FACING) == axisDir.getOpposite();
         }
@@ -390,6 +402,12 @@ public class ShaftBlock extends BaseEntityBlock {
         }
         if (block instanceof TachometerBlock) {
             return state.getValue(TachometerBlock.FACING).getAxis() == axisDir.getAxis();
+        }
+        if (block instanceof ClutchBlock) {
+            return state.getValue(ClutchBlock.FACING).getAxis() == axisDir.getAxis();
+        }
+        if (block instanceof com.trd.block.basic.industrial.WaterPumpBlock) {
+            return state.getValue(com.trd.block.basic.industrial.WaterPumpBlock.FACING).getAxis() == axisDir.getAxis();
         }
         // <-- НОВОЕ: порт дробителя считается опорой для вала
         if (block instanceof com.trd.multiblock.system.MultiblockPartBlock) {

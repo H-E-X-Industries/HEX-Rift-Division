@@ -107,16 +107,16 @@ public class VishelashivatelBlockEntity extends com.trd.block.entity.industrial.
     // ===================== КИНЕТИКА (потребление через верх) =====================
 
     @Override
-    public long getMaxTorqueTolerance() { return 4096L; }
+    public long getMaxTorqueTolerance() { return Long.MAX_VALUE; }
 
     @Override
-    public long getMaxTorque() { return 4096L; }
+    public long getMaxTorque() { return Long.MAX_VALUE; }
 
     @Override
     public double getInertiaContribution() { return 20.0; }
 
     @Override
-    public long getMaxSpeed() { return 512L; }
+    public long getMaxSpeed() { return 1500L; }
 
     @Override
     public long getTorque() { return 0L; }

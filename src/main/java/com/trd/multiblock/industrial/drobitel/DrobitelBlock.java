@@ -80,19 +80,21 @@ public class DrobitelBlock extends BaseEntityBlock implements IMultiblockControl
                     '#', () -> ModBlocks.MULTIBLOCK_PART.get().defaultBlockState(),
                     'F', () -> ModBlocks.MULTIBLOCK_PART.get().defaultBlockState(),
                     'B', () -> ModBlocks.MULTIBLOCK_PART.get().defaultBlockState(),
+                    '$', () -> ModBlocks.MULTIBLOCK_PART.get().defaultBlockState(),
                     '@', () -> this.defaultBlockState()
             );
             Map<Character, PartRole> roles = Map.of(
                     '#', PartRole.DEFAULT,
                     'F', PartRole.KINETIC_PORT,
                     'B', PartRole.KINETIC_PORT,
+                    '$', PartRole.CARGO_PORT,
                     '@', PartRole.CONTROLLER
             );
 
             helper = MultiblockStructureHelper.createFromLayersWithRoles(
                     new String[][]{
-                            // y=0: F — передний порт, B — задний порт
-                            {"#F#", "#@#", "#B#"},
+                            // y=0: F — передний порт, B — задний порт, $ — карго порты по 4 углам
+                            {"$F$", "#@#", "$B$"},
                             {"###", "###", "###"}
                     },
                     symbols,
@@ -183,5 +185,11 @@ public class DrobitelBlock extends BaseEntityBlock implements IMultiblockControl
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         return level.isClientSide ? null : createTickerHelper(type, ModBlockEntities.DROBITEL_BE.get(), DrobitelBlockEntity::serverTick);
+    }
+    
+    @Override
+    public void appendHoverText(net.minecraft.world.item.ItemStack stack, @org.jetbrains.annotations.Nullable net.minecraft.world.level.BlockGetter level, java.util.List<net.minecraft.network.chat.Component> tooltip, net.minecraft.world.item.TooltipFlag flag) {
+        super.appendHoverText(stack, level, tooltip, flag);
+        tooltip.add(net.minecraft.network.chat.Component.literal("Максимальная скорость: 2500 RPM").withStyle(net.minecraft.ChatFormatting.GRAY));
     }
 }

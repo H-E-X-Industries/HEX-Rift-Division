@@ -155,12 +155,12 @@ public class WaterPumpBlockEntity extends KineticNodeBlockEntity {
 
     @Override
     public long getMaxTorqueTolerance() {
-        return 4096L;
+        return Long.MAX_VALUE;
     }
 
     @Override
     public long getMaxTorque() {
-        return 4096L;
+        return Long.MAX_VALUE;
     }
 
     @Override
@@ -170,7 +170,7 @@ public class WaterPumpBlockEntity extends KineticNodeBlockEntity {
 
     @Override
     public long getMaxSpeed() {
-        return 4096L;
+        return 1000L;
     }
 
     @Override
