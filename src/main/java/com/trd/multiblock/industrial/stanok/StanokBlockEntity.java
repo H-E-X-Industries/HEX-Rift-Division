@@ -57,10 +57,10 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
     public static final int TOTAL_SLOTS  = 13;
 
     // ────── Кинетика ──────
-    @Override public long getMaxTorqueTolerance() { return 8192L; }
-    @Override public long getMaxTorque()           { return 8192L; }
+    @Override public long getMaxTorqueTolerance() { return Long.MAX_VALUE; }
+    @Override public long getMaxTorque()           { return Long.MAX_VALUE; }
     @Override public double getInertiaContribution(){ return 25.0; }
-    @Override public long getMaxSpeed()             { return 1024L; }
+    @Override public long getMaxSpeed()             { return 4000L; }
     @Override public long getTorque()               { return 0L;    }
     @Override public boolean isSource()             { return false; }
 

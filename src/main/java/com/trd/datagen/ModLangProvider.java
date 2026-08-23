@@ -919,6 +919,32 @@ public class ModLangProvider extends LanguageProvider {
         add("gui.trd.coccer_oven.fluid_amount", "%s / %s mB");
         add("gui.trd.coccer_oven.progress.temperature", "Temperature: %d/%d °C");
         add("gui.trd.coccer_oven.progress.remaining", "Remaining: %ss");
+
+        // Stanok Items
+        add(ModItems.PRESS_CARRIAGE.get(), "Press Carriage");
+        add(ModItems.WIRE_CARRIAGE.get(), "Wire Carriage");
+        add(ModItems.FREZA_CARRIAGE.get(), "Freza Carriage");
+
+        // Stanok HUD
+        add("hud.trd.stanok.no_recipe", "No suitable recipe");
+        add("hud.trd.stanok.no_carriage", "Missing attachment!");
+        add("hud.trd.stanok.speed_ok", "Optimal");
+        add("hud.trd.stanok.speed_slow", "Too slow");
+        add("hud.trd.stanok.speed_fast", "Too fast");
+        add("hud.trd.stanok.no_material", "No materials");
+
+        // Stanok GUI Tooltips
+        add("gui.trd.stanok.tooltip.inputs", "Inputs:");
+        add("gui.trd.stanok.tooltip.outputs", "Outputs:");
+        add("gui.trd.stanok.tooltip.time", "Time: %s sec");
+        add("gui.trd.stanok.tooltip.rpm", "Required speed: %s RPM");
+        add("gui.trd.stanok.tooltip.torque", "Required torque: %s");
+        add("gui.trd.stanok.tooltip.carriage", "Attachment:");
+        
+        // Stanok Recipes
+        add("recipe.trd.press_copper_plate", "Press Copper Plate");
+        add("recipe.trd.wire_copper_coil", "Wire Copper Coil");
+        add("recipe.trd.freza_titanium_shaft", "Milling Titanium Shaft");
     }
 
     private void addRussian() {
@@ -1777,5 +1803,31 @@ public class ModLangProvider extends LanguageProvider {
         addFluidTranslations("water", "Вода", "Вода", "Water");
         addFluidTranslations("lava", "Лава", "Лава", "Lava");
         addFluidTranslations("mercury", "Ртуть", "Ртуть", "Mercury");
+
+        // Stanok Items
+        add(ModItems.PRESS_CARRIAGE.get(), "Пресс-насадка");
+        add(ModItems.WIRE_CARRIAGE.get(), "Проволочная насадка");
+        add(ModItems.FREZA_CARRIAGE.get(), "Фрезерная насадка");
+
+        // Stanok HUD
+        add("hud.trd.stanok.no_recipe", "Нет подходящего рецепта");
+        add("hud.trd.stanok.no_carriage", "Отсутствует насадка!");
+        add("hud.trd.stanok.speed_ok", "Оптимально");
+        add("hud.trd.stanok.speed_slow", "Слишком медленно");
+        add("hud.trd.stanok.speed_fast", "Слишком быстро");
+        add("hud.trd.stanok.no_material", "Нет материалов");
+
+        // Stanok GUI Tooltips
+        add("gui.trd.stanok.tooltip.inputs", "Входы:");
+        add("gui.trd.stanok.tooltip.outputs", "Выходы:");
+        add("gui.trd.stanok.tooltip.time", "Время: %s сек");
+        add("gui.trd.stanok.tooltip.rpm", "Требуемая скорость: %s RPM");
+        add("gui.trd.stanok.tooltip.torque", "Требуемый момент: %s");
+        add("gui.trd.stanok.tooltip.carriage", "Насадка:");
+        
+        // Stanok Recipes
+        add("recipe.trd.press_copper_plate", "Штамповка медной пластины");
+        add("recipe.trd.wire_copper_coil", "Намотка медной катушки");
+        add("recipe.trd.freza_titanium_shaft", "Фрезеровка титанового вала");
     }
 }

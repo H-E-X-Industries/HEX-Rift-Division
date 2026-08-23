@@ -391,6 +391,12 @@ public class ShaftBlock extends BaseEntityBlock {
         if (block instanceof TachometerBlock) {
             return state.getValue(TachometerBlock.FACING).getAxis() == axisDir.getAxis();
         }
+        if (block instanceof ClutchBlock) {
+            return state.getValue(ClutchBlock.FACING).getAxis() == axisDir.getAxis();
+        }
+        if (block instanceof com.trd.block.basic.industrial.WaterPumpBlock) {
+            return state.getValue(com.trd.block.basic.industrial.WaterPumpBlock.FACING).getAxis() == axisDir.getAxis();
+        }
         // <-- НОВОЕ: порт дробителя считается опорой для вала
         if (block instanceof com.trd.multiblock.system.MultiblockPartBlock) {
             BlockEntity be = level.getBlockEntity(pos);

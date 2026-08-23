@@ -153,4 +153,9 @@ public class SteamEngineBlock extends BaseEntityBlock implements IMultiblockCont
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         return level.isClientSide ? null : createTickerHelper(type, ModBlockEntities.STEAM_ENGINE_BE.get(), SteamEngineBlockEntity::tick);
     }
+    @Override
+    public void appendHoverText(net.minecraft.world.item.ItemStack stack, @org.jetbrains.annotations.Nullable net.minecraft.world.level.BlockGetter level, java.util.List<net.minecraft.network.chat.Component> tooltip, net.minecraft.world.item.TooltipFlag flag) {
+        super.appendHoverText(stack, level, tooltip, flag);
+        tooltip.add(net.minecraft.network.chat.Component.literal("Максимальная скорость: 2500 RPM").withStyle(net.minecraft.ChatFormatting.GRAY));
+    }
 }

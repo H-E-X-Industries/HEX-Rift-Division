@@ -138,6 +138,9 @@ public class ClientModEvents {
         event.registerBlockEntityRenderer(ModBlockEntities.MILLSTONE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.STANOK_BE.get(), com.trd.client.render.StanokRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.VISHELASHIVATEL_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.WATER_PUMP_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.FUEL_TANK_SMALL_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.HAND_CRANK_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
 
 
 

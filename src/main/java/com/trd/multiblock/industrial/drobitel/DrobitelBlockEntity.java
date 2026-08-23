@@ -166,16 +166,16 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
     // ===================== КИНЕТИКА =====================
 
     @Override
-    public long getMaxTorqueTolerance() { return 4096L; }
+    public long getMaxTorqueTolerance() { return Long.MAX_VALUE; }
 
     @Override
-    public long getMaxTorque() { return 4096L; }
+    public long getMaxTorque() { return Long.MAX_VALUE; }
 
     @Override
     public double getInertiaContribution() { return 20.0; }
 
     @Override
-    public long getMaxSpeed() { return 512L; }
+    public long getMaxSpeed() { return 2500L; }
 
     @Override
     public long getTorque() { return 0L; }
@@ -328,9 +328,15 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
         if (cap == ForgeCapabilities.ITEM_HANDLER) {
-            return side == null ? internalHandler.cast() : externalHandler.cast();
+            // Строго блокируем любой доступ к инвентарю через сам блок контроллера!
+            // Все конвейеры должны работать только через Dummy-блоки с ролью CARGO_PORT.
+            return LazyOptional.empty();
         }
         return super.getCapability(cap, side);
+    }
+
+    public LazyOptional<net.minecraftforge.items.IItemHandler> getCargoPortCapability() {
+        return externalHandler;
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, DrobitelBlockEntity be) {

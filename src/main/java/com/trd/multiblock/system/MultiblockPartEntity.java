@@ -319,6 +319,17 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
                         }
                         return LazyOptional.empty();
                     }
+                    // Специальная логика для карго-портов дробителя
+                    if (be instanceof com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity dbe) {
+                        if (role == PartRole.CARGO_PORT) {
+                            Direction facing = dbe.getBlockState().getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING);
+                            // У дробителя порты должны смотреть по оси кинетики (вперёд/назад)
+                            if (side == facing || side == facing.getOpposite()) {
+                                return dbe.getCargoPortCapability().cast();
+                            }
+                        }
+                        return LazyOptional.empty();
+                    }
                     
                     return be.getCapability(cap, side);
                 }

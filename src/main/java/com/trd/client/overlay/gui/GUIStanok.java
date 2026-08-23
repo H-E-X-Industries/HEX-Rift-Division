@@ -139,6 +139,29 @@ public class GUIStanok extends AbstractContainerScreen<StanokMenu> {
 
         // Иконка рецепта на кнопке
         renderRecipeButton(graphics, x, y);
+
+        // Ghost item for empty carriage slot (slot 12)
+        net.minecraft.world.inventory.Slot carriageSlot = menu.getSlot(12);
+        if (carriageSlot.getItem().isEmpty()) {
+            long time = System.currentTimeMillis() / 1000;
+            int index = (int) (time % 3);
+            ItemStack ghostStack = ItemStack.EMPTY;
+            if (index == 0) ghostStack = new ItemStack(com.trd.item.ModItems.PRESS_CARRIAGE.get());
+            else if (index == 1) ghostStack = new ItemStack(com.trd.item.ModItems.WIRE_CARRIAGE.get());
+            else if (index == 2) ghostStack = new ItemStack(com.trd.item.ModItems.FREZA_CARRIAGE.get());
+            
+            int slotX = x + carriageSlot.x;
+            int slotY = y + carriageSlot.y;
+            
+            // Пытаемся применить прозрачность через ShaderColor
+            com.mojang.blaze3d.systems.RenderSystem.enableBlend();
+            com.mojang.blaze3d.systems.RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 0.5F);
+            graphics.renderFakeItem(ghostStack, slotX, slotY);
+            com.mojang.blaze3d.systems.RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+            
+            // И накладываем серую полупрозрачную маску поверх, чтобы слить предмет с фоном слота
+            graphics.fill(slotX, slotY, slotX + 16, slotY + 16, 0x808B8B8B);
+        }
     }
 
     private void renderRecipeButton(GuiGraphics graphics, int x, int y) {

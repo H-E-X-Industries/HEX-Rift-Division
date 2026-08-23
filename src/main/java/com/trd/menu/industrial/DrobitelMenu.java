@@ -27,9 +27,9 @@ public class DrobitelMenu extends AbstractContainerMenu {
         this.blockEntity = entity;
         this.data = data;
 
-        if (entity != null) {
-            entity.getCapability(ForgeCapabilities.ITEM_HANDLER).ifPresent(handler -> {
-                // Входные слоты 3x3: 8,29
+        if (entity instanceof com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity dbe) {
+            net.minecraftforge.items.IItemHandler handler = dbe.getInventory();
+            // Входные слоты 3x3: 8,29
                 for (int row = 0; row < 3; row++) {
                     for (int col = 0; col < 3; col++) {
                         addSlot(new SlotItemHandler(handler, col + row * 3, 8 + col * 18, 29 + row * 18));
@@ -46,8 +46,7 @@ public class DrobitelMenu extends AbstractContainerMenu {
                         });
                     }
                 }
-            });
-        }
+            }
 
         // Инвентарь игрока: 44,91
         for (int row = 0; row < 3; row++) {

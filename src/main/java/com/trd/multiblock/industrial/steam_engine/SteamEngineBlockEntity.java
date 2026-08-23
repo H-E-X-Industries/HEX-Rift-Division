@@ -195,17 +195,17 @@ public class SteamEngineBlockEntity extends KineticNodeBlockEntity {
 
     @Override
     public long getMaxTorqueTolerance() {
-        return getMaxTorque();
+        return Long.MAX_VALUE;
     }
 
     @Override
     public long getMaxSpeed() {
-        return 16000;
+        return 2500L;
     }
 
     @Override
     public long getMaxTorque() {
-        return 8000;
+        return Long.MAX_VALUE;
     }
 
     @Override
