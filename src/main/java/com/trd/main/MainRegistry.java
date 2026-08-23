@@ -388,6 +388,7 @@ public class MainRegistry {
 
             event.accept(ModItems.GRENADIER_GOGGLES);
             event.accept(ModBlocks.DET_MINER);
+            event.accept(ModItems.DETONATOR);
             event.accept(ModItems.RANGE_DETONATOR);
             event.accept(ModItems.GRENADE);
             event.accept(ModItems.GRENADEHE);
