@@ -12,6 +12,8 @@ public class MachineGunRenderer extends GeoItemRenderer<MachineGunItem> {
     public MachineGunRenderer() {
         super(new MachineGunModel());
     }
+    
+
 
     @Override
     public void renderRecursively(

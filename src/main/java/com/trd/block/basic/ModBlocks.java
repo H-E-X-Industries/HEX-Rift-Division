@@ -466,10 +466,13 @@ public class ModBlocks {
                     .requiresCorrectToolForDrops()
                     .noOcclusion()));
 
-    public static final RegistryObject<Block> VISHELASHIVATEL = registerBlock("vishelashivatel",
+    public static final RegistryObject<Block> VISHELASHIVATEL = registerBlockWithoutItem("vishelashivatel",
             () -> new com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlock(BlockBehaviour.Properties.of()
                     .strength(3.0F, 10.0F)
                     .noOcclusion()));
+    public static final RegistryObject<net.minecraft.world.item.Item> VISHELASHIVATEL_ITEM = ModItems.ITEMS.register("vishelashivatel",
+            () -> new com.trd.multiblock.system.MultiblockBlockItem(VISHELASHIVATEL.get(), new net.minecraft.world.item.Item.Properties()));
+
 
     public static final RegistryObject<Block> CHEMICAL_PLANT_HEATER = registerBlock("chemical_plant_heater",
             () -> new com.trd.block.basic.industrial.chemistry.ChemicalPlantHeaterBlock(BlockBehaviour.Properties.of()
