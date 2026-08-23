@@ -391,7 +391,9 @@ public class ShaftBlock extends BaseEntityBlock {
     private boolean isSupport(Level level, BlockPos pos, Direction axisDir) {
         BlockState state = level.getBlockState(pos);
         net.minecraft.world.level.block.Block block = state.getBlock();
-        if (block instanceof BearingBlock) return true;
+        if (block instanceof BearingBlock) {
+            return state.getValue(BearingBlock.FACING).getAxis() == axisDir.getAxis();
+        }
         if (block instanceof MotorElectroBlock) {
             return state.getValue(MotorElectroBlock.FACING) == axisDir.getOpposite();
         }

@@ -114,12 +114,12 @@ public class ModBlocks {
     // Средний
     public static final RegistryObject<Block> MEDIUM_CONNECTOR = registerBlock("medium_connector",
             () -> new ConnectorBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK),
-                    new ConnectorTier(32, 7, 0.05f, 6, 8)));
+                    new ConnectorTier(32, 7, 0.035f, 6, 8)));
 
     // Большой
     public static final RegistryObject<Block> LARGE_CONNECTOR = registerBlock("large_connector",
             () -> new ConnectorBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK),
-                    new ConnectorTier(100, 11, 0.08f, 8, 13)));
+                    new ConnectorTier(200, 11, 0.055f, 8, 13)));
 
     //трубы
     public static final RegistryObject<Block> BRONZE_FLUID_PIPE = registerBlock("bronze_fluid_pipe",

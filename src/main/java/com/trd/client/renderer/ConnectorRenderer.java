@@ -23,10 +23,10 @@ public class ConnectorRenderer implements BlockEntityRenderer<ConnectorBlockEnti
     private static final int SEGMENTS = 24; // увеличено для плавности
     private static final double SLACK = 1.002;
 
-    // NEW: цвет провода #1e1c18
-    private static final float R = 0.1176f; // 30/255
-    private static final float G = 0.1098f; // 28/255
-    private static final float B = 0.0941f; // 24/255
+    // NEW: Цвет провода #141f2e
+    private static final float R = 20f / 255f;
+    private static final float G = 31f / 255f;
+    private static final float B = 46f / 255f;
     private static final float A = 1.0f;
 
     public ConnectorRenderer(BlockEntityRendererProvider.Context context) {
@@ -107,59 +107,48 @@ public class ConnectorRenderer implements BlockEntityRenderer<ConnectorBlockEnti
             }
         }
 
-        // 3. Строим базисы (side, upDir) методом параллельного переноса
+        // 3. Вычисляем базисные векторы (side, upDir)
         List<Vec3> sideVectors = new ArrayList<>(SEGMENTS + 1);
         List<Vec3> upVectors = new ArrayList<>(SEGMENTS + 1);
 
-        // Начальный базис: выбираем up = глобальный вектор (0,1,0),
-        // а side получаем как tangent × up, затем нормализуем
         Vec3 tangent0 = tangents.get(0);
         Vec3 up0 = new Vec3(0, 1, 0);
-        // Если касательная почти вертикальна, используем другой up
         if (Math.abs(tangent0.y) > 0.99) {
             up0 = new Vec3(1, 0, 0);
         }
         Vec3 side0 = tangent0.cross(up0).normalize();
-        Vec3 upDir0 = tangent0.cross(side0).normalize(); // перпендикуляр к tangent и side
+        Vec3 upDir0 = side0.cross(tangent0).normalize(); // Правильное векторное произведение для up
         sideVectors.add(side0);
         upVectors.add(upDir0);
 
-        // Переносим базис вдоль кривой
+        // Строим фреймы вдоль кривой
         for (int i = 1; i <= SEGMENTS; i++) {
             Vec3 tPrev = tangents.get(i - 1);
             Vec3 tCurr = tangents.get(i);
 
-            // Находим ось вращения и угол между tPrev и tCurr
             Vec3 rotAxis = tPrev.cross(tCurr);
             double angle = Math.acos(tPrev.dot(tCurr) / (tPrev.length() * tCurr.length()));
 
             if (rotAxis.lengthSqr() < 1e-6) {
-                // Направление не изменилось — оставляем базис без изменений
                 sideVectors.add(sideVectors.get(i - 1));
                 upVectors.add(upVectors.get(i - 1));
             } else {
                 rotAxis = rotAxis.normalize();
-                // Поворачиваем предыдущие side и upDir вокруг rotAxis на угол angle
                 Vec3 sidePrev = sideVectors.get(i - 1);
                 Vec3 upPrev = upVectors.get(i - 1);
 
-                Vec3 sideCurr = rotate(sidePrev, rotAxis, angle);
-                Vec3 upCurr = rotate(upPrev, rotAxis, angle);
-
-                // Ортонормируем на всякий случай (из-за погрешностей)
-                sideCurr = sideCurr.normalize();
-                upCurr = tCurr.cross(sideCurr).normalize();
-                sideCurr = tCurr.cross(upCurr).normalize();
+                Vec3 sideCurr = rotate(sidePrev, rotAxis, angle).normalize();
+                Vec3 upCurr = rotate(upPrev, rotAxis, angle).normalize();
 
                 sideVectors.add(sideCurr);
                 upVectors.add(upCurr);
             }
         }
 
-        // 4. Рисуем сегменты
+        // 4. Рендер полигонов
         VertexConsumer consumer = bufferSource.getBuffer(
                 RenderType.entityCutoutNoCull(
-                        new ResourceLocation("minecraft", "textures/block/black_concrete.png")));
+                        new ResourceLocation("minecraft", "textures/block/white_concrete.png")));
 
         Matrix4f matrix = poseStack.last().pose();
         Matrix3f normalMatrix = poseStack.last().normal();
@@ -174,15 +163,12 @@ public class ConnectorRenderer implements BlockEntityRenderer<ConnectorBlockEnti
             Vec3 u2 = upVectors.get(i + 1).scale(wireRadius);
 
             // Четыре грани: +side, -side, +up, -up
-            // Для каждой грани используем соответствующие векторы в p1 и p2
-            emitQuad(matrix, normalMatrix, consumer, p1, p2, s1, s2, light, overlay); // +side
-            emitQuad(matrix, normalMatrix, consumer, p1, p2, s1.scale(-1), s2.scale(-1), light, overlay); // -side
-            emitQuad(matrix, normalMatrix, consumer, p1, p2, u1, u2, light, overlay); // +up
-            emitQuad(matrix, normalMatrix, consumer, p1, p2, u1.scale(-1), u2.scale(-1), light, overlay); // -up
+            // Рендерим 3D сегмент (труба из 4 граней)
+            emitBoxSegment(matrix, normalMatrix, consumer, p1, p2, s1, u1, s2, u2, light, overlay);
         }
     }
 
-    // Вспомогательный поворот вектора вокруг оси
+    // Вращение вектора вокруг оси
     private Vec3 rotate(Vec3 vec, Vec3 axis, double angle) {
         double cos = Math.cos(angle);
         double sin = Math.sin(angle);
@@ -193,20 +179,43 @@ public class ConnectorRenderer implements BlockEntityRenderer<ConnectorBlockEnti
                 .add(cross.scale(sin));
     }
 
-    // Новая версия emitQuad, принимающая разные смещения для начала и конца
-    private void emitQuad(Matrix4f mat, Matrix3f norm, VertexConsumer consumer,
-            Vec3 p1, Vec3 p2, Vec3 offset1, Vec3 offset2,
+    // Генерация 3D сегмента провода (кубик между p1 и p2)
+    private void emitBoxSegment(Matrix4f mat, Matrix3f norm, VertexConsumer consumer,
+            Vec3 p1, Vec3 p2, Vec3 s1, Vec3 u1, Vec3 s2, Vec3 u2,
             int light, int overlay) {
-        Vec3 a = p1.add(offset1);
-        Vec3 b = p1.subtract(offset1);
-        Vec3 c = p2.subtract(offset2);
-        Vec3 d = p2.add(offset2);
+        
+        // Вершины в начале (p1)
+        Vec3 tr1 = p1.add(s1).add(u1);
+        Vec3 tl1 = p1.subtract(s1).add(u1);
+        Vec3 bl1 = p1.subtract(s1).subtract(u1);
+        Vec3 br1 = p1.add(s1).subtract(u1);
 
-        // Нормаль берём как среднее направление offset (для простоты используем
-        // offset1)
-        Vec3 n = offset1.normalize();
+        // Вершины в конце (p2)
+        Vec3 tr2 = p2.add(s2).add(u2);
+        Vec3 tl2 = p2.subtract(s2).add(u2);
+        Vec3 bl2 = p2.subtract(s2).subtract(u2);
+        Vec3 br2 = p2.add(s2).subtract(u2);
+
+        // Верхняя грань (+u)
+        Vec3 nTop = u1.normalize();
+        emitFace(mat, norm, consumer, tl1, tr1, tr2, tl2, nTop, light, overlay);
+
+        // Нижняя грань (-u)
+        Vec3 nBot = u1.scale(-1).normalize();
+        emitFace(mat, norm, consumer, br1, bl1, bl2, br2, nBot, light, overlay);
+
+        // Правая грань (+s)
+        Vec3 nRight = s1.normalize();
+        emitFace(mat, norm, consumer, tr1, br1, br2, tr2, nRight, light, overlay);
+
+        // Левая грань (-s)
+        Vec3 nLeft = s1.scale(-1).normalize();
+        emitFace(mat, norm, consumer, bl1, tl1, tl2, bl2, nLeft, light, overlay);
+    }
+
+    private void emitFace(Matrix4f mat, Matrix3f norm, VertexConsumer consumer,
+            Vec3 a, Vec3 b, Vec3 c, Vec3 d, Vec3 n, int light, int overlay) {
         float nx = (float) n.x, ny = (float) n.y, nz = (float) n.z;
-
         vert(mat, norm, consumer, a, nx, ny, nz, 0, 0, light, overlay);
         vert(mat, norm, consumer, b, nx, ny, nz, 0, 1, light, overlay);
         vert(mat, norm, consumer, c, nx, ny, nz, 1, 1, light, overlay);
