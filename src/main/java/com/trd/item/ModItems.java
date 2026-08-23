@@ -541,11 +541,6 @@ public class ModItems {
     MachineTooltipRegistry.registerBlock(ModBlocks.CONVERTER_BLOCK, "tooltip.trd.machine.converter.desc");
     MachineTooltipRegistry.registerBlock(ModBlocks.PAINTABLE_WIRE, "tooltip.trd.machine.paintable_wire.desc");
     MachineTooltipRegistry.register(ENERGY_CELL_BASIC, "tooltip.trd.machine.energy_cell.desc");
-    MachineTooltipRegistry.register(BATTERY, "tooltip.trd.machine.battery.desc");
-    MachineTooltipRegistry.register(BATTERY_ADVANCED, "tooltip.trd.machine.battery.desc");
-    MachineTooltipRegistry.register(BATTERY_LITHIUM, "tooltip.trd.machine.battery.desc");
-    MachineTooltipRegistry.register(BATTERY_TRIXITE, "tooltip.trd.machine.battery.desc");
-    MachineTooltipRegistry.register(CREATIVE_BATTERY, "tooltip.trd.machine.creative_battery.desc");
 
     // ═══ Кинетика ═══
     MachineTooltipRegistry.registerBlock(ModBlocks.HAND_CRANK_BLOCK, "tooltip.trd.machine.hand_crank.desc");
@@ -558,11 +553,6 @@ public class ModItems {
     MachineTooltipRegistry.register(GEAR2_STEEL, "tooltip.trd.machine.gear.desc");
     MachineTooltipRegistry.register(BEVEL_GEAR, "tooltip.trd.machine.bevel_gear.desc");
 
-    // ═══ Конвейеры ═══
-    MachineTooltipRegistry.registerBlock(ModBlocks.CONVEYOR, "tooltip.trd.machine.conveyor.desc");
-    MachineTooltipRegistry.registerBlock(ModBlocks.CONVEYOR_VSTAVSHIK, "tooltip.trd.machine.conveyor_inserter.desc");
-    MachineTooltipRegistry.registerBlock(ModBlocks.CONVEYOR_IZVLEKATEL, "tooltip.trd.machine.conveyor_extractor.desc");
-    MachineTooltipRegistry.registerBlock(ModBlocks.SORTIROVSHIK, "tooltip.trd.machine.sortirovshik.desc");
 
     // ═══ Промышленные машины ═══
     MachineTooltipRegistry.registerBlock(ModBlocks.ELECTRO_FURNACE, "tooltip.trd.machine.electro_furnace.desc");
@@ -587,7 +577,6 @@ public class ModItems {
     MachineTooltipRegistry.register(PROTECTOR_STEEL, "tooltip.trd.machine.protector.desc");
     MachineTooltipRegistry.register(PROTECTOR_LEAD, "tooltip.trd.machine.protector.desc");
     MachineTooltipRegistry.register(PROTECTOR_TUNGSTEN, "tooltip.trd.machine.protector.desc");
-    MachineTooltipRegistry.register(INFINITE_FLUID_BARREL, "tooltip.trd.machine.infinite_barrel.desc");
 
     // ═══ Инструменты ═══
     MachineTooltipRegistry.register(SCREWDRIVER, "tooltip.trd.machine.screwdriver.desc");
@@ -596,13 +585,10 @@ public class ModItems {
     MachineTooltipRegistry.register(DETONATOR, "tooltip.trd.machine.detonator.desc");
     MachineTooltipRegistry.register(MULTI_DETONATOR, "tooltip.trd.machine.multi_detonator.desc");
     MachineTooltipRegistry.register(RANGE_DETONATOR, "tooltip.trd.machine.range_detonator.desc");
-    MachineTooltipRegistry.register(CAST_PICKAXE_IRON, "tooltip.trd.machine.cast_pickaxe_iron.desc");
-    MachineTooltipRegistry.register(CAST_PICKAXE_STEEL, "tooltip.trd.machine.cast_pickaxe_steel.desc");
 
     // ═══ Оружие ═══
     MachineTooltipRegistry.register(TURRET_LIGHT_PORTATIVE_PLACER, "tooltip.trd.machine.turret_portative.desc");
     MachineTooltipRegistry.register(PIG_TURRET_PLACER, "tooltip.trd.machine.pig_turret.desc");
-    MachineTooltipRegistry.register(GRENADIER_GOGGLES, "tooltip.trd.machine.goggles.desc");
 
     }
 
