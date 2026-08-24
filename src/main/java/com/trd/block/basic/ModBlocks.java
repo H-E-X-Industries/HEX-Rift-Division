@@ -35,6 +35,7 @@ import com.trd.block.basic.necrosis.hive.HiveRootsBlock;
 import com.trd.block.basic.weapons.MissileTurretBlock;
 
 import com.trd.multiblock.industrial.boiler.BoilerBlock;
+import com.trd.multiblock.industrial.centrifuge.CentrifugeConusBlock;
 import com.trd.multiblock.industrial.drobitel.DrobitelBlock;
 import com.trd.multiblock.industrial.fueltanks.FuelTankBlock;
 import com.trd.multiblock.industrial.fueltanks.small.FuelTankSmallBlock;
@@ -465,6 +466,13 @@ public class ModBlocks {
 
     public static final RegistryObject<Block> CENTRIFUGE_CONUS = registerBlock("centrifuge_conus",
             () -> new com.trd.multiblock.industrial.centrifuge.CentrifugeConusBlock(BlockBehaviour.Properties.of()
+                    .strength(2.0F, 6.0F)
+                    .sound(SoundType.STONE)
+                    .requiresCorrectToolForDrops()
+                    .noOcclusion()));
+
+    public static final RegistryObject<Block> CENTRIFUGE_CYLINDER = registerBlock("centrifuge_cylinder",
+            () -> new com.trd.multiblock.industrial.centrifuge.CentrifugeCylinderBlock(BlockBehaviour.Properties.of()
                     .strength(2.0F, 6.0F)
                     .sound(SoundType.STONE)
                     .requiresCorrectToolForDrops()

@@ -75,6 +75,7 @@ public class FuelTankSmallBlockEntity extends FluidBarrelBlockEntity implements 
 
     public static void tick(Level level, BlockPos pos, BlockState state, FuelTankSmallBlockEntity be) {
         if (level.isClientSide) return;
+        be.updateIdentifierFilter();
         be.processBuckets();
     }
 

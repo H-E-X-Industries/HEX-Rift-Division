@@ -1,10 +1,10 @@
 {
   "loader": "forge:obj",
-  "model": "trd:models/block/centrifuge_conus.obj",
+  "model": "trd:models/block/centrifuge_cylinder.obj",
   "flip_v": true,
   "textures": {
-    "centrifuge_conus_texture": "trd:block/centrifuge_conus",
-    "particle": "trd:block/centrifuge_conus"
+    "centrifuge_cylinder_texture": "trd:block/centrifuge_cylinder",
+    "particle": "trd:block/centrifuge_cylinder"
   },
   "transform": {
     "translation": [0.50, 0.0, 0.5],

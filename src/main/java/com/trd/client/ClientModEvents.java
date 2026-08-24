@@ -121,6 +121,7 @@ public class ClientModEvents {
         MenuScreens.register(ModMenuTypes.STANOK_MENU.get(), GUIStanok::new);
         MenuScreens.register(ModMenuTypes.VISHELASHIVATEL_MENU.get(), GUIVishelashivatel::new);
         MenuScreens.register(ModMenuTypes.CENTRIFUGE_MENU.get(), GUICentrifuge::new);
+        MenuScreens.register(ModMenuTypes.CENTRIFUGE_CYLINDER_MENU.get(), GUICentrifugeCylinder::new);
 
         MinecraftForge.EVENT_BUS.register(com.trd.client.overlay.hud.ChemicalPlantReactionChamberOverlay.class);
         MinecraftForge.EVENT_BUS.register(com.trd.client.overlay.hud.ChemicalPlantHeaterOverlay.class);

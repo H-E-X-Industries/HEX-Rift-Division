@@ -103,6 +103,8 @@ public class trdJeiPlugin implements IModPlugin {
             RecipeType.create(MainRegistry.MOD_ID, "vishelashivatel", VishelashivatelWrapper.class);
     public static final RecipeType<CentrifugeWrapper> CENTRIFUGE_TYPE =
             RecipeType.create(MainRegistry.MOD_ID, "centrifuge", CentrifugeWrapper.class);
+    public static final RecipeType<CentrifugeCylinderWrapper> CENTRIFUGE_CYLINDER_TYPE =
+            RecipeType.create(MainRegistry.MOD_ID, "centrifuge_cylinder", CentrifugeCylinderWrapper.class);
 
     public record ElectricFurnaceWrapper(net.minecraft.world.item.crafting.AbstractCookingRecipe recipe, int cookTime, int energyPerTick) {}
     public record SmeltingWrapper(ItemStack input, Metal metal, int outputUnits, int temp, float heatConsumption, int timeTicks) {}
@@ -116,6 +118,7 @@ public class trdJeiPlugin implements IModPlugin {
     public record ChemicalPlantWrapper(ChemicalPlantRecipe recipe) {}
     public record VishelashivatelWrapper(com.trd.multiblock.industrial.vishelashivatel.VishelashivatelRecipe recipe) {}
     public record CentrifugeWrapper(com.trd.multiblock.industrial.centrifuge.CentrifugeRecipe recipe) {}
+    public record CentrifugeCylinderWrapper(com.trd.multiblock.industrial.centrifuge.CentrifugeCylinderRecipe recipe) {}
 
     @Override
     public void registerCategories(IRecipeCategoryRegistration registration) {
@@ -133,6 +136,7 @@ public class trdJeiPlugin implements IModPlugin {
         registration.addRecipeCategories(new ChemicalPlantCategory(guiHelper));
         registration.addRecipeCategories(new VishelashivatelCategory(guiHelper));
         registration.addRecipeCategories(new CentrifugeCategory(guiHelper));
+        registration.addRecipeCategories(new CentrifugeCylinderCategory(guiHelper));
     }
 
     @Override
@@ -283,6 +287,14 @@ public class trdJeiPlugin implements IModPlugin {
             centrifugeRecipes.add(new CentrifugeWrapper(recipe));
         }
         registration.addRecipes(CENTRIFUGE_TYPE, centrifugeRecipes);
+
+        // === ЖИДКОСТНАЯ ЦЕНТРИФУГА ===
+        List<CentrifugeCylinderWrapper> centrifugeCylinderRecipes = new ArrayList<>();
+        for (com.trd.multiblock.industrial.centrifuge.CentrifugeCylinderRecipe recipe :
+                com.trd.multiblock.industrial.centrifuge.CentrifugeCylinderRecipes.getAllRecipes()) {
+            centrifugeCylinderRecipes.add(new CentrifugeCylinderWrapper(recipe));
+        }
+        registration.addRecipes(CENTRIFUGE_CYLINDER_TYPE, centrifugeCylinderRecipes);
     }
 
     @Override
@@ -299,7 +311,8 @@ public class trdJeiPlugin implements IModPlugin {
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.CHEMICAL_PLANT_REACTION_CHAMBER.get()), CHEMICAL_PLANT_TYPE);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.VISHELASHIVATEL.get()), VISHELASHIVATEL_TYPE);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.CENTRIFUGE_CONUS.get()), CENTRIFUGE_TYPE);
-        registration.addRecipeCatalyst(new ItemStack(ModBlocks.CENTRIFUGE_MOTOR.get()), CENTRIFUGE_TYPE);
+        registration.addRecipeCatalyst(new ItemStack(ModBlocks.CENTRIFUGE_CYLINDER.get()), CENTRIFUGE_CYLINDER_TYPE);
+        registration.addRecipeCatalyst(new ItemStack(ModBlocks.CENTRIFUGE_MOTOR.get()), CENTRIFUGE_TYPE, CENTRIFUGE_CYLINDER_TYPE);
     }
 
     private static ItemStack createLiquidMetalStack(Metal metal, int amount) {
@@ -900,6 +913,64 @@ public class trdJeiPlugin implements IModPlugin {
 
         @Override
         public void draw(CentrifugeWrapper recipe, IRecipeSlotsView view, GuiGraphics gg, double mx, double my) {
+            var font = Minecraft.getInstance().font;
+            gg.drawString(font, String.format("%.1fs", recipe.recipe().getProcessTime() / 20f), 24, 33, 0xFF555555, false);
+        }
+    }
+
+    // Жидкостная центрифуга — шаблон gui3 (102x60): вход на (5,22), выходы 2x2 на (63,13)
+    public static class CentrifugeCylinderCategory implements IRecipeCategory<CentrifugeCylinderWrapper> {
+        private final IDrawable background;
+        private final IDrawable icon;
+        private final Component title;
+
+        public CentrifugeCylinderCategory(IGuiHelper guiHelper) {
+            this.background = guiHelper.createDrawable(TEXTURE_UNIVERSAL_102x60, 0, 0, 102, 60);
+            this.icon = guiHelper.createDrawableIngredient(VanillaTypes.ITEM_STACK,
+                    new ItemStack(ModBlocks.CENTRIFUGE_CYLINDER.get()));
+            this.title = Component.translatable("jei.category.trd.centrifuge_cylinder");
+        }
+
+        @Override public RecipeType<CentrifugeCylinderWrapper> getRecipeType() { return CENTRIFUGE_CYLINDER_TYPE; }
+        @Override public Component getTitle() { return title; }
+        @Override public IDrawable getBackground() { return background; }
+        @Override public IDrawable getIcon() { return icon; }
+
+        @Override
+        public void setRecipe(IRecipeLayoutBuilder builder, CentrifugeCylinderWrapper wrapper, IFocusGroup focuses) {
+            com.trd.multiblock.industrial.centrifuge.CentrifugeCylinderRecipe recipe = wrapper.recipe();
+
+            // Входная жидкость (каплей) с количеством
+            ItemStack fluidDrop = fluidDropStack(recipe.getInputFluid());
+            if (!fluidDrop.isEmpty()) {
+                builder.addSlot(RecipeIngredientRole.INPUT, 5, 22)
+                        .addItemStack(fluidDrop)
+                        .addTooltipCallback((view, tooltip) ->
+                                tooltip.add(Component.literal(recipe.getInputFluid().getAmount() + " mB")));
+            }
+
+            // Выходы: сначала жидкости, затем предметы — до 4 ячеек 2x2
+            int cell = 0;
+            for (FluidStack fluid : recipe.getFluidOutputs()) {
+                if (cell >= CHAMBER_OUTPUT_SLOTS.length) break;
+                ItemStack drop = fluidDropStack(fluid);
+                if (drop.isEmpty()) continue;
+                builder.addSlot(RecipeIngredientRole.OUTPUT, CHAMBER_OUTPUT_SLOTS[cell][0], CHAMBER_OUTPUT_SLOTS[cell][1])
+                        .addItemStack(drop)
+                        .addTooltipCallback((view, tooltip) ->
+                                tooltip.add(Component.literal(fluid.getAmount() + " mB")));
+                cell++;
+            }
+            for (ItemStack stack : recipe.getItemOutputs()) {
+                if (cell >= CHAMBER_OUTPUT_SLOTS.length || stack.isEmpty()) continue;
+                builder.addSlot(RecipeIngredientRole.OUTPUT, CHAMBER_OUTPUT_SLOTS[cell][0], CHAMBER_OUTPUT_SLOTS[cell][1])
+                        .addItemStack(stack.copy());
+                cell++;
+            }
+        }
+
+        @Override
+        public void draw(CentrifugeCylinderWrapper recipe, IRecipeSlotsView view, GuiGraphics gg, double mx, double my) {
             var font = Minecraft.getInstance().font;
             gg.drawString(font, String.format("%.1fs", recipe.recipe().getProcessTime() / 20f), 24, 33, 0xFF555555, false);
         }

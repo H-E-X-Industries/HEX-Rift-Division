@@ -105,6 +105,7 @@ public class ModLangProvider extends LanguageProvider {
         addFluidTranslations("water", "Вода", "Вода", "Water");
         addFluidTranslations("lava", "Лава", "Лава", "Lava");
         addFluidTranslations("mercury", "Ртуть", "Ртуть", "Mercury");
+        addFluidTranslations("sodium_hydroxide", "Щёлочь (NaOH)", "Щёлочь (NaOH)", "Sodium Hydroxide (NaOH)");
 
         // JEI Categories
         add("jei.category.trd.smelting", "Smelting");
@@ -149,6 +150,8 @@ public class ModLangProvider extends LanguageProvider {
         add("recipe.trd.sodium_sulfate", "Sodium Sulfate");
         add("recipe.trd.black_ash", "Black Ash");
         add("recipe.trd.obsidian", "Obsidian");
+        add("recipe.trd.concrete", "Concrete");
+        add("recipe.trd.sodium_hydroxide", "Sodium Hydroxide (NaOH)");
 
 
         // ═══ GUI: Electric Furnace ═══
@@ -716,6 +719,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModItems.AMMO_TURRET_RADIO.get(), "20mm Turret Round with Radio Fuze");
         add(ModItems.MISSILE_100MM_HE.get(), "100mm HE Missile");
         add(ModItems.MISSILE_100MM_FIRE.get(), "100mm Incendiary Missile");
+        add(ModItems.QUICKLIME.get(), "Quicklime");
 
         // Resources & Materials
         add(ModItems.IRON_PLATE.get(), "Iron Plate");
@@ -970,12 +974,19 @@ public class ModLangProvider extends LanguageProvider {
         // ═══ Centrifuge ═══
         add(ModBlocks.CENTRIFUGE_MOTOR.get(), "Centrifuge Motor");
         add(ModBlocks.CENTRIFUGE_CONUS.get(), "Centrifuge");
+        add(ModBlocks.CENTRIFUGE_CYLINDER.get(), "Fluid Centrifuge");
+        add("gui.trd.centrifuge_cylinder.empty_tank", "Empty");
         add("recipe.trd.dirt_centrifuging", "Dirt Centrifugation");
         add("recipe.trd.gravel_centrifuging", "Gravel Centrifugation");
         add("recipe.trd.bone_block_centrifuging", "Bone Block Centrifugation");
+        add("recipe.trd.soda_centrifuging", "Soda Centrifugation");
+        add("recipe.trd.sulfuric_acid_centrifuging", "Sulfuric Acid Centrifugation");
+        add("recipe.trd.water_centrifuging", "Water Centrifugation");
+        add("recipe.trd.peroxide_centrifuging", "Hydrogen Peroxide Centrifugation");
         add("gui.trd.centrifuge.energy_tooltip", "%s / %s JE");
         add("gui.trd.centrifuge.progress_tooltip", "§6Remaining: §f%s sec");
         add("jei.category.trd.centrifuge", "Centrifuge");
+        add("jei.category.trd.centrifuge_cylinder", "Fluid Centrifuge");
         add("hud.trd.centrifuge.no_attachment", "Install an attachment!");
         add("hud.trd.centrifuge.energy", "Energy: %s / %s JE");
         add("hud.trd.centrifuge.recipe", "Recipe: %s");
@@ -1027,8 +1038,8 @@ public class ModLangProvider extends LanguageProvider {
         add("gui.trd.coccer_oven.no_recipe", "Нет рецепта");
 
         // ═══ Выщелащиватель ═══
-        add(ModBlocks.VISHELASHIVATEL.get(), "Выщелащиватель");
-        add("jei.category.trd.vishelashivatel", "Выщелащиватель");
+        add(ModBlocks.VISHELASHIVATEL.get(), "Рудный выщелачиватель");
+        add("jei.category.trd.vishelashivatel", "Рудный выщелачиватель");
         add("recipe.trd.leather_from_rotten_flesh", "Производство кожи");
         add("gui.trd.vishelashivatel.empty_tank", "Пусто");
         add("gui.trd.vishelashivatel.fluid_amount", "%s / %s мБ");
@@ -1047,12 +1058,19 @@ public class ModLangProvider extends LanguageProvider {
         // ═══ Центрифуга ═══
         add(ModBlocks.CENTRIFUGE_MOTOR.get(), "Мотор центрифуги");
         add(ModBlocks.CENTRIFUGE_CONUS.get(), "Центрифуга");
+        add(ModBlocks.CENTRIFUGE_CYLINDER.get(), "Жидкостная центрифуга");
+        add("gui.trd.centrifuge_cylinder.empty_tank", "Пусто");
         add("recipe.trd.dirt_centrifuging", "Центрифугирование земли");
         add("recipe.trd.gravel_centrifuging", "Центрифугирование гравия");
         add("recipe.trd.bone_block_centrifuging", "Центрифугирование костяного блока");
+        add("recipe.trd.soda_centrifuging", "Центрифугирование соды");
+        add("recipe.trd.sulfuric_acid_centrifuging", "Центрифугирование серной кислоты");
+        add("recipe.trd.water_centrifuging", "Центрифугирование воды");
+        add("recipe.trd.peroxide_centrifuging", "Центрифугирование пероксида водорода");
         add("gui.trd.centrifuge.energy_tooltip", "%s / %s JE");
         add("gui.trd.centrifuge.progress_tooltip", "§6Осталось: §f%s сек");
         add("jei.category.trd.centrifuge", "Центрифуга");
+        add("jei.category.trd.centrifuge_cylinder", "Жидкостная центрифуга");
         add("hud.trd.centrifuge.no_attachment", "Установите насадку!");
         add("hud.trd.centrifuge.energy", "Энергия: %s / %s JE");
         add("hud.trd.centrifuge.recipe", "Рецепт: %s");
@@ -1134,6 +1152,9 @@ public class ModLangProvider extends LanguageProvider {
         add("recipe.trd.sulfuric_acid", "Серная кислота");
         add("recipe.trd.sodium_sulfate", "Сульфат натрия");
         add("recipe.trd.black_ash", "Чёрная зола");
+        add("recipe.trd.concrete", "Бетон");
+        add("recipe.trd.sodium_hydroxide", "Щёлочь (NaOH)");
+
         add("recipe.trd.obsidian", "Обсидиан");
         add(  "gui.trd.chemistry.empty", "Пусто");
         add(  "gui.trd.chemistry.inputs", "Входы:");
@@ -1699,6 +1720,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.CONCRETE_NET.get(), "Усиленный бетон");
         add(ModItems.SODA.get(), "Порошок соды");
         add(ModItems.SODA_CRYSTAL.get(), "Кристалл соды");
+        add(ModItems.QUICKLIME.get(), "Негашёная известь");
 
         // Кирпичи
         add(ModBlocks.FIREBRICK_BLOCK.get(), "Блок огнеупорного кирпича");
@@ -1935,6 +1957,7 @@ public class ModLangProvider extends LanguageProvider {
         addFluidTranslations("water", "Вода", "Вода", "Water");
         addFluidTranslations("lava", "Лава", "Лава", "Lava");
         addFluidTranslations("mercury", "Ртуть", "Ртуть", "Mercury");
+        addFluidTranslations("sodium_hydroxide", "Щёлочь (NaOH)", "Щёлочь (NaOH)", "Sodium Hydroxide (NaOH)");
 
         // Stanok Items
         add(ModItems.PRESS_CARRIAGE.get(), "Пресс-насадка");

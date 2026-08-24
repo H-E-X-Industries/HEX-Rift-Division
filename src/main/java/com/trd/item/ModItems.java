@@ -314,6 +314,8 @@ public class ModItems {
             () -> new Item(new Item.Properties()));
     public static final RegistryObject<Item> SODA_CRYSTAL = ITEMS.register("soda_crystal",
             () -> new Item(new Item.Properties()));
+    public static final RegistryObject<Item> QUICKLIME = ITEMS.register("quicklime",
+            () -> new Item(new Item.Properties()));
 
     public static final RegistryObject<Item> BLADE = ITEMS.register("blade",
             () -> new com.trd.item.tools.BladeItem(new Item.Properties().stacksTo(1)));
@@ -569,6 +571,7 @@ public class ModItems {
     MachineTooltipRegistry.registerBlock(ModBlocks.VISHELASHIVATEL, "tooltip.trd.machine.vishelashivatel.desc");
     MachineTooltipRegistry.registerBlock(ModBlocks.CENTRIFUGE_MOTOR, "tooltip.trd.machine.centrifuge.desc");
     MachineTooltipRegistry.registerBlock(ModBlocks.CENTRIFUGE_CONUS, "tooltip.trd.machine.centrifuge.desc");
+    MachineTooltipRegistry.registerBlock(ModBlocks.CENTRIFUGE_CYLINDER, "tooltip.trd.machine.centrifuge.desc");
     MachineTooltipRegistry.registerBlock(ModBlocks.STEEL_STORAGE, "tooltip.trd.machine.steel_storage.desc");
     MachineTooltipRegistry.registerBlock(ModBlocks.CASTING_POT, "tooltip.trd.machine.casting_pot.desc");
     MachineTooltipRegistry.registerBlock(ModBlocks.CASTING_DESCENT, "tooltip.trd.machine.casting_descent.desc");

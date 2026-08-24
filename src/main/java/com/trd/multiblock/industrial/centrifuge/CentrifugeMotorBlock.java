@@ -45,7 +45,8 @@ public class CentrifugeMotorBlock extends BaseEntityBlock {
     }
 
     private boolean hasAttachment(BlockGetter level, BlockPos pos) {
-        return level.getBlockState(pos.above()).getBlock() instanceof CentrifugeConusBlock;
+        var above = level.getBlockState(pos.above()).getBlock();
+        return above instanceof CentrifugeConusBlock || above instanceof CentrifugeCylinderBlock;
     }
 
     /**
@@ -59,7 +60,7 @@ public class CentrifugeMotorBlock extends BaseEntityBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         if (level.isClientSide) {
-            return hasAttachment(level, pos) ? InteractionResult.SUCCESS : InteractionResult.CONSUME;
+            return hasAttachment(level, pos) ? InteractionResult.SUCCESS : InteractionResult.PASS;
         }
         if (hasAttachment(level, pos)) {
             BlockPos conusPos = pos.above();
@@ -71,7 +72,19 @@ public class CentrifugeMotorBlock extends BaseEntityBlock {
             );
             return level.getBlockState(conusPos).use(level, player, hand, newHit);
         }
-        return InteractionResult.CONSUME;
+        // Без насадки ничего не делаем: PASS позволяет установить насадку
+        // удерживаемым в руке предметом (иначе клик съедается впустую)
+        return InteractionResult.PASS;
+    }
+
+    @Override
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean isMoving) {
+        super.neighborChanged(state, level, pos, neighborBlock, neighborPos, isMoving);
+        // Насадку установили/сняли — мотор получил/потерял жидкостный порт,
+        // соседние трубы должны пересчитать подключение
+        if (!level.isClientSide && neighborPos.equals(pos.above())) {
+            level.getBlockState(pos).updateNeighbourShapes(level, pos, 3);
+        }
     }
 
     @Nullable

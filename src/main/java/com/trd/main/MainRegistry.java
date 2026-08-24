@@ -141,6 +141,7 @@ public class MainRegistry {
             ChemicalPlantRecipeRegistry.init();
             com.trd.multiblock.industrial.vishelashivatel.VishelashivatelRecipes.init();
             com.trd.multiblock.industrial.centrifuge.CentrifugeRecipes.init();
+            com.trd.multiblock.industrial.centrifuge.CentrifugeCylinderRecipes.init();
             ModPacketHandler.register();
             Regions.register(new ModOverworldRegion(new ResourceLocation(MOD_ID, "overworld"), 2));
             SurfaceRuleManager.addSurfaceRules(SurfaceRuleManager.RuleCategory.OVERWORLD, "trd",
@@ -312,6 +313,7 @@ public class MainRegistry {
 
             event.accept(ModBlocks.CENTRIFUGE_MOTOR);
             event.accept(ModBlocks.CENTRIFUGE_CONUS);
+            event.accept(ModBlocks.CENTRIFUGE_CYLINDER);
 
 
 
@@ -347,13 +349,6 @@ public class MainRegistry {
             event.accept(ModBlocks.VISHELASHIVATEL.get());
 
 
-            for (var entry : com.trd.api.fluids.ModFluids.getAllFluidDrops().values()) {
-                event.accept(entry.get());
-            }
-
-
-
-
             //ПРОЧЕЕ
             event.accept(ModBlocks.SMALL_SMELTER);
 
@@ -376,6 +371,10 @@ public class MainRegistry {
             event.accept(ModBlocks.CONVEYOR_IZVLEKATEL.get());
             event.accept(ModBlocks.CONVEYOR.get());
             event.accept(ModBlocks.SORTIROVSHIK.get());
+
+            for (var entry : com.trd.api.fluids.ModFluids.getAllFluidDrops().values()) {
+                event.accept(entry.get());
+            }
 
         }
 
@@ -447,6 +446,7 @@ public class MainRegistry {
 
             event.accept(ModItems.FIRE_SMES.get());
             event.accept(ModItems.DOLOMITE_SMES.get());
+            event.accept(ModItems.QUICKLIME.get());
             event.accept(ModItems.FIREBRICK.get());
             event.accept(ModItems.REINFORCEDBRICK.get());
 

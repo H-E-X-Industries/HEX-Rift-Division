@@ -32,7 +32,7 @@ public class CentrifugeHudOverlay {
         BlockPos pos = blockHit.getBlockPos();
         BlockEntity be = mc.level.getBlockEntity(pos);
         if (!(be instanceof CentrifugeMotorBlockEntity motor)) return;
-        if (motor.getAttachedConus() != null) return;
+        if (motor.getAttachedConus() != null || motor.getAttachedCylinder() != null) return;
 
         Font font = mc.font;
         int screenW = event.getWindow().getGuiScaledWidth();

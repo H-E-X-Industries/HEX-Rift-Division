@@ -31,6 +31,7 @@ public class FuelTankMenu extends AbstractContainerMenu {
             this.addSlot(new SlotItemHandler(handler, 2, 124, 8));
             this.addSlot(new SlotItemHandler(handler, 3, 124, 44));
             this.addSlot(new SlotItemHandler(handler, 4, 40, 8));
+            this.addSlot(new SlotItemHandler(handler, FluidBarrelBlockEntity.IDENTIFIER_SLOT, 17, 26));
         });
 
         addPlayerInventory(inv);
@@ -80,16 +81,17 @@ public class FuelTankMenu extends AbstractContainerMenu {
             ItemStack slotStack = slot.getItem();
             stack = slotStack.copy();
 
-            // Из цистерны (0-4) в инвентарь (5-41)
-            if (index < 5) {
-                if (!this.moveItemStackTo(slotStack, 5, 41, true)) {
+            // Из цистерны (0-5) в инвентарь (6-42)
+            if (index < 6) {
+                if (!this.moveItemStackTo(slotStack, 6, 42, true)) {
                     return ItemStack.EMPTY;
                 }
             } else {
                 // Из инвентаря в цистерну
                 if (!this.moveItemStackTo(slotStack, 0, 1, false) &&   // fill input
                         !this.moveItemStackTo(slotStack, 2, 3, false) &&   // drain input
-                        !this.moveItemStackTo(slotStack, 4, 5, false)) {   // protector
+                        !this.moveItemStackTo(slotStack, 4, 5, false) &&   // protector
+                        !this.moveItemStackTo(slotStack, 5, 6, false)) {   // identifier
                     return ItemStack.EMPTY;
                 }
             }

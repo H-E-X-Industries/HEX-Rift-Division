@@ -63,6 +63,15 @@ public class ModRecipeProvider extends RecipeProvider implements IConditionBuild
                 .save(writer, MainRegistry.MOD_ID + ":firebrick_from_smelting");
 
         SimpleCookingRecipeBuilder.smelting(
+                        Ingredient.of(ModItems.LIMESTONE_POWDER.get()),
+                        RecipeCategory.MISC,
+                        ModItems.QUICKLIME.get(),
+                        0.3f,
+                        200)
+                .unlockedBy("has_limestone_powder", has(ModItems.LIMESTONE_POWDER.get()))
+                .save(writer, MainRegistry.MOD_ID + ":quicklime_from_smelting");
+
+        SimpleCookingRecipeBuilder.smelting(
                         Ingredient.of(ModItems.DOLOMITE_SMES.get()),
                         RecipeCategory.MISC,
                         ModItems.REINFORCEDBRICK.get(),

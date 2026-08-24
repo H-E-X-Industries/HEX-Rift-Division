@@ -63,6 +63,7 @@ public class FuelTankBlockEntity extends FluidBarrelBlockEntity implements IFlui
 
     public static void tick(Level level, BlockPos pos, BlockState state, FuelTankBlockEntity be) {
         if (level.isClientSide) return;
+        be.updateIdentifierFilter();
         be.processBuckets();
     }
 
