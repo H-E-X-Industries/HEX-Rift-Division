@@ -140,7 +140,7 @@ public class ClientModEvents {
         event.registerBlockEntityRenderer(ModBlockEntities.STATOR_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.MILLSTONE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.STANOK_BE.get(), com.trd.client.render.StanokRenderer::new);
-        event.registerBlockEntityRenderer(ModBlockEntities.VISHELASHIVATEL_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.VISHELASHIVATEL_BE.get(), com.trd.client.render.VishelachivatelRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.WATER_PUMP_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.FUEL_TANK_SMALL_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.HAND_CRANK_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
@@ -202,6 +202,7 @@ public class ClientModEvents {
         event.register(new ResourceLocation("trd", "block/steam_engine_base"));
         event.register(new ResourceLocation("trd", "block/crankshaft"));
         event.register(new ResourceLocation("trd", "block/connecting_rod"));
+        event.register(new ResourceLocation("trd", "block/vishelashivatel_lopasti"));
 
         // 3. Динамические модели
         for (String name : ModModels.GEAR_MODELS.keySet()) {
