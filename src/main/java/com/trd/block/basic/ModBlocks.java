@@ -472,7 +472,7 @@ public class ModBlocks {
                     .noOcclusion()));
 
     public static final RegistryObject<Block> CENTRIFUGE_CYLINDER = registerBlock("centrifuge_cylinder",
-            () -> new CentrifugeConusBlock(BlockBehaviour.Properties.of()
+            () -> new com.trd.multiblock.industrial.centrifuge.CentrifugeCylinderBlock(BlockBehaviour.Properties.of()
                     .strength(2.0F, 6.0F)
                     .sound(SoundType.STONE)
                     .requiresCorrectToolForDrops()

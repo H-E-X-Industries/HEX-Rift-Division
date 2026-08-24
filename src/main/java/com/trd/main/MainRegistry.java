@@ -141,6 +141,7 @@ public class MainRegistry {
             ChemicalPlantRecipeRegistry.init();
             com.trd.multiblock.industrial.vishelashivatel.VishelashivatelRecipes.init();
             com.trd.multiblock.industrial.centrifuge.CentrifugeRecipes.init();
+            com.trd.multiblock.industrial.centrifuge.CentrifugeCylinderRecipes.init();
             ModPacketHandler.register();
             Regions.register(new ModOverworldRegion(new ResourceLocation(MOD_ID, "overworld"), 2));
             SurfaceRuleManager.addSurfaceRules(SurfaceRuleManager.RuleCategory.OVERWORLD, "trd",

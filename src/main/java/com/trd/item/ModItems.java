@@ -571,6 +571,7 @@ public class ModItems {
     MachineTooltipRegistry.registerBlock(ModBlocks.VISHELASHIVATEL, "tooltip.trd.machine.vishelashivatel.desc");
     MachineTooltipRegistry.registerBlock(ModBlocks.CENTRIFUGE_MOTOR, "tooltip.trd.machine.centrifuge.desc");
     MachineTooltipRegistry.registerBlock(ModBlocks.CENTRIFUGE_CONUS, "tooltip.trd.machine.centrifuge.desc");
+    MachineTooltipRegistry.registerBlock(ModBlocks.CENTRIFUGE_CYLINDER, "tooltip.trd.machine.centrifuge.desc");
     MachineTooltipRegistry.registerBlock(ModBlocks.STEEL_STORAGE, "tooltip.trd.machine.steel_storage.desc");
     MachineTooltipRegistry.registerBlock(ModBlocks.CASTING_POT, "tooltip.trd.machine.casting_pot.desc");
     MachineTooltipRegistry.registerBlock(ModBlocks.CASTING_DESCENT, "tooltip.trd.machine.casting_descent.desc");

@@ -35,18 +35,29 @@ public class CentrifugeMotorBlockEntity extends BlockEntity implements IEnergyRe
         return be instanceof CentrifugeConusBlockEntity conus ? conus : null;
     }
 
+    @Nullable
+    public CentrifugeCylinderBlockEntity getAttachedCylinder() {
+        if (level == null) return null;
+        BlockEntity be = level.getBlockEntity(worldPosition.above());
+        return be instanceof CentrifugeCylinderBlockEntity cylinder ? cylinder : null;
+    }
+
     // ===================== ENERGy =====================
 
     @Override
     public long getEnergyStored() {
         CentrifugeConusBlockEntity conus = getAttachedConus();
-        return conus != null ? conus.getEnergyStored() : 0L;
+        if (conus != null) return conus.getEnergyStored();
+        CentrifugeCylinderBlockEntity cylinder = getAttachedCylinder();
+        return cylinder != null ? cylinder.getEnergyStored() : 0L;
     }
 
     @Override
     public long getMaxEnergyStored() {
         CentrifugeConusBlockEntity conus = getAttachedConus();
-        return conus != null ? conus.getMaxEnergy() : 0L;
+        if (conus != null) return conus.getMaxEnergy();
+        CentrifugeCylinderBlockEntity cylinder = getAttachedCylinder();
+        return cylinder != null ? cylinder.getMaxEnergy() : 0L;
     }
 
     @Override
@@ -54,6 +65,11 @@ public class CentrifugeMotorBlockEntity extends BlockEntity implements IEnergyRe
         CentrifugeConusBlockEntity conus = getAttachedConus();
         if (conus != null) {
             conus.addEnergy(energy - conus.getEnergyStored());
+            return;
+        }
+        CentrifugeCylinderBlockEntity cylinder = getAttachedCylinder();
+        if (cylinder != null) {
+            cylinder.addEnergy(energy - cylinder.getEnergyStored());
         }
     }
 
@@ -66,20 +82,33 @@ public class CentrifugeMotorBlockEntity extends BlockEntity implements IEnergyRe
     @Override
     public long receiveEnergy(long maxReceive, boolean simulate) {
         CentrifugeConusBlockEntity conus = getAttachedConus();
-        if (conus == null) return 0L;
-        long space = CentrifugeConusBlockEntity.MAX_ENERGY - conus.getEnergyStored();
-        long canReceive = Math.min(space, Math.min(maxReceive, CentrifugeConusBlockEntity.RECEIVE_SPEED));
-        if (!simulate && canReceive > 0) {
-            // Буфер лежит в BE насадки; пополнение идёт через её инвентарь-независимое поле.
-            conus.addEnergy(canReceive);
+        if (conus != null) {
+            long space = CentrifugeConusBlockEntity.MAX_ENERGY - conus.getEnergyStored();
+            long canReceive = Math.min(space, Math.min(maxReceive, CentrifugeConusBlockEntity.RECEIVE_SPEED));
+            if (!simulate && canReceive > 0) {
+                // Буфер лежит в BE насадки; пополнение идёт через её инвентарь-независимое поле.
+                conus.addEnergy(canReceive);
+            }
+            return canReceive;
         }
-        return canReceive;
+        CentrifugeCylinderBlockEntity cylinder = getAttachedCylinder();
+        if (cylinder != null) {
+            long space = CentrifugeCylinderBlockEntity.MAX_ENERGY - cylinder.getEnergyStored();
+            long canReceive = Math.min(space, Math.min(maxReceive, CentrifugeCylinderBlockEntity.RECEIVE_SPEED));
+            if (!simulate && canReceive > 0) {
+                cylinder.addEnergy(canReceive);
+            }
+            return canReceive;
+        }
+        return 0L;
     }
 
     @Override
     public boolean canReceive() {
         CentrifugeConusBlockEntity conus = getAttachedConus();
-        return conus != null && conus.getEnergyStored() < CentrifugeConusBlockEntity.MAX_ENERGY;
+        if (conus != null) return conus.getEnergyStored() < CentrifugeConusBlockEntity.MAX_ENERGY;
+        CentrifugeCylinderBlockEntity cylinder = getAttachedCylinder();
+        return cylinder != null && cylinder.getEnergyStored() < CentrifugeCylinderBlockEntity.MAX_ENERGY;
     }
 
     @Override
@@ -123,6 +152,14 @@ public class CentrifugeMotorBlockEntity extends BlockEntity implements IEnergyRe
 
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
+        if (cap == ForgeCapabilities.FLUID_HANDLER) {
+            // Жидкостный порт насадки-цилиндра: заливка во входной буфер,
+            // слив из выходных (правила внутри portFluidHandler цилиндра)
+            CentrifugeCylinderBlockEntity cylinder = getAttachedCylinder();
+            if (cylinder != null) {
+                return cylinder.getFluidHandlerCapability().cast();
+            }
+        }
         if (cap == ForgeCapabilities.ITEM_HANDLER && side != Direction.DOWN) {
             return itemCap.cast();
         }
@@ -134,16 +171,20 @@ public class CentrifugeMotorBlockEntity extends BlockEntity implements IEnergyRe
     }
 
     /**
-     * Предметный доступ к насадке через мотор: вставка только во вход и слот
-     * аккумуляторов, извлечение только из выходных слотов.
+     * Предметный доступ к насадке через мотор: вставка только во вход (конус)
+     * или в слот аккумуляторов, извлечение только из выходных слотов.
      */
     private class AttachedItemHandler implements IItemHandler {
 
         @Nullable
         private IItemHandler backing() {
             CentrifugeConusBlockEntity conus = getAttachedConus();
-            return conus != null ? conus.getInventory() : null;
+            if (conus != null) return conus.getInventory();
+            CentrifugeCylinderBlockEntity cylinder = getAttachedCylinder();
+            return cylinder != null ? cylinder.getInventory() : null;
         }
+
+        private boolean isCylinder() { return getAttachedCylinder() != null; }
 
         @Override
         public int getSlots() {
@@ -161,8 +202,13 @@ public class CentrifugeMotorBlockEntity extends BlockEntity implements IEnergyRe
         public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
             IItemHandler h = backing();
             if (h == null || stack.isEmpty()) return stack;
-            if (slot != CentrifugeConusBlockEntity.INPUT_SLOT
-                    && slot != CentrifugeConusBlockEntity.BATTERY_SLOT) return stack;
+            if (isCylinder()) {
+                // У цилиндра нет входного предметного слота — только аккумулятор
+                if (slot != CentrifugeCylinderBlockEntity.BATTERY_SLOT) return stack;
+            } else if (slot != CentrifugeConusBlockEntity.INPUT_SLOT
+                    && slot != CentrifugeConusBlockEntity.BATTERY_SLOT) {
+                return stack;
+            }
             return h.insertItem(slot, stack, simulate);
         }
 
@@ -170,8 +216,13 @@ public class CentrifugeMotorBlockEntity extends BlockEntity implements IEnergyRe
         public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
             IItemHandler h = backing();
             if (h == null) return ItemStack.EMPTY;
-            if (slot < CentrifugeConusBlockEntity.FIRST_OUTPUT_SLOT
-                    || slot >= CentrifugeConusBlockEntity.FIRST_OUTPUT_SLOT + CentrifugeConusBlockEntity.OUTPUT_SLOTS) {
+            int firstOutput = isCylinder()
+                    ? CentrifugeCylinderBlockEntity.FIRST_OUTPUT_SLOT
+                    : CentrifugeConusBlockEntity.FIRST_OUTPUT_SLOT;
+            int outputCount = isCylinder()
+                    ? CentrifugeCylinderBlockEntity.OUTPUT_SLOTS
+                    : CentrifugeConusBlockEntity.OUTPUT_SLOTS;
+            if (slot < firstOutput || slot >= firstOutput + outputCount) {
                 return ItemStack.EMPTY;
             }
             return h.extractItem(slot, amount, simulate);
@@ -187,6 +238,9 @@ public class CentrifugeMotorBlockEntity extends BlockEntity implements IEnergyRe
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             IItemHandler h = backing();
             if (h == null) return false;
+            if (isCylinder()) {
+                return slot == CentrifugeCylinderBlockEntity.BATTERY_SLOT;
+            }
             return slot == CentrifugeConusBlockEntity.INPUT_SLOT
                     || slot == CentrifugeConusBlockEntity.BATTERY_SLOT;
         }

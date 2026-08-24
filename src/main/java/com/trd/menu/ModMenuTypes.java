@@ -60,6 +60,9 @@ public class ModMenuTypes {
     public static final RegistryObject<MenuType<CentrifugeMenu>> CENTRIFUGE_MENU =
             MENUS.register("centrifuge_menu", () -> IForgeMenuType.create(CentrifugeMenu::new));
 
+    public static final RegistryObject<MenuType<CentrifugeCylinderMenu>> CENTRIFUGE_CYLINDER_MENU =
+            MENUS.register("centrifuge_cylinder_menu", () -> IForgeMenuType.create(CentrifugeCylinderMenu::new));
+
     public static final RegistryObject<MenuType<StanokMenu>> STANOK_MENU =
             MENUS.register("stanok_menu", () -> IForgeMenuType.create(StanokMenu::new));
 

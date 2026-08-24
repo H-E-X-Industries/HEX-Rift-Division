@@ -45,7 +45,8 @@ public class CentrifugeMotorBlock extends BaseEntityBlock {
     }
 
     private boolean hasAttachment(BlockGetter level, BlockPos pos) {
-        return level.getBlockState(pos.above()).getBlock() instanceof CentrifugeConusBlock;
+        var above = level.getBlockState(pos.above()).getBlock();
+        return above instanceof CentrifugeConusBlock || above instanceof CentrifugeCylinderBlock;
     }
 
     /**

@@ -109,6 +109,12 @@ public class ModBlockEntities {
                             com.trd.multiblock.industrial.centrifuge.CentrifugeConusBlockEntity::new,
                             ModBlocks.CENTRIFUGE_CONUS.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<com.trd.multiblock.industrial.centrifuge.CentrifugeCylinderBlockEntity>> CENTRIFUGE_CYLINDER_BE =
+            BLOCK_ENTITIES.register("centrifuge_cylinder_be",
+                    () -> BlockEntityType.Builder.of(
+                            com.trd.multiblock.industrial.centrifuge.CentrifugeCylinderBlockEntity::new,
+                            ModBlocks.CENTRIFUGE_CYLINDER.get()).build(null));
+
     public static final RegistryObject<BlockEntityType<SmallSmelterBlockEntity>> SMALL_SMELTER_BE =
             BLOCK_ENTITIES.register("small_smelter",
                     () -> BlockEntityType.Builder.of(SmallSmelterBlockEntity::new, ModBlocks.SMALL_SMELTER.get()).build(null));

@@ -974,9 +974,15 @@ public class ModLangProvider extends LanguageProvider {
         // ═══ Centrifuge ═══
         add(ModBlocks.CENTRIFUGE_MOTOR.get(), "Centrifuge Motor");
         add(ModBlocks.CENTRIFUGE_CONUS.get(), "Centrifuge");
+        add(ModBlocks.CENTRIFUGE_CYLINDER.get(), "Fluid Centrifuge");
+        add("gui.trd.centrifuge_cylinder.empty_tank", "Empty");
         add("recipe.trd.dirt_centrifuging", "Dirt Centrifugation");
         add("recipe.trd.gravel_centrifuging", "Gravel Centrifugation");
         add("recipe.trd.bone_block_centrifuging", "Bone Block Centrifugation");
+        add("recipe.trd.soda_centrifuging", "Soda Centrifugation");
+        add("recipe.trd.sulfuric_acid_centrifuging", "Sulfuric Acid Centrifugation");
+        add("recipe.trd.water_centrifuging", "Water Centrifugation");
+        add("recipe.trd.peroxide_centrifuging", "Hydrogen Peroxide Centrifugation");
         add("gui.trd.centrifuge.energy_tooltip", "%s / %s JE");
         add("gui.trd.centrifuge.progress_tooltip", "§6Remaining: §f%s sec");
         add("jei.category.trd.centrifuge", "Centrifuge");
@@ -1031,8 +1037,8 @@ public class ModLangProvider extends LanguageProvider {
         add("gui.trd.coccer_oven.no_recipe", "Нет рецепта");
 
         // ═══ Выщелащиватель ═══
-        add(ModBlocks.VISHELASHIVATEL.get(), "Выщелащиватель");
-        add("jei.category.trd.vishelashivatel", "Выщелащиватель");
+        add(ModBlocks.VISHELASHIVATEL.get(), "Рудный выщелачиватель");
+        add("jei.category.trd.vishelashivatel", "Рудный выщелачиватель");
         add("recipe.trd.leather_from_rotten_flesh", "Производство кожи");
         add("gui.trd.vishelashivatel.empty_tank", "Пусто");
         add("gui.trd.vishelashivatel.fluid_amount", "%s / %s мБ");
@@ -1051,9 +1057,15 @@ public class ModLangProvider extends LanguageProvider {
         // ═══ Центрифуга ═══
         add(ModBlocks.CENTRIFUGE_MOTOR.get(), "Мотор центрифуги");
         add(ModBlocks.CENTRIFUGE_CONUS.get(), "Центрифуга");
+        add(ModBlocks.CENTRIFUGE_CYLINDER.get(), "Жидкостная центрифуга");
+        add("gui.trd.centrifuge_cylinder.empty_tank", "Пусто");
         add("recipe.trd.dirt_centrifuging", "Центрифугирование земли");
         add("recipe.trd.gravel_centrifuging", "Центрифугирование гравия");
         add("recipe.trd.bone_block_centrifuging", "Центрифугирование костяного блока");
+        add("recipe.trd.soda_centrifuging", "Центрифугирование соды");
+        add("recipe.trd.sulfuric_acid_centrifuging", "Центрифугирование серной кислоты");
+        add("recipe.trd.water_centrifuging", "Центрифугирование воды");
+        add("recipe.trd.peroxide_centrifuging", "Центрифугирование пероксида водорода");
         add("gui.trd.centrifuge.energy_tooltip", "%s / %s JE");
         add("gui.trd.centrifuge.progress_tooltip", "§6Осталось: §f%s сек");
         add("jei.category.trd.centrifuge", "Центрифуга");
