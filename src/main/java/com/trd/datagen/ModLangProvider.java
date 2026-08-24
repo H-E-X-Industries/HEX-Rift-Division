@@ -105,6 +105,7 @@ public class ModLangProvider extends LanguageProvider {
         addFluidTranslations("water", "Вода", "Вода", "Water");
         addFluidTranslations("lava", "Лава", "Лава", "Lava");
         addFluidTranslations("mercury", "Ртуть", "Ртуть", "Mercury");
+        addFluidTranslations("sodium_hydroxide", "Щёлочь (NaOH)", "Щёлочь (NaOH)", "Sodium Hydroxide (NaOH)");
 
         // JEI Categories
         add("jei.category.trd.smelting", "Smelting");
@@ -149,6 +150,8 @@ public class ModLangProvider extends LanguageProvider {
         add("recipe.trd.sodium_sulfate", "Sodium Sulfate");
         add("recipe.trd.black_ash", "Black Ash");
         add("recipe.trd.obsidian", "Obsidian");
+        add("recipe.trd.concrete", "Concrete");
+        add("recipe.trd.sodium_hydroxide", "Sodium Hydroxide (NaOH)");
 
 
         // ═══ GUI: Electric Furnace ═══
@@ -716,6 +719,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModItems.AMMO_TURRET_RADIO.get(), "20mm Turret Round with Radio Fuze");
         add(ModItems.MISSILE_100MM_HE.get(), "100mm HE Missile");
         add(ModItems.MISSILE_100MM_FIRE.get(), "100mm Incendiary Missile");
+        add(ModItems.QUICKLIME.get(), "Quicklime");
 
         // Resources & Materials
         add(ModItems.IRON_PLATE.get(), "Iron Plate");
@@ -1134,6 +1138,9 @@ public class ModLangProvider extends LanguageProvider {
         add("recipe.trd.sulfuric_acid", "Серная кислота");
         add("recipe.trd.sodium_sulfate", "Сульфат натрия");
         add("recipe.trd.black_ash", "Чёрная зола");
+        add("recipe.trd.concrete", "Бетон");
+        add("recipe.trd.sodium_hydroxide", "Щёлочь (NaOH)");
+
         add("recipe.trd.obsidian", "Обсидиан");
         add(  "gui.trd.chemistry.empty", "Пусто");
         add(  "gui.trd.chemistry.inputs", "Входы:");
@@ -1699,6 +1706,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.CONCRETE_NET.get(), "Усиленный бетон");
         add(ModItems.SODA.get(), "Порошок соды");
         add(ModItems.SODA_CRYSTAL.get(), "Кристалл соды");
+        add(ModItems.QUICKLIME.get(), "Негашёная известь");
 
         // Кирпичи
         add(ModBlocks.FIREBRICK_BLOCK.get(), "Блок огнеупорного кирпича");
@@ -1935,6 +1943,7 @@ public class ModLangProvider extends LanguageProvider {
         addFluidTranslations("water", "Вода", "Вода", "Water");
         addFluidTranslations("lava", "Лава", "Лава", "Lava");
         addFluidTranslations("mercury", "Ртуть", "Ртуть", "Mercury");
+        addFluidTranslations("sodium_hydroxide", "Щёлочь (NaOH)", "Щёлочь (NaOH)", "Sodium Hydroxide (NaOH)");
 
         // Stanok Items
         add(ModItems.PRESS_CARRIAGE.get(), "Пресс-насадка");

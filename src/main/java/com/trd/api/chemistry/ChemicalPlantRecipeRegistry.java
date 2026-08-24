@@ -1,6 +1,7 @@
 package com.trd.api.chemistry;
 
 import com.trd.api.fluids.ModFluids;
+import com.trd.block.basic.ModBlocks;
 import com.trd.item.ModItems;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -67,6 +68,26 @@ public class ChemicalPlantRecipeRegistry {
                 List.of(new ItemStack(ModItems.BLACK_ASH.get(), 1)),
                 90,
                 200
+        ));
+
+        register(new ChemicalPlantRecipe(
+                new ResourceLocation("trd", "sodium_hydroxide"),
+                List.of(new FluidStack(Fluids.WATER, 1000)),
+                List.of(new FluidStack(ModFluids.SODIUM_HYDROXIDE_SOURCE.get(), 250)),
+                List.of(new ItemStack(ModItems.SODA.get(), 1), new ItemStack(ModItems.QUICKLIME.get(), 1)),
+                List.of(),
+                90,
+                50
+        ));
+
+        register(new ChemicalPlantRecipe(
+                new ResourceLocation("trd", "concrete"),
+                List.of(new FluidStack(Fluids.WATER, 1000)),
+                List.of(),
+                List.of(new ItemStack(Items.GRAVEL, 1), new ItemStack(Items.SAND, 1), new ItemStack(ModItems.QUICKLIME.get(), 1)),
+                List.of(new ItemStack(ModBlocks.CONCRETE.get(), 1)),
+                90,
+                30
         ));
 
     }

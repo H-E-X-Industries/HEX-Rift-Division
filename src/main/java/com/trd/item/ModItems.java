@@ -314,6 +314,8 @@ public class ModItems {
             () -> new Item(new Item.Properties()));
     public static final RegistryObject<Item> SODA_CRYSTAL = ITEMS.register("soda_crystal",
             () -> new Item(new Item.Properties()));
+    public static final RegistryObject<Item> QUICKLIME = ITEMS.register("quicklime",
+            () -> new Item(new Item.Properties()));
 
     public static final RegistryObject<Item> BLADE = ITEMS.register("blade",
             () -> new com.trd.item.tools.BladeItem(new Item.Properties().stacksTo(1)));
