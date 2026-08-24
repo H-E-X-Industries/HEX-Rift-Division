@@ -6,9 +6,8 @@ import com.trd.block.basic.ModBlocks;
 import com.trd.block.entity.conglomerate.ConglomerateBlockEntity;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.WorldGenRegion;
-import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -16,12 +15,13 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 
-import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
 public class ConglomerateVeinFeature extends Feature<ConglomerateVeinConfiguration> {
+
+    private static final long DEPLETION_SALT = 0x51ED270B19C0FFEEL;
 
     public ConglomerateVeinFeature(Codec<ConglomerateVeinConfiguration> codec) {
         super(codec);
@@ -30,70 +30,87 @@ public class ConglomerateVeinFeature extends Feature<ConglomerateVeinConfigurati
     @Override
     public boolean place(FeaturePlaceContext<ConglomerateVeinConfiguration> context) {
         WorldGenLevel level = context.level();
-        BlockPos origin = context.origin();
-        RandomSource random = context.random();
         ConglomerateVeinConfiguration cfg = context.config();
 
-        ServerLevel serverLevel = getServerLevel(level);
-        if (serverLevel == null) return false;
+        ServerLevel serverLevel = level.getLevel();
+        int chunkX = SectionPos.blockToSectionCoord(context.origin().getX());
+        int chunkZ = SectionPos.blockToSectionCoord(context.origin().getZ());
 
-        float range = cfg.maxY() - cfg.minY();
-        float t = range > 0 ? Mth.clamp((origin.getY() - cfg.minY()) / range, 0f, 1f) : 0.5f;
-        int size = Mth.floor(Mth.lerp(t, cfg.minSize(), cfg.maxSize()));
-        if (size <= 0) return false;
+        int minBX = chunkX << 4;
+        int maxBX = minBX + 15;
+        int minBZ = chunkZ << 4;
+        int maxBZ = minBZ + 15;
+        int worldMinY = level.getMinBuildHeight();
+        int worldMaxY = level.getMaxBuildHeight() - 1;
 
-        int rx = size + random.nextInt(size / 3 + 1);
-        int ry = Math.max(2, size / 3 + random.nextInt(2));
-        int rz = size + random.nextInt(size / 3 + 1);
+        CrossChunkVeins.ShapeParams params = new CrossChunkVeins.ShapeParams(
+                cfg.veinId(), cfg.minSize(), cfg.maxSize(), cfg.minY(), cfg.maxY(),
+                cfg.maxStretch(), 0.15f, cfg.rarity());
+
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        boolean[] placedAny = {false};
 
         Set<BlockPos> normalBlocks = new HashSet<>();
         Set<BlockPos> depletedBlocks = new HashSet<>();
 
-        for (int x = -rx; x <= rx; x++) {
-            for (int y = -ry; y <= ry; y++) {
-                for (int z = -rz; z <= rz; z++) {
-                    double dist = (x * x) / (double) (rx * rx)
-                            + (y * y) / (double) (ry * ry)
-                            + (z * z) / (double) (rz * rz);
-                    if (dist > 1.0) continue;
+        CrossChunkVeins.forEachVein(level, chunkX, chunkZ, params, vein -> {
+            float hx = vein.horizontalReach() + vein.warpAmp + 1f;
+            int x0 = Math.max(minBX, (int) Math.floor(vein.cx - hx));
+            int x1 = Math.min(maxBX, (int) Math.ceil(vein.cx + hx));
+            int z0 = Math.max(minBZ, (int) Math.floor(vein.cz - hx));
+            int z1 = Math.min(maxBZ, (int) Math.ceil(vein.cz + hx));
+            int y0 = Math.max(worldMinY, (int) Math.floor(vein.cy - vein.ry - vein.warpAmp));
+            int y1 = Math.min(worldMaxY, (int) Math.ceil(vein.cy + vein.ry + vein.warpAmp));
 
-                    BlockPos pos = origin.offset(x, y, z);
-                    BlockState existing = level.getBlockState(pos);
+            normalBlocks.clear();
+            depletedBlocks.clear();
 
-                    if (!isReplaceable(existing)) continue;
-                    if (random.nextFloat() > cfg.density()) continue;
+            for (int x = x0; x <= x1; x++) {
+                for (int z = z0; z <= z1; z++) {
+                    for (int y = y0; y <= y1; y++) {
+                        pos.set(x, y, z);
 
-                    if (random.nextFloat() < cfg.depletionChance()) {
-                        depletedBlocks.add(pos.immutable());
-                    } else {
-                        normalBlocks.add(pos.immutable());
+                        // плотность — чистая функция координат (бесшовно между чанками)
+                        if (CrossChunkVeins.blockRandom(vein.seed, x, y, z) > cfg.density()) continue;
+
+                        BlockState existing = level.getBlockState(pos);
+                        if (!isReplaceable(existing)) continue;
+
+                        if (vein.fieldValue(x, y, z) > 1.0) continue;
+
+                        if (CrossChunkVeins.blockRandom(vein.seed ^ DEPLETION_SALT, x, y, z) < cfg.depletionChance()) {
+                            depletedBlocks.add(pos.immutable());
+                        } else {
+                            normalBlocks.add(pos.immutable());
+                        }
                     }
                 }
             }
-        }
 
-        if (normalBlocks.isEmpty()) return false;
+            if (normalBlocks.isEmpty()) return;
 
-        var composition = VeinCompositionGenerator.generate(origin.getY(), random);
-        UUID veinId = VeinManager.get(serverLevel).registerVein(normalBlocks, composition, origin.getY());
+            // Состав жилы детерминирован сидом жилы — все чанки получают одинаковый
+            var composition = VeinCompositionGenerator.generate(
+                    vein.cy, RandomSource.create(vein.seed ^ 0xC0FFEE1234L));
 
-        for (BlockPos pos : depletedBlocks) {
-            level.setBlock(pos, ModBlocks.DEPLETED_CONGLOMERATE.get().defaultBlockState(), 2);
-        }
+            UUID veinId = CrossChunkVeins.veinUuid(serverLevel.getSeed(), vein, cfg.veinId());
+            VeinManager.get(serverLevel).registerVeinPortion(veinId, normalBlocks, composition, vein.cy);
 
-        for (BlockPos pos : normalBlocks) {
-            level.setBlock(pos, ModBlocks.CONGLOMERATE.get().defaultBlockState(), 2);
-            BlockEntity be = level.getBlockEntity(pos);
-            if (be instanceof ConglomerateBlockEntity cbe) {
-                cbe.setVeinId(veinId);
+            for (BlockPos p : depletedBlocks) {
+                level.setBlock(p, ModBlocks.DEPLETED_CONGLOMERATE.get().defaultBlockState(), 2);
             }
-        }
 
-        return true;
-    }
+            for (BlockPos p : normalBlocks) {
+                level.setBlock(p, ModBlocks.CONGLOMERATE.get().defaultBlockState(), 2);
+                BlockEntity be = level.getBlockEntity(p);
+                if (be instanceof ConglomerateBlockEntity cbe) {
+                    cbe.setVeinId(veinId);
+                }
+            }
+            placedAny[0] = true;
+        });
 
-    private ServerLevel getServerLevel(WorldGenLevel level) {
-        return level.getLevel();
+        return placedAny[0];
     }
 
     private boolean isReplaceable(BlockState state) {

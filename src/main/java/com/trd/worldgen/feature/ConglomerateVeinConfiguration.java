@@ -10,7 +10,10 @@ public record ConglomerateVeinConfiguration(
         int minY,
         int maxY,
         float density,
-        float depletionChance
+        float depletionChance,
+        int rarity,       // в среднем одна жила раз в N чанков
+        float maxStretch, // максимальное растяжение главной оси (1 = сфера)
+        String veinId     // стабильный id для детерминированной генерации и UUID жилы
 ) implements FeatureConfiguration {
 
     public static final Codec<ConglomerateVeinConfiguration> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -19,6 +22,9 @@ public record ConglomerateVeinConfiguration(
             Codec.INT.fieldOf("min_y").forGetter(ConglomerateVeinConfiguration::minY),
             Codec.INT.fieldOf("max_y").forGetter(ConglomerateVeinConfiguration::maxY),
             Codec.FLOAT.fieldOf("density").forGetter(ConglomerateVeinConfiguration::density),
-            Codec.FLOAT.fieldOf("depletion_chance").forGetter(ConglomerateVeinConfiguration::depletionChance)
+            Codec.FLOAT.fieldOf("depletion_chance").forGetter(ConglomerateVeinConfiguration::depletionChance),
+            Codec.INT.optionalFieldOf("rarity", 10).forGetter(ConglomerateVeinConfiguration::rarity),
+            Codec.FLOAT.optionalFieldOf("max_stretch", 2.0f).forGetter(ConglomerateVeinConfiguration::maxStretch),
+            Codec.STRING.optionalFieldOf("vein_id", "").forGetter(ConglomerateVeinConfiguration::veinId)
     ).apply(instance, ConglomerateVeinConfiguration::new));
 }

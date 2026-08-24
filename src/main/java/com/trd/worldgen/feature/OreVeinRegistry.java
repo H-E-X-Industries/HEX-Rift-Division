@@ -59,9 +59,10 @@ public class OreVeinRegistry {
         public final int minY, maxY;
         public final int minSize;      // размер на нижней границе
         public final int maxSize;      // размер на верхней границе
-        public final int rarity;       // раз в N чанков (1 = каждый чанк)
+        public final int rarity;       // в среднем одна жила раз в N чанков
         public final boolean respectAir;
         public final float density;    // 0.0 – 1.0
+        public final float maxStretch; // максимальное растяжение главной оси
 
         public final ResourceKey<ConfiguredFeature<?, ?>> configuredKey;
         public final ResourceKey<PlacedFeature> placedKey;
@@ -69,7 +70,7 @@ public class OreVeinRegistry {
 
         public SpecialOreEntry(String name, Block block, int minY, int maxY,
                                int minSize, int maxSize, int rarity,
-                               boolean respectAir, float density) {
+                               boolean respectAir, float density, float maxStretch) {
             this.name = name;
             this.block = block;
             this.minY = minY;
@@ -79,6 +80,7 @@ public class OreVeinRegistry {
             this.rarity = rarity;
             this.respectAir = respectAir;
             this.density = density;
+            this.maxStretch = maxStretch;
 
             this.configuredKey = ResourceKey.create(
                     net.minecraft.core.registries.Registries.CONFIGURED_FEATURE,
@@ -97,8 +99,8 @@ public class OreVeinRegistry {
 
     public static void registerSpecial(String name, Block block, int minY, int maxY,
                                        int minSize, int maxSize, int rarity,
-                                       boolean respectAir, float density) {
-        SPECIAL_ORES.add(new SpecialOreEntry(name, block, minY, maxY, minSize, maxSize, rarity, respectAir, density));
+                                       boolean respectAir, float density, float maxStretch) {
+        SPECIAL_ORES.add(new SpecialOreEntry(name, block, minY, maxY, minSize, maxSize, rarity, respectAir, density, maxStretch));
     }
 
     public static void register(String name, Block block, int veinSize, int minY, int maxY, int countPerChunk) {
@@ -114,13 +116,14 @@ public class OreVeinRegistry {
         public final int rarity;
         public final float density;
         public final float depletionChance;
+        public final float maxStretch;
 
         public final ResourceKey<ConfiguredFeature<?, ?>> configuredKey;
         public final ResourceKey<PlacedFeature> placedKey;
         public final ResourceKey<BiomeModifier> biomeModifierKey;
 
         public ConglomerateEntry(String name, int minY, int maxY, int minSize, int maxSize,
-                                 int rarity, float density, float depletionChance) {
+                                 int rarity, float density, float depletionChance, float maxStretch) {
             this.name = name;
             this.minY = minY;
             this.maxY = maxY;
@@ -129,6 +132,7 @@ public class OreVeinRegistry {
             this.rarity = rarity;
             this.density = density;
             this.depletionChance = depletionChance;
+            this.maxStretch = maxStretch;
 
             this.configuredKey = ResourceKey.create(
                     net.minecraft.core.registries.Registries.CONFIGURED_FEATURE,
@@ -146,8 +150,8 @@ public class OreVeinRegistry {
     }
 
     public static void registerConglomerate(String name, int minY, int maxY, int minSize, int maxSize,
-                                            int rarity, float density, float depletionChance) {
-        CONGLOMERATES.add(new ConglomerateEntry(name, minY, maxY, minSize, maxSize, rarity, density, depletionChance));
+                                            int rarity, float density, float depletionChance, float maxStretch) {
+        CONGLOMERATES.add(new ConglomerateEntry(name, minY, maxY, minSize, maxSize, rarity, density, depletionChance, maxStretch));
     }
 
     static {
@@ -169,18 +173,18 @@ public class OreVeinRegistry {
 
 
         // --- спец-залежи ---
-            registerSpecial("bauxite", ModBlocks.BAUXITE.get(), -64, 150, 15, 25, 30, true, 0.7f);
+            registerSpecial("bauxite", ModBlocks.BAUXITE.get(), -64, 150, 15, 25, 60, true, 0.7f, 3.0f);
 
-            registerSpecial("limestone", ModBlocks.LIMESTONE.get(), -20, 150, 6, 10, 8, false, 0.9f);
+            registerSpecial("limestone", ModBlocks.LIMESTONE.get(), -20, 150, 6, 10, 8, false, 0.9f, 2.5f);
 
-            registerSpecial("dolomite", ModBlocks.DOLOMITE.get(), -64, 70, 5, 8, 4, true, 0.6f);
+            registerSpecial("dolomite", ModBlocks.DOLOMITE.get(), -64, 70, 5, 8, 4, true, 0.6f, 2.0f);
 
-            registerSpecial("sulfur_cluster", ModBlocks.SULFUR_CLUSTER.get(), -64, 150, 5, 8, 10, true, 0.8f);
+            registerSpecial("sulfur_cluster", ModBlocks.SULFUR_CLUSTER.get(), -64, 150, 5, 8, 10, true, 0.8f, 2.0f);
 
         // === КОНГЛОМЕРАТЫ ===
-        registerConglomerate("surface", 40, 150, 6, 11, 10, 0.65f, 0.3f);
-        registerConglomerate("medium", -20, 40, 5, 9, 14, 0.7f, 0.4f);
-        registerConglomerate("deep", -64, -20, 4, 7, 18, 0.85f, 0.5f);
+        registerConglomerate("surface", 40, 150, 6, 11, 10, 0.65f, 0.3f, 1.8f);
+        registerConglomerate("medium", -20, 40, 5, 9, 14, 0.7f, 0.4f, 1.8f);
+        registerConglomerate("deep", -64, -20, 4, 7, 18, 0.85f, 0.5f, 1.8f);
     }
 
     }

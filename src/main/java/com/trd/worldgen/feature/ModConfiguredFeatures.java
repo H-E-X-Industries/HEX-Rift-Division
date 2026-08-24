@@ -50,7 +50,8 @@ public class ModConfiguredFeatures {
             register(context, ore.configuredKey, ModFeatures.SPECIAL_VEIN.get(),
                     new SpecialVeinConfiguration(targets, ore.block.defaultBlockState(),
                             ore.minSize, ore.maxSize, ore.minY, ore.maxY,
-                            ore.respectAir, ore.density, 0.1f));
+                            ore.respectAir, ore.density, 0.15f,
+                            ore.rarity, ore.maxStretch, "special_ore_" + ore.name));
         }
 
         // --- КОНГЛОМЕРАТЫ ---
@@ -58,7 +59,8 @@ public class ModConfiguredFeatures {
             register(context, entry.configuredKey, ModFeatures.CONGLOMERATE_VEIN.get(),
                     new ConglomerateVeinConfiguration(
                             entry.minSize, entry.maxSize, entry.minY, entry.maxY,
-                            entry.density, entry.depletionChance
+                            entry.density, entry.depletionChance,
+                            entry.rarity, entry.maxStretch, "conglomerate_" + entry.name
                     ));
         }
 

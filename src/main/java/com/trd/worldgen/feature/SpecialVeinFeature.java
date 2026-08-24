@@ -1,16 +1,21 @@
 package com.trd.worldgen.feature;
 
+import com.trd.api.vein.VeinCompositionGenerator;
+import com.trd.api.vein.VeinManager;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
-import net.minecraft.util.Mth;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.configurations.OreConfiguration;
+
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 public class SpecialVeinFeature extends Feature<SpecialVeinConfiguration> {
 
@@ -21,64 +26,82 @@ public class SpecialVeinFeature extends Feature<SpecialVeinConfiguration> {
     @Override
     public boolean place(FeaturePlaceContext<SpecialVeinConfiguration> context) {
         WorldGenLevel level = context.level();
-        BlockPos origin = context.origin();
-        RandomSource random = context.random();
         SpecialVeinConfiguration cfg = context.config();
+        ServerLevel serverLevel = level.getLevel();
 
-        // === ОПРЕДЕЛЯЕМ ГРАНИЦЫ ТЕКУЩЕГО ЧАНКА ===
-        int chunkX = SectionPos.blockToSectionCoord(origin.getX());
-        int chunkZ = SectionPos.blockToSectionCoord(origin.getZ());
-        int minBlockX = SectionPos.sectionToBlockCoord(chunkX);
-        int minBlockZ = SectionPos.sectionToBlockCoord(chunkZ);
-        int maxBlockX = minBlockX + 15;
-        int maxBlockZ = minBlockZ + 15;
+        // Якорь фичи игнорируется: жилы привязаны к ячейкам региона и детерминированы
+        // (см. CrossChunkVeins), поэтому каждый чанк сам достраивает свою часть всех жил.
+        int chunkX = SectionPos.blockToSectionCoord(context.origin().getX());
+        int chunkZ = SectionPos.blockToSectionCoord(context.origin().getZ());
 
-        // --- Интерполяция размера по Y ---
-        float range = cfg.maxY() - cfg.minY();
-        float t = range > 0 ? Mth.clamp((origin.getY() - cfg.minY()) / range, 0f, 1f) : 0.5f;
-        int size = Mth.floor(Mth.lerp(t, cfg.minSize(), cfg.maxSize()));
-        if (size <= 0) return false;
-
-        int rx = size;
-        int ry = Math.max(1, size / 2 + random.nextInt(2));
-        int rz = size;
+        int minBX = chunkX << 4;
+        int maxBX = minBX + 15;
+        int minBZ = chunkZ << 4;
+        int maxBZ = minBZ + 15;
+        int worldMinY = level.getMinBuildHeight();
+        int worldMaxY = level.getMaxBuildHeight() - 1;
 
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-        boolean placed = false;
+        boolean[] placed = {false};
 
-        for (int x = -rx; x <= rx; x++) {
-            for (int y = -ry; y <= ry; y++) {
-                for (int z = -rz; z <= rz; z++) {
-                    double dist = (x * x) / (double) (rx * rx)
-                            + (y * y) / (double) (ry * ry)
-                            + (z * z) / (double) (rz * rz);
-                    if (dist > 1.0) continue;
+        CrossChunkVeins.ShapeParams params = new CrossChunkVeins.ShapeParams(
+                cfg.veinId(), cfg.minSize(), cfg.maxSize(), cfg.minY(), cfg.maxY(),
+                cfg.maxStretch(), cfg.noiseScale(), cfg.rarity());
 
-                    int absX = origin.getX() + x;
-                    int absZ = origin.getZ() + z;
+        Set<BlockPos> portion = new HashSet<>();
 
-                    pos.set(absX, origin.getY() + y, absZ);
+        CrossChunkVeins.forEachVein(level, chunkX, chunkZ, params, vein -> {
+            float hx = vein.horizontalReach() + vein.warpAmp + 1f;
+            int x0 = Math.max(minBX, (int) Math.floor(vein.cx - hx));
+            int x1 = Math.min(maxBX, (int) Math.ceil(vein.cx + hx));
+            int z0 = Math.max(minBZ, (int) Math.floor(vein.cz - hx));
+            int z1 = Math.min(maxBZ, (int) Math.ceil(vein.cz + hx));
+            int y0 = Math.max(worldMinY, (int) Math.floor(vein.cy - vein.ry - vein.warpAmp));
+            int y1 = Math.min(worldMaxY, (int) Math.ceil(vein.cy + vein.ry + vein.warpAmp));
 
-                    // Разрезание воздухом
-                    BlockState existing = level.getBlockState(pos);
-                    if (cfg.respectAir() && existing.isAir()) {
-                        continue;
-                    }
+            portion.clear();
 
-                    // Плотность
-                    if (random.nextFloat() > cfg.density()) continue;
+            for (int x = x0; x <= x1; x++) {
+                for (int z = z0; z <= z1; z++) {
+                    for (int y = y0; y <= y1; y++) {
+                        pos.set(x, y, z);
 
-                    // Замена через RuleTest
-                    for (OreConfiguration.TargetBlockState target : cfg.targets()) {
-                        if (target.target.test(existing, random)) {
-                            level.setBlock(pos, cfg.state(), 2);
-                            placed = true;
-                            break;
+                        // плотность — чистая функция координат: бесшовно между чанками,
+                        // и дешёвый отсев до дорогого шума
+                        if (CrossChunkVeins.blockRandom(vein.seed, x, y, z) > cfg.density()) continue;
+
+                        BlockState existing = level.getBlockState(pos);
+                        if (cfg.respectAir() && existing.isAir()) continue;
+
+                        if (vein.fieldValue(x, y, z) > 1.0) continue;
+
+                        boolean replaced = false;
+                        for (OreConfiguration.TargetBlockState target : cfg.targets()) {
+                            if (target.target.test(existing, context.random())) {
+                                level.setBlock(pos, cfg.state(), 2);
+                                replaced = true;
+                                break;
+                            }
+                        }
+                        if (replaced) {
+                            portion.add(pos.immutable());
+                            placed[0] = true;
                         }
                     }
                 }
             }
-        }
-        return placed;
+
+            if (portion.isEmpty() || serverLevel == null) return;
+
+            // Регистрируем свою порцию жилы в менеджере (детерминированный UUID:
+            // соседние чанки сольют свои порции с этой же записью).
+            var composition = VeinCompositionGenerator.generate(
+                    vein.cy, RandomSource.create(vein.seed ^ 0xC0FFEE1234L));
+            UUID veinId = CrossChunkVeins.veinUuid(serverLevel.getSeed(), vein, cfg.veinId());
+            VeinManager.get(serverLevel).registerVeinPortion(veinId, portion, composition, vein.cy);
+        });
+
+        return placed[0];
     }
 }
+

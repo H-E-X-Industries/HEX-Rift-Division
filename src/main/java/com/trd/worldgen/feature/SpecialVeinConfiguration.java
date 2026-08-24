@@ -17,7 +17,10 @@ public record SpecialVeinConfiguration(
         int maxY,
         boolean respectAir, // true = не заменяет воздух (разрезание)
         float density,      // 0.0–1.0, плотность заполнения
-        float noiseScale    // можно оставить 0.1f, позже добавишь шум
+        float noiseScale,   // сила варпа краёв жилы
+        int rarity,         // в среднем одна жила раз в N чанков
+        float maxStretch,   // максимальное растяжение главной оси (1 = сфера)
+        String veinId       // стабильный id для детерминированной генерации и UUID жилы
 ) implements FeatureConfiguration {
 
     public static final Codec<SpecialVeinConfiguration> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -29,6 +32,9 @@ public record SpecialVeinConfiguration(
             Codec.INT.fieldOf("max_y").forGetter(SpecialVeinConfiguration::maxY),
             Codec.BOOL.fieldOf("respect_air").forGetter(SpecialVeinConfiguration::respectAir),
             Codec.FLOAT.fieldOf("density").forGetter(SpecialVeinConfiguration::density),
-            Codec.FLOAT.optionalFieldOf("noise_scale", 0.1f).forGetter(SpecialVeinConfiguration::noiseScale)
+            Codec.FLOAT.optionalFieldOf("noise_scale", 0.15f).forGetter(SpecialVeinConfiguration::noiseScale),
+            Codec.INT.optionalFieldOf("rarity", 10).forGetter(SpecialVeinConfiguration::rarity),
+            Codec.FLOAT.optionalFieldOf("max_stretch", 2.0f).forGetter(SpecialVeinConfiguration::maxStretch),
+            Codec.STRING.optionalFieldOf("vein_id", "").forGetter(SpecialVeinConfiguration::veinId)
     ).apply(instance, SpecialVeinConfiguration::new));
 }
