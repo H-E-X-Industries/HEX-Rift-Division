@@ -42,16 +42,13 @@ public class ModPlacedFeatures {
             ));
         }
 
-        // === СПЕЦ-ЖИЛЫ: шанс раз в N чанков ===
+        // === СПЕЦ-ЖИЛЫ: кросс-чанковая генерация ===
+        // Якоря и редкость живут в ячейках региона внутри фичи (CrossChunkVeins),
+        // поэтому здесь НЕ должно быть RarityFilter/InSquare/HeightRange —
+        // иначе часть чанков не достроит свою порцию чужой жилы.
         for (OreVeinRegistry.SpecialOreEntry ore : OreVeinRegistry.SPECIAL_ORES) {
             Holder<ConfiguredFeature<?, ?>> configured = configuredFeatures.getOrThrow(ore.configuredKey);
             register(context, ore.placedKey, configured, List.of(
-                    RarityFilter.onAverageOnceEvery(ore.rarity), // вот он — настраиваемый шанс!
-                    InSquarePlacement.spread(),
-                    HeightRangePlacement.uniform(
-                            VerticalAnchor.absolute(ore.minY),
-                            VerticalAnchor.absolute(ore.maxY)
-                    ),
                     BiomeFilter.biome()
             ));
         }
@@ -59,15 +56,10 @@ public class ModPlacedFeatures {
         var smallSequoia = context.lookup(Registries.CONFIGURED_FEATURE).getOrThrow(ModConfiguredFeatures.SMALL_SEQUOIA_KEY);
         var mediumSequoia = context.lookup(Registries.CONFIGURED_FEATURE).getOrThrow(ModConfiguredFeatures.MEDIUM_SEQUOIA_KEY);
         // === КОНГЛОМЕРАТЫ ===
+        // Аналогично спец-жилам: вся логика размещения внутри фичи.
         for (OreVeinRegistry.ConglomerateEntry entry : OreVeinRegistry.CONGLOMERATES) {
             Holder<ConfiguredFeature<?, ?>> configured = configuredFeatures.getOrThrow(entry.configuredKey);
             register(context, entry.placedKey, configured, List.of(
-                    RarityFilter.onAverageOnceEvery(entry.rarity),
-                    InSquarePlacement.spread(),
-                    HeightRangePlacement.uniform(
-                            VerticalAnchor.absolute(entry.minY),
-                            VerticalAnchor.absolute(entry.maxY)
-                    ),
                     BiomeFilter.biome()
             ));
         }

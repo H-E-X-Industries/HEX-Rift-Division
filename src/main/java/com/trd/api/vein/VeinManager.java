@@ -13,10 +13,14 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class VeinManager extends SavedData {
     private static final String DATA_NAME = "trd_vein_manager";
+    private static final int UNITS_PER_BLOCK = 810;
 
-    private final Map<UUID, VeinMetadata> veinIndex = new HashMap<>();
+    // Потокобезопасность обязательна: фичи генерации вызываются из воркер-потоков
+    // (Worker-Main-*), а save()/consume идут на потоке сервера. Все изменения записей
+    // идут через ConcurrentHashMap.compute — атомарно по ключу.
+    private final Map<UUID, VeinMetadata> veinIndex = new ConcurrentHashMap<>();
     private final Map<UUID, VeinData> activeVeins = new ConcurrentHashMap<>();
-    private final Map<ChunkPos, Set<UUID>> chunkToVeins = new HashMap<>();
+    private final Map<ChunkPos, Set<UUID>> chunkToVeins = new ConcurrentHashMap<>();
 
     public static VeinManager get(ServerLevel level) {
         DimensionDataStorage storage = level.getDataStorage();
@@ -27,32 +31,70 @@ public class VeinManager extends SavedData {
         );
     }
 
-    public UUID registerVein(Set<BlockPos> blocks, VeinComposition composition, int yLevel) {
-        UUID id = UUID.randomUUID();
+    /**
+     * Регистрирует порцию большой жилы, достроенную текущим чанком.
+     * Жила определяется детерминированным UUID, поэтому соседний чанк получит тот же id
+     * и его порция атомарно сольётся с уже существующей записью.
+     */
+    public void registerVeinPortion(UUID id, Set<BlockPos> portionBlocks, VeinComposition composition, int yLevel) {
+        if (portionBlocks.isEmpty()) return;
 
-        int minX = blocks.stream().mapToInt(BlockPos::getX).min().orElse(0);
-        int maxX = blocks.stream().mapToInt(BlockPos::getX).max().orElse(0);
-        int minZ = blocks.stream().mapToInt(BlockPos::getZ).min().orElse(0);
-        int maxZ = blocks.stream().mapToInt(BlockPos::getZ).max().orElse(0);
-
-        ChunkPos minChunk = new ChunkPos(minX >> 4, minZ >> 4);
-        ChunkPos maxChunk = new ChunkPos(maxX >> 4, maxZ >> 4);
-
-        for (int cx = minChunk.x; cx <= maxChunk.x; cx++) {
-            for (int cz = minChunk.z; cz <= maxChunk.z; cz++) {
-                chunkToVeins.computeIfAbsent(new ChunkPos(cx, cz), k -> new HashSet<>()).add(id);
-            }
+        int minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE;
+        int minZ = Integer.MAX_VALUE, maxZ = Integer.MIN_VALUE;
+        for (BlockPos p : portionBlocks) {
+            if (p.getX() < minX) minX = p.getX();
+            if (p.getX() > maxX) maxX = p.getX();
+            if (p.getZ() < minZ) minZ = p.getZ();
+            if (p.getZ() > maxZ) maxZ = p.getZ();
         }
+        ChunkPos pMin = new ChunkPos(minX >> 4, minZ >> 4);
+        ChunkPos pMax = new ChunkPos(maxX >> 4, maxZ >> 4);
 
-        int maxUnits = blocks.size() * 810;
-        VeinMetadata meta = new VeinMetadata(id, composition, maxUnits, minChunk, maxChunk, yLevel, blocks.size());
-        veinIndex.put(id, meta);
+        // 1. Сливаем блоки в активную жилу и считаем реально добавленные блоки
+        int[] addedBox = new int[1];
+        activeVeins.compute(id, (k, data) -> {
+            VeinData d = data != null ? data : new VeinData(id, composition, 0, 0, yLevel);
+            int added = 0;
+            for (BlockPos p : portionBlocks) {
+                if (d.blocks.add(p)) added++;
+            }
+            d.grow(added);
+            addedBox[0] = added;
+            return d;
+        });
 
-        VeinData data = new VeinData(id, composition, blocks, yLevel);
-        activeVeins.put(id, data);
+        int added = addedBox[0];
+
+        // 2. Обновляем индекс (метаданные для сейва)
+        veinIndex.compute(id, (k, meta) -> {
+            if (meta == null) {
+                ChunkPos mn = pMin, mx = pMax;
+                VeinMetadata m = new VeinMetadata(id, composition, added * UNITS_PER_BLOCK, mn, mx, yLevel, added);
+                m.remainingUnits = added * UNITS_PER_BLOCK;
+                indexChunkRange(m);
+                return m;
+            }
+            if (pMin.x < meta.minChunk.x || pMin.z < meta.minChunk.z || pMax.x > meta.maxChunk.x || pMax.z > meta.maxChunk.z) {
+                meta.minChunk = new ChunkPos(Math.min(pMin.x, meta.minChunk.x), Math.min(pMin.z, meta.minChunk.z));
+                meta.maxChunk = new ChunkPos(Math.max(pMax.x, meta.maxChunk.x), Math.max(pMax.z, meta.maxChunk.z));
+                indexChunkRange(meta);
+            }
+            meta.blockCount += added;
+            meta.maxUnits += added * UNITS_PER_BLOCK;
+            meta.remainingUnits += added * UNITS_PER_BLOCK;
+            return meta;
+        });
 
         setDirty();
-        return id;
+    }
+
+    /** Заполняет обратный индекс чанк -> жилы для метаданных. */
+    private void indexChunkRange(VeinMetadata meta) {
+        for (int cx = meta.minChunk.x; cx <= meta.maxChunk.x; cx++) {
+            for (int cz = meta.minChunk.z; cz <= meta.maxChunk.z; cz++) {
+                chunkToVeins.computeIfAbsent(new ChunkPos(cx, cz), k -> ConcurrentHashMap.newKeySet()).add(meta.id);
+            }
+        }
     }
 
     public VeinData getVein(UUID id) {
@@ -85,16 +127,15 @@ public class VeinManager extends SavedData {
         }
     }
 
-    /** Новый метод: атомарно списывает единицы и синхронизирует метаданные */
     public void consumeVeinUnits(UUID veinId, int amount) {
-        VeinData data = activeVeins.get(veinId);
-        if (data != null) {
+        activeVeins.computeIfPresent(veinId, (k, data) -> {
             data.consumeUnits(amount);
-        }
-        VeinMetadata meta = veinIndex.get(veinId);
-        if (meta != null) {
+            return data;
+        });
+        veinIndex.computeIfPresent(veinId, (k, meta) -> {
             meta.remainingUnits = Math.max(0, meta.remainingUnits - amount);
-        }
+            return meta;
+        });
         setDirty();
     }
 
@@ -123,13 +164,7 @@ public class VeinManager extends SavedData {
         indexList.forEach(nbt -> {
             VeinMetadata meta = VeinMetadata.deserialize((CompoundTag) nbt);
             manager.veinIndex.put(meta.id, meta);
-
-            // ВОССТАНОВЛЕНИЕ chunkToVeins
-            for (int cx = meta.minChunk.x; cx <= meta.maxChunk.x; cx++) {
-                for (int cz = meta.minChunk.z; cz <= meta.maxChunk.z; cz++) {
-                    manager.chunkToVeins.computeIfAbsent(new ChunkPos(cx, cz), k -> new HashSet<>()).add(meta.id);
-                }
-            }
+            manager.indexChunkRange(meta);
         });
         return manager;
     }
@@ -137,12 +172,12 @@ public class VeinManager extends SavedData {
     public static class VeinMetadata {
         public final UUID id;
         public final VeinComposition composition;
-        public final int maxUnits;
-        public final ChunkPos minChunk;
-        public final ChunkPos maxChunk;
+        public int maxUnits;
+        public ChunkPos minChunk;
+        public ChunkPos maxChunk;
         public final int yLevel;
-        public final int blockCount;
-        public int remainingUnits;
+        public int blockCount;
+        public volatile int remainingUnits;
 
         public VeinMetadata(UUID id, VeinComposition composition, int maxUnits, ChunkPos minChunk, ChunkPos maxChunk, int yLevel, int blockCount) {
             this.id = id;
@@ -187,29 +222,37 @@ public class VeinManager extends SavedData {
     public static class VeinData {
         public final UUID id;
         public final VeinComposition composition;
+        // Потокобезопасное множество: порции добавляются из воркер-потоков генерации
         public final Set<BlockPos> blocks;
-        private int remainingUnits;
-        private final int blockCount;
+        private volatile int remainingUnits;
+        private int blockCount;
         private final int yLevel;
 
-        // Конструктор для новой жилы (при генерации)
         public VeinData(UUID id, VeinComposition composition, Set<BlockPos> blocks, int yLevel) {
             this.id = id;
             this.composition = composition;
-            this.blocks = blocks;
-            this.blockCount = blocks.size();
-            this.remainingUnits = blocks.size() * 810;
+            this.blocks = ConcurrentHashMap.newKeySet();
+            this.blocks.addAll(blocks);
+            this.blockCount = this.blocks.size();
+            this.remainingUnits = this.blockCount * UNITS_PER_BLOCK;
             this.yLevel = yLevel;
         }
 
-        // Конструктор для загрузки (без списка блоков)
+        // Конструктор для загрузки / наращивания (без списка блоков)
         public VeinData(UUID id, VeinComposition composition, int remainingUnits, int blockCount, int yLevel) {
             this.id = id;
             this.composition = composition;
-            this.blocks = new HashSet<>();
+            this.blocks = ConcurrentHashMap.newKeySet();
             this.blockCount = blockCount;
             this.remainingUnits = remainingUnits;
             this.yLevel = yLevel;
+        }
+
+        /** Атомарно наращивает жилу новой порцией блоков (вызывается внутри compute). */
+        void grow(int addedBlocks) {
+            if (addedBlocks <= 0) return;
+            this.blockCount += addedBlocks;
+            this.remainingUnits += addedBlocks * UNITS_PER_BLOCK;
         }
 
         public void consumeUnits(int amount) {
