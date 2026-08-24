@@ -27,8 +27,13 @@ import javax.annotation.Nullable;
  */
 public class ValveBlockEntity extends FluidPipeBlockEntity {
 
-    // Флаг для отслеживания фронта сигнала редстоуна (как у рубильника)
-    public boolean isTriggered = false;
+    /**
+     * Предыдущий УРОВЕНЬ редстоун-сигнала (не "фронт").
+     * Инициализируется фактическим значением при установке и загрузке чанка —
+     * иначе фронты начинают теряться или срабатывать ложно.
+     * В NBT пишется под старым ключом "isTriggered" для совместимости миров.
+     */
+    public boolean prevSignal = false;
 
     public ValveBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.VALVE_BE.get(), pos, state);
@@ -42,8 +47,11 @@ public class ValveBlockEntity extends FluidPipeBlockEntity {
             BlockState state = getBlockState();
             if (state.getBlock() instanceof ValveBlock && state.getValue(ValveBlock.POWERED)) {
                 FluidNetworkManager manager = FluidNetworkManager.get((ServerLevel) this.level);
-                if (!manager.hasNode(getBlockPos())) manager.addNode(getBlockPos());
+                manager.ensureNodeConnected(getBlockPos());
             }
+            // Синхронизируем предыдущий уровень сигнала с фактическим: источник мог
+            // измениться, пока чанк был выгружен (иначе первый фронт теряется).
+            this.prevSignal = this.level.hasNeighborSignal(this.getBlockPos());
         }
     }
 
@@ -51,21 +59,22 @@ public class ValveBlockEntity extends FluidPipeBlockEntity {
     public static void tick(Level level, BlockPos pos, BlockState state, ValveBlockEntity be) {
         if (level.isClientSide) return;
         if (state.getBlock() instanceof ValveBlock && state.getValue(ValveBlock.POWERED)) {
-            FluidNetworkManager manager = FluidNetworkManager.get((ServerLevel) level);
-            if (!manager.hasNode(pos)) manager.addNode(pos);
+            // Самолечение: узел должен существовать И иметь сеть, иначе клапан
+            // приходилось "лечить" перестановкой блока.
+            FluidNetworkManager.get((ServerLevel) level).ensureNodeConnected(pos);
         }
     }
 
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag); // сохраняет фильтр (FilterFluid) и HasFlowed
-        tag.putBoolean("isTriggered", isTriggered);
+        tag.putBoolean("isTriggered", prevSignal);
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        isTriggered = tag.getBoolean("isTriggered");
+        prevSignal = tag.getBoolean("isTriggered");
     }
 
     // ==========================================

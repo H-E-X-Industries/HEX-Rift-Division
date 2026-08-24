@@ -308,6 +308,21 @@ public class EnergyNetworkManager extends SavedData {
         addNode(pos, networkToAvoid);
     }
 
+    /**
+     * Гарантирует, что узел существует И подключён к сети.
+     * Лечит "залипшие" узлы без сети (узел в allNodes есть, но network == null):
+     * раньше проверка hasNode() блокировала их восстановление, и рубильник
+     * приходилось "чинить" переустановкой блока.
+     */
+    public void ensureNodeConnected(BlockPos pos) {
+        EnergyNode node = allNodes.get(pos.asLong());
+        if (node == null) {
+            addNode(pos);
+        } else if (node.getNetwork() == null) {
+            reAddNode(pos, null);
+        }
+    }
+
     // ==================== СОХРАНЕНИЕ ====================
 
     @Override
