@@ -95,6 +95,10 @@ public class ModLangProvider extends LanguageProvider {
         // Fluids
         addFluidTranslations("hydrogen_peroxide", "Пероксид водорода", null, "Hydrogen Peroxide");
         addFluidTranslations("sulfuric_acid", "Серная кислота", null, "Sulfuric Acid");
+        addFluidTranslations("sodium_sulfate", "Сульфат натрия", null, "Sodium Sulfate");
+        addFluidTranslations("soda", "Раствор соды", null, "Liquid Soda");
+        addFluidTranslations("hydrogen_chlorine", "Хлороводород", null, "Hydrogen Chlorine");
+        addFluidTranslations("carbon_dioxide", "Углекислый газ", null, "Carbon Dioxide");
         addFluidTranslations("natural_gas", "Природный газ", null, "Natural Gas");
         addFluidTranslations("steam", "Пар", null, "Steam");
         addFluidTranslations("low_pressure_steam", "Пар низкого давления", null, "Low Pressure Steam");
@@ -142,6 +146,8 @@ public class ModLangProvider extends LanguageProvider {
         // ═══ Chemistry ═══
         add("recipe.trd.hydrogen_peroxide", "Hydrogen Peroxide");
         add("recipe.trd.sulfuric_acid", "Sulfuric Acid");
+        add("recipe.trd.sodium_sulfate", "Sodium Sulfate");
+        add("recipe.trd.black_ash", "Black Ash");
         add("recipe.trd.obsidian", "Obsidian");
 
 
@@ -549,7 +555,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.SEQUOIA_LEAVES.get(), "Sequoia Leaves");
         add(ModBlocks.SEQUOIA_SLAB.get(), "Sequoia Slab");
         add(ModBlocks.SEQUOIA_STAIRS.get(), "Sequoia Stairs");
-
+        add(ModBlocks.SALT_ORE.get(), "Salt Ore");
 
         // Smelting & Casting
         add(ModBlocks.SMALL_SMELTER.get(), "Small Smelter");
@@ -562,6 +568,7 @@ public class ModLangProvider extends LanguageProvider {
         // Electronics & Energy
         add(ModItems.ENERGY_CELL_BASIC.get(), "Energy Cell");
         add(ModItems.CREATIVE_BATTERY.get(), "Creative Battery");
+        add(ModItems.SALT.get(), "Salt");
         add(ModItems.BATTERY.get(), "Battery");
         add(ModItems.BATTERY_ADVANCED.get(), "Advanced Battery");
         add(ModItems.BATTERY_LITHIUM.get(), "Lithium Battery");
@@ -572,6 +579,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.PAINTABLE_WIRE.get(), "Paintable Wire");
         add(ModBlocks.MEDIUM_CONNECTOR.get(), "Medium Connector");
         add(ModBlocks.LARGE_CONNECTOR.get(), "Large Connector");
+        add(ModItems.BLACK_ASH.get(), "Black Ash");
         add(ModBlocks.SWITCH.get(), "Switch");
         add(ModBlocks.VALVE.get(), "Valve");
         add(ModBlocks.TURRET_LIGHT_PLACER.get(), "Light Landing Turret \'Nagual\'");
@@ -794,6 +802,8 @@ public class ModLangProvider extends LanguageProvider {
         add(ModItems.PROTECTOR_STEEL.get(), "Steel Internal Wall Protector");
         add(ModItems.PROTECTOR_TUNGSTEN.get(), "Tungsten Internal Wall Protector");
         add(ModBlocks.DROBITEL.get(), "Ore Crusher");
+        add(ModItems.SODA.get(), "Soda Powder");
+        add(ModItems.SODA_CRYSTAL.get(), "Soda Crystal");
         // Fluid pipes
         add(ModBlocks.BRONZE_FLUID_PIPE.get(), "Bronze Fluid Pipe");
         add(ModBlocks.STEEL_FLUID_PIPE.get(), "Steel Fluid Pipe");
@@ -1122,6 +1132,8 @@ public class ModLangProvider extends LanguageProvider {
         add("block.trd.chemical_plant_port", "Порт хим. установки");
         add("recipe.trd.hydrogen_peroxide", "Пероксид водорода");
         add("recipe.trd.sulfuric_acid", "Серная кислота");
+        add("recipe.trd.sodium_sulfate", "Сульфат натрия");
+        add("recipe.trd.black_ash", "Чёрная зола");
         add("recipe.trd.obsidian", "Обсидиан");
         add(  "gui.trd.chemistry.empty", "Пусто");
         add(  "gui.trd.chemistry.inputs", "Входы:");
@@ -1601,7 +1613,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.SEQUOIA_LEAVES.get(), "Листья секвойи");
         add(ModBlocks.SEQUOIA_SLAB.get(), "Плита из секвойи");
         add(ModBlocks.SEQUOIA_STAIRS.get(), "Ступени из секвойи");
-
+        add(ModItems.BLACK_ASH.get(), "Чёрная зола");
         // Электроника
         add(ModItems.ENERGY_CELL_BASIC.get(), "Энергетическая ячейка");
         add(ModItems.CREATIVE_BATTERY.get(), "Бесконечный аккумулятор");
@@ -1685,6 +1697,8 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.CONCRETE_REINFORCED_HEAVY_SLAB.get(), "Плита из тёмного текстурированного бетона");
         add(ModBlocks.CONCRETE_REINFORCED_HEAVY_STAIRS.get(), "Ступени из тёмного текстурированного бетона");
         add(ModBlocks.CONCRETE_NET.get(), "Усиленный бетон");
+        add(ModItems.SODA.get(), "Порошок соды");
+        add(ModItems.SODA_CRYSTAL.get(), "Кристалл соды");
 
         // Кирпичи
         add(ModBlocks.FIREBRICK_BLOCK.get(), "Блок огнеупорного кирпича");
@@ -1780,6 +1794,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.CONVEYOR.get(), "Конвейер");
         add(ModBlocks.SORTIROVSHIK.get(), "Конвейерный сортировщик");
         add(ModBlocks.STEEL_STORAGE.get(), "Стальное хранилище");
+        add(ModBlocks.SALT_ORE.get(), "Солевая руда");
 
         // Оружие и боеприпасы
         add(ModItems.CAST_PICKAXE_IRON.get(), "Литая железная кирка");
@@ -1830,6 +1845,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModItems.DOLOMITE_SMES.get(), "Доломитовая смесь");
         add(ModItems.CONGLOMERATE_CHUNK.get(), "Кусок конгломерата");
         add(ModItems.HARD_ROCK.get(), "Твёрдая порода");
+        add(ModItems.SALT.get(), "Соль");
         add(ModItems.DOLOMITE_CHUNK.get(), "Кусок доломита");
         add(ModItems.LIMESTONE_CHUNK.get(), "Кусок известняка");
         add(ModItems.BAUXITE_CHUNK.get(), "Кусок боксита");
@@ -1908,7 +1924,11 @@ public class ModLangProvider extends LanguageProvider {
 
         // Fluids
         addFluidTranslations("hydrogen_peroxide", "Пероксид водорода", null, "Hydrogen Peroxide");
+        addFluidTranslations("soda", "Раствор соды", null, "Liquid Soda");
         addFluidTranslations("sulfuric_acid", "Серная кислота", null, "Sulfuric Acid");
+        addFluidTranslations("sodium_sulfate", "Сульфат натрия", null, "Sodium Sulfate");
+        addFluidTranslations("hydrogen_chlorine", "Хлороводород", null, "Hydrogen Chlorine");
+        addFluidTranslations("carbon_dioxide", "Углекислый газ", null, "Carbon Dioxide");
         addFluidTranslations("natural_gas", "Природный газ", null, "Natural Gas");
         addFluidTranslations("steam", "Пар", null, "Steam");
         addFluidTranslations("low_pressure_steam", "Пар низкого давления", null, "Low Pressure Steam");

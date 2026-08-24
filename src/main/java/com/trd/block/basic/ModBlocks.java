@@ -350,6 +350,10 @@ public class ModBlocks {
             () -> new Block(BlockBehaviour.Properties.of()
                     .strength(3.0F, 9.0F).sound(SoundType.METAL).requiresCorrectToolForDrops()));
 
+    public static final RegistryObject<Block> SALT_ORE = registerBlock("salt_ore",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(3.5F, 10.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
     public static final RegistryObject<Block> MINERAL_TILE = registerBlock("mineral_tile",
             () -> new Block(BlockBehaviour.Properties.of()
                     .strength(3.5F, 10.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));

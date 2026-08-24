@@ -1,4 +1,4 @@
-package com.trd.block.entity.industrial;
+package com.trd.block.entity.industrial.energy;
 
 import com.trd.api.energy.IEnergyConnector;
 import com.trd.api.energy.IEnergyReceiver;

@@ -1,6 +1,6 @@
 package com.trd.client.render.flywheel;
 
-import com.trd.block.entity.industrial.MillstoneBlockEntity;
+import com.trd.block.entity.industrial.rotation.MillstoneBlockEntity;
 import dev.engine_room.flywheel.api.instance.Instance;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
 import dev.engine_room.flywheel.lib.instance.InstanceTypes;

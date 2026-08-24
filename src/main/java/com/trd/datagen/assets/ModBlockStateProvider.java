@@ -54,6 +54,7 @@ public class ModBlockStateProvider extends BlockStateProvider {
         cubeAllWithItem(ModBlocks.ANTON_CHIGUR);
         cubeAllWithItem(ModBlocks.PAINTABLE_PIPE);
         cubeAllWithItem(ModBlocks.PAINTABLE_WIRE);
+        cubeAllWithItem(ModBlocks.SALT_ORE);
 
         cubeAllWithItem(ModBlocks.SEQUOIA_ROOTS);
         cubeAllWithItem(ModBlocks.SEQUOIA_ROOTS_MOSSY);

@@ -20,7 +20,14 @@ import javax.annotation.Nullable;
 public class SwitchBlockEntity extends BlockEntity implements IEnergyConnector {
 
     private final LazyOptional<IEnergyConnector> hbmConnector = LazyOptional.of(() -> this);
-    public boolean isTriggered = false;
+
+    /**
+     * Предыдущий УРОВЕНЬ редстоун-сигнала (не "фронт").
+     * Инициализируется фактическим значением при установке и загрузке чанка —
+     * иначе фронты начинают теряться или срабатывать ложно.
+     * В NBT пишется под старым ключом "isTriggered" для совместимости миров.
+     */
+    public boolean prevSignal = false;
 
     public SwitchBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.SWITCH_BE.get(), pos, state);
@@ -30,12 +37,19 @@ public class SwitchBlockEntity extends BlockEntity implements IEnergyConnector {
         if (level.isClientSide) return;
 
         if (state.getValue(SwitchBlock.POWERED)) {
-            ServerLevel serverLevel = (ServerLevel) level;
-            EnergyNetworkManager manager = EnergyNetworkManager.get(serverLevel);
+            // Самолечение: узел должен существовать И иметь сеть. Просто hasNode()
+            // пропускал "залипшие" узлы без сети — их приходилось лечить перестановкой блока.
+            EnergyNetworkManager.get((ServerLevel) level).ensureNodeConnected(pos);
+        }
+    }
 
-            if (!manager.hasNode(pos)) {
-                manager.addNode(pos);
-            }
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        // Синхронизируем предыдущий уровень сигнала с фактическим: источник мог
+        // измениться, пока чанк был выгружен (иначе первый фронт теряется).
+        if (this.level != null && !this.level.isClientSide) {
+            this.prevSignal = this.level.hasNeighborSignal(this.getBlockPos());
         }
     }
 
@@ -71,11 +85,6 @@ public class SwitchBlockEntity extends BlockEntity implements IEnergyConnector {
     }
 
     @Override
-    public void setLevel(Level pLevel) {
-        super.setLevel(pLevel);
-    }
-
-    @Override
     public void setRemoved() {
         super.setRemoved();
         if (this.level != null && !this.level.isClientSide) {
@@ -87,12 +96,12 @@ public class SwitchBlockEntity extends BlockEntity implements IEnergyConnector {
     @Override
     protected void saveAdditional(net.minecraft.nbt.CompoundTag tag) {
         super.saveAdditional(tag);
-        tag.putBoolean("isTriggered", isTriggered);
+        tag.putBoolean("isTriggered", prevSignal);
     }
 
     @Override
     public void load(net.minecraft.nbt.CompoundTag tag) {
         super.load(tag);
-        isTriggered = tag.getBoolean("isTriggered");
+        prevSignal = tag.getBoolean("isTriggered");
     }
 }

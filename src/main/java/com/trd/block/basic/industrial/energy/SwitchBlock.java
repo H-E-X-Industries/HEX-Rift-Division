@@ -22,7 +22,6 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
 import com.trd.api.energy.EnergyNetworkManager;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.block.entity.industrial.energy.SwitchBlockEntity;
@@ -64,75 +63,61 @@ public class SwitchBlock extends BaseEntityBlock {
         if (level.isClientSide) {
             return InteractionResult.SUCCESS;
         }
-
-        // 1. Toggle logic
-        boolean isPowered = !state.getValue(POWERED);
-        BlockState newState = state.setValue(POWERED, isPowered);
-
-        // 2. [ИСПРАВЛЕНО] Используем флаг 3 (UPDATE_ALL = CLIENTS | NEIGHBORS).
-        level.setBlock(pos, newState, 3);
-
-        // 3. Update BE State cache
-        if(level.getBlockEntity(pos) instanceof SwitchBlockEntity be) {
-            be.setBlockState(newState);
-        }
-
-        // 4. Handle Network Logic
-        EnergyNetworkManager manager = EnergyNetworkManager.get((ServerLevel) level);
-        manager.removeNode(pos);
-
-        if (isPowered) {
-            level.playSound(null, pos, ModSounds.LEVER1.get(), SoundSource.BLOCKS, 0.3f, 1.0f);
-            manager.addNode(pos);
-        } else {
-            level.playSound(null, pos, ModSounds.LEVER1.get(), SoundSource.BLOCKS, 0.3f, 0.9f);
-        }
-
-        // 5. Notify neighbors
-        level.updateNeighborsAt(pos, this);
-
+        applyToggle(state, (ServerLevel) level, pos);
         return InteractionResult.SUCCESS;
     }
 
+    /**
+     * Переключает рубильник и синхронизирует энергосеть.
+     * Общий путь для ПКМ и фронта редстоуна.
+     */
+    private void applyToggle(BlockState state, ServerLevel level, BlockPos pos) {
+        boolean isPowered = !state.getValue(POWERED);
+        BlockState newState = state.setValue(POWERED, isPowered);
 
+        // flag 3 (UPDATE_ALL): клиенты + пересчёт форм соседей
+        level.setBlock(pos, newState, 3);
+
+        EnergyNetworkManager manager = EnergyNetworkManager.get(level);
+        manager.removeNode(pos);
+        if (isPowered) {
+            manager.addNode(pos);
+        }
+
+        level.playSound(null, pos, ModSounds.LEVER1.get(), SoundSource.BLOCKS, 0.3f, isPowered ? 1.0f : 0.9f);
+        level.updateNeighborsAt(pos, this);
+    }
 
     @Override
     public void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean isMoving) {
         if (level.isClientSide) return;
+        if (!(level.getBlockEntity(pos) instanceof SwitchBlockEntity switchEntity)) return;
 
-        BlockEntity entity = level.getBlockEntity(pos);
-        if (!(entity instanceof SwitchBlockEntity switchEntity)) return;
+        // Отслеживаем УРОВЕНЬ сигнала, а не "событийный" флаг: ручное переключение ПКМ
+        // уровень не меняет, поэтому собственные обновления соседей (updateNeighborsAt)
+        // больше не откатывают клик игрока, а рассинхрон после выгрузки чанков
+        // исключён (см. onLoad/onPlace).
+        boolean signal = level.hasNeighborSignal(pos);
+        if (signal == switchEntity.prevSignal) return;
 
-        boolean hasRedstoneSignal = level.hasNeighborSignal(pos);
+        switchEntity.prevSignal = signal;
+        switchEntity.setChanged();
 
-        if (hasRedstoneSignal && !switchEntity.isTriggered) {
-            // Фронт (переход 0 -> 1): переключаем состояние
-            switchEntity.isTriggered = true;
-            boolean isPowered = !state.getValue(POWERED);
-            BlockState newState = state.setValue(POWERED, isPowered);
-            level.setBlock(pos, newState, 3);
-            switchEntity.setBlockState(newState);
-
-            EnergyNetworkManager manager = EnergyNetworkManager.get((ServerLevel) level);
-            manager.removeNode(pos);
-
-            if (isPowered) {
-                level.playSound(null, pos, ModSounds.LEVER1.get(), SoundSource.BLOCKS, 0.3f, 1.0f);
-                manager.addNode(pos);
-            } else {
-                level.playSound(null, pos, ModSounds.LEVER1.get(), SoundSource.BLOCKS, 0.3f, 0.9f);
-            }
-            level.updateNeighborsAt(pos, this);
-
-        } else if (!hasRedstoneSignal && switchEntity.isTriggered) {
-            // Спад (переход 1 -> 0): сбрасываем флаг, но не меняем состояние рубильника
-            switchEntity.isTriggered = false;
+        // Реагируем только на фронт 0 -> 1; спад состояние рубильника не меняет.
+        if (signal) {
+            applyToggle(state, (ServerLevel) level, pos);
         }
     }
 
     @Override
     public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
         if (!level.isClientSide && !oldState.is(state.getBlock())) {
+            // Инициализируем предыдущий уровень сигнала фактическим, иначе первое же
+            // обновление соседей рядом с включённым источником даст ложный фронт.
+            if (level.getBlockEntity(pos) instanceof SwitchBlockEntity be) {
+                be.prevSignal = level.hasNeighborSignal(pos);
+                be.setChanged();
+            }
             if (state.getValue(POWERED)) {
                 EnergyNetworkManager.get((ServerLevel) level).addNode(pos);
             }

@@ -11,7 +11,7 @@ import com.trd.api.metallurgy.system.recipe.AlloySlot;
 import com.trd.api.metallurgy.system.recipe.MoldRecipe;
 import com.trd.api.metallurgy.system.recipe.MoldRecipeRegistry;
 import com.trd.block.basic.ModBlocks;
-import com.trd.block.entity.industrial.MillstoneBlockEntity;
+import com.trd.block.entity.industrial.rotation.MillstoneBlockEntity;
 import com.trd.event.SlagItem;
 import com.trd.item.ModItems;
 import com.trd.main.MainRegistry;

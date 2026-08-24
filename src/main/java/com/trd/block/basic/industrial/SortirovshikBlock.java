@@ -1,7 +1,7 @@
 package com.trd.block.basic.industrial;
 
 import com.trd.block.entity.ModBlockEntities;
-import com.trd.block.entity.industrial.SortirovshikBlockEntity;
+import com.trd.block.entity.industrial.conveyors.SortirovshikBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;

@@ -1,7 +1,7 @@
 package com.trd.block.basic.industrial;
 
 import com.trd.api.energy.EnergyNetworkManager;
-import com.trd.block.entity.industrial.ElectricFurnaceBlockEntity;
+import com.trd.block.entity.industrial.energy.ElectricFurnaceBlockEntity;
 import com.trd.menu.industrial.ElectricFurnaceMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

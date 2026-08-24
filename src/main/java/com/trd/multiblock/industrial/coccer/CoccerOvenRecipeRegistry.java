@@ -26,6 +26,9 @@ public class CoccerOvenRecipeRegistry {
 
         register(ModItems.CINNABAR.get(), new ItemStack(Items.AIR),
                 new FluidStack(ModFluids.MERCURY_SOURCE.get(), 100), 1200, 60);
+
+        register(ModItems.SODA_CRYSTAL.get(), new ItemStack(ModItems.SODA.get()),
+                new FluidStack(Fluids.WATER, 250), 100, 60);
     }
 
     private static void register(net.minecraft.world.item.Item input, net.minecraft.world.item.ItemStack outItem,

@@ -1,6 +1,6 @@
 package com.trd.client.overlay.hud;
 
-import com.trd.block.entity.industrial.MillstoneBlockEntity;
+import com.trd.block.entity.industrial.rotation.MillstoneBlockEntity;
 import com.trd.main.MainRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;

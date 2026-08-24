@@ -19,14 +19,14 @@ public class ModCreativeTabs {
     public static final RegistryObject<CreativeModeTab> trd_BUILD_TAB = CREATIVE_MODE_TABS.register("trd_build_tab",
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup." + MainRegistry.MOD_ID + ".trd_build_tab"))
-                    .icon(() -> new ItemStack(ModBlocks.CONCRETE.get()))
+                    .icon(() -> new ItemStack(ModBlocks.CONCRETE_HAZARD_OLD.get()))
                     .build());
 
     // Вкладка TECH – должна быть после BUILD
     public static final RegistryObject<CreativeModeTab> trd_TECH_TAB = CREATIVE_MODE_TABS.register("trd_tech_tab",
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup." + MainRegistry.MOD_ID + ".trd_tech_tab"))
-                    .icon(() -> new ItemStack(ModBlocks.MACHINE_BATTERY.get()))
+                    .icon(() -> new ItemStack(ModBlocks.FUEL_TANK_BIG.get()))
                     .withTabsBefore(new ResourceLocation(MainRegistry.MOD_ID, "trd_build_tab"))
                     .build());
 
@@ -40,14 +40,17 @@ public class ModCreativeTabs {
     public static final RegistryObject<CreativeModeTab> trd_RECOURSES_TAB = CREATIVE_MODE_TABS.register("trd_recourses_tab",
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup." + MainRegistry.MOD_ID + ".trd_recourses_tab"))
-                    .icon(() -> new ItemStack(ModItems.FIREBRICK.get()))
+                    .icon(() -> {
+                        var steel = ResourceRegistry.getMainUnit("steel");
+                        return new ItemStack(steel != null ? steel : ModItems.FIREBRICK.get());
+                    })
                     .withTabsBefore(new ResourceLocation(MainRegistry.MOD_ID, "trd_weapons_tab"))
                     .build());
 
     public static final RegistryObject<CreativeModeTab> trd_NATURE_TAB = CREATIVE_MODE_TABS.register("trd_nature_tab",
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup." + MainRegistry.MOD_ID + ".trd_nature_tab"))
-                    .icon(() -> new ItemStack(ModItems.DEPTH_WORM_SPAWN_EGG.get()))
+                    .icon(() -> new ItemStack(ModBlocks.LIGNITE_ORE.get()))
                     .withTabsBefore(new ResourceLocation(MainRegistry.MOD_ID, "trd_recourses_tab"))
                     .build());
 

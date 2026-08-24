@@ -1,6 +1,6 @@
 package com.trd.client.overlay.hud;
 
-import com.trd.block.entity.industrial.WaterPumpBlockEntity;
+import com.trd.block.entity.industrial.fluids.WaterPumpBlockEntity;
 import com.trd.block.basic.industrial.WaterPumpBlock;
 import com.trd.multiblock.system.MultiblockPartBlock;
 import net.minecraft.client.Minecraft;

@@ -46,6 +46,7 @@ public class ModBlockLootTableProvider extends BlockLootSubProvider {
             new OreXpConfig(ModBlocks.SEQUESTRUM_ORE_DEEPSLATE, 2, 5),
             new OreXpConfig(ModBlocks.FLUORITE_ORE,             2, 5),
             new OreXpConfig(ModBlocks.FLUORITE_ORE_DEEPSLATE,   2, 5),
+            new OreXpConfig(ModBlocks.SALT_ORE,   2, 5),
             new OreXpConfig(ModBlocks.ASBESOTS_ORE,             2, 5)
     );
 
@@ -88,6 +89,7 @@ public class ModBlockLootTableProvider extends BlockLootSubProvider {
         if (block == ModBlocks.SEQUESTRUM_ORE || block == ModBlocks.SEQUESTRUM_ORE_DEEPSLATE) return ModItems.SEQUESTRUM;
         if (block == ModBlocks.FLUORITE_ORE || block == ModBlocks.FLUORITE_ORE_DEEPSLATE) return ModItems.FLUORITE;
         if (block == ModBlocks.ASBESOTS_ORE) return ModItems.ASBESTOS;
+        if (block == ModBlocks.SALT_ORE) return ModItems.SALT;
         return ModItems.LIGNITE; // fallback
     }
 

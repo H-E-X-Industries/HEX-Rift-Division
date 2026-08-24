@@ -1,4 +1,4 @@
-package com.trd.block.entity.industrial;
+package com.trd.block.entity.industrial.conveyors;
 
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.menu.industrial.ConveyorBufferMenu;

@@ -1,6 +1,6 @@
 package com.trd.menu.industrial;
 
-import com.trd.block.entity.industrial.SortirovshikBlockEntity;
+import com.trd.block.entity.industrial.conveyors.SortirovshikBlockEntity;
 import com.trd.menu.ModMenuTypes;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;

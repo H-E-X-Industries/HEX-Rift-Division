@@ -157,6 +157,7 @@ public class OreVeinRegistry {
     static {
 
         register("asbestos_ore", ModBlocks.ASBESOTS_ORE.get(), 9, 0, 150, 6);
+        register("salt_ore", ModBlocks.SALT_ORE.get(), 9, 0, 150, 6);
         register("lignite_ore", ModBlocks.LIGNITE_ORE.get(), 18, 0, 150, 6);
 
         register("sulfur_ore", ModBlocks.SULFUR_ORE.get(), 9, 0, 150, 2);

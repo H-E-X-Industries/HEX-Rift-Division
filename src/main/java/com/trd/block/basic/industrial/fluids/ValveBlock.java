@@ -160,23 +160,30 @@ public class ValveBlock extends BaseEntityBlock {
         BlockEntity entity = level.getBlockEntity(pos);
         if (!(entity instanceof ValveBlockEntity valveEntity)) return;
 
-        boolean hasRedstoneSignal = level.hasNeighborSignal(pos);
+        // Отслеживаем УРОВЕНЬ сигнала, а не "событийный" флаг: ручное переключение ПКМ
+        // уровень не меняет, поэтому собственные обновления соседей (updateNeighborsAt)
+        // больше не откатывают клик игрока, а рассинхрон после выгрузки чанков
+        // исключён (см. onLoad/onPlace).
+        boolean signal = level.hasNeighborSignal(pos);
+        if (signal == valveEntity.prevSignal) return;
 
-        // Реагируем только на ИЗМЕНЕНИЕ сигнала (фронт/спад), чтобы обычные апдейты
-        // соседей не сбивали ручное переключение ПКМ.
-        if (hasRedstoneSignal != valveEntity.isTriggered) {
-            valveEntity.isTriggered = hasRedstoneSignal;
-            valveEntity.setChanged();
-            // Прямое соответствие: сигнал ЕСТЬ -> открыт, сигнала НЕТ -> закрыт.
-            // Поэтому выключение рычага (спад) сразу закрывает клапан — без второго нажатия.
-            setOpen(state, (ServerLevel) level, pos, hasRedstoneSignal,
-                    FluidNetworkManager.get((ServerLevel) level));
-        }
+        valveEntity.prevSignal = signal;
+        valveEntity.setChanged();
+
+        // Прямое соответствие: фронт 0 -> 1 открывает, спад 1 -> 0 закрывает.
+        setOpen(state, (ServerLevel) level, pos, signal,
+                FluidNetworkManager.get((ServerLevel) level));
     }
 
     @Override
     public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
         if (!level.isClientSide && !oldState.is(state.getBlock())) {
+            // Инициализируем предыдущий уровень сигнала фактическим, иначе первое же
+            // обновление соседей рядом с включённым источником даст ложный фронт.
+            if (level.getBlockEntity(pos) instanceof ValveBlockEntity be) {
+                be.prevSignal = level.hasNeighborSignal(pos);
+                be.setChanged();
+            }
             if (state.getValue(POWERED)) {
                 FluidNetworkManager.get((ServerLevel) level).addNode(pos);
             }
