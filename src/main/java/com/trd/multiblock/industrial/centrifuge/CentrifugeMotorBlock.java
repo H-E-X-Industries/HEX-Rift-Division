@@ -87,6 +87,16 @@ public class CentrifugeMotorBlock extends BaseEntityBlock {
         }
     }
 
+    @Override
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean isMoving) {
+        super.neighborChanged(state, level, pos, neighborBlock, neighborPos, isMoving);
+        // Насадку установили/сняли — мотор получил/потерял жидкостный порт,
+        // соседние трубы должны пересчитать подключение
+        if (!level.isClientSide && neighborPos.equals(pos.above())) {
+            level.getBlockState(pos).updateNeighbourShapes(level, pos, 3);
+        }
+    }
+
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
