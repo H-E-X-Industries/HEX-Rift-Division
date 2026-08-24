@@ -39,7 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -278,11 +277,8 @@ public class CentrifugeCylinderBlockEntity extends BlockEntity implements MenuPr
             // side == null — доступ из GUI меню, отдаём полный хендлер
             return (side == null ? selfHandler : LazyOptional.empty()).cast();
         }
-        if (cap == ForgeCapabilities.FLUID_HANDLER) {
-            // Заливка — только во входной буфер, слив — только из выходных
-            // (правила внутри portFluidHandler)
-            return portFluidHandler.cast();
-        }
+        // Энергия, предметы и жидкости — только через мотор:
+        // FLUID_HANDLER наружу НЕ выдаём, мотор делегирует его сам.
         return super.getCapability(cap, side);
     }
 
@@ -364,150 +360,67 @@ public class CentrifugeCylinderBlockEntity extends BlockEntity implements MenuPr
         // Расход входной жидкости
         tanks[INPUT_TANK].drain(recipe.getInputFluid().getAmount(), IFluidHandler.FluidAction.EXECUTE);
 
-        // Выходные жидкости: сначала доливаем в частично заполненные, потом в пустые
-        for (FluidStack out : recipe.getFluidOutputs()) {
-            fillOutput(out.copy());
-        }
-
-        // Выходные предметы
-        for (List<ItemStack> group : groupOutputs(recipe.getItemOutputs())) {
-            ItemStack representative = group.get(0);
-            int remaining = 0;
-            for (ItemStack stack : group) remaining += stack.getCount();
-
-            List<Integer> candidates = new ArrayList<>();
-            for (int i = FIRST_OUTPUT_SLOT; i < FIRST_OUTPUT_SLOT + OUTPUT_SLOTS; i++) candidates.add(i);
-            shuffle(candidates);
-
-            for (int slot : candidates) {
-                if (remaining <= 0) break;
-                ItemStack cur = inventory.getStackInSlot(slot);
-                if (cur.isEmpty()) {
-                    int put = Math.min(representative.getMaxStackSize(), remaining);
-                    ItemStack placed = representative.copy();
-                    placed.setCount(put);
-                    inventory.setStackInSlot(slot, placed);
-                    remaining -= put;
-                } else if (ItemStack.isSameItemSameTags(cur, representative)) {
-                    int space = cur.getMaxStackSize() - cur.getCount();
-                    int put = Math.min(space, remaining);
-                    if (put > 0) {
-                        cur.grow(put);
-                        remaining -= put;
-                    }
-                }
-            }
-
-            if (remaining > 0 && level != null) {
-                ItemStack leftover = representative.copy();
-                leftover.setCount(remaining);
-                Containers.dropItemStack(level, worldPosition.getX() + 0.5,
-                        worldPosition.getY() + 1.5, worldPosition.getZ() + 0.5, leftover);
+        // Выходные жидкости: выход i кладётся строго в свой бак i.
+        // Баки сепаративные — один тип не растекается по чужим бакам.
+        List<FluidStack> fluidOutputs = recipe.getFluidOutputs();
+        for (int i = 0; i < fluidOutputs.size() && i < OUTPUT_TANKS; i++) {
+            FluidStack out = fluidOutputs.get(i).copy();
+            FluidTank tank = tanks[FIRST_OUTPUT_TANK + i];
+            FluidStack cur = tank.getFluid();
+            if (cur.isEmpty() || cur.getFluid() == out.getFluid()) {
+                tank.fill(out, IFluidHandler.FluidAction.EXECUTE);
             }
         }
-    }
 
-    private void fillOutput(FluidStack out) {
-        int remaining = out.getAmount();
-        for (int pass = 0; pass < 2 && remaining > 0; pass++) {
-            for (int i = FIRST_OUTPUT_TANK; i < TOTAL_TANKS && remaining > 0; i++) {
-                FluidStack cur = tanks[i].getFluid();
-                if (pass == 0) {
-                    if (!cur.isEmpty() && cur.getFluid() == out.getFluid()) {
-                        remaining -= tanks[i].fill(new FluidStack(out.getFluid(), remaining),
-                                IFluidHandler.FluidAction.EXECUTE);
-                    }
-                } else if (cur.isEmpty()) {
-                    remaining -= tanks[i].fill(new FluidStack(out.getFluid(), remaining),
-                            IFluidHandler.FluidAction.EXECUTE);
-                }
+        // Выходные предметы: выход i кладётся строго в свой слот i.
+        // Переполнение исключено: canFitOutputs проверяет раскладку перед
+        // стартом цикла, поэтому ничего в мир не выбрасывается.
+        List<ItemStack> itemOutputs = recipe.getItemOutputs();
+        for (int i = 0; i < itemOutputs.size() && i < OUTPUT_SLOTS; i++) {
+            ItemStack result = itemOutputs.get(i).copy();
+            int slotIndex = FIRST_OUTPUT_SLOT + i;
+            ItemStack cur = inventory.getStackInSlot(slotIndex);
+            if (cur.isEmpty()) {
+                inventory.setStackInSlot(slotIndex, result);
+            } else if (ItemStack.isSameItemSameTags(cur, result)) {
+                int space = cur.getMaxStackSize() - cur.getCount();
+                int put = Math.min(space, result.getCount());
+                cur.grow(put);
             }
-        }
-    }
-
-    private static List<List<ItemStack>> groupOutputs(List<ItemStack> outputs) {
-        List<List<ItemStack>> groups = new ArrayList<>();
-        for (ItemStack out : outputs) {
-            if (out.isEmpty()) continue;
-            boolean merged = false;
-            for (List<ItemStack> group : groups) {
-                if (ItemStack.isSameItemSameTags(group.get(0), out)) {
-                    group.add(out);
-                    merged = true;
-                    break;
-                }
-            }
-            if (!merged) {
-                List<ItemStack> group = new ArrayList<>();
-                group.add(out);
-                groups.add(group);
-            }
-        }
-        return groups;
-    }
-
-    private void shuffle(List<Integer> list) {
-        for (int i = list.size() - 1; i > 0; i--) {
-            int j = level.random.nextInt(i + 1);
-            int tmp = list.get(i);
-            list.set(i, list.get(j));
-            list.set(j, tmp);
         }
     }
 
     private boolean canFitOutputs(CentrifugeCylinderRecipe recipe) {
-        for (FluidStack out : recipe.getFluidOutputs()) {
-            if (!canFitFluid(out)) return false;
-        }
-
-        ItemStack[] sim = new ItemStack[OUTPUT_SLOTS];
-        for (int i = 0; i < OUTPUT_SLOTS; i++) {
-            sim[i] = inventory.getStackInSlot(FIRST_OUTPUT_SLOT + i).copy();
-        }
-        for (List<ItemStack> group : groupOutputs(recipe.getItemOutputs())) {
-            ItemStack rep = group.get(0);
-            int total = 0;
-            for (ItemStack stack : group) total += stack.getCount();
-
-            for (int pass = 0; pass < 2 && total > 0; pass++) {
-                for (int i = 0; i < OUTPUT_SLOTS && total > 0; i++) {
-                    ItemStack cur = sim[i];
-                    if (pass == 0) {
-                        if (!cur.isEmpty() && ItemStack.isSameItemSameTags(cur, rep)) {
-                            int space = cur.getMaxStackSize() - cur.getCount();
-                            int put = Math.min(space, total);
-                            cur.grow(put);
-                            total -= put;
-                        }
-                    } else if (cur.isEmpty()) {
-                        int put = Math.min(rep.getMaxStackSize(), total);
-                        ItemStack placed = rep.copy();
-                        placed.setCount(put);
-                        sim[i] = placed;
-                        total -= put;
-                    }
-                }
+        // Жидкости: выход i помещается только в бак i
+        List<FluidStack> fluidOutputs = recipe.getFluidOutputs();
+        if (fluidOutputs.size() > OUTPUT_TANKS) return false;
+        for (int i = 0; i < fluidOutputs.size(); i++) {
+            FluidStack out = fluidOutputs.get(i);
+            FluidStack cur = tanks[FIRST_OUTPUT_TANK + i].getFluid();
+            if (cur.isEmpty()) {
+                if (out.getAmount() > TANK_CAPACITY) return false;
+            } else if (cur.getFluid() == out.getFluid()) {
+                if (cur.getAmount() + out.getAmount() > TANK_CAPACITY) return false;
+            } else {
+                return false; // бак занят другой жидкостью
             }
-            if (total > 0) return false;
+        }
+
+        // Предметы: выход i помещается только в слот i
+        List<ItemStack> itemOutputs = recipe.getItemOutputs();
+        if (itemOutputs.size() > OUTPUT_SLOTS) return false;
+        for (int i = 0; i < itemOutputs.size(); i++) {
+            ItemStack result = itemOutputs.get(i);
+            ItemStack cur = inventory.getStackInSlot(FIRST_OUTPUT_SLOT + i);
+            if (cur.isEmpty()) {
+                if (result.getCount() > result.getMaxStackSize()) return false;
+            } else if (ItemStack.isSameItemSameTags(cur, result)) {
+                if (cur.getCount() + result.getCount() > cur.getMaxStackSize()) return false;
+            } else {
+                return false; // слот занят другим предметом
+            }
         }
         return true;
-    }
-
-    private boolean canFitFluid(FluidStack out) {
-        int remaining = out.getAmount();
-        for (int pass = 0; pass < 2 && remaining > 0; pass++) {
-            for (int i = FIRST_OUTPUT_TANK; i < TOTAL_TANKS && remaining > 0; i++) {
-                FluidStack cur = tanks[i].getFluid();
-                if (pass == 0) {
-                    if (!cur.isEmpty() && cur.getFluid() == out.getFluid()) {
-                        remaining -= Math.min(remaining, tanks[i].getCapacity() - cur.getAmount());
-                    }
-                } else if (cur.isEmpty()) {
-                    remaining -= Math.min(remaining, tanks[i].getCapacity());
-                }
-            }
-        }
-        return remaining <= 0;
     }
 
     private boolean chargeFromBattery() {

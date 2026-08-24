@@ -34,9 +34,10 @@ import java.util.function.Supplier;
  * Жидкостная насадка центрифуги (centrifuge_cylinder) — контроллер
  * мультиблока 1x1x2, ставится на мотор:
  * <pre>
- * слой 2: #   # — мультиблок парт (жидкостный порт)
+ * слой 2: #   # — мультиблок парт
  * слой 1: @   @ — контроллер (низ, на моторе)
  * </pre>
+ * Энергия, предметы и жидкости подаются только через мотор.
  */
 public class CentrifugeCylinderBlock extends BaseEntityBlock implements IMultiblockController {
 
@@ -73,7 +74,7 @@ public class CentrifugeCylinderBlock extends BaseEntityBlock implements IMultibl
                     '@', () -> this.defaultBlockState()
             );
             Map<Character, PartRole> roles = Map.of(
-                    '#', PartRole.FLUID_CONNECTOR,
+                    '#', PartRole.DEFAULT,
                     '@', PartRole.CONTROLLER
             );
 
@@ -92,7 +93,7 @@ public class CentrifugeCylinderBlock extends BaseEntityBlock implements IMultibl
 
     @Override
     public PartRole getPartRole(BlockPos localOffset) {
-        return PartRole.FLUID_CONNECTOR;
+        return PartRole.DEFAULT;
     }
 
     @Override
@@ -117,7 +118,20 @@ public class CentrifugeCylinderBlock extends BaseEntityBlock implements IMultibl
                 return;
             }
             getStructureHelper().placeStructure(level, pos, Direction.NORTH, this);
+            // Мотор получил жидкостный порт — пересчитываем соединения соседних труб
+            updatePipeConnections(level, pos);
         }
+    }
+
+    /**
+     * Трубы соединяются по наличию FLUID_HANDLER у соседа, который появляется
+     * только после установки насадки. Принудительный апдейт форм заставляет
+     * их переподключиться без переустановки.
+     */
+    private static void updatePipeConnections(Level level, BlockPos pos) {
+        level.getBlockState(pos).updateNeighbourShapes(level, pos, 3);
+        level.getBlockState(pos.below()).updateNeighbourShapes(level, pos.below(), 3);
+        level.getBlockState(pos.above()).updateNeighbourShapes(level, pos.above(), 3);
     }
 
     @Override
@@ -136,6 +150,8 @@ public class CentrifugeCylinderBlock extends BaseEntityBlock implements IMultibl
                 cylinder.dropContents();
             }
             getStructureHelper().destroyStructure(level, pos, Direction.NORTH);
+            // Жидкостный порт пропал — трубы должны отключиться
+            updatePipeConnections(level, pos);
         }
         super.onRemove(state, level, pos, newState, isMoving);
     }

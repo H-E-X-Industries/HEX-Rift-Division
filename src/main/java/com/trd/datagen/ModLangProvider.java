@@ -986,6 +986,7 @@ public class ModLangProvider extends LanguageProvider {
         add("gui.trd.centrifuge.energy_tooltip", "%s / %s JE");
         add("gui.trd.centrifuge.progress_tooltip", "§6Remaining: §f%s sec");
         add("jei.category.trd.centrifuge", "Centrifuge");
+        add("jei.category.trd.centrifuge_cylinder", "Fluid Centrifuge");
         add("hud.trd.centrifuge.no_attachment", "Install an attachment!");
         add("hud.trd.centrifuge.energy", "Energy: %s / %s JE");
         add("hud.trd.centrifuge.recipe", "Recipe: %s");
@@ -1069,6 +1070,7 @@ public class ModLangProvider extends LanguageProvider {
         add("gui.trd.centrifuge.energy_tooltip", "%s / %s JE");
         add("gui.trd.centrifuge.progress_tooltip", "§6Осталось: §f%s сек");
         add("jei.category.trd.centrifuge", "Центрифуга");
+        add("jei.category.trd.centrifuge_cylinder", "Жидкостная центрифуга");
         add("hud.trd.centrifuge.no_attachment", "Установите насадку!");
         add("hud.trd.centrifuge.energy", "Энергия: %s / %s JE");
         add("hud.trd.centrifuge.recipe", "Рецепт: %s");
