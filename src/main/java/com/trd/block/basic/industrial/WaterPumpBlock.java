@@ -25,7 +25,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
-import com.trd.block.entity.industrial.WaterPumpBlockEntity;
+import com.trd.block.entity.industrial.fluids.WaterPumpBlockEntity;
 
 import java.util.Map;
 import java.util.function.Supplier;

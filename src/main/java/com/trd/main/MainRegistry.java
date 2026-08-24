@@ -459,7 +459,10 @@ public class MainRegistry {
             event.accept(ModItems.CINNABAR);
             event.accept(ModItems.LIGNITE);
             event.accept(ModItems.FLUORITE);
+            event.accept(ModItems.SODA_CRYSTAL);
+            event.accept(ModItems.SODA);
             event.accept(ModItems.SEQUESTRUM);
+            event.accept(ModItems.SALT);
             event.accept(ModItems.SULFUR);
 
             event.accept(ModItems.CONGLOMERATE_POWDER);
@@ -468,6 +471,7 @@ public class MainRegistry {
             event.accept(ModItems.BAUXITE_POWDER);
 
             event.accept(ModItems.FUEL_ASH.get());
+            event.accept(ModItems.BLACK_ASH);
             event.accept(ModItems.TRASH);
 
 
@@ -476,6 +480,7 @@ public class MainRegistry {
         if (event.getTab() == ModCreativeTabs.trd_NATURE_TAB.get()) {
 
             event.accept(ModBlocks.ASBESOTS_ORE.get());
+            event.accept(ModBlocks.SALT_ORE.get());
             event.accept(ModBlocks.LIGNITE_ORE.get());
             event.accept(ModBlocks.CINNABAR_ORE.get());
             event.accept(ModBlocks.CINNABAR_ORE_DEEPSLATE.get());

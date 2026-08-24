@@ -1,6 +1,6 @@
 package com.trd.menu.industrial;
 
-import com.trd.block.entity.industrial.ElectricFurnaceBlockEntity;
+import com.trd.block.entity.industrial.energy.ElectricFurnaceBlockEntity;
 import com.trd.item.energy.EnergyCellItem;
 import com.trd.item.energy.ModBatteryItem;
 import com.trd.menu.ModMenuTypes;

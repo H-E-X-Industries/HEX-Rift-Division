@@ -1,6 +1,6 @@
 package com.trd.block.basic.industrial;
 
-import com.trd.block.entity.industrial.ConveyorBufferBlockEntity;
+import com.trd.block.entity.industrial.conveyors.ConveyorBufferBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;

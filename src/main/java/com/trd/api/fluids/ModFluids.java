@@ -112,6 +112,54 @@ public class ModFluids {
     private static final ForgeFlowingFluid.Properties MERCURY_PROPS = new ForgeFlowingFluid.Properties(
             MERCURY_TYPE, MERCURY_SOURCE, MERCURY_FLOWING);
 
+    public static final RegistryObject<FluidType> SODIUM_SULFATE_TYPE = FLUID_TYPES.register("sodium_sulfate",
+            () -> new BaseFluidType(FluidType.Properties.create().density(-1000).viscosity(200).temperature(300),
+                    WATER_STILL, WATER_FLOW,
+                    new ResourceLocation("trd", "textures/gui/fluid/sodium_sulfate.png"),
+                    0xdadd8f, 20, 75));
+    public static final RegistryObject<FlowingFluid> SODIUM_SULFATE_SOURCE = FLUIDS.register("sodium_sulfate",
+            () -> new ForgeFlowingFluid.Source(ModFluids.SODIUM_SULFATE_PROPS));
+    public static final RegistryObject<FlowingFluid> SODIUM_SULFATE_FLOWING = FLUIDS.register("flowing_sodium_sulfate",
+            () -> new ForgeFlowingFluid.Flowing(ModFluids.SODIUM_SULFATE_PROPS));
+    private static final ForgeFlowingFluid.Properties SODIUM_SULFATE_PROPS = new ForgeFlowingFluid.Properties(
+            SODIUM_SULFATE_TYPE, SODIUM_SULFATE_SOURCE, SODIUM_SULFATE_FLOWING);
+
+    public static final RegistryObject<FluidType> HYDROGEN_CHLORINE_TYPE = FLUID_TYPES.register("hydrogen_chlorine",
+            () -> new BaseFluidType(FluidType.Properties.create().density(1450).viscosity(1100).temperature(300),
+                    WATER_STILL, WATER_FLOW,
+                    new ResourceLocation("trd", "textures/gui/fluid/hydrogen_chlorine.png"),
+                    0xb3b38c, 20, 0));
+    public static final RegistryObject<FlowingFluid> HYDROGEN_CHLORINE_SOURCE = FLUIDS.register("hydrogen_chlorine",
+            () -> new ForgeFlowingFluid.Source(ModFluids.HYDROGEN_CHLORINE_PROPS));
+    public static final RegistryObject<FlowingFluid> HYDROGEN_CHLORINE_FLOWING = FLUIDS.register("flowing_hydrogen_chlorine",
+            () -> new ForgeFlowingFluid.Flowing(ModFluids.HYDROGEN_PEROXIDE_PROPS));
+    private static final ForgeFlowingFluid.Properties HYDROGEN_CHLORINE_PROPS = new ForgeFlowingFluid.Properties(
+            HYDROGEN_CHLORINE_TYPE, HYDROGEN_CHLORINE_SOURCE, HYDROGEN_CHLORINE_FLOWING);
+
+    public static final RegistryObject<FluidType> CARBON_DIOXIDE_TYPE = FLUID_TYPES.register("carbon_dioxide",
+            () -> new BaseFluidType(FluidType.Properties.create().density(1450).viscosity(1100).temperature(300),
+                    WATER_STILL, WATER_FLOW,
+                    new ResourceLocation("trd", "textures/gui/fluid/carbon_dioxide.png"),
+                    0x595959, 20, 0));
+    public static final RegistryObject<FlowingFluid> CARBON_DIOXIDE_SOURCE = FLUIDS.register("carbon_dioxide",
+            () -> new ForgeFlowingFluid.Source(ModFluids.CARBON_DIOXIDE_PROPS));
+    public static final RegistryObject<FlowingFluid> CARBON_DIOXIDE_FLOWING = FLUIDS.register("flowing_carbon_dioxide",
+            () -> new ForgeFlowingFluid.Flowing(ModFluids.CARBON_DIOXIDE_PROPS));
+    private static final ForgeFlowingFluid.Properties CARBON_DIOXIDE_PROPS = new ForgeFlowingFluid.Properties(
+            CARBON_DIOXIDE_TYPE, CARBON_DIOXIDE_SOURCE, CARBON_DIOXIDE_FLOWING);
+
+    public static final RegistryObject<FluidType> SODA_TYPE = FLUID_TYPES.register("soda",
+            () -> new BaseFluidType(FluidType.Properties.create().density(1450).viscosity(1100).temperature(300),
+                    WATER_STILL, WATER_FLOW,
+                    new ResourceLocation("trd", "textures/gui/fluid/soda.png"),
+                    0xe0f6ef, 20, 0));
+    public static final RegistryObject<FlowingFluid> SODA_SOURCE = FLUIDS.register("soda",
+            () -> new ForgeFlowingFluid.Source(ModFluids.SODA_PROPS));
+    public static final RegistryObject<FlowingFluid> SODA_FLOWING = FLUIDS.register("flowing_soda",
+            () -> new ForgeFlowingFluid.Flowing(ModFluids.CARBON_DIOXIDE_PROPS));
+    private static final ForgeFlowingFluid.Properties SODA_PROPS = new ForgeFlowingFluid.Properties(
+            SODA_TYPE, SODA_SOURCE, SODA_FLOWING);
+
 
 
     public static final RegistryObject<Item> FLUID_DROP_NONE = FLUID_DROP_ITEMS.register("fluid_drop_none", () -> new Item(new Item.Properties()));
@@ -132,10 +180,14 @@ public class ModFluids {
 
     private static void registerFluidDrops() {
         registerDrop("hydrogen_peroxide", HYDROGEN_PEROXIDE_TYPE);
+        registerDrop("hydrogen_chlorine", HYDROGEN_CHLORINE_TYPE);
         registerDrop("sulfuric_acid", SULFURIC_ACID_TYPE);
         registerDrop("natural_gas", NATURAL_GAS_TYPE);
         registerDrop("steam", STEAM_TYPE);
         registerDrop("mercury", MERCURY_TYPE);
+        registerDrop("sodium_sulfate", SODIUM_SULFATE_TYPE);
+        registerDrop("carbon_dioxide", CARBON_DIOXIDE_TYPE);
+        registerDrop("soda", SODA_TYPE);
         registerDrop("low_pressure_steam", LOW_PRESSURE_STEAM_TYPE);
     }
 

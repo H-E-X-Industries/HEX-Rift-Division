@@ -1,4 +1,4 @@
-package com.trd.block.entity.industrial;
+package com.trd.block.entity.industrial.conveyors;
 
 import com.trd.api.conveyor.ConveyorItem;
 import com.trd.api.conveyor.ConveyorNetwork;

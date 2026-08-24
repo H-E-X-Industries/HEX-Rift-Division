@@ -1,7 +1,7 @@
 package com.trd.block.basic.industrial;
 
 import com.trd.block.entity.ModBlockEntities;
-import com.trd.block.entity.industrial.MillstoneBlockEntity;
+import com.trd.block.entity.industrial.rotation.MillstoneBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.sounds.SoundEvents;

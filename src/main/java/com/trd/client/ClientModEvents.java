@@ -3,6 +3,8 @@ package com.trd.client;
 import com.trd.api.fluids.system.FluidDropItem;
 import com.trd.api.fluids.ModFluids;
 import com.trd.api.metallurgy.system.ItemHeatColorRegistry;
+import com.trd.block.entity.industrial.fluids.WaterPumpBlockEntity;
+import com.trd.block.entity.industrial.rotation.MillstoneBlockEntity;
 import com.trd.client.gecko.entity.mobs.DepthWormBrutalRenderer;
 import com.trd.client.overlay.hud.WaterPumpHUD;
 import com.trd.client.render.ber.ConveyorRenderer;
@@ -305,24 +307,24 @@ public class ClientModEvents {
                 }
             });
 
-            VisualizerRegistry.setVisualizer(ModBlockEntities.MILLSTONE.get(), new dev.engine_room.flywheel.api.visualization.BlockEntityVisualizer<com.trd.block.entity.industrial.MillstoneBlockEntity>() {
+            VisualizerRegistry.setVisualizer(ModBlockEntities.MILLSTONE.get(), new dev.engine_room.flywheel.api.visualization.BlockEntityVisualizer<MillstoneBlockEntity>() {
                 @Override
-                public dev.engine_room.flywheel.api.visual.BlockEntityVisual<? super com.trd.block.entity.industrial.MillstoneBlockEntity> createVisual(dev.engine_room.flywheel.api.visualization.VisualizationContext ctx, com.trd.block.entity.industrial.MillstoneBlockEntity be, float partialTick) {
+                public dev.engine_room.flywheel.api.visual.BlockEntityVisual<? super MillstoneBlockEntity> createVisual(dev.engine_room.flywheel.api.visualization.VisualizationContext ctx, MillstoneBlockEntity be, float partialTick) {
                     return new com.trd.client.render.flywheel.MillstoneVisual(ctx, be, partialTick);
                 }
                 @Override
-                public boolean skipVanillaRender(com.trd.block.entity.industrial.MillstoneBlockEntity be) {
+                public boolean skipVanillaRender(MillstoneBlockEntity be) {
                     return true;
                 }
             });
 
-            VisualizerRegistry.setVisualizer(ModBlockEntities.WATER_PUMP_BE.get(), new dev.engine_room.flywheel.api.visualization.BlockEntityVisualizer<com.trd.block.entity.industrial.WaterPumpBlockEntity>() {
+            VisualizerRegistry.setVisualizer(ModBlockEntities.WATER_PUMP_BE.get(), new dev.engine_room.flywheel.api.visualization.BlockEntityVisualizer<WaterPumpBlockEntity>() {
                 @Override
-                public dev.engine_room.flywheel.api.visual.BlockEntityVisual<? super com.trd.block.entity.industrial.WaterPumpBlockEntity> createVisual(dev.engine_room.flywheel.api.visualization.VisualizationContext ctx, com.trd.block.entity.industrial.WaterPumpBlockEntity be, float partialTick) {
+                public dev.engine_room.flywheel.api.visual.BlockEntityVisual<? super WaterPumpBlockEntity> createVisual(dev.engine_room.flywheel.api.visualization.VisualizationContext ctx, WaterPumpBlockEntity be, float partialTick) {
                     return new com.trd.client.render.visual.WaterPumpVisual(ctx, be, partialTick);
                 }
                 @Override
-                public boolean skipVanillaRender(com.trd.block.entity.industrial.WaterPumpBlockEntity be) {
+                public boolean skipVanillaRender(WaterPumpBlockEntity be) {
                     return true;
                 }
             });

@@ -1,8 +1,12 @@
 package com.trd.multiblock.industrial.vishelashivatel;
 
+import com.trd.api.fluids.ModFluids;
+import com.trd.item.ModItems;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.fluids.FluidStack;
 
 import java.util.ArrayList;
@@ -66,9 +70,16 @@ public class VishelashivatelRecipes {
         // 3 секунды, от 100 об/мин, 250 мБ пероксида водорода за 1 кожу
         register(new VishelashivatelRecipe(
                 new ResourceLocation("trd", "leather_from_rotten_flesh"),
-                new FluidStack(com.trd.api.fluids.ModFluids.HYDROGEN_PEROXIDE_SOURCE.get(), 250),
+                new FluidStack(ModFluids.HYDROGEN_PEROXIDE_SOURCE.get(), 250),
                 new ItemStack(net.minecraft.world.item.Items.ROTTEN_FLESH, 1),
                 List.of(new ItemStack(net.minecraft.world.item.Items.LEATHER, 1)),
+                60, 100, 20));
+
+        register(new VishelashivatelRecipe(
+                new ResourceLocation("trd", "liquid_soda"),
+                new FluidStack(Fluids.WATER, 250),
+                new ItemStack(ModItems.BLACK_ASH.get(), 1),
+                List.of(new ItemStack(ModItems.SODA_CRYSTAL.get(), 1)),
                 60, 100, 20));
     }
 }

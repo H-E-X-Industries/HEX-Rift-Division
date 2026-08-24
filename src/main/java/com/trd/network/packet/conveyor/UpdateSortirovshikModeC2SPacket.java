@@ -1,6 +1,6 @@
 package com.trd.network.packet.conveyor;
 
-import com.trd.block.entity.industrial.SortirovshikBlockEntity;
+import com.trd.block.entity.industrial.conveyors.SortirovshikBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;

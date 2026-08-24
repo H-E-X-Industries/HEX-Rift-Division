@@ -1,7 +1,8 @@
 package com.trd.api.conveyor;
 
-import com.trd.block.basic.industrial.ConveyorBufferBlock;
-import com.trd.block.entity.industrial.ConveyorBufferBlockEntity;
+import com.trd.block.entity.industrial.conveyors.ConveyorBlockEntity;
+import com.trd.block.entity.industrial.conveyors.ConveyorBufferBlockEntity;
+import com.trd.block.entity.industrial.conveyors.SortirovshikBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -113,7 +114,7 @@ public class ConveyorNetwork {
 
                     // Сортировщик: лента упирается в него торцом — отдаём предмет на сортировку.
                     // Не принял (нет подходящей секции) — выбросится ниже как обычно.
-                    if (!transferred && targetBe instanceof com.trd.block.entity.industrial.SortirovshikBlockEntity sorter) {
+                    if (!transferred && targetBe instanceof SortirovshikBlockEntity sorter) {
                         if (sorter.tryAcceptFromBelt(item.getStack().copy())) {
                             transferred = true;
                         }
@@ -123,7 +124,7 @@ public class ConveyorNetwork {
                         iterator.remove();
                         changed = true;
                         continue;
-                    } else if (targetBe instanceof com.trd.block.entity.industrial.ConveyorBlockEntity) {
+                    } else if (targetBe instanceof ConveyorBlockEntity) {
                         ConveyorNetwork nextNet = manager.getNetworkFor(targetPos);
                         if (nextNet != null && nextNet != this) {
                             if (nextNet.tryInsertItem(item.getStack().copy(), 0.0)) {

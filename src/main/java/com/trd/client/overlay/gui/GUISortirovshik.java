@@ -1,7 +1,7 @@
 package com.trd.client.overlay.gui;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.trd.block.entity.industrial.SortirovshikBlockEntity;
+import com.trd.block.entity.industrial.conveyors.SortirovshikBlockEntity;
 import com.trd.main.MainRegistry;
 import com.trd.menu.industrial.SortirovshikMenu;
 import com.trd.network.ModPacketHandler;

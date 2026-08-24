@@ -54,6 +54,10 @@ public class ModItemModelProvider extends ItemModelProvider {
         simpleItem(ModItems.WOODEN_HANDLE);
         simpleItem(ModItems.MOLD_PICKAXE);
         simpleItem(ModItems.MOLD_EMPTY);
+        simpleItem(ModItems.SALT);
+        simpleItem(ModItems.BLACK_ASH);
+        simpleItem(ModItems.SODA);
+        simpleItem(ModItems.SODA_CRYSTAL);
         simpleItem(ModItems.ROPE);
         simpleItem(ModItems.IRON_PLATE);
         simpleItem(ModItems.SULFUR);

@@ -306,6 +306,14 @@ public class ModItems {
             () -> new Item(new Item.Properties()));
     public static final RegistryObject<Item> DOLOMITE_POWDER= ITEMS.register("dolomite_powder",
             () -> new Item(new Item.Properties()));
+    public static final RegistryObject<Item> SALT = ITEMS.register("salt",
+            () -> new Item(new Item.Properties()));
+    public static final RegistryObject<Item> BLACK_ASH = ITEMS.register("black_ash",
+            () -> new Item(new Item.Properties()));
+    public static final RegistryObject<Item> SODA = ITEMS.register("soda",
+            () -> new Item(new Item.Properties()));
+    public static final RegistryObject<Item> SODA_CRYSTAL = ITEMS.register("soda_crystal",
+            () -> new Item(new Item.Properties()));
 
     public static final RegistryObject<Item> BLADE = ITEMS.register("blade",
             () -> new com.trd.item.tools.BladeItem(new Item.Properties().stacksTo(1)));

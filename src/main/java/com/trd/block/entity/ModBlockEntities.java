@@ -2,19 +2,16 @@ package com.trd.block.entity;
 
 import com.trd.block.entity.conglomerate.ConglomerateBlockEntity;
 import com.trd.block.entity.deco.BeamCollisionBlockEntity;
-import com.trd.block.entity.industrial.ConveyorBlockEntity;
-import com.trd.block.entity.industrial.ConveyorBufferBlockEntity;
-import com.trd.block.entity.industrial.ElectricFurnaceBlockEntity;
+import com.trd.block.entity.industrial.conveyors.ConveyorBlockEntity;
+import com.trd.block.entity.industrial.conveyors.ConveyorBufferBlockEntity;
+import com.trd.block.entity.industrial.energy.ElectricFurnaceBlockEntity;
 import com.trd.block.entity.industrial.chemistry.ChemicalPlantPortBlockEntity;
 import com.trd.block.entity.industrial.chemistry.ChemicalPlantReactionChamberBlockEntity;
-import com.trd.block.entity.industrial.fluids.FluidBarrelBlockEntity;
+import com.trd.block.entity.industrial.conveyors.SortirovshikBlockEntity;
+import com.trd.block.entity.industrial.fluids.*;
 
-import com.trd.block.entity.industrial.fluids.FluidPipeBlockEntity;
-
-import com.trd.block.entity.industrial.MillstoneBlockEntity;
+import com.trd.block.entity.industrial.rotation.MillstoneBlockEntity;
 import com.trd.block.entity.industrial.casting.SmallSmelterBlockEntity;
-import com.trd.block.entity.industrial.fluids.LowPressureSteamCondenserBlockEntity;
-import com.trd.block.entity.industrial.fluids.PaintablePipeBlockEntity;
 import com.trd.block.entity.industrial.rotation.BearingBlockEntity;
 import com.trd.block.entity.industrial.rotation.MotorElectroBlockEntity;
 import com.trd.block.entity.industrial.rotation.HandCrankBlockEntity;
@@ -165,9 +162,9 @@ public class ModBlockEntities {
             BLOCK_ENTITIES.register("conveyor",
                     () -> BlockEntityType.Builder.of(ConveyorBlockEntity::new, ModBlocks.CONVEYOR.get()).build(null));
 
-    public static final RegistryObject<BlockEntityType<com.trd.block.entity.industrial.SortirovshikBlockEntity>> SORTIROVSHIK_BE =
+    public static final RegistryObject<BlockEntityType<SortirovshikBlockEntity>> SORTIROVSHIK_BE =
             BLOCK_ENTITIES.register("sortirovshik", () -> BlockEntityType.Builder.of(
-                    com.trd.block.entity.industrial.SortirovshikBlockEntity::new,
+                    SortirovshikBlockEntity::new,
                     ModBlocks.SORTIROVSHIK.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<MachineBatteryBlockEntity>> MACHINE_BATTERY_BE =
@@ -331,9 +328,9 @@ public class ModBlockEntities {
                     () -> BlockEntityType.Builder.of(PaintableWireBlockEntity::new,
                             ModBlocks.PAINTABLE_WIRE.get()).build(null));
 
-    public static final RegistryObject<BlockEntityType<com.trd.block.entity.industrial.WaterPumpBlockEntity>> WATER_PUMP_BE =
+    public static final RegistryObject<BlockEntityType<WaterPumpBlockEntity>> WATER_PUMP_BE =
             BLOCK_ENTITIES.register("water_pump",
-                    () -> BlockEntityType.Builder.of(com.trd.block.entity.industrial.WaterPumpBlockEntity::new,
+                    () -> BlockEntityType.Builder.of(WaterPumpBlockEntity::new,
                             ModBlocks.WATER_PUMP.get()).build(null));
 
     public static void register(IEventBus eventBus) {

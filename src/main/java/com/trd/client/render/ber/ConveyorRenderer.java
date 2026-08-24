@@ -3,7 +3,7 @@ package com.trd.client.render.ber;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.trd.block.basic.industrial.ConveyorBlock;
-import com.trd.block.entity.industrial.ConveyorBlockEntity;
+import com.trd.block.entity.industrial.conveyors.ConveyorBlockEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -15,8 +15,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
-
-import java.util.List;
 
 public class ConveyorRenderer implements BlockEntityRenderer<ConveyorBlockEntity> {
 

@@ -1,4 +1,4 @@
-package com.trd.block.entity.industrial;
+package com.trd.block.entity.industrial.fluids;
 
 import com.trd.block.entity.industrial.rotation.KineticNodeBlockEntity;
 import com.trd.block.basic.industrial.WaterPumpBlock;

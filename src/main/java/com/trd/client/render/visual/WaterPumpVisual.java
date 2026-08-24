@@ -1,6 +1,6 @@
 package com.trd.client.render.visual;
 
-import com.trd.block.entity.industrial.WaterPumpBlockEntity;
+import com.trd.block.entity.industrial.fluids.WaterPumpBlockEntity;
 import com.trd.block.basic.industrial.WaterPumpBlock;
 import dev.engine_room.flywheel.api.instance.Instance;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;

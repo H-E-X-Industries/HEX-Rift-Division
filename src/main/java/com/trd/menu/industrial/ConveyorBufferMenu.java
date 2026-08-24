@@ -1,6 +1,6 @@
 package com.trd.menu.industrial;
 
-import com.trd.block.entity.industrial.ConveyorBufferBlockEntity;
+import com.trd.block.entity.industrial.conveyors.ConveyorBufferBlockEntity;
 import com.trd.menu.ModMenuTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
