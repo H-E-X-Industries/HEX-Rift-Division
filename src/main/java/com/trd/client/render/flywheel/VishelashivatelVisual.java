@@ -21,6 +21,7 @@ import java.util.function.Consumer;
 public class VishelashivatelVisual extends AbstractBlockEntityVisual<VishelashivatelBlockEntity> implements SimpleDynamicVisual {
 
     private final TransformedInstance shaft;
+    private final TransformedInstance blades;
 
     // Локальные координаты относительно renderOrigin (ВАЖНО для Flywheel)
     private final float localX;
@@ -37,6 +38,9 @@ public class VishelashivatelVisual extends AbstractBlockEntityVisual<Vishelashiv
 
         this.shaft = instancerProvider().instancer(InstanceTypes.TRANSFORMED,
                 Models.partial(ModModels.HALF_SHAFT)).createInstance();
+                
+        this.blades = instancerProvider().instancer(InstanceTypes.TRANSFORMED,
+                Models.partial(ModModels.VISHELACHIVATEL_LOPASTI)).createInstance();
 
         updateLight(partialTick);
     }
@@ -98,20 +102,28 @@ public class VishelashivatelVisual extends AbstractBlockEntityVisual<Vishelashiv
                 .rotateZ(currentAngle)                 // спин вокруг собственной оси модели
                 .translate(-0.5f, -0.5f, -0.5f);
         shaft.setChanged();
+
+        // === ЛОПАСТИ ВЫЩЕЛАЧИВАТЕЛЯ ===
+        blades.setIdentityTransform()
+                .translate(localX + 0.5f, localY, localZ + 0.5f) // смещение позиции рендера на -0.5 по X и Y
+                .rotateY(-currentAngle / 2.0f);                  // вращение в обратную сторону в 2 раза медленнее
+        blades.setChanged();
     }
 
     @Override
     public void updateLight(float partialTick) {
-        relight(pos, shaft);
+        relight(pos, shaft, blades);
     }
 
     @Override
     protected void _delete() {
         shaft.delete();
+        blades.delete();
     }
 
     @Override
     public void collectCrumblingInstances(Consumer<@Nullable Instance> consumer) {
         consumer.accept(shaft);
+        consumer.accept(blades);
     }
 }

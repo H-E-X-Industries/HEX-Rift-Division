@@ -1,0 +1,9 @@
+{
+  "loader": "forge:obj",
+  "model": "trd:models/block/vishelashivatel_lopasti.obj",
+  "flip_v": true,
+  "textures": {
+    "default": "trd:block/vishelashivatel",
+    "particle": "trd:block/vishelashivatel"
+  }
+}

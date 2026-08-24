@@ -42,6 +42,7 @@ public class ModModels {
     public static final PartialModel WATER_PUMP = PartialModel.of(new ResourceLocation("trd", "block/water_pump"));
     public static final PartialModel HAND_CRANK = PartialModel.of(new ResourceLocation("trd", "block/handle"));
     public static final PartialModel CRUSHER_BLADES = PartialModel.of(new ResourceLocation("trd", "block/crusher_blades"));
+    public static final PartialModel VISHELACHIVATEL_LOPASTI = PartialModel.of(new ResourceLocation("trd", "block/vishelashivatel_lopasti"));
 
     // ─── Станок (stanok) ───
     public static final PartialModel STANOK_BASE             = PartialModel.of(new ResourceLocation("trd", "block/stanok"));
