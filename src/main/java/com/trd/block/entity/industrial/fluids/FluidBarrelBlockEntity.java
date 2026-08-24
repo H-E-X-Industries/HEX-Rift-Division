@@ -57,12 +57,13 @@ public class FluidBarrelBlockEntity extends FluidNodeBlockEntity implements Menu
     protected int getTankCapacity() { return getTier().getCapacity(); }
 
     public static final int MAX_TRANSFER_RATE = 200;
-    public static final int TOTAL_SLOTS = 5;
+    public static final int TOTAL_SLOTS = 6;
     public static final int FILL_IN_SLOT = 0;
     public static final int FILL_OUT_SLOT = 1;
     public static final int DRAIN_IN_SLOT = 2;
     public static final int DRAIN_OUT_SLOT = 3;
     public static final int PROTECTOR_SLOT = 4;
+    public static final int IDENTIFIER_SLOT = 5;
 
     public int mode = 0;
     public String fluidFilter = "none";
@@ -74,6 +75,7 @@ public class FluidBarrelBlockEntity extends FluidNodeBlockEntity implements Menu
         @Override protected void onContentsChanged(int slot) { setChanged(); }
 
         @Override public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            if (slot == IDENTIFIER_SLOT) return stack.getItem() instanceof com.trd.item.tools.FluidIdentifierItem;
             if (slot == FILL_IN_SLOT) return stack.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).isPresent();
             if (slot == DRAIN_IN_SLOT) {
                 if (stack.getItem() instanceof com.trd.item.tools.InfiniteFluidBarrelItem) return true;
@@ -191,9 +193,25 @@ public class FluidBarrelBlockEntity extends FluidNodeBlockEntity implements Menu
             be.spawnLeakParticles();
             return;
         }
+        be.updateIdentifierFilter();
         be.processBuckets();
         be.processLeaking();
         be.checkDamage();
+    }
+
+    /**
+     * Копирует тип жидкости с идентификатора в слоте в фильтр бочки
+     * (та же логика, что у жидкостной центрифуги/выщелачивателя).
+     * Пустой или сброшенный ("none") идентификатор фильтр не меняет.
+     */
+    protected void updateIdentifierFilter() {
+        if (level == null || level.isClientSide) return;
+        ItemStack idStack = itemHandler.getStackInSlot(IDENTIFIER_SLOT);
+        if (idStack.isEmpty() || !(idStack.getItem() instanceof com.trd.item.tools.FluidIdentifierItem)) return;
+        String selected = com.trd.item.tools.FluidIdentifierItem.getSelectedFluid(idStack);
+        if (selected.isEmpty() || selected.equals("none")) return;
+        if (selected.equals(fluidFilter)) return;
+        setFilter(selected);
     }
 
     protected void processLeaking() {

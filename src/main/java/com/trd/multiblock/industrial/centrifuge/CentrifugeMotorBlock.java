@@ -60,7 +60,7 @@ public class CentrifugeMotorBlock extends BaseEntityBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         if (level.isClientSide) {
-            return hasAttachment(level, pos) ? InteractionResult.SUCCESS : InteractionResult.CONSUME;
+            return hasAttachment(level, pos) ? InteractionResult.SUCCESS : InteractionResult.PASS;
         }
         if (hasAttachment(level, pos)) {
             BlockPos conusPos = pos.above();
@@ -72,7 +72,9 @@ public class CentrifugeMotorBlock extends BaseEntityBlock {
             );
             return level.getBlockState(conusPos).use(level, player, hand, newHit);
         }
-        return InteractionResult.CONSUME;
+        // Без насадки ничего не делаем: PASS позволяет установить насадку
+        // удерживаемым в руке предметом (иначе клик съедается впустую)
+        return InteractionResult.PASS;
     }
 
     @Override

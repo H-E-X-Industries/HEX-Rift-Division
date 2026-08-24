@@ -34,6 +34,9 @@ public class FluidBarrelMenu extends AbstractContainerMenu {
 
             // Защитный слой (40, 8)
             this.addSlot(new SlotItemHandler(handler, 4, 40, 8));
+
+            // Жидкостный идентификатор (17, 26)
+            this.addSlot(new SlotItemHandler(handler, FluidBarrelBlockEntity.IDENTIFIER_SLOT, 17, 26));
         });
 
         addPlayerInventory(inv);
@@ -92,9 +95,9 @@ public class FluidBarrelMenu extends AbstractContainerMenu {
             ItemStack stack = slot.getItem();
             itemstack = stack.copy();
 
-            // Из бочки (0-4) в инвентарь (5-41)
-            if (index < 5) {
-                if (!this.moveItemStackTo(stack, 5, 41, true)) {
+            // Из бочки (0-5) в инвентарь (6-42)
+            if (index < 6) {
+                if (!this.moveItemStackTo(stack, 6, 42, true)) {
                     return ItemStack.EMPTY;
                 }
             } else {
@@ -102,7 +105,9 @@ public class FluidBarrelMenu extends AbstractContainerMenu {
                 if (!this.moveItemStackTo(stack, 0, 1, false)) {      // FILL_IN
                     if (!this.moveItemStackTo(stack, 2, 3, false)) {  // DRAIN_IN
                         if (!this.moveItemStackTo(stack, 4, 5, false)) { // PROTECTOR
-                            return ItemStack.EMPTY;
+                            if (!this.moveItemStackTo(stack, 5, 6, false)) { // IDENTIFIER
+                                return ItemStack.EMPTY;
+                            }
                         }
                     }
                 }
