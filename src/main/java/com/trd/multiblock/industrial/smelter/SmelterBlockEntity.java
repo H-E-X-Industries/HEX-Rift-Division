@@ -383,12 +383,15 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
         }
 
         // Все готовы! Запускаем/продолжаем плавку
-        if (!allTopSlotsReady) {
+        // topHeatConsumption <= 0 — защита после перезахода в мир: allTopSlotsReady
+        // восстанавливается из NBT как true, и блок инициализации пропускался,
+        // из-за чего плавка "шла", но тепло не применялось
+        if (!allTopSlotsReady || topHeatConsumption <= 0) {
             allTopSlotsReady = true;
             if (sharedTopMaxProgress <= 0) {
                 sharedTopMaxProgress = recipe.getTotalHeatConsumption();
-                topHeatConsumption = recipe.getHeatConsumptionPerTick();
             }
+            topHeatConsumption = recipe.getHeatConsumptionPerTick();
         }
 
         topSmelting = true;
@@ -1150,6 +1153,7 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
         tag.putFloat("SharedTopProgress", sharedTopProgress);
         tag.putFloat("SharedTopMaxProgress", sharedTopMaxProgress);
         tag.putBoolean("AllTopSlotsReady", allTopSlotsReady);
+        tag.putFloat("TopHeatConsumption", topHeatConsumption);
 
         // Сохраняем температуры слотов
         ListTag tempsTag = new ListTag();
@@ -1221,6 +1225,7 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
         sharedTopProgress = tag.getFloat("SharedTopProgress");
         sharedTopMaxProgress = tag.getFloat("SharedTopMaxProgress");
         allTopSlotsReady = tag.getBoolean("AllTopSlotsReady");
+        topHeatConsumption = tag.getFloat("TopHeatConsumption");
 
         // Загружаем температуры слотов
         if (tag.contains("SlotTemperatures")) {

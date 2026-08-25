@@ -40,6 +40,10 @@ public class DrobitelRecipes {
                 new ItemStack(ModItems.LIGNITE.get(), 3),
                 new ItemStack(Blocks.COBBLESTONE, 1));
 
+        DrobitelBlockEntity.addRecipe(ModBlocks.SALT_ORE.get().asItem(),
+                new ItemStack(ModItems.SALT.get(), 3),
+                new ItemStack(Blocks.COBBLESTONE, 1));
+
         DrobitelBlockEntity.addRecipe(ModBlocks.ASBESOTS_ORE.get().asItem(),
                 new ItemStack(ModItems.ASBESTOS.get(), 3),
                 new ItemStack(Blocks.COBBLESTONE, 1));

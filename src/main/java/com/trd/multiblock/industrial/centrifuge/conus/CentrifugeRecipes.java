@@ -32,26 +32,7 @@ public class CentrifugeRecipes {
     }
 
     public static void init() {
-        // Три уникальных выхода — проверка распределения по разным слотам
-        register(new CentrifugeRecipe(
-                new ResourceLocation("trd", "dirt_centrifuging"),
-                new ItemStack(Items.DIRT, 1),
-                List.of(
-                        new ItemStack(Items.CLAY_BALL, 1),
-                        new ItemStack(Items.SAND, 2),
-                        new ItemStack(Items.FLINT, 1)
-                ),
-                100));
 
-        // Несколько одинаковых предметов в выходе — уходят в один слот, пока не забьётся
-        register(new CentrifugeRecipe(
-                new ResourceLocation("trd", "gravel_centrifuging"),
-                new ItemStack(Items.GRAVEL, 1),
-                List.of(
-                        new ItemStack(Items.IRON_NUGGET, 2),
-                        new ItemStack(Items.FLINT, 4)
-                ),
-                80));
 
         register(new CentrifugeRecipe(
                 new ResourceLocation("trd", "bone_block_centrifuging"),

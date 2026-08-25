@@ -79,7 +79,7 @@ public class VishelashivatelRecipes {
                 new ResourceLocation("trd", "liquid_soda"),
                 new FluidStack(Fluids.WATER, 250),
                 new ItemStack(ModItems.BLACK_ASH.get(), 1),
-                List.of(new ItemStack(ModItems.SODA_CRYSTAL.get(), 1)),
+                List.of(new ItemStack(ModItems.SODA_CRYSTAL.get(), 1),new ItemStack(ModItems.SALT.get(), 1)),
                 60, 100, 20));
     }
 }

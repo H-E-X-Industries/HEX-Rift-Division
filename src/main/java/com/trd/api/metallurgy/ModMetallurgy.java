@@ -106,7 +106,7 @@ public class ModMetallurgy {
         // Флюсовое восстановление глинозёма: 4 глинозёма + 2 флюса (негашёная известь ИЛИ флюорит) -> 1 слиток алюминия
         AlloyRecipe aluminaReduction = new AlloyRecipe(
                 new AlloySlot[]{
-                        new AlloySlot(ModItems.ALUMINA.get(), 4),
+                        new AlloySlot(ModItems.ALUMINA.get(), 2),
                         new AlloySlot(null, 0),
                         new AlloySlot(null, 0),
                         new AlloySlot(null, 0)
@@ -114,7 +114,7 @@ public class ModMetallurgy {
                 aluminum,
                 9,
                 0.6f,
-                100
+                60
         );
         MetallurgyRegistry.addAlloyRecipe(aluminaReduction);
 
