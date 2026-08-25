@@ -95,7 +95,7 @@ public class ChemicalPlantRecipeRegistry {
                 List.of(new FluidStack(ModFluids.SODIUM_HYDROXIDE_SOURCE.get(), 500)),
                 List.of(new FluidStack(ModFluids.ALUMINATE_SOLUTION_SOURCE.get(), 250),
                             new FluidStack(ModFluids.RED_SLUDGE_SOURCE.get(), 50 )),
-                List.of(new ItemStack(ModItems.BAUXITE_POWDER.get(), 10)),
+                List.of(new ItemStack(ModItems.BAUXITE_POWDER.get(), 5)),
                 List.of(),
                 90,
                 150

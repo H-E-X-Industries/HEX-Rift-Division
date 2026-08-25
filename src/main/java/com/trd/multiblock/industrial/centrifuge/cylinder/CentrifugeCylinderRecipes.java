@@ -51,51 +51,15 @@ public class CentrifugeCylinderRecipes {
     }
 
     public static void init() {
-        // === Рецепты-заглушки ===
-
-        // Раствор соды разделяется на гидроксид натрия и воду
-        register(new CentrifugeCylinderRecipe(
-                new ResourceLocation("trd", "soda_centrifuging"),
-                new FluidStack(ModFluids.SODA_SOURCE.get(), 1000),
-                List.of(
-                        new FluidStack(ModFluids.SODIUM_HYDROXIDE_SOURCE.get(), 500),
-                        new FluidStack(Fluids.WATER, 500)
-                ),
-                List.of(),
-                120));
-
-        // Серная кислота разделяется на воду и серу
-        register(new CentrifugeCylinderRecipe(
-                new ResourceLocation("trd", "sulfuric_acid_centrifuging"),
-                new FluidStack(ModFluids.SULFURIC_ACID_SOURCE.get(), 1000),
-                List.of(new FluidStack(Fluids.WATER, 600)),
-                List.of(new ItemStack(ModItems.SULFUR.get(), 2)),
-                140));
-
-        // Вода разделяется на соль (упрощённое выпаривание)
-        register(new CentrifugeCylinderRecipe(
-                new ResourceLocation("trd", "water_centrifuging"),
-                new FluidStack(Fluids.WATER, 1000),
-                List.of(),
-                List.of(new ItemStack(ModItems.SALT.get(), 2)),
-                100));
-
-        // Пероксид водорода разлагается на воду и железный самородок (заглушка)
-        register(new CentrifugeCylinderRecipe(
-                new ResourceLocation("trd", "peroxide_centrifuging"),
-                new FluidStack(ModFluids.HYDROGEN_PEROXIDE_SOURCE.get(), 1000),
-                List.of(new FluidStack(Fluids.WATER, 800)),
-                List.of(new ItemStack(Items.IRON_NUGGET, 1)),
-                80));
 
         // Красный шлам: сепарация на воду, оксидное железо, песок и титансодержащую фракцию
         register(new CentrifugeCylinderRecipe(
                 new ResourceLocation("trd", "red_sludge_centrifuging"),
-                new FluidStack(ModFluids.RED_SLUDGE_SOURCE.get(), 500),
-                List.of(new FluidStack(Fluids.WATER, 250)),
+                new FluidStack(ModFluids.RED_SLUDGE_SOURCE.get(), 100),
+                List.of(new FluidStack(Fluids.WATER, 50)),
                 List.of(
                         new ItemStack(Items.IRON_NUGGET, 4),
-                        new ItemStack(Items.SAND, 1),
+                        new ItemStack(ModItems.SULFUR.get(), 1),
                         new ItemStack(ResourceRegistry.getSmallUnit("titanium"), 1)
                 ),
                 140));
