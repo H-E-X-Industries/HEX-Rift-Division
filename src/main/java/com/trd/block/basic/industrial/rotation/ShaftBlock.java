@@ -301,6 +301,12 @@ public class ShaftBlock extends BaseEntityBlock {
         } else if (stateAgainst.getBlock() instanceof MotorElectroBlock) {
             // Перенимаем ось мотора
             placementFacing = stateAgainst.getValue(MotorElectroBlock.FACING);
+        } else if (stateAgainst.getBlock() instanceof com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlock) {
+            // Выщелачиватель принимает кинетику сверху (UP)
+            if (clickedFace != Direction.UP) {
+                return null;
+            }
+            placementFacing = Direction.UP;
         } else if (stateAgainst.getBlock() instanceof com.trd.multiblock.system.MultiblockPartBlock) {
             BlockEntity be = level.getBlockEntity(posAgainst);
             if (be instanceof com.trd.multiblock.system.IMultiblockPart part
@@ -315,6 +321,14 @@ public class ShaftBlock extends BaseEntityBlock {
                         return null;
                     }
                     placementFacing = facing;
+                } else if (ctrlState.getBlock() instanceof com.trd.multiblock.industrial.stanok.StanokBlock
+                        && ctrlState.hasProperty(com.trd.multiblock.industrial.stanok.StanokBlock.FACING)) {
+                    Direction facing = ctrlState.getValue(com.trd.multiblock.industrial.stanok.StanokBlock.FACING);
+                    Direction portAxisDir = facing.getClockWise();
+                    if (clickedFace.getAxis() != portAxisDir.getAxis()) {
+                        return null;
+                    }
+                    placementFacing = portAxisDir;
                 }
             } else {
                 return null;
@@ -416,6 +430,9 @@ public class ShaftBlock extends BaseEntityBlock {
                     && part.getPartRole() == com.trd.multiblock.system.PartRole.KINETIC_PORT) {
                 return true;
             }
+        }
+        if (block instanceof com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlock) {
+            return axisDir.getAxis() == Direction.Axis.Y;
         }
         return false;
     }
