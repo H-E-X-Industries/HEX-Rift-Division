@@ -23,6 +23,8 @@ import com.trd.block.entity.industrial.casting.CastingPotBlockEntity;
 import com.trd.block.entity.industrial.energy.*;
 
 import com.trd.multiblock.industrial.boiler.BoilerBlockEntity;
+import com.trd.multiblock.industrial.centrifuge.conus.CentrifugeConusBlockEntity;
+import com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderBlockEntity;
 import com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity;
 import com.trd.multiblock.industrial.fueltanks.FuelTankBlockEntity;
 import com.trd.multiblock.industrial.fueltanks.small.FuelTankSmallBlockEntity;
@@ -103,16 +105,16 @@ public class ModBlockEntities {
                             com.trd.multiblock.industrial.centrifuge.CentrifugeMotorBlockEntity::new,
                             ModBlocks.CENTRIFUGE_MOTOR.get()).build(null));
 
-    public static final RegistryObject<BlockEntityType<com.trd.multiblock.industrial.centrifuge.CentrifugeConusBlockEntity>> CENTRIFUGE_CONUS_BE =
+    public static final RegistryObject<BlockEntityType<CentrifugeConusBlockEntity>> CENTRIFUGE_CONUS_BE =
             BLOCK_ENTITIES.register("centrifuge_conus_be",
                     () -> BlockEntityType.Builder.of(
-                            com.trd.multiblock.industrial.centrifuge.CentrifugeConusBlockEntity::new,
+                            CentrifugeConusBlockEntity::new,
                             ModBlocks.CENTRIFUGE_CONUS.get()).build(null));
 
-    public static final RegistryObject<BlockEntityType<com.trd.multiblock.industrial.centrifuge.CentrifugeCylinderBlockEntity>> CENTRIFUGE_CYLINDER_BE =
+    public static final RegistryObject<BlockEntityType<CentrifugeCylinderBlockEntity>> CENTRIFUGE_CYLINDER_BE =
             BLOCK_ENTITIES.register("centrifuge_cylinder_be",
                     () -> BlockEntityType.Builder.of(
-                            com.trd.multiblock.industrial.centrifuge.CentrifugeCylinderBlockEntity::new,
+                            CentrifugeCylinderBlockEntity::new,
                             ModBlocks.CENTRIFUGE_CYLINDER.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<SmallSmelterBlockEntity>> SMALL_SMELTER_BE =

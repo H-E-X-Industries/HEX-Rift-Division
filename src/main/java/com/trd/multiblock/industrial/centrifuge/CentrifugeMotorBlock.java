@@ -1,6 +1,7 @@
 package com.trd.multiblock.industrial.centrifuge;
 
-import com.trd.block.entity.ModBlockEntities;
+import com.trd.multiblock.industrial.centrifuge.conus.CentrifugeConusBlock;
+import com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -87,15 +88,6 @@ public class CentrifugeMotorBlock extends BaseEntityBlock {
         }
     }
 
-    @Override
-    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean isMoving) {
-        super.neighborChanged(state, level, pos, neighborBlock, neighborPos, isMoving);
-        // Насадку установили/сняли — мотор получил/потерял жидкостный порт,
-        // соседние трубы должны пересчитать подключение
-        if (!level.isClientSide && neighborPos.equals(pos.above())) {
-            level.getBlockState(pos).updateNeighbourShapes(level, pos, 3);
-        }
-    }
 
     @Nullable
     @Override

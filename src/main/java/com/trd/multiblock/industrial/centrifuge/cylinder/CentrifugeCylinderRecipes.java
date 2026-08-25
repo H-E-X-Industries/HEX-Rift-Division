@@ -1,7 +1,8 @@
-package com.trd.multiblock.industrial.centrifuge;
+package com.trd.multiblock.industrial.centrifuge.cylinder;
 
 import com.trd.api.fluids.ModFluids;
 import com.trd.item.ModItems;
+import com.trd.main.ResourceRegistry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -86,5 +87,17 @@ public class CentrifugeCylinderRecipes {
                 List.of(new FluidStack(Fluids.WATER, 800)),
                 List.of(new ItemStack(Items.IRON_NUGGET, 1)),
                 80));
+
+        // Красный шлам: сепарация на воду, оксидное железо, песок и титансодержащую фракцию
+        register(new CentrifugeCylinderRecipe(
+                new ResourceLocation("trd", "red_sludge_centrifuging"),
+                new FluidStack(ModFluids.RED_SLUDGE_SOURCE.get(), 500),
+                List.of(new FluidStack(Fluids.WATER, 250)),
+                List.of(
+                        new ItemStack(Items.IRON_NUGGET, 4),
+                        new ItemStack(Items.SAND, 1),
+                        new ItemStack(ResourceRegistry.getSmallUnit("titanium"), 1)
+                ),
+                140));
     }
 }

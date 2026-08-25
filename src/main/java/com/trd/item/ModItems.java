@@ -302,6 +302,10 @@ public class ModItems {
             () -> new Item(new Item.Properties()));
     public static final RegistryObject<Item> BAUXITE_POWDER = ITEMS.register("bauxite_powder",
             () -> new Item(new Item.Properties()));
+    public static final RegistryObject<Item> ALUMINUM_HYDROXIDE = ITEMS.register("aluminum_hydroxide",
+            () -> new Item(new Item.Properties()));
+    public static final RegistryObject<Item> ALUMINA = ITEMS.register("alumina",
+            () -> new Item(new Item.Properties()));
     public static final RegistryObject<Item> DOLOMITE_CHUNK = ITEMS.register("dolomite_chunk",
             () -> new Item(new Item.Properties()));
     public static final RegistryObject<Item> DOLOMITE_POWDER= ITEMS.register("dolomite_powder",

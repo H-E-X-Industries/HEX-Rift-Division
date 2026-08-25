@@ -172,6 +172,30 @@ public class ModFluids {
     private static final ForgeFlowingFluid.Properties SODIUM_HYDROXIDE_PROPS = new ForgeFlowingFluid.Properties(
             SODIUM_HYDROXIDE_TYPE, SODIUM_HYDROXIDE_SOURCE, SODIUM_HYDROXIDE_FLOWING);
 
+    public static final RegistryObject<FluidType> RED_SLUDGE_TYPE = FLUID_TYPES.register("red_sludge",
+            () -> new BaseFluidType(FluidType.Properties.create().density(1450).viscosity(1100).temperature(300),
+                    WATER_STILL, WATER_FLOW,
+                    new ResourceLocation("trd", "textures/gui/fluid/red_sludge.png"),
+                    0xb14949, 20, 10));
+    public static final RegistryObject<FlowingFluid> RED_SLUDGE_SOURCE = FLUIDS.register("red_sludge",
+            () -> new ForgeFlowingFluid.Source(ModFluids.RED_SLUDGE_PROPS));
+    public static final RegistryObject<FlowingFluid> RED_SLUDGE_FLOWING = FLUIDS.register("flowing_red_sludge",
+            () -> new ForgeFlowingFluid.Flowing(ModFluids.RED_SLUDGE_PROPS));
+    private static final ForgeFlowingFluid.Properties RED_SLUDGE_PROPS = new ForgeFlowingFluid.Properties(
+            RED_SLUDGE_TYPE, RED_SLUDGE_SOURCE, RED_SLUDGE_FLOWING);
+
+    public static final RegistryObject<FluidType> ALUMINATE_SOLUTION_TYPE = FLUID_TYPES.register("aluminate_solution",
+            () -> new BaseFluidType(FluidType.Properties.create().density(1450).viscosity(1100).temperature(300),
+                    WATER_STILL, WATER_FLOW,
+                    new ResourceLocation("trd", "textures/gui/fluid/aluminate_solution.png"),
+                    0x92b1a1, 20, 0));
+    public static final RegistryObject<FlowingFluid> ALUMINATE_SOLUTION_SOURCE = FLUIDS.register("aluminate_solution",
+            () -> new ForgeFlowingFluid.Source(ModFluids.ALUMINATE_SOLUTION_PROPS));
+    public static final RegistryObject<FlowingFluid> ALUMINATE_SOLUTION_FLOWING = FLUIDS.register("flowing_aluminate_solution",
+            () -> new ForgeFlowingFluid.Flowing(ModFluids.ALUMINATE_SOLUTION_PROPS));
+    private static final ForgeFlowingFluid.Properties ALUMINATE_SOLUTION_PROPS = new ForgeFlowingFluid.Properties(
+            ALUMINATE_SOLUTION_TYPE, ALUMINATE_SOLUTION_SOURCE, ALUMINATE_SOLUTION_FLOWING);
+
 
 
     public static final RegistryObject<Item> FLUID_DROP_NONE = FLUID_DROP_ITEMS.register("fluid_drop_none", () -> new Item(new Item.Properties()));
@@ -200,6 +224,8 @@ public class ModFluids {
         registerDrop("sodium_sulfate", SODIUM_SULFATE_TYPE);
         registerDrop("carbon_dioxide", CARBON_DIOXIDE_TYPE);
         registerDrop("soda", SODA_TYPE);
+        registerDrop("aluminate_solution", ALUMINATE_SOLUTION_TYPE);
+        registerDrop("red_sludge", RED_SLUDGE_TYPE);
         registerDrop("sodium_hydroxide", SODIUM_HYDROXIDE_TYPE);
         registerDrop("low_pressure_steam", LOW_PRESSURE_STEAM_TYPE);
     }

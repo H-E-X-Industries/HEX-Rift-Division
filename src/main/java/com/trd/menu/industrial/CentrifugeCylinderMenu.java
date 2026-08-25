@@ -1,7 +1,7 @@
 package com.trd.menu.industrial;
 
 import com.trd.menu.ModMenuTypes;
-import com.trd.multiblock.industrial.centrifuge.CentrifugeCylinderBlockEntity;
+import com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderBlockEntity;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;

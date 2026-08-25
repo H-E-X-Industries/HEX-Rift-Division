@@ -12,6 +12,8 @@ import com.trd.datagen.stats.ModBlockLootTableProvider;
 import com.trd.entity.mobs.depth_worm.DepthWormBrutalEntity;
 import com.trd.entity.mobs.grenadier.GrenadierZombieEntity;
 import com.trd.event.SlagItem;
+import com.trd.multiblock.industrial.centrifuge.conus.CentrifugeRecipes;
+import com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderRecipes;
 import com.trd.multiblock.industrial.coccer.CoccerOvenRecipeRegistry;
 import com.trd.multiblock.industrial.drobitel.DrobitelRecipes;
 import com.trd.worldgen.feature.ModFeatures;
@@ -140,8 +142,8 @@ public class MainRegistry {
             com.trd.multiblock.industrial.stanok.StanokRecipes.register();
             ChemicalPlantRecipeRegistry.init();
             com.trd.multiblock.industrial.vishelashivatel.VishelashivatelRecipes.init();
-            com.trd.multiblock.industrial.centrifuge.CentrifugeRecipes.init();
-            com.trd.multiblock.industrial.centrifuge.CentrifugeCylinderRecipes.init();
+            CentrifugeRecipes.init();
+            CentrifugeCylinderRecipes.init();
             ModPacketHandler.register();
             Regions.register(new ModOverworldRegion(new ResourceLocation(MOD_ID, "overworld"), 2));
             SurfaceRuleManager.addSurfaceRules(SurfaceRuleManager.RuleCategory.OVERWORLD, "trd",
@@ -459,8 +461,11 @@ public class MainRegistry {
             event.accept(ModItems.CINNABAR);
             event.accept(ModItems.LIGNITE);
             event.accept(ModItems.FLUORITE);
+            event.accept(ModItems.ALUMINA);
             event.accept(ModItems.SODA_CRYSTAL);
+
             event.accept(ModItems.SODA);
+            event.accept(ModItems.ALUMINUM_HYDROXIDE);
             event.accept(ModItems.SEQUESTRUM);
             event.accept(ModItems.SALT);
             event.accept(ModItems.SULFUR);

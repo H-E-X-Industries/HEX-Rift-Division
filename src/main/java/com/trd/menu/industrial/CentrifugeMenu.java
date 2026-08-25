@@ -1,6 +1,6 @@
 package com.trd.menu.industrial;
 
-import com.trd.multiblock.industrial.centrifuge.CentrifugeConusBlockEntity;
+import com.trd.multiblock.industrial.centrifuge.conus.CentrifugeConusBlockEntity;
 import com.trd.menu.ModMenuTypes;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;

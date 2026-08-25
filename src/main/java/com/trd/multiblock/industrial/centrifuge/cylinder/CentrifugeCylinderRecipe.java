@@ -1,4 +1,4 @@
-package com.trd.multiblock.industrial.centrifuge;
+package com.trd.multiblock.industrial.centrifuge.cylinder;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;

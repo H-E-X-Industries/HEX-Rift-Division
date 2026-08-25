@@ -103,6 +103,20 @@ public class ModMetallurgy {
                 ResourceRegistry.getSmallUnit("aluminum"),
                 ResourceRegistry.getBlock("aluminum"));
         MetallurgyRegistry.addSmeltRecipe(ModItems.ALUMINUM_PLATE.get(), aluminum, 9, 660, 0.4f, 60);
+        // Флюсовое восстановление глинозёма: 4 глинозёма + 2 негашёной извести -> 1 слиток алюминия
+        AlloyRecipe aluminaReduction = new AlloyRecipe(
+                new AlloySlot[]{
+                        new AlloySlot(ModItems.ALUMINA.get(), 4),
+                        new AlloySlot(ModItems.QUICKLIME.get(), 2),
+                        new AlloySlot(null, 0),
+                        new AlloySlot(null, 0)
+                },
+                aluminum,
+                9,
+                0.6f,
+                100
+        );
+        MetallurgyRegistry.addAlloyRecipe(aluminaReduction);
 
         // === БРОНЗА ===
         Metal bronze = registerMetalWithItems("bronze", 0xcb9a3e, 930, 0.6f,

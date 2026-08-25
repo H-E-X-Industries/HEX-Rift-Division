@@ -1,4 +1,4 @@
-package com.trd.multiblock.industrial.centrifuge;
+package com.trd.multiblock.industrial.centrifuge.conus;
 
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.item.energy.EnergyCellItem;

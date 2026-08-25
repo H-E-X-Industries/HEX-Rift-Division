@@ -5,6 +5,8 @@ import com.trd.api.energy.IEnergyConnector;
 import com.trd.api.energy.IEnergyReceiver;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.capability.ModCapabilities;
+import com.trd.multiblock.industrial.centrifuge.conus.CentrifugeConusBlockEntity;
+import com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;

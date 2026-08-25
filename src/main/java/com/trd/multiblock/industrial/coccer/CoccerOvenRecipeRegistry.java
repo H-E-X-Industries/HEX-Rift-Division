@@ -29,6 +29,10 @@ public class CoccerOvenRecipeRegistry {
 
         register(ModItems.SODA_CRYSTAL.get(), new ItemStack(ModItems.SODA.get()),
                 new FluidStack(Fluids.WATER, 250), 100, 60);
+
+        // Прокалка гидроксида алюминия -> глинозём + пар воды
+        register(ModItems.ALUMINUM_HYDROXIDE.get(), new ItemStack(ModItems.ALUMINA.get()),
+                new FluidStack(Fluids.WATER, 50), 1100, 80);
     }
 
     private static void register(net.minecraft.world.item.Item input, net.minecraft.world.item.ItemStack outItem,

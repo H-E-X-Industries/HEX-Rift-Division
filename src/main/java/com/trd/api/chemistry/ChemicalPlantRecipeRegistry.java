@@ -90,6 +90,30 @@ public class ChemicalPlantRecipeRegistry {
                 30
         ));
 
+        register(new ChemicalPlantRecipe(
+                new ResourceLocation("trd", "aluminate_solution"),
+                List.of(new FluidStack(ModFluids.SODIUM_HYDROXIDE_SOURCE.get(), 500)),
+                List.of(new FluidStack(ModFluids.ALUMINATE_SOLUTION_SOURCE.get(), 250),
+                            new FluidStack(ModFluids.RED_SLUDGE_SOURCE.get(), 50 )),
+                List.of(new ItemStack(ModItems.BAUXITE_POWDER.get(), 10)),
+                List.of(),
+                90,
+                150
+        ));
+
+        // Декомпозиция алюминатного раствора: разбавление водой с выпадением гидроксида алюминия,
+        // щёлочь регенерируется (~90%) и возвращается в цикл Байера
+        register(new ChemicalPlantRecipe(
+                new ResourceLocation("trd", "aluminate_decomposition"),
+                List.of(new FluidStack(ModFluids.ALUMINATE_SOLUTION_SOURCE.get(), 250),
+                        new FluidStack(Fluids.WATER, 250)),
+                List.of(new FluidStack(ModFluids.SODIUM_HYDROXIDE_SOURCE.get(), 450)),
+                List.of(),
+                List.of(new ItemStack(ModItems.ALUMINUM_HYDROXIDE.get(), 3)),
+                90,
+                60
+        ));
+
     }
 
     public static void register(ChemicalPlantRecipe recipe) {

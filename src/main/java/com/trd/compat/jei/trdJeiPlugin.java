@@ -15,6 +15,10 @@ import com.trd.block.entity.industrial.rotation.MillstoneBlockEntity;
 import com.trd.event.SlagItem;
 import com.trd.item.ModItems;
 import com.trd.main.MainRegistry;
+import com.trd.multiblock.industrial.centrifuge.conus.CentrifugeRecipe;
+import com.trd.multiblock.industrial.centrifuge.conus.CentrifugeRecipes;
+import com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderRecipe;
+import com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderRecipes;
 import com.trd.multiblock.industrial.coccer.CoccerOvenRecipe;
 import com.trd.multiblock.industrial.coccer.CoccerOvenRecipeRegistry;
 import com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity;
@@ -117,8 +121,8 @@ public class trdJeiPlugin implements IModPlugin {
     public record CoccerOvenWrapper(CoccerOvenRecipe recipe) {}
     public record ChemicalPlantWrapper(ChemicalPlantRecipe recipe) {}
     public record VishelashivatelWrapper(com.trd.multiblock.industrial.vishelashivatel.VishelashivatelRecipe recipe) {}
-    public record CentrifugeWrapper(com.trd.multiblock.industrial.centrifuge.CentrifugeRecipe recipe) {}
-    public record CentrifugeCylinderWrapper(com.trd.multiblock.industrial.centrifuge.CentrifugeCylinderRecipe recipe) {}
+    public record CentrifugeWrapper(CentrifugeRecipe recipe) {}
+    public record CentrifugeCylinderWrapper(CentrifugeCylinderRecipe recipe) {}
 
     @Override
     public void registerCategories(IRecipeCategoryRegistration registration) {
@@ -282,16 +286,16 @@ public class trdJeiPlugin implements IModPlugin {
 
         // === ЦЕНТРИФУГА ===
         List<CentrifugeWrapper> centrifugeRecipes = new ArrayList<>();
-        for (com.trd.multiblock.industrial.centrifuge.CentrifugeRecipe recipe :
-                com.trd.multiblock.industrial.centrifuge.CentrifugeRecipes.getAllRecipes()) {
+        for (CentrifugeRecipe recipe :
+                CentrifugeRecipes.getAllRecipes()) {
             centrifugeRecipes.add(new CentrifugeWrapper(recipe));
         }
         registration.addRecipes(CENTRIFUGE_TYPE, centrifugeRecipes);
 
         // === ЖИДКОСТНАЯ ЦЕНТРИФУГА ===
         List<CentrifugeCylinderWrapper> centrifugeCylinderRecipes = new ArrayList<>();
-        for (com.trd.multiblock.industrial.centrifuge.CentrifugeCylinderRecipe recipe :
-                com.trd.multiblock.industrial.centrifuge.CentrifugeCylinderRecipes.getAllRecipes()) {
+        for (CentrifugeCylinderRecipe recipe :
+                CentrifugeCylinderRecipes.getAllRecipes()) {
             centrifugeCylinderRecipes.add(new CentrifugeCylinderWrapper(recipe));
         }
         registration.addRecipes(CENTRIFUGE_CYLINDER_TYPE, centrifugeCylinderRecipes);
@@ -896,7 +900,7 @@ public class trdJeiPlugin implements IModPlugin {
 
         @Override
         public void setRecipe(IRecipeLayoutBuilder builder, CentrifugeWrapper wrapper, IFocusGroup focuses) {
-            com.trd.multiblock.industrial.centrifuge.CentrifugeRecipe recipe = wrapper.recipe();
+            CentrifugeRecipe recipe = wrapper.recipe();
 
             builder.addSlot(RecipeIngredientRole.INPUT, 5, 22)
                     .addItemStack(recipe.getInput().copy());
@@ -938,7 +942,7 @@ public class trdJeiPlugin implements IModPlugin {
 
         @Override
         public void setRecipe(IRecipeLayoutBuilder builder, CentrifugeCylinderWrapper wrapper, IFocusGroup focuses) {
-            com.trd.multiblock.industrial.centrifuge.CentrifugeCylinderRecipe recipe = wrapper.recipe();
+            CentrifugeCylinderRecipe recipe = wrapper.recipe();
 
             // Входная жидкость (каплей) с количеством
             ItemStack fluidDrop = fluidDropStack(recipe.getInputFluid());
