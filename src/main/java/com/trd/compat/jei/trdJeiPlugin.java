@@ -329,7 +329,11 @@ public class trdJeiPlugin implements IModPlugin {
 
     public static ItemStack fluidDropStack(FluidStack fluid) {
         Item drop = ModFluids.getFluidDrop(fluid.getFluid().getFluidType());
-        return drop == null ? ItemStack.EMPTY : new ItemStack(drop);
+        if (drop == null) return ItemStack.EMPTY;
+        ItemStack stack = new ItemStack(drop);
+        // Актуальный объём для тултипа (FluidDropItem читает этот тег)
+        stack.getOrCreateTag().putInt("FluidVolume", fluid.getAmount());
+        return stack;
     }
 
     // ==================== КАТЕГОРИИ ====================
@@ -747,11 +751,8 @@ public class trdJeiPlugin implements IModPlugin {
             if (recipe.hasFluidOutput() && cell < 2) {
                 ItemStack drop = fluidDropStack(recipe.getOutputFluid());
                 if (!drop.isEmpty()) {
-                    FluidStack fluid = recipe.getOutputFluid();
                     builder.addSlot(RecipeIngredientRole.OUTPUT, 73, 22)
-                            .addItemStack(drop)
-                            .addTooltipCallback((view, tooltip) ->
-                                    tooltip.add(Component.literal(fluid.getAmount() + " mB")));
+                            .addItemStack(drop);
                 }
             }
         }
@@ -797,9 +798,7 @@ public class trdJeiPlugin implements IModPlugin {
                 ItemStack drop = fluidDropStack(fluid);
                 if (drop.isEmpty()) continue;
                 builder.addSlot(RecipeIngredientRole.INPUT, GRID_INPUT_SLOTS[cell][0], GRID_INPUT_SLOTS[cell][1])
-                        .addItemStack(drop)
-                        .addTooltipCallback((view, tooltip) ->
-                                tooltip.add(Component.literal(fluid.getAmount() + " mB")));
+                        .addItemStack(drop);
                 cell++;
             }
 
@@ -815,9 +814,7 @@ public class trdJeiPlugin implements IModPlugin {
                 ItemStack drop = fluidDropStack(fluid);
                 if (drop.isEmpty()) continue;
                 builder.addSlot(RecipeIngredientRole.OUTPUT, GRID_OUTPUT_SLOTS[cell][0], GRID_OUTPUT_SLOTS[cell][1])
-                        .addItemStack(drop)
-                        .addTooltipCallback((view, tooltip) ->
-                                tooltip.add(Component.literal(fluid.getAmount() + " mB")));
+                        .addItemStack(drop);
                 cell++;
             }
         }
@@ -859,9 +856,7 @@ public class trdJeiPlugin implements IModPlugin {
             ItemStack fluidDrop = fluidDropStack(recipe.getRequiredFluid());
             if (!fluidDrop.isEmpty()) {
                 builder.addSlot(RecipeIngredientRole.INPUT, 23, 22)
-                        .addItemStack(fluidDrop)
-                        .addTooltipCallback((view, tooltip) ->
-                                tooltip.add(Component.literal(recipe.getRequiredFluid().getAmount() + " mB")));
+                        .addItemStack(fluidDrop);
             }
 
             // Выходы — до 3 шт в ряд
@@ -951,9 +946,7 @@ public class trdJeiPlugin implements IModPlugin {
             ItemStack fluidDrop = fluidDropStack(recipe.getInputFluid());
             if (!fluidDrop.isEmpty()) {
                 builder.addSlot(RecipeIngredientRole.INPUT, 5, 22)
-                        .addItemStack(fluidDrop)
-                        .addTooltipCallback((view, tooltip) ->
-                                tooltip.add(Component.literal(recipe.getInputFluid().getAmount() + " mB")));
+                        .addItemStack(fluidDrop);
             }
 
             // Выходы: сначала жидкости, затем предметы — до 4 ячеек 2x2
@@ -963,9 +956,7 @@ public class trdJeiPlugin implements IModPlugin {
                 ItemStack drop = fluidDropStack(fluid);
                 if (drop.isEmpty()) continue;
                 builder.addSlot(RecipeIngredientRole.OUTPUT, CHAMBER_OUTPUT_SLOTS[cell][0], CHAMBER_OUTPUT_SLOTS[cell][1])
-                        .addItemStack(drop)
-                        .addTooltipCallback((view, tooltip) ->
-                                tooltip.add(Component.literal(fluid.getAmount() + " mB")));
+                        .addItemStack(drop);
                 cell++;
             }
             for (ItemStack stack : recipe.getItemOutputs()) {

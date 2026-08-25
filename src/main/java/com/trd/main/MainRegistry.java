@@ -374,9 +374,6 @@ public class MainRegistry {
             event.accept(ModBlocks.CONVEYOR.get());
             event.accept(ModBlocks.SORTIROVSHIK.get());
 
-            for (var entry : com.trd.api.fluids.ModFluids.getAllFluidDrops().values()) {
-                event.accept(entry.get());
-            }
 
         }
 
@@ -479,6 +476,9 @@ public class MainRegistry {
             event.accept(ModItems.BLACK_ASH);
             event.accept(ModItems.TRASH);
 
+            for (var entry : com.trd.api.fluids.ModFluids.getAllFluidDrops().values()) {
+                event.accept(entry.get());
+            }
 
         }
 

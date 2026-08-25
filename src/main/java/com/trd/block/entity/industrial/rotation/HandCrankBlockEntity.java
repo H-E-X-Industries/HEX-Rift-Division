@@ -22,6 +22,8 @@ import java.util.List;
 public class HandCrankBlockEntity extends KineticNodeBlockEntity {
 
     public static final int MAX_RPM = 500;
+    /** Максимальная скорость, которую ручка может ВЫРАБАТЫВАТЬ вручную */
+    public static final int MAX_GENERATED_RPM = 64;
     public static final long MAX_TORQUE = 5L;
 
     private int scrollBuffer = 0;
@@ -33,12 +35,13 @@ public class HandCrankBlockEntity extends KineticNodeBlockEntity {
 
     public void addScroll(int delta) {
         if (delta == 0) return;
-        
+
         int amount = delta > 0 ? 16 : -16;
         this.scrollBuffer += amount;
-        
-        this.scrollBuffer = Math.max(-MAX_RPM, Math.min(MAX_RPM, this.scrollBuffer));
-        
+
+        // Ограничиваем именно вырабатываемую скорость; MAX_RPM — предел прочности сети
+        this.scrollBuffer = Math.max(-MAX_GENERATED_RPM, Math.min(MAX_GENERATED_RPM, this.scrollBuffer));
+
         this.idleTicks = 0;
         setChanged();
         requestKineticRecalculation();

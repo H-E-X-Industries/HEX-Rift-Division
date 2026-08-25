@@ -166,6 +166,13 @@ public class SortirovshikBlockEntity extends BlockEntity implements MenuProvider
         Set<ConveyorNetwork> visited = new HashSet<>();
         for (Direction side : Direction.values()) {
             BlockPos beltPos = worldPosition.relative(side);
+
+            // Подхватываем предметы ТОЛЬКО с лент, направленных в сортировщик
+            // (т.е. реально подключённых к нему входом; ленты сбоку/снизу/от него не трогаем)
+            BlockState beltState = serverLevel.getBlockState(beltPos);
+            if (!(beltState.getBlock() instanceof com.trd.block.basic.industrial.ConveyorBlock)) continue;
+            if (beltState.getValue(com.trd.block.basic.industrial.ConveyorBlock.FACING) != side.getOpposite()) continue;
+
             ConveyorNetwork net = manager.getNetworkFor(beltPos);
             if (net == null || !visited.add(net)) continue;
 

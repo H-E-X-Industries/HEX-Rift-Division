@@ -64,7 +64,7 @@ public class StatorBlock extends BaseEntityBlock implements IMultiblockControlle
             );
             helper = MultiblockStructureHelper.createFromLayersWithRoles(
                     new String[][]{
-                            {"#O#"},
+                            {"EOE"},   // базовый слой: энергопорты снизу для скрытой проводки
                             {"E E"},
                             {"#E#"}
                     },
