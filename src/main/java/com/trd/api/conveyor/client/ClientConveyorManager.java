@@ -9,7 +9,18 @@ public class ClientConveyorManager {
     private static final Map<UUID, ClientNetworkData> networks = new HashMap<>();
 
     public static void updateNetwork(UUID networkId, List<ConveyorItem> items, List<BlockPos> path) {
+        // После пересоздания/слияния сетей на сервере старые клиентские копии остаются
+        // с застывшими предметами и перехватывают рендер у живой сети.
+        // Удаляем любые записи, чей путь пересекается с обновляемой сетью.
+        networks.values().removeIf(data -> data != null && pathIntersects(data.path, path));
         networks.put(networkId, new ClientNetworkData(items, path));
+    }
+
+    private static boolean pathIntersects(List<BlockPos> a, List<BlockPos> b) {
+        for (BlockPos pos : a) {
+            if (b.contains(pos)) return true;
+        }
+        return false;
     }
 
     public static void removeNetwork(UUID networkId) {
@@ -29,12 +40,11 @@ public class ClientConveyorManager {
         // Экстраполяция на клиенте для плавности
         double speed = com.trd.api.conveyor.ConveyorNetwork.SPEED;
         for (ClientNetworkData data : networks.values()) {
+            double maxProgress = data.path.size() - 0.01;
             for (ConveyorItem item : data.items) {
-                // ПРИМЕЧАНИЕ: Это простая экстраполяция. 
-                // В идеале мы должны отслеживать коллизии и на клиенте, 
-                // чтобы предметы не въезжали друг в друга при задержках пакетов.
-                // Но пакеты с сервера будут корректировать их реальное положение.
-                item.setProgress(item.getProgress() + speed);
+                // Экстраполяция ограничена концом пути: если сервер уже удалил предмет,
+                // а пакет синхронизации ещё не дошёл — предмет не должен "убегать" вперёд
+                item.setProgress(Math.min(item.getProgress() + speed, maxProgress));
             }
         }
     }

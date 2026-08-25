@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -84,5 +85,23 @@ public class ChemicalPlantPortBlock extends BaseEntityBlock {
             }
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    @Override
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!state.is(newState.getBlock()) && !level.isClientSide) {
+            // Высыпаем содержимое предметного буфера порта при поломке
+            BlockEntity be = level.getBlockEntity(pos);
+            if (be instanceof ChemicalPlantPortBlockEntity port) {
+                var inv = port.getItemHandler();
+                for (int i = 0; i < inv.getSlots(); i++) {
+                    ItemStack stack = inv.getStackInSlot(i);
+                    if (!stack.isEmpty()) {
+                        net.minecraft.world.Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), stack);
+                    }
+                }
+            }
+        }
+        super.onRemove(state, level, pos, newState, isMoving);
     }
 }

@@ -70,6 +70,14 @@ public class ConveyorNetwork {
         return true;
     }
 
+    /** Вставка с доступом к созданному предмету (например, для выдачи сортировщиком). */
+    public ConveyorItem insertItemTracked(ItemStack stack, double progress) {
+        ConveyorItem newItem = new ConveyorItem(stack, progress);
+        items.add(newItem);
+        sortItems();
+        return newItem;
+    }
+
     private void sortItems() {
         items.sort((a, b) -> Double.compare(b.getProgress(), a.getProgress()));
     }
@@ -86,6 +94,12 @@ public class ConveyorNetwork {
         Iterator<ConveyorItem> iterator = items.iterator();
         while (iterator.hasNext()) {
             ConveyorItem item = iterator.next();
+
+            // Иммунитет от повторного захвата сортировщиком истекает со временем
+            if (item.getSorterCooldown() > 0) {
+                item.setSorterCooldown(item.getSorterCooldown() - 1);
+            }
+
             double currentProgress = item.getProgress();
             double desiredProgress = currentProgress + SPEED;
             

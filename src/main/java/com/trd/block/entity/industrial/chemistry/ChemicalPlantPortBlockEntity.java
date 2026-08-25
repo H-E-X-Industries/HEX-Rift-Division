@@ -62,6 +62,9 @@ public class ChemicalPlantPortBlockEntity extends BlockEntity implements MenuPro
 
     private int mode = 0; // 0 = input (вставщик), 1 = output (извлекатель)
 
+    // Ротация стартового бака при drain(int): оба буфера доступны независимо друг от друга
+    private int lastDrainedTank = 0;
+
     private LazyOptional<IFluidHandler> fluidHandler = LazyOptional.empty();
     private LazyOptional<IItemHandler> itemCapability = LazyOptional.empty();
 
@@ -69,10 +72,48 @@ public class ChemicalPlantPortBlockEntity extends BlockEntity implements MenuPro
         super(ModBlockEntities.CHEMICAL_PLANT_PORT_BE.get(), pos, state);
     }
 
-    @Override
-    public void onLoad() {
-        super.onLoad();
-        fluidHandler = LazyOptional.of(() -> new IFluidHandler() {
+    // ===================== РЕЦЕПТ ПОДКЛЮЧЁННОЙ КАМЕРЫ =====================
+
+    /** Рецепт, выбранный у камеры, к которой подключён порт (null — рецепта нет или камера не подключена). */
+    @Nullable
+    public ChemicalPlantRecipe getConnectedRecipe() {
+        if (level == null) return null;
+        BlockState state = getBlockState();
+        if (!state.hasProperty(HorizontalDirectionalBlock.FACING)) return null;
+        Direction facing = state.getValue(HorizontalDirectionalBlock.FACING);
+        if (level.getBlockEntity(worldPosition.relative(facing)) instanceof ChemicalPlantReactionChamberBlockEntity chamber) {
+            ResourceLocation id = chamber.getCurrentRecipeId();
+            return id == null ? null : ChemicalPlantRecipeRegistry.getById(id);
+        }
+        return null;
+    }
+
+    /** Участвует ли жидкость во входах текущего рецепта камеры. */
+    public boolean acceptsFluidForRecipe(FluidStack stack) {
+        if (stack.isEmpty()) return false;
+        ChemicalPlantRecipe recipe = getConnectedRecipe();
+        if (recipe == null) return false;
+        for (FluidStack input : recipe.getFluidInputs()) {
+            if (input.getFluid() == stack.getFluid()) return true;
+        }
+        return false;
+    }
+
+    /** Совпадает ли предмет с входами текущего рецепта камеры. */
+    public boolean acceptsItemForRecipe(ItemStack stack) {
+        if (stack.isEmpty()) return false;
+        ChemicalPlantRecipe recipe = getConnectedRecipe();
+        if (recipe == null) return false;
+        for (ItemStack input : recipe.getItemInputs()) {
+            if (ItemStack.isSameItemSameTags(input, stack)) return true;
+        }
+        return false;
+    }
+
+    // ===================== CAPABILITIES =====================
+
+    private IFluidHandler createFluidHandler() {
+        return new IFluidHandler() {
             @Override public int getTanks() { return 2; }
             @Override public @NotNull FluidStack getFluidInTank(int tank) {
                 return tank == 0 ? tankA.getFluid() : tankB.getFluid();
@@ -80,26 +121,58 @@ public class ChemicalPlantPortBlockEntity extends BlockEntity implements MenuPro
             @Override public int getTankCapacity(int tank) {
                 return tank == 0 ? tankA.getCapacity() : tankB.getCapacity();
             }
-            @Override public boolean isFluidValid(int tank, @NotNull FluidStack stack) { return true; }
+            @Override public boolean isFluidValid(int tank, @NotNull FluidStack stack) {
+                if (mode != 0 || !acceptsFluidForRecipe(stack)) return false;
+                FluidTank target = tank == 0 ? tankA : tankB;
+                return target.isEmpty() || target.getFluid().getFluid() == stack.getFluid();
+            }
             @Override public int fill(FluidStack resource, FluidAction action) {
+                // Заливать можно только в режиме вставщика и только жидкости из рецепта камеры
                 if (mode != 0 || resource.isEmpty()) return 0;
+                if (!acceptsFluidForRecipe(resource)) return 0;
                 return internalFill(resource, action);
             }
             @Override public @NotNull FluidStack drain(FluidStack resource, FluidAction action) {
                 if (mode != 1) return FluidStack.EMPTY;
+                // Буферы независимы: опрашиваем оба, отдаём из того, где есть такая жидкость
                 FluidStack drainedA = tankA.drain(resource, action);
                 if (!drainedA.isEmpty()) return drainedA;
                 return tankB.drain(resource, action);
             }
             @Override public @NotNull FluidStack drain(int maxDrain, FluidAction action) {
-                if (mode != 1) return FluidStack.EMPTY;
-                FluidStack drainedA = tankA.drain(maxDrain, action);
-                if (!drainedA.isEmpty()) return drainedA;
-                return tankB.drain(maxDrain, action);
+                if (mode != 1 || maxDrain <= 0) return FluidStack.EMPTY;
+                // Ротация стартового бака: труба видит содержимое обоих буферов,
+                // второй не блокируется первым
+                for (int k = 0; k < 2; k++) {
+                    int index = (lastDrainedTank + k) % 2;
+                    FluidTank tank = index == 0 ? tankA : tankB;
+                    if (!tank.isEmpty()) {
+                        lastDrainedTank = (index + 1) % 2;
+                        return tank.drain(maxDrain, action);
+                    }
+                }
+                return FluidStack.EMPTY;
             }
-        });
+        };
+    }
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        fluidHandler = LazyOptional.of(this::createFluidHandler);
+        // Предметы: кладётся/забирается независимо от режима и рецепта.
+        // Важно: ItemStackHandler реализует IItemHandlerModifiable (нужно для GUI-слотов).
         itemCapability = LazyOptional.of(() -> itemHandler);
         // Принудительно уведомляем соседей о готовности capability после загрузки мира
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+        }
+    }
+
+    /** Пересоздаёт capability жидкостей, чтобы соседи увидели новый режим (вставщик/извлекатель). */
+    private void refreshCapabilities() {
+        fluidHandler.invalidate();
+        fluidHandler = LazyOptional.of(this::createFluidHandler);
         if (level != null && !level.isClientSide) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
         }
@@ -127,7 +200,11 @@ public class ChemicalPlantPortBlockEntity extends BlockEntity implements MenuPro
         boolean changed = false;
 
         if (be.mode == 0) { // INPUT
-            if (chamberFluid != null) {
+            ChemicalPlantRecipe recipe = be.getConnectedRecipe();
+
+            // Жидкости гоним только если у камеры выбран рецепт (fill камеры отфильтрует лишнее).
+            // Предметы передаём всегда — камера сама отклоняет чужие через isItemValid.
+            if (recipe != null && chamberFluid != null) {
                 changed |= transferFluid(be.tankA, chamberFluid, 200);
                 changed |= transferFluid(be.tankB, chamberFluid, 200);
             }
@@ -149,9 +226,7 @@ public class ChemicalPlantPortBlockEntity extends BlockEntity implements MenuPro
             }
         } else { // OUTPUT
             if (chamberFluid != null) {
-                ChemicalPlantRecipe recipe = null;
-                ResourceLocation recipeId = chamber.getCurrentRecipeId();
-                if (recipeId != null) recipe = ChemicalPlantRecipeRegistry.getById(recipeId);
+                ChemicalPlantRecipe recipe = be.getConnectedRecipe();
 
                 // НЕ забираем жидкости если рецепта нет
                 if (recipe != null) {
@@ -249,9 +324,8 @@ public class ChemicalPlantPortBlockEntity extends BlockEntity implements MenuPro
     public void setMode(int mode) {
         this.mode = mode;
         setChanged();
-        if (level != null && !level.isClientSide) {
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
-        }
+        // Пересоздаём capabilities: соседи (трубы/конвейеры) должны увидеть новый режим
+        refreshCapabilities();
     }
 
     public int getMode() { return mode; }
