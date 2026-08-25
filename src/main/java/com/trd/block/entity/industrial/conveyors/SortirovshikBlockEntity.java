@@ -40,6 +40,10 @@ public class SortirovshikBlockEntity extends BlockEntity implements MenuProvider
     public static final int FILTERS_PER_SECTION = 5;
     public static final int TOTAL_FILTER_SLOTS = SECTIONS * FILTERS_PER_SECTION;
 
+    // Ширина окна захвата у конца сегмента (в блоках). Должна быть заметно больше
+    // ConveyorNetwork.SPEED (0.075/тик), чтобы предмет не "перепрыгнул" мимо захвата
+    private static final double CAPTURE_WINDOW = 0.3;
+
     // Режимы секции (переключаются кнопкой по кругу)
     public static final int MODE_CLOSED = 0;     // направление закрыто (по умолчанию)
     public static final int MODE_BLACKLIST = 1;  // чёрный список
@@ -185,10 +189,12 @@ public class SortirovshikBlockEntity extends BlockEntity implements MenuProvider
             // выдача может вставить предмет обратно в ЭТУ же сеть (кольцевая схема),
             // и нельзя переставлять список, пока мы его обходим
             List<ConveyorItem> matched = new ArrayList<>(0);
+            // Предмет забирается только у КОНЦА сегмента напротив сортировщика,
+            // чтобы он визуально доехал до него, а не исчезал при въезде на блок
+            double captureStart = index + 1.0 - CAPTURE_WINDOW;
             for (ConveyorItem item : items) {
                 double progress = item.getProgress();
-                // Предмет находится напротив сортировщика (блок ленты, соседний с ним)
-                if (progress < index || progress >= index + 1.0) continue;
+                if (progress < captureStart || progress >= index + 1.0) continue;
                 // Свежевыданные этим (или соседним) сортировщиком предметы не трогаем,
                 // пока они проезжают примыкающий сегмент — иначе цикл на месте
                 if (item.getSorterCooldown() > 0) continue;

@@ -107,7 +107,7 @@ public class ModMetallurgy {
         AlloyRecipe aluminaReduction = new AlloyRecipe(
                 new AlloySlot[]{
                         new AlloySlot(ModItems.ALUMINA.get(), 4),
-                        new AlloySlot(2, ModItems.QUICKLIME.get(), ModItems.FLUORITE.get()),
+                        new AlloySlot(null, 0),
                         new AlloySlot(null, 0),
                         new AlloySlot(null, 0)
                 },

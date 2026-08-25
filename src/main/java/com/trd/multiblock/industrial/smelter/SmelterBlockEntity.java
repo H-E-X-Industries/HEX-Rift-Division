@@ -191,14 +191,14 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
         be.pickupThrownItems(level, pos);
         be.burnEntitiesInRecess(level, pos);
 
-        // Раздельное отслеживание изменений
-        int currentTopHash = be.calculateTopHash();
-        int currentBottomHash = be.calculateBottomHash();
+        // Сливаем одинаковые предметы верхнего ряда в один слот всегда:
+        // докладывание/слияние того же предмета больше не сбрасывает плавку
+        be.mergeTopRowStacks();
 
-        if (currentTopHash != be.lastTopHash) {
-            be.lastTopHash = currentTopHash;
-            be.resetTopSmelting();
-        }
+        // Изменения ВЕРХНЕГО ряда отслеживаются внутри tickTopRow: докладывание
+        // того же предмета (рост пачки) не должно сбрасывать идущую плавку.
+        // Нижний ряд — прежняя логика полного сброса при изменении слотов.
+        int currentBottomHash = be.calculateBottomHash();
 
         if (currentBottomHash != be.lastBottomHash) {
             be.lastBottomHash = currentBottomHash;
@@ -307,8 +307,9 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
         int currentTopHash = calculateTopHash();
         if (currentTopHash != lastTopHash) {
             lastTopHash = currentTopHash;
-            // Сбрасываем только если рецепт изменился (не просто количество)
-            if (!recipe.matches(previousTopStacks)) {
+            // Сбрасываем только если НОВЫЙ расклад больше не соответствует рецепту.
+            // Докладывание того же предмета в тот же слот (пачка растёт) плавку НЕ прерывает.
+            if (!recipe.matches(topSlotsStacks)) {
                 resetTopSmelting();
                 // Копируем текущие стеки для отслеживания
                 for (int i = 0; i < 4; i++) {
@@ -424,6 +425,43 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
         }
     }
 
+    /**
+     * Сливает одинаковые предметы (тот же предмет + те же теги) верхнего ряда
+     * в первый подходящий слот. Позволяет "пачкам" собираться, даже если
+     * конвейер разложил предметы по разным слотам.
+     */
+    private void mergeTopRowStacks() {
+        boolean mergedAny = false;
+        for (int i = 0; i < 4; i++) {
+            ItemStack target = inventory.getStackInSlot(i);
+            if (target.isEmpty() || target.getCount() >= target.getMaxStackSize()) continue;
+
+            for (int j = i + 1; j < 4; j++) {
+                ItemStack other = inventory.getStackInSlot(j);
+                if (other.isEmpty()) continue;
+                if (!ItemStack.isSameItemSameTags(target, other)) continue;
+
+                int space = Math.min(target.getMaxStackSize(), inventory.getSlotLimit(i)) - target.getCount();
+                if (space <= 0) break;
+
+                int moved = Math.min(space, other.getCount());
+                target.grow(moved);
+                other.shrink(moved);
+                mergedAny = true;
+
+                if (other.isEmpty()) {
+                    inventory.setStackInSlot(j, ItemStack.EMPTY);
+                } else {
+                    inventory.setStackInSlot(j, other);
+                    break; // слот i заполнен
+                }
+            }
+        }
+        if (mergedAny) {
+            setChanged();
+        }
+    }
+
     private void completeAlloyRecipeSynced(AlloyRecipe recipe, AlloySlot[] slots, ItemStack[] stacks) {
         // Списываем ВСЕ предметы рецепта (и плавящиеся, и катализаторы)
         for (int i = 0; i < 4; i++) {
@@ -434,6 +472,11 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
             if (!stack.isEmpty() && slotReq.accepts(stack.getItem()) && stack.getCount() >= slotReq.count()) {
                 stack.shrink(slotReq.count());
                 slotTemperatures[i] = 20; // Сброс температуры
+                // Остаток пачки должен снова стакаться с холодными предметами
+                if (!stack.isEmpty() && HotItemHandler.isHot(stack)) {
+                    HotItemHandler.clearHotTags(stack);
+                    setChanged();
+                }
             }
         }
 
@@ -795,7 +838,10 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
     private void processItemHeatExchange() {
         float heatTransferRate = 3.0f; // Скорость передачи тепла
 
-        for (int i = 0; i < 8; i++) {
+        // ТОЛЬКО нижний ряд (переплавка). Верхний ряд (сплавы) греется исключительно
+        // в tickTopRow и только после сборки полной "пачки" рецепта — иначе предметы
+        // получают NBT нагрева по одному, перестают стакаться и блокируют рецепт.
+        for (int i = 4; i < 8; i++) {
             ItemStack stack = inventory.getStackInSlot(i);
             if (stack.isEmpty()) {
                 slotTemperatures[i] = Math.max(20, slotTemperatures[i] - 1);

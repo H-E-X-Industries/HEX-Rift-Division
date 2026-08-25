@@ -141,73 +141,109 @@ public class FluidNetwork {
 
     private boolean transfer(ServerLevel level, List<IFluidHandler> sources, List<IFluidHandler> destinations, Set<net.minecraft.world.level.material.Fluid> allowedFluids) {
         for (IFluidHandler source : sources) {
-            FluidStack available = source.drain(Integer.MAX_VALUE, IFluidHandler.FluidAction.SIMULATE);
-            if (available.isEmpty() || available.getAmount() <= 0) continue;
-            if (!allowedFluids.isEmpty() && !allowedFluids.contains(available.getFluid())) continue; // Заблокировано фильтром
+            // Перебираем ВСЕ жидкости многосекционных источников (порты, центрифуги),
+            // иначе одна жидкость в первом баке блокирует доступ ко второй
+            for (FluidStack available : collectSourceCandidates(source)) {
+                if (available.isEmpty() || available.getAmount() <= 0) continue;
+                if (!allowedFluids.isEmpty() && !allowedFluids.contains(available.getFluid())) continue;
 
-            int remaining = available.getAmount();
-            net.minecraft.world.level.material.Fluid fluid = available.getFluid();
+                if (transferFromSource(level, source, destinations, allowedFluids, available)) return true;
+            }
+        }
+        return false;
+    }
 
-            Map<IFluidHandler, Integer> validDestinations = new HashMap<>();
-            long totalCapacity = 0;
+    /** Собирает список различных жидкостей, доступных для откачки из источника. */
+    private List<FluidStack> collectSourceCandidates(IFluidHandler source) {
+        List<FluidStack> result = new ArrayList<>();
+        Set<net.minecraft.world.level.material.Fluid> seen = new HashSet<>();
 
-            for (IFluidHandler dest : destinations) {
-                if (source == dest) continue;
-                int accepted = dest.fill(new FluidStack(fluid, Integer.MAX_VALUE), IFluidHandler.FluidAction.SIMULATE);
-                if (accepted > 0) {
-                    validDestinations.put(dest, accepted);
-                    totalCapacity += accepted;
+        int tanks = source.getTanks();
+        if (tanks > 1) {
+            // Лимит на случай некорректных хендлеров с гигантским числом танков
+            int limit = Math.min(tanks, 64);
+            for (int i = 0; i < limit; i++) {
+                FluidStack fs = source.getFluidInTank(i);
+                if (!fs.isEmpty() && seen.add(fs.getFluid())) {
+                    result.add(fs.copy());
                 }
             }
+        }
+        if (result.isEmpty()) {
+            // Fallback: источник без честного per-tank API
+            FluidStack av = source.drain(Integer.MAX_VALUE, IFluidHandler.FluidAction.SIMULATE);
+            if (!av.isEmpty()) result.add(av);
+        }
+        return result;
+    }
 
-            if (validDestinations.isEmpty()) continue;
+    private boolean transferFromSource(ServerLevel level, IFluidHandler source, List<IFluidHandler> destinations,
+                                       Set<net.minecraft.world.level.material.Fluid> allowedFluids, FluidStack available) {
+        int remaining = available.getAmount();
+        net.minecraft.world.level.material.Fluid fluid = available.getFluid();
 
-            while (remaining > 0 && !validDestinations.isEmpty() && totalCapacity > 0) {
-                int initialRemaining = remaining;
-                long currentTotalCapacity = totalCapacity;
-                
-                Iterator<Map.Entry<IFluidHandler, Integer>> it = validDestinations.entrySet().iterator();
-                while (it.hasNext() && remaining > 0) {
-                    Map.Entry<IFluidHandler, Integer> entry = it.next();
-                    IFluidHandler dest = entry.getKey();
-                    int maxAcceptable = entry.getValue();
+        Map<IFluidHandler, Integer> validDestinations = new HashMap<>();
+        long totalCapacity = 0;
 
-                    long share = (long) ((double) initialRemaining * ((double) maxAcceptable / currentTotalCapacity));
-                    if (share <= 0) share = 1; 
-                    
-                    int toFill = (int) Math.min(share, maxAcceptable);
-                    toFill = Math.min(toFill, remaining);
-                    
-                    if (toFill > 0) {
-                        FluidStack drained = source.drain(new FluidStack(fluid, toFill), IFluidHandler.FluidAction.EXECUTE);
-                        if (!drained.isEmpty()) {
-                            dest.fill(drained, IFluidHandler.FluidAction.EXECUTE);
-                            remaining -= drained.getAmount();
-                            
-                            if (!hasCheckedMeltdown) {
-                                if (checkMeltdown(level, fluid)) return true;
-                                hasCheckedMeltdown = true;
-                                for (FluidNode node : nodes) {
-                                    BlockPos nodePos = node.getPos();
-                                    if (level.isLoaded(nodePos)) {
-                                        BlockEntity be = level.getBlockEntity(nodePos);
-                                        if (be instanceof FluidPipeBlockEntity pipeBE) pipeBE.setHasFlowed(true);
-                                    }
+        for (IFluidHandler dest : destinations) {
+            if (source == dest) continue;
+            int accepted = dest.fill(new FluidStack(fluid, Integer.MAX_VALUE), IFluidHandler.FluidAction.SIMULATE);
+            if (accepted > 0) {
+                validDestinations.put(dest, accepted);
+                totalCapacity += accepted;
+            }
+        }
+
+        if (validDestinations.isEmpty()) return false;
+
+        while (remaining > 0 && !validDestinations.isEmpty() && totalCapacity > 0) {
+            int initialRemaining = remaining;
+            long currentTotalCapacity = totalCapacity;
+
+            Iterator<Map.Entry<IFluidHandler, Integer>> it = validDestinations.entrySet().iterator();
+            while (it.hasNext() && remaining > 0) {                Map.Entry<IFluidHandler, Integer> entry = it.next();
+                IFluidHandler dest = entry.getKey();
+                int maxAcceptable = entry.getValue();
+
+                long share = (long) ((double) initialRemaining * ((double) maxAcceptable / currentTotalCapacity));
+                if (share <= 0) share = 1;
+
+                int toFill = (int) Math.min(share, maxAcceptable);
+                toFill = Math.min(toFill, remaining);
+
+                if (toFill > 0) {
+                    FluidStack drained = source.drain(new FluidStack(fluid, toFill), IFluidHandler.FluidAction.EXECUTE);
+                    if (!drained.isEmpty()) {
+                        dest.fill(drained, IFluidHandler.FluidAction.EXECUTE);
+                        remaining -= drained.getAmount();
+
+                        if (!hasCheckedMeltdown) {
+                            if (checkMeltdown(level, fluid)) return true;
+                            hasCheckedMeltdown = true;
+                            for (FluidNode node : nodes) {
+                                BlockPos nodePos = node.getPos();
+                                if (level.isLoaded(nodePos)) {
+                                    BlockEntity be = level.getBlockEntity(nodePos);
+                                    if (be instanceof FluidPipeBlockEntity pipeBE) pipeBE.setHasFlowed(true);
                                 }
                             }
                         }
                     }
-                    
-                    int newAccepted = dest.fill(new FluidStack(fluid, Integer.MAX_VALUE), IFluidHandler.FluidAction.SIMULATE);
-                    totalCapacity -= maxAcceptable;
-                    if (newAccepted > 0) {
-                        entry.setValue(newAccepted);
-                        totalCapacity += newAccepted;
-                    } else {
-                        it.remove();
-                    }
+                }
+
+                int newAccepted = dest.fill(new FluidStack(fluid, Integer.MAX_VALUE), IFluidHandler.FluidAction.SIMULATE);
+                totalCapacity -= maxAcceptable;
+                if (newAccepted > 0) {
+                    entry.setValue(newAccepted);
+                    totalCapacity += newAccepted;
+                } else {
+                    it.remove();
                 }
             }
+
+            // Защита от вечного цикла: если за полный проход не передано ни капли
+            // (источник "врёт" — SIMULATE даёт, EXECUTE нет), прекращаем передачу
+            if (remaining == initialRemaining) break;
         }
         return false;
     }

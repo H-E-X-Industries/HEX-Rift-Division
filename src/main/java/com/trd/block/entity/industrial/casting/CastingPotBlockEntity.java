@@ -570,16 +570,15 @@ public class CastingPotBlockEntity extends BlockEntity {
 
         int toFillTotal = Math.min(amount, totalSpace);
         int actuallyFilled = 0;
-        int count = availablePools.size();
-        int perPool = toFillTotal / count;
-        int remainder = toFillTotal % count;
 
+        // ПОСЛЕДОВАТЕЛЬНОЕ заполнение: первый котёл (под спуском — он первый в BFS-порядке)
+        // заполняется до верха, и только потом металл идёт в следующий.
+        // Равномерное распределение недопустимо: ни один котёл не наберёт порцию для литья.
         for (CastingPotBlockEntity pool : availablePools) {
-            int fillAmount = perPool + (remainder-- > 0 ? 1 : 0);
-            if (fillAmount > 0) {
-                int accepted = pool.addMetal(metal, fillAmount);
-                actuallyFilled += accepted;
-            }
+            if (toFillTotal <= 0) break;
+            int accepted = pool.addMetal(metal, toFillTotal);
+            actuallyFilled += accepted;
+            toFillTotal -= accepted;
         }
         return actuallyFilled;
     }

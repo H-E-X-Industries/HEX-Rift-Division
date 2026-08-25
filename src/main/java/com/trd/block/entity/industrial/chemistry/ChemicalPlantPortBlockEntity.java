@@ -74,10 +74,23 @@ public class ChemicalPlantPortBlockEntity extends BlockEntity implements MenuPro
 
     // ===================== РЕЦЕПТ ПОДКЛЮЧЁННОЙ КАМЕРЫ =====================
 
-    /** Рецепт, выбранный у камеры, к которой подключён порт (null — рецепта нет или камера не подключена). */
+    private ChemicalPlantRecipe cachedRecipe;
+    private long recipeCacheTime = Long.MIN_VALUE;
+
+    /** Рецепт, выбранный у камеры, к которой подключён порт (null — рецепта нет или камера не подключена). Кэш на 1 тик. */
     @Nullable
     public ChemicalPlantRecipe getConnectedRecipe() {
         if (level == null) return null;
+        long now = level.getGameTime();
+        if (recipeCacheTime == now) return cachedRecipe;
+        recipeCacheTime = now;
+
+        cachedRecipe = computeConnectedRecipe();
+        return cachedRecipe;
+    }
+
+    @Nullable
+    private ChemicalPlantRecipe computeConnectedRecipe() {
         BlockState state = getBlockState();
         if (!state.hasProperty(HorizontalDirectionalBlock.FACING)) return null;
         Direction facing = state.getValue(HorizontalDirectionalBlock.FACING);
@@ -159,20 +172,11 @@ public class ChemicalPlantPortBlockEntity extends BlockEntity implements MenuPro
     @Override
     public void onLoad() {
         super.onLoad();
+        // Создаются ОДИН раз на жизнь BE и никогда не инвалидируются вручную.
+        // Режим (mode) и рецепт камеры хендлер читает динамически при каждом вызове.
         fluidHandler = LazyOptional.of(this::createFluidHandler);
-        // Предметы: кладётся/забирается независимо от режима и рецепта.
-        // Важно: ItemStackHandler реализует IItemHandlerModifiable (нужно для GUI-слотов).
         itemCapability = LazyOptional.of(() -> itemHandler);
         // Принудительно уведомляем соседей о готовности capability после загрузки мира
-        if (level != null && !level.isClientSide) {
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
-        }
-    }
-
-    /** Пересоздаёт capability жидкостей, чтобы соседи увидели новый режим (вставщик/извлекатель). */
-    private void refreshCapabilities() {
-        fluidHandler.invalidate();
-        fluidHandler = LazyOptional.of(this::createFluidHandler);
         if (level != null && !level.isClientSide) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
         }
@@ -324,8 +328,12 @@ public class ChemicalPlantPortBlockEntity extends BlockEntity implements MenuPro
     public void setMode(int mode) {
         this.mode = mode;
         setChanged();
-        // Пересоздаём capabilities: соседи (трубы/конвейеры) должны увидеть новый режим
-        refreshCapabilities();
+        // Capability НЕ инвалидируем: хендлер читает mode напрямую из поля BE,
+        // а жидкостная сеть переопрашивает getCapability каждый тик.
+        // Инвалидация лишь ломала кэшированные у соседей ссылки (порт "отваливался").
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+        }
     }
 
     public int getMode() { return mode; }
