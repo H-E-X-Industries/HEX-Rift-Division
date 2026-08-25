@@ -597,8 +597,11 @@ public class trdJeiPlugin implements IModPlugin {
 
             for (int i = 0; i < 4; i++) {
                 if (slots[i].item() != null && slots[i].count() > 0) {
-                    builder.addSlot(RecipeIngredientRole.INPUT, xs[i], 22)
-                            .addItemStack(new ItemStack(slots[i].item(), slots[i].count()));
+                    var slotBuilder = builder.addSlot(RecipeIngredientRole.INPUT, xs[i], 22);
+                    // Показываем все допустимые варианты предмета (альтернативы циклически)
+                    for (Item alt : slots[i].items()) {
+                        slotBuilder.addItemStack(new ItemStack(alt, slots[i].count()));
+                    }
                 } else {
                     builder.addSlot(RecipeIngredientRole.INPUT, xs[i], 22);
                 }

@@ -31,7 +31,7 @@ public class AlloyRecipe {
                 if (!stack.isEmpty()) return false;
             } else {
                 if (stack.isEmpty()) return false;
-                if (stack.getItem() != req.item()) return false;
+                if (!req.accepts(stack.getItem())) return false;
                 if (stack.getCount() < req.count()) return false;
             }
         }
