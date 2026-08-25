@@ -11,6 +11,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraftforge.network.PacketDistributor;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -65,25 +66,36 @@ public class ConveyorNetworkManager extends SavedData {
     }
 
     public void syncNetwork(ConveyorNetwork net) {
+        // ВАЖНО: отправка асинхронная (Netty-поток), а список предметов мутируется серверным тиком.
+        // Сериализация живого списка приводила к битым/потерянным пакетам и "застревающим" предметам.
+        java.util.List<com.trd.api.conveyor.ConveyorItem> itemsSnapshot = new ArrayList<>(net.getItems().size());
+        for (com.trd.api.conveyor.ConveyorItem item : net.getItems()) {
+            itemsSnapshot.add(new com.trd.api.conveyor.ConveyorItem(item.getStack().copy(), item.getProgress()));
+        }
+        java.util.List<BlockPos> pathSnapshot = new ArrayList<>(net.getPath());
         com.trd.network.ModPacketHandler.INSTANCE.send(
             PacketDistributor.DIMENSION.with(() -> level.dimension()),
-            new com.trd.network.packet.conveyor.SyncConveyorNetworkPacket(net.getId(), net.getItems(), net.getPath())
+            new com.trd.network.packet.conveyor.SyncConveyorNetworkPacket(net.getId(), itemsSnapshot, pathSnapshot)
         );
     }
 
     public void tickAll() {
         boolean changed = false;
+        // ВАЖНО: отметки могут быть поставлены сортировщиками ДО тика сетей (в том же серверном
+        // тике). Нельзя их просто стирать — иначе удаление предмета сортировщиком так и не
+        // доедет до клиентов, и предмет "застынет" на ленте перед сортировщиком.
+        Set<ConveyorNetwork> toSend = new HashSet<>(networksToSync);
         networksToSync.clear();
         for (ConveyorNetwork net : networks) {
             if (net.tick(level, this)) {
                 changed = true;
-                markForSync(net);
+                toSend.add(net);
             }
         }
-        for (ConveyorNetwork net : networksToSync) {
+        for (ConveyorNetwork net : toSend) {
             syncNetwork(net);
         }
-        if (changed || !networksToSync.isEmpty()) {
+        if (changed || !toSend.isEmpty()) {
             this.setDirty();
         }
     }

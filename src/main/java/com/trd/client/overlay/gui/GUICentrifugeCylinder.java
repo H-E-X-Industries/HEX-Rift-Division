@@ -3,7 +3,7 @@ package com.trd.client.overlay.gui;
 import com.trd.api.fluids.ModFluids;
 import com.trd.main.MainRegistry;
 import com.trd.menu.industrial.CentrifugeCylinderMenu;
-import com.trd.multiblock.industrial.centrifuge.CentrifugeCylinderBlockEntity;
+import com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderBlockEntity;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;

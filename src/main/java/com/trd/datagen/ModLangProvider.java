@@ -106,6 +106,8 @@ public class ModLangProvider extends LanguageProvider {
         addFluidTranslations("lava", "Лава", "Лава", "Lava");
         addFluidTranslations("mercury", "Ртуть", "Ртуть", "Mercury");
         addFluidTranslations("sodium_hydroxide", "Щёлочь (NaOH)", "Щёлочь (NaOH)", "Sodium Hydroxide (NaOH)");
+        addFluidTranslations("aluminate_solution", "Алюминатный Раствор", "Алюминатный Раствор", "Aluminate Solution");
+        addFluidTranslations("red_sludge", "Красный шлам", "Красный шлам", "Red Sludge");
 
         // JEI Categories
         add("jei.category.trd.smelting", "Smelting");
@@ -750,6 +752,8 @@ public class ModLangProvider extends LanguageProvider {
         add(ModItems.DOLOMITE_POWDER.get(), "Dolomite Powder");
         add(ModItems.LIMESTONE_POWDER.get(), "Limestone Powder");
         add(ModItems.BAUXITE_POWDER.get(), "Bauxite Powder");
+        add(ModItems.ALUMINUM_HYDROXIDE.get(), "Aluminum Hydroxide");
+        add(ModItems.ALUMINA.get(), "Alumina");
         add(ModItems.FUEL_ASH.get(), "Fuel Ash");
         add(ModItems.TRASH.get(), "Trash");
         add(ModItems.SLAG.get(), "Slag");
@@ -1881,6 +1885,8 @@ public class ModLangProvider extends LanguageProvider {
         add(ModItems.DOLOMITE_POWDER.get(), "Порошок доломита");
         add(ModItems.LIMESTONE_POWDER.get(), "Порошок известняка");
         add(ModItems.BAUXITE_POWDER.get(), "Порошок боксита");
+        add(ModItems.ALUMINUM_HYDROXIDE.get(), "Гидроксид алюминия");
+        add(ModItems.ALUMINA.get(), "Глинозём");
         add(ModItems.FUEL_ASH.get(), "Топливный пепел");
         add(ModItems.TRASH.get(), "Мусор");
         add(ModItems.SLAG.get(), "Шлак");
@@ -1957,6 +1963,8 @@ public class ModLangProvider extends LanguageProvider {
         addFluidTranslations("water", "Вода", "Вода", "Water");
         addFluidTranslations("lava", "Лава", "Лава", "Lava");
         addFluidTranslations("mercury", "Ртуть", "Ртуть", "Mercury");
+        addFluidTranslations("aluminate_solution", "Алюминатный Раствор", "Алюминатный Раствор", "Aluminate Solution");
+        addFluidTranslations("red_sludge", "Красный шлам", "Красный шлам", "Red Sludge");
         addFluidTranslations("sodium_hydroxide", "Щёлочь (NaOH)", "Щёлочь (NaOH)", "Sodium Hydroxide (NaOH)");
 
         // Stanok Items

@@ -1,12 +1,12 @@
-package com.trd.multiblock.industrial.centrifuge;
+package com.trd.multiblock.industrial.centrifuge.conus;
 
 import com.trd.block.basic.ModBlocks;
+import com.trd.multiblock.industrial.centrifuge.CentrifugeMotorBlock;
 import com.trd.multiblock.system.IMultiblockController;
 import com.trd.multiblock.system.MultiblockStructureHelper;
 import com.trd.multiblock.system.PartRole;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;

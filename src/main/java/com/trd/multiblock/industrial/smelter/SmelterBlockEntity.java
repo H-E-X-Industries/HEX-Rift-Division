@@ -249,7 +249,9 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
     }
 
     private void pickupThrownItems(Level level, BlockPos pos) {
-        IItemHandler handler = sideHandler.orElse(null);
+        // Предметы, брошенные в углубление сверху, попадают в верхний ряд (сплавы),
+        // как и при вставке через верхнюю грань мультиблока
+        IItemHandler handler = upHandler.orElse(null);
         if (handler == null) return;
 
         AABB area = new AABB(pos.above()).inflate(0.125D, 0.0D, 0.125D);
@@ -327,8 +329,6 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
         // === ФАЗА 1: НАГРЕВ И КЛАССИФИКАЦИЯ СЛОТОВ ===
         AlloySlot[] slots = recipe.getSlots();
         boolean allMeltablesHeated = true;
-        boolean hasAnyMeltable = false;
-        int meltableCount = 0;
 
         for (int i = 0; i < 4; i++) {
             ItemStack stack = topSlotsStacks[i];
@@ -337,8 +337,8 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
             // Пустой слот в рецепте — пропускаем
             if (slotReq.item() == null) continue;
 
-            // Проверяем что предмет подходит
-            if (stack.isEmpty() || stack.getItem() != slotReq.item()) {
+            // Проверяем что предмет подходит (в т.ч. альтернативные предметы)
+            if (stack.isEmpty() || !slotReq.accepts(stack.getItem())) {
                 allMeltablesHeated = false;
                 continue;
             }
@@ -347,8 +347,6 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
             boolean isMeltable = MetallurgyRegistry.getSmeltRecipe(stack.getItem()) != null;
 
             if (isMeltable) {
-                hasAnyMeltable = true;
-                meltableCount++;
 
                 int targetTemp = getMeltingPointForItem(stack);
                 float currentTemp = getItemTemperature(stack);
@@ -373,11 +371,8 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
         }
 
         // === ФАЗА 2: СИНХРОННАЯ ПЛАВКА ===
-        if (!hasAnyMeltable) {
-            // Только катализаторы — нечего плавить
-            resetTopSmelting();
-            return;
-        }
+        // Если плавящихся предметов нет (только реагенты/флюсы), процесс идёт
+        // при достижении печью температуры плавления выходного металла
 
         // Если не все плавящиеся нагреты или нет температуры печи — ждём
         if (!allMeltablesHeated || temperature < requiredTempTop * 0.9f) {
@@ -436,7 +431,7 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
             if (slotReq.item() == null || slotReq.count() <= 0) continue;
 
             ItemStack stack = stacks[i];
-            if (!stack.isEmpty() && stack.getItem() == slotReq.item() && stack.getCount() >= slotReq.count()) {
+            if (!stack.isEmpty() && slotReq.accepts(stack.getItem()) && stack.getCount() >= slotReq.count()) {
                 stack.shrink(slotReq.count());
                 slotTemperatures[i] = 20; // Сброс температуры
             }
@@ -461,7 +456,7 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
             }
 
             // Проверяем что предмет подходит для рецепта
-            if (stack.getItem() != slots[i].item()) {
+            if (!slots[i].accepts(stack.getItem())) {
                 slotTemperatures[i] = Math.max(20, slotTemperatures[i] - 2);
                 continue;
             }
@@ -500,7 +495,7 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
             AlloySlot slotReq = recipe.getSlots()[i];
             if (slotReq.item() != null && slotReq.count() > 0) {
                 ItemStack stack = inventory.getStackInSlot(i);
-                if (!stack.isEmpty() && stack.getItem() == slotReq.item() && stack.getCount() >= slotReq.count()) {
+                if (!stack.isEmpty() && slotReq.accepts(stack.getItem()) && stack.getCount() >= slotReq.count()) {
                     stack.shrink(slotReq.count());
                     slotTemperatures[i] = 20; // Сброс температуры
                 }
@@ -853,7 +848,7 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
         // Сплавы в верхнем ряду - проверяем по рецептам
         for (AlloyRecipe alloy : MetallurgyRegistry.getAllAlloyRecipes()) {
             for (AlloySlot slot : alloy.getSlots()) {
-                if (slot.item() == stack.getItem()) {
+                if (slot.accepts(stack.getItem())) {
                     return alloy.getOutputMetal().getMeltingPoint();
                 }
             }

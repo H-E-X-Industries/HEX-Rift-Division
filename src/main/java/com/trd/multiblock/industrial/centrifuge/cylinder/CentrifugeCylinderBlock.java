@@ -1,6 +1,7 @@
-package com.trd.multiblock.industrial.centrifuge;
+package com.trd.multiblock.industrial.centrifuge.cylinder;
 
 import com.trd.block.basic.ModBlocks;
+import com.trd.multiblock.industrial.centrifuge.CentrifugeMotorBlock;
 import com.trd.multiblock.system.IMultiblockController;
 import com.trd.multiblock.system.MultiblockStructureHelper;
 import com.trd.multiblock.system.PartRole;

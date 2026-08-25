@@ -70,7 +70,10 @@ public class ConnectorBlock extends BaseEntityBlock {
     public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
         Direction facing = state.getValue(FACING);
         BlockPos supportPos = pos.relative(facing.getOpposite());
-        return level.getBlockState(supportPos).isFaceSturdy(level, supportPos, facing);
+        BlockState support = level.getBlockState(supportPos);
+        // Провода имеют тонкую форму и их грани не "sturdy" — разрешаем крепление к ним напрямую
+        if (support.getBlock() instanceof WireBlock) return true;
+        return support.isFaceSturdy(level, supportPos, facing);
     }
 
     @Override

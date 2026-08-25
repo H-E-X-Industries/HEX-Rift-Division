@@ -276,7 +276,8 @@ public class HeaterBlockEntity extends BlockEntity implements MenuProvider {
         @Override
         public boolean isItemValid(int slot, ItemStack stack) {
             if (slot == 0) return isFuel(stack);
-            if (slot == 1) return stack.is(ModItems.FUEL_ASH.get());
+            // Слот выхода: зола, а также пустые контейнеры (вёдра/банки) от израсходованного топлива
+            if (slot == 1) return stack.is(ModItems.FUEL_ASH.get()) || !isFuel(stack);
             return false;
         }
     };
@@ -319,9 +320,9 @@ public class HeaterBlockEntity extends BlockEntity implements MenuProvider {
     public HeaterBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.HEATER_BE.get(), pos, state);
         this.fullHandler = LazyOptional.of(() -> inventory);
-        this.upHandler   = LazyOptional.of(() -> new InsertOnlyHandler(inventory, 0));
-        this.downHandler = LazyOptional.of(() -> new ExtractOnlyHandler(inventory, 1));
-        this.sideHandler = LazyOptional.of(() -> new InsertOnlyHandler(inventory, 0));
+        this.upHandler   = LazyOptional.of(() -> new FuelIOHandler(inventory, false));  // верх: вставка топлива
+        this.downHandler = LazyOptional.of(() -> new ExtractOnlyHandler(inventory, 1)); // низ: извлечение золы/вёдер
+        this.sideHandler = LazyOptional.of(() -> new FuelIOHandler(inventory, true));   // бока: вставка топлива + извлечение золы
     }
 
     @Override
@@ -401,10 +402,13 @@ public class HeaterBlockEntity extends BlockEntity implements MenuProvider {
                     ItemStack remainder = fuel.getCraftingRemainingItem();
                     fuel.shrink(1);
 
-                    if (fuel.isEmpty() && !remainder.isEmpty()) {
-                        be.inventory.setStackInSlot(0, remainder);
-                    } else if (!remainder.isEmpty()) {
-                        Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), remainder);
+                    // Пустой контейнер (ведро/банка) отправляем в слот выхода,
+                    // чтобы он не блокировал подачу нового топлива
+                    if (!remainder.isEmpty()) {
+                        ItemStack left = be.inventory.insertItem(1, remainder, false);
+                        if (!left.isEmpty()) {
+                            Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), left);
+                        }
                     }
 
                     changed = true;
@@ -526,44 +530,57 @@ public class HeaterBlockEntity extends BlockEntity implements MenuProvider {
         }
     }
 
-    private static class InsertOnlyHandler implements IItemHandler {
+    /**
+     * Хендлер топливного доступа: вставка только топлива в слот 0.
+     * Извлекать можно лишь НЕтопливные предметы (застрявшие пустые контейнеры),
+     * а при allowAshExtract — ещё и золу из слота 1 (боковой доступ).
+     */
+    private class FuelIOHandler implements IItemHandler {
         private final ItemStackHandler inventory;
-        private final int[] slots;
+        private final boolean allowAshExtract;
 
-        InsertOnlyHandler(ItemStackHandler inventory, int... slots) {
+        FuelIOHandler(ItemStackHandler inventory, boolean allowAshExtract) {
             this.inventory = inventory;
-            this.slots = slots;
+            this.allowAshExtract = allowAshExtract;
         }
 
-        @Override public int getSlots() { return slots.length; }
+        @Override public int getSlots() { return 2; }
 
         @Override
         public ItemStack getStackInSlot(int slot) {
-            if (slot < 0 || slot >= slots.length) return ItemStack.EMPTY;
-            return inventory.getStackInSlot(slots[slot]);
+            if (slot < 0 || slot >= 2) return ItemStack.EMPTY;
+            return inventory.getStackInSlot(slot);
         }
 
         @Override
         public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
-            if (slot < 0 || slot >= slots.length) return stack;
-            return inventory.insertItem(slots[slot], stack, simulate);
+            if (slot != 0) return stack; // вставка только в топливо
+            return inventory.insertItem(0, stack, simulate);
         }
 
         @Override
         public ItemStack extractItem(int slot, int amount, boolean simulate) {
-            return ItemStack.EMPTY;
+            if (amount <= 0 || slot < 0 || slot >= 2) return ItemStack.EMPTY;
+            if (slot == 0) {
+                // Топливо не отдаём — только пустые контейнеры/мусор, блокирующие подачу
+                ItemStack present = inventory.getStackInSlot(0);
+                if (present.isEmpty() || isFuel(present)) return ItemStack.EMPTY;
+                return inventory.extractItem(0, amount, simulate);
+            }
+            if (!allowAshExtract) return ItemStack.EMPTY;
+            return inventory.extractItem(1, amount, simulate);
         }
 
         @Override
         public int getSlotLimit(int slot) {
-            if (slot < 0 || slot >= slots.length) return 0;
-            return inventory.getSlotLimit(slots[slot]);
+            if (slot < 0 || slot >= 2) return 0;
+            return inventory.getSlotLimit(slot);
         }
 
         @Override
         public boolean isItemValid(int slot, ItemStack stack) {
-            if (slot < 0 || slot >= slots.length) return false;
-            return inventory.isItemValid(slots[slot], stack);
+            if (slot != 0) return false;
+            return inventory.isItemValid(0, stack);
         }
     }
 

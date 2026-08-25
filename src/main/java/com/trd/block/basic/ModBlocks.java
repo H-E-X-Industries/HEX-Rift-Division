@@ -11,7 +11,6 @@ import com.trd.block.basic.deco.BeamBlock;
 import com.trd.block.basic.deco.BeamCollisionBlock;
 import com.trd.block.basic.deco.LampBlock;
 import com.trd.block.basic.deco.SteelPropsBlock;
-import com.trd.block.basic.direction.SideOBlock;
 import com.trd.block.basic.industrial.*;
 import com.trd.block.basic.industrial.chemistry.ChemicalPlantPortBlock;
 import com.trd.block.basic.industrial.chemistry.ChemicalPlantReactionChamberBlock;
@@ -35,7 +34,8 @@ import com.trd.block.basic.necrosis.hive.HiveRootsBlock;
 import com.trd.block.basic.weapons.MissileTurretBlock;
 
 import com.trd.multiblock.industrial.boiler.BoilerBlock;
-import com.trd.multiblock.industrial.centrifuge.CentrifugeConusBlock;
+import com.trd.multiblock.industrial.centrifuge.conus.CentrifugeConusBlock;
+import com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderBlock;
 import com.trd.multiblock.industrial.drobitel.DrobitelBlock;
 import com.trd.multiblock.industrial.fueltanks.FuelTankBlock;
 import com.trd.multiblock.industrial.fueltanks.small.FuelTankSmallBlock;
@@ -465,14 +465,14 @@ public class ModBlocks {
                     .noOcclusion()));
 
     public static final RegistryObject<Block> CENTRIFUGE_CONUS = registerBlock("centrifuge_conus",
-            () -> new com.trd.multiblock.industrial.centrifuge.CentrifugeConusBlock(BlockBehaviour.Properties.of()
+            () -> new CentrifugeConusBlock(BlockBehaviour.Properties.of()
                     .strength(2.0F, 6.0F)
                     .sound(SoundType.STONE)
                     .requiresCorrectToolForDrops()
                     .noOcclusion()));
 
     public static final RegistryObject<Block> CENTRIFUGE_CYLINDER = registerBlock("centrifuge_cylinder",
-            () -> new com.trd.multiblock.industrial.centrifuge.CentrifugeCylinderBlock(BlockBehaviour.Properties.of()
+            () -> new CentrifugeCylinderBlock(BlockBehaviour.Properties.of()
                     .strength(2.0F, 6.0F)
                     .sound(SoundType.STONE)
                     .requiresCorrectToolForDrops()

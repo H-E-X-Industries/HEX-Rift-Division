@@ -166,6 +166,13 @@ public class SortirovshikBlockEntity extends BlockEntity implements MenuProvider
         Set<ConveyorNetwork> visited = new HashSet<>();
         for (Direction side : Direction.values()) {
             BlockPos beltPos = worldPosition.relative(side);
+
+            // Подхватываем предметы ТОЛЬКО с лент, направленных в сортировщик
+            // (т.е. реально подключённых к нему входом; ленты сбоку/снизу/от него не трогаем)
+            BlockState beltState = serverLevel.getBlockState(beltPos);
+            if (!(beltState.getBlock() instanceof com.trd.block.basic.industrial.ConveyorBlock)) continue;
+            if (beltState.getValue(com.trd.block.basic.industrial.ConveyorBlock.FACING) != side.getOpposite()) continue;
+
             ConveyorNetwork net = manager.getNetworkFor(beltPos);
             if (net == null || !visited.add(net)) continue;
 
@@ -182,6 +189,9 @@ public class SortirovshikBlockEntity extends BlockEntity implements MenuProvider
                 double progress = item.getProgress();
                 // Предмет находится напротив сортировщика (блок ленты, соседний с ним)
                 if (progress < index || progress >= index + 1.0) continue;
+                // Свежевыданные этим (или соседним) сортировщиком предметы не трогаем,
+                // пока они проезжают примыкающий сегмент — иначе цикл на месте
+                if (item.getSorterCooldown() > 0) continue;
                 if (matchSection(item.getStack()) < 0) continue;
                 matched.add(item);
             }
@@ -252,16 +262,20 @@ public class SortirovshikBlockEntity extends BlockEntity implements MenuProvider
                              Direction dir, ItemStack stack) {
         BlockPos target = worldPosition.relative(dir);
 
-        // 1. На соседний конвейер — ЗА сегмент, примыкающий к сортировщику.
-        // Если вставить в сам этот сегмент, предмет тут же снова попадёт в окно
-        // сканирования, повторно пройдёт фильтр и зациклится на первом блоке.
+        // 1. На соседний конвейер — в НАЧАЛО сегмента, примыкающего к сортировщику.
+        // Чтобы предмет не был тут же повторно захвачен этим же сортировщиком,
+        // ему выдаётся короткий иммунитет (на время проезда примыкающего сегмента).
         ConveyorNetwork outNet = manager.getNetworkFor(target);
         if (outNet != null) {
-            double insertAt = outNet.getPath().indexOf(target) + 1.0;
-            outNet.tryInsertItem(stack, insertAt);
-            manager.markForSync(outNet);
-            manager.setDirty();
-            return;
+            double index = outNet.getPath().indexOf(target);
+            if (index >= 0) {
+                ConveyorItem inserted = outNet.insertItemTracked(stack, index);
+                int cooldown = (int) Math.ceil(1.0 / ConveyorNetwork.SPEED) + 6;
+                inserted.setSorterCooldown(cooldown);
+                manager.markForSync(outNet);
+                manager.setDirty();
+                return;
+            }
         }
 
         // 2. В инвентарь машины/сундука

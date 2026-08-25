@@ -15,6 +15,10 @@ import com.trd.block.entity.industrial.rotation.MillstoneBlockEntity;
 import com.trd.event.SlagItem;
 import com.trd.item.ModItems;
 import com.trd.main.MainRegistry;
+import com.trd.multiblock.industrial.centrifuge.conus.CentrifugeRecipe;
+import com.trd.multiblock.industrial.centrifuge.conus.CentrifugeRecipes;
+import com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderRecipe;
+import com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderRecipes;
 import com.trd.multiblock.industrial.coccer.CoccerOvenRecipe;
 import com.trd.multiblock.industrial.coccer.CoccerOvenRecipeRegistry;
 import com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity;
@@ -117,8 +121,8 @@ public class trdJeiPlugin implements IModPlugin {
     public record CoccerOvenWrapper(CoccerOvenRecipe recipe) {}
     public record ChemicalPlantWrapper(ChemicalPlantRecipe recipe) {}
     public record VishelashivatelWrapper(com.trd.multiblock.industrial.vishelashivatel.VishelashivatelRecipe recipe) {}
-    public record CentrifugeWrapper(com.trd.multiblock.industrial.centrifuge.CentrifugeRecipe recipe) {}
-    public record CentrifugeCylinderWrapper(com.trd.multiblock.industrial.centrifuge.CentrifugeCylinderRecipe recipe) {}
+    public record CentrifugeWrapper(CentrifugeRecipe recipe) {}
+    public record CentrifugeCylinderWrapper(CentrifugeCylinderRecipe recipe) {}
 
     @Override
     public void registerCategories(IRecipeCategoryRegistration registration) {
@@ -282,16 +286,16 @@ public class trdJeiPlugin implements IModPlugin {
 
         // === ЦЕНТРИФУГА ===
         List<CentrifugeWrapper> centrifugeRecipes = new ArrayList<>();
-        for (com.trd.multiblock.industrial.centrifuge.CentrifugeRecipe recipe :
-                com.trd.multiblock.industrial.centrifuge.CentrifugeRecipes.getAllRecipes()) {
+        for (CentrifugeRecipe recipe :
+                CentrifugeRecipes.getAllRecipes()) {
             centrifugeRecipes.add(new CentrifugeWrapper(recipe));
         }
         registration.addRecipes(CENTRIFUGE_TYPE, centrifugeRecipes);
 
         // === ЖИДКОСТНАЯ ЦЕНТРИФУГА ===
         List<CentrifugeCylinderWrapper> centrifugeCylinderRecipes = new ArrayList<>();
-        for (com.trd.multiblock.industrial.centrifuge.CentrifugeCylinderRecipe recipe :
-                com.trd.multiblock.industrial.centrifuge.CentrifugeCylinderRecipes.getAllRecipes()) {
+        for (CentrifugeCylinderRecipe recipe :
+                CentrifugeCylinderRecipes.getAllRecipes()) {
             centrifugeCylinderRecipes.add(new CentrifugeCylinderWrapper(recipe));
         }
         registration.addRecipes(CENTRIFUGE_CYLINDER_TYPE, centrifugeCylinderRecipes);
@@ -325,7 +329,11 @@ public class trdJeiPlugin implements IModPlugin {
 
     public static ItemStack fluidDropStack(FluidStack fluid) {
         Item drop = ModFluids.getFluidDrop(fluid.getFluid().getFluidType());
-        return drop == null ? ItemStack.EMPTY : new ItemStack(drop);
+        if (drop == null) return ItemStack.EMPTY;
+        ItemStack stack = new ItemStack(drop);
+        // Актуальный объём для тултипа (FluidDropItem читает этот тег)
+        stack.getOrCreateTag().putInt("FluidVolume", fluid.getAmount());
+        return stack;
     }
 
     // ==================== КАТЕГОРИИ ====================
@@ -593,8 +601,11 @@ public class trdJeiPlugin implements IModPlugin {
 
             for (int i = 0; i < 4; i++) {
                 if (slots[i].item() != null && slots[i].count() > 0) {
-                    builder.addSlot(RecipeIngredientRole.INPUT, xs[i], 22)
-                            .addItemStack(new ItemStack(slots[i].item(), slots[i].count()));
+                    var slotBuilder = builder.addSlot(RecipeIngredientRole.INPUT, xs[i], 22);
+                    // Показываем все допустимые варианты предмета (альтернативы циклически)
+                    for (Item alt : slots[i].items()) {
+                        slotBuilder.addItemStack(new ItemStack(alt, slots[i].count()));
+                    }
                 } else {
                     builder.addSlot(RecipeIngredientRole.INPUT, xs[i], 22);
                 }
@@ -740,11 +751,8 @@ public class trdJeiPlugin implements IModPlugin {
             if (recipe.hasFluidOutput() && cell < 2) {
                 ItemStack drop = fluidDropStack(recipe.getOutputFluid());
                 if (!drop.isEmpty()) {
-                    FluidStack fluid = recipe.getOutputFluid();
                     builder.addSlot(RecipeIngredientRole.OUTPUT, 73, 22)
-                            .addItemStack(drop)
-                            .addTooltipCallback((view, tooltip) ->
-                                    tooltip.add(Component.literal(fluid.getAmount() + " mB")));
+                            .addItemStack(drop);
                 }
             }
         }
@@ -790,9 +798,7 @@ public class trdJeiPlugin implements IModPlugin {
                 ItemStack drop = fluidDropStack(fluid);
                 if (drop.isEmpty()) continue;
                 builder.addSlot(RecipeIngredientRole.INPUT, GRID_INPUT_SLOTS[cell][0], GRID_INPUT_SLOTS[cell][1])
-                        .addItemStack(drop)
-                        .addTooltipCallback((view, tooltip) ->
-                                tooltip.add(Component.literal(fluid.getAmount() + " mB")));
+                        .addItemStack(drop);
                 cell++;
             }
 
@@ -808,9 +814,7 @@ public class trdJeiPlugin implements IModPlugin {
                 ItemStack drop = fluidDropStack(fluid);
                 if (drop.isEmpty()) continue;
                 builder.addSlot(RecipeIngredientRole.OUTPUT, GRID_OUTPUT_SLOTS[cell][0], GRID_OUTPUT_SLOTS[cell][1])
-                        .addItemStack(drop)
-                        .addTooltipCallback((view, tooltip) ->
-                                tooltip.add(Component.literal(fluid.getAmount() + " mB")));
+                        .addItemStack(drop);
                 cell++;
             }
         }
@@ -852,9 +856,7 @@ public class trdJeiPlugin implements IModPlugin {
             ItemStack fluidDrop = fluidDropStack(recipe.getRequiredFluid());
             if (!fluidDrop.isEmpty()) {
                 builder.addSlot(RecipeIngredientRole.INPUT, 23, 22)
-                        .addItemStack(fluidDrop)
-                        .addTooltipCallback((view, tooltip) ->
-                                tooltip.add(Component.literal(recipe.getRequiredFluid().getAmount() + " mB")));
+                        .addItemStack(fluidDrop);
             }
 
             // Выходы — до 3 шт в ряд
@@ -896,7 +898,7 @@ public class trdJeiPlugin implements IModPlugin {
 
         @Override
         public void setRecipe(IRecipeLayoutBuilder builder, CentrifugeWrapper wrapper, IFocusGroup focuses) {
-            com.trd.multiblock.industrial.centrifuge.CentrifugeRecipe recipe = wrapper.recipe();
+            CentrifugeRecipe recipe = wrapper.recipe();
 
             builder.addSlot(RecipeIngredientRole.INPUT, 5, 22)
                     .addItemStack(recipe.getInput().copy());
@@ -938,15 +940,13 @@ public class trdJeiPlugin implements IModPlugin {
 
         @Override
         public void setRecipe(IRecipeLayoutBuilder builder, CentrifugeCylinderWrapper wrapper, IFocusGroup focuses) {
-            com.trd.multiblock.industrial.centrifuge.CentrifugeCylinderRecipe recipe = wrapper.recipe();
+            CentrifugeCylinderRecipe recipe = wrapper.recipe();
 
             // Входная жидкость (каплей) с количеством
             ItemStack fluidDrop = fluidDropStack(recipe.getInputFluid());
             if (!fluidDrop.isEmpty()) {
                 builder.addSlot(RecipeIngredientRole.INPUT, 5, 22)
-                        .addItemStack(fluidDrop)
-                        .addTooltipCallback((view, tooltip) ->
-                                tooltip.add(Component.literal(recipe.getInputFluid().getAmount() + " mB")));
+                        .addItemStack(fluidDrop);
             }
 
             // Выходы: сначала жидкости, затем предметы — до 4 ячеек 2x2
@@ -956,9 +956,7 @@ public class trdJeiPlugin implements IModPlugin {
                 ItemStack drop = fluidDropStack(fluid);
                 if (drop.isEmpty()) continue;
                 builder.addSlot(RecipeIngredientRole.OUTPUT, CHAMBER_OUTPUT_SLOTS[cell][0], CHAMBER_OUTPUT_SLOTS[cell][1])
-                        .addItemStack(drop)
-                        .addTooltipCallback((view, tooltip) ->
-                                tooltip.add(Component.literal(fluid.getAmount() + " mB")));
+                        .addItemStack(drop);
                 cell++;
             }
             for (ItemStack stack : recipe.getItemOutputs()) {

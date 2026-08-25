@@ -28,10 +28,13 @@ public class FluidDropItem extends Item {
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, level, tooltip, flag);
-        // 1 капля = 1000 mB (1 ведро)
-        int volume = stack.getCount() * 1000;
-        tooltip.add(Component.literal("  Объём: ").withStyle(ChatFormatting.GRAY)
-                .append(Component.literal(volume + " mB").withStyle(ChatFormatting.AQUA)));
+        // Объём показываем только если он задан явно (NBT от JEI/рецептов).
+        // Как предмет в инвентаре/креативе капля объёма не несёт.
+        if (stack.hasTag() && stack.getTag().contains("FluidVolume")) {
+            int volume = stack.getTag().getInt("FluidVolume");
+            tooltip.add(Component.literal("  Объём: ").withStyle(ChatFormatting.GRAY)
+                    .append(Component.literal(volume + " mB").withStyle(ChatFormatting.AQUA)));
+        }
         tooltip.addAll(getFluidPropertiesTooltip(getFluidType()));
     }
 

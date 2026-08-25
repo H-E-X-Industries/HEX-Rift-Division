@@ -1,6 +1,7 @@
 package com.trd.multiblock.industrial.centrifuge;
 
-import com.trd.block.entity.ModBlockEntities;
+import com.trd.multiblock.industrial.centrifuge.conus.CentrifugeConusBlock;
+import com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -86,6 +87,7 @@ public class CentrifugeMotorBlock extends BaseEntityBlock {
             level.getBlockState(pos).updateNeighbourShapes(level, pos, 3);
         }
     }
+
 
     @Nullable
     @Override

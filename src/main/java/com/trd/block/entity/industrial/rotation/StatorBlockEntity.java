@@ -92,9 +92,9 @@ public class StatorBlockEntity extends KineticNodeBlockEntity implements IEnergy
     // ===================== IEnergyConnector =====================
     @Override
     public boolean canConnectEnergy(Direction side) {
-        BlockState state = getBlockState();
-        if (!state.hasProperty(StatorBlock.FACING)) return true;
-        return side != state.getValue(StatorBlock.FACING);
+        // Подключение со всех сторон, включая низ (скрытая проводка под полом).
+        // Лицевая грань (FACING) физически занята валом/структурой, ограничение не нужно.
+        return true;
     }
 
     // ===================== IEnergyProvider =====================

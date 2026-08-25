@@ -7,6 +7,10 @@ public class ConveyorItem {
     private ItemStack stack;
     private double progress;
 
+    // Серверный иммунитет от повторного захвата сортировщиком сразу после выдачи
+    // (транзиентно: не сериализуется в NBT и не синкается клиентам)
+    private int sorterCooldown;
+
     public ConveyorItem(ItemStack stack, double progress) {
         this.stack = stack.copy();
         this.progress = progress;
@@ -27,6 +31,14 @@ public class ConveyorItem {
 
     public void setProgress(double progress) {
         this.progress = progress;
+    }
+
+    public int getSorterCooldown() {
+        return sorterCooldown;
+    }
+
+    public void setSorterCooldown(int ticks) {
+        this.sorterCooldown = ticks;
     }
 
     public CompoundTag serializeNBT() {
