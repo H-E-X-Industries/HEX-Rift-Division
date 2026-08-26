@@ -26,7 +26,7 @@ public class ConveyorNetwork {
     private final List<BlockPos> path = new ArrayList<>();
     private final List<ConveyorItem> items = new ArrayList<>();
 
-    public static final double SPEED = 1.5 / 20.0;
+    public static final double SPEED = 1.25 / 20.0;
     public static final double SPACING = 0.5; // Минимальное расстояние между предметами
 
     public ConveyorNetwork() {
