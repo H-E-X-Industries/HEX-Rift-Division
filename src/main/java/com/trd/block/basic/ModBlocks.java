@@ -28,6 +28,7 @@ import com.trd.block.basic.industrial.fluids.PaintablePipeBlock;
 import com.trd.block.basic.industrial.rotation.BearingBlock;
 import com.trd.block.basic.industrial.rotation.MotorElectroBlock;
 import com.trd.block.basic.industrial.rotation.HandCrankBlock;
+import com.trd.block.basic.redstone.RedstoneRadioBlock;
 import com.trd.block.basic.industrial.rotation.ShaftBlock;
 import com.trd.block.basic.necrosis.hive.HiveRootsBlock;
 
@@ -85,6 +86,21 @@ public class ModBlocks {
             () -> new ConverterBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)));
     public static final RegistryObject<Block> WIRE_COATED = registerBlock("wire_coated",
             () -> new WireBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion()));
+    
+    public static final RegistryObject<Block> REDSTONE_RADIO_TRANSMITTER = registerBlock("redstone_radio_transmitter",
+            () -> new RedstoneRadioBlock(BlockBehaviour.Properties.copy(Blocks.REDSTONE_TORCH)
+                    .noOcclusion()
+                    .strength(0.0F)
+                    .instabreak()
+                    .lightLevel(state -> state.getValue(RedstoneRadioBlock.POWERED) ? 7 : 0), true));
+    
+    public static final RegistryObject<Block> REDSTONE_RADIO_RECEIVER = registerBlock("redstone_radio_receiver",
+            () -> new RedstoneRadioBlock(BlockBehaviour.Properties.copy(Blocks.REDSTONE_TORCH)
+                    .noOcclusion()
+                    .strength(0.0F)
+                    .instabreak()
+                    .lightLevel(state -> state.getValue(RedstoneRadioBlock.POWERED) ? 7 : 0), false));
+
     public static final RegistryObject<Block> SWITCH = registerBlock("switch",
             () -> new SwitchBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)));
     public static final RegistryObject<Block> VALVE = registerBlock("valve",

@@ -6,6 +6,8 @@ import com.trd.menu.rotation.MotorElectroMenu;
 import com.trd.menu.turrets.TromboneMenu;
 import com.trd.menu.turrets.TurretLightMenu;
 import com.trd.multiblock.industrial.steel_storage.SteelStorageBlockEntity;
+import com.trd.block.entity.redstone.RedstoneRadioBlockEntity;
+import com.trd.block.entity.redstone.RedstoneRadioMenu;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraftforge.common.extensions.IForgeMenuType;
@@ -114,6 +116,9 @@ public class ModMenuTypes {
     public static final RegistryObject<MenuType<FluidBarrelMenu>> FLUID_BARREL_MENU =
             MENUS.register("fluid_barrel_menu",
                     () -> IForgeMenuType.create(FluidBarrelMenu::new));
+
+    public static final RegistryObject<MenuType<RedstoneRadioMenu>> REDSTONE_RADIO_MENU =
+            MENUS.register("redstone_radio_menu", () -> IForgeMenuType.create(RedstoneRadioMenu::create));
 
     public static void register(IEventBus eventBus) {
         MENUS.register(eventBus);

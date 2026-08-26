@@ -7,6 +7,7 @@ import com.trd.block.entity.industrial.fluids.WaterPumpBlockEntity;
 import com.trd.block.entity.industrial.rotation.MillstoneBlockEntity;
 import com.trd.client.gecko.entity.mobs.DepthWormBrutalRenderer;
 import com.trd.client.overlay.hud.WaterPumpHUD;
+import com.trd.client.overlay.hud.RedstoneRadioOverlay;
 import com.trd.client.render.ber.ConveyorRenderer;
 import com.trd.item.tools.FluidIdentifierItem;
 import com.trd.main.ResourceRegistry;
@@ -118,6 +119,7 @@ public class ClientModEvents {
 //        MenuScreens.register(ModMenuTypes.MINING_PORT_MENU.get(), GUIMiningPort::new);
         MenuScreens.register(ModMenuTypes.FLUID_BARREL_MENU.get(), GUIFluidBarrel::new);
         MenuScreens.register(ModMenuTypes.HEATER_MENU.get(), GUIHeater::new);
+        MenuScreens.register(ModMenuTypes.REDSTONE_RADIO_MENU.get(), GUIRedstoneRadio::new);
         MenuScreens.register(ModMenuTypes.SMELTER_MENU.get(), GUISmelter::new);
         MenuScreens.register(ModMenuTypes.FUEL_TANK_MENU.get(), GUIFuelTank::new);
         MenuScreens.register(ModMenuTypes.TROMBONE_MENU.get(), GUITrombone::new);
@@ -482,6 +484,7 @@ public class ClientModEvents {
         event.registerAbove(VanillaGuiOverlay.CROSSHAIR.id(), "stator_hud", StatorOverlay.HUD_STATOR);
         event.registerAbove(VanillaGuiOverlay.CROSSHAIR.id(), "boiler_hud", com.trd.client.overlay.hud.BoilerOverlay.INSTANCE);
         event.registerAbove(VanillaGuiOverlay.CROSSHAIR.id(), "steam_engine_hud", com.trd.client.overlay.hud.SteamEngineOverlay.INSTANCE);
+        event.registerAbove(VanillaGuiOverlay.CROSSHAIR.id(), "redstone_radio_hud", RedstoneRadioOverlay.HUD_REDSTONE_RADIO);
         event.registerAboveAll("water_pump_hud", new WaterPumpHUD());
         MinecraftForge.EVENT_BUS.register(com.trd.client.overlay.hud.LowPressureSteamCondenserOverlay.class);
     }
