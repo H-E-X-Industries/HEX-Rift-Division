@@ -177,6 +177,10 @@ public class ModLangProvider extends LanguageProvider {
         add("gui.trd.fluid_identifier.title", "Fluid Identifier");
         add("gui.trd.fluid_identifier.unknown", "Unknown");
 
+        // ═══ GUI: Redstone Radio ═══
+        add("gui.trd.redstone_radio.title", "Redstone Radio");
+        add("gui.trd.redstone_radio.channel", "Channel ID");
+
         // ═══ GUI: Heater ═══
         add("hud.trd.chem_heater.title", "Chemical Heater");
         add("hud.trd.chem_heater.mode", "Mode");
@@ -373,6 +377,17 @@ public class ModLangProvider extends LanguageProvider {
         add("hud.trd.tachometer.torque", "Torque: %s / %s Nm");
         add("hud.trd.tachometer.inertia", "Inertia: %.2f");
         add("hud.trd.tachometer.stress", "Stress: %.1f%%");
+
+        // ═══ HUD: Redstone Radio ═══
+        add("hud.trd.redstone_radio.transmitter", "▶ Redstone Radio Transmitter");
+        add("hud.trd.redstone_radio.receiver", "▶ Redstone Radio Receiver");
+        add("hud.trd.redstone_radio.channel", "Channel: %s");
+        add("hud.trd.redstone_radio.no_channel", "None");
+        add("hud.trd.redstone_radio.state", "State: %s");
+        add("hud.trd.redstone_radio.on", "ON");
+        add("hud.trd.redstone_radio.off", "OFF");
+        add("hud.trd.redstone_radio.input_signal", "Input Signal: %s");
+        add("hud.trd.redstone_radio.output_signal", "Output Signal: %s");
 
         // ═══ HUD: Boiler ═══
         add("hud.trd.boiler.water", "Water");
@@ -587,6 +602,8 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.MACHINE_BATTERY.get(), "Modular Energy Storage");
         add(ModBlocks.CONVERTER_BLOCK.get(), "Energy Converter");
         add(ModBlocks.WIRE_COATED.get(), "Coated Copper Wire");
+        add(ModBlocks.REDSTONE_RADIO_TRANSMITTER.get(), "Redstone Radio Transmitter");
+        add(ModBlocks.REDSTONE_RADIO_RECEIVER.get(), "Redstone Radio Receiver");
         add(ModBlocks.PAINTABLE_WIRE.get(), "Paintable Wire");
         add(ModBlocks.MEDIUM_CONNECTOR.get(), "Medium Connector");
         add(ModBlocks.LARGE_CONNECTOR.get(), "Large Connector");
@@ -918,6 +935,8 @@ public class ModLangProvider extends LanguageProvider {
         add("tooltip.trd.machine.hand_crank.desc", "|Hand Crank| - the simplest source of |torque|. Cranked by scrolling the |mouse wheel| while looking at the block. Outputs torque only through its back side and connects exclusively to |light shafts|.");
         add("tooltip.trd.machine.bearing.desc", "|Bearing| - a mounting node for shafts. The speed and torque limits are adopted from the inserted shaft.");
         add("tooltip.trd.machine.tachometer.desc", "|Tachometer| - a |kinetic network| sensor that displays its state when connected: |speed|, total and consumed |torque|, |inertia| and |network load|.");
+        add("tooltip.trd.machine.redstone_radio_transmitter.desc", "|Redstone Radio Transmitter| - a |redstone radio| transmitter that sends redstone signals wirelessly to receivers on the same |channel ID|. Set the channel ID in the GUI. Can be placed in all 6 directions.");
+        add("tooltip.trd.machine.redstone_radio_receiver.desc", "|Redstone Radio Receiver| - a |redstone radio| receiver that outputs redstone signals received from transmitters on the same |channel ID|. Set the channel ID in the GUI. Can be placed in all 6 directions.");
         add("tooltip.trd.machine.motor_electro.desc", "|Electric Motor| - a |torque| source powered by |JE energy|. Energy is accepted only from the back side, the target speed from 100 to 1000 RPM is set with a slider in the interface. Supplying a |redstone signal| switches the rotation direction.");
         add("tooltip.trd.machine.flywheel.desc", "|Flywheel| - a shaft attachment adding |inertia| to the system. Smooths the network motion and provides a rotation reserve under varying load.");
         add("tooltip.trd.machine.pulley.desc", "|Pulley| - a shaft attachment for belt transmission. The transmission ratio depends on the difference in pulley diameters.");
@@ -1214,6 +1233,8 @@ public class ModLangProvider extends LanguageProvider {
         add("tooltip.trd.machine.hand_crank.desc", "|Ручная рукоятка| - простейший источник |крутящего момента|. Крутится прокруткой |колеса мыши| при взгляде на блок. Отдаёт момент только через тыльную сторону и соединяется исключительно с |лёгкими валами|.");
         add("tooltip.trd.machine.bearing.desc", "|Подшипник| - узел-крепление для валов. Лимиты скорости и момента перенимаются от вставленного вала.");
         add("tooltip.trd.machine.tachometer.desc", "|Тахометр| - датчик |кинетической сети|, при подключении демонстрирует её состояние: |обороты|, общий и потребляемый |крутящий момент|, |инерцию| и |нагрузку сети|.");
+        add("tooltip.trd.machine.redstone_radio_transmitter.desc", "|Редстоун-радио передатчик| - передатчик |редстоун-радио|, передаёт редстоун-сигналы беспроводно всем приёмникам с таким же |ID канала|. ID задаётся в GUI. Можно ставить во всех 6 направлениях.");
+        add("tooltip.trd.machine.redstone_radio_receiver.desc", "|Редстоун-радио приёмник| - приёмник |редстоун-радио|, выдаёт редстоун-сигналы от передатчиков с таким же |ID канала|. ID задаётся в GUI. Можно ставить во всех 6 направлениях.");
         add("tooltip.trd.machine.motor_electro.desc", "|Электромотор| - источник |крутящего момента|, работающий от |JE энергии|. Энергия принимается только с задней стороны, целевые обороты от 100 до 1000 RPM задаются ползунком в интерфейсе. Подача |редстоун-сигнала| переключает направление вращения.");
         add("tooltip.trd.machine.flywheel.desc", "|Маховик| - насадка на вал, добавляющая системе |инерцию|. Сглаживает ход сети и даёт запас вращения при переменной нагрузке.");
         add("tooltip.trd.machine.pulley.desc", "|Шкив| - насадка на вал для ременной передачи. Передаточное отношение зависит от разницы диаметров шкивов.");
@@ -1267,6 +1288,10 @@ public class ModLangProvider extends LanguageProvider {
         // ═══ GUI: Fluid Identifier ═══
         add("gui.trd.fluid_identifier.title", "Жидкостный идентификатор");
         add("gui.trd.fluid_identifier.unknown", "Неизвестно");
+
+        // ═══ GUI: Redstone Radio ═══
+        add("gui.trd.redstone_radio.title", "Редстоун-радио");
+        add("gui.trd.redstone_radio.channel", "ID канала");
 
         // ═══ GUI: Heater ═══
         add("hud.trd.chem_heater.title", "Хим. Нагреватель");
@@ -1425,6 +1450,17 @@ public class ModLangProvider extends LanguageProvider {
         add("hud.trd.tachometer.torque", "Момент: %s / %s Нм");
         add("hud.trd.tachometer.inertia", "Инерция: %.2f");
         add("hud.trd.tachometer.stress", "Нагрузка: %.1f%%");
+
+        // ═══ HUD: Redstone Radio ═══
+        add("hud.trd.redstone_radio.transmitter", "▶ Редстоун-радио передатчик");
+        add("hud.trd.redstone_radio.receiver", "▶ Редстоун-радио приёмник");
+        add("hud.trd.redstone_radio.channel", "Канал: %s");
+        add("hud.trd.redstone_radio.no_channel", "Нет");
+        add("hud.trd.redstone_radio.state", "Состояние: %s");
+        add("hud.trd.redstone_radio.on", "ВКЛ");
+        add("hud.trd.redstone_radio.off", "ВЫКЛ");
+        add("hud.trd.redstone_radio.input_signal", "Входной сигнал: %s");
+        add("hud.trd.redstone_radio.output_signal", "Выходной сигнал: %s");
 
         // ═══ HUD: Boiler ═══
         add("hud.trd.boiler.water", "Вода");
@@ -1663,6 +1699,8 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.MACHINE_BATTERY.get(), "Модульное энергохранилище");
         add(ModBlocks.CONVERTER_BLOCK.get(), "Энергетический конвертер");
         add(ModBlocks.WIRE_COATED.get(), "Провод из промышленной меди");
+        add(ModBlocks.REDSTONE_RADIO_TRANSMITTER.get(), "Редстоун-радио передатчик");
+        add(ModBlocks.REDSTONE_RADIO_RECEIVER.get(), "Редстоун-радио приёмник");
         add(ModBlocks.PAINTABLE_WIRE.get(), "Окрашиваемый провод");
         add(ModBlocks.CONNECTOR.get(), "Малый коннектор");
         add(ModBlocks.MEDIUM_CONNECTOR.get(), "Средний коннектор");

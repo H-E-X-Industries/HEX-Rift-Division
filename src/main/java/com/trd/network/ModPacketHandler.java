@@ -5,6 +5,7 @@ import com.trd.network.packet.chemistry.ClearChemicalRecipePacket;
 import com.trd.network.packet.chemistry.SelectChemicalRecipePacket;
 import com.trd.network.packet.chemistry.UpdatePortModePacket;
 import com.trd.network.packet.fluids.*;
+import com.trd.network.packet.redstone.RedstoneRadioSyncPacket;
 //import com.trd.network.packet.rotation.PacketToggleRetractMode;
 import com.trd.network.packet.turrets.*;
 import com.trd.network.packet.rotation.ScrollHandCrankPacket;
@@ -34,6 +35,14 @@ public class ModPacketHandler {
             PROTOCOL_VERSION::equals,
             PROTOCOL_VERSION::equals
     );
+
+    public static net.minecraft.client.Minecraft getClient() {
+        return net.minecraft.client.Minecraft.getInstance();
+    }
+
+    public static net.minecraft.world.level.Level getClientLevel() {
+        return getClient().level;
+    }
 
     public static void register() {
         int id = 0;
@@ -227,5 +236,11 @@ public class ModPacketHandler {
                 com.trd.network.packet.conveyor.UpdateSortirovshikFilterC2SPacket::toBytes,
                 com.trd.network.packet.conveyor.UpdateSortirovshikFilterC2SPacket::new,
                 com.trd.network.packet.conveyor.UpdateSortirovshikFilterC2SPacket::handle);
+
+        INSTANCE.registerMessage(id++,
+                RedstoneRadioSyncPacket.class,
+                RedstoneRadioSyncPacket::encode,
+                RedstoneRadioSyncPacket::decode,
+                RedstoneRadioSyncPacket::handle);
     }
 }

@@ -17,6 +17,8 @@ import com.trd.block.entity.industrial.rotation.MotorElectroBlockEntity;
 import com.trd.block.entity.industrial.rotation.HandCrankBlockEntity;
 import com.trd.block.entity.industrial.rotation.ShaftBlockEntity;
 import com.trd.block.entity.weapons.MissileTurretBlockEntity;
+import com.trd.block.entity.redstone.RedstoneRadioReceiverBlockEntity;
+import com.trd.block.entity.redstone.RedstoneRadioTransmitterBlockEntity;
 
 import com.trd.block.entity.industrial.casting.CastingDescentBlockEntity;
 import com.trd.block.entity.industrial.casting.CastingPotBlockEntity;
@@ -92,7 +94,6 @@ public class ModBlockEntities {
                     () -> net.minecraft.world.level.block.entity.BlockEntityType.Builder.of(
                             com.trd.multiblock.industrial.coccer.CoccerOvenBlockEntity::new,
                             com.trd.block.basic.ModBlocks.COCCER_OVEN.get()).build(null));
-
     public static final RegistryObject<BlockEntityType<com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlockEntity>> VISHELASHIVATEL_BE =
             BLOCK_ENTITIES.register("vishelashivatel",
                     () -> BlockEntityType.Builder.of(
@@ -177,7 +178,6 @@ public class ModBlockEntities {
 
     public static final RegistryObject<BlockEntityType<MachineBatteryBlockEntity>> MACHINE_BATTERY_BE =
             BLOCK_ENTITIES.register("machine_battery_be", () -> {
-                // Превращаем список RegistryObject в массив Block[]
                 Block[] validBlocks = ModBlocks.BATTERY_BLOCKS.stream()
                         .map(RegistryObject::get)
                         .toArray(Block[]::new);
@@ -194,6 +194,16 @@ public class ModBlockEntities {
     public static final RegistryObject<BlockEntityType<ConverterBlockEntity>> CONVERTER_BE =
             BLOCK_ENTITIES.register("converter_be",
                     () -> BlockEntityType.Builder.of(ConverterBlockEntity::new, ModBlocks.CONVERTER_BLOCK.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<RedstoneRadioTransmitterBlockEntity>> REDSTONE_RADIO_TRANSMITTER_BE =
+            BLOCK_ENTITIES.register("redstone_radio_transmitter_be",
+                    () -> BlockEntityType.Builder.of(RedstoneRadioTransmitterBlockEntity::new, ModBlocks.REDSTONE_RADIO_TRANSMITTER.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<RedstoneRadioReceiverBlockEntity>> REDSTONE_RADIO_RECEIVER_BE =
+            BLOCK_ENTITIES.register("redstone_radio_receiver_be",
+                    () -> BlockEntityType.Builder.of(RedstoneRadioReceiverBlockEntity::new, ModBlocks.REDSTONE_RADIO_RECEIVER.get()).build(null));
+
+
 
 
 
@@ -283,12 +293,10 @@ public class ModBlockEntities {
     public static final RegistryObject<BlockEntityType<FluidPipeBlockEntity>> FLUID_PIPE_BE =
             BLOCK_ENTITIES.register("fluid_pipe_be",
                     () -> BlockEntityType.Builder.of(FluidPipeBlockEntity::new,
-                            // Просто перечисляем все наши трубы через запятую:
                             ModBlocks.BRONZE_FLUID_PIPE.get(),
                             ModBlocks.STEEL_FLUID_PIPE.get(),
                             ModBlocks.LEAD_FLUID_PIPE.get(),
                             ModBlocks.TUNGSTEN_FLUID_PIPE.get()
-                            // ... и любые другие трубы, которые ты добавишь в будущем
                     ).build(null));
 
 
@@ -301,7 +309,7 @@ public class ModBlockEntities {
 //            BLOCK_ENTITIES.register("shaft",
 //                    () -> BlockEntityType.Builder.of(ShaftBlockEntity::new,
 //                            ModBlocks.SHAFT_IRON.get(),
-//                            ModBlocks.SHAFT_WOODEN.get() // и все другие валы
+//                            ModBlocks.SHAFT_WOODEN.get()
 //                    ).build(null));
 
     public static final RegistryObject<BlockEntityType<ConnectorBlockEntity>> CONNECTOR_BE =

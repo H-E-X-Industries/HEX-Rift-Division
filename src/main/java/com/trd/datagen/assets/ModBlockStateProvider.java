@@ -128,6 +128,8 @@ public class ModBlockStateProvider extends BlockStateProvider {
         cubeAllWithItem(ModBlocks.CONCRETE_TILE_ALT);
         cubeAllWithItem(ModBlocks.CONCRETE_TILE_ALT_BLUE);
         hiveRootsBlock(ModBlocks.HIVE_ROOTS);
+        redstoneRadioBlock(ModBlocks.REDSTONE_RADIO_TRANSMITTER);
+        redstoneRadioBlock(ModBlocks.REDSTONE_RADIO_RECEIVER);
 
         glassBlockWithItem(ModBlocks.CONCRETE_ARMED_GLASS, "concrete_armed_glass", "translucent");
 
@@ -376,6 +378,45 @@ public class ModBlockStateProvider extends BlockStateProvider {
         // Для инвентаря используем нижнюю часть (у опоры)
         simpleBlockItem(block.get(), models()
                 .cross(block.getId().getPath() + "_bottom", modLoc("block/" + block.getId().getPath() + "_bottom"))
+                .renderType("cutout"));
+    }
+
+    public void redstoneRadioBlock(RegistryObject<Block> block) {
+        String name = block.getId().getPath();
+
+        ModelFile modelOn = models()
+                .cross(name + "_on", modLoc("block/" + name + "_on"))
+                .renderType("cutout");
+        ModelFile modelOff = models()
+                .cross(name + "_off", modLoc("block/" + name + "_off"))
+                .renderType("cutout");
+
+        getVariantBuilder(block.get()).forAllStates(state -> {
+            boolean powered = state.getValue(com.trd.block.basic.redstone.RedstoneRadioBlock.POWERED);
+            Direction facing = state.getValue(com.trd.block.basic.redstone.RedstoneRadioBlock.FACING);
+
+            ModelFile model = powered ? modelOn : modelOff;
+            int rotationX = 0;
+            int rotationY = 0;
+
+            switch (facing) {
+                case DOWN -> rotationX = 90;
+                case UP -> rotationX = 270;
+                case NORTH -> { rotationX = 0; rotationY = 0; }
+                case SOUTH -> { rotationX = 0; rotationY = 180; }
+                case WEST -> { rotationX = 0; rotationY = 270; }
+                case EAST -> { rotationX = 0; rotationY = 90; }
+            }
+
+            return ConfiguredModel.builder()
+                    .modelFile(model)
+                    .rotationX(rotationX)
+                    .rotationY(rotationY)
+                    .build();
+        });
+
+        simpleBlockItem(block.get(), models()
+                .cross(name + "_off", modLoc("block/" + name + "_off"))
                 .renderType("cutout"));
     }
 
