@@ -56,11 +56,16 @@ public class SwitchBlockEntity extends BlockEntity implements IEnergyConnector {
     @Override
     public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
         if (cap == ModCapabilities.ENERGY_CONNECTOR) {
-            if (isValidSide(side)) {
+            if (isValidSide(side) && isPowered()) {
                 return hbmConnector.cast();
             }
         }
         return super.getCapability(cap, side);
+    }
+
+    private boolean isPowered() {
+        BlockState state = this.getBlockState();
+        return state.hasProperty(SwitchBlock.POWERED) && state.getValue(SwitchBlock.POWERED);
     }
 
     private boolean isValidSide(@Nullable Direction side) {
