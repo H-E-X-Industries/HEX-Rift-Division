@@ -216,7 +216,8 @@ public class GUIStanokRecipeSelect {
 
             // Название
             Component name = Component.translatable("recipe.trd." + recipe.getId().getPath());
-            int maxTextW = LIST_W - (ICON_X + 23) - 2;
+            // Правый край обрезки текста смещён на 3px влево
+            int maxTextW = LIST_W - (ICON_X + 23) - 5;
             int tW = font.width(name);
             int tX = lx + ICON_X + 23;
             int tY = ey + ICON_Y + 4;

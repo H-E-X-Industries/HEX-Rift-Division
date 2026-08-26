@@ -503,6 +503,9 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
         pressOperationCount = tag.getInt("PressOpCount");
         if (tag.contains("RecipeId")) {
             currentRecipeId = new ResourceLocation(tag.getString("RecipeId"));
+        } else {
+            // Тег отсутствует — рецепт сброшен на сервере, клиент тоже должен сбросить
+            currentRecipeId = null;
         }
     }
 

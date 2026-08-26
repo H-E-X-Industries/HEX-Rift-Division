@@ -260,6 +260,13 @@ public class GUIStanok extends AbstractContainerScreen<StanokMenu> {
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (recipeScreenOpen && recipeScreen != null) {
             if (recipeScreen.handleKeyPressed(keyCode, scanCode, modifiers)) return true;
+            // Первый Escape закрывает только встроенную панель выбора рецепта,
+            // второй — само GUI
+            if (keyCode == org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE) {
+                recipeScreenOpen = false;
+                recipeScreen = null;
+                return true;
+            }
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
     }

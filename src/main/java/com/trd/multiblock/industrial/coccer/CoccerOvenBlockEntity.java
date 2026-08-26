@@ -78,8 +78,8 @@ public class CoccerOvenBlockEntity extends BlockEntity implements MenuProvider, 
     private boolean isProcessing = false;
     private CoccerOvenRecipe currentRecipe = null;
     private ItemStack inputSnapshot = ItemStack.EMPTY;
-    /** Сколько тиков дым идёт после окончания рецепта (~3 секунды) */
-    public static final int SMOKE_TAIL_TICKS = 60;
+    /** Сколько тиков дым идёт после окончания рецепта (~5 секунд) */
+    public static final int SMOKE_TAIL_TICKS = 100;
     private int smokeTicks = 0; // Хвост дыма (синхронизируется)
 
     private final LazyOptional<IItemHandler> fullHandler = LazyOptional.of(() -> inventory);

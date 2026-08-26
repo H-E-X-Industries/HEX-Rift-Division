@@ -23,7 +23,6 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.CampfireBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
@@ -208,23 +207,32 @@ public class SmelterBlock extends BaseEntityBlock implements IMultiblockControll
 
     /**
      * Клиентский тикер дыма — копия логики CampfireBlockEntity#particleTick:
-     * каждый игровой тик с вероятностью 11% спавнится сигнальный дым
-     * (как у костра со снопом сена снизу) через ванильный
-     * CampfireBlock#makeParticles.
+     * каждый игровой тик с вероятностью 11% спавнится сигнальный дым.
+     * Дым идёт ТОЛЬКО во время активной плавки и ещё ~5 секунд после неё.
      */
     private static void clientSmokeTick(Level level, BlockPos pos, BlockState state, SmelterBlockEntity smelter) {
-        boolean hot = smelter.getTemperature() >= EFFECTS_MIN_TEMP;
-        // Дым идёт пока печь горячая, а также ещё ~3 секунды после окончания рецепта
-        boolean smoking = hot || smelter.getSmokeTicks() > 0;
-        if (!smoking) return;
+        if (smelter.getSmokeTicks() <= 0) return;
 
         if (level.getRandom().nextFloat() < 0.11F) {
             MultiblockStructureHelper structureHelper = helper;
             if (structureHelper != null) {
                 BlockPos chimney = structureHelper.getTopCenterAbovePos(pos, state.getValue(FACING));
-                CampfireBlock.makeParticles(level, chimney, true, false);
+                makeCampfireSmoke(level, chimney);
             }
         }
+    }
+
+    /**
+     * Копия ванильного CampfireBlock#makeParticles (сигнальный дым — как у костра
+     * со снопом сена снизу): тот же разброс, та же скорость, addAlwaysVisibleParticle,
+     * но источник опущен на пол-блока ниже.
+     */
+    private static void makeCampfireSmoke(Level level, BlockPos pos) {
+        RandomSource randomsource = level.getRandom();
+        double x = (double) pos.getX() + 0.5D + randomsource.nextDouble() / 3.0D * (double) (randomsource.nextBoolean() ? 1 : -1);
+        double y = (double) pos.getY() - 0.5D + randomsource.nextDouble() + randomsource.nextDouble();
+        double z = (double) pos.getZ() + 0.5D + randomsource.nextDouble() / 3.0D * (double) (randomsource.nextBoolean() ? 1 : -1);
+        level.addAlwaysVisibleParticle(ParticleTypes.CAMPFIRE_SIGNAL_SMOKE, true, x, y, z, 0.0D, 0.07D, 0.0D);
     }
 
     @Override

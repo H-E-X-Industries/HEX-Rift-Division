@@ -54,8 +54,8 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
     public static final int MAX_TEMP = 1600;
     public static final int BLOCK_CAPACITY = 4;
     public static final int TANK_CAPACITY = BLOCK_CAPACITY * MetalUnits2.UNITS_PER_BLOCK;
-    /** Сколько тиков дым идёт после окончания плавки (~3 секунды) */
-    public static final int SMOKE_TAIL_TICKS = 60;
+    /** Сколько тиков дым идёт после окончания плавки (~5 секунд) */
+    public static final int SMOKE_TAIL_TICKS = 100;
     private static final float BURN_MIN_TEMP = 300.0F;
 
     private final ItemStackHandler inventory = new ItemStackHandler(8) {
