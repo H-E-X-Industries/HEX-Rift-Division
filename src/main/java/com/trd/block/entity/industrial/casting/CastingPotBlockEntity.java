@@ -6,6 +6,7 @@ import com.trd.api.metallurgy.system.MetalUnits2;
 import com.trd.api.metallurgy.system.recipe.MoldRecipe;
 import com.trd.api.metallurgy.system.recipe.MoldRecipeRegistry;
 import com.trd.block.entity.ModBlockEntities;
+import com.trd.block.basic.industrial.casting.CastingPotBlock;
 import com.trd.item.ModItems;
 import com.trd.event.SlagItem;
 import com.trd.event.HotItemHandler;
@@ -279,6 +280,13 @@ public class CastingPotBlockEntity extends BlockEntity {
      */
     public static void serverTick(Level level, BlockPos pos, BlockState state, CastingPotBlockEntity be) {
         if (be.transferCooldown > 0) be.transferCooldown--;
+
+        // === СВЕТ: котёл с расплавленным металлом светится как факел ===
+        boolean hasMetal = be.storedUnits > 0;
+        if (state.getValue(CastingPotBlock.HAS_METAL) != hasMetal && !level.isClientSide) {
+            level.setBlock(pos, state.setValue(CastingPotBlock.HAS_METAL, hasMetal), 3);
+            return; // состояние обновилось — подождём следующего тика
+        }
 
         // === ОХЛАЖДЕНИЕ ГОТОВОГО ПРЕДМЕТА В КОТЛЕ ===
         if (!be.outputItem.isEmpty()) {

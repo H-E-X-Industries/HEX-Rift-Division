@@ -78,6 +78,9 @@ public class CoccerOvenBlockEntity extends BlockEntity implements MenuProvider, 
     private boolean isProcessing = false;
     private CoccerOvenRecipe currentRecipe = null;
     private ItemStack inputSnapshot = ItemStack.EMPTY;
+    /** Сколько тиков дым идёт после окончания рецепта (~3 секунды) */
+    public static final int SMOKE_TAIL_TICKS = 60;
+    private int smokeTicks = 0; // Хвост дыма (синхронизируется)
 
     private final LazyOptional<IItemHandler> fullHandler = LazyOptional.of(() -> inventory);
     private final LazyOptional<IItemHandler> automationHandler = LazyOptional.of(() -> new IItemHandler() {
@@ -150,6 +153,9 @@ public class CoccerOvenBlockEntity extends BlockEntity implements MenuProvider, 
     public int getRequiredTemp() { return requiredTemp; }
     public boolean isProcessing() { return isProcessing; }
 
+    /** Остаток хвоста дыма после окончания рецепта (тики) */
+    public int getSmokeTicks() { return smokeTicks; }
+
     @Override
     public void invalidateCaps() {
         super.invalidateCaps();
@@ -177,6 +183,17 @@ public class CoccerOvenBlockEntity extends BlockEntity implements MenuProvider, 
     public static void serverTick(Level level, BlockPos pos, BlockState state, CoccerOvenBlockEntity be) {
         be.pickupThrownItems(level, pos);
         be.burnEntitiesInRecess(level, pos);
+
+        // === ДЫМ ===
+        // Спавнится клиентски в CoccerOvenBlock.animateTick как у ванильного костра
+        // (сигнальный дым — высокий столб из центра над крышей мультиблока).
+        // Пока идёт рецепт — таймер обновляется, после его завершения дым
+        // продолжает идти ещё SMOKE_TAIL_TICKS тиков
+        if (be.currentRecipe != null) {
+            be.smokeTicks = SMOKE_TAIL_TICKS;
+        } else if (be.smokeTicks > 0) {
+            be.smokeTicks--;
+        }
 
         // === ТЕПЛООБМЕН ===
         BlockEntity below = level.getBlockEntity(pos.below());
@@ -247,7 +264,7 @@ public class CoccerOvenBlockEntity extends BlockEntity implements MenuProvider, 
             }
         }
 
-        if (be.isProcessing || be.temperature > 0 || be.progress > 0) {
+        if (be.isProcessing || be.temperature > 0 || be.progress > 0 || be.smokeTicks > 0) {
             be.setChanged();
             level.sendBlockUpdated(pos, state, state, 3);
         }
@@ -297,6 +314,7 @@ public class CoccerOvenBlockEntity extends BlockEntity implements MenuProvider, 
         tag.put("Inventory", inventory.serializeNBT());
         tag.put("FluidTank", fluidTank.writeToNBT(new CompoundTag()));
         tag.putFloat("Temperature", temperature);
+        tag.putInt("SmokeTicks", smokeTicks);
         tag.putInt("Progress", progress);
         tag.putInt("MaxProgress", maxProgress);
         tag.putInt("RequiredTemp", requiredTemp);
@@ -312,6 +330,7 @@ public class CoccerOvenBlockEntity extends BlockEntity implements MenuProvider, 
         inventory.deserializeNBT(tag.getCompound("Inventory"));
         fluidTank.readFromNBT(tag.getCompound("FluidTank"));
         temperature = tag.getFloat("Temperature");
+        smokeTicks = tag.getInt("SmokeTicks");
         progress = tag.getInt("Progress");
         maxProgress = tag.getInt("MaxProgress");
         requiredTemp = tag.getInt("RequiredTemp");

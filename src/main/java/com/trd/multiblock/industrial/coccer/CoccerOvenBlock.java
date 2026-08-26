@@ -20,6 +20,7 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.CampfireBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -159,7 +160,33 @@ public class CoccerOvenBlock extends BaseEntityBlock implements IMultiblockContr
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return level.isClientSide ? null : createTickerHelper(type, ModBlockEntities.COCCER_OVEN_BE.get(), CoccerOvenBlockEntity::serverTick);
+        if (level.isClientSide) {
+            // Клиентский тикер для дыма — тот же механизм, что у ванильного костра,
+            // который спавнит дым каждый игровой тик (а не через редкий animateTick)
+            return createTickerHelper(type, ModBlockEntities.COCCER_OVEN_BE.get(), CoccerOvenBlock::clientSmokeTick);
+        }
+        return createTickerHelper(type, ModBlockEntities.COCCER_OVEN_BE.get(), CoccerOvenBlockEntity::serverTick);
+    }
+
+    /**
+     * Клиентский тикер дыма — копия логики CampfireBlockEntity#particleTick:
+     * каждый игровой тик с вероятностью 11% спавнится сигнальный дым
+     * (как у костра со снопом сена снизу) через ванильный
+     * CampfireBlock#makeParticles.
+     */
+    private static void clientSmokeTick(Level level, BlockPos pos, BlockState state, CoccerOvenBlockEntity oven) {
+        boolean hot = oven.getTemperature() >= EFFECTS_MIN_TEMP;
+        // Дым идёт пока печь горячая, а также ещё ~3 секунды после окончания рецепта
+        boolean smoking = hot || oven.getSmokeTicks() > 0;
+        if (!smoking) return;
+
+        if (level.getRandom().nextFloat() < 0.11F) {
+            MultiblockStructureHelper structureHelper = helper;
+            if (structureHelper != null) {
+                BlockPos chimney = structureHelper.getTopCenterAbovePos(pos, state.getValue(FACING));
+                CampfireBlock.makeParticles(level, chimney, true, false);
+            }
+        }
     }
 
     @Override

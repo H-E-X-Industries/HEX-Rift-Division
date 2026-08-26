@@ -308,6 +308,13 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
             else if (cap == ForgeCapabilities.ITEM_HANDLER) {
                 BlockEntity be = level.getBlockEntity(controllerPos);
                 if (be != null) {
+                    // Выщелачиватель: предметы ТОЛЬКО через жидкостные порты ($ = FLUID_INPUT)
+                    if (be instanceof com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlockEntity leacher) {
+                        if (role == PartRole.FLUID_INPUT || role == PartRole.UNIVERSAL_CONNECTOR) {
+                            return leacher.getItemPortCapability().cast();
+                        }
+                        return LazyOptional.empty();
+                    }
                     // Специальная логика для карго-портов станка
                     if (be instanceof com.trd.multiblock.industrial.stanok.StanokBlockEntity sbe) {
                         if (role == PartRole.CARGO_PORT) {

@@ -16,7 +16,11 @@ import net.minecraftforge.common.crafting.conditions.IConditionBuilder;
 import com.trd.block.basic.ModBlocks;
 
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonArray;
+import net.minecraft.resources.ResourceLocation;
 
 public class ModRecipeProvider extends RecipeProvider implements IConditionBuilder {
     public ModRecipeProvider(PackOutput output) {
@@ -27,6 +31,10 @@ public class ModRecipeProvider extends RecipeProvider implements IConditionBuild
     @Override
     protected void buildRecipes(Consumer<FinishedRecipe> writer) {
         ResourceRecipeHelper.generateRecipes(writer);
+
+        // --- НАМОТКА КАТУШКИ ПРОВОДА ---
+        // Пустая катушка + 8 промышленных медных проводов = полностью заряженная (32/32)
+        wireCoilWindingRecipe(writer);
 
         // --- КРАФТЫ ИЗ КАЛА ---
         ShapelessRecipeBuilder.shapeless(RecipeCategory.MISC, ModItems.FIRE_SMES.get(), 4)
@@ -314,5 +322,40 @@ public class ModRecipeProvider extends RecipeProvider implements IConditionBuild
                     .group(group).unlockedBy(getHasName(itemlike), has(itemlike))
                     .save(writer, MainRegistry.MOD_ID + ":" + getItemName(result) + suffix + "_" + getItemName(itemlike));
         }
+    }
+
+    /**
+     * Намотка катушки: катушка + N промышленных медных проводов
+     * -> катушка с +N проводами (кастомный рецепт, см. WireCoilWindingRecipe).
+     */
+    private static void wireCoilWindingRecipe(Consumer<FinishedRecipe> writer) {
+        ResourceLocation id = new ResourceLocation(MainRegistry.MOD_ID, "wire_coil_winding");
+
+        writer.accept(new FinishedRecipe() {
+            @Override
+            public void serializeRecipeData(com.google.gson.JsonObject json) {
+                json.addProperty("type", "trd:wire_coil_winding");
+            }
+
+            @Override
+            public ResourceLocation getId() {
+                return id;
+            }
+
+            @Override
+            public net.minecraft.world.item.crafting.RecipeSerializer<?> getType() {
+                return com.trd.api.energy.ModRecipes.WIRE_COIL_WINDING.get();
+            }
+
+            @Override
+            public JsonObject serializeAdvancement() {
+                return null;
+            }
+
+            @Override
+            public ResourceLocation getAdvancementId() {
+                return null;
+            }
+        });
     }
 }

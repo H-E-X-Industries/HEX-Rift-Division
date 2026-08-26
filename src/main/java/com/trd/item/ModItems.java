@@ -279,8 +279,7 @@ public class ModItems {
     public static final RegistryObject<Item> NEODYMIUM_WIRE = ITEMS.register("neodymium_wire",
             () -> new Item(new Item.Properties()));
 
-    public static final RegistryObject<Item> WIRE_COIL_EMPTY = ITEMS.register("wire_coil_empty",
-            () -> new Item(new Item.Properties()));
+    // WIRE_COIL_EMPTY удалён: пустое состояние — тот же wire_coil без NBT-заряда
 
     // Conglomerate items
     public static final RegistryObject<Item> CONGLOMERATE_CHUNK = ITEMS.register("conglomerate_chunk",

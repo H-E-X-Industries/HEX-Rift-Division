@@ -509,6 +509,11 @@ public class MultiblockStructureHelper {
         return topRing;
     }
 
+    /** Центральная точка над крышей структуры (для эффектов вроде дыма костра). */
+    public BlockPos getTopCenterAbovePos(BlockPos controllerWorldPos, Direction facing) {
+        return getRotatedPos(controllerWorldPos, new BlockPos(0, getMaxY() + 1, 0), facing);
+    }
+
     public boolean computeFrameVisible(Level level, BlockPos controllerPos, Direction facing) {
         for (BlockPos p : getTopRingWorldPositions(controllerPos, facing)) {
             if (!level.isEmptyBlock(p.above())) return true;

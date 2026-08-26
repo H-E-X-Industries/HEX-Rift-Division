@@ -23,6 +23,7 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.CampfireBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
@@ -76,16 +77,21 @@ public class SmelterBlock extends BaseEntityBlock implements IMultiblockControll
         if (helper == null) {
             Map<Character, Supplier<BlockState>> symbols = Map.of(
                     '#', () -> ModBlocks.MULTIBLOCK_PART.get().defaultBlockState(),
+                    '$', () -> ModBlocks.MULTIBLOCK_PART.get().defaultBlockState(),
                     'O', () -> this.defaultBlockState()
             );
             Map<Character, PartRole> roles = Map.of(
                     '#', PartRole.DEFAULT,
+                    // '$' — обычные мультиблок-парты нижнего слоя; роль FLUID_OUTPUT
+                    // служит маркером валидных точек крепления литейного спуска
+                    // (см. CastingDescentBlock.canSurvive)
+                    '$', PartRole.FLUID_OUTPUT,
                     'O', PartRole.CONTROLLER
             );
 
             helper = MultiblockStructureHelper.createFromLayersWithRoles(
                     new String[][]{
-                            {"###", "#O#", "###"},
+                            {"#$#", "$O$", "#$#"},
                             {"###", "###", "###"}
                     },
                     symbols,
@@ -192,7 +198,33 @@ public class SmelterBlock extends BaseEntityBlock implements IMultiblockControll
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return level.isClientSide ? null : createTickerHelper(type, ModBlockEntities.SMELTER_BE.get(), SmelterBlockEntity::serverTick);
+        if (level.isClientSide) {
+            // Клиентский тикер для дыма — тот же механизм, что у ванильного костра,
+            // который спавнит дым каждый игровой тик (а не через редкий animateTick)
+            return createTickerHelper(type, ModBlockEntities.SMELTER_BE.get(), SmelterBlock::clientSmokeTick);
+        }
+        return createTickerHelper(type, ModBlockEntities.SMELTER_BE.get(), SmelterBlockEntity::serverTick);
+    }
+
+    /**
+     * Клиентский тикер дыма — копия логики CampfireBlockEntity#particleTick:
+     * каждый игровой тик с вероятностью 11% спавнится сигнальный дым
+     * (как у костра со снопом сена снизу) через ванильный
+     * CampfireBlock#makeParticles.
+     */
+    private static void clientSmokeTick(Level level, BlockPos pos, BlockState state, SmelterBlockEntity smelter) {
+        boolean hot = smelter.getTemperature() >= EFFECTS_MIN_TEMP;
+        // Дым идёт пока печь горячая, а также ещё ~3 секунды после окончания рецепта
+        boolean smoking = hot || smelter.getSmokeTicks() > 0;
+        if (!smoking) return;
+
+        if (level.getRandom().nextFloat() < 0.11F) {
+            MultiblockStructureHelper structureHelper = helper;
+            if (structureHelper != null) {
+                BlockPos chimney = structureHelper.getTopCenterAbovePos(pos, state.getValue(FACING));
+                CampfireBlock.makeParticles(level, chimney, true, false);
+            }
+        }
     }
 
     @Override

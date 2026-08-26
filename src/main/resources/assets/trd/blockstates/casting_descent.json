@@ -1,8 +1,12 @@
 {
   "variants": {
-    "facing=north": { "model": "trd:block/casting_descent" },
-    "facing=east":  { "model": "trd:block/casting_descent", "y": 90 },
-    "facing=south": { "model": "trd:block/casting_descent", "y": 180 },
-    "facing=west":  { "model": "trd:block/casting_descent", "y": 270 }
+    "facing=north,pouring=false": { "model": "trd:block/casting_descent" },
+    "facing=north,pouring=true":  { "model": "trd:block/casting_descent" },
+    "facing=east,pouring=false":  { "model": "trd:block/casting_descent", "y": 90 },
+    "facing=east,pouring=true":   { "model": "trd:block/casting_descent", "y": 90 },
+    "facing=south,pouring=false": { "model": "trd:block/casting_descent", "y": 180 },
+    "facing=south,pouring=true":  { "model": "trd:block/casting_descent", "y": 180 },
+    "facing=west,pouring=false":  { "model": "trd:block/casting_descent", "y": 270 },
+    "facing=west,pouring=true":   { "model": "trd:block/casting_descent", "y": 270 }
   }
 }

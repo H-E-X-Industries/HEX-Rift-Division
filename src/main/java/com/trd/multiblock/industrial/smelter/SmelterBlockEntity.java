@@ -33,6 +33,7 @@ import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -53,6 +54,8 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
     public static final int MAX_TEMP = 1600;
     public static final int BLOCK_CAPACITY = 4;
     public static final int TANK_CAPACITY = BLOCK_CAPACITY * MetalUnits2.UNITS_PER_BLOCK;
+    /** Сколько тиков дым идёт после окончания плавки (~3 секунды) */
+    public static final int SMOKE_TAIL_TICKS = 60;
     private static final float BURN_MIN_TEMP = 300.0F;
 
     private final ItemStackHandler inventory = new ItemStackHandler(8) {
@@ -96,6 +99,7 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
     private final Map<Metal, Integer> metalTank = new LinkedHashMap<>();
     private int totalMetalAmount = 0;
     private float temperature = 0;
+    private int smokeTicks = 0; // Хвост дыма после окончания плавки (синхронизируется)
 
     private int lastTopHash = 0;
     private int lastBottomHash = 0;
@@ -226,6 +230,17 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
         be.tickTopRow();
         be.tickBottomRow();
 
+        // === ДЫМ ===
+        // Спавнится клиентски в SmelterBlock.animateTick как у ванильного костра
+        // (сигнальный дым — высокий столб из центра над крышей мультиблока).
+        // Пока идёт плавка — таймер обновляется, после её окончания дым
+        // продолжает идти ещё SMOKE_TAIL_TICKS тиков
+        if (be.topSmelting || !be.currentBottomRecipes.isEmpty()) {
+            be.smokeTicks = SMOKE_TAIL_TICKS;
+        } else if (be.smokeTicks > 0) {
+            be.smokeTicks--;
+        }
+
         // Синхронизация данных для GUI
         be.data.set(0, (int) be.temperature);
         be.data.set(1, (int) be.topProgress);
@@ -242,7 +257,7 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
         be.data.set(12, (int) be.bottomHeatConsumption);
         be.data.set(13, be.isTankFull() ? 1 : 0);
 
-        if (be.topSmelting || be.bottomSmelting || be.temperature > 0) {
+        if (be.topSmelting || be.bottomSmelting || be.temperature > 0 || be.smokeTicks > 0) {
             be.setChanged();
             level.sendBlockUpdated(pos, state, state, 3);
         }
@@ -1086,6 +1101,9 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
     public ItemStackHandler getInventory() { return inventory; }
     public ContainerData getData() { return data; }
     public float getTemperature() { return temperature; }
+
+    /** Остаток хвоста дыма после окончания плавки (тики) */
+    public int getSmokeTicks() { return smokeTicks; }
     public Map<Metal, Integer> getMetalTank() { return Collections.unmodifiableMap(metalTank); }
     public int getTotalMetalAmount() { return totalMetalAmount; }
     public int getBlockCapacity() { return BLOCK_CAPACITY; }
@@ -1141,6 +1159,7 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
         super.saveAdditional(tag);
         tag.put("Inventory", inventory.serializeNBT());
         tag.putFloat("Temperature", temperature);
+        tag.putInt("SmokeTicks", smokeTicks);
         tag.putFloat("TopProgress", topProgress);
         tag.putFloat("TopMaxProgress", topMaxProgress);
         tag.putFloat("BottomProgress", bottomProgress);
@@ -1213,6 +1232,7 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
         super.load(tag);
         inventory.deserializeNBT(tag.getCompound("Inventory"));
         temperature = tag.getFloat("Temperature");
+        smokeTicks = tag.getInt("SmokeTicks");
         topProgress = tag.getFloat("TopProgress");
         topMaxProgress = tag.getFloat("TopMaxProgress");
         bottomProgress = tag.getFloat("BottomProgress");

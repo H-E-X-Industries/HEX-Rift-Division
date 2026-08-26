@@ -4,6 +4,7 @@ import com.trd.api.fluids.ModFluids;
 import com.trd.block.basic.ModBlocks;
 import com.trd.datagen.ResourceDatagenHelper;
 import com.trd.main.MainRegistry;
+import net.minecraftforge.client.model.generators.ModelFile;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
@@ -66,7 +67,16 @@ public class ModItemModelProvider extends ItemModelProvider {
         simpleItem(ModItems.INDUSTRIAL_COPPER_WIRE);
         simpleItem(ModItems.GOLD_WIRE);
         simpleItem(ModItems.NEODYMIUM_WIRE);
-        simpleItem(ModItems.WIRE_COIL_EMPTY);
+        // Катушка: пустая текстура, при наличии провода — полная (predicate trd:wires)
+        getBuilder("wire_coil")
+                .parent(new ModelFile.UncheckedModelFile("item/generated"))
+                .texture("layer0", modLoc("item/wire_coil_empty"))
+                .override()
+                        .predicate(new ResourceLocation(MainRegistry.MOD_ID, "wires"), 1.0f)
+                        .model(getBuilder("wire_coil_filled")
+                                .parent(new ModelFile.UncheckedModelFile("item/generated"))
+                                .texture("layer0", modLoc("item/wire_coil")))
+                        .end();
         simpleItem(ModItems.FLUORITE);
         simpleItem(ModItems.GRAVITY_GRENADE);
         simpleItem(ModItems.STEEL_PLATE);
@@ -104,7 +114,6 @@ public class ModItemModelProvider extends ItemModelProvider {
         simpleItem(ModItems.BATTERY_TRIXITE);
         simpleItem(ModItems.DOLOMITE_SMES);
         simpleItem(ModItems.FIRE_SMES);
-        simpleItem(ModItems.WIRE_COIL);
         simpleItem(ModItems.LIMESTONE_CHUNK);
         simpleItem(ModItems.LIMESTONE_POWDER);
         simpleItem(ModItems.BEAM_PLACER);

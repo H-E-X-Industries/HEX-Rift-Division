@@ -154,6 +154,9 @@ public class ModLangProvider extends LanguageProvider {
         add("recipe.trd.obsidian", "Obsidian");
         add("recipe.trd.concrete", "Concrete");
         add("recipe.trd.sodium_hydroxide", "Sodium Hydroxide (NaOH)");
+        add("recipe.trd.hydrogen_chlorine", "Hydrogen Chloride");
+        add("recipe.trd.aluminate_solution", "Sodium Aluminate Solution");
+        add("recipe.trd.aluminate_decomposition", "Aluminate Decomposition");
 
 
         // ═══ GUI: Electric Furnace ═══
@@ -403,6 +406,7 @@ public class ModLangProvider extends LanguageProvider {
         add("hud.trd.stator.buffer_label", "Buffer: ");
         add("hud.trd.stator.load_label", "Load: ");
         add("hud.trd.stator.production_label", "Production: ");
+        add("hud.trd.stator.title", "Stator");
 
         // ═══ GUI: Casting Pot ═══
         add("gui.trd.casting_pot.cannot_insert", "§cCannot insert: pot is occupied or has no mold");
@@ -498,6 +502,8 @@ public class ModLangProvider extends LanguageProvider {
         add("message.trd.wire_coil.too_far", "§cToo far! Maximum length: %s blocks.");
         add("message.trd.wire_coil.blocked", "§cPath blocked: %s");
         add("message.trd.wire_coil.success", "§bConnection successfully established!");
+        add("message.trd.wire_coil.no_wires", "§cThe spool is empty! Wind industrial copper wires into it first.");
+        add("tooltip.trd.wire_coil.wires", "Wires: %s / %s");
 
         // ═══ Message: Belt ═══
         add("message.trd.belt.pulleys_only", "§cBelt can only be stretched on pulleys!");
@@ -892,7 +898,7 @@ public class ModLangProvider extends LanguageProvider {
         add("tooltip.trd.machine.condenser.desc", "|Low Pressure Steam Condenser| - a device for cooling |low pressure steam| back into liquid form. Can merge if |low pressure steam condensers| are placed with their ports adjacent to each other, forming a single row. Full submersion of the |low pressure steam condenser| in water is mandatory for operation. The cooling bonus depends entirely on the size of the water body in which it is submerged.");
         add("tooltip.trd.machine.clutch.desc", "|Clutch| - a special module capable of breaking the |torque| transmission chain using a redstone signal.");
         add("tooltip.trd.machine.beam_placer.desc", "|Beam Placer| - a special tool capable of placing rows of beam blocks using the |P2P| principle. When one component in an installed beam row is destroyed, the entire structure collapses. When placing a beam row, keep in mind that there should be no obstacles between the connection points.");
-        add("tooltip.trd.machine.wire_coil.desc", "|Copper Wire Spool| - a special tool capable of connecting |connectors| to each other. |Connectors| are connected with priority given to the one where the connection was started. Before using the spool, it must be loaded with 8 |copper wires| in a crafting table, which will be consumed during subsequent connections.");
+        add("tooltip.trd.machine.wire_coil.desc", "|Copper Wire Spool| - a special tool capable of connecting |connectors| to each other. |Connectors| are connected with priority given to the one where the connection was started. Before using the spool, it must be loaded with 32 |industrial copper wires| in a crafting table, which will be consumed during subsequent connections.");
         add("tooltip.trd.machine.connector.desc", "|Connector| - a participant in the |energy network|, allowing other participants to be connected using the |P2P| method, which is noticeably more economical compared to classic methods. Connection to another connector is made via a |copper wire spool|. Connection ports are located under the |connector|. When connecting two |connectors|, the maximum connection length is determined by the |connector| of the smallest size.");
         add("tooltip.trd.machine.trombone.desc", "|Stationary Rocket Launcher 'Trombone'| - |Automatic weaponry| capable of controlling the area. Requires |100-mm missiles| and |JE energy| to operate. Fires a salvo of three missiles that launch vertically and then redirect toward the selected target, subsequently tracking it. Features a high-tech menu where you can configure the operating mode, view statistics, and manage the player whitelist (requires installing a |turret combat chip|).");
         add("tooltip.trd.machine.turret_chip.desc", "|Turret Combat Chip| - a module that allows moderating the player whitelist for |automatic weaponry|. Pressing |Shift + RMB| adds the player currently holding the chip to the whitelist.");
@@ -961,6 +967,7 @@ public class ModLangProvider extends LanguageProvider {
         // ═══ Vishelashivater (Leacher) ═══
         add(ModBlocks.VISHELASHIVATEL.get(), "Leacher");
         add("recipe.trd.leather_from_rotten_flesh", "Leather from Rotten Flesh");
+        add("recipe.trd.soda_crystal", "Soda Crystals (Leaching)");
         add("gui.trd.vishelashivatel.empty_tank", "Empty");
         add("gui.trd.vishelashivatel.fluid_amount", "%s / %s mB");
         add("gui.trd.vishelashivatel.fluid_req", "Fluid:");
@@ -1045,6 +1052,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.VISHELASHIVATEL.get(), "Рудный выщелачиватель");
         add("jei.category.trd.vishelashivatel", "Рудный выщелачиватель");
         add("recipe.trd.leather_from_rotten_flesh", "Производство кожи");
+        add("recipe.trd.soda_crystal", "Содовые кристаллы (выщелачивание)");
         add("gui.trd.vishelashivatel.empty_tank", "Пусто");
         add("gui.trd.vishelashivatel.fluid_amount", "%s / %s мБ");
         add("gui.trd.vishelashivatel.fluid_req", "Жидкость:");
@@ -1158,6 +1166,9 @@ public class ModLangProvider extends LanguageProvider {
         add("recipe.trd.black_ash", "Чёрная зола");
         add("recipe.trd.concrete", "Бетон");
         add("recipe.trd.sodium_hydroxide", "Щёлочь (NaOH)");
+        add("recipe.trd.hydrogen_chlorine", "Хлороводород");
+        add("recipe.trd.aluminate_solution", "Алюминатный раствор");
+        add("recipe.trd.aluminate_decomposition", "Декомпозиция алюмината");
 
         add("recipe.trd.obsidian", "Обсидиан");
         add(  "gui.trd.chemistry.empty", "Пусто");
@@ -1183,7 +1194,7 @@ public class ModLangProvider extends LanguageProvider {
         add("tooltip.trd.machine.condenser.desc", "|Конденсатор пара низкого давления| - устройство, для охлаждения |пара низкого давления| обратно до жидкого состояния. Способен объединяться, если |конденсаторы пара низкого давления| стоят своими портами вплотную друг к другу, образуя единый ряд. Обязательным условием работы является полное погружение |конденсатора пара низкого давления| в воду. Бонус к охлаждению полностью зависит от размеров водоёма, в котором он погружен.");
         add("tooltip.trd.machine.clutch.desc", "|Сцепление| - специальный модуль, способный разрывать цепь передачи |крутящего момента| с помощью сигнала красного камня.");
         add("tooltip.trd.machine.beam_placer.desc", "|Установщик балок| - специальный инструмент, способный размещать ряды блоков балок по |P2P| принципу. При разрушении одного компонента в установленном ряде балок, разрушается вся конструкция. При размещении ряда балок, стоит учесть, что между точками соединения не должно находится каких-либо препятствий.");
-        add("tooltip.trd.machine.wire_coil.desc", "|Катушка медного провода| - специальный инструмент, способный соединять между собой |коннекторы|. |Коннекторы| соединяются с приоритетом на тот, с которого началось соединение. Перед использованием катушки, на неё необходимо намотать 8 |медных проводов| в верстаке, которые будут расходоваться при последующих соединениях.");
+        add("tooltip.trd.machine.wire_coil.desc", "|Катушка медного провода| - специальный инструмент, способный соединять между собой |коннекторы|. |Коннекторы| соединяются с приоритетом на тот, с которого началось соединение. Перед использованием катушки, на неё необходимо намотать 32 |провода из промышленной меди| в верстаке, которые будут расходоваться при последующих соединениях.");
         add("tooltip.trd.machine.connector.desc", "|Коннектор| - участник |энергосети|, позволяющий соединять другие её участки |P2P| методом, что заметно экономнее, в сравнении с классическими методами. Соединение с другим коннектором осуществляется через |катушку медного провода|. Порты соединений, находятся под |коннектором|. При соединении двух |коннекторов|, максимальная длинна соединения будет избираться по |коннектору| наименьшего размера.");
         add("tooltip.trd.machine.trombone.desc", "|Стационарная ракетная установка \"Тромбон\"| - |Автоматический вид вооружения|, позволяющий контролировать местность. Для работы требует |100-мм ракеты| и |JE энергию|. Выстреливает залпом из трёх ракет, которые вылетают вертикально и после перенаправляются на выбранную цель, с последующим её сопровождением. Обладает высокотехнологичным меню, в котором можно настроить режим работы, просмотреть статистику и управлять белым списком игроков (необходимо установить |турельный боевой чип|).");
         add("tooltip.trd.machine.turret_chip.desc", "|Турельный боевой чип| - модуль, позволяющий модерировать белый список игроков у |автоматического вида оружия|. При нажатии |Shift + ПКМ| позволяет добавить в белый список игрока, у которого на данный момент находится чип.");
@@ -1445,6 +1456,7 @@ public class ModLangProvider extends LanguageProvider {
         add("hud.trd.stator.buffer_label", "Буфер: ");
         add("hud.trd.stator.load_label", "Нагрузка: ");
         add("hud.trd.stator.production_label", "Производство: ");
+        add("hud.trd.stator.title", "Статор");
 
         // ═══ GUI: Casting Pot ═══
         add("gui.trd.casting_pot.cannot_insert", "§cНельзя поместить: котёл занят или нет формы");
@@ -1539,6 +1551,8 @@ public class ModLangProvider extends LanguageProvider {
         add("message.trd.wire_coil.too_far", "§cСлишком далеко! Максимальная длина: %s блоков.");
         add("message.trd.wire_coil.blocked", "§cПуть заблокирован: %s");
         add("message.trd.wire_coil.success", "§bСоединение успешно установлено!");
+        add("message.trd.wire_coil.no_wires", "§cКатушка пуста! Сначала намотайте в неё промышленные медные провода.");
+        add("tooltip.trd.wire_coil.wires", "Провода: %s / %s");
 
         // ═══ Message: Belt ═══
         add("message.trd.belt.pulleys_only", "§cРемень можно натянуть только на шкивы!");
