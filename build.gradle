@@ -99,28 +99,19 @@ repositories {
 }
 
 dependencies {
+
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
-
-    // GeckoLib (обычно с ним проблем меньше)
     implementation fg.deobf('software.bernie.geckolib:geckolib-forge-1.20.1:4.8.2')
-
     implementation fg.deobf("com.github.glitchfiend:TerraBlender-forge:${terrablender_version}")
-
-    // JEI через официальный Maven (Mezz)
-    // Мы берем конкретную версию, которая ТОЧНО есть в репозитории
     compileOnly fg.deobf("mezz.jei:jei-1.20.1-common-api:15.3.0.4")
     compileOnly fg.deobf("mezz.jei:jei-1.20.1-forge-api:15.3.0.4")
     runtimeOnly fg.deobf("mezz.jei:jei-1.20.1-forge:15.3.0.4")
-
-    // 🔥 Идеально чистая установка Flywheel через сеть 🔥
     implementation fg.deobf("dev.engine-room.flywheel:flywheel-forge-1.20.1:1.0.2")
     jarJar(group: 'dev.engine-room.flywheel', name: 'flywheel-forge-1.20.1', version: '[1.0.0, 2.0.0)') {
         jarJar.pin(it, '1.0.2')
     }
-    // Spark
     runtimeOnly fg.deobf("maven.modrinth:spark:1.10.53-forge")
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
-
     compileOnly fg.deobf(files('libs/oculus-mc1.20.1-1.8.0.jar'))
     compileOnly fg.deobf(files('libs/embeddium-0.3.31+mc1.20.1.jar'))
 
