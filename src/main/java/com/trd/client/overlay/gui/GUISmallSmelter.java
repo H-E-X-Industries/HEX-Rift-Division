@@ -231,18 +231,10 @@ public class GUISmallSmelter extends AbstractContainerScreen<SmallSmelterMenu> {
 
         if (be != null && be.getSmeltMaxProgress() > 0) {
             float remaining = be.getSmeltMaxProgress() - be.getSmeltProgress();
-            float heatPerTick = 0;
-            if (be.getCurrentRecipe() != null) {
-                heatPerTick = be.getCurrentRecipe().heatConsumption();
-            } else if (be.isSlagRecipe()) {
-                heatPerTick = be.getSmeltHeatPerTick();
-            }
-            if (heatPerTick > 0) {
-                float seconds = remaining / (heatPerTick * 20.0f);
-                lines.add(Component.translatable("gui.trd.small_smelter.progress.remaining",
-                                String.format("%.1f", Math.max(0, seconds)))
-                        .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAAAA))));
-            }
+            float seconds = remaining / (10 * 20.0f);
+            lines.add(Component.translatable("gui.trd.small_smelter.progress.remaining",
+                            String.format("%.1f", Math.max(0, seconds)))
+                    .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAAAA))));
         }
         gui.renderComponentTooltip(this.font, lines, mx, my);
     }

@@ -216,15 +216,17 @@ public class ChemicalPlantPortBlockEntity extends BlockEntity implements MenuPro
                 for (int i = 0; i < ITEM_SLOTS; i++) {
                     ItemStack stack = be.itemHandler.getStackInSlot(i);
                     if (stack.isEmpty()) continue;
+
+                    // Камера определяет, в какой именно слот должен пойти этот предмет
+                    int targetSlot = chamber.getSlotForItem(stack);
+                    if (targetSlot < 0 || targetSlot >= ChemicalPlantReactionChamberBlockEntity.INPUT_SLOTS) continue;
+
                     ItemStack toInsert = stack.copy();
                     toInsert.setCount(1);
-                    for (int j = 0; j < ChemicalPlantReactionChamberBlockEntity.INPUT_SLOTS; j++) {
-                        ItemStack remainder = chamberItem.insertItem(j, toInsert, false);
-                        if (remainder.isEmpty()) {
-                            be.itemHandler.extractItem(i, 1, false);
-                            changed = true;
-                            break;
-                        }
+                    ItemStack remainder = chamberItem.insertItem(targetSlot, toInsert, false);
+                    if (remainder.isEmpty()) {
+                        be.itemHandler.extractItem(i, 1, false);
+                        changed = true;
                     }
                 }
             }

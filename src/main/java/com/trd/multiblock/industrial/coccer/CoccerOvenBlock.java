@@ -187,12 +187,12 @@ public class CoccerOvenBlock extends BaseEntityBlock implements IMultiblockContr
     /**
      * Копия ванильного CampfireBlock#makeParticles (сигнальный дым — как у костра
      * со снопом сена снизу): тот же разброс, та же скорость, addAlwaysVisibleParticle,
-     * но источник опущен на пол-блока ниже.
+     * но источник опущен на 1.5 блока ниже (изнутри коксовой печи).
      */
     private static void makeCampfireSmoke(Level level, BlockPos pos) {
         RandomSource randomsource = level.getRandom();
         double x = (double) pos.getX() + 0.5D + randomsource.nextDouble() / 3.0D * (double) (randomsource.nextBoolean() ? 1 : -1);
-        double y = (double) pos.getY() - 0.5D + randomsource.nextDouble() + randomsource.nextDouble();
+        double y = (double) pos.getY() - 1.5D + randomsource.nextDouble() + randomsource.nextDouble();
         double z = (double) pos.getZ() + 0.5D + randomsource.nextDouble() / 3.0D * (double) (randomsource.nextBoolean() ? 1 : -1);
         level.addAlwaysVisibleParticle(ParticleTypes.CAMPFIRE_SIGNAL_SMOKE, true, x, y, z, 0.0D, 0.07D, 0.0D);
     }

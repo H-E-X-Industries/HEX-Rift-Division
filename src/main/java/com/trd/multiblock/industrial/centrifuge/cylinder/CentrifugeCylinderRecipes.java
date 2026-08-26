@@ -63,5 +63,14 @@ public class CentrifugeCylinderRecipes {
                         new ItemStack(ResourceRegistry.getSmallUnit("titanium"), 1)
                 ),
                 140));
+
+        register(new CentrifugeCylinderRecipe(
+                new ResourceLocation("trd", "sulfuric_acid_centrifuging"),
+                new FluidStack(ModFluids.SULFURIC_ACID_SOURCE.get(), 1000),
+                List.of(new FluidStack(Fluids.WATER, 900)),
+                List.of(
+                        new ItemStack(ModItems.SULFUR.get(), 2)
+                ),
+                60));
     }
 }
