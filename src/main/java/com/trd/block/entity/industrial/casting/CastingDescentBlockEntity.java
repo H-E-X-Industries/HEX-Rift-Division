@@ -144,6 +144,16 @@ public class CastingDescentBlockEntity extends BlockEntity {
             } else {
                 this.pouringTicks = 0;
             }
+
+            // Свет при переливании: синхронизируем blockstate
+            if (level != null && !level.isClientSide) {
+                BlockState state = level.getBlockState(getBlockPos());
+                if (state.hasProperty(CastingDescentBlock.POURING)
+                        && state.getValue(CastingDescentBlock.POURING) != pouring) {
+                    level.setBlock(getBlockPos(), state.setValue(CastingDescentBlock.POURING, pouring), 3);
+                }
+            }
+
             this.setChanged();
             if (level != null && !level.isClientSide) {
                 level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 3);

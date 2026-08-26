@@ -15,6 +15,7 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -22,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class CastingDescentBlock extends BaseEntityBlock {
     public static final DirectionProperty FACING = DirectionProperty.create("facing", Direction.Plane.HORIZONTAL);
+    /** Идёт переливание металла — блок светится */
+    public static final BooleanProperty POURING = BooleanProperty.create("pouring");
 
     private static final double MIN_X = 5, MAX_X = 11;
     private static final double MIN_Y = 0, MAX_Y = 3.7;
@@ -36,13 +39,16 @@ public class CastingDescentBlock extends BaseEntityBlock {
     }
 
     public CastingDescentBlock(Properties properties) {
-        super(properties);
+        super(properties.lightLevel(state -> state.getValue(POURING) ? 13 : 0));
+        this.registerDefaultState(this.stateDefinition.any()
+                .setValue(FACING, Direction.NORTH)
+                .setValue(POURING, false));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         super.createBlockStateDefinition(builder);
-        builder.add(FACING);
+        builder.add(FACING, POURING);
     }
 
     @Nullable
@@ -86,6 +92,42 @@ public class CastingDescentBlock extends BaseEntityBlock {
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return SHAPES[state.getValue(FACING).get2DDataValue()];
+    }
+
+    /**
+     * Литейный спуск ставится ТОЛЬКО на $-парты нижнего слоя большой плавильни
+     * (парты структуры SmelterBlock с ролью FLUID_OUTPUT — маркер $-позиций),
+     * либо на фронтовую грань малой плавильни (спуск и печь смотрят в одну сторону).
+     */
+    @Override
+    public boolean canSurvive(BlockState state, net.minecraft.world.level.LevelReader level, BlockPos pos) {
+        Direction back = state.getValue(FACING).getOpposite();
+        BlockPos behindPos = pos.relative(back);
+
+        BlockEntity behind = level.getBlockEntity(behindPos);
+        if (behind instanceof com.trd.multiblock.system.MultiblockPartEntity part) {
+            // Парт большой плавильни — валиден только $ (роль FLUID_OUTPUT)
+            BlockPos controllerPos = part.getControllerPos();
+            return controllerPos != null
+                    && level.getBlockState(controllerPos).getBlock() instanceof com.trd.multiblock.industrial.smelter.SmelterBlock
+                    && part.getPartRole() == com.trd.multiblock.system.PartRole.FLUID_OUTPUT;
+        }
+
+        BlockState behindState = level.getBlockState(behindPos);
+        return behindState.getBlock() instanceof SmallSmelterBlock
+                && behindState.hasProperty(SmallSmelterBlock.FACING)
+                && behindState.getValue(SmallSmelterBlock.FACING) == state.getValue(FACING);
+    }
+
+    @Override
+    public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState,
+                                  net.minecraft.world.level.LevelAccessor level, BlockPos currentPos, BlockPos neighborPos) {
+        // Плавильню демонтировали — спуск больше не на своём месте
+        if (!level.isClientSide() && !state.canSurvive(level, currentPos)) {
+            level.destroyBlock(currentPos, true);
+            return net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+        }
+        return super.updateShape(state, direction, neighborState, level, currentPos, neighborPos);
     }
 
     @Override

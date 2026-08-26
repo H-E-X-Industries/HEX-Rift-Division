@@ -1,8 +1,12 @@
 {
   "variants": {
-    "facing=north": { "model": "trd:block/casting_pot" },
-    "facing=south": { "model": "trd:block/casting_pot", "y": 180 },
-    "facing=west":  { "model": "trd:block/casting_pot", "y": 270 },
-    "facing=east":  { "model": "trd:block/casting_pot", "y": 90 }
+    "facing=north,has_metal=false": { "model": "trd:block/casting_pot" },
+    "facing=north,has_metal=true":  { "model": "trd:block/casting_pot" },
+    "facing=south,has_metal=false": { "model": "trd:block/casting_pot", "y": 180 },
+    "facing=south,has_metal=true":  { "model": "trd:block/casting_pot", "y": 180 },
+    "facing=west,has_metal=false":  { "model": "trd:block/casting_pot", "y": 270 },
+    "facing=west,has_metal=true":   { "model": "trd:block/casting_pot", "y": 270 },
+    "facing=east,has_metal=false":  { "model": "trd:block/casting_pot", "y": 90 },
+    "facing=east,has_metal=true":   { "model": "trd:block/casting_pot", "y": 90 }
   }
 }

@@ -97,6 +97,14 @@ public class ClientModEvents {
                         return 0.0f;
                     });
         });
+
+        // Катушка провода: модель переключается при наличии провода на катушке
+        ModItems.WIRE_COIL.ifPresent(item -> {
+            ItemProperties.register(item,
+                    new ResourceLocation(MainRegistry.MOD_ID, "wires"),
+                    (pStack, pLevel, pEntity, pSeed) ->
+                            com.trd.item.energy.WireCoilItem.getWires(pStack) > 0 ? 1.0f : 0.0f);
+        });
         event.registerBlockEntityRenderer(ModBlockEntities.CONVEYOR_BE.get(), ConveyorRenderer::new);
         net.minecraft.client.gui.screens.MenuScreens.register(ModMenuTypes.STEEL_STORAGE_MENU.get(), SteelStorageScreen::new);
 

@@ -82,6 +82,7 @@ public class MainRegistry {
         ResourceRegistry.init();
         ModBlocks.register(modEventBus); // 1. Сначала блоки
         ModItems.ITEMS.register(modEventBus);
+        com.trd.api.energy.ModRecipes.register(modEventBus);
         ModBlockEntities.BLOCK_ENTITIES.register(modEventBus);
         MinecraftForge.EVENT_BUS.register(new CrateBreaker());
         ModEntities.ENTITY_TYPES.register(modEventBus);
@@ -230,8 +231,11 @@ public class MainRegistry {
             event.accept(ModItems.HAMMER.get());
 
             event.accept(ModItems.BELT.get());
-            event.accept(ModItems.WIRE_COIL_EMPTY);
-            event.accept(ModItems.WIRE_COIL);
+            // Катушка: пустая и заряженная версии в креативной вкладке
+            event.accept(ModItems.WIRE_COIL.get());
+            net.minecraft.world.item.ItemStack fullCoil = new net.minecraft.world.item.ItemStack(ModItems.WIRE_COIL.get());
+            com.trd.item.energy.WireCoilItem.setWires(fullCoil, com.trd.item.energy.WireCoilItem.MAX_WIRES);
+            event.accept(fullCoil);
 
             event.accept(ModItems.INFINITE_FLUID_BARREL);
             event.accept(ModItems.FLUID_IDENTIFIER.get());

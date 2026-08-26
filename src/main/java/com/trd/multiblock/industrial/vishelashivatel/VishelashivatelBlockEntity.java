@@ -291,11 +291,18 @@ public class VishelashivatelBlockEntity extends com.trd.block.entity.industrial.
     @Override
     public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
         if (cap == ForgeCapabilities.ITEM_HANDLER) {
-            // side == null — это доступ из GUI меню, отдаём полный хендлер
-            return (side == null ? selfHandler : automationHandler).cast();
+            // Напрямую к контроллеру предметы НЕ принимаются: side == null — доступ из GUI.
+            // Автоматизация — исключительно через жидкостные порты мультиблока
+            // (MultiblockPartEntity проксирует getItemPortCapability для роли FLUID_INPUT).
+            return (side == null ? selfHandler : LazyOptional.empty()).cast();
         }
         // FLUID_HANDLER наружу НЕ выдаём: жидкость идёт только через порты
         return super.getCapability(cap, side);
+    }
+
+    /** Предметный хендлер для жидкостных портов мультиблока (вставка во вход, извлечение из выходов). */
+    public LazyOptional<IItemHandler> getItemPortCapability() {
+        return automationHandler;
     }
 
     // ===================== ДАННЫЕ ДЛЯ МЕНЮ/HUD =====================

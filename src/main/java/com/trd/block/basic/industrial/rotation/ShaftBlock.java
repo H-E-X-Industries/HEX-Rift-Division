@@ -215,9 +215,15 @@ public class ShaftBlock extends BaseEntityBlock {
                             Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), shaftBE.getAttachedPulley());
                             shaftBE.setAttachedPulley(net.minecraft.world.item.ItemStack.EMPTY);
 
-                            // ОБРЫВ РЕМНЯ: Чистим память у всех связанных валов
+                            // ОБРЫВ РЕМНЯ: если шкив держал соединение — выпадает 1 ремень
+                            if (shaftBE.getConnectedPulley() != null) {
+                                Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(),
+                                        new net.minecraft.world.item.ItemStack(com.trd.item.ModItems.BELT.get()));
+                                shaftBE.setConnectedPulley(null);
+                            }
+
+                            // Чистим память у всех связанных валов
                             com.trd.api.rotation.BeltConnectionHelper.breakBelt(level, pos);
-                            shaftBE.setConnectedPulley(null);
                             level.setBlock(pos, state.setValue(PULLEY_SIZE, 0), 3);
                         } else if (isFlywheel && shaftBE.hasFlywheel()) {
                             Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), shaftBE.getAttachedFlywheel());
@@ -457,6 +463,12 @@ public class ShaftBlock extends BaseEntityBlock {
                     Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), shaftBE.getAttachedPulley());
 
                     // ОБРЫВ РЕМНЯ при ломании блока киркой
+                    // Если этот шкив был началом соединения — выпадает 1 ремень
+                    if (shaftBE.getConnectedPulley() != null) {
+                        Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(),
+                                new net.minecraft.world.item.ItemStack(com.trd.item.ModItems.BELT.get()));
+                        shaftBE.setConnectedPulley(null);
+                    }
                     com.trd.api.rotation.BeltConnectionHelper.breakBelt(level, pos);
                 }
                 if (shaftBE.hasFlywheel()) {

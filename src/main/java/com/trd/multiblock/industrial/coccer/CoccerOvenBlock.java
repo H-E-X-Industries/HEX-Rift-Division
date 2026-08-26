@@ -159,7 +159,42 @@ public class CoccerOvenBlock extends BaseEntityBlock implements IMultiblockContr
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return level.isClientSide ? null : createTickerHelper(type, ModBlockEntities.COCCER_OVEN_BE.get(), CoccerOvenBlockEntity::serverTick);
+        if (level.isClientSide) {
+            // Клиентский тикер для дыма — тот же механизм, что у ванильного костра,
+            // который спавнит дым каждый игровой тик (а не через редкий animateTick)
+            return createTickerHelper(type, ModBlockEntities.COCCER_OVEN_BE.get(), CoccerOvenBlock::clientSmokeTick);
+        }
+        return createTickerHelper(type, ModBlockEntities.COCCER_OVEN_BE.get(), CoccerOvenBlockEntity::serverTick);
+    }
+
+    /**
+     * Клиентский тикер дыма — копия логики CampfireBlockEntity#particleTick:
+     * каждый игровой тик с вероятностью 11% спавнится сигнальный дым.
+     * Дым идёт ТОЛЬКО во время активного рецепта и ещё ~5 секунд после него.
+     */
+    private static void clientSmokeTick(Level level, BlockPos pos, BlockState state, CoccerOvenBlockEntity oven) {
+        if (oven.getSmokeTicks() <= 0) return;
+
+        if (level.getRandom().nextFloat() < 0.11F) {
+            MultiblockStructureHelper structureHelper = helper;
+            if (structureHelper != null) {
+                BlockPos chimney = structureHelper.getTopCenterAbovePos(pos, state.getValue(FACING));
+                makeCampfireSmoke(level, chimney);
+            }
+        }
+    }
+
+    /**
+     * Копия ванильного CampfireBlock#makeParticles (сигнальный дым — как у костра
+     * со снопом сена снизу): тот же разброс, та же скорость, addAlwaysVisibleParticle,
+     * но источник опущен на 1.5 блока ниже (изнутри коксовой печи).
+     */
+    private static void makeCampfireSmoke(Level level, BlockPos pos) {
+        RandomSource randomsource = level.getRandom();
+        double x = (double) pos.getX() + 0.5D + randomsource.nextDouble() / 3.0D * (double) (randomsource.nextBoolean() ? 1 : -1);
+        double y = (double) pos.getY() - 1.5D + randomsource.nextDouble() + randomsource.nextDouble();
+        double z = (double) pos.getZ() + 0.5D + randomsource.nextDouble() / 3.0D * (double) (randomsource.nextBoolean() ? 1 : -1);
+        level.addAlwaysVisibleParticle(ParticleTypes.CAMPFIRE_SIGNAL_SMOKE, true, x, y, z, 0.0D, 0.07D, 0.0D);
     }
 
     @Override

@@ -317,6 +317,9 @@ public class HeaterBlockEntity extends BlockEntity implements MenuProvider {
     private int totalBurnTime = 0;
     private int fuelTier = 0;
 
+    // Таймер потрескивания костра (звук при горящем топливе)
+    private int crackleTimer = 20;
+
     public HeaterBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.HEATER_BE.get(), pos, state);
         this.fullHandler = LazyOptional.of(() -> inventory);
@@ -377,6 +380,13 @@ public class HeaterBlockEntity extends BlockEntity implements MenuProvider {
             float heatPerTick = TIER_STATS[be.fuelTier][0];
             be.temperature = Math.min(MAX_TEMP, be.temperature + heatPerTick);
             changed = true;
+
+            // Потрескивание костра при горящем топливе
+            if (--be.crackleTimer <= 0) {
+                level.playSound(null, pos, net.minecraft.sounds.SoundEvents.CAMPFIRE_CRACKLE,
+                        net.minecraft.sounds.SoundSource.BLOCKS, 0.45f, 1.0f);
+                be.crackleTimer = 40 + level.random.nextInt(80);
+            }
 
             // Зола выпадает по шансу
             if (be.burnTime == 0 && be.fuelTier >= 2) {

@@ -43,6 +43,10 @@ public class BeltConnectionHelper {
                                 if (target != null) {
                                     if (target.equals(brokenPos)) {
                                         shaft.setConnectedPulley(null);
+                                        // Ремень рвётся — выпадает ровно один предмет
+                                        net.minecraft.world.Containers.dropItemStack(level,
+                                                brokenPos.getX() + 0.5, brokenPos.getY() + 0.5, brokenPos.getZ() + 0.5,
+                                                new net.minecraft.world.item.ItemStack(com.trd.item.ModItems.BELT.get()));
                                     }
                                 }
                             }

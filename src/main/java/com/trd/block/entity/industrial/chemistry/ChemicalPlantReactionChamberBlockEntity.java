@@ -456,6 +456,25 @@ public class ChemicalPlantReactionChamberBlockEntity extends BlockEntity impleme
         }
     }
 
+    /**
+     * Возвращает слот ввода (0-2), к которому привязан данный предмет по текущему рецепту.
+     * Привязка — по типу предмета и порядку в списке входов рецепта.
+     * Возвращает -1, если предмет не принадлежит рецепту.
+     */
+    public int getSlotForItem(ItemStack stack) {
+        if (stack.isEmpty() || currentRecipeId.isEmpty()) return -1;
+        ChemicalPlantRecipe recipe = ChemicalPlantRecipeRegistry.getById(new ResourceLocation(currentRecipeId));
+        if (recipe == null) return -1;
+
+        List<ItemStack> itemInputs = recipe.getItemInputs();
+        for (int i = 0; i < INPUT_SLOTS && i < itemInputs.size(); i++) {
+            if (ItemStack.isSameItemSameTags(itemInputs.get(i), stack)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     @Nullable
     public ResourceLocation getCurrentRecipeId() {
         return currentRecipeId.isEmpty() ? null : new ResourceLocation(currentRecipeId);

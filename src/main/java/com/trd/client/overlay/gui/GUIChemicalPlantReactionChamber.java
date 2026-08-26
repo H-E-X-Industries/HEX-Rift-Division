@@ -212,10 +212,36 @@ public class GUIChemicalPlantReactionChamber extends AbstractContainerScreen<Che
                 graphics.pose().popPose();
             }
 
-            // Render recipe name
+            // Название рецепта — длинные имена не обрезаются, а прокручиваются
+            // слева направо (как в панели выбора рецепта станка)
             Component name = Component.translatable("recipe.trd." + recipe.getId().getPath());
             int color = getRecipeColor(recipe);
-            graphics.drawString(this.font, name, listX + ICON_X + 23, entryY + ICON_Y + 4, color, false);
+            // Правый край обрезки текста смещён на 3px влево (как у станка)
+            int maxTextW = LIST_W - (ICON_X + 23) - 5;
+            int tX = listX + ICON_X + 23;
+            int tY = entryY + ICON_Y + 4;
+            int tW = this.font.width(name);
+
+            if (tW > maxTextW) {
+                int scrollRange = tW - maxTextW;
+                double cycle = (net.minecraft.Util.getMillis() % 4000) / 4000.0;
+                int offset = 0;
+                if (cycle > 0.1 && cycle < 0.4) {
+                    offset = (int)((cycle - 0.1) / 0.3 * scrollRange);
+                } else if (cycle >= 0.4 && cycle <= 0.6) {
+                    offset = scrollRange;
+                } else if (cycle > 0.6 && cycle < 0.9) {
+                    offset = (int)((0.9 - cycle) / 0.3 * scrollRange);
+                }
+
+                graphics.disableScissor();
+                graphics.enableScissor(tX, entryY, tX + maxTextW, entryY + ENTRY_H);
+                graphics.drawString(this.font, name, tX - offset, tY, color, false);
+                graphics.disableScissor();
+                graphics.enableScissor(listX, listY, listX + LIST_W, listY + LIST_H);
+            } else {
+                graphics.drawString(this.font, name, tX, tY, color, false);
+            }
 
             // Hover detection
             if (mouseX >= listX && mouseX < listX + LIST_W && mouseY >= entryY && mouseY < entryY + ENTRY_H) {

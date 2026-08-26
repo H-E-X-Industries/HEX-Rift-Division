@@ -105,11 +105,11 @@ public class ChemicalPlantRecipeRegistry {
         // щёлочь регенерируется (~90%) и возвращается в цикл Байера
         register(new ChemicalPlantRecipe(
                 new ResourceLocation("trd", "aluminate_decomposition"),
-                List.of(new FluidStack(ModFluids.ALUMINATE_SOLUTION_SOURCE.get(), 250),
-                        new FluidStack(Fluids.WATER, 250)),
+                List.of(new FluidStack(ModFluids.ALUMINATE_SOLUTION_SOURCE.get(), 125),
+                        new FluidStack(Fluids.WATER, 375)),
                 List.of(new FluidStack(ModFluids.SODIUM_HYDROXIDE_SOURCE.get(), 450)),
                 List.of(),
-                List.of(new ItemStack(ModItems.ALUMINUM_HYDROXIDE.get(), 3)),
+                List.of(new ItemStack(ModItems.ALUMINUM_HYDROXIDE.get(), 2)),
                 90,
                 60
         ));

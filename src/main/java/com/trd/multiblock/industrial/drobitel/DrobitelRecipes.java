@@ -2,6 +2,7 @@ package com.trd.multiblock.industrial.drobitel;
 
 import com.trd.block.basic.ModBlocks;
 import com.trd.item.ModItems;
+import com.trd.main.ResourceRegistry;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
@@ -84,7 +85,7 @@ public class DrobitelRecipes {
         DrobitelBlockEntity.addRecipe(ModItems.LIMESTONE_CHUNK.get(), ModItems.LIMESTONE_POWDER.get(), 1);
         DrobitelBlockEntity.addRecipe(ModItems.BAUXITE_CHUNK.get(), ModItems.BAUXITE_POWDER.get(), 1);
         DrobitelBlockEntity.addRecipe(ModItems.DOLOMITE_CHUNK.get(), ModItems.DOLOMITE_POWDER.get(), 1);
-
+        DrobitelBlockEntity.addRecipe(ModItems.ALUMINA.get(), ResourceRegistry.getSmallUnit("aluminum"), 1);
         // === ВАНИЛЬНЫЕ РУДЫ ===
 
         // Дешёвые / распространённые (4–5 единиц)

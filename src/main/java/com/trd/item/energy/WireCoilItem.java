@@ -9,6 +9,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -20,9 +21,54 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
+import javax.annotation.Nullable;
+import java.util.List;
+
 public class WireCoilItem extends Item {
+    public static final int MAX_WIRES = 32;
+
     public WireCoilItem(Properties properties) {
         super(properties);
+    }
+
+    // ===================== ЗАРЯД КАТУШКИ =====================
+
+    public static int getWires(ItemStack stack) {
+        return stack.hasTag() ? stack.getTag().getInt("Wires") : 0;
+    }
+
+    public static void setWires(ItemStack stack, int wires) {
+        if (wires <= 0) {
+            stack.removeTagKey("Wires");
+        } else {
+            stack.getOrCreateTag().putInt("Wires", Math.min(wires, MAX_WIRES));
+        }
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, level, tooltip, flag);
+        tooltip.add(Component.translatable("tooltip.trd.wire_coil.wires",
+                getWires(stack), MAX_WIRES).withStyle(net.minecraft.ChatFormatting.GRAY));
+    }
+
+    // Полоска прочности показывает остаток провода
+    @Override
+    public boolean isBarVisible(ItemStack stack) {
+        return true;
+    }
+
+    @Override
+    public int getBarWidth(ItemStack stack) {
+        return Math.round((getWires(stack) / (float) MAX_WIRES) * 13f);
+    }
+
+    @Override
+    public int getBarColor(ItemStack stack) {
+        float fraction = getWires(stack) / (float) MAX_WIRES;
+        // Классический ванильный градиент: полная — зелёная, к концу — жёлто-красная
+        if (fraction <= 0f) return 0xFF555555; // пустая катушка — серая полоска
+        return net.minecraft.util.Mth.hsvToRgb(fraction / 3.0f, 1.0f, 1.0f);
     }
 
     @Override
@@ -36,6 +82,8 @@ public class WireCoilItem extends Item {
 
         BlockEntity be = level.getBlockEntity(pos);
 
+        boolean creative = player != null && player.isCreative();
+
         // Если кликнули НЕ по коннектору
         if (!(be instanceof ConnectorBlockEntity currentConnector)) {
             // Если игрок кликнул с Shift по воздуху/другому блоку — сбрасываем сохраненные координаты
@@ -45,6 +93,14 @@ public class WireCoilItem extends Item {
                 return InteractionResult.SUCCESS;
             }
             return InteractionResult.PASS;
+        }
+
+        // Пустая катушка не работает (в креативе провода бесконечны)
+        int wires = getWires(stack);
+        if (wires <= 0 && !creative) {
+            if (player != null)
+                player.displayClientMessage(Component.translatable("message.trd.wire_coil.no_wires"), true);
+            return InteractionResult.FAIL;
         }
 
         CompoundTag tag = stack.getOrCreateTag();
@@ -118,6 +174,11 @@ public class WireCoilItem extends Item {
             // Записываем друг друга в память
             firstConnector.connectTo(pos);
             currentConnector.connectTo(firstPos);
+
+            // Расходуем один провод (кроме креатива)
+            if (!creative) {
+                setWires(stack, wires - 1);
+            }
 
             if (player != null) player.displayClientMessage(Component.translatable("message.trd.wire_coil.success"), true);
             return InteractionResult.SUCCESS;
