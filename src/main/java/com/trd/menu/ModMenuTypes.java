@@ -118,7 +118,7 @@ public class ModMenuTypes {
                     () -> IForgeMenuType.create(FluidBarrelMenu::new));
 
     public static final RegistryObject<MenuType<RedstoneRadioMenu>> REDSTONE_RADIO_MENU =
-            MENUS.register("redstone_radio_menu", () -> IForgeMenuType.create(RedstoneRadioMenu::new));
+            MENUS.register("redstone_radio_menu", () -> IForgeMenuType.create(RedstoneRadioMenu::create));
 
     public static void register(IEventBus eventBus) {
         MENUS.register(eventBus);

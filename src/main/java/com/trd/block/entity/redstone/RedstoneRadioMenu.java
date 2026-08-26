@@ -28,12 +28,25 @@ public class RedstoneRadioMenu extends AbstractContainerMenu {
         this(windowId, playerInventory, radioEntity, new SimpleContainerData(3), playerInventory.player.level(), radioEntity.getBlockPos());
     }
 
-    public RedstoneRadioMenu(int windowId, Inventory playerInventory, FriendlyByteBuf buf) {
+    public static RedstoneRadioMenu create(int windowId, Inventory playerInventory, FriendlyByteBuf buf) {
+        BlockPos pos = buf.readBlockPos();
+        BlockEntity entity = playerInventory.player.level().getBlockEntity(pos);
+        if (entity instanceof RedstoneRadioBlockEntity radio) {
+            return new RedstoneRadioMenu(windowId, playerInventory, radio);
+        }
+        return new RedstoneRadioMenu(windowId, playerInventory, pos);
+    }
+
+    private RedstoneRadioMenu(int windowId, Inventory playerInventory, FriendlyByteBuf buf) {
+        this(windowId, playerInventory, buf.readBlockPos());
+    }
+
+    private RedstoneRadioMenu(int windowId, Inventory playerInventory, BlockPos pos) {
         this(windowId, playerInventory, 
-            (RedstoneRadioBlockEntity) playerInventory.player.level().getBlockEntity(buf.readBlockPos()),
+            (RedstoneRadioBlockEntity) playerInventory.player.level().getBlockEntity(pos),
             new SimpleContainerData(3),
             playerInventory.player.level(),
-            buf.readBlockPos());
+            pos);
     }
 
     private RedstoneRadioMenu(int windowId, Inventory playerInventory, RedstoneRadioBlockEntity radioEntity,
