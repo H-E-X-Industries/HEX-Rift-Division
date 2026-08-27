@@ -1,7 +1,7 @@
 package com.trd.client.overlay.gui;
 
 import com.trd.block.entity.redstone.RedstoneRadioBlockEntity;
-import com.trd.block.entity.redstone.RedstoneRadioMenu;
+import com.trd.menu.industrial.RedstoneRadioMenu;
 import com.trd.main.MainRegistry;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
@@ -20,21 +20,12 @@ public class GUIRedstoneRadio extends AbstractContainerScreen<RedstoneRadioMenu>
 
     // Координаты из промпта (относительно leftPos/topPos)
     private static final int TITLE_X = 15;
-    private static final int TITLE_Y = 6;
+    private static final int TITLE_Y = 3;
     private static final int INPUT_X = 37;
     private static final int INPUT_Y = 18;
     private static final int INPUT_W = 82;  // подогнано под ширину окна 126
     private static final int INPUT_H = 12;
 
-    // Индикатор вкл/выкл (сдвинут ниже поля ввода, чтобы не налезать на название)
-    private static final int INDICATOR_X = 15;
-    private static final int INDICATOR_Y = 32;
-    private static final int INDICATOR_W = 96;
-    private static final int INDICATOR_H = 12;
-    private static final int INDICATOR_U_ON = 0;
-    private static final int INDICATOR_V_ON = 128;
-    private static final int INDICATOR_U_OFF = 0;
-    private static final int INDICATOR_V_OFF = 140;
 
     private EditBox channelInput;
     private final RedstoneRadioBlockEntity radioEntity;
@@ -94,14 +85,7 @@ public class GUIRedstoneRadio extends AbstractContainerScreen<RedstoneRadioMenu>
         // Фон GUI 126×46 из атласа 128×128
         gui.blit(TEXTURE, x, y, 0, 0, this.imageWidth, this.imageHeight, 128, 128);
 
-        // Индикатор состояния (ON/OFF)
-        if (radioEntity.isPowered()) {
-            gui.blit(TEXTURE, x + INDICATOR_X, y + INDICATOR_Y,
-                    INDICATOR_U_ON, INDICATOR_V_ON, INDICATOR_W, INDICATOR_H, 128, 128);
-        } else {
-            gui.blit(TEXTURE, x + INDICATOR_X, y + INDICATOR_Y,
-                    INDICATOR_U_OFF, INDICATOR_V_OFF, INDICATOR_W, INDICATOR_H, 128, 128);
-        }
+
     }
 
     @Override

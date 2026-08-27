@@ -1,6 +1,9 @@
 {
   "loader": "forge:obj",
   "model": "trd:models/block/water_pump.obj",
+  "textures": {
+    "particle": "trd:block/deco_beam_top"
+  },
   "flip_v": true,
   "display": {
     "gui": {

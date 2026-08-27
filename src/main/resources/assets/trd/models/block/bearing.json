@@ -2,6 +2,9 @@
   "loader": "forge:obj",
   "model": "trd:models/block/bearing.obj",
   "flip_v": true,
+  "textures": {
+    "particle": "trd:block/deco_beam_top"
+  },
   "display": {
     "thirdperson_righthand": {
         "rotation": [ 75, 45, 0 ],

@@ -64,6 +64,13 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
     @Override public long getTorque()               { return 0L;    }
     @Override public boolean isSource()             { return false; }
 
+    // ────── Данные кинетической сети для HUD (синхронизируются на клиент) ──────
+    private long networkTorque = 0;
+    private long networkConsumedTorque = 0;
+
+    public long getNetworkTorque() { return networkTorque; }
+    public long getNetworkConsumedTorque() { return networkConsumedTorque; }
+
     @Override
     public long getConsumedTorque() {
         StanokRecipe recipe = getCurrentRecipe();
@@ -291,6 +298,25 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
     public static void serverTick(Level level, BlockPos pos, BlockState state, StanokBlockEntity be) {
         boolean changed = false;
 
+        // Синхронизация момента кинетической сети на клиент для HUD
+        com.trd.api.rotation.KineticNetwork net = KineticNetworkManager
+                .get((net.minecraft.server.level.ServerLevel) level)
+                .getNetworkFor(be.worldPosition);
+        if (net != null) {
+            float absScale = Math.abs(be.networkScale);
+            long newTorque = absScale > 0.001f ? (long) (net.getTotalTorque() / absScale) : net.getTotalTorque();
+            long newConsumed = absScale > 0.001f ? (long) (net.getTotalConsumedTorque() / absScale) : net.getTotalConsumedTorque();
+            if (newTorque != be.networkTorque || newConsumed != be.networkConsumedTorque) {
+                be.networkTorque = newTorque;
+                be.networkConsumedTorque = newConsumed;
+                changed = true;
+            }
+        } else if (be.networkTorque != 0 || be.networkConsumedTorque != 0) {
+            be.networkTorque = 0;
+            be.networkConsumedTorque = 0;
+            changed = true;
+        }
+
         long absSpeed = Math.abs(be.getSpeed());
 
         // Обновить speedStatus: 0 = OK (крафт возможен), 1 = слишком медленно/не готов, 2 = слишком быстро
@@ -490,6 +516,8 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
         tag.putInt("MaxProgress", maxProgress);
         tag.putInt("SpeedStatus", speedStatus);
         tag.putInt("PressOpCount", pressOperationCount);
+        tag.putLong("NetTorque", this.networkTorque);
+        tag.putLong("NetConsumedTorque", this.networkConsumedTorque);
         if (currentRecipeId != null) tag.putString("RecipeId", currentRecipeId.toString());
     }
 
@@ -501,6 +529,8 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
         maxProgress        = tag.getInt("MaxProgress");
         speedStatus        = tag.getInt("SpeedStatus");
         pressOperationCount = tag.getInt("PressOpCount");
+        this.networkTorque = tag.getLong("NetTorque");
+        this.networkConsumedTorque = tag.getLong("NetConsumedTorque");
         if (tag.contains("RecipeId")) {
             currentRecipeId = new ResourceLocation(tag.getString("RecipeId"));
         } else {

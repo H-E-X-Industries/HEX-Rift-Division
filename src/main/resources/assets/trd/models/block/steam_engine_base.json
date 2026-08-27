@@ -4,7 +4,9 @@
   "model": "trd:models/block/steam_engine_base.obj",
   "flip_v": true,
   "textures": {
-    "default": "trd:block/steam_engine_base"
+    "default": "trd:block/steam_engine_base",
+      "particle": "trd:block/deco_beam_top"
+
   },
   "display": {
     "thirdperson_righthand": {

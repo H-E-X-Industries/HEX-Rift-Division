@@ -378,6 +378,11 @@ public class ModLangProvider extends LanguageProvider {
         add("hud.trd.tachometer.inertia", "Inertia: %.2f");
         add("hud.trd.tachometer.stress", "Stress: %.1f%%");
 
+        // ═══ HUD: Paintable Pipe ═══
+        add("hud.trd.paintable_pipe.title", "▶ Paintable Fluid Pipe");
+        add("hud.trd.paintable_pipe.fluid", "Fluid: ");
+        add("hud.trd.paintable_pipe.empty", "Fluid: Empty");
+
         // ═══ HUD: Redstone Radio ═══
         add("hud.trd.redstone_radio.transmitter", "▶ Redstone Radio Transmitter");
         add("hud.trd.redstone_radio.receiver", "▶ Redstone Radio Receiver");
@@ -1040,6 +1045,19 @@ public class ModLangProvider extends LanguageProvider {
         add("hud.trd.stanok.speed_fast", "Too fast");
         add("hud.trd.stanok.no_material", "No materials");
 
+        // Stanok HUD (torque)
+        add("hud.trd.stanok.torque", "Torque: %s / %s Nm");
+        add("hud.trd.stanok.progress", "Progress: %s%%");
+
+        // Drobitel HUD
+        add("hud.trd.drobitel.title", "Ore Crusher");
+        add("hud.trd.drobitel.no_blades", "Missing blades!");
+        add("hud.trd.drobitel.speed_ok", "Optimal");
+        add("hud.trd.drobitel.speed_slow", "Too slow");
+        add("hud.trd.drobitel.speed_fast", "Too fast");
+        add("hud.trd.drobitel.torque", "Torque: %s / %s Nm");
+        add("hud.trd.drobitel.progress", "Progress: %s%%");
+
         // Stanok GUI Tooltips
         add("gui.trd.stanok.tooltip.inputs", "Inputs:");
         add("gui.trd.stanok.tooltip.outputs", "Outputs:");
@@ -1450,6 +1468,11 @@ public class ModLangProvider extends LanguageProvider {
         add("hud.trd.tachometer.torque", "Момент: %s / %s Нм");
         add("hud.trd.tachometer.inertia", "Инерция: %.2f");
         add("hud.trd.tachometer.stress", "Нагрузка: %.1f%%");
+
+        // ═══ HUD: Окрашиваемая труба ═══
+        add("hud.trd.paintable_pipe.title", "▶ Окрашиваемая жидкостная труба");
+        add("hud.trd.paintable_pipe.fluid", "Жидкость: ");
+        add("hud.trd.paintable_pipe.empty", "Жидкость: Пусто");
 
         // ═══ HUD: Redstone Radio ═══
         add("hud.trd.redstone_radio.transmitter", "▶ Редстоун-радио передатчик");
@@ -2031,6 +2054,19 @@ public class ModLangProvider extends LanguageProvider {
         add("hud.trd.stanok.speed_slow", "Слишком медленно");
         add("hud.trd.stanok.speed_fast", "Слишком быстро");
         add("hud.trd.stanok.no_material", "Нет материалов");
+
+        // Stanok HUD (момент)
+        add("hud.trd.stanok.torque", "Момент: %s / %s Нм");
+        add("hud.trd.stanok.progress", "Прогресс: %s%%");
+
+        // Drobitel HUD
+        add("hud.trd.drobitel.title", "Рудный дробитель");
+        add("hud.trd.drobitel.no_blades", "Отсутствуют лезвия!");
+        add("hud.trd.drobitel.speed_ok", "Оптимально");
+        add("hud.trd.drobitel.speed_slow", "Слишком медленно");
+        add("hud.trd.drobitel.speed_fast", "Слишком быстро");
+        add("hud.trd.drobitel.torque", "Момент: %s / %s Нм");
+        add("hud.trd.drobitel.progress", "Прогресс: %s%%");
 
         // Stanok GUI Tooltips
         add("gui.trd.stanok.tooltip.inputs", "Входы:");

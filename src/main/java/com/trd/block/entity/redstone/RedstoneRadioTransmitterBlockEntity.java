@@ -1,19 +1,16 @@
 package com.trd.block.entity.redstone;
 
 import com.trd.block.entity.ModBlockEntities;
+import com.trd.menu.industrial.RedstoneRadioMenu;
 import com.trd.network.ModPacketHandler;
 import com.trd.network.packet.redstone.RedstoneRadioSyncPacket;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.network.PacketDistributor;
 
 import java.util.HashSet;

@@ -1,17 +1,22 @@
 {
   "loader": "forge:composite",
   "textures": {
-    "particle": "trd:block/deco_beam_top"
+    "particle": "trd:block/cc_machine"
   },
   "children": {
-    "main": {
+    "cc_machine_model": {
       "loader": "forge:obj",
-      "model": "trd:models/block/fuel_tank_small.obj",
+      "model": "trd:models/block/cc_machine.obj",
       "flip_v": true,
       "textures": {
-        "default": "trd:block/fuel_tank_small"
+        "default": "trd:block/cc_machine"
       }
     }
+  },
+  "transform": {
+    "translation": [0.50, 0.0, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
   },
   "display": {
     "thirdperson_righthand": {
@@ -35,7 +40,7 @@
     },
     "gui": {
       "rotation": [-151, 44.7, -180],
-      "translation": [-0.5, -0.75, 3],
+      "translation": [0, -0.75, 0],
       "scale": [0.22, 0.22, 0.22]
     },
     "head": {

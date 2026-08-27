@@ -80,6 +80,10 @@ public class RedstoneRadioBlock extends BaseEntityBlock {
             case WEST -> SHAPE_WEST;
         };
     }
+    @Override
+    public boolean canConnectRedstone(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos pos, @Nullable Direction direction) {
+        return true;
+    }
 
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {

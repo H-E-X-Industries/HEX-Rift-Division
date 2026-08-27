@@ -400,12 +400,12 @@ public class ModBlockStateProvider extends BlockStateProvider {
             int rotationY = 0;
 
             switch (facing) {
-                case DOWN -> rotationX = 90;
-                case UP -> rotationX = 270;
-                case NORTH -> { rotationX = 0; rotationY = 0; }
-                case SOUTH -> { rotationX = 0; rotationY = 180; }
-                case WEST -> { rotationX = 0; rotationY = 270; }
-                case EAST -> { rotationX = 0; rotationY = 90; }
+                case DOWN -> rotationX = 180;
+                case UP -> rotationX = 0;
+                case NORTH -> { rotationX = 90;  }
+                case SOUTH -> { rotationX = 270; }
+                case WEST -> { rotationX = 270; rotationY = 90; }
+                case EAST -> { rotationX = 270; rotationY = 270; }
             }
 
             return ConfiguredModel.builder()

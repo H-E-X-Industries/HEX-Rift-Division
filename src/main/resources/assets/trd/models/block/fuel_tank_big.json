@@ -1,7 +1,7 @@
 {
   "loader": "forge:composite",
   "textures": {
-    "particle": "trd:block/fuel_tank_big"
+    "particle": "trd:block/deco_beam_top"
   },
   "children": {
     "main": {

@@ -360,6 +360,7 @@ public class MainRegistry {
 
             event.accept(ModItems.HEATER_ITEM);
             event.accept(ModBlocks.SMELTER);
+            event.accept(ModBlocks.CC_MACHINE.get());
             event.accept(ModBlocks.COCCER_OVEN);
             event.accept(ModBlocks.CASTING_POT);
             event.accept(ModBlocks.CASTING_DESCENT);
@@ -378,7 +379,8 @@ public class MainRegistry {
             event.accept(ModBlocks.CONVEYOR.get());
             event.accept(ModBlocks.SORTIROVSHIK.get());
 
-
+            event.accept(ModBlocks.REDSTONE_RADIO_TRANSMITTER.get());
+            event.accept(ModBlocks.REDSTONE_RADIO_RECEIVER.get());
         }
 
 
