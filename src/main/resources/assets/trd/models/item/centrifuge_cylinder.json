@@ -1,3 +1,49 @@
 {
-  "parent": "trd:block/centrifuge_cylinder"
+  "loader": "forge:obj",
+  "model": "trd:models/item/centrifuge_cylinder_item.obj",
+  "flip_v": true,
+  "textures": {
+    "centrifuge_cylinder_texture": "trd:block/centrifuge_cylinder",
+    "m_3a2355a5-fff2-f31c-1d4a-bf33c296c9b2": "trd:block/centrifuge_cylinder",
+    "particle": "trd:block/centrifuge_cylinder"
+  },
+  "transform": {
+    "translation": [0.50, 0.0, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
+  },
+  "display": {
+    "thirdperson_righthand": {
+      "translation": [0, 0.75, 0],
+      "scale": [0.1, 0.1, 0.1]
+    },
+    "thirdperson_lefthand": {
+      "scale": [0.1, 0.1, 0.1]
+    },
+    "firstperson_righthand": {
+      "rotation": [0, 39.25, 0],
+      "scale": [0.2, 0.2, 0.2]
+    },
+    "firstperson_lefthand": {
+      "rotation": [0, -51, 0],
+      "scale": [0.2, 0.2, 0.2]
+    },
+    "ground": {
+      "translation": [0, 0.75, 0],
+      "scale": [0.1, 0.1, 0.1]
+    },
+    "gui": {
+      "rotation": [-151, 44.7, -180],
+      "translation": [0, -2.25, 0],
+      "scale": [0.5, 0.5, 0.5]
+    },
+    "head": {
+      "translation": [0, 7.25, 0],
+      "scale": [0.1, 0.1, 0.1]
+    },
+    "fixed": {
+      "rotation": [-90, 0, 0],
+      "scale": [0.25, 0.25, 0.25]
+    }
+  }
 }

@@ -1,13 +1,13 @@
 modLoader="javafml"
 loaderVersion="[47,)"
 license="GPL-3.0"
-issueTrackerURL="https://github.com/TONG-Industries/Crustal-Incursion"
+issueTrackerURL="https://github.com/H-E-X-Industries/HEX-Rift-Division"
 
 [[mods]]
 modId="trd"
 version="0.0.1-alpha"
-displayName="TONG: Rift Division"
-authors="TONG Industries"
+displayName="The Rift Division"
+authors="HEX Industries"
 description='''
     A dark, necrotic expansion for Minecraft.
     Master the forbidden arts and explore the trd.

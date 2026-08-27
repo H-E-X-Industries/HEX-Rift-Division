@@ -169,7 +169,7 @@ public class ModBlockEntities {
 
     public static final RegistryObject<BlockEntityType<ConveyorBlockEntity>> CONVEYOR_BE =
             BLOCK_ENTITIES.register("conveyor",
-                    () -> BlockEntityType.Builder.of(ConveyorBlockEntity::new, ModBlocks.CONVEYOR.get()).build(null));
+                    () -> BlockEntityType.Builder.of(ConveyorBlockEntity::new, ModBlocks.CONVEYOR.get(), ModBlocks.CONVEYOR_ELEVATOR.get()).build(null));
 
     public static final RegistryObject<BlockEntityType<SortirovshikBlockEntity>> SORTIROVSHIK_BE =
             BLOCK_ENTITIES.register("sortirovshik", () -> BlockEntityType.Builder.of(

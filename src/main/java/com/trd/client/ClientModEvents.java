@@ -154,6 +154,7 @@ public class ClientModEvents {
         event.registerBlockEntityRenderer(ModBlockEntities.MILLSTONE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.STANOK_BE.get(), com.trd.client.render.StanokRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.VISHELASHIVATEL_BE.get(), com.trd.client.render.VishelachivatelRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.CENTRIFUGE_CYLINDER_BE.get(), com.trd.client.render.ber.CentrifugeCylinderRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.WATER_PUMP_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.FUEL_TANK_SMALL_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.HAND_CRANK_BE.get(), com.trd.client.render.flywheel.DummyFlywheelRenderer::new);
@@ -216,6 +217,7 @@ public class ClientModEvents {
         event.register(new ResourceLocation("trd", "block/crankshaft"));
         event.register(new ResourceLocation("trd", "block/connecting_rod"));
         event.register(new ResourceLocation("trd", "block/vishelashivatel_lopasti"));
+        event.register(new ResourceLocation("trd", "block/centrifuge_cylinder_lopasti"));
 
         // 3. Динамические модели
         for (String name : ModModels.GEAR_MODELS.keySet()) {
@@ -234,6 +236,9 @@ public class ClientModEvents {
         
         // Для станка нужна прозрачность стёкол крышки
         net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(ModBlocks.STANOK.get(), net.minecraft.client.renderer.RenderType.cutout());
+
+        // Для жидкостной насадки центрифуги нужна прозрачность стекла
+        net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(ModBlocks.CENTRIFUGE_CYLINDER.get(), net.minecraft.client.renderer.RenderType.cutout());
 
         // 1. Инициализируем загрузку кастомной 3D модели для Flywheel
         event.enqueueWork(() -> {
@@ -388,6 +393,22 @@ public class ClientModEvents {
                         @Override
                         public boolean skipVanillaRender(com.trd.multiblock.industrial.stanok.StanokBlockEntity be) {
                             return false; // Отключаем пропуск ванильного рендера, чтобы работал StanokRenderer для предметов
+                        }
+                    });
+
+            VisualizerRegistry.setVisualizer(ModBlockEntities.CENTRIFUGE_CYLINDER_BE.get(),
+                    new dev.engine_room.flywheel.api.visualization.BlockEntityVisualizer<com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderBlockEntity>() {
+                        @Override
+                        public dev.engine_room.flywheel.api.visual.BlockEntityVisual<? super com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderBlockEntity> createVisual(
+                                VisualizationContext ctx,
+                                com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderBlockEntity be,
+                                float partialTick) {
+                            return new com.trd.client.render.flywheel.CentrifugeCylinderVisual(ctx, be, partialTick);
+                        }
+
+                        @Override
+                        public boolean skipVanillaRender(com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderBlockEntity be) {
+                            return false; // Оставляем ванильный рендер статического корпуса (стеклянная банка), Flywheel только крутит лопасти
                         }
                     });
 

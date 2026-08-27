@@ -25,7 +25,7 @@ import java.util.List;
 
 public class ConveyorBlockEntity extends BlockEntity {
 
-    public static final double SPEED = 1.5 / 20.0;
+    public static final double SPEED = 1.25 / 20.0;
     public static final double ITEM_Y_OFFSET = 2 / 16.0;
 
     private static final int MAX_ITEMS = 64;

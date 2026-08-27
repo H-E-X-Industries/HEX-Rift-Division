@@ -29,7 +29,12 @@ public class SyncConveyorNetworkPacket {
         for (int i = 0; i < itemSize; i++) {
             ItemStack stack = buf.readItem();
             double progress = buf.readDouble();
-            this.items.add(new ConveyorItem(stack, progress));
+            ConveyorItem item = new ConveyorItem(stack, progress);
+            boolean hasPrevOverride = buf.readBoolean();
+            if (hasPrevOverride) {
+                item.setPrevOverridePos(buf.readBlockPos());
+            }
+            this.items.add(item);
         }
         int pathSize = buf.readInt();
         this.path = new ArrayList<>(pathSize);
@@ -44,6 +49,13 @@ public class SyncConveyorNetworkPacket {
         for (ConveyorItem item : items) {
             buf.writeItem(item.getStack());
             buf.writeDouble(item.getProgress());
+            net.minecraft.core.BlockPos prev = item.getPrevOverridePos();
+            if (prev != null) {
+                buf.writeBoolean(true);
+                buf.writeBlockPos(prev);
+            } else {
+                buf.writeBoolean(false);
+            }
         }
         buf.writeInt(path.size());
         for (BlockPos pos : path) {

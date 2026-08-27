@@ -54,8 +54,10 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
 
     // ─── Общее состояние ───
     private float shaftAngle    = 0f;
-    private float lastFrameTime = -1f;
+    private float lastFrameTime = -1f;  // -1 = не инициализировано
+    private long  lastNanoTime  = 0L;   // для delta через System.nanoTime()
     private float smoothedSpeed = 0f;
+    private float lastValidPartialTick = 0.5f; // fallback если getFrameTime() вернул невалидное
 
     // ─── Состояние пресса ───
     // pressPhase: 0.0–1.0 = одна операция. Синхронизируем с BE.progress/maxProgress.
@@ -64,6 +66,12 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
     // ─── Состояние фрезы ───
     // Локальные переменные анимации TRD
     private float frezaStage2Time = 0f; // 0.0–4.0 секунды в этапе 2
+
+    // ─── Интерполяция прогресса операции ───
+    // Храним прогресс двух последних серверных тиков для плавной интерполяции
+    private float prevAnimProgress = 0f;  // прогресс на предыдущем тике
+    private float currAnimProgress = 0f;  // прогресс на текущем тике
+    private int lastSeenServerProg  = -1; // для определения смены тика
 
     // Константы координат барабанов (Blender→MC: swap Y↔Z, /16 для блоков)
     // Blender left drum:  x=1.0618, y=1.2997, z=1.3301
@@ -170,12 +178,24 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
 
     @Override
     public void beginFrame(Context ctx) {
-        float partialTick = Minecraft.getInstance().getFrameTime();
-        float timeInSeconds = (level.getGameTime() + partialTick) / 20.0f;
+        // ─── Вычисляем delta через реальное время (не зависит от Minecraft timer) ───
+        long nowNanos = System.nanoTime();
+        if (lastFrameTime < 0) {
+            lastFrameTime = 0f;
+            lastNanoTime = nowNanos;
+        }
+        float delta = (nowNanos - lastNanoTime) / 1_000_000_000f;
+        // Ограничиваем delta: при зависании / первом кадре не делаем огромный скачок
+        delta = Math.min(delta, 0.1f);
+        lastNanoTime = nowNanos;
 
-        if (lastFrameTime < 0) lastFrameTime = timeInSeconds;
-        float delta = timeInSeconds - lastFrameTime;
-        lastFrameTime = timeInSeconds;
+        // partialTick для интерполяции анимации
+        float partialTick = Minecraft.getInstance().getFrameTime();
+        // Защита: getFrameTime() может вернуть 0 в первый кадр или при некоторых условиях
+        if (partialTick <= 0f || partialTick > 1f) partialTick = lastValidPartialTick;
+        else lastValidPartialTick = partialTick;
+
+        float timeInSeconds = (level.getGameTime() + partialTick) / 20.0f;
 
         // Синхронизация фазы с остальной кинетической сетью
         float targetSpeed = blockEntity.getVisualSpeed();
@@ -189,10 +209,34 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
         if (Math.abs(speedDiff) > 0.1f) smoothedSpeed += speedDiff * 4.0f * delta;
         else smoothedSpeed = targetSpeed;
 
-        // Вращение накапливаем каждый кадр через delta (интерполированное время)
+        // Вращение накапливаем каждый кадр через delta (реальное время между кадрами)
         shaftAngle += smoothedSpeed * ((float) Math.PI / 30.0f) * delta;
         shaftAngle %= (float)(2 * Math.PI);
         if (shaftAngle < 0) shaftAngle += (float) Math.PI * 2;
+
+        // ─── Интерполяция прогресса операции ───
+        // Серверный прогресс меняется раз в тик. При каждом новом значении запоминаем
+        // его и ожидаемое следующее, интерполируем по partialTick внутри тика.
+        int serverProg = blockEntity.getData().get(0);
+        int maxProg    = blockEntity.getData().get(1);
+
+        float animPhase;
+        if (maxProg <= 0 || serverProg <= 0) {
+            // Не работает — сбрасываем
+            animPhase = 0f;
+            prevAnimProgress = 0f;
+            currAnimProgress = 0f;
+            lastSeenServerProg = -1;
+        } else {
+            if (serverProg != lastSeenServerProg) {
+                // Новое значение от сервера: это наша «нижняя» точка тика
+                prevAnimProgress = (float) serverProg / maxProg;
+                currAnimProgress = (float)(serverProg + 1) / maxProg; // верхняя точка (следующий тик)
+                lastSeenServerProg = serverProg;
+            }
+            // Интерполируем между prev (начало тика) и curr (конец тика) по partialTick
+            animPhase = Math.max(0f, Math.min(1f, prevAnimProgress + (currAnimProgress - prevAnimProgress) * partialTick));
+        }
 
         // Обновляем валы с вращением
         updateShaftInstances();
@@ -201,9 +245,9 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
         CarriageType carriage = blockEntity.getCurrentCarriageType();
 
         // Обновляем визуалы
-        updatePressVisual(carriage, delta, partialTick);
+        updatePressVisual(carriage, animPhase);
         updateWireVisual(carriage, delta, partialTick);
-        updateFrezaVisual(carriage, timeInSeconds, delta, partialTick);
+        updateFrezaVisual(carriage, timeInSeconds, delta, animPhase);
     }
 
     // ════════════════════════════════════════════════════════════
@@ -233,7 +277,7 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
     //  ПРЕСС
     // ════════════════════════════════════════════════════════════
 
-    private void updatePressVisual(CarriageType carriage, float delta, float partialTick) {
+    private void updatePressVisual(CarriageType carriage, float animPhase) {
 
         boolean active = carriage == CarriageType.PRESS;
 
@@ -255,23 +299,13 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
                 return;
             }
 
-            // Вычисляем фазу операции из данных BE
-            float phase = 0f;
-            int prog    = blockEntity.getData().get(0);
-            int maxProg = blockEntity.getData().get(1);
-            if (maxProg > 0) {
-                float interp = prog;
-                if (prog > 0 && blockEntity.getSpeed() != 0) interp += partialTick;
-                phase = Math.min(1f, interp / maxProg);
-            }
-
             // Первая половина: голова идёт вниз (0 → 0.22)
             // Вторая половина: голова идёт вверх (0.22 → 0)
             float headOffsetY;
-            if (phase < 0.5f) {
-                headOffsetY = -(phase / 0.5f) * 0.22f;  // вниз
+            if (animPhase < 0.5f) {
+                headOffsetY = -(animPhase / 0.5f) * 0.22f;  // вниз
             } else {
-                headOffsetY = -((1.0f - phase) / 0.5f) * 0.22f; // вверх
+                headOffsetY = -((1.0f - animPhase) / 0.5f) * 0.22f; // вверх
             }
 
             startTransform(pressHead)
@@ -328,7 +362,7 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
     //  ФРЕЗА
     // ════════════════════════════════════════════════════════════
 
-    private void updateFrezaVisual(CarriageType carriage, float timeInSeconds, float delta, float partialTick) {
+    private void updateFrezaVisual(CarriageType carriage, float timeInSeconds, float delta, float animPhase) {
         boolean active = carriage == CarriageType.FREZA;
 
         if (!active) {
@@ -342,19 +376,8 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
         int recipeTime = recipe != null ? recipe.getProcessTicks() : 80; // 4 сек по умолчанию
         float recipeSeconds = recipeTime / 20.0f;
 
-        // Прогресс операции [0.0 – 1.0]
-        float phase = 0f;
-        int prog    = blockEntity.getData().get(0);
-        int maxProg = blockEntity.getData().get(1);
-        if (maxProg > 0) {
-            float interp = prog;
-            if (prog > 0 && blockEntity.getSpeed() != 0) interp += partialTick;
-            phase = Math.min(1f, interp / maxProg);
-        }
-
-
-        // Абсолютное время в текущей операции (в секундах)
-        float opElapsed = phase * recipeSeconds;
+        // Абсолютное время в текущей операции (в секундах), интерполированное
+        float opElapsed = animPhase * recipeSeconds;
 
         // Определяем текущий этап анимации
         float shiftX, shiftZ, shiftY;

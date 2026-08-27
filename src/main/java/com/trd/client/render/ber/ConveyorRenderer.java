@@ -68,26 +68,40 @@ public class ConveyorRenderer implements BlockEntityRenderer<ConveyorBlockEntity
                 ItemStack stack = item.getStack();
                 if (stack.isEmpty()) continue;
 
-                double[] pose = com.trd.api.conveyor.PathMath.calculatePathPoint(prevPos, currentPos, nextPos, localProgress);
+                // Вычисляем prevPos: сначала пробуем prevOverridePos (для T-перекрёстков),
+                // затем стандартный путь по сети, затем соседние блоки.
+                BlockPos effectivePrevPos = prevPos;
+
+                net.minecraft.core.BlockPos itemPrevOverride = item.getPrevOverridePos();
+                if (itemPrevOverride != null) {
+                    // Используем override только пока предмет находится в начале блока входа.
+                    // После прохождения середины блока - переключаемся на стандартный prevPos,
+                    // чтобы дуга корректно завершалась.
+                    if (localProgress < 0.75) {
+                        effectivePrevPos = itemPrevOverride;
+                    }
+                }
+
+                double[] pose = com.trd.api.conveyor.PathMath.calculatePathPoint(effectivePrevPos, currentPos, nextPos, localProgress, be.getBlockState(), be.getLevel());
 
                 poseStack.pushPose();
                 
-                boolean isBlock = item.getStack().getItem() instanceof net.minecraft.world.item.BlockItem;
-                double yOffset = isBlock ? 0.05 : -0.075;
+                BakedModel model = itemRenderer.getModel(stack, be.getLevel(), null, 0);
+                boolean is3d = model.isGui3d();
+                double yOffset = is3d ? 0.05 : -0.075;
                 
                 // pose = [x (абсолютный), y, z, rotY]
                 poseStack.translate(pose[0] - currentPos.getX(), (pose[1] - currentPos.getY()) + yOffset, pose[2] - currentPos.getZ());
 
                 poseStack.mulPose(Axis.YP.rotationDegrees((float) -pose[3]));
 
-                if (!isBlock) {
+                if (!is3d) {
                     poseStack.mulPose(Axis.XP.rotationDegrees(90));
                 }
 
                 float scale = 0.75f;
                 poseStack.scale(scale, scale, scale);
 
-                BakedModel model = itemRenderer.getModel(stack, be.getLevel(), null, 0);
                 itemRenderer.render(stack, ItemDisplayContext.FIXED, false, poseStack, buffer,
                         packedLight, packedOverlay, model);
 

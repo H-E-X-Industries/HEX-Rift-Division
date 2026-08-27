@@ -1,0 +1,10 @@
+{
+  "loader": "forge:obj",
+  "model": "trd:models/block/centrifuge_cylinder_lopasti.obj",
+  "flip_v": true,
+  "textures": {
+    "default": "trd:block/centrifuge_cylinder",
+    "particle": "trd:block/centrifuge_cylinder",
+    "m_3a2355a5-fff2-f31c-1d4a-bf33c296c9b2": "trd:block/centrifuge_cylinder"
+  }
+}

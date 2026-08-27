@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "facing=north,part=bottom": { "model": "trd:block/conveyor_elevator_down", "y": 180 },
+    "facing=east,part=bottom": { "model": "trd:block/conveyor_elevator_down", "y": 270 },
+    "facing=south,part=bottom": { "model": "trd:block/conveyor_elevator_down" },
+    "facing=west,part=bottom": { "model": "trd:block/conveyor_elevator_down", "y": 90 },
+    "facing=north,part=middle": { "model": "trd:block/conveyor_elevator_middle", "y": 180 },
+    "facing=east,part=middle": { "model": "trd:block/conveyor_elevator_middle", "y": 270 },
+    "facing=south,part=middle": { "model": "trd:block/conveyor_elevator_middle" },
+    "facing=west,part=middle": { "model": "trd:block/conveyor_elevator_middle", "y": 90 },
+    "facing=north,part=top": { "model": "trd:block/conveyor_elevator_up", "y": 180 },
+    "facing=east,part=top": { "model": "trd:block/conveyor_elevator_up", "y": 270 },
+    "facing=south,part=top": { "model": "trd:block/conveyor_elevator_up" },
+    "facing=west,part=top": { "model": "trd:block/conveyor_elevator_up", "y": 90 }
+  }
+}

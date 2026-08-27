@@ -380,6 +380,7 @@ public class MainRegistry {
             event.accept(ModBlocks.CONVEYOR_VSTAVSHIK.get());
             event.accept(ModBlocks.CONVEYOR_IZVLEKATEL.get());
             event.accept(ModBlocks.CONVEYOR.get());
+            event.accept(ModBlocks.CONVEYOR_ELEVATOR.get());
             event.accept(ModBlocks.SORTIROVSHIK.get());
 
             event.accept(ModBlocks.REDSTONE_RADIO_TRANSMITTER.get());

@@ -57,6 +57,9 @@ public class ModModels {
     public static final PartialModel STANOK_FREZA_CARRIAGE   = PartialModel.of(new ResourceLocation("trd", "block/freza_carriage"));
     public static final PartialModel STANOK_FREZA_ATTACHMENT = PartialModel.of(new ResourceLocation("trd", "block/freza_attachment"));
     public static final PartialModel STANOK_FREZA            = PartialModel.of(new ResourceLocation("trd", "block/freza"));
+    
+    // Центрифуга
+    public static final PartialModel CENTRIFUGE_CYLINDER_LOPASTI = PartialModel.of(new ResourceLocation("trd", "block/centrifuge_cylinder_lopasti"));
 
     // Статический блок вызывается самым первым, как только Java видит этот класс!
     // Flywheel 100% получит эти модели вовремя.

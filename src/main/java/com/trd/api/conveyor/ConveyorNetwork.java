@@ -26,7 +26,7 @@ public class ConveyorNetwork {
     private final List<BlockPos> path = new ArrayList<>();
     private final List<ConveyorItem> items = new ArrayList<>();
 
-    public static final double SPEED = 1.5 / 20.0;
+    public static final double SPEED = 1.25 / 20.0;
     public static final double SPACING = 0.5; // Минимальное расстояние между предметами
 
     public ConveyorNetwork() {
@@ -100,8 +100,16 @@ public class ConveyorNetwork {
                 item.setSorterCooldown(item.getSorterCooldown() - 1);
             }
 
+            // Очищаем prevOverridePos, когда предмет прошёл блок входа с перекрёстка
+            // (он нужен только на первом блоке после слияния сетей, дальше — стандартный путь)
+            if (item.getPrevOverridePos() != null && item.getProgress() >= Math.floor(item.getProgress()) + 0.5) {
+                item.setPrevOverridePos(null);
+                changed = true;
+            }
+
             double currentProgress = item.getProgress();
             double desiredProgress = currentProgress + SPEED;
+
             
             if (desiredProgress >= maxProgress) {
                 // Пытаемся передать в буфер (вставщик)
@@ -141,22 +149,46 @@ public class ConveyorNetwork {
                     } else if (targetBe instanceof ConveyorBlockEntity) {
                         ConveyorNetwork nextNet = manager.getNetworkFor(targetPos);
                         if (nextNet != null && nextNet != this) {
-                            if (nextNet.tryInsertItem(item.getStack().copy(), 0.0)) {
-                                manager.markForSync(nextNet);
-                                iterator.remove();
-                                changed = true;
-                                continue;
+                            if (lastState.getBlock() instanceof com.trd.block.basic.industrial.ConveyorElevatorBlock) {
+                                // If we are an elevator, we just eject if we didn't merge
+                            } else if (level.getBlockState(targetPos).getBlock() instanceof com.trd.block.basic.industrial.ConveyorElevatorBlock) {
+                                // Do not allow side-loading into elevators via networks
                             } else {
-                                // Если следующая сеть забита, мы стопоримся
-                                desiredProgress = Math.min(desiredProgress, maxProgress - 0.01);
-                                transferred = true;
+                                double targetIndex = nextNet.getPath().indexOf(targetPos);
+                                if (targetIndex >= 0) {
+                                    ConveyorItem inserted = nextNet.insertItemTracked(item.getStack().copy(), targetIndex);
+                                    // Запоминаем, откуда пришёл предмет (для правильной Безье на T-перекрёстках)
+                                    inserted.setPrevOverridePos(lastPos);
+                                    manager.markForSync(nextNet);
+                                    iterator.remove();
+                                    changed = true;
+                                    continue;
+                                }
                             }
                         }
                     }
 
+
                     if (!transferred) {
-                        // Если впереди ничего нет или это не вставщик, просто выбрасываем
-                        ejectItemAt(level, targetPos, item.getStack(), facing);
+                        BlockPos ejectPos = targetPos;
+                        Direction ejectFacing = facing;
+                        
+                        if (!level.isEmptyBlock(targetPos)) {
+                            Direction right = facing.getClockWise();
+                            Direction left = facing.getCounterClockWise();
+                            if (level.isEmptyBlock(lastPos.relative(right))) {
+                                ejectPos = lastPos.relative(right);
+                                ejectFacing = right;
+                            } else if (level.isEmptyBlock(lastPos.relative(left))) {
+                                ejectPos = lastPos.relative(left);
+                                ejectFacing = left;
+                            } else {
+                                ejectPos = lastPos.above();
+                                ejectFacing = null;
+                            }
+                        }
+                        
+                        ejectItemAt(level, ejectPos, item.getStack(), ejectFacing);
                         iterator.remove();
                         changed = true;
                         continue;
