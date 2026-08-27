@@ -100,8 +100,16 @@ public class ConveyorNetwork {
                 item.setSorterCooldown(item.getSorterCooldown() - 1);
             }
 
+            // Очищаем prevOverridePos, когда предмет прошёл блок входа с перекрёстка
+            // (он нужен только на первом блоке после слияния сетей, дальше — стандартный путь)
+            if (item.getPrevOverridePos() != null && item.getProgress() >= Math.floor(item.getProgress()) + 0.5) {
+                item.setPrevOverridePos(null);
+                changed = true;
+            }
+
             double currentProgress = item.getProgress();
             double desiredProgress = currentProgress + SPEED;
+
             
             if (desiredProgress >= maxProgress) {
                 // Пытаемся передать в буфер (вставщик)
@@ -148,19 +156,18 @@ public class ConveyorNetwork {
                             } else {
                                 double targetIndex = nextNet.getPath().indexOf(targetPos);
                                 if (targetIndex >= 0) {
-                                    if (nextNet.tryInsertItem(item.getStack().copy(), targetIndex)) {
-                                        manager.markForSync(nextNet);
-                                        iterator.remove();
-                                        changed = true;
-                                        continue;
-                                    } else {
-                                        desiredProgress = Math.min(desiredProgress, maxProgress - 0.01);
-                                        transferred = true;
-                                    }
+                                    ConveyorItem inserted = nextNet.insertItemTracked(item.getStack().copy(), targetIndex);
+                                    // Запоминаем, откуда пришёл предмет (для правильной Безье на T-перекрёстках)
+                                    inserted.setPrevOverridePos(lastPos);
+                                    manager.markForSync(nextNet);
+                                    iterator.remove();
+                                    changed = true;
+                                    continue;
                                 }
                             }
                         }
                     }
+
 
                     if (!transferred) {
                         BlockPos ejectPos = targetPos;

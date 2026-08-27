@@ -68,7 +68,21 @@ public class ConveyorRenderer implements BlockEntityRenderer<ConveyorBlockEntity
                 ItemStack stack = item.getStack();
                 if (stack.isEmpty()) continue;
 
-                double[] pose = com.trd.api.conveyor.PathMath.calculatePathPoint(prevPos, currentPos, nextPos, localProgress, be.getBlockState(), be.getLevel());
+                // Вычисляем prevPos: сначала пробуем prevOverridePos (для T-перекрёстков),
+                // затем стандартный путь по сети, затем соседние блоки.
+                BlockPos effectivePrevPos = prevPos;
+
+                net.minecraft.core.BlockPos itemPrevOverride = item.getPrevOverridePos();
+                if (itemPrevOverride != null) {
+                    // Используем override только пока предмет находится в начале блока входа.
+                    // После прохождения середины блока - переключаемся на стандартный prevPos,
+                    // чтобы дуга корректно завершалась.
+                    if (localProgress < 0.75) {
+                        effectivePrevPos = itemPrevOverride;
+                    }
+                }
+
+                double[] pose = com.trd.api.conveyor.PathMath.calculatePathPoint(effectivePrevPos, currentPos, nextPos, localProgress, be.getBlockState(), be.getLevel());
 
                 poseStack.pushPose();
                 

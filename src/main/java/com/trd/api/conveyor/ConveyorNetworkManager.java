@@ -70,7 +70,9 @@ public class ConveyorNetworkManager extends SavedData {
         // Сериализация живого списка приводила к битым/потерянным пакетам и "застревающим" предметам.
         java.util.List<com.trd.api.conveyor.ConveyorItem> itemsSnapshot = new ArrayList<>(net.getItems().size());
         for (com.trd.api.conveyor.ConveyorItem item : net.getItems()) {
-            itemsSnapshot.add(new com.trd.api.conveyor.ConveyorItem(item.getStack().copy(), item.getProgress()));
+            com.trd.api.conveyor.ConveyorItem snapshot = new com.trd.api.conveyor.ConveyorItem(item.getStack().copy(), item.getProgress());
+            snapshot.setPrevOverridePos(item.getPrevOverridePos()); // Сохраняем для Bezier на T-перекрёстках
+            itemsSnapshot.add(snapshot);
         }
         java.util.List<BlockPos> pathSnapshot = new ArrayList<>(net.getPath());
         com.trd.network.ModPacketHandler.INSTANCE.send(
