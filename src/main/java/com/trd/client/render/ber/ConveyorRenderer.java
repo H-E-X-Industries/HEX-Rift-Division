@@ -72,22 +72,22 @@ public class ConveyorRenderer implements BlockEntityRenderer<ConveyorBlockEntity
 
                 poseStack.pushPose();
                 
-                boolean isBlock = item.getStack().getItem() instanceof net.minecraft.world.item.BlockItem;
-                double yOffset = isBlock ? 0.05 : -0.075;
+                BakedModel model = itemRenderer.getModel(stack, be.getLevel(), null, 0);
+                boolean is3d = model.isGui3d();
+                double yOffset = is3d ? 0.05 : -0.075;
                 
                 // pose = [x (абсолютный), y, z, rotY]
                 poseStack.translate(pose[0] - currentPos.getX(), (pose[1] - currentPos.getY()) + yOffset, pose[2] - currentPos.getZ());
 
                 poseStack.mulPose(Axis.YP.rotationDegrees((float) -pose[3]));
 
-                if (!isBlock) {
+                if (!is3d) {
                     poseStack.mulPose(Axis.XP.rotationDegrees(90));
                 }
 
                 float scale = 0.75f;
                 poseStack.scale(scale, scale, scale);
 
-                BakedModel model = itemRenderer.getModel(stack, be.getLevel(), null, 0);
                 itemRenderer.render(stack, ItemDisplayContext.FIXED, false, poseStack, buffer,
                         packedLight, packedOverlay, model);
 
