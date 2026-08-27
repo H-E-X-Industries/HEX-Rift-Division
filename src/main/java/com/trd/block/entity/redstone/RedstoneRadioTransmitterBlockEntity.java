@@ -1,5 +1,6 @@
 package com.trd.block.entity.redstone;
 
+import com.trd.api.redstone.RadioNetworkManager;
 import com.trd.block.basic.redstone.RedstoneRadioBlock;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.menu.industrial.RedstoneRadioMenu;
@@ -120,21 +121,9 @@ public class RedstoneRadioTransmitterBlockEntity extends RedstoneRadioBlockEntit
     private void discoverReceivers(Level level) {
         knownReceivers.clear();
         if (channelId.isEmpty()) return;
-
-        int range = 64;
-        for (int dx = -range; dx <= range; dx++) {
-            for (int dy = -range; dy <= range; dy++) {
-                for (int dz = -range; dz <= range; dz++) {
-                    BlockPos checkPos = worldPosition.offset(dx, dy, dz);
-                    if (checkPos.distSqr(worldPosition) > range * range) continue;
-                    BlockEntity be = level.getBlockEntity(checkPos);
-                    if (be instanceof RedstoneRadioReceiverBlockEntity receiver) {
-                        if (channelId.equals(receiver.getChannelId())) {
-                            knownReceivers.add(be.getBlockPos());
-                        }
-                    }
-                }
-            }
+        RadioNetworkManager manager = RadioNetworkManager.get(level);
+        if (manager != null) {
+            knownReceivers.addAll(manager.getReceivers(channelId));
         }
     }
 

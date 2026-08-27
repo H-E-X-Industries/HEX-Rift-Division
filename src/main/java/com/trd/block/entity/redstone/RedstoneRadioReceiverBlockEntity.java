@@ -1,5 +1,6 @@
 package com.trd.block.entity.redstone;
 
+import com.trd.api.redstone.RadioNetworkManager;
 import com.trd.block.basic.redstone.RedstoneRadioBlock;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.menu.industrial.RedstoneRadioMenu;
@@ -93,17 +94,47 @@ public class RedstoneRadioReceiverBlockEntity extends RedstoneRadioBlockEntity {
 
     private void updateNeighbors() {
         Level level = getLevel();
-        if (level == null) return;
-        for (Direction dir : Direction.values()) {
-            BlockPos neighborPos = worldPosition.relative(dir);
-            level.updateNeighborsAt(neighborPos, getBlockState().getBlock());
-            level.neighborChanged(getBlockState(), neighborPos, getBlockState().getBlock(), worldPosition, false);
-        }
-        level.updateNeighborsAt(worldPosition, getBlockState().getBlock());
+        if (level == null || level.isClientSide) return;
+        BlockState state = getBlockState();
+        if (state == null) return;
+        // Стандартный способ уведомить соседей, что наш блок изменил выходной сигнал.
+        // НЕ вызываем level.neighborChanged вручную — это ломало соседние блоки (поршни),
+        // потому что передавалось наше BlockState в чужую позицию.
+        level.updateNeighborsAt(worldPosition, state.getBlock());
     }
 
     public int getOutputSignal() {
         return outputSignal;
+    }
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level != null && !level.isClientSide) {
+            RadioNetworkManager.get(level).registerReceiver(worldPosition, channelId);
+        }
+    }
+
+    @Override
+    public void setRemoved() {
+        super.setRemoved();
+        if (level != null && !level.isClientSide) {
+            RadioNetworkManager.get(level).unregisterReceiver(worldPosition);
+        }
+    }
+
+    @Override
+    public void setChannelId(String channelId) {
+        String old = this.channelId;
+        this.channelId = channelId != null ? channelId : "";
+        setChanged();
+        if (level != null && !level.isClientSide) {
+            RadioNetworkManager.get(level).registerReceiver(worldPosition, this.channelId);
+            if (!old.equals(this.channelId)) {
+                // старый канал почистится автоматически внутри registerReceiver
+                // (перезапись channelByPos + удаление из старого Set)
+            }
+            sendSyncPacket();
+        }
     }
 
     @Override

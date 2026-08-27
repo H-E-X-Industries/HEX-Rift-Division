@@ -54,7 +54,7 @@ public class ModLangProvider extends LanguageProvider {
         // Затем ручные переводы
         if (locale.equals("ru_ru")) {
             addRussian();
-        } else {
+        }  else {
             addEnglish();
         }
     }
@@ -972,6 +972,40 @@ public class ModLangProvider extends LanguageProvider {
         add("tooltip.trd.machine.multi_detonator.desc", "|Multi-Detonator| - an advanced trigger with 4 named detonation points. |Shift + RMB| on a block writes the position into the active point, the |R| key opens point selection, |RMB| activates the current one.");
         add("tooltip.trd.machine.range_detonator.desc", "|Long-Range Detonator| - a laser device for instant detonation of charges. Pressing |RMB| fires a beam up to 256 blocks and detonates the charge you are aiming at.");
 
+        // ═══ Detonator tooltips & messages (hover + chat) ═══
+        add("tooltip.trd.detonator.desc", "Radio trigger for linked explosive charges.");
+        add("tooltip.trd.detonator.linked", "Linked charge: %d, %d, %d");
+        add("tooltip.trd.detonator.distance", "Distance: %d blocks");
+        add("tooltip.trd.detonator.not_linked", "No charge linked");
+        add("tooltip.trd.detonator.bind", "Shift + RMB on a block to bind a charge");
+        add("tooltip.trd.detonator.fire", "RMB in the air to detonate the linked charge");
+
+        add("tooltip.trd.multi_detonator.desc", "Advanced trigger with up to 4 named detonation points.");
+        add("tooltip.trd.multi_detonator.point_active", "▶ %s: %d, %d, %d");
+        add("tooltip.trd.multi_detonator.point", "  %s: %d, %d, %d");
+        add("tooltip.trd.multi_detonator.point_empty", "  Slot %d: empty");
+        add("tooltip.trd.multi_detonator.linked", "Linked points: %d / %d");
+        add("tooltip.trd.multi_detonator.key_r", "Press R to choose the active point");
+        add("tooltip.trd.multi_detonator.shift_rmb", "Shift + RMB on a block to bind the active point");
+        add("tooltip.trd.multi_detonator.rmb_activate", "RMB to detonate the active point");
+
+
+        add("message.trd.detonator.saved", "Position saved: %d, %d, %d");
+        add("message.trd.detonator.no_position", "No saved position!");
+        add("message.trd.detonator.invalid", "Position invalid or not loaded");
+        add("message.trd.detonator.activated", "Charge activated");
+
+        add("message.trd.multi_detonator.position_saved", "Position saved [%s]: %d, %d, %d");
+        add("message.trd.multi_detonator.no_coordinates", "No coordinates saved");
+        add("message.trd.multi_detonator.point_not_set", "Active point %d is not set");
+        add("message.trd.multi_detonator.chunk_not_loaded", "Chunk not loaded");
+        add("message.trd.multi_detonator.activated", "Activated: %s");
+        add("message.trd.multi_detonator.activation_error", "Activation error");
+        add("message.trd.multi_detonator.incompatible_block", "No compatible charge at this position");
+
+        add("message.trd.range_detonator.pos_not_loaded", "Position invalid or not loaded");
+        add("message.trd.range_detonator.activated", "Charge activated");
+
         // ═══ Оружие ═══
         add("tooltip.trd.machine.turret_portative.desc", "|Portable Light Turret| - a one-time deployer of the autonomous version of the 'Nagual' turret.");
         add("tooltip.trd.machine.pig_turret.desc", "|Pig Turret| - a one-time deployer of the autonomous version of the 'Nagual' turret, riding breezily on its very own pig.");
@@ -1282,6 +1316,41 @@ public class ModLangProvider extends LanguageProvider {
         add("tooltip.trd.machine.detonator.desc", "|Детонатор| - радиопульт для подрыва зарядов. Нажатие |Shift + ПКМ| по блоку запоминает его позицию, нажатие |ПКМ| по воздуху детонирует заряд.");
         add("tooltip.trd.machine.multi_detonator.desc", "|Мульти-детонатор| - продвинутый пульт с 4 именованными точками подрыва. |Shift + ПКМ| по блоку записывает позицию в активную точку, клавиша |R| открывает выбор точки, |ПКМ| активирует текущую.");
         add("tooltip.trd.machine.range_detonator.desc", "|Детонатор дальнего действия| - лазерное устройство мгновенного подрыва зарядов. Нажатие |ПКМ| пускает луч до 256 блоков и детонирует заряд, на который вы навелись.");
+
+        // ═══ Детонаторы: тултипы и сообщения (подсказка + чат) ═══
+        add("tooltip.trd.detonator.desc", "Радиопульт для подрыва привязанных зарядов.");
+        add("tooltip.trd.detonator.linked", "Привязанный заряд: %d, %d, %d");
+        add("tooltip.trd.detonator.distance", "Расстояние: %d блоков");
+        add("tooltip.trd.detonator.not_linked", "Заряд не привязан");
+        add("tooltip.trd.detonator.bind", "Shift + ПКМ по блоку — привязать заряд");
+        add("tooltip.trd.detonator.fire", "ПКМ по воздуху — подорвать привязанный заряд");
+
+        add("tooltip.trd.multi_detonator.desc", "Продвинутый пульт до 4 именованных точек подрыва.");
+        add("tooltip.trd.multi_detonator.point_active", "▶ %s: %d, %d, %d");
+        add("tooltip.trd.multi_detonator.point", "  %s: %d, %d, %d");
+        add("tooltip.trd.multi_detonator.point_empty", "  Слот %d: пусто");
+        add("tooltip.trd.multi_detonator.linked", "Привязано точек: %d / %d");
+        add("tooltip.trd.multi_detonator.key_r", "Клавиша R — выбрать активную точку");
+        add("tooltip.trd.multi_detonator.shift_rmb", "Shift + ПКМ по блоку — записать в активную точку");
+        add("tooltip.trd.multi_detonator.rmb_activate", "ПКМ — подорвать активную точку");
+
+
+
+        add("message.trd.detonator.saved", "Позиция сохранена: %d, %d, %d");
+        add("message.trd.detonator.no_position", "Нет сохранённой позиции!");
+        add("message.trd.detonator.invalid", "Позиция несовместима или не прогружена");
+        add("message.trd.detonator.activated", "Успешно активировано");
+
+        add("message.trd.multi_detonator.position_saved", "Позиция сохранена [%s]: %d, %d, %d");
+        add("message.trd.multi_detonator.no_coordinates", "Координаты не сохранены");
+        add("message.trd.multi_detonator.point_not_set", "Активная точка %d не задана");
+        add("message.trd.multi_detonator.chunk_not_loaded", "Чанк не прогружен");
+        add("message.trd.multi_detonator.activated", "Активировано: %s");
+        add("message.trd.multi_detonator.activation_error", "Ошибка активации");
+        add("message.trd.multi_detonator.incompatible_block", "Нет совместимого заряда в этой позиции");
+
+        add("message.trd.range_detonator.pos_not_loaded", "Позиция несовместима или не прогружена");
+        add("message.trd.range_detonator.activated", "Успешно активировано");
 
         // ═══ Оружие ═══
         add("tooltip.trd.machine.turret_portative.desc", "|Портативная лёгкая турель| - одноразовый установщик автономной версии турели 'Нагваль'.");

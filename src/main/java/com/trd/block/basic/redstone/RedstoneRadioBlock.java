@@ -56,14 +56,7 @@ public class RedstoneRadioBlock extends BaseEntityBlock {
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        Direction clicked = context.getClickedFace();
-        Direction facing;
-        if (clicked == Direction.DOWN || clicked == Direction.UP) {
-            facing = clicked;
-        } else {
-            facing = clicked.getOpposite();
-        }
-        // Проверка опоры
+        Direction facing = context.getClickedFace(); // антенна наружу
         BlockPos supportPos = context.getClickedPos().relative(facing.getOpposite());
         if (!context.getLevel().getBlockState(supportPos).isSolid()) {
             return null;
@@ -80,16 +73,12 @@ public class RedstoneRadioBlock extends BaseEntityBlock {
 
     @Override
     public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
-        if (!level.isClientSide) {
-            if (!state.canSurvive(level, pos)) {
-                level.destroyBlock(pos, true);
-                return;
-            }
+        // Не проверяем canSurvive во время движения поршня — мир временно неконсистентен
+        if (!level.isClientSide && !isMoving && !state.canSurvive(level, pos)) {
+            level.destroyBlock(pos, true);
+            return;
         }
         super.neighborChanged(state, level, pos, block, fromPos, isMoving);
-        if (!level.isClientSide && isTransmitter) {
-            // Тик обработает изменение сигнала
-        }
     }
 
     @Override
@@ -133,7 +122,10 @@ public class RedstoneRadioBlock extends BaseEntityBlock {
     public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
         super.onPlace(state, level, pos, oldState, isMoving);
         if (!level.isClientSide && state.getBlock() != oldState.getBlock()) {
-            level.updateNeighborsAt(pos, this);
+            BlockEntity be = level.getBlockEntity(pos);
+            if (be instanceof RedstoneRadioBlockEntity radio) {
+                radio.sendSyncPacket(); // синхронизация нового блока
+            }
         }
     }
 
@@ -189,9 +181,11 @@ public class RedstoneRadioBlock extends BaseEntityBlock {
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         if (level.isClientSide) return null;
         if (isTransmitter) {
-            return createTickerHelper(type, ModBlockEntities.REDSTONE_RADIO_TRANSMITTER_BE.get(), RedstoneRadioTransmitterBlockEntity::serverTick);
+            return createTickerHelper(type, ModBlockEntities.REDSTONE_RADIO_TRANSMITTER_BE.get(),
+                    RedstoneRadioTransmitterBlockEntity::serverTick);
         } else {
-            return createTickerHelper(type, ModBlockEntities.REDSTONE_RADIO_RECEIVER_BE.get(), RedstoneRadioReceiverBlockEntity::serverTick);
+            return createTickerHelper(type, ModBlockEntities.REDSTONE_RADIO_RECEIVER_BE.get(),
+                    RedstoneRadioReceiverBlockEntity::serverTick);
         }
     }
 }

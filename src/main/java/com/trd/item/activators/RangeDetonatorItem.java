@@ -109,14 +109,4 @@ public class RangeDetonatorItem extends Item {
             );
         }
     }
-
-    @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level level,
-                                List<Component> tooltip, TooltipFlag flag) {
-        super.appendHoverText(stack, level, tooltip, flag);
-        tooltip.add(Component.translatable("tooltip.trd.range_detonator.desc")
-                .withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.translatable("tooltip.trd.range_detonator.hint")
-                .withStyle(ChatFormatting.GRAY));
-    }
 }
