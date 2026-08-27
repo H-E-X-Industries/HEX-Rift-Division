@@ -23,6 +23,8 @@ import com.trd.sound.ModSounds;
 import javax.annotation.Nullable;
 import java.util.List;
 
+import net.minecraft.client.Minecraft;
+
 public class DetonatorItem extends Item {
 
     private static final String NBT_POS_X = "DetPosX";
@@ -34,39 +36,6 @@ public class DetonatorItem extends Item {
         super(properties.stacksTo(1));
     }
 
-
-    @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
-        super.appendHoverText(stack, level, tooltip, flag);
-
-        if (stack.hasTag()) {
-            CompoundTag nbt = stack.getTag();
-            if (nbt != null && nbt.contains("HasTarget") && nbt.getBoolean("HasTarget")) {
-                int x = nbt.getInt("DetPosX");
-                int y = nbt.getInt("DetPosY");
-                int z = nbt.getInt("DetPosZ");
-
-                tooltip.add(Component.translatable("tooltip.smogline.detonator.target")
-                        .append(Component.literal(x + ", " + y + ", " + z))
-                        .withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD));
-
-                tooltip.add(Component.translatable("tooltip.smogline.detonator.right_click")
-                        .withStyle(ChatFormatting.GRAY));
-                tooltip.add(Component.translatable("tooltip.smogline.detonator.shift_right_click")
-                        .withStyle(ChatFormatting.GRAY));
-            } else {
-                tooltip.add(Component.translatable("tooltip.smogline.detonator.no_target")
-                        .withStyle(ChatFormatting.RED));
-                tooltip.add(Component.translatable("tooltip.smogline.detonator.shift_right_click")
-                        .withStyle(ChatFormatting.GRAY));
-            }
-        } else {
-            tooltip.add(Component.translatable("tooltip.smogline.detonator.no_target")
-                    .withStyle(ChatFormatting.RED));
-            tooltip.add(Component.translatable("tooltip.smogline.detonator.shift_right_click")
-                    .withStyle(ChatFormatting.GRAY));
-        }
-    }
 
     @Override
     public InteractionResult useOn(UseOnContext context) {
@@ -94,7 +63,7 @@ public class DetonatorItem extends Item {
             if (!level.isClientSide) {
                 player.displayClientMessage(
 
-                        Component.literal("Позиция сохранена: " + pos.getX() + ", " + pos.getY() + ", " + pos.getZ())
+                        Component.translatable("message.trd.detonator.saved", pos.getX(), pos.getY(), pos.getZ())
                                 .withStyle(ChatFormatting.GREEN),
                         true
                 );
@@ -119,7 +88,7 @@ public class DetonatorItem extends Item {
             if (!stack.hasTag()) {
                 if (!level.isClientSide) {
                     player.displayClientMessage(
-                            Component.literal("Нет сохраненной позиции!")
+                            Component.translatable("message.trd.detonator.no_position")
                                     .withStyle(ChatFormatting.RED),
                             true
                     );
@@ -136,7 +105,7 @@ public class DetonatorItem extends Item {
             if (!nbt.contains(NBT_HAS_TARGET) || !nbt.getBoolean(NBT_HAS_TARGET)) {
                 if (!level.isClientSide) {
                     player.displayClientMessage(
-                            Component.literal("Нет сохраненной позиции!")
+                            Component.translatable("message.trd.detonator.no_position")
                                     .withStyle(ChatFormatting.RED),
                             true
                     );
@@ -158,7 +127,7 @@ public class DetonatorItem extends Item {
                 // Проверяем, загружен ли чанк
                 if (!level.isLoaded(targetPos)) {
                     player.displayClientMessage(
-                            Component.literal("Позиция не совместима или не прогружена")
+                            Component.translatable("message.trd.detonator.invalid")
                                     .withStyle(ChatFormatting.RED),
                             true
                     );
@@ -180,7 +149,7 @@ public class DetonatorItem extends Item {
 
                     if (success) {
                         player.displayClientMessage(
-                                Component.literal("Успешно активировано")
+                                Component.translatable("message.trd.detonator.activated")
                                         .withStyle(ChatFormatting.GREEN),
                                 true
                         );
@@ -192,7 +161,7 @@ public class DetonatorItem extends Item {
                         return InteractionResultHolder.success(stack);
                     } else {
                         player.displayClientMessage(
-                                Component.literal("Позиция не совместима или не прогружена")
+                                Component.translatable("message.trd.detonator.invalid")
                                         .withStyle(ChatFormatting.RED),
                                 true
                         );
@@ -207,7 +176,7 @@ public class DetonatorItem extends Item {
 
                 } else {
                     player.displayClientMessage(
-                            Component.literal("Позиция не совместима или не прогружена")
+                            Component.translatable("message.trd.detonator.invalid")
                                     .withStyle(ChatFormatting.RED),
                             true
                     );

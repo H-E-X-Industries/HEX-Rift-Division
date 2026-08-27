@@ -172,6 +172,13 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
     @Override
     public boolean isSource() { return false; }
 
+    // Данные кинетической сети для HUD (синхронизируются на клиент)
+    private long networkTorque = 0;
+    private long networkConsumedTorque = 0;
+
+    public long getNetworkTorque() { return networkTorque; }
+    public long getNetworkConsumedTorque() { return networkConsumedTorque; }
+
     @Override
     public long getConsumedTorque() {
         if (hasBlade1 == 0 || hasBlade2 == 0) return 0;
@@ -330,6 +337,26 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, DrobitelBlockEntity be) {
         boolean changed = false;
+
+        // Синхронизация момента кинетической сети на клиент для HUD
+        com.trd.api.rotation.KineticNetwork network = com.trd.api.rotation.KineticNetworkManager
+                .get((net.minecraft.server.level.ServerLevel) level)
+                .getNetworkFor(be.worldPosition);
+        if (network != null) {
+            float absScale = Math.abs(be.networkScale);
+            long newTorque = absScale > 0.001f ? (long) (network.getTotalTorque() / absScale) : network.getTotalTorque();
+            long newConsumed = absScale > 0.001f ? (long) (network.getTotalConsumedTorque() / absScale) : network.getTotalConsumedTorque();
+            if (newTorque != be.networkTorque || newConsumed != be.networkConsumedTorque) {
+                be.networkTorque = newTorque;
+                be.networkConsumedTorque = newConsumed;
+                changed = true;
+            }
+        } else if (be.networkTorque != 0 || be.networkConsumedTorque != 0) {
+            be.networkTorque = 0;
+            be.networkConsumedTorque = 0;
+            changed = true;
+        }
+
         be.updateBladeData();
 
         int newConnected = Math.abs(be.getSpeed()) > 0 ? 1 : 0;
@@ -632,6 +659,8 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
         tag.putInt("Progress", progress);
         tag.putBoolean("IsOverstressed", isOverstressed);
         tag.putBoolean("IsTooSlow", isTooSlow);
+        tag.putLong("NetTorque", this.networkTorque);
+        tag.putLong("NetConsumedTorque", this.networkConsumedTorque);
     }
 
     @Override
@@ -641,6 +670,8 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
         progress = tag.getInt("Progress");
         isOverstressed = tag.getBoolean("IsOverstressed");
         isTooSlow = tag.getBoolean("IsTooSlow");
+        this.networkTorque = tag.getLong("NetTorque");
+        this.networkConsumedTorque = tag.getLong("NetConsumedTorque");
         updateBladeData();
     }
 

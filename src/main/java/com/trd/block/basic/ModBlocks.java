@@ -161,6 +161,10 @@ public class ModBlocks {
             () -> new PaintableWireBlock(
                     BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion()));
 
+    public static final RegistryObject<Block> CC_MACHINE = registerBlock("cc_machine",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(1.5F, 6.0F).sound(SoundType.NETHER_BRICKS).requiresCorrectToolForDrops().noOcclusion()));
+
 
     // Конгломераты
     public static final RegistryObject<Block> ASBESOTS_ORE = registerBlock("asbestos_ore",
@@ -255,7 +259,7 @@ public class ModBlocks {
 
     public static final RegistryObject<Block> SMALL_SMELTER = registerBlock("small_smelter",
             () -> new SmallSmelterBlock(BlockBehaviour.Properties.of()
-                    .strength(1.2F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+                    .strength(1.2F, 6.0F).sound(SoundType.NETHER_BRICKS).requiresCorrectToolForDrops()));
 
 
     //ОБЫЧНЫЕ БЛОКИ
@@ -448,7 +452,7 @@ public class ModBlocks {
 
     public static final RegistryObject<Block> COCCER_OVEN = BLOCKS.register("coccer_oven",
             () -> new com.trd.multiblock.industrial.coccer.CoccerOvenBlock(BlockBehaviour.Properties.of()
-                    .strength(2.0F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
+                    .strength(2.0F, 6.0F).sound(SoundType.NETHER_BRICKS).requiresCorrectToolForDrops().noOcclusion()));
 
     public static final RegistryObject<Block> MORY_BLOCK = registerBlock("mory_block",
             () -> new Block(BlockBehaviour.Properties.of()
@@ -519,7 +523,7 @@ public class ModBlocks {
 
     public static final RegistryObject<Block> SMELTER = BLOCKS.register("smelter",
             () -> new SmelterBlock(BlockBehaviour.Properties.of()
-                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
+                    .strength(0.5F, 6.0F).sound(SoundType.NETHER_BRICKS).requiresCorrectToolForDrops().noOcclusion()));
     public static final RegistryObject<Block> DROBITEL = BLOCKS.register("drobitel",
             () -> new DrobitelBlock(BlockBehaviour.Properties.of()
                     .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
@@ -867,7 +871,7 @@ public class ModBlocks {
 
     // 2. Регистрируем блок самого Нагревателя
     public static final RegistryObject<Block> HEATER = BLOCKS.register("heater",
-            () -> new HeaterBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion()));
+            () -> new HeaterBlock(BlockBehaviour.Properties.copy(Blocks.NETHER_BRICKS).noOcclusion()));
 
     public static final RegistryObject<Block> STEEL_STORAGE = BLOCKS.register("steel_storage",
             () -> new SteelStorageBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion()));

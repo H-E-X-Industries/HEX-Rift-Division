@@ -5,6 +5,7 @@ import com.trd.network.packet.chemistry.ClearChemicalRecipePacket;
 import com.trd.network.packet.chemistry.SelectChemicalRecipePacket;
 import com.trd.network.packet.chemistry.UpdatePortModePacket;
 import com.trd.network.packet.fluids.*;
+import com.trd.network.packet.redstone.RedstoneRadioChannelPacket;
 import com.trd.network.packet.redstone.RedstoneRadioSyncPacket;
 //import com.trd.network.packet.rotation.PacketToggleRetractMode;
 import com.trd.network.packet.turrets.*;
@@ -242,5 +243,12 @@ public class ModPacketHandler {
                 RedstoneRadioSyncPacket::encode,
                 RedstoneRadioSyncPacket::decode,
                 RedstoneRadioSyncPacket::handle);
+
+        INSTANCE.registerMessage(id++,                          // следующий ID
+                RedstoneRadioChannelPacket.class,
+                RedstoneRadioChannelPacket::encode,
+                RedstoneRadioChannelPacket::decode,
+                RedstoneRadioChannelPacket::handle
+        );
     }
 }

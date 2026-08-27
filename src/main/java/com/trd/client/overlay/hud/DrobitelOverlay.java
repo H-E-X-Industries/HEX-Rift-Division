@@ -1,8 +1,8 @@
 package com.trd.client.overlay.hud;
 
 import com.trd.main.MainRegistry;
-import com.trd.multiblock.industrial.stanok.StanokBlockEntity;
-import com.trd.multiblock.industrial.stanok.StanokRecipe;
+import com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity;
+import com.trd.multiblock.system.MultiblockPartEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -21,11 +21,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * HUD-оверлей для станка. Показывается справа-снизу от прицела
- * при наведении на любой блок мультиблока станка (контроллер или парты).
+ * HUD-оверлей для дробителя. Показывается справа-снизу от прицела
+ * при наведении на любой блок мультиблока дробителя (контроллер или парты).
+ * Копирует оформление HUD станка.
  */
 @Mod.EventBusSubscriber(modid = MainRegistry.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
-public class StanokHudOverlay {
+public class DrobitelOverlay {
 
     @SubscribeEvent
     public static void onRenderHud(RenderGuiOverlayEvent.Post event) {
@@ -40,29 +41,29 @@ public class StanokHudOverlay {
         BlockPos pos = blockHit.getBlockPos();
         BlockEntity be = mc.level.getBlockEntity(pos);
 
-        StanokBlockEntity stanok = null;
+        DrobitelBlockEntity drobitel = null;
 
         // Попадание напрямую в контроллер
-        if (be instanceof StanokBlockEntity s) {
-            stanok = s;
-        } else if (be instanceof com.trd.multiblock.system.MultiblockPartEntity part) {
+        if (be instanceof DrobitelBlockEntity d) {
+            drobitel = d;
+        } else if (be instanceof MultiblockPartEntity part) {
             // Попадание в парт — ищем контроллер
             BlockPos ctrlPos = part.getControllerPos();
             if (ctrlPos != null) {
                 BlockEntity ctrl = mc.level.getBlockEntity(ctrlPos);
-                if (ctrl instanceof StanokBlockEntity s) stanok = s;
+                if (ctrl instanceof DrobitelBlockEntity d) drobitel = d;
             }
         }
 
-        if (stanok == null) return;
+        if (drobitel == null) return;
 
-        renderHUD(event.getGuiGraphics(), stanok,
+        renderHUD(event.getGuiGraphics(), drobitel,
                 event.getWindow().getGuiScaledWidth(),
                 event.getWindow().getGuiScaledHeight(),
                 mc.font);
     }
 
-    private static void renderHUD(GuiGraphics gui, StanokBlockEntity be,
+    private static void renderHUD(GuiGraphics gui, DrobitelBlockEntity be,
                                    int screenW, int screenH, Font font) {
         int x = screenW / 2 + 12;
         int y = screenH / 2 + 4;
@@ -71,82 +72,46 @@ public class StanokHudOverlay {
         List<Integer> colors = new ArrayList<>();
         int maxW = 0;
 
-        StanokRecipe recipe = be.getCurrentRecipe();
+        // Заголовок
+        String title = Component.translatable("hud.trd.drobitel.title").getString();
+        lines.add(title);
+        colors.add(0xFFFFAA00);
+        maxW = Math.max(maxW, font.width(title));
 
-        if (recipe == null) {
-            String txt = Component.translatable("hud.trd.stanok.no_recipe").getString();
-            lines.add(txt);
-            colors.add(0xAAAAAA);
-            maxW = Math.max(maxW, font.width(txt));
-            
-            if (!be.hasCarriage()) {
-                String carriageTxt = Component.translatable("hud.trd.stanok.no_carriage").getString();
-                lines.add(carriageTxt);
-                colors.add(0xFF4444);
-                maxW = Math.max(maxW, font.width(carriageTxt));
-            }
+        boolean hasBlades = be.getHasBlade1() == 1 && be.getHasBlade2() == 1;
 
-            if (x + maxW + 4 > screenW) x = screenW / 2 - maxW - 12;
-            gui.fill(x - 3, y - 2, x + maxW + 3, y + lines.size() * font.lineHeight + 2, 0x90000000);
-            for (int i = 0; i < lines.size(); i++) {
-                gui.drawString(font, lines.get(i), x, y + (i * font.lineHeight), colors.get(i), true);
-            }
-            return;
-        }
-
-        // Название рецепта
-        String recipeName = "§e" + Component.translatable(
-                "recipe.trd." + recipe.getId().getPath()).getString();
-        lines.add(recipeName);
-        colors.add(0xFFFFFF);
-        maxW = Math.max(maxW, font.width(recipeName));
-
-        // Если нет насадки
-        if (!be.hasCarriage()) {
-            String noCarriageTxt = Component.translatable("hud.trd.stanok.no_carriage").getString();
-            lines.add(noCarriageTxt);
+        // Если нет лезвий
+        if (!hasBlades) {
+            String noBladesTxt = Component.translatable("hud.trd.drobitel.no_blades").getString();
+            lines.add(noBladesTxt);
             colors.add(0xFF4444);
-            maxW = Math.max(maxW, font.width(noCarriageTxt));
+            maxW = Math.max(maxW, font.width(noBladesTxt));
         }
 
-        // Скорость
+        // Скорость (рабочий диапазон 60-120 RPM)
         long absSpeed = Math.abs(be.getSpeed());
-        long req      = recipe.getRequiredRpm();
-        long tolerance = (long)(req * 0.25);
-        
-        int displaySpeedStatus;
-        if (absSpeed < req - tolerance) {
-            displaySpeedStatus = 1;
-        } else if (absSpeed > req + tolerance) {
-            displaySpeedStatus = 2;
-        } else {
-            displaySpeedStatus = 0;
-        }
 
-        // Определяем: есть ли материал
-        boolean hasInput = be.hasRequiredInputsPublic(recipe);
-
-        int speedColor;
         String speedLabel;
-        if (displaySpeedStatus == 0) {
-            speedColor = 0x00FF00;
-            speedLabel = Component.translatable("hud.trd.stanok.speed_ok").getString();
-        } else if (displaySpeedStatus == 1) {
+        int speedColor;
+        if (absSpeed < 60) {
+            speedLabel = Component.translatable("hud.trd.drobitel.speed_slow").getString();
             speedColor = 0xFF4444;
-            speedLabel = Component.translatable("hud.trd.stanok.speed_slow").getString();
-        } else {
+        } else if (absSpeed > 120) {
+            speedLabel = Component.translatable("hud.trd.drobitel.speed_fast").getString();
             speedColor = 0xFFAA00;
-            speedLabel = Component.translatable("hud.trd.stanok.speed_fast").getString();
+        } else {
+            speedLabel = Component.translatable("hud.trd.drobitel.speed_ok").getString();
+            speedColor = 0x00FF00;
         }
-        String speedLine = absSpeed + " / " + req + " RPM - " + speedLabel;
+        String speedLine = absSpeed + " / 60-120 RPM - " + speedLabel;
         lines.add(speedLine);
         colors.add(speedColor);
         maxW = Math.max(maxW, font.width(speedLine));
 
         // Момент (необходимый и доступный в сети)
-        long requiredTorque = recipe.getConsumedTorque();
+        long requiredTorque = be.getConsumedTorque();
         long availableTorque = be.getNetworkTorque();
-        String torqueLine = Component.translatable("hud.trd.stanok.torque",
+        String torqueLine = Component.translatable("hud.trd.drobitel.torque",
                 availableTorque, requiredTorque).getString();
         int torqueColor;
         if (requiredTorque <= 0) {
@@ -161,15 +126,6 @@ public class StanokHudOverlay {
         lines.add(torqueLine);
         colors.add(torqueColor);
         maxW = Math.max(maxW, font.width(torqueLine));
-
-        // Отдельная строка "Нет материала" — показываем только если скорость OK
-        // но материала нет (или выходные слоты заполнены)
-        if (!hasInput) {
-            String noMatLine = Component.translatable("hud.trd.stanok.no_material").getString();
-            lines.add(noMatLine);
-            colors.add(0xFF4444); // красный
-            maxW = Math.max(maxW, font.width(noMatLine));
-        }
 
         // Прогресс
         int prog    = be.getData().get(0);
@@ -186,7 +142,7 @@ public class StanokHudOverlay {
             bar.append("§7");
             for (int i = 0; i < gray; i++) bar.append("|");
 
-            String progressLine = Component.translatable("hud.trd.stanok.progress",
+            String progressLine = Component.translatable("hud.trd.drobitel.progress",
                     (int)(pct * 100)).getString() + " [" + bar + "§r]";
             lines.add(progressLine);
             colors.add(0xFFFFFF);
@@ -203,4 +159,3 @@ public class StanokHudOverlay {
         }
     }
 }
-

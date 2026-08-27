@@ -8,6 +8,7 @@ import com.trd.api.metallurgy.ModMetallurgy;
 import com.trd.api.metallurgy.system.Metal;
 import com.trd.api.metallurgy.system.MetalUnits2;
 import com.trd.api.metallurgy.system.MetallurgyRegistry;
+import com.trd.api.redstone.RadioNetworkManager;
 import com.trd.datagen.stats.ModBlockLootTableProvider;
 import com.trd.entity.mobs.depth_worm.DepthWormBrutalEntity;
 import com.trd.entity.mobs.grenadier.GrenadierZombieEntity;
@@ -98,6 +99,7 @@ public class MainRegistry {
         ModFeatures.FEATURES.register(modEventBus);
         MinecraftForge.EVENT_BUS.addListener(this::onFuelBurnTime);
         MinecraftForge.EVENT_BUS.register(new HiveEventHandler());
+        MinecraftForge.EVENT_BUS.register(RadioNetworkManager.class);
         // Проверяем, есть ли Окулус
         // Проверяем наличие Окулуса
         if (net.minecraftforge.fml.loading.FMLEnvironment.dist == net.minecraftforge.api.distmarker.Dist.CLIENT) {
@@ -133,6 +135,7 @@ public class MainRegistry {
 
     private void registerCapabilities(IEventBus modEventBus) {
         modEventBus.addListener(ModCapabilities::register);
+        modEventBus.addListener(RadioNetworkManager::registerCapability);
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
@@ -360,6 +363,7 @@ public class MainRegistry {
 
             event.accept(ModItems.HEATER_ITEM);
             event.accept(ModBlocks.SMELTER);
+            event.accept(ModBlocks.CC_MACHINE.get());
             event.accept(ModBlocks.COCCER_OVEN);
             event.accept(ModBlocks.CASTING_POT);
             event.accept(ModBlocks.CASTING_DESCENT);
@@ -378,7 +382,8 @@ public class MainRegistry {
             event.accept(ModBlocks.CONVEYOR.get());
             event.accept(ModBlocks.SORTIROVSHIK.get());
 
-
+            event.accept(ModBlocks.REDSTONE_RADIO_TRANSMITTER.get());
+            event.accept(ModBlocks.REDSTONE_RADIO_RECEIVER.get());
         }
 
 

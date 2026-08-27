@@ -63,28 +63,31 @@ public class SwitchBlock extends BaseEntityBlock {
         if (level.isClientSide) {
             return InteractionResult.SUCCESS;
         }
-        applyToggle(state, (ServerLevel) level, pos);
+        // Ручное переключение (работает как override, если редстоун не активен)
+        boolean newPowered = !state.getValue(POWERED);
+        setPoweredState(state, (ServerLevel) level, pos, newPowered, true);
         return InteractionResult.SUCCESS;
     }
 
     /**
-     * Переключает рубильник и синхронизирует энергосеть.
-     * Общий путь для ПКМ и фронта редстоуна.
+     * Устанавливает POWERED напрямую. Если состояние не меняется — ничего не делает.
      */
-    private void applyToggle(BlockState state, ServerLevel level, BlockPos pos) {
-        boolean isPowered = !state.getValue(POWERED);
-        BlockState newState = state.setValue(POWERED, isPowered);
+    public void setPoweredState(BlockState state, ServerLevel level, BlockPos pos, boolean powered, boolean playSound) {
+        if (state.getValue(POWERED) == powered) return;
 
-        // flag 3 (UPDATE_ALL): клиенты + пересчёт форм соседей
+        BlockState newState = state.setValue(POWERED, powered);
         level.setBlock(pos, newState, 3);
 
         EnergyNetworkManager manager = EnergyNetworkManager.get(level);
-        manager.removeNode(pos);
-        if (isPowered) {
+        if (powered) {
             manager.addNode(pos);
+        } else {
+            manager.removeNode(pos);
         }
 
-        level.playSound(null, pos, ModSounds.LEVER1.get(), SoundSource.BLOCKS, 0.3f, isPowered ? 1.0f : 0.9f);
+        if (playSound) {
+            level.playSound(null, pos, ModSounds.LEVER1.get(), SoundSource.BLOCKS, 0.3f, powered ? 1.0f : 0.9f);
+        }
         level.updateNeighborsAt(pos, this);
     }
 
@@ -93,33 +96,31 @@ public class SwitchBlock extends BaseEntityBlock {
         if (level.isClientSide) return;
         if (!(level.getBlockEntity(pos) instanceof SwitchBlockEntity switchEntity)) return;
 
-        // Отслеживаем УРОВЕНЬ сигнала, а не "событийный" флаг: ручное переключение ПКМ
-        // уровень не меняет, поэтому собственные обновления соседей (updateNeighborsAt)
-        // больше не откатывают клик игрока, а рассинхрон после выгрузки чанков
-        // исключён (см. onLoad/onPlace).
         boolean signal = level.hasNeighborSignal(pos);
         if (signal == switchEntity.prevSignal) return;
 
         switchEntity.prevSignal = signal;
         switchEntity.setChanged();
 
-        // Реагируем только на фронт 0 -> 1; спад состояние рубильника не меняет.
-        if (signal) {
-            applyToggle(state, (ServerLevel) level, pos);
-        }
+        // Прямое управление: блок повторяет редстоун-сигнал
+        setPoweredState(state, (ServerLevel) level, pos, signal, true);
     }
 
     @Override
     public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
         if (!level.isClientSide && !oldState.is(state.getBlock())) {
-            // Инициализируем предыдущий уровень сигнала фактическим, иначе первое же
-            // обновление соседей рядом с включённым источником даст ложный фронт.
             if (level.getBlockEntity(pos) instanceof SwitchBlockEntity be) {
-                be.prevSignal = level.hasNeighborSignal(pos);
+                boolean signal = level.hasNeighborSignal(pos);
+                be.prevSignal = signal;
                 be.setChanged();
-            }
-            if (state.getValue(POWERED)) {
-                EnergyNetworkManager.get((ServerLevel) level).addNode(pos);
+
+                // При установке сразу синхронизируемся с редстоуном
+                if (state.getValue(POWERED) != signal) {
+                    setPoweredState(state, (ServerLevel) level, pos, signal, true);
+                } else if (signal) {
+                    // Если совпадает и включён — регистрируем в сети
+                    EnergyNetworkManager.get((ServerLevel) level).addNode(pos);
+                }
             }
         }
         super.onPlace(state, level, pos, oldState, isMoving);

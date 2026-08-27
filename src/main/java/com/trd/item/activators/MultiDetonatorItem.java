@@ -70,38 +70,41 @@ public class MultiDetonatorItem extends Item {
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, level, tooltip, flag);
 
+        tooltip.add(Component.translatable("tooltip.trd.multi_detonator.desc")
+                .withStyle(ChatFormatting.GRAY));
+
+        int activePoint = getActivePoint(stack);
+        int linkedCount = 0;
+
         // Проходим по всем 4 точкам
         for (int i = 0; i < MAX_POINTS; i++) {
             PointData point = getPointData(stack, i);
 
             if (point != null && point.hasTarget) {
-                // 🟢 АКТИВНАЯ точка - выделяем жёлтым
-                if (i == getActivePoint(stack)) {
-                    tooltip.add(Component.translatable("tooltip.smogline.multi_detonator.active_point", point.name)
+                linkedCount++;
+
+                if (i == activePoint) {
+                    tooltip.add(Component.translatable("tooltip.trd.multi_detonator.point_active",
+                                    point.name, point.x, point.y, point.z)
                             .withStyle(ChatFormatting.YELLOW));
                 } else {
-                    // 🟡 Обычная точка - зелёным
-                    tooltip.add(Component.translatable("tooltip.smogline.multi_detonator.point_set", point.name)
+                    tooltip.add(Component.translatable("tooltip.trd.multi_detonator.point",
+                                    point.name, point.x, point.y, point.z)
                             .withStyle(ChatFormatting.GREEN));
                 }
-
-                // Координаты
-                tooltip.add(Component.translatable("tooltip.smogline.multi_detonator.coordinates", point.x, point.y, point.z)
-                        .withStyle(ChatFormatting.WHITE));
-
             } else {
-                // Пустая точка - серым
-                tooltip.add(Component.translatable("tooltip.smogline.multi_detonator.point_empty", i + 1)
-                        .withStyle(ChatFormatting.GRAY));
-                tooltip.add(Component.translatable("tooltip.smogline.multi_detonator.not_set")
-                        .withStyle(ChatFormatting.GRAY));
+                tooltip.add(Component.translatable("tooltip.trd.multi_detonator.point_empty", i + 1)
+                        .withStyle(ChatFormatting.DARK_GRAY));
             }
         }
 
+        tooltip.add(Component.translatable("tooltip.trd.multi_detonator.linked", linkedCount, MAX_POINTS)
+                .withStyle(linkedCount > 0 ? ChatFormatting.WHITE : ChatFormatting.RED));
+
         // Инструкции внизу
-        tooltip.add(Component.translatable("tooltip.smogline.multi_detonator.key_r").withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.translatable("tooltip.smogline.multi_detonator.shift_rmb").withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.translatable("tooltip.smogline.multi_detonator.rmb_activate").withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("tooltip.trd.multi_detonator.key_r").withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("tooltip.trd.multi_detonator.shift_rmb").withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("tooltip.trd.multi_detonator.rmb_activate").withStyle(ChatFormatting.GRAY));
     }
 
     /**
@@ -163,7 +166,7 @@ public class MultiDetonatorItem extends Item {
             if (!level.isClientSide) {
                 String finalName = pointTag.getString(NBT_POINT_NAME);
                 player.displayClientMessage(
-                        Component.translatable("message.smogline.multi_detonator.position_saved", finalName, pos.getX(), pos.getY(), pos.getZ())
+                        Component.translatable("message.trd.multi_detonator.position_saved", finalName, pos.getX(), pos.getY(), pos.getZ())
                                 .withStyle(ChatFormatting.GREEN),
                         true
                 );
@@ -198,7 +201,7 @@ public class MultiDetonatorItem extends Item {
         if (!level.isClientSide) {
             if (!stack.hasTag()) {
                 player.displayClientMessage(
-                        Component.translatable("message.smogline.multi_detonator.no_coordinates")
+                        Component.translatable("message.trd.multi_detonator.no_coordinates")
                                 .withStyle(ChatFormatting.RED),
                         true
                 );
@@ -222,7 +225,7 @@ public class MultiDetonatorItem extends Item {
 
             if (pointData == null || !pointData.hasTarget) {
                 player.displayClientMessage(
-                        Component.translatable("message.smogline.multi_detonator.point_not_set", activePoint + 1)
+                        Component.translatable("message.trd.multi_detonator.point_not_set", activePoint + 1)
                                 .withStyle(ChatFormatting.RED),
                         true
                 );
@@ -239,7 +242,7 @@ public class MultiDetonatorItem extends Item {
 
             if (!level.isLoaded(targetPos)) {
                 player.displayClientMessage(
-                        Component.translatable("message.smogline.multi_detonator.chunk_not_loaded")
+                        Component.translatable("message.trd.multi_detonator.chunk_not_loaded")
                                 .withStyle(ChatFormatting.RED),
                         true
                 );
@@ -263,7 +266,7 @@ public class MultiDetonatorItem extends Item {
 
                     if (success) {
                         player.displayClientMessage(
-                                Component.translatable("message.smogline.multi_detonator.activated", pointData.name)
+                                Component.translatable("message.trd.multi_detonator.activated", pointData.name)
                                         .withStyle(ChatFormatting.GREEN),
                                 true
                         );
@@ -275,7 +278,7 @@ public class MultiDetonatorItem extends Item {
                     }
                 } catch (Exception e) {
                     player.displayClientMessage(
-                            Component.translatable("message.smogline.multi_detonator.activation_error")
+                            Component.translatable("message.trd.multi_detonator.activation_error")
                                     .withStyle(ChatFormatting.RED),
                             true
                     );
@@ -289,7 +292,7 @@ public class MultiDetonatorItem extends Item {
                 }
             } else {
                 player.displayClientMessage(
-                        Component.translatable("message.smogline.multi_detonator.incompatible_block")
+                        Component.translatable("message.trd.multi_detonator.incompatible_block")
                                 .withStyle(ChatFormatting.RED),
                         true
                 );

@@ -21,12 +21,7 @@ public class SwitchBlockEntity extends BlockEntity implements IEnergyConnector {
 
     private final LazyOptional<IEnergyConnector> hbmConnector = LazyOptional.of(() -> this);
 
-    /**
-     * Предыдущий УРОВЕНЬ редстоун-сигнала (не "фронт").
-     * Инициализируется фактическим значением при установке и загрузке чанка —
-     * иначе фронты начинают теряться или срабатывать ложно.
-     * В NBT пишется под старым ключом "isTriggered" для совместимости миров.
-     */
+    /** Кешированный уровень редстоун-сигнала (не состояние блока!) */
     public boolean prevSignal = false;
 
     public SwitchBlockEntity(BlockPos pos, BlockState state) {
@@ -37,8 +32,6 @@ public class SwitchBlockEntity extends BlockEntity implements IEnergyConnector {
         if (level.isClientSide) return;
 
         if (state.getValue(SwitchBlock.POWERED)) {
-            // Самолечение: узел должен существовать И иметь сеть. Просто hasNode()
-            // пропускал "залипшие" узлы без сети — их приходилось лечить перестановкой блока.
             EnergyNetworkManager.get((ServerLevel) level).ensureNodeConnected(pos);
         }
     }
@@ -46,8 +39,6 @@ public class SwitchBlockEntity extends BlockEntity implements IEnergyConnector {
     @Override
     public void onLoad() {
         super.onLoad();
-        // Синхронизируем предыдущий уровень сигнала с фактическим: источник мог
-        // измениться, пока чанк был выгружен (иначе первый фронт теряется).
         if (this.level != null && !this.level.isClientSide) {
             this.prevSignal = this.level.hasNeighborSignal(this.getBlockPos());
         }

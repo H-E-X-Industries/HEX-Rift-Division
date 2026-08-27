@@ -1,5 +1,6 @@
-package com.trd.block.entity.redstone;
+package com.trd.menu.industrial;
 
+import com.trd.block.entity.redstone.RedstoneRadioBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
