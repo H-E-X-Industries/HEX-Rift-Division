@@ -833,6 +833,13 @@ public class ModBlocks {
                     .requiresCorrectToolForDrops()
                     .noOcclusion()));
 
+    public static final RegistryObject<Block> CONVEYOR_ELEVATOR = registerBlock("conveyor_elevator",
+            () -> new com.trd.block.basic.industrial.ConveyorElevatorBlock(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F)
+                    .sound(SoundType.STONE)
+                    .requiresCorrectToolForDrops()
+                    .noOcclusion()));
+
     public static final RegistryObject<Block> CONVEYOR_VSTAVSHIK = registerBlock("conveyor_vstavshik",
             () -> new ConveyorInserterBlock(BlockBehaviour.Properties.of()
                     .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));

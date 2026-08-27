@@ -104,17 +104,40 @@ public class ConveyorNetworkManager extends SavedData {
         return blockToNetwork.get(pos);
     }
 
-    public void addBlock(BlockPos pos, Direction facing) {
-        BlockPos posBehind = pos.relative(facing.getOpposite());
-        BlockPos posAhead = pos.relative(facing);
+    private BlockPos getNextPos(BlockPos pos, BlockState state) {
+        if (state.getBlock() instanceof com.trd.block.basic.industrial.ConveyorElevatorBlock) {
+            com.trd.block.basic.industrial.ConveyorElevatorBlock.ElevatorPart part = state.getValue(com.trd.block.basic.industrial.ConveyorElevatorBlock.PART);
+            Direction facing = state.getValue(ConveyorBlock.FACING);
+            if (part == com.trd.block.basic.industrial.ConveyorElevatorBlock.ElevatorPart.BOTTOM) return pos.above();
+            if (part == com.trd.block.basic.industrial.ConveyorElevatorBlock.ElevatorPart.MIDDLE) return pos.above();
+            if (part == com.trd.block.basic.industrial.ConveyorElevatorBlock.ElevatorPart.TOP) return pos.relative(facing);
+        }
+        return pos.relative(state.getValue(ConveyorBlock.FACING));
+    }
+
+    private BlockPos getPrevPos(BlockPos pos, BlockState state) {
+        if (state.getBlock() instanceof com.trd.block.basic.industrial.ConveyorElevatorBlock) {
+            com.trd.block.basic.industrial.ConveyorElevatorBlock.ElevatorPart part = state.getValue(com.trd.block.basic.industrial.ConveyorElevatorBlock.PART);
+            Direction facing = state.getValue(ConveyorBlock.FACING);
+            if (part == com.trd.block.basic.industrial.ConveyorElevatorBlock.ElevatorPart.BOTTOM) return pos.relative(facing.getOpposite());
+            if (part == com.trd.block.basic.industrial.ConveyorElevatorBlock.ElevatorPart.MIDDLE) return pos.below();
+            if (part == com.trd.block.basic.industrial.ConveyorElevatorBlock.ElevatorPart.TOP) return pos.below();
+        }
+        return pos.relative(state.getValue(ConveyorBlock.FACING).getOpposite());
+    }
+
+    public void addBlock(BlockPos pos, BlockState state) {
+        Direction facing = state.getValue(ConveyorBlock.FACING);
+        BlockPos posBehind = getPrevPos(pos, state);
+        BlockPos posAhead = getNextPos(pos, state);
 
         ConveyorNetwork netBehind = null;
-        if (isSameDirectionConveyor(posBehind, facing)) {
+        if (isSameDirectionConveyor(posBehind, pos, false)) {
             netBehind = blockToNetwork.get(posBehind);
         }
 
         ConveyorNetwork netAhead = null;
-        if (isSameDirectionConveyor(posAhead, facing)) {
+        if (isSameDirectionConveyor(posAhead, pos, true)) {
             netAhead = blockToNetwork.get(posAhead);
         }
 
@@ -129,14 +152,13 @@ public class ConveyorNetworkManager extends SavedData {
                 item.setProgress(item.getProgress() + offset);
                 netBehind.getItems().add(item);
             }
-            netBehind.addBlockToEnd(pos); // Wait, pos goes in the middle!
             
             // Actually, simpler to just dissolve and rebuild to keep path ordered perfectly
             networks.remove(netBehind);
             networks.remove(netAhead);
             for (BlockPos p : netBehind.getPath()) blockToNetwork.remove(p);
             for (BlockPos p : netAhead.getPath()) blockToNetwork.remove(p);
-            rebuildNetworkFrom(pos, facing);
+            rebuildNetworkFrom(pos, state);
         } else if (netBehind != null) {
             // Append to end
             netBehind.addBlockToEnd(pos);
@@ -180,35 +202,66 @@ public class ConveyorNetworkManager extends SavedData {
             if (!p.equals(pos) && !blockToNetwork.containsKey(p)) {
                 BlockState state = level.getBlockState(p);
                 if (state.getBlock() instanceof ConveyorBlock) {
-                    rebuildNetworkFrom(p, state.getValue(ConveyorBlock.FACING));
+                    rebuildNetworkFrom(p, state);
                 }
             }
         }
         this.setDirty();
     }
 
-    private void rebuildNetworkFrom(BlockPos start, Direction facing) {
+    private void rebuildNetworkFrom(BlockPos start, BlockState startState) {
         ConveyorNetwork net = new ConveyorNetwork();
         
         // Find absolute start by traversing backward
         BlockPos current = start;
-        while (isSameDirectionConveyor(current.relative(facing.getOpposite()), facing)) {
-            current = current.relative(facing.getOpposite());
+        BlockState currentState = startState;
+        while (true) {
+            BlockPos prev = getPrevPos(current, currentState);
+            if (isSameDirectionConveyor(prev, current, false)) {
+                current = prev;
+                currentState = level.getBlockState(current);
+            } else {
+                break;
+            }
         }
 
         // Traverse forward to build path
-        while (isSameDirectionConveyor(current, facing)) {
+        while (true) {
             net.addBlockToEnd(current);
             blockToNetwork.put(current, net);
-            current = current.relative(facing);
+            
+            BlockPos next = getNextPos(current, currentState);
+            if (isSameDirectionConveyor(next, current, true)) {
+                current = next;
+                currentState = level.getBlockState(current);
+            } else {
+                break;
+            }
         }
 
         networks.add(net);
         this.setDirty();
     }
 
-    private boolean isSameDirectionConveyor(BlockPos pos, Direction expectedFacing) {
-        BlockState state = level.getBlockState(pos);
-        return state.getBlock() instanceof ConveyorBlock && state.getValue(ConveyorBlock.FACING) == expectedFacing;
+    private boolean isSameDirectionConveyor(BlockPos otherPos, BlockPos myPos, boolean isAhead) {
+        BlockState myState = level.getBlockState(myPos);
+        BlockState otherState = level.getBlockState(otherPos);
+        
+        if (!(myState.getBlock() instanceof ConveyorBlock) || !(otherState.getBlock() instanceof ConveyorBlock)) {
+            return false;
+        }
+        
+        // If they are both conveyors, check if they connect
+        BlockPos expectedFromMyPerspecive = isAhead ? getNextPos(myPos, myState) : getPrevPos(myPos, myState);
+        if (!expectedFromMyPerspecive.equals(otherPos)) {
+            return false; // I don't point to them
+        }
+        
+        BlockPos expectedFromTheirPerspective = isAhead ? getPrevPos(otherPos, otherState) : getNextPos(otherPos, otherState);
+        if (!expectedFromTheirPerspective.equals(myPos)) {
+            return false; // They don't point to me
+        }
+        
+        return true;
     }
 }

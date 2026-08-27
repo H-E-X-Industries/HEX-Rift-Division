@@ -16,8 +16,48 @@ public class PathMath {
      * @param localProgress Прогресс внутри текущего блока (от 0.0 до 1.0)
      * @return Массив [x, y, z, rotY]
      */
-    public static double[] calculatePathPoint(BlockPos prevPos, BlockPos currentPos, BlockPos nextPos, double localProgress) {
+    public static double[] calculatePathPoint(BlockPos prevPos, BlockPos currentPos, BlockPos nextPos, double localProgress, net.minecraft.world.level.block.state.BlockState state, net.minecraft.world.level.BlockGetter level) {
         Vec3 center = Vec3.atCenterOf(currentPos).add(0, 2.0 / 16.0, 0);
+
+        if (state != null && state.getBlock() instanceof com.trd.block.basic.industrial.ConveyorElevatorBlock) {
+            com.trd.block.basic.industrial.ConveyorElevatorBlock.ElevatorPart part = state.getValue(com.trd.block.basic.industrial.ConveyorElevatorBlock.PART);
+            Direction facing = state.getValue(com.trd.block.basic.industrial.ConveyorBlock.FACING);
+            double baseRotY = facing.toYRot();
+            double trackOffset = 2.5 / 16.0; // 2.5 pixels towards the input side (back)
+            
+            if (part == com.trd.block.basic.industrial.ConveyorElevatorBlock.ElevatorPart.BOTTOM) {
+                if (localProgress <= 0.5) {
+                    double fraction = localProgress / 0.5;
+                    double currentOffset = 0.5 - fraction * (0.5 - trackOffset);
+                    double offsetZ = facing.getOpposite().getStepZ() * currentOffset;
+                    double offsetX = facing.getOpposite().getStepX() * currentOffset;
+                    return new double[]{center.x + offsetX, center.y, center.z + offsetZ, baseRotY};
+                } else {
+                    double offsetY = (localProgress - 0.5);
+                    double offsetZ = facing.getOpposite().getStepZ() * trackOffset;
+                    double offsetX = facing.getOpposite().getStepX() * trackOffset;
+                    return new double[]{center.x + offsetX, center.y + offsetY, center.z + offsetZ, baseRotY};
+                }
+            } else if (part == com.trd.block.basic.industrial.ConveyorElevatorBlock.ElevatorPart.MIDDLE) {
+                double offsetY = -0.5 + localProgress;
+                double offsetZ = facing.getOpposite().getStepZ() * trackOffset;
+                double offsetX = facing.getOpposite().getStepX() * trackOffset;
+                return new double[]{center.x + offsetX, center.y + offsetY, center.z + offsetZ, baseRotY};
+            } else if (part == com.trd.block.basic.industrial.ConveyorElevatorBlock.ElevatorPart.TOP) {
+                if (localProgress <= 0.5) {
+                    double offsetY = -0.5 + localProgress;
+                    double offsetZ = facing.getOpposite().getStepZ() * trackOffset;
+                    double offsetX = facing.getOpposite().getStepX() * trackOffset;
+                    return new double[]{center.x + offsetX, center.y + offsetY, center.z + offsetZ, baseRotY};
+                } else {
+                    double fraction = (localProgress - 0.5) / 0.5;
+                    double currentOffset = -trackOffset + fraction * (0.5 + trackOffset);
+                    double offsetX = facing.getStepX() * currentOffset;
+                    double offsetZ = facing.getStepZ() * currentOffset;
+                    return new double[]{center.x + offsetX, center.y, center.z + offsetZ, baseRotY};
+                }
+            }
+        }
 
         Direction inDir = getDirectionFromTo(prevPos, currentPos);
         Direction outDir = getDirectionFromTo(currentPos, nextPos);

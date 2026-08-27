@@ -68,7 +68,7 @@ public class ConveyorRenderer implements BlockEntityRenderer<ConveyorBlockEntity
                 ItemStack stack = item.getStack();
                 if (stack.isEmpty()) continue;
 
-                double[] pose = com.trd.api.conveyor.PathMath.calculatePathPoint(prevPos, currentPos, nextPos, localProgress);
+                double[] pose = com.trd.api.conveyor.PathMath.calculatePathPoint(prevPos, currentPos, nextPos, localProgress, be.getBlockState(), be.getLevel());
 
                 poseStack.pushPose();
                 

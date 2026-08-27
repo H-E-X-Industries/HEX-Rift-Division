@@ -52,7 +52,7 @@ public class ConveyorBlock extends BaseEntityBlock {
     @Override
     public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
         if (!oldState.is(state.getBlock()) && !level.isClientSide() && level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
-            com.trd.api.conveyor.ConveyorNetworkManager.get(serverLevel).addBlock(pos, state.getValue(FACING));
+            com.trd.api.conveyor.ConveyorNetworkManager.get(serverLevel).addBlock(pos, state);
         }
         super.onPlace(state, level, pos, oldState, isMoving);
     }

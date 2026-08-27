@@ -141,22 +141,47 @@ public class ConveyorNetwork {
                     } else if (targetBe instanceof ConveyorBlockEntity) {
                         ConveyorNetwork nextNet = manager.getNetworkFor(targetPos);
                         if (nextNet != null && nextNet != this) {
-                            if (nextNet.tryInsertItem(item.getStack().copy(), 0.0)) {
-                                manager.markForSync(nextNet);
-                                iterator.remove();
-                                changed = true;
-                                continue;
+                            if (lastState.getBlock() instanceof com.trd.block.basic.industrial.ConveyorElevatorBlock) {
+                                // If we are an elevator, we just eject if we didn't merge
+                            } else if (level.getBlockState(targetPos).getBlock() instanceof com.trd.block.basic.industrial.ConveyorElevatorBlock) {
+                                // Do not allow side-loading into elevators via networks
                             } else {
-                                // Если следующая сеть забита, мы стопоримся
-                                desiredProgress = Math.min(desiredProgress, maxProgress - 0.01);
-                                transferred = true;
+                                double targetIndex = nextNet.getPath().indexOf(targetPos);
+                                if (targetIndex >= 0) {
+                                    if (nextNet.tryInsertItem(item.getStack().copy(), targetIndex)) {
+                                        manager.markForSync(nextNet);
+                                        iterator.remove();
+                                        changed = true;
+                                        continue;
+                                    } else {
+                                        desiredProgress = Math.min(desiredProgress, maxProgress - 0.01);
+                                        transferred = true;
+                                    }
+                                }
                             }
                         }
                     }
 
                     if (!transferred) {
-                        // Если впереди ничего нет или это не вставщик, просто выбрасываем
-                        ejectItemAt(level, targetPos, item.getStack(), facing);
+                        BlockPos ejectPos = targetPos;
+                        Direction ejectFacing = facing;
+                        
+                        if (!level.isEmptyBlock(targetPos)) {
+                            Direction right = facing.getClockWise();
+                            Direction left = facing.getCounterClockWise();
+                            if (level.isEmptyBlock(lastPos.relative(right))) {
+                                ejectPos = lastPos.relative(right);
+                                ejectFacing = right;
+                            } else if (level.isEmptyBlock(lastPos.relative(left))) {
+                                ejectPos = lastPos.relative(left);
+                                ejectFacing = left;
+                            } else {
+                                ejectPos = lastPos.above();
+                                ejectFacing = null;
+                            }
+                        }
+                        
+                        ejectItemAt(level, ejectPos, item.getStack(), ejectFacing);
                         iterator.remove();
                         changed = true;
                         continue;
