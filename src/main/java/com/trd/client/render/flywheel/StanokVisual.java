@@ -54,8 +54,10 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
 
     // ─── Общее состояние ───
     private float shaftAngle    = 0f;
-    private float lastFrameTime = -1f;
+    private float lastFrameTime = -1f;  // -1 = не инициализировано
+    private long  lastNanoTime  = 0L;   // для delta через System.nanoTime()
     private float smoothedSpeed = 0f;
+    private float lastValidPartialTick = 0.5f; // fallback если getFrameTime() вернул невалидное
 
     // ─── Состояние пресса ───
     // pressPhase: 0.0–1.0 = одна операция. Синхронизируем с BE.progress/maxProgress.
@@ -176,12 +178,24 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
 
     @Override
     public void beginFrame(Context ctx) {
-        float partialTick = Minecraft.getInstance().getFrameTime();
-        float timeInSeconds = (level.getGameTime() + partialTick) / 20.0f;
+        // ─── Вычисляем delta через реальное время (не зависит от Minecraft timer) ───
+        long nowNanos = System.nanoTime();
+        if (lastFrameTime < 0) {
+            lastFrameTime = 0f;
+            lastNanoTime = nowNanos;
+        }
+        float delta = (nowNanos - lastNanoTime) / 1_000_000_000f;
+        // Ограничиваем delta: при зависании / первом кадре не делаем огромный скачок
+        delta = Math.min(delta, 0.1f);
+        lastNanoTime = nowNanos;
 
-        if (lastFrameTime < 0) lastFrameTime = timeInSeconds;
-        float delta = timeInSeconds - lastFrameTime;
-        lastFrameTime = timeInSeconds;
+        // partialTick для интерполяции анимации
+        float partialTick = Minecraft.getInstance().getFrameTime();
+        // Защита: getFrameTime() может вернуть 0 в первый кадр или при некоторых условиях
+        if (partialTick <= 0f || partialTick > 1f) partialTick = lastValidPartialTick;
+        else lastValidPartialTick = partialTick;
+
+        float timeInSeconds = (level.getGameTime() + partialTick) / 20.0f;
 
         // Синхронизация фазы с остальной кинетической сетью
         float targetSpeed = blockEntity.getVisualSpeed();
@@ -195,14 +209,14 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
         if (Math.abs(speedDiff) > 0.1f) smoothedSpeed += speedDiff * 4.0f * delta;
         else smoothedSpeed = targetSpeed;
 
-        // Вращение накапливаем каждый кадр через delta (интерполированное время)
+        // Вращение накапливаем каждый кадр через delta (реальное время между кадрами)
         shaftAngle += smoothedSpeed * ((float) Math.PI / 30.0f) * delta;
         shaftAngle %= (float)(2 * Math.PI);
         if (shaftAngle < 0) shaftAngle += (float) Math.PI * 2;
 
         // ─── Интерполяция прогресса операции ───
-        // Серверный прогресс меняется раз в тик. Мы запоминаем gameTime момента изменения
-        // и плавно экстраполируем вперёд, давая анимации 60fps-плавность.
+        // Серверный прогресс меняется раз в тик. При каждом новом значении запоминаем
+        // его и ожидаемое следующее, интерполируем по partialTick внутри тика.
         int serverProg = blockEntity.getData().get(0);
         int maxProg    = blockEntity.getData().get(1);
 
@@ -215,12 +229,12 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
             lastSeenServerProg = -1;
         } else {
             if (serverProg != lastSeenServerProg) {
-                // Новое значение от сервера: запоминаем его как базовую точку
+                // Новое значение от сервера: это наша «нижняя» точка тика
                 prevAnimProgress = (float) serverProg / maxProg;
-                currAnimProgress = (float)(serverProg + 1) / maxProg; // ожидаемое следующее значение
+                currAnimProgress = (float)(serverProg + 1) / maxProg; // верхняя точка (следующий тик)
                 lastSeenServerProg = serverProg;
             }
-            // Интерполируем между prev и curr по partialTick
+            // Интерполируем между prev (начало тика) и curr (конец тика) по partialTick
             animPhase = Math.max(0f, Math.min(1f, prevAnimProgress + (currAnimProgress - prevAnimProgress) * partialTick));
         }
 
