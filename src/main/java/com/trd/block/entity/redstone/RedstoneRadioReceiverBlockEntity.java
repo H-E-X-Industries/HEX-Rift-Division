@@ -1,9 +1,8 @@
 package com.trd.block.entity.redstone;
 
+import com.trd.block.basic.redstone.RedstoneRadioBlock;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.menu.industrial.RedstoneRadioMenu;
-import com.trd.network.ModPacketHandler;
-import com.trd.network.packet.redstone.RedstoneRadioSyncPacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -11,9 +10,13 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.network.PacketDistributor;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class RedstoneRadioReceiverBlockEntity extends RedstoneRadioBlockEntity {
+    // Карта сигналов от передатчиков (только на сервере)
+    private final Map<BlockPos, Integer> transmitterSignals = new HashMap<>();
     private int outputSignal = 0;
 
     public RedstoneRadioReceiverBlockEntity(BlockPos pos, BlockState state) {
@@ -26,23 +29,64 @@ public class RedstoneRadioReceiverBlockEntity extends RedstoneRadioBlockEntity {
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, RedstoneRadioReceiverBlockEntity be) {
-        if (level.isClientSide) return;
+        // ничего не делаем
     }
 
-    public void receiveSignal(int signalStrength) {
-        if (this.outputSignal != signalStrength) {
-            this.outputSignal = signalStrength;
-            this.setPowered(signalStrength > 0);
-            this.setLastSignalStrength(signalStrength);
+    @Override
+    public void setPowered(boolean powered) {
+        if (this.powered != powered) {
+            this.powered = powered;
             setChanged();
-            syncToClient();
-
-            Level level = getLevel();
             if (level != null && !level.isClientSide) {
-                ModPacketHandler.INSTANCE.send(PacketDistributor.TRACKING_CHUNK.with(() -> level.getChunkAt(worldPosition)),
-                    new RedstoneRadioSyncPacket(worldPosition, channelId, powered, outputSignal));
+                BlockState state = level.getBlockState(worldPosition);
+                if (state.getValue(RedstoneRadioBlock.POWERED) != powered) {
+                    level.setBlock(worldPosition, state.setValue(RedstoneRadioBlock.POWERED, powered), 3);
+                }
+                sendSyncPacket();
             }
-            
+        }
+    }
+
+    @Override
+    public void setLastSignalStrength(int strength) {
+        if (this.lastSignalStrength != strength) {
+            this.lastSignalStrength = strength;
+            setChanged();
+            if (level != null && !level.isClientSide) {
+                sendSyncPacket();
+            }
+        }
+    }
+
+    @Override
+    public void syncFromPacket(String channelId, boolean powered, int signalStrength) {
+        super.syncFromPacket(channelId, powered, signalStrength);
+        this.outputSignal = signalStrength;
+    }
+
+    /**
+     * Приём сигнала от передатчика (вызывается на сервере)
+     * @param signalStrength сила сигнала
+     * @param sourcePos позиция передатчика
+     */
+    public void receiveSignal(int signalStrength, BlockPos sourcePos) {
+        if (level == null || level.isClientSide) return;
+
+        // Обновляем запись для этого передатчика
+        transmitterSignals.put(sourcePos, signalStrength);
+
+        // Вычисляем максимум
+        int maxSignal = 0;
+        for (int s : transmitterSignals.values()) {
+            if (s > maxSignal) maxSignal = s;
+        }
+
+        // Если максимум изменился, обновляем выход
+        if (this.outputSignal != maxSignal) {
+            this.outputSignal = maxSignal;
+            this.setPowered(maxSignal > 0);
+            this.setLastSignalStrength(maxSignal);
+            setChanged();
             updateNeighbors();
         }
     }
@@ -50,7 +94,6 @@ public class RedstoneRadioReceiverBlockEntity extends RedstoneRadioBlockEntity {
     private void updateNeighbors() {
         Level level = getLevel();
         if (level == null) return;
-        
         for (Direction dir : Direction.values()) {
             BlockPos neighborPos = worldPosition.relative(dir);
             level.updateNeighborsAt(neighborPos, getBlockState().getBlock());
@@ -67,6 +110,7 @@ public class RedstoneRadioReceiverBlockEntity extends RedstoneRadioBlockEntity {
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
         tag.putInt("OutputSignal", outputSignal);
+        // карту не сохраняем — она будет восстановлена при получении сигналов
     }
 
     @Override

@@ -6,12 +6,12 @@ import com.trd.block.entity.redstone.RedstoneRadioReceiverBlockEntity;
 import com.trd.block.entity.redstone.RedstoneRadioTransmitterBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
@@ -26,7 +26,6 @@ import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraft.world.phys.shapes.Shapes;
 import org.jetbrains.annotations.Nullable;
 
 public class RedstoneRadioBlock extends BaseEntityBlock {
@@ -57,7 +56,40 @@ public class RedstoneRadioBlock extends BaseEntityBlock {
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return this.defaultBlockState().setValue(FACING, context.getNearestLookingDirection().getOpposite());
+        Direction clicked = context.getClickedFace();
+        Direction facing;
+        if (clicked == Direction.DOWN || clicked == Direction.UP) {
+            facing = clicked;
+        } else {
+            facing = clicked.getOpposite();
+        }
+        // Проверка опоры
+        BlockPos supportPos = context.getClickedPos().relative(facing.getOpposite());
+        if (!context.getLevel().getBlockState(supportPos).isSolid()) {
+            return null;
+        }
+        return this.defaultBlockState().setValue(FACING, facing).setValue(POWERED, false);
+    }
+
+    @Override
+    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        Direction facing = state.getValue(FACING);
+        BlockPos supportPos = pos.relative(facing.getOpposite());
+        return level.getBlockState(supportPos).isSolid();
+    }
+
+    @Override
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        if (!level.isClientSide) {
+            if (!state.canSurvive(level, pos)) {
+                level.destroyBlock(pos, true);
+                return;
+            }
+        }
+        super.neighborChanged(state, level, pos, block, fromPos, isMoving);
+        if (!level.isClientSide && isTransmitter) {
+            // Тик обработает изменение сигнала
+        }
     }
 
     @Override
@@ -80,6 +112,7 @@ public class RedstoneRadioBlock extends BaseEntityBlock {
             case WEST -> SHAPE_WEST;
         };
     }
+
     @Override
     public boolean canConnectRedstone(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos pos, @Nullable Direction direction) {
         return true;
@@ -107,24 +140,12 @@ public class RedstoneRadioBlock extends BaseEntityBlock {
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         if (!level.isClientSide && state.getBlock() != newState.getBlock()) {
-            super.onRemove(state, level, pos, newState, isMoving);
-            level.updateNeighborsAt(pos, this);
-            return;
-        }
-        super.onRemove(state, level, pos, newState, isMoving);
-    }
-
-    @Override
-    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
-        super.neighborChanged(state, level, pos, block, fromPos, isMoving);
-        if (!level.isClientSide && isTransmitter) {
             BlockEntity be = level.getBlockEntity(pos);
             if (be instanceof RedstoneRadioTransmitterBlockEntity transmitter) {
-                int signal = level.getBestNeighborSignal(pos);
-                transmitter.setPowered(signal > 0);
-                transmitter.setLastSignalStrength(signal);
+                transmitter.notifyReceiversOfRemoval();
             }
         }
+        super.onRemove(state, level, pos, newState, isMoving);
     }
 
     @Override

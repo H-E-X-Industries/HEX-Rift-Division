@@ -1,8 +1,9 @@
 package com.trd.block.entity.redstone;
 
 import com.trd.block.entity.ModBlockEntities;
+import com.trd.network.ModPacketHandler;
+import com.trd.network.packet.redstone.RedstoneRadioSyncPacket;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.MenuProvider;
@@ -13,7 +14,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.network.NetworkHooks;
+import net.minecraftforge.network.PacketDistributor;
 
 public abstract class RedstoneRadioBlockEntity extends BlockEntity implements MenuProvider {
     protected String channelId = "";
@@ -31,8 +32,17 @@ public abstract class RedstoneRadioBlockEntity extends BlockEntity implements Me
     public void setChannelId(String channelId) {
         this.channelId = channelId != null ? channelId : "";
         setChanged();
-        if (!level.isClientSide) {
-            syncToClient();
+        if (level != null && !level.isClientSide) {
+            sendSyncPacket(); // теперь клиент получит новый канал
+        }
+    }
+
+    public void sendSyncPacket() {
+        if (level != null && !level.isClientSide) {
+            ModPacketHandler.INSTANCE.send(
+                    PacketDistributor.TRACKING_CHUNK.with(() -> level.getChunkAt(worldPosition)),
+                    new RedstoneRadioSyncPacket(worldPosition, channelId, powered, lastSignalStrength)
+            );
         }
     }
 
@@ -65,7 +75,9 @@ public abstract class RedstoneRadioBlockEntity extends BlockEntity implements Me
     }
 
     public void syncFromPacket(String channelId, boolean powered, int signalStrength) {
-        this.channelId = channelId;
+        if (channelId != null && !channelId.isEmpty()) {
+            this.channelId = channelId;
+        }
         this.powered = powered;
         this.lastSignalStrength = signalStrength;
         setChanged();
@@ -106,6 +118,6 @@ public abstract class RedstoneRadioBlockEntity extends BlockEntity implements Me
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, RedstoneRadioBlockEntity be) {
-        if (level.isClientSide) return;
+        // пустой метод, переопределяется в наследниках
     }
 }
