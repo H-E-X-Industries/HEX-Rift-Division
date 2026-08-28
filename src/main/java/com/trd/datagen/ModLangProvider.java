@@ -570,8 +570,11 @@ public class ModLangProvider extends LanguageProvider {
         // ═══ Message: Beam Placer ═══
         add("message.trd.beam_placer.same_point", "§cPoints cannot match! Link reset.");
         add("message.trd.beam_placer.not_enough", "§cNot enough beams! Required: §e%s");
+        add("message.trd.beam_placer.too_long", "§cBeam is too long! Max length: §e%s §cblocks.");
+        add("message.trd.beam_placer.obstructed", "§cPath is obstructed by blocks!");
         add("message.trd.beam_placer.placed", "§aBeam placed! Spent: %s");
         add("message.trd.beam_placer.first_set", "§aFirst point (center) anchored.");
+        add("message.trd.beam_placer.reset", "§eAnchor point reset.");
 
         // ═══ Message: Cast Pickaxe ═══
         add("message.trd.cast_pickaxe.cooldown", "§cCooldown...");
@@ -835,6 +838,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.ANTON_CHIGUR.get(), "Anton Chigur Block");
         add(ModBlocks.MINERAL_BLOCK2.get(), "Depth Sapphire Decorative Block");
         add(ModBlocks.MINERAL_TILE.get(), "Depth Sapphire Tile");
+        add(ModBlocks.FREAKY_ALIEN_BLOCK.get(), "Freaky Alien Block");
         add(ModBlocks.DECO_STEEL.get(), "Decorative Steel Block");
         add(ModBlocks.DECO_STEEL_DARK.get(), "Dark Decorative Steel Block");
         add(ModBlocks.DECO_STEEL_SMOG.get(), "Sooty Decorative Steel Block");
@@ -1737,8 +1741,11 @@ public class ModLangProvider extends LanguageProvider {
         // ═══ Message: Beam Placer ═══
         add("message.trd.beam_placer.same_point", "§cТочки не могут совпадать! Сброс связи.");
         add("message.trd.beam_placer.not_enough", "§cНедостаточно балок! Требуется: §e%s");
+        add("message.trd.beam_placer.too_long", "§cБалка слишком длинная! Макс. длина: §e%s §cблоков.");
+        add("message.trd.beam_placer.obstructed", "§cПуть заблокирован препятствием!");
         add("message.trd.beam_placer.placed", "§aБалка установлена! Потрачено: %s");
         add("message.trd.beam_placer.first_set", "§aПервая точка (центр) закреплена.");
+        add("message.trd.beam_placer.reset", "§eТочка привязки сброшена.");
 
         // ═══ Message: Cast Pickaxe ═══
         add("message.trd.cast_pickaxe.cooldown", "§cПерезарядка...");
@@ -1905,6 +1912,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.CRATE_AMMO.get(), "Ящик с патронами");
         add(ModBlocks.BEAM_BLOCK.get(), "Балка");
         add(ModBlocks.STEEL_PROPS.get(), "Стальные подпорки");
+        add(ModBlocks.FREAKY_ALIEN_BLOCK.get(), "Чокнутый инопланетный блок");
         add(ModBlocks.DECO_STEEL.get(), "Декоративный стальной блок");
         add(ModBlocks.DECO_STEEL_DARK.get(), "Тёмный декоративный стальной блок");
         add(ModBlocks.DECO_STEEL_SMOG.get(), "Закоптелый декоративный стальной блок");

@@ -178,13 +178,13 @@ public class BeamCollisionBlockEntity extends BlockEntity {
 
     private net.minecraft.world.phys.shapes.VoxelShape computeShape() {
         if (beams.isEmpty()) {
-            return net.minecraft.world.level.block.Block.box(5.0D, 5.0D, 5.0D, 11.0D, 11.0D, 11.0D);
+            return net.minecraft.world.phys.shapes.Shapes.empty();
         }
 
         net.minecraft.world.phys.shapes.VoxelShape finalShape = net.minecraft.world.phys.shapes.Shapes.empty();
         BlockPos myPos = this.getBlockPos();
         AABB myBox = new AABB(myPos);
-        double radius = 3.0 / 16.0;
+        double radius = 5.0 / 16.0;
 
         for (BeamData data : beams) {
             Vec3 direction = data.endPos.subtract(data.startPos).normalize();
@@ -209,7 +209,7 @@ public class BeamCollisionBlockEntity extends BlockEntity {
         }
 
         if (finalShape.isEmpty()) {
-            return net.minecraft.world.level.block.Block.box(5.0D, 5.0D, 5.0D, 11.0D, 11.0D, 11.0D);
+            return net.minecraft.world.phys.shapes.Shapes.empty();
         }
         return finalShape.optimize();
     }

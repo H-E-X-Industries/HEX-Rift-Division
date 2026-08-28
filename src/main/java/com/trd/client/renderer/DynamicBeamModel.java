@@ -132,7 +132,7 @@ public class DynamicBeamModel implements IDynamicBakedModel {
 
     @Override
     public boolean useAmbientOcclusion() {
-        return baseModel.useAmbientOcclusion();
+        return false;
     }
 
     @Override

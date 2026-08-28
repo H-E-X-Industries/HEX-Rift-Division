@@ -6,18 +6,37 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 public class BeamPlacerItem extends Item {
+    public static final double MAX_DISTANCE = 32.0;
+
     public BeamPlacerItem(Properties properties) {
         super(properties);
+    }
+
+    @Override
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        if (!level.isClientSide) {
+            CompoundTag nbt = stack.getOrCreateTag();
+            if (nbt.contains("FirstPos")) {
+                nbt.remove("FirstPos");
+                player.sendSystemMessage(Component.translatable("message.trd.beam_placer.reset"));
+                return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
+            }
+        }
+        return super.use(level, player, hand);
     }
 
     @Override
@@ -30,6 +49,12 @@ public class BeamPlacerItem extends Item {
 
         ItemStack toolStack = context.getItemInHand();
         CompoundTag nbt = toolStack.getOrCreateTag();
+
+        if (player.isShiftKeyDown() && nbt.contains("FirstPos")) {
+            nbt.remove("FirstPos");
+            player.sendSystemMessage(Component.translatable("message.trd.beam_placer.reset"));
+            return InteractionResult.SUCCESS;
+        }
 
         // Берем именно тот блок, по которому кликнули (например, бетон)
         BlockPos currentPos = context.getClickedPos();
@@ -48,19 +73,44 @@ public class BeamPlacerItem extends Item {
             Vec3 endVec = Vec3.atCenterOf(currentPos);
 
             double distance = startVec.distanceTo(endVec);
+
+            if (distance > MAX_DISTANCE) {
+                player.sendSystemMessage(Component.translatable("message.trd.beam_placer.too_long", (int) MAX_DISTANCE));
+                nbt.remove("FirstPos");
+                return InteractionResult.FAIL;
+            }
+
             int requiredBeams = (int) Math.ceil(distance);
             Item beamItem = ModBlocks.BEAM_BLOCK.get().asItem();
 
             if (!player.isCreative() && countItems(player, beamItem) < requiredBeams) {
                 player.sendSystemMessage(Component.translatable("message.trd.beam_placer.not_enough", requiredBeams));
+                nbt.remove("FirstPos");
                 return InteractionResult.FAIL;
             }
 
             // --- АЛГОРИТМ ПРОКЛАДКИ ЛУЧА ---
             Vec3 direction = endVec.subtract(startVec).normalize();
-            double stepSize = 0.5;
+            double stepSize = 0.25;
             int steps = (int) Math.ceil(distance / stepSize);
 
+            // 1. Проверка на препятствия на пути луча
+            for (int i = 1; i <= steps; i++) {
+                double currentDist = Math.min(i * stepSize, distance - 0.01);
+                Vec3 stepVec = startVec.add(direction.scale(currentDist));
+                BlockPos posOnLine = BlockPos.containing(stepVec);
+
+                if (!posOnLine.equals(firstPos) && !posOnLine.equals(currentPos)) {
+                    BlockState state = level.getBlockState(posOnLine);
+                    if (!state.canBeReplaced() && !state.is(ModBlocks.BEAM_COLLISION.get())) {
+                        player.sendSystemMessage(Component.translatable("message.trd.beam_placer.obstructed"));
+                        nbt.remove("FirstPos");
+                        return InteractionResult.FAIL;
+                    }
+                }
+            }
+
+            // 2. Размещение блоков коллизии
             boolean masterPlaced = false;
             BlockPos masterPos = null;
 
@@ -71,18 +121,6 @@ public class BeamPlacerItem extends Item {
                 Vec3 stepVec = startVec.add(direction.scale(currentDist));
                 BlockPos posOnLine = BlockPos.containing(stepVec);
 
-                // Если оригинальная позиция занята твердым блоком (не заменяема и не балка),
-                // ищем соседний пустой блок, чтобы не создавать огромных "слепых зон" для рендера!
-                if (!level.getBlockState(posOnLine).canBeReplaced() && !level.getBlockState(posOnLine).is(ModBlocks.BEAM_COLLISION.get())) {
-                    for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
-                        BlockPos adj = posOnLine.relative(dir);
-                        if (level.getBlockState(adj).canBeReplaced() || level.getBlockState(adj).is(ModBlocks.BEAM_COLLISION.get())) {
-                            posOnLine = adj;
-                            break;
-                        }
-                    }
-                }
-
                 if (level.getBlockState(posOnLine).canBeReplaced() || level.getBlockState(posOnLine).is(ModBlocks.BEAM_COLLISION.get())) {
                     if (level.getBlockState(posOnLine).canBeReplaced()) {
                         level.setBlock(posOnLine, ModBlocks.BEAM_COLLISION.get().defaultBlockState(), 3);
@@ -91,6 +129,11 @@ public class BeamPlacerItem extends Item {
                         placedBlocks.add(posOnLine);
                     }
                 }
+            }
+
+            if (placedBlocks.isEmpty()) {
+                nbt.remove("FirstPos");
+                return InteractionResult.FAIL;
             }
 
             // Распределяем сегменты рендера по блокам

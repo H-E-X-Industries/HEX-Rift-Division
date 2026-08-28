@@ -5,6 +5,7 @@
 	"textures": {
 		"0": "trd:block/conveyor_elevator_down",
 		"1": "trd:block/conveyor_top",
+		"2": "trd:block/conveyor_side",
 		"particle": "trd:block/conveyor_elevator_down"
 	},
 	"elements": [
@@ -28,7 +29,7 @@
 			"faces": {
 				"north": {"uv": [0, 0, 16, 8], "texture": "#1"},
 				"east": {"uv": [8, 6, 10, 8], "texture": "#0"},
-				"south": {"uv": [4, 2, 8, 4], "texture": "#0"},
+				"south": {"uv": [0, 8, 16, 0], "texture": "#2"},
 				"west": {"uv": [8, 6, 10, 8], "texture": "#0"},
 				"up": {"uv": [8, 6, 4, 4], "texture": "#0"},
 				"down": {"uv": [8, 8, 4, 10], "texture": "#0"}
