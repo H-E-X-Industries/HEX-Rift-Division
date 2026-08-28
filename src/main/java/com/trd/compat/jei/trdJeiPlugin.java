@@ -111,7 +111,7 @@ public class trdJeiPlugin implements IModPlugin {
             RecipeType.create(MainRegistry.MOD_ID, "centrifuge_cylinder", CentrifugeCylinderWrapper.class);
 
     public record ElectricFurnaceWrapper(net.minecraft.world.item.crafting.AbstractCookingRecipe recipe, int cookTime, int energyPerTick) {}
-    public record SmeltingWrapper(ItemStack input, Metal metal, int outputUnits, int temp, float heatConsumption, int timeTicks) {}
+    public record SmeltingWrapper(ItemStack input, Metal metal, int outputUnits, int temp, float heatConsumption, int timeTicks, int inputCount) {}
     public record CastingWrapper(MoldRecipe mold, Metal metal, ItemStack output, int requiredUnits) {}
     public record AlloyingWrapper(AlloyRecipe recipe) {}
     public record MillstoneWrapper(Item input, List<ItemStack> outputs, int grindsRequired) {}
@@ -164,13 +164,16 @@ public class trdJeiPlugin implements IModPlugin {
         List<SmeltingWrapper> smeltingRecipes = new ArrayList<>();
 
         for (var recipe : MetallurgyRegistry.getAllSmeltRecipes()) {
+            ItemStack inputStack = new ItemStack(recipe.input());
+            inputStack.setCount(recipe.inputCount());
             smeltingRecipes.add(new SmeltingWrapper(
-                    new ItemStack(recipe.input()),
+                    inputStack,
                     recipe.output(),
                     recipe.outputUnits(),
                     recipe.minTemp(),
                     recipe.heatConsumption(),
-                    recipe.smeltTimeTicks()
+                    recipe.smeltTimeTicks(),
+                    recipe.inputCount()
             ));
         }
 
@@ -182,7 +185,8 @@ public class trdJeiPlugin implements IModPlugin {
                     MetalUnits2.UNITS_PER_INGOT,
                     metal.getMeltingPoint(),
                     metal.getHeatConsumptionPerTick(),
-                    metal.calculateSmeltTimeForUnits(MetalUnits2.UNITS_PER_INGOT)
+                    metal.calculateSmeltTimeForUnits(MetalUnits2.UNITS_PER_INGOT),
+                    1
             ));
         }
 
@@ -508,7 +512,9 @@ public class trdJeiPlugin implements IModPlugin {
 
         @Override
         public void setRecipe(IRecipeLayoutBuilder builder, SmeltingWrapper recipe, IFocusGroup focuses) {
-            builder.addSlot(RecipeIngredientRole.INPUT, 5, 13).addItemStack(recipe.input());
+            ItemStack displayInput = recipe.input().copy();
+            displayInput.setCount(recipe.inputCount());
+            builder.addSlot(RecipeIngredientRole.INPUT, 5, 13).addItemStack(displayInput);
             builder.addSlot(RecipeIngredientRole.INPUT, 23, 13);
             builder.addSlot(RecipeIngredientRole.INPUT, 5, 31);
             builder.addSlot(RecipeIngredientRole.INPUT, 23, 31);

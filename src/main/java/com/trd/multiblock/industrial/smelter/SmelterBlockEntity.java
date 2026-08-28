@@ -235,7 +235,7 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
         // (сигнальный дым — высокий столб из центра над крышей мультиблока).
         // Пока идёт плавка — таймер обновляется, после её окончания дым
         // продолжает идти ещё SMOKE_TAIL_TICKS тиков
-        if (be.topSmelting || !be.currentBottomRecipes.isEmpty()) {
+        if (be.topSmelting || be.bottomSmelting) {
             be.smokeTicks = SMOKE_TAIL_TICKS;
         } else if (be.smokeTicks > 0) {
             be.smokeTicks--;
@@ -252,7 +252,7 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
         be.data.set(7, be.bottomSmelting ? 1 : 0);
         be.data.set(8, be.requiredTempBottom);
         be.data.set(9, be.currentAlloyRecipe != null ? 1 : 0);
-        be.data.set(10, !be.currentBottomRecipes.isEmpty() ? 1 : 0);
+        be.data.set(10, be.bottomSmelting ? 1 : 0);
         be.data.set(11, (int) be.topHeatConsumption);
         be.data.set(12, (int) be.bottomHeatConsumption);
         be.data.set(13, be.isTankFull() ? 1 : 0);
@@ -669,10 +669,13 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
                     temperature -= heatTransfer * 0.5f;
                 }
             } else {
-                // Проверка места в резервуаре перед плавкой
+                // Проверка места в резервуаре и достаточного количества предметов
                 int outputAmount = (slot.recipe != null) ? slot.recipe.outputUnits() : slot.slagData.amount;
-                if (!hasSpaceFor(outputAmount)) {
-                    slot.active = false; // Нет места — ждем
+                boolean hasEnoughItems = (slot.recipe != null)
+                        ? stack.getCount() >= slot.recipe.inputCount()
+                        : true;
+                if (!hasSpaceFor(outputAmount) || !hasEnoughItems) {
+                    slot.active = false;
                 } else {
                     slot.active = true;
                 }
@@ -815,7 +818,7 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
 
         // Выдаем металл в зависимости от типа переплавки
         if (slot.recipe != null) {
-            stack.shrink(1);
+            stack.shrink(slot.recipe.inputCount());
             addMetal(slot.recipe.output(), slot.recipe.outputUnits());
         } else if (slot.slagData != null) {
             stack.shrink(1);

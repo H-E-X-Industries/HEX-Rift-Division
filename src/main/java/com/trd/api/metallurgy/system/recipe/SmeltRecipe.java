@@ -1,6 +1,7 @@
 package com.trd.api.metallurgy.system.recipe;
 
 import com.trd.api.metallurgy.system.Metal;
+import net.minecraft.world.item.Item;
 
 /**
  * @param input Входной предмет
@@ -11,17 +12,20 @@ import com.trd.api.metallurgy.system.Metal;
  * @param smeltTimeTicks Время плавки в тиках
  */
 public record SmeltRecipe(
-        net.minecraft.world.item.Item input,
+        Item input,
         Metal output,
         int outputUnits,
         int minTemp,
         float heatConsumption,
-        int smeltTimeTicks
+        int smeltTimeTicks,
+        int inputCount
 ) {
+    /** Обратная совместимость: по умолчанию 1 предмет */
+    public SmeltRecipe(Item input, Metal output, int outputUnits, int minTemp,
+                       float heatConsumption, int smeltTimeTicks) {
+        this(input, output, outputUnits, minTemp, heatConsumption, smeltTimeTicks, 1);
+    }
 
-    /**
-     * Общее потребление температуры = heatConsumption * smeltTimeTicks
-     */
     public float getTotalHeatConsumption() {
         return heatConsumption * smeltTimeTicks;
     }
