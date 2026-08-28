@@ -1,7 +1,44 @@
 {
-  "variants": {
-    "": {
-      "model": "trd:block/steel_barrel"
+  "multipart": [
+    {
+      "apply": {
+        "model": "trd:block/steel_barrel"
+      }
+    },
+    {
+      "apply": {
+        "model": "trd:block/steel_fluid_pipe_arm"
+      },
+      "when": {
+        "north": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "trd:block/steel_fluid_pipe_arm",
+        "y": 90
+      },
+      "when": {
+        "east": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "trd:block/steel_fluid_pipe_arm",
+        "y": 180
+      },
+      "when": {
+        "south": "true"
+      }
+    },
+    {
+      "apply": {
+        "model": "trd:block/steel_fluid_pipe_arm",
+        "y": 270
+      },
+      "when": {
+        "west": "true"
+      }
     }
-  }
+  ]
 }
