@@ -41,12 +41,18 @@ public class ConveyorRenderer implements BlockEntityRenderer<ConveyorBlockEntity
         if (blockIndex > 0) {
             prevPos = netData.path.get((int) blockIndex - 1);
         } else {
-            // Пытаемся найти конвейер, который смотрит в нас, чтобы построить правильную дугу
+            // Пытаемся найти конвейер/верхушку лифта, который смотрит в нас, чтобы построить правильную дугу
             for (Direction d : Direction.values()) {
                 if (d.getAxis().isVertical()) continue;
                 BlockPos p = currentPos.relative(d);
                 BlockState s = be.getLevel().getBlockState(p);
-                if (s.getBlock() instanceof ConveyorBlock && s.getValue(ConveyorBlock.FACING) == d.getOpposite()) {
+                if (s.getBlock() instanceof com.trd.block.basic.industrial.ConveyorElevatorBlock) {
+                    if (s.getValue(com.trd.block.basic.industrial.ConveyorElevatorBlock.PART) == com.trd.block.basic.industrial.ConveyorElevatorBlock.ElevatorPart.TOP
+                            && s.getValue(ConveyorBlock.FACING) == d.getOpposite()) {
+                        prevPos = p;
+                        break;
+                    }
+                } else if (s.getBlock() instanceof ConveyorBlock && s.getValue(ConveyorBlock.FACING) == d.getOpposite()) {
                     prevPos = p;
                     break;
                 }
@@ -68,18 +74,13 @@ public class ConveyorRenderer implements BlockEntityRenderer<ConveyorBlockEntity
                 ItemStack stack = item.getStack();
                 if (stack.isEmpty()) continue;
 
-                // Вычисляем prevPos: сначала пробуем prevOverridePos (для T-перекрёстков),
+                // Вычисляем prevPos: сначала пробуем prevOverridePos (для T-перекрёстков и выезда из лифта),
                 // затем стандартный путь по сети, затем соседние блоки.
                 BlockPos effectivePrevPos = prevPos;
 
                 net.minecraft.core.BlockPos itemPrevOverride = item.getPrevOverridePos();
                 if (itemPrevOverride != null) {
-                    // Используем override только пока предмет находится в начале блока входа.
-                    // После прохождения середины блока - переключаемся на стандартный prevPos,
-                    // чтобы дуга корректно завершалась.
-                    if (localProgress < 0.75) {
-                        effectivePrevPos = itemPrevOverride;
-                    }
+                    effectivePrevPos = itemPrevOverride;
                 }
 
                 double[] pose = com.trd.api.conveyor.PathMath.calculatePathPoint(effectivePrevPos, currentPos, nextPos, localProgress, be.getBlockState(), be.getLevel());
