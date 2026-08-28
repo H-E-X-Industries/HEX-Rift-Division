@@ -209,6 +209,7 @@ public class MainRegistry {
             event.accept(ModBlocks.TILE_LIGHT.get());
             event.accept(ModBlocks.SULFUR_TILE.get());
             event.accept(ModBlocks.SULFUR_BRICKS.get());
+            event.accept(ModBlocks.FREAKY_ALIEN_BLOCK.get());
             event.accept(ModBlocks.DECO_STEEL.get());
             event.accept(ModBlocks.DECO_STEEL_DARK.get());
             event.accept(ModBlocks.DECO_STEEL_SMOG.get());

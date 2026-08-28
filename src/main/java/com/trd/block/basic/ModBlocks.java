@@ -442,6 +442,10 @@ public class ModBlocks {
 // ПРОЧЕЕ / ДЕКОР / СПЕЦБЛОКИ
 // ═══════════════════════════════════════════════════════
 
+    public static final RegistryObject<Block> FREAKY_ALIEN_BLOCK = registerBlock("freaky_alien_block",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(3.0F, 10.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
     public static final RegistryObject<Block> ROUND_LAMP = registerBlock("round_lamp",
             () -> new LampBlock(BlockBehaviour.Properties.of()
                     .strength(6F, 30F)

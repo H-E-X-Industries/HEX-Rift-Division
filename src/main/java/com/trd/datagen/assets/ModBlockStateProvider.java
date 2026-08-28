@@ -113,6 +113,7 @@ public class ModBlockStateProvider extends BlockStateProvider {
         cubeAllWithItem(ModBlocks.MINERAL2);
         cubeAllWithItem(ModBlocks.BAUXITE);
         cubeAllWithItem(ModBlocks.DOLOMITE_TILE);
+        cubeAllWithItem(ModBlocks.FREAKY_ALIEN_BLOCK);
         cubeAllWithItem(ModBlocks.DECO_STEEL);
         cubeAllWithItem(ModBlocks.DECO_STEEL_DARK);
         cubeAllWithItem(ModBlocks.DECO_STEEL_SMOG);

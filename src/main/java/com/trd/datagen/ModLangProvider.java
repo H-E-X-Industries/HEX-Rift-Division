@@ -828,6 +828,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.ANTON_CHIGUR.get(), "Anton Chigur Block");
         add(ModBlocks.MINERAL_BLOCK2.get(), "Depth Sapphire Decorative Block");
         add(ModBlocks.MINERAL_TILE.get(), "Depth Sapphire Tile");
+        add(ModBlocks.FREAKY_ALIEN_BLOCK.get(), "Freaky Alien Block");
         add(ModBlocks.DECO_STEEL.get(), "Decorative Steel Block");
         add(ModBlocks.DECO_STEEL_DARK.get(), "Dark Decorative Steel Block");
         add(ModBlocks.DECO_STEEL_SMOG.get(), "Sooty Decorative Steel Block");
@@ -1891,6 +1892,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.CRATE_AMMO.get(), "Ящик с патронами");
         add(ModBlocks.BEAM_BLOCK.get(), "Балка");
         add(ModBlocks.STEEL_PROPS.get(), "Стальные подпорки");
+        add(ModBlocks.FREAKY_ALIEN_BLOCK.get(), "Чокнутый инопланетный блок");
         add(ModBlocks.DECO_STEEL.get(), "Декоративный стальной блок");
         add(ModBlocks.DECO_STEEL_DARK.get(), "Тёмный декоративный стальной блок");
         add(ModBlocks.DECO_STEEL_SMOG.get(), "Закоптелый декоративный стальной блок");
