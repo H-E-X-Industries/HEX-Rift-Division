@@ -1,0 +1,45 @@
+{
+  "flip_v": true,
+  "loader": "forge:obj",
+  "model": "trd:models/block/crusher_blades.obj",
+  "textures": {
+    "particle": "trd:block/crusher_blades"
+  },
+  "display": {
+    "thirdperson_righthand": {
+      "rotation": [ 75, 45, 0 ],
+      "translation": [ 0.0, 2.5, 0.0 ],
+      "scale": [ 0.25, 0.25, 0.25 ]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [ 75, 45, 0 ],
+      "translation": [ 0.0, 2.5, 0.0 ],
+      "scale": [ 0.25, 0.25, 0.25 ]
+    },
+    "firstperson_righthand": {
+      "rotation": [ 0, 45, 0 ],
+      "translation": [ 0.0, 0.0, 0.0 ],
+      "scale": [ 0.28, 0.28, 0.28 ]
+    },
+    "firstperson_lefthand": {
+      "rotation": [ 0, 225, 0 ],
+      "translation": [ 0.0, 0.0, 0.0 ],
+      "scale": [ 0.28, 0.28, 0.28 ]
+    },
+    "gui": {
+      "rotation": [ 30, 225, 0 ],
+      "translation": [ -3.0, 3.0, 0.0 ],
+      "scale": [ 0.33, 0.33, 0.33 ]
+    },
+    "ground": {
+      "rotation": [ 0, 0, 0 ],
+      "translation": [ 0.0, 3.0, 0.0 ],
+      "scale": [ 0.2, 0.2, 0.2 ]
+    },
+    "fixed": {
+      "rotation": [ 0, 0, 0 ],
+      "translation": [ 0.0, 0.0, 0.0 ],
+      "scale": [ 0.35, 0.35, 0.35 ]
+    }
+  }
+}

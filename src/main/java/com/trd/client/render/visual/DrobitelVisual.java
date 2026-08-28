@@ -38,6 +38,8 @@ public class DrobitelVisual extends AbstractBlockEntityVisual<DrobitelBlockEntit
 
     private float smoothedSpeed = 0f;
     private float currentAngle = 0f;
+    private float bladeSmoothedSpeed = 0f;
+    private float bladeAngle = 0f;
     private float lastFrameTime = -1.0f;
 
     public DrobitelVisual(VisualizationContext ctx, DrobitelBlockEntity blockEntity, float partialTick) {
@@ -116,6 +118,7 @@ public class DrobitelVisual extends AbstractBlockEntityVisual<DrobitelBlockEntit
             targetSpeed = Math.signum(targetSpeed) * maxRenderSpeed;
         }
 
+        // Внешние валы следуют направлению кинетической сети
         float speedDiff = targetSpeed - this.smoothedSpeed;
         if (Math.abs(speedDiff) > 0.01f) {
             this.smoothedSpeed += speedDiff * 5.0f * deltaSeconds;
@@ -123,11 +126,23 @@ public class DrobitelVisual extends AbstractBlockEntityVisual<DrobitelBlockEntit
             this.smoothedSpeed = targetSpeed;
         }
 
-        // Непрерывная физическая интеграция угла вращения
         this.currentAngle += this.smoothedSpeed * ((float) Math.PI / 30.0f) * deltaSeconds;
         float twoPi = (float) (2 * Math.PI);
         this.currentAngle = this.currentAngle % twoPi;
         if (this.currentAngle < 0) this.currentAngle += twoPi;
+
+        // Внутренние лезвия ВСЕГДА вращаются внутрь (скорость всегда положительная Math.abs)
+        float targetBladeSpeed = Math.abs(targetSpeed);
+        float bladeSpeedDiff = targetBladeSpeed - this.bladeSmoothedSpeed;
+        if (Math.abs(bladeSpeedDiff) > 0.01f) {
+            this.bladeSmoothedSpeed += bladeSpeedDiff * 5.0f * deltaSeconds;
+        } else {
+            this.bladeSmoothedSpeed = targetBladeSpeed;
+        }
+
+        this.bladeAngle += this.bladeSmoothedSpeed * ((float) Math.PI / 30.0f) * deltaSeconds;
+        this.bladeAngle = this.bladeAngle % twoPi;
+        if (this.bladeAngle < 0) this.bladeAngle += twoPi;
 
         if (targetSpeed == 0 && Math.abs(this.smoothedSpeed) < 5.0f) {
             float PI_OVER_4 = (float) (Math.PI / 4.0);
@@ -142,40 +157,53 @@ public class DrobitelVisual extends AbstractBlockEntityVisual<DrobitelBlockEntit
             }
         }
 
+        if (targetBladeSpeed == 0 && Math.abs(this.bladeSmoothedSpeed) < 5.0f) {
+            float PI_OVER_4 = (float) (Math.PI / 4.0);
+            float targetSnap = Math.round(this.bladeAngle / PI_OVER_4) * PI_OVER_4;
+            float snapDiff = targetSnap - this.bladeAngle;
+
+            if (Math.abs(snapDiff) > 0.001f) {
+                float pull = 6.0f * (1.0f - (Math.abs(this.bladeSmoothedSpeed) / 5.0f));
+                this.bladeAngle += snapDiff * pull * deltaSeconds;
+            } else {
+                this.bladeAngle = targetSnap;
+            }
+        }
+
         // --- Outer network shafts ---
         updateShaft(shaftFront, facing.getStepX(), facing.getStepZ(), 0.0f, 0.0f, 0.0f, currentAngle);
         updateShaft(shaftBack, -facing.getStepX(), -facing.getStepZ(), 0.0f, 0.0f, 0.0f, currentAngle);
 
         // --- Blades and Inner Shafts ---
-        // Right blade (rotates counter-clockwise: currentAngle)
+        // Right blade (rotates clockwise: -bladeAngle)
         if (rightBlade != null) {
-            updatePart(rightBlade, -0.1f, 1.3225f, 0.525f, currentAngle, false, 180f);
+            updatePart(rightBlade, -0.1f, 1.3225f, 0.525f, -bladeAngle, false, 180f);
         }
         if (rightShaft1 != null) {
             // Front shaft (near North)
-            updatePart(rightShaft1, -0.1f, 1.3225f, -0.275f, currentAngle, true, 0f);
+            updatePart(rightShaft1, -0.1f, 1.3225f, -0.275f, -bladeAngle, true, 0f);
         }
         if (rightShaft3 != null) {
             // Middle shaft
-            updatePart(rightShaft3, -0.1f, 1.3225f, 0.525f, currentAngle, true, 0f);
+            updatePart(rightShaft3, -0.1f, 1.3225f, 0.525f, -bladeAngle, true, 0f);
         }
         if (rightShaft2 != null) {
             // Back shaft (near South)
-            updatePart(rightShaft2, -0.1f, 1.3225f, 1.325f, currentAngle, true, 0f);
+            updatePart(rightShaft2, -0.1f, 1.3225f, 1.325f, -bladeAngle, true, 0f);
         }
 
-        // Left blade (rotates clockwise: -currentAngle)
+        // Left blade (rotates counter-clockwise: bladeAngle)
         if (leftBlade != null) {
-            updatePart(leftBlade, 1.1f, 1.3225f, 0.525f, -currentAngle, false, 0f);
+            updatePart(leftBlade, 1.1f, 1.3225f, 0.525f, bladeAngle, false, 0f);
         }
         if (leftShaft1 != null) {
-            updatePart(leftShaft1, 1.1f, 1.3225f, -0.275f, -currentAngle, true, 0f);
+            updatePart(leftShaft1, 1.1f, 1.3225f, -0.275f, bladeAngle, true, 0f);
         }
         if (leftShaft3 != null) {
-            updatePart(leftShaft3, 1.1f, 1.3225f, 0.525f, -currentAngle, true, 0f);
+            updatePart(leftShaft3, 1.1f, 1.3225f, 0.525f, bladeAngle, true, 0f);
         }
         if (leftShaft2 != null) {
-            updatePart(leftShaft2, 1.1f, 1.3225f, 1.325f, -currentAngle, true, 0f);
+            updatePart(leftShaft2, 1.1f, 1.3225f, 1.325f, bladeAngle, true, 0f);
         }
     }
 
