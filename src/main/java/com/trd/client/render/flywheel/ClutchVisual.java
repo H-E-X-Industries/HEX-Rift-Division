@@ -144,14 +144,15 @@ public class ClutchVisual extends AbstractBlockEntityVisual<ClutchBlockEntity> i
             targetSpeedFront = blockEntity.getVisualSpeed();
             targetSpeedBack = targetSpeedFront;
         } else {
+            boolean invert = (facing == Direction.SOUTH || facing == Direction.EAST || facing == Direction.UP);
             BlockEntity beFront = level.getBlockEntity(pos.relative(facing.getOpposite()));
             BlockEntity beBack = level.getBlockEntity(pos.relative(facing));
             
             if (beFront instanceof Rotational rotFront) {
-                targetSpeedFront = rotFront.getVisualSpeed();
+                targetSpeedFront = invert ? -rotFront.getSpeed() : rotFront.getSpeed();
             }
             if (beBack instanceof Rotational rotBack) {
-                targetSpeedBack = rotBack.getVisualSpeed();
+                targetSpeedBack = invert ? -rotBack.getSpeed() : rotBack.getSpeed();
             }
         }
 
@@ -168,16 +169,10 @@ public class ClutchVisual extends AbstractBlockEntityVisual<ClutchBlockEntity> i
     
     private float updateAngle(float targetSpeed, float deltaSeconds, float timeInSeconds, float currentAngle, boolean isFront) {
         float smoothedSpeed = isFront ? this.smoothedSpeedFront : this.smoothedSpeedBack;
-        
-        if (smoothedSpeed == 0 && targetSpeed != 0) {
-            smoothedSpeed = targetSpeed;
-            currentAngle = (timeInSeconds * targetSpeed * ((float) Math.PI / 30.0f)) % ((float) Math.PI * 2);
-            if (currentAngle < 0) currentAngle += (float) Math.PI * 2;
-        }
 
         float speedDiff = targetSpeed - smoothedSpeed;
-        if (Math.abs(speedDiff) > 0.1f) {
-            smoothedSpeed += speedDiff * 4.0f * deltaSeconds;
+        if (Math.abs(speedDiff) > 0.01f) {
+            smoothedSpeed += speedDiff * 5.0f * deltaSeconds;
         } else {
             smoothedSpeed = targetSpeed;
         }
@@ -189,17 +184,6 @@ public class ClutchVisual extends AbstractBlockEntityVisual<ClutchBlockEntity> i
         float twoPi = (float) (2 * Math.PI);
         currentAngle = currentAngle % twoPi;
         if (currentAngle < 0) currentAngle += twoPi;
-        
-        if (smoothedSpeed == targetSpeed && targetSpeed != 0) {
-            float globalAngle = (timeInSeconds * targetSpeed * ((float) Math.PI / 30.0f)) % twoPi;
-            if (globalAngle < 0) globalAngle += twoPi;
-
-            float diff = (globalAngle - currentAngle) % twoPi;
-            if (diff > Math.PI) diff -= twoPi;
-            if (diff < -Math.PI) diff += twoPi;
-
-            currentAngle += diff * 10.0f * deltaSeconds;
-        }
 
         if (targetSpeed == 0 && Math.abs(smoothedSpeed) < 5.0f) {
             float PI_OVER_4 = (float) (Math.PI / 4.0);
@@ -207,7 +191,7 @@ public class ClutchVisual extends AbstractBlockEntityVisual<ClutchBlockEntity> i
             float snapDiff = targetSnap - currentAngle;
             
             if (Math.abs(snapDiff) > 0.001f) {
-                float pull = 8.0f * (1.0f - (Math.abs(smoothedSpeed) / 5.0f));
+                float pull = 6.0f * (1.0f - (Math.abs(smoothedSpeed) / 5.0f));
                 currentAngle += snapDiff * pull * deltaSeconds;
             } else {
                 currentAngle = targetSnap;

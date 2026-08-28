@@ -275,7 +275,16 @@ public class FluidBarrelBlockEntity extends FluidNodeBlockEntity implements Menu
             CompoundTag tag = saveWithoutMetadata();
 
             // === ЗАМЕНЯЕМ БЛОК ===
-            level.setBlock(worldPosition, target.defaultBlockState(), 3);
+            BlockState currentState = getBlockState();
+            BlockState targetState = target.defaultBlockState();
+            if (targetState.hasProperty(FluidBarrelBlock.NORTH) && currentState.hasProperty(FluidBarrelBlock.NORTH)) {
+                targetState = targetState
+                        .setValue(FluidBarrelBlock.NORTH, currentState.getValue(FluidBarrelBlock.NORTH))
+                        .setValue(FluidBarrelBlock.SOUTH, currentState.getValue(FluidBarrelBlock.SOUTH))
+                        .setValue(FluidBarrelBlock.EAST, currentState.getValue(FluidBarrelBlock.EAST))
+                        .setValue(FluidBarrelBlock.WEST, currentState.getValue(FluidBarrelBlock.WEST));
+            }
+            level.setBlock(worldPosition, targetState, 3);
 
             // === ЗВУК: ВОДА КАСАЕТСЯ ЛАВЫ (как будто жидкость проедает бочку) ===
             level.playSound(null, worldPosition, SoundEvents.LAVA_EXTINGUISH, SoundSource.BLOCKS, 1.0F, 1.2F);

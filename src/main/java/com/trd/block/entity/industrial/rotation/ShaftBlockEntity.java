@@ -48,7 +48,7 @@ public class ShaftBlockEntity extends KineticNodeBlockEntity {
     }
 
     public boolean hasFlywheel() {
-        return !attachedFlywheel.isEmpty();
+        return !attachedFlywheel.isEmpty() || (getBlockState().hasProperty(ShaftBlock.HAS_FLYWHEEL) && getBlockState().getValue(ShaftBlock.HAS_FLYWHEEL));
     }
 
     public boolean hasCentralAttachment() {
@@ -72,7 +72,7 @@ public class ShaftBlockEntity extends KineticNodeBlockEntity {
     }
 
     public boolean hasGear() {
-        return !attachedGear.isEmpty();
+        return !attachedGear.isEmpty() || (getBlockState().hasProperty(ShaftBlock.GEAR_SIZE) && getBlockState().getValue(ShaftBlock.GEAR_SIZE) > 0);
     }
 
     public ItemStack getAttachedGear() {
@@ -80,7 +80,7 @@ public class ShaftBlockEntity extends KineticNodeBlockEntity {
     }
 
     public boolean hasPulley() {
-        return !attachedPulley.isEmpty();
+        return !attachedPulley.isEmpty() || (getBlockState().hasProperty(ShaftBlock.PULLEY_SIZE) && getBlockState().getValue(ShaftBlock.PULLEY_SIZE) > 0);
     }
 
     public ItemStack getAttachedPulley() {
@@ -118,7 +118,7 @@ public class ShaftBlockEntity extends KineticNodeBlockEntity {
     }
 
     public boolean hasBevelStart() {
-        return !attachedBevelStart.isEmpty();
+        return !attachedBevelStart.isEmpty() || (getBlockState().hasProperty(ShaftBlock.HAS_BEVEL_START) && getBlockState().getValue(ShaftBlock.HAS_BEVEL_START));
     }
 
     public ItemStack getAttachedBevelStart() {
@@ -134,7 +134,7 @@ public class ShaftBlockEntity extends KineticNodeBlockEntity {
     }
 
     public boolean hasBevelEnd() {
-        return !attachedBevelEnd.isEmpty();
+        return !attachedBevelEnd.isEmpty() || (getBlockState().hasProperty(ShaftBlock.HAS_BEVEL_END) && getBlockState().getValue(ShaftBlock.HAS_BEVEL_END));
     }
 
     public ItemStack getAttachedBevelEnd() {
@@ -256,12 +256,13 @@ public class ShaftBlockEntity extends KineticNodeBlockEntity {
                 if (pos.equals(myPos))
                     continue;
 
-                BlockEntity be = level.getBlockEntity(pos);
-                if (be instanceof ShaftBlockEntity otherShaft) {
-                    if (!otherShaft.hasGear())
+                BlockState otherState = level.getBlockState(pos);
+                if (otherState.getBlock() instanceof ShaftBlock) {
+                    int otherSize = otherState.hasProperty(ShaftBlock.GEAR_SIZE) ? otherState.getValue(ShaftBlock.GEAR_SIZE) : 0;
+                    if (otherSize <= 0)
                         continue;
-                    int otherSize = otherShaft.getBlockState().getValue(ShaftBlock.GEAR_SIZE);
-                    Direction.Axis otherAxis = otherShaft.getBlockState().getValue(ShaftBlock.FACING).getAxis();
+
+                    Direction.Axis otherAxis = otherState.getValue(ShaftBlock.FACING).getAxis();
 
                     if (axis == otherAxis) {
                         // Отсекаем блоки не в нашей плоскости
@@ -337,10 +338,12 @@ public class ShaftBlockEntity extends KineticNodeBlockEntity {
             for (BlockPos pos : BlockPos.betweenClosed(myPos.offset(-1, -1, -1), myPos.offset(1, 1, 1))) {
                 if (pos.equals(myPos))
                     continue;
-                BlockEntity be = level.getBlockEntity(pos);
-                if (be instanceof ShaftBlockEntity otherShaft) {
-                    if (otherShaft.hasBevelStart() || otherShaft.hasBevelEnd()) {
-                        Direction.Axis otherAxis = otherShaft.getBlockState().getValue(ShaftBlock.FACING).getAxis();
+                BlockState otherState = level.getBlockState(pos);
+                if (otherState.getBlock() instanceof ShaftBlock) {
+                    boolean otherHasBevel = (otherState.hasProperty(ShaftBlock.HAS_BEVEL_START) && otherState.getValue(ShaftBlock.HAS_BEVEL_START))
+                            || (otherState.hasProperty(ShaftBlock.HAS_BEVEL_END) && otherState.getValue(ShaftBlock.HAS_BEVEL_END));
+                    if (otherHasBevel) {
+                        Direction.Axis otherAxis = otherState.getValue(ShaftBlock.FACING).getAxis();
                         if (axis != otherAxis) {
                             list.add(pos.immutable()); // Точная проверка расстояния будет в canConnectMechanically
                         }
@@ -354,18 +357,14 @@ public class ShaftBlockEntity extends KineticNodeBlockEntity {
         for (Direction dir : Direction.values()) {
             if (dir.getAxis() == axis) continue; // пропускаем вдоль оси — там уже добавлены
             BlockPos sidePos = myPos.relative(dir);
-            if (level.isLoaded(sidePos)) {
-                BlockEntity be = level.getBlockEntity(sidePos);
-                if (be instanceof StatorBlockEntity stator) {
-                    // Статор смотрит на нас?
-                    BlockState statorState = stator.getBlockState();
-                    if (statorState.hasProperty(com.trd.block.basic.industrial.rotation.StatorBlock.FACING) && statorState.hasProperty(com.trd.block.basic.industrial.rotation.StatorBlock.AXIS)) {
-                        Direction statorFacing = statorState.getValue(com.trd.block.basic.industrial.rotation.StatorBlock.FACING);
-                        Direction.Axis statorAxis = statorState.getValue(com.trd.block.basic.industrial.rotation.StatorBlock.AXIS);
-                        BlockPos holeOffset = com.trd.multiblock.system.MultiblockStructureHelper.rotateStatorPos(new BlockPos(0, 1, 0), statorFacing, statorAxis);
-                        if (sidePos.offset(holeOffset).equals(myPos)) {
-                            list.add(sidePos);
-                        }
+            BlockState statorState = level.getBlockState(sidePos);
+            if (statorState.getBlock() instanceof com.trd.block.basic.industrial.rotation.StatorBlock) {
+                if (statorState.hasProperty(com.trd.block.basic.industrial.rotation.StatorBlock.FACING) && statorState.hasProperty(com.trd.block.basic.industrial.rotation.StatorBlock.AXIS)) {
+                    Direction statorFacing = statorState.getValue(com.trd.block.basic.industrial.rotation.StatorBlock.FACING);
+                    Direction.Axis statorAxis = statorState.getValue(com.trd.block.basic.industrial.rotation.StatorBlock.AXIS);
+                    BlockPos holeOffset = com.trd.multiblock.system.MultiblockStructureHelper.rotateStatorPos(new BlockPos(0, 1, 0), statorFacing, statorAxis);
+                    if (sidePos.offset(holeOffset).equals(myPos)) {
+                        list.add(sidePos);
                     }
                 }
             }
@@ -415,24 +414,42 @@ public class ShaftBlockEntity extends KineticNodeBlockEntity {
         if (myAxis != neighborAxis && (this.hasBevelStart() || this.hasBevelEnd())
                 && (neighborShaft.hasBevelStart() || neighborShaft.hasBevelEnd())) {
             java.util.List<net.minecraft.world.phys.Vec3> myBevels = new java.util.ArrayList<>();
-            if (this.hasBevelStart())
+            java.util.List<Boolean> myStarts = new java.util.ArrayList<>();
+            if (this.hasBevelStart()) {
                 myBevels.add(getBevelPos(myPos, myAxis, true));
-            if (this.hasBevelEnd())
+                myStarts.add(true);
+            }
+            if (this.hasBevelEnd()) {
                 myBevels.add(getBevelPos(myPos, myAxis, false));
+                myStarts.add(false);
+            }
 
             java.util.List<net.minecraft.world.phys.Vec3> neighborBevels = new java.util.ArrayList<>();
-            if (neighborShaft.hasBevelStart())
+            java.util.List<Boolean> neighborStarts = new java.util.ArrayList<>();
+            if (neighborShaft.hasBevelStart()) {
                 neighborBevels.add(getBevelPos(neighborPos, neighborAxis, true));
-            if (neighborShaft.hasBevelEnd())
+                neighborStarts.add(true);
+            }
+            if (neighborShaft.hasBevelEnd()) {
                 neighborBevels.add(getBevelPos(neighborPos, neighborAxis, false));
+                neighborStarts.add(false);
+            }
 
-            for (net.minecraft.world.phys.Vec3 g1 : myBevels) {
-                for (net.minecraft.world.phys.Vec3 g2 : neighborBevels) {
+            for (int i = 0; i < myBevels.size(); i++) {
+                net.minecraft.world.phys.Vec3 g1 = myBevels.get(i);
+                for (int j = 0; j < neighborBevels.size(); j++) {
+                    net.minecraft.world.phys.Vec3 g2 = neighborBevels.get(j);
                     if (g1.distanceToSqr(g2) < 0.6) { // Exactly 0.5 expected (0.5^2 + 0.5^2 = 0.5)
                         net.minecraft.world.phys.Vec3 diff = g2.subtract(g1);
                         double d1 = getAxisValue(diff, myAxis);
                         double d2 = getAxisValue(diff, neighborAxis);
-                        return (float) Math.signum(d1 * d2); // 1:1 ratio, but sign depends on relative orientation
+                        double prod = d1 * d2;
+                        if (Math.abs(prod) > 0.001) {
+                            return (float) Math.signum(prod);
+                        }
+                        boolean isStart1 = myStarts.get(i);
+                        boolean isStart2 = neighborStarts.get(j);
+                        return (isStart1 == isStart2) ? -1.0f : 1.0f;
                     }
                 }
             }
@@ -459,8 +476,8 @@ public class ShaftBlockEntity extends KineticNodeBlockEntity {
         }
 
         // Если соединение по оси (вал-вал) - передача 1:1, знак не меняется
-        if (myPos.relative(myFacing).equals(neighborPos)
-                || myPos.relative(myFacing.getOpposite()).equals(neighborPos)) {
+        if (myAxis == neighborAxis && (myPos.relative(myFacing).equals(neighborPos)
+                || myPos.relative(myFacing.getOpposite()).equals(neighborPos))) {
             return 1.0f;
         }
 
@@ -497,20 +514,21 @@ public class ShaftBlockEntity extends KineticNodeBlockEntity {
 
         ShaftDiameter thisDiameter = ((ShaftBlock) this.getBlockState().getBlock()).getDiameter();
         Direction thisFacing = getBlockState().getValue(ShaftBlock.FACING);
+        Direction.Axis myAxis = thisFacing.getAxis();
 
-        // Проверяем, находятся ли валы на одной прямой линии (торец к торцу)
-        boolean isEndToEnd = myPos.relative(thisFacing).equals(neighborPos) ||
+        // Проверяем, находятся ли блоки на одной геометрической линии перед/зад
+        boolean isCollinear = myPos.relative(thisFacing).equals(neighborPos) ||
                 myPos.relative(thisFacing.getOpposite()).equals(neighborPos);
 
         if (neighbor instanceof ShaftBlockEntity otherShaft) {
             Direction otherFacing = otherShaft.getBlockState().getValue(ShaftBlock.FACING);
             ShaftDiameter otherDiameter = ((ShaftBlock) otherShaft.getBlockState().getBlock()).getDiameter();
-
-            Direction.Axis myAxis = thisFacing.getAxis();
             Direction.Axis otherAxis = otherFacing.getAxis();
 
+            boolean isEndToEnd = isCollinear && (myAxis == otherAxis);
+
             if (isEndToEnd) {
-                return thisDiameter == otherDiameter && myAxis == otherAxis;
+                return thisDiameter == otherDiameter;
             } else {
                 // Проверка соединения конических шестерней (Bevel Gears)
                 if (myAxis != otherAxis && (this.hasBevelStart() || this.hasBevelEnd())
@@ -600,16 +618,30 @@ public class ShaftBlockEntity extends KineticNodeBlockEntity {
             }
         }
         if (neighbor instanceof BearingBlockEntity bearing) {
-            return bearing.hasShaft() && bearing.getShaftDiameter() == thisDiameter;
+            boolean axisMatch = bearing.getBlockState().hasProperty(com.trd.block.basic.industrial.rotation.BearingBlock.FACING)
+                    && bearing.getBlockState().getValue(com.trd.block.basic.industrial.rotation.BearingBlock.FACING).getAxis() == myAxis;
+            return isCollinear && axisMatch && bearing.hasShaft() && bearing.getShaftDiameter() == thisDiameter;
         }
-        if (neighbor instanceof MotorElectroBlockEntity) {
-            return thisDiameter == ShaftDiameter.LIGHT;
+        if (neighbor instanceof ClutchBlockEntity clutch) {
+            boolean axisMatch = clutch.getBlockState().hasProperty(com.trd.block.basic.industrial.rotation.ClutchBlock.FACING)
+                    && clutch.getBlockState().getValue(com.trd.block.basic.industrial.rotation.ClutchBlock.FACING).getAxis() == myAxis;
+            return isCollinear && axisMatch && clutch.hasShaft() && clutch.getShaftDiameter() == thisDiameter;
+        }
+        if (neighbor instanceof TachometerBlockEntity tach) {
+            boolean axisMatch = tach.getBlockState().hasProperty(com.trd.block.basic.industrial.rotation.TachometerBlock.FACING)
+                    && tach.getBlockState().getValue(com.trd.block.basic.industrial.rotation.TachometerBlock.FACING).getAxis() == myAxis;
+            return isCollinear && axisMatch && tach.hasShaft() && tach.getShaftDiameter() == thisDiameter;
+        }
+        if (neighbor instanceof MotorElectroBlockEntity motor) {
+            boolean axisMatch = motor.getBlockState().hasProperty(com.trd.block.basic.industrial.rotation.MotorElectroBlock.FACING)
+                    && motor.getBlockState().getValue(com.trd.block.basic.industrial.rotation.MotorElectroBlock.FACING).getAxis() == myAxis;
+            return isCollinear && axisMatch && thisDiameter == ShaftDiameter.LIGHT;
         }
         if (neighbor instanceof StatorBlockEntity stator) {
             // Вал разрешает соединение со статором, если тот смотрит на вал
             return stator.canConnectMechanically(neighborPos, myPos, this);
         }
-        return true;
+        return isCollinear;
     }
 
     private net.minecraft.world.phys.Vec3 getBevelPos(BlockPos pos, Direction.Axis axis, boolean isStart) {
@@ -670,6 +702,16 @@ public class ShaftBlockEntity extends KineticNodeBlockEntity {
         this.connectedPulley = tag.contains("ConnectedPulley")
                 ? net.minecraft.nbt.NbtUtils.readBlockPos(tag.getCompound("ConnectedPulley"))
                 : null;
+
+        if (this.attachedBevelStart.isEmpty() && getBlockState().hasProperty(ShaftBlock.HAS_BEVEL_START) && getBlockState().getValue(ShaftBlock.HAS_BEVEL_START)) {
+            this.attachedBevelStart = new ItemStack(com.trd.item.ModItems.BEVEL_GEAR.get());
+        }
+        if (this.attachedBevelEnd.isEmpty() && getBlockState().hasProperty(ShaftBlock.HAS_BEVEL_END) && getBlockState().getValue(ShaftBlock.HAS_BEVEL_END)) {
+            this.attachedBevelEnd = new ItemStack(com.trd.item.ModItems.BEVEL_GEAR.get());
+        }
+        if (this.attachedFlywheel.isEmpty() && getBlockState().hasProperty(ShaftBlock.HAS_FLYWHEEL) && getBlockState().getValue(ShaftBlock.HAS_FLYWHEEL)) {
+            this.attachedFlywheel = new ItemStack(com.trd.item.ModItems.FLYWHEEL_LIGHT.get());
+        }
     }
 
     // getUpdateTag, getUpdatePacket, onDataPacket, onLoad — унаследованы от KineticNodeBlockEntity

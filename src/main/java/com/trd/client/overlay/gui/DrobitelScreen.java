@@ -34,7 +34,7 @@ public class DrobitelScreen extends AbstractContainerScreen<DrobitelMenu> {
         int progress = menu.getProgress();
         int maxProgress = menu.getMaxProgress();
         if (maxProgress > 0 && progress > 0) {
-            int w = (int) ((progress / (float) maxProgress) * 52);
+            int w = (int) (Math.min(1.0f, (progress / (float) maxProgress)) * 52);
             guiGraphics.blit(GUI, x + 62, y + 53, 1, 195, w, 6);
         }
 

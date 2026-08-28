@@ -122,13 +122,12 @@ public class ClutchBlock extends BaseEntityBlock {
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         if (!level.isClientSide && state.getBlock() != newState.getBlock()) {
-            super.onRemove(state, level, pos, newState, isMoving);
-            KineticNetworkManager.get((ServerLevel) level).updateNetworkAfterRemove(pos);
-            
             BlockEntity be = level.getBlockEntity(pos);
             if (be instanceof ClutchBlockEntity clutch && clutch.hasShaft()) {
                 net.minecraft.world.Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), new ItemStack(com.trd.block.basic.ModBlocks.getShaft(clutch.getShaftMaterial(), clutch.getShaftDiameter()).get()));
             }
+            super.onRemove(state, level, pos, newState, isMoving);
+            KineticNetworkManager.get((ServerLevel) level).updateNetworkAfterRemove(pos);
             return;
         }
         super.onRemove(state, level, pos, newState, isMoving);

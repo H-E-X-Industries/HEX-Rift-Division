@@ -368,6 +368,7 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
         long absSpeed = Math.abs(be.getSpeed());
         boolean wasOverstressed = be.isOverstressed;
         boolean wasTooSlow = be.isTooSlow;
+        int prevMaxProgress = be.maxProgress;
         
         be.isOverstressed = false;
         be.isTooSlow = false;
@@ -393,7 +394,7 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
             }
         }
 
-        if (wasOverstressed != be.isOverstressed || wasTooSlow != be.isTooSlow) {
+        if (wasOverstressed != be.isOverstressed || wasTooSlow != be.isTooSlow || prevMaxProgress != be.maxProgress) {
             changed = true;
         }
 
@@ -657,6 +658,7 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
         super.saveAdditional(tag);
         tag.put("Inventory", inventory.serializeNBT());
         tag.putInt("Progress", progress);
+        tag.putInt("MaxProgress", maxProgress);
         tag.putBoolean("IsOverstressed", isOverstressed);
         tag.putBoolean("IsTooSlow", isTooSlow);
         tag.putLong("NetTorque", this.networkTorque);
@@ -668,6 +670,7 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
         super.load(tag);
         inventory.deserializeNBT(tag.getCompound("Inventory"));
         progress = tag.getInt("Progress");
+        maxProgress = tag.contains("MaxProgress") ? tag.getInt("MaxProgress") : MAX_PROGRESS;
         isOverstressed = tag.getBoolean("IsOverstressed");
         isTooSlow = tag.getBoolean("IsTooSlow");
         this.networkTorque = tag.getLong("NetTorque");

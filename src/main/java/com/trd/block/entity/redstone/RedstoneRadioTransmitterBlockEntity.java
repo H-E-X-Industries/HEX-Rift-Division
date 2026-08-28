@@ -84,7 +84,6 @@ public class RedstoneRadioTransmitterBlockEntity extends RedstoneRadioBlockEntit
             be.initialized = true;
             be.discoverReceivers(level);
             be.sendSignalToReceivers(be.lastSignalStrength);
-            return;
         }
 
         int inputSignal = level.getBestNeighborSignal(pos);
@@ -135,12 +134,10 @@ public class RedstoneRadioTransmitterBlockEntity extends RedstoneRadioBlockEntit
     @Override
     protected void saveAdditional(CompoundTag tag) {
         super.saveAdditional(tag);
-        tag.putBoolean("Initialized", initialized);
     }
 
     @Override
     public void load(CompoundTag tag) {
         super.load(tag);
-        this.initialized = tag.getBoolean("Initialized");
     }
 }

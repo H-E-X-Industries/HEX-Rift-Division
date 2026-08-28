@@ -372,6 +372,7 @@ public class ShaftVisual extends AbstractBlockEntityVisual<ShaftBlockEntity> imp
 
         if (this.lastFrameTime < 0) this.lastFrameTime = timeInSeconds;
         float deltaSeconds = timeInSeconds - this.lastFrameTime;
+        if (deltaSeconds > 0.25f || deltaSeconds <= 0f) deltaSeconds = 0.016f;
         this.lastFrameTime = timeInSeconds;
 
         float physicalTargetSpeed = blockEntity.getVisualSpeed();
@@ -383,37 +384,18 @@ public class ShaftVisual extends AbstractBlockEntityVisual<ShaftBlockEntity> imp
             targetSpeed = Math.signum(targetSpeed) * maxRenderSpeed;
         }
 
-        if (this.smoothedSpeed == 0 && targetSpeed != 0) {
-            this.smoothedSpeed = targetSpeed;
-            this.currentAngle = (timeInSeconds * targetSpeed * ((float) Math.PI / 30.0f)) % ((float) Math.PI * 2);
-            if (this.currentAngle < 0) this.currentAngle += (float) Math.PI * 2;
-        }
-
         float speedDiff = targetSpeed - this.smoothedSpeed;
-        if (Math.abs(speedDiff) > 0.1f) {
-            this.smoothedSpeed += speedDiff * 4.0f * deltaSeconds;
-            this.phaseSynced = false;
+        if (Math.abs(speedDiff) > 0.01f) {
+            this.smoothedSpeed += speedDiff * 5.0f * deltaSeconds;
         } else {
             this.smoothedSpeed = targetSpeed;
         }
 
+        // Непрерывная физическая интеграция угла вращения
         this.currentAngle += this.smoothedSpeed * ((float) Math.PI / 30.0f) * deltaSeconds;
         float twoPi = (float) (2 * Math.PI);
         this.currentAngle = this.currentAngle % twoPi;
         if (this.currentAngle < 0) this.currentAngle += twoPi;
-
-        if (this.smoothedSpeed == targetSpeed && targetSpeed != 0) {
-            // Идеальный глобальный угол, одинаковый для всех блоков сети
-            float globalAngle = (timeInSeconds * targetSpeed * ((float) Math.PI / 30.0f)) % twoPi;
-            if (globalAngle < 0) globalAngle += twoPi;
-
-            float diff = (globalAngle - this.currentAngle) % twoPi;
-            if (diff > Math.PI) diff -= twoPi;
-            if (diff < -Math.PI) diff += twoPi;
-
-            // Плавно притягиваем текущий угол к идеальному, устраняя любые погрешности
-            this.currentAngle += diff * 10.0f * deltaSeconds;
-        }
 
         if (targetSpeed == 0 && Math.abs(this.smoothedSpeed) < 5.0f) {
             float PI_OVER_4 = (float) (Math.PI / 4.0);
@@ -421,7 +403,7 @@ public class ShaftVisual extends AbstractBlockEntityVisual<ShaftBlockEntity> imp
             float snapDiff = targetSnap - this.currentAngle;
             
             if (Math.abs(snapDiff) > 0.001f) {
-                float pull = 8.0f * (1.0f - (Math.abs(this.smoothedSpeed) / 5.0f));
+                float pull = 6.0f * (1.0f - (Math.abs(this.smoothedSpeed) / 5.0f));
                 this.currentAngle += snapDiff * pull * deltaSeconds;
             } else {
                 this.currentAngle = targetSnap;

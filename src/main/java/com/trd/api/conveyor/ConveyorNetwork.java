@@ -100,16 +100,15 @@ public class ConveyorNetwork {
                 item.setSorterCooldown(item.getSorterCooldown() - 1);
             }
 
-            // Очищаем prevOverridePos, когда предмет прошёл блок входа с перекрёстка
-            // (он нужен только на первом блоке после слияния сетей, дальше — стандартный путь)
-            if (item.getPrevOverridePos() != null && item.getProgress() >= Math.floor(item.getProgress()) + 0.5) {
-                item.setPrevOverridePos(null);
-                changed = true;
-            }
-
             double currentProgress = item.getProgress();
             double desiredProgress = currentProgress + SPEED;
 
+            // Очищаем prevOverridePos только при переходе на следующий блок
+            // (он нужен на протяжении всего первого блока для расчёта Безье)
+            if (item.getPrevOverridePos() != null && (int) Math.floor(desiredProgress) > (int) Math.floor(currentProgress)) {
+                item.setPrevOverridePos(null);
+                changed = true;
+            }
             
             if (desiredProgress >= maxProgress) {
                 // Пытаемся передать в буфер (вставщик)
@@ -147,22 +146,30 @@ public class ConveyorNetwork {
                         changed = true;
                         continue;
                     } else if (targetBe instanceof ConveyorBlockEntity) {
-                        ConveyorNetwork nextNet = manager.getNetworkFor(targetPos);
-                        if (nextNet != null && nextNet != this) {
-                            if (lastState.getBlock() instanceof com.trd.block.basic.industrial.ConveyorElevatorBlock) {
-                                // If we are an elevator, we just eject if we didn't merge
-                            } else if (level.getBlockState(targetPos).getBlock() instanceof com.trd.block.basic.industrial.ConveyorElevatorBlock) {
-                                // Do not allow side-loading into elevators via networks
-                            } else {
-                                double targetIndex = nextNet.getPath().indexOf(targetPos);
-                                if (targetIndex >= 0) {
-                                    ConveyorItem inserted = nextNet.insertItemTracked(item.getStack().copy(), targetIndex);
-                                    // Запоминаем, откуда пришёл предмет (для правильной Безье на T-перекрёстках)
-                                    inserted.setPrevOverridePos(lastPos);
-                                    manager.markForSync(nextNet);
-                                    iterator.remove();
-                                    changed = true;
-                                    continue;
+                        BlockState targetState = level.getBlockState(targetPos);
+                        boolean isElevatorOutput = lastState.getBlock() instanceof com.trd.block.basic.industrial.ConveyorElevatorBlock;
+                        boolean isElevatorTarget = targetState.getBlock() instanceof com.trd.block.basic.industrial.ConveyorElevatorBlock;
+
+                        // Из лифта передавать можно только с верхней секции (TOP)
+                        boolean canCurrentOutput = !isElevatorOutput || 
+                                lastState.getValue(com.trd.block.basic.industrial.ConveyorElevatorBlock.PART) == com.trd.block.basic.industrial.ConveyorElevatorBlock.ElevatorPart.TOP;
+
+                        if (canCurrentOutput && !isElevatorTarget && targetState.hasProperty(com.trd.block.basic.industrial.ConveyorBlock.FACING)) {
+                            Direction targetFacing = targetState.getValue(com.trd.block.basic.industrial.ConveyorBlock.FACING);
+                            // Не передаём, если конвейер движется навстречу выходу
+                            if (targetFacing != facing.getOpposite()) {
+                                ConveyorNetwork nextNet = manager.getNetworkFor(targetPos);
+                                if (nextNet != null && nextNet != this) {
+                                    double targetIndex = nextNet.getPath().indexOf(targetPos);
+                                    if (targetIndex >= 0) {
+                                        ConveyorItem inserted = nextNet.insertItemTracked(item.getStack().copy(), targetIndex);
+                                        // Запоминаем, откуда пришёл предмет (для правильной Безье на T-перекрёстках и выезде из лифта)
+                                        inserted.setPrevOverridePos(lastPos);
+                                        manager.markForSync(nextNet);
+                                        iterator.remove();
+                                        changed = true;
+                                        continue;
+                                    }
                                 }
                             }
                         }

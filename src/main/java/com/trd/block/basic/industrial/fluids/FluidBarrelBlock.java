@@ -33,28 +33,109 @@ import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.Nullable;
 
+import net.minecraft.core.Direction;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.phys.shapes.Shapes;
+
 import java.util.List;
 
 public class FluidBarrelBlock extends BaseEntityBlock {
 
-    private static final VoxelShape SHAPE = Block.box(2.0D, 0.0D, 2.0D, 14.0D, 16.0D, 14.0D);
+    public static final BooleanProperty NORTH = BlockStateProperties.NORTH;
+    public static final BooleanProperty SOUTH = BlockStateProperties.SOUTH;
+    public static final BooleanProperty EAST = BlockStateProperties.EAST;
+    public static final BooleanProperty WEST = BlockStateProperties.WEST;
+
+    private static final VoxelShape BASE_SHAPE = Block.box(2.0D, 0.0D, 2.0D, 14.0D, 16.0D, 14.0D);
+    private static final VoxelShape NORTH_SHAPE = Block.box(5.0D, 5.0D, 0.0D, 11.0D, 11.0D, 2.0D);
+    private static final VoxelShape SOUTH_SHAPE = Block.box(5.0D, 5.0D, 14.0D, 11.0D, 11.0D, 16.0D);
+    private static final VoxelShape WEST_SHAPE = Block.box(0.0D, 5.0D, 5.0D, 2.0D, 11.0D, 11.0D);
+    private static final VoxelShape EAST_SHAPE = Block.box(14.0D, 5.0D, 5.0D, 16.0D, 11.0D, 11.0D);
+
+    private static final VoxelShape[] SHAPES = new VoxelShape[16];
+
+    static {
+        for (int i = 0; i < 16; i++) {
+            VoxelShape shape = BASE_SHAPE;
+            if ((i & 1) != 0) shape = Shapes.or(shape, NORTH_SHAPE);
+            if ((i & 2) != 0) shape = Shapes.or(shape, SOUTH_SHAPE);
+            if ((i & 4) != 0) shape = Shapes.or(shape, EAST_SHAPE);
+            if ((i & 8) != 0) shape = Shapes.or(shape, WEST_SHAPE);
+            SHAPES[i] = shape;
+        }
+    }
+
+    private static int getShapeIndex(BlockState state) {
+        int index = 0;
+        if (state.getValue(NORTH)) index |= 1;
+        if (state.getValue(SOUTH)) index |= 2;
+        if (state.getValue(EAST)) index |= 4;
+        if (state.getValue(WEST)) index |= 8;
+        return index;
+    }
+
     private final BarrelTier tier;
 
     public FluidBarrelBlock(BarrelTier tier, Properties properties) {
         super(properties);
         this.tier = tier;
+        this.registerDefaultState(this.stateDefinition.any()
+                .setValue(NORTH, false)
+                .setValue(SOUTH, false)
+                .setValue(EAST, false)
+                .setValue(WEST, false));
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(NORTH, SOUTH, EAST, WEST);
     }
 
     public BarrelTier getTier() { return tier; }
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return SHAPE;
+        return SHAPES[getShapeIndex(state)];
     }
 
     @Override
     public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return SHAPE;
+        return getShape(state, level, pos, context);
+    }
+
+    public static boolean canConnectToPipe(BlockGetter level, BlockPos neighborPos) {
+        return level.getBlockState(neighborPos).getBlock() instanceof FluidPipeBlock;
+    }
+
+    @Nullable
+    @Override
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        Level level = context.getLevel();
+        BlockPos pos = context.getClickedPos();
+        return this.defaultBlockState()
+                .setValue(NORTH, canConnectToPipe(level, pos.north()))
+                .setValue(SOUTH, canConnectToPipe(level, pos.south()))
+                .setValue(EAST, canConnectToPipe(level, pos.east()))
+                .setValue(WEST, canConnectToPipe(level, pos.west()));
+    }
+
+    @Override
+    public BlockState updateShape(BlockState state, Direction dir, BlockState neighborState, LevelAccessor level, BlockPos currentPos, BlockPos neighborPos) {
+        if (dir.getAxis().isHorizontal()) {
+            boolean connected = neighborState.getBlock() instanceof FluidPipeBlock;
+            return switch (dir) {
+                case NORTH -> state.setValue(NORTH, connected);
+                case SOUTH -> state.setValue(SOUTH, connected);
+                case EAST -> state.setValue(EAST, connected);
+                case WEST -> state.setValue(WEST, connected);
+                default -> state;
+            };
+        }
+        return super.updateShape(state, dir, neighborState, level, currentPos, neighborPos);
     }
 
     @Nullable

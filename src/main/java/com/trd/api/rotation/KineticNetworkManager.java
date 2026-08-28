@@ -64,12 +64,17 @@ public class KineticNetworkManager extends SavedData {
             CompoundTag netTag = networksList.getCompound(i);
             KineticNetwork net = KineticNetwork.deserializeNBT(netTag);
 
-            // Восстанавливаем маппинг блоков и регистрируем сеть в uniqueNetworks
+            // Восстанавливаем маппинг блоков и регистрируем сеть в uniqueNetworks.
+            // needsRecalculation уже = true (выставлен в deserializeNBT).
+            // Каждый BE при onLoad() вызовет requestRecalculation(), поэтому BFS
+            // будет запускаться пока не загрузятся все соседи, включая конические шестерни.
             for (BlockPos pos : net.getMembers()) {
                 manager.blockToNetwork.put(pos, net);
             }
             manager.networks.add(net); // ← Регистрируем в множестве уникальных сетей
         }
+        LOGGER.info("[Kinetic] Loaded {} networks from NBT. needsRecalculation=true for all.",
+                manager.networks.size());
         return manager;
     }
 
@@ -87,6 +92,7 @@ public class KineticNetworkManager extends SavedData {
         Set<KineticNetwork> neighborNetworks = new HashSet<>();
 
         for (BlockPos neighborPos : node.getPotentialConnections(level, pos)) {
+            if (!level.isLoaded(neighborPos)) continue;
             BlockEntity neighborBE = level.getBlockEntity(neighborPos);
 
             if (neighborBE instanceof Rotational neighborNode) {
@@ -106,37 +112,6 @@ public class KineticNetworkManager extends SavedData {
             }
         }
 
-        if (neighborNetworks.size() > 1) {
-            long firstBaseSpeed = 0;
-            boolean conflict = false;
-
-            for (KineticNetwork net : neighborNetworks) {
-                // Вычисляем "базовую" скорость сети (до применения networkScale)
-                // Берём целевую скорость как наиболее актуальную
-                long netRawSpeed = net.getTargetSpeed();
-                if (netRawSpeed == 0) netRawSpeed = net.getSpeed();
-
-                if (netRawSpeed != 0) {
-                    if (firstBaseSpeed == 0) {
-                        firstBaseSpeed = netRawSpeed;
-                    } else {
-                        // Конфликт только если знаки (направления) противоположны.
-                        // Разные абсолютные значения допустимы — это нормальная передача через шестерни/шкивы.
-                        if (Math.signum(firstBaseSpeed) != Math.signum(netRawSpeed)) {
-                            conflict = true;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            if (conflict) {
-                LOGGER.info("[Kinetic] Rotational conflict at {}! Breaking shaft.", pos.toShortString());
-                level.destroyBlock(pos, true);
-                return;
-            }
-        }
-
         if (neighborNetworks.isEmpty()) {
             KineticNetwork newNet = new KineticNetwork();
             registerBlockToNetwork(pos, newNet);
@@ -144,9 +119,9 @@ public class KineticNetworkManager extends SavedData {
         } else if (neighborNetworks.size() == 1) {
             KineticNetwork existingNet = neighborNetworks.iterator().next();
             
-            double oldMomentum = existingNet.getSpeed() * existingNet.getTotalInertia();
+            double oldMomentum = existingNet.getExactSpeed() * existingNet.getTotalInertia();
             double newInertia = existingNet.getTotalInertia() + node.getInertiaContribution();
-            long newSpeed = newInertia > 0 ? (long) (oldMomentum / newInertia) : 0;
+            double newSpeed = newInertia > 0 ? (oldMomentum / newInertia) : 0.0;
             
             registerBlockToNetwork(pos, existingNet);
 
@@ -236,7 +211,7 @@ public class KineticNetworkManager extends SavedData {
 
         if (level.getBlockEntity(start) instanceof Rotational startNode) {
             float scale = startNode.getNetworkScale();
-            long baseSpeed = scale != 0 ? (long)(startNode.getSpeed() / scale) : startNode.getSpeed();
+            double baseSpeed = scale != 0 ? (startNode.getSpeed() / (double) scale) : (double) startNode.getSpeed();
             newNet.setCurrentSpeed(baseSpeed);
         }
 
@@ -286,7 +261,7 @@ public class KineticNetworkManager extends SavedData {
         return newNet;
     }
 
-    private boolean recalculateNetworkSigns(KineticNetwork net) {
+    public boolean recalculateNetworkSigns(KineticNetwork net) {
         if (net.getMembers().isEmpty()) return true;
 
         java.util.Queue<BlockPos> queue = new java.util.LinkedList<>();
@@ -295,14 +270,30 @@ public class KineticNetworkManager extends SavedData {
 
         BlockPos root = null;
         if (!net.getGenerators().isEmpty()) {
-            root = net.getGenerators().iterator().next();
+            for (BlockPos genPos : net.getGenerators()) {
+                if (level.isLoaded(genPos) && level.getBlockEntity(genPos) instanceof Rotational) {
+                    root = genPos;
+                    break;
+                }
+            }
+            if (root == null) root = net.getGenerators().iterator().next();
         } else {
             // Ищем первый блок, который уже имеет масштаб (чтобы не перевернуть сеть по инерции)
             for (BlockPos p : net.getMembers()) {
-                BlockEntity be = level.getBlockEntity(p);
-                if (be instanceof Rotational rot && Math.abs(rot.getNetworkScale()) > 0.1f) {
-                    root = p;
-                    break;
+                if (level.isLoaded(p)) {
+                    BlockEntity be = level.getBlockEntity(p);
+                    if (be instanceof Rotational rot && Math.abs(rot.getNetworkScale()) > 0.1f) {
+                        root = p;
+                        break;
+                    }
+                }
+            }
+            if (root == null) {
+                for (BlockPos p : net.getMembers()) {
+                    if (level.isLoaded(p) && level.getBlockEntity(p) instanceof Rotational) {
+                        root = p;
+                        break;
+                    }
                 }
             }
             if (root == null) root = net.getMembers().iterator().next();
@@ -311,7 +302,7 @@ public class KineticNetworkManager extends SavedData {
         queue.add(root);
         
         float rootScale = 1.0f;
-        if (level.getBlockEntity(root) instanceof Rotational rootNode) {
+        if (level.isLoaded(root) && level.getBlockEntity(root) instanceof Rotational rootNode) {
             if (Math.abs(rootNode.getNetworkScale()) > 0.1f) {
                 rootScale = Math.signum(rootNode.getNetworkScale());
             }
@@ -324,6 +315,8 @@ public class KineticNetworkManager extends SavedData {
             if (visited.contains(current)) continue;
             visited.add(current);
 
+            if (!level.isLoaded(current)) continue;
+
             BlockEntity currentBE = level.getBlockEntity(current);
             if (currentBE instanceof Rotational node) {
                 float currentScale = scales.getOrDefault(current, 1.0f);
@@ -332,9 +325,16 @@ public class KineticNetworkManager extends SavedData {
                 // ИСПОЛЬЗУЕМ НОВЫЙ МЕТОД ПОИСКА
                 for (BlockPos neighborPos : node.getPotentialConnections(level, current)) {
                     if (net.getMembers().contains(neighborPos) && !visited.contains(neighborPos)) {
+                        if (!level.isLoaded(neighborPos)) continue;
+
                         BlockEntity neighborBE = level.getBlockEntity(neighborPos);
 
                         if (neighborBE instanceof Rotational neighborNode) {
+                            if (!node.canConnectMechanically(current, neighborPos, neighborNode) ||
+                                    !neighborNode.canConnectMechanically(neighborPos, current, node)) {
+                                continue;
+                            }
+
                             // Спрашиваем сам блок, с каким коэффициентом он передает вращение
                             float ratio = node.calculateTransmissionRatio(current, neighborPos, neighborNode);
                             float nextScale = currentScale * ratio;
@@ -362,7 +362,7 @@ public class KineticNetworkManager extends SavedData {
         double totalCombinedInertia = 0;
 
         for (KineticNetwork net : networks) {
-            totalAngularMomentum += net.getSpeed() * net.getTotalInertia();
+            totalAngularMomentum += net.getExactSpeed() * net.getTotalInertia();
             totalCombinedInertia += net.getTotalInertia();
         }
 
@@ -371,7 +371,7 @@ public class KineticNetworkManager extends SavedData {
             totalCombinedInertia += node.getInertiaContribution();
         }
 
-        long newSpeed = totalCombinedInertia > 0 ? (long) (totalAngularMomentum / totalCombinedInertia) : 0;
+        double newSpeed = totalCombinedInertia > 0 ? (totalAngularMomentum / totalCombinedInertia) : 0.0;
 
         KineticNetwork mainNet = networks.iterator().next();
         networks.remove(mainNet);

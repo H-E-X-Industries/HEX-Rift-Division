@@ -131,9 +131,9 @@ public class DrobitelOverlay {
         int prog    = be.getData().get(0);
         int maxProg = be.getData().get(1);
         if (maxProg > 0 && prog > 0) {
-            double pct = (double) prog / maxProg;
+            double pct = Math.min(1.0, (double) prog / maxProg);
             int totalBars = 20;
-            int green = (int)(pct * totalBars);
+            int green = Math.min(totalBars, (int)(pct * totalBars));
             int gray  = totalBars - green;
 
             StringBuilder bar = new StringBuilder();

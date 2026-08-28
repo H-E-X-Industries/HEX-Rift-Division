@@ -1,6 +1,7 @@
 package com.trd.datagen.assets;
 
 import com.trd.block.basic.industrial.fluids.FluidPipeBlock;
+import com.trd.block.basic.industrial.fluids.FluidBarrelBlock;
 import com.trd.main.ResourceRegistry;
 import com.trd.block.basic.necrosis.hive.HiveRootsBlock;
 import net.minecraft.core.Direction;
@@ -231,6 +232,12 @@ public class ModBlockStateProvider extends BlockStateProvider {
         fluidPipeBlock(ModBlocks.LEAD_FLUID_PIPE, "lead");
         fluidPipeBlock(ModBlocks.TUNGSTEN_FLUID_PIPE, "tungsten");
         fluidPipeBlock(ModBlocks.PIPE_SPOTS, "pipe_spots");
+
+        fluidBarrelBlock(ModBlocks.LEAD_BARREL, "lead_barrel", "lead");
+        fluidBarrelBlock(ModBlocks.STEEL_BARREL, "steel_barrel", "steel");
+        fluidBarrelBlock(ModBlocks.IRON_BARREL, "iron_barrel", "steel");
+        fluidBarrelBlock(ModBlocks.CORRUPTED_BARREL, "corrupted_barrel", "steel");
+        fluidBarrelBlock(ModBlocks.LEAKING_BARREL, "leaking_barrel", "steel");
 
         //ПОВОРОТ ДЛЯ 3Д МОДЕЛИ, ПРИМЕР:
         // customModelBlockWithItem(ModBlocks.TURRET_BASE);
@@ -512,6 +519,18 @@ public class ModBlockStateProvider extends BlockStateProvider {
                 .end()
                 .texture("pipe_texture", pipeTexture) // <--- ПРОКИДЫВАЕМ ТЕКСТУРУ ДЛЯ ПРЕДМЕТА В ИНВЕНТАРЕ
                 .texture("particle", pipeTexture);
+    }
+
+    public void fluidBarrelBlock(RegistryObject<Block> block, String barrelModelName, String armPrefix) {
+        ModelFile barrelModel = models().getExistingFile(modLoc("block/" + barrelModelName));
+        ModelFile armModel = models().getExistingFile(modLoc("block/" + armPrefix + "_fluid_pipe_arm"));
+
+        var builder = getMultipartBuilder(block.get());
+        builder.part().modelFile(barrelModel).addModel().end();
+        builder.part().modelFile(armModel).addModel().condition(FluidBarrelBlock.NORTH, true).end();
+        builder.part().modelFile(armModel).rotationY(90).addModel().condition(FluidBarrelBlock.EAST, true).end();
+        builder.part().modelFile(armModel).rotationY(180).addModel().condition(FluidBarrelBlock.SOUTH, true).end();
+        builder.part().modelFile(armModel).rotationY(270).addModel().condition(FluidBarrelBlock.WEST, true).end();
     }
 
     public void generateAllShafts() {

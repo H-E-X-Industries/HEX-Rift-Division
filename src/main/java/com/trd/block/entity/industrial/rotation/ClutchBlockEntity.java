@@ -52,7 +52,26 @@ public class ClutchBlockEntity extends KineticNodeBlockEntity {
             return false;
         }
 
+        if (neighbor instanceof ShaftBlockEntity shaft) {
+            if (shaft.getBlockState().getBlock() instanceof com.trd.block.basic.industrial.rotation.ShaftBlock sb) {
+                return sb.getDiameter() == this.shaftDiameter && shaft.getBlockState().getValue(com.trd.block.basic.industrial.rotation.ShaftBlock.FACING).getAxis() == facing.getAxis();
+            }
+        } else if (neighbor instanceof BearingBlockEntity bearing) {
+            return bearing.hasShaft() && bearing.getShaftDiameter() == this.shaftDiameter && bearing.getBlockState().getValue(com.trd.block.basic.industrial.rotation.BearingBlock.FACING).getAxis() == facing.getAxis();
+        } else if (neighbor instanceof ClutchBlockEntity otherClutch) {
+            return otherClutch.hasShaft() && otherClutch.getShaftDiameter() == this.shaftDiameter && otherClutch.getBlockState().getValue(ClutchBlock.FACING).getAxis() == facing.getAxis();
+        } else if (neighbor instanceof TachometerBlockEntity tach) {
+            return tach.hasShaft() && tach.getShaftDiameter() == this.shaftDiameter && tach.getBlockState().getValue(com.trd.block.basic.industrial.rotation.TachometerBlock.FACING).getAxis() == facing.getAxis();
+        } else if (neighbor instanceof MotorElectroBlockEntity motor) {
+            return this.shaftDiameter == ShaftDiameter.LIGHT && motor.getBlockState().getValue(com.trd.block.basic.industrial.rotation.MotorElectroBlock.FACING).getAxis() == facing.getAxis();
+        }
+
         return true;
+    }
+
+    @Override
+    public float calculateTransmissionRatio(BlockPos myPos, BlockPos neighborPos, Rotational neighbor) {
+        return 1.0f;
     }
 
     @Override
@@ -100,6 +119,18 @@ public class ClutchBlockEntity extends KineticNodeBlockEntity {
             return (long) (shaftMaterial.baseTorque() * shaftDiameter.getTorqueMultiplier());
         }
         return 10000;
+    }
+
+    @Override
+    public long getVisualSpeed() {
+        if (!this.hasShaft) return 0;
+        BlockState state = getBlockState();
+        if (!state.hasProperty(ClutchBlock.FACING)) return 0;
+        Direction facing = state.getValue(ClutchBlock.FACING);
+        if (facing == Direction.SOUTH || facing == Direction.EAST || facing == Direction.UP) {
+            return -this.speed;
+        }
+        return this.speed;
     }
 
     @Override
