@@ -45,6 +45,7 @@ public class KineticNetwork {
             return false;
 
         if (this.needsRecalculation) {
+            KineticNetworkManager.get(level).recalculateNetworkSigns(this);
             this.recalculate(level);
             this.needsRecalculation = false;
         }

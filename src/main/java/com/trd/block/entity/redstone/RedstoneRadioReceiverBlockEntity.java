@@ -111,6 +111,9 @@ public class RedstoneRadioReceiverBlockEntity extends RedstoneRadioBlockEntity {
         super.onLoad();
         if (level != null && !level.isClientSide) {
             RadioNetworkManager.get(level).registerReceiver(worldPosition, channelId);
+            if (outputSignal > 0) {
+                updateNeighbors();
+            }
         }
     }
 

@@ -64,12 +64,17 @@ public class KineticNetworkManager extends SavedData {
             CompoundTag netTag = networksList.getCompound(i);
             KineticNetwork net = KineticNetwork.deserializeNBT(netTag);
 
-            // Восстанавливаем маппинг блоков и регистрируем сеть в uniqueNetworks
+            // Восстанавливаем маппинг блоков и регистрируем сеть в uniqueNetworks.
+            // needsRecalculation уже = true (выставлен в deserializeNBT).
+            // Каждый BE при onLoad() вызовет requestRecalculation(), поэтому BFS
+            // будет запускаться пока не загрузятся все соседи, включая конические шестерни.
             for (BlockPos pos : net.getMembers()) {
                 manager.blockToNetwork.put(pos, net);
             }
             manager.networks.add(net); // ← Регистрируем в множестве уникальных сетей
         }
+        LOGGER.info("[Kinetic] Loaded {} networks from NBT. needsRecalculation=true for all.",
+                manager.networks.size());
         return manager;
     }
 
@@ -87,6 +92,7 @@ public class KineticNetworkManager extends SavedData {
         Set<KineticNetwork> neighborNetworks = new HashSet<>();
 
         for (BlockPos neighborPos : node.getPotentialConnections(level, pos)) {
+            if (!level.isLoaded(neighborPos)) continue;
             BlockEntity neighborBE = level.getBlockEntity(neighborPos);
 
             if (neighborBE instanceof Rotational neighborNode) {
@@ -255,7 +261,7 @@ public class KineticNetworkManager extends SavedData {
         return newNet;
     }
 
-    private boolean recalculateNetworkSigns(KineticNetwork net) {
+    public boolean recalculateNetworkSigns(KineticNetwork net) {
         if (net.getMembers().isEmpty()) return true;
 
         java.util.Queue<BlockPos> queue = new java.util.LinkedList<>();
@@ -264,14 +270,30 @@ public class KineticNetworkManager extends SavedData {
 
         BlockPos root = null;
         if (!net.getGenerators().isEmpty()) {
-            root = net.getGenerators().iterator().next();
+            for (BlockPos genPos : net.getGenerators()) {
+                if (level.isLoaded(genPos) && level.getBlockEntity(genPos) instanceof Rotational) {
+                    root = genPos;
+                    break;
+                }
+            }
+            if (root == null) root = net.getGenerators().iterator().next();
         } else {
             // Ищем первый блок, который уже имеет масштаб (чтобы не перевернуть сеть по инерции)
             for (BlockPos p : net.getMembers()) {
-                BlockEntity be = level.getBlockEntity(p);
-                if (be instanceof Rotational rot && Math.abs(rot.getNetworkScale()) > 0.1f) {
-                    root = p;
-                    break;
+                if (level.isLoaded(p)) {
+                    BlockEntity be = level.getBlockEntity(p);
+                    if (be instanceof Rotational rot && Math.abs(rot.getNetworkScale()) > 0.1f) {
+                        root = p;
+                        break;
+                    }
+                }
+            }
+            if (root == null) {
+                for (BlockPos p : net.getMembers()) {
+                    if (level.isLoaded(p) && level.getBlockEntity(p) instanceof Rotational) {
+                        root = p;
+                        break;
+                    }
                 }
             }
             if (root == null) root = net.getMembers().iterator().next();
@@ -280,7 +302,7 @@ public class KineticNetworkManager extends SavedData {
         queue.add(root);
         
         float rootScale = 1.0f;
-        if (level.getBlockEntity(root) instanceof Rotational rootNode) {
+        if (level.isLoaded(root) && level.getBlockEntity(root) instanceof Rotational rootNode) {
             if (Math.abs(rootNode.getNetworkScale()) > 0.1f) {
                 rootScale = Math.signum(rootNode.getNetworkScale());
             }
@@ -293,6 +315,8 @@ public class KineticNetworkManager extends SavedData {
             if (visited.contains(current)) continue;
             visited.add(current);
 
+            if (!level.isLoaded(current)) continue;
+
             BlockEntity currentBE = level.getBlockEntity(current);
             if (currentBE instanceof Rotational node) {
                 float currentScale = scales.getOrDefault(current, 1.0f);
@@ -301,6 +325,8 @@ public class KineticNetworkManager extends SavedData {
                 // ИСПОЛЬЗУЕМ НОВЫЙ МЕТОД ПОИСКА
                 for (BlockPos neighborPos : node.getPotentialConnections(level, current)) {
                     if (net.getMembers().contains(neighborPos) && !visited.contains(neighborPos)) {
+                        if (!level.isLoaded(neighborPos)) continue;
+
                         BlockEntity neighborBE = level.getBlockEntity(neighborPos);
 
                         if (neighborBE instanceof Rotational neighborNode) {

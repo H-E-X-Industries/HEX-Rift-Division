@@ -55,16 +55,15 @@ public class BevelGearItem extends Item {
                 ItemStack stack = context.getItemInHand();
 
                 if (level.getBlockEntity(pos) instanceof ShaftBlockEntity shaftBE) {
+                    ItemStack copy = stack.copy();
+                    copy.setCount(1);
+
                     if (isStart) {
-                        level.setBlock(pos, state.setValue(ShaftBlock.HAS_BEVEL_START, true), 3);
-                        ItemStack copy = stack.copy();
-                        copy.setCount(1);
                         shaftBE.setAttachedBevelStart(copy);
+                        level.setBlock(pos, state.setValue(ShaftBlock.HAS_BEVEL_START, true), 3);
                     } else {
-                        level.setBlock(pos, state.setValue(ShaftBlock.HAS_BEVEL_END, true), 3);
-                        ItemStack copy = stack.copy();
-                        copy.setCount(1);
                         shaftBE.setAttachedBevelEnd(copy);
+                        level.setBlock(pos, state.setValue(ShaftBlock.HAS_BEVEL_END, true), 3);
                     }
 
                     level.playSound(null, pos, SoundEvents.IRON_TRAPDOOR_CLOSE, SoundSource.BLOCKS, 1.0F, 1.0F);
@@ -73,7 +72,9 @@ public class BevelGearItem extends Item {
                         stack.shrink(1);
                     }
 
-                    KineticNetworkManager.get((ServerLevel) level).updateNetworkAfterPlace(pos);
+                    KineticNetworkManager manager = KineticNetworkManager.get((ServerLevel) level);
+                    manager.updateNetworkAfterRemove(pos);
+                    manager.updateNetworkAfterPlace(pos);
                 }
             }
             return InteractionResult.sidedSuccess(level.isClientSide);

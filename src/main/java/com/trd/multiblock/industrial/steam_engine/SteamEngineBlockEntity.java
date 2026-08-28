@@ -218,7 +218,7 @@ public class SteamEngineBlockEntity extends KineticNodeBlockEntity {
         BlockState state = getBlockState();
         if (!state.hasProperty(SteamEngineBlock.FACING)) return new Direction[0];
         Direction facing = state.getValue(SteamEngineBlock.FACING);
-        Direction.Axis crankshaftAxis = facing.getAxis() == Direction.Axis.X ? Direction.Axis.Z : Direction.Axis.X;
+        Direction.Axis crankshaftAxis = facing.getAxis();
         return new Direction[] {
             Direction.get(Direction.AxisDirection.POSITIVE, crankshaftAxis),
             Direction.get(Direction.AxisDirection.NEGATIVE, crankshaftAxis)
