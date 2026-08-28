@@ -122,6 +122,7 @@ public class ClientModEvents {
         MenuScreens.register(ModMenuTypes.HEATER_MENU.get(), GUIHeater::new);
         MenuScreens.register(ModMenuTypes.REDSTONE_RADIO_MENU.get(), GUIRedstoneRadio::new);
         MenuScreens.register(ModMenuTypes.SMELTER_MENU.get(), GUISmelter::new);
+        MenuScreens.register(ModMenuTypes.CC_MACHINE_MENU.get(), GUICCMachine::new);
         MenuScreens.register(ModMenuTypes.FUEL_TANK_MENU.get(), GUIFuelTank::new);
         MenuScreens.register(ModMenuTypes.TROMBONE_MENU.get(), GUITrombone::new);
         MenuScreens.register(ModMenuTypes.CONVEYOR_BUFFER.get(), ConveyorBufferScreen::new);
@@ -688,6 +689,7 @@ public class ClientModEvents {
                 ModItems.GOLD_PLATE.get(),
                 ModItems.LEAD_PLATE.get(),
                 ModItems.IRON_PLATE.get(),
+                ModItems.ALUMINA.get(),
                 ResourceRegistry.getMainUnit("steel"),
                 ResourceRegistry.getSmallUnit("steel"),
                 ResourceRegistry.getBlock("steel"),
@@ -754,6 +756,7 @@ public class ClientModEvents {
                 Items.COPPER_ORE, Items.DEEPSLATE_COPPER_ORE,
                 Items.LIGHTNING_ROD,
                 Items.NETHERITE_INGOT,
+                ModItems.ALUMINA.get(),
                 net.minecraft.world.level.block.Blocks.NETHERITE_BLOCK.asItem(),
                 Items.NETHERITE_PICKAXE, Items.NETHERITE_AXE, Items.NETHERITE_SHOVEL, Items.NETHERITE_HOE, Items.NETHERITE_SWORD,
                 ResourceRegistry.getMainUnit("aluminum"),

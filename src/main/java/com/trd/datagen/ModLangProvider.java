@@ -435,6 +435,16 @@ public class ModLangProvider extends LanguageProvider {
         add("gui.trd.casting_pot.too_hot_simple", "§cToo hot! (%d%%) Use a poker.");
         add("gui.trd.casting_pot.cannot_remove_mold", "§cCannot remove mold: contains metal or item");
 
+        // ═══ GUI: CC Machine (Continuous Casting) ═══
+        add("gui.trd.cc_machine.metal_title", "§6§lMolten Metal");
+        add("gui.trd.cc_machine.metal_amount", "§7Amount: §f%s§7 / §f%s§7 units");
+        add("gui.trd.cc_machine.cast_remaining", "§6Remaining: §f%s sec");
+        add("gui.trd.cc_machine.fluid_amount", "%s / %s mB");
+        add("gui.trd.cc_machine.water.name", "Water");
+        add("gui.trd.cc_machine.steam.name", "Low Pressure Steam");
+        add("gui.trd.cc_machine.mold_slot", "Casting Mold");
+        add("gui.trd.cc_machine.output_slot", "Output");
+
         // ═══ GUI: Machine Battery ═══
         add("gui.trd.machine_battery.cell_extracted", "§eCell extracted from slot %s");
         add("gui.trd.machine_battery.cell_inserted", "§aCell inserted into slot %s");
@@ -1137,6 +1147,16 @@ public class ModLangProvider extends LanguageProvider {
         add("hud.trd.leacher.input", "вход");
         add("hud.trd.leacher.output", "выход");
         add("hud.trd.leacher.progress", "Прогресс: %s%%");
+
+        // ═══ GUI: Машина непрерывного литья ═══
+        add("gui.trd.cc_machine.metal_title", "§6§lРасплавленный металл");
+        add("gui.trd.cc_machine.metal_amount", "§7Количество: §f%s§7 / §f%s§7 ед.");
+        add("gui.trd.cc_machine.cast_remaining", "§6Осталось: §f%s сек");
+        add("gui.trd.cc_machine.fluid_amount", "%s / %s мБ");
+        add("gui.trd.cc_machine.water.name", "Вода");
+        add("gui.trd.cc_machine.steam.name", "Пар низкого давления");
+        add("gui.trd.cc_machine.mold_slot", "Литейная форма");
+        add("gui.trd.cc_machine.output_slot", "Выход");
 
         // ═══ Центрифуга ═══
         add(ModBlocks.CENTRIFUGE_MOTOR.get(), "Мотор центрифуги");

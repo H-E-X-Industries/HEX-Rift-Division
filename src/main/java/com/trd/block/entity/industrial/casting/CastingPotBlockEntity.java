@@ -1,5 +1,6 @@
 package com.trd.block.entity.industrial.casting;
 
+import com.trd.api.metallurgy.system.IMetalReceiver;
 import com.trd.api.metallurgy.system.Metal;
 import com.trd.api.metallurgy.system.MetallurgyRegistry;
 import com.trd.api.metallurgy.system.MetalUnits2;
@@ -35,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class CastingPotBlockEntity extends BlockEntity {
+public class CastingPotBlockEntity extends BlockEntity implements IMetalReceiver {
     public static final int CAPACITY_MOLD_INGOT = MetalUnits2.UNITS_PER_INGOT; // 9 единиц
     public static final int CAPACITY_MOLD_NUGGET = MetalUnits2.UNITS_PER_NUGGET; // 1 единица
     public static final int CAPACITY_MOLD_BLOCK = MetalUnits2.UNITS_PER_BLOCK; // 81 единица

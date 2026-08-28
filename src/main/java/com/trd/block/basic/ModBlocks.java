@@ -161,8 +161,8 @@ public class ModBlocks {
             () -> new PaintableWireBlock(
                     BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion()));
 
-    public static final RegistryObject<Block> CC_MACHINE = registerBlock("cc_machine",
-            () -> new Block(BlockBehaviour.Properties.of()
+    public static final RegistryObject<Block> CC_MACHINE = BLOCKS.register("cc_machine",
+            () -> new com.trd.multiblock.industrial.ccmachine.CCMachineBlock(BlockBehaviour.Properties.of()
                     .strength(1.5F, 6.0F).sound(SoundType.NETHER_BRICKS).requiresCorrectToolForDrops().noOcclusion()));
 
 

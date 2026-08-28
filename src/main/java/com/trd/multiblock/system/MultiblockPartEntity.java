@@ -4,6 +4,7 @@ import com.trd.api.fluids.system.FluidNetworkManager;
 import com.trd.api.rotation.Rotational;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.multiblock.industrial.boiler.BoilerBlockEntity;
+import com.trd.multiblock.industrial.ccmachine.CCMachineBlockEntity;
 import com.trd.multiblock.industrial.fueltanks.small.FuelTankSmallBlockEntity;
 import com.trd.multiblock.industrial.steam_engine.SteamEngineBlockEntity;
 import net.minecraft.core.BlockPos;
@@ -292,6 +293,13 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
                     return smallTank.getCapabilityForPart(cap, side, role);
                 } else if (be instanceof SteamEngineBlockEntity steamEngine) {
                     return steamEngine.getCapabilityForPart(cap, side, role);
+                } else if (be instanceof CCMachineBlockEntity ccMachine) {
+                    // Машина непрерывного литья: порт $ принимает жидкости (вода/пар)
+                    // CASTING_PORT (литейные порты сверху) никакие жидкости не принимает
+                    if (role == PartRole.CASTING_PORT) {
+                        return LazyOptional.empty();
+                    }
+                    return ccMachine.getCapability(cap, side);
                 } else if (be instanceof IFluidTankProvider provider) {
                     return provider.getFluidHandlerCapability().cast();
                 }
@@ -338,6 +346,13 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
                         return LazyOptional.empty();
                     }
                     
+                    // Машина непрерывного литья: предметы/жидкости ТОЛЬКО с боковых портов ($)
+                    // CASTING_PORT (литейные порты сверху) — только приём металла, никаких предметов/жидкостей
+                    if (be instanceof CCMachineBlockEntity) {
+                        if (role == PartRole.CASTING_PORT) {
+                            return LazyOptional.empty();
+                        }
+                    }
                     return be.getCapability(cap, side);
                 }
             }

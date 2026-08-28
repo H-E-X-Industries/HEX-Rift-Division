@@ -1,11 +1,14 @@
 package com.trd.block.entity.industrial.casting;
 
+import com.trd.api.metallurgy.system.IMetalReceiver;
 import com.trd.api.metallurgy.system.ISmelter;
 import com.trd.api.metallurgy.system.Metal;
 import com.trd.api.metallurgy.system.MetallurgyRegistry;
 import com.trd.block.basic.industrial.casting.CastingDescentBlock;
 import com.trd.block.basic.industrial.casting.SmallSmelterBlock;
 import com.trd.block.entity.ModBlockEntities;
+import com.trd.multiblock.industrial.ccmachine.CCMachineBlockEntity;
+import com.trd.multiblock.system.IMultiblockPart;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -69,69 +72,107 @@ public class CastingDescentBlockEntity extends BlockEntity {
             return;
         }
 
-        CastingPotBlockEntity mainPot = be.findPotBelow(level, pos);
-        if (mainPot == null) {
+        IMetalReceiver receiver = be.findReceiverBelow(level, pos);
+        if (receiver == null) {
             be.setPouring(false, null);
             return;
         }
 
-        // ПОЛУЧАЕМ ПРИОРИТЕТНЫЕ МЕТАЛЛЫ ИЗ КОТЛОВ
-        List<CastingPotBlockEntity> network = mainPot.findNetwork();
+        // ПОЛУЧАЕМ ПРИОРИТЕТНЫЕ МЕТАЛЛЫ И СВОБОДНОЕ МЕСТО
         List<Metal> preferredMetals = new ArrayList<>();
 
-        for (CastingPotBlockEntity pot : network) {
-            Metal potMetal = pot.getCurrentMetal();
-            if (potMetal != null && !preferredMetals.contains(potMetal)) {
-                preferredMetals.add(potMetal);
-            }
-        }
+        if (receiver instanceof CastingPotBlockEntity mainPot) {
+            List<CastingPotBlockEntity> network = mainPot.findNetwork();
 
-        int totalNetworkSpace = network.stream().mapToInt(CastingPotBlockEntity::getRemainingCapacity).sum();
-
-        if (totalNetworkSpace <= 0) {
-            be.setPouring(false, null);
-            return;
-        }
-
-        // Выбираем металл с учетом приоритета
-        Metal metalToTransfer = smelter.getMetalForCasting(preferredMetals);
-
-        if (metalToTransfer == null) {
-            be.setPouring(false, null);
-            return;
-        }
-
-        boolean canAccept = network.stream().anyMatch(p -> p.canAcceptMetal(metalToTransfer));
-
-        if (!canAccept) {
-            be.setPouring(false, null);
-            return;
-        }
-
-        // ПЕРЕДАЧА МЕТАЛЛА (сразу в котлы, без накопления в спуске!)
-        int toTransfer = Math.min(TRANSFER_RATE, totalNetworkSpace);
-        int extracted = smelter.extractMetal(metalToTransfer, toTransfer);
-
-        if (extracted > 0) {
-            // Сразу передаем в сеть котлов
-            int filled = mainPot.fillNetwork(metalToTransfer, extracted);
-
-            // Если передалось меньше чем извлекли (не должно произойти, но на всякий случай)
-            if (filled < extracted) {
-                // Возвращаем остаток обратно в плавильню (хотя это маловероятно)
-                // Или просто теряем (но лучше предотвратить)
+            for (CastingPotBlockEntity pot : network) {
+                Metal potMetal = pot.getCurrentMetal();
+                if (potMetal != null && !preferredMetals.contains(potMetal)) {
+                    preferredMetals.add(potMetal);
+                }
             }
 
-            if (filled > 0) {
-                be.lastKnownFillLevel = mainPot.getFillLevel();
-                be.setPouring(true, metalToTransfer);
-                be.transferCooldown = TRANSFER_COOLDOWN; // Задержка до следующей порции
-                be.continuousPourTicks++;
+            int totalNetworkSpace = network.stream().mapToInt(CastingPotBlockEntity::getRemainingCapacity).sum();
+
+            if (totalNetworkSpace <= 0) {
+                be.setPouring(false, null);
+                return;
+            }
+
+            // Выбираем металл с учетом приоритета
+            Metal metalToTransfer = smelter.getMetalForCasting(preferredMetals);
+
+            if (metalToTransfer == null) {
+                be.setPouring(false, null);
+                return;
+            }
+
+            boolean canAccept = network.stream().anyMatch(p -> p.canAcceptMetal(metalToTransfer));
+
+            if (!canAccept) {
+                be.setPouring(false, null);
+                return;
+            }
+
+            // ПЕРЕДАЧА МЕТАЛЛА (сразу в котлы, без накопления в спуске!)
+            int toTransfer = Math.min(TRANSFER_RATE, totalNetworkSpace);
+            int extracted = smelter.extractMetal(metalToTransfer, toTransfer);
+
+            if (extracted > 0) {
+                // Сразу передаем в сеть котлов
+                int filled = mainPot.fillNetwork(metalToTransfer, extracted);
+
+                if (filled > 0) {
+                    be.lastKnownFillLevel = mainPot.getFillLevel();
+                    be.setPouring(true, metalToTransfer);
+                    be.transferCooldown = TRANSFER_COOLDOWN; // Задержка до следующей порции
+                    be.continuousPourTicks++;
+                } else {
+                    be.setPouring(false, null);
+                }
             } else {
                 be.setPouring(false, null);
             }
         } else {
-            be.setPouring(false, null);
+            // === МАШИНА НЕПРЕРЫВНОГО ЛИТЬЯ ===
+            Metal current = receiver.getCurrentMetal();
+            if (current != null) {
+                preferredMetals.add(current);
+            }
+
+            int machineSpace = receiver.getRemainingCapacity();
+            if (machineSpace <= 0) {
+                be.setPouring(false, null);
+                return;
+            }
+
+            Metal metalToTransfer = smelter.getMetalForCasting(preferredMetals);
+            if (metalToTransfer == null) {
+                be.setPouring(false, null);
+                return;
+            }
+
+            if (!receiver.canAcceptMetal(metalToTransfer)) {
+                be.setPouring(false, null);
+                return;
+            }
+
+            int toTransfer = Math.min(TRANSFER_RATE, machineSpace);
+            int extracted = smelter.extractMetal(metalToTransfer, toTransfer);
+
+            if (extracted > 0) {
+                int filled = receiver.addMetal(metalToTransfer, extracted);
+
+                if (filled > 0) {
+                    be.lastKnownFillLevel = receiver.getFillLevel();
+                    be.setPouring(true, metalToTransfer);
+                    be.transferCooldown = TRANSFER_COOLDOWN;
+                    be.continuousPourTicks++;
+                } else {
+                    be.setPouring(false, null);
+                }
+            } else {
+                be.setPouring(false, null);
+            }
         }
     }
 
@@ -227,7 +268,7 @@ public class CastingDescentBlockEntity extends BlockEntity {
         return null;
     }
 
-    private CastingPotBlockEntity findPotBelow(Level level, BlockPos pos) {
+    private IMetalReceiver findReceiverBelow(Level level, BlockPos pos) {
         for (int i = 1; i <= MAX_TRANSFER_DISTANCE; i++) {
             BlockPos checkPos = pos.below(i);
             BlockEntity be = level.getBlockEntity(checkPos);
@@ -235,7 +276,29 @@ public class CastingDescentBlockEntity extends BlockEntity {
                 lastKnownDistance = i;
                 return pot;
             }
+            // Структурная часть машины непрерывного литья
+            if (be instanceof com.trd.multiblock.system.MultiblockPartEntity part) {
+                CCMachineBlockEntity machine = resolveMachine(level, part);
+                if (machine != null) {
+                    lastKnownDistance = i;
+                    return machine;
+                }
+            }
+            if (be instanceof CCMachineBlockEntity) {
+                lastKnownDistance = i;
+                return (CCMachineBlockEntity) be;
+            }
             if (!level.getBlockState(checkPos).isAir()) return null;
+        }
+        return null;
+    }
+
+    private CCMachineBlockEntity resolveMachine(Level level, com.trd.multiblock.system.MultiblockPartEntity part) {
+        BlockPos controllerPos = part.getControllerPos();
+        if (controllerPos == null) return null;
+        BlockEntity controller = level.getBlockEntity(controllerPos);
+        if (controller instanceof CCMachineBlockEntity machine) {
+            return machine;
         }
         return null;
     }

@@ -59,27 +59,25 @@ public class MetallurgyRegistry {
         }
     }
 
-    /**
-     * Добавляет кастомный рецепт плавки с полным контролем
-     * @param outputUnits Точное количество единиц металла на выходе
-     * @param heatConsumption Потребление температуры за тик
-     * @param timeTicks Время плавки в тиках
-     */
+    // НОВЫЙ метод (добавить рядом со старым)
     public static void addSmeltRecipe(Item input, Metal output, int outputUnits,
-                                      int minTemp, float heatConsumption, int timeTicks) {
+                                      int minTemp, float heatConsumption, int timeTicks, int inputCount) {
         SmeltRecipe recipe = new SmeltRecipe(input, output, outputUnits, minTemp,
-                heatConsumption, timeTicks);
+                heatConsumption, timeTicks, inputCount);
         SMELT_RECIPES.put(input, recipe);
     }
 
-    /**
-     * Упрощённый метод для обратной совместимости (генерирует время из металла)
-     * Не рекомендуется для нового кода
-     */
+    // Старый метод оставить как есть (он теперь вызывает новый с inputCount=1)
+    public static void addSmeltRecipe(Item input, Metal output, int outputUnits,
+                                      int minTemp, float heatConsumption, int timeTicks) {
+        addSmeltRecipe(input, output, outputUnits, minTemp, heatConsumption, timeTicks, 1);
+    }
+
+    // Deprecated тоже обновить
     @Deprecated
     public static void addSmeltRecipe(Item input, Metal output, int outputUnits, int timeTicks) {
         addSmeltRecipe(input, output, outputUnits, output.getMeltingPoint(),
-                output.getHeatConsumptionPerTick(), timeTicks);
+                output.getHeatConsumptionPerTick(), timeTicks, 1);
     }
 
     public static void addAlloyRecipe(AlloyRecipe recipe) {
