@@ -386,6 +386,9 @@ public class ModItems {
     public static final RegistryObject<Item> TROMBONE_ITEM = ITEMS.register("trombone",
             () -> new MultiblockBlockItem(ModBlocks.TROMBONE.get(), new Item.Properties()));
 
+    public static final RegistryObject<Item> CC_MACHINE_ITEM = ITEMS.register("cc_machine",
+            () -> new MultiblockBlockItem(ModBlocks.CC_MACHINE.get(), new Item.Properties()));
+
 
     //ПАТРОНЫ
     public static final RegistryObject<Item> AMMO_TURRET = ITEMS.register("ammo_turret",

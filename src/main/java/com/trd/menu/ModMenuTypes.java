@@ -104,6 +104,9 @@ public class ModMenuTypes {
     public static final RegistryObject<MenuType<SmelterMenu>> SMELTER_MENU =
             MENUS.register("smelter_menu", () -> IForgeMenuType.create(SmelterMenu::create));
 
+    public static final RegistryObject<MenuType<CCMachineMenu>> CC_MACHINE_MENU =
+            MENUS.register("cc_machine_menu", () -> IForgeMenuType.create(CCMachineMenu::create));
+
 //    public static final RegistryObject<MenuType<MiningPortMenu>> MINING_PORT_MENU =
 //            MENUS.register("mining_port_menu",
 //                    () -> IForgeMenuType.create(MiningPortMenu::new));

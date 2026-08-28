@@ -122,6 +122,7 @@ public class ClientModEvents {
         MenuScreens.register(ModMenuTypes.HEATER_MENU.get(), GUIHeater::new);
         MenuScreens.register(ModMenuTypes.REDSTONE_RADIO_MENU.get(), GUIRedstoneRadio::new);
         MenuScreens.register(ModMenuTypes.SMELTER_MENU.get(), GUISmelter::new);
+        MenuScreens.register(ModMenuTypes.CC_MACHINE_MENU.get(), GUICCMachine::new);
         MenuScreens.register(ModMenuTypes.FUEL_TANK_MENU.get(), GUIFuelTank::new);
         MenuScreens.register(ModMenuTypes.TROMBONE_MENU.get(), GUITrombone::new);
         MenuScreens.register(ModMenuTypes.CONVEYOR_BUFFER.get(), ConveyorBufferScreen::new);

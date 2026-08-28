@@ -223,6 +223,9 @@ public class ModBlockEntities {
     public static final RegistryObject<BlockEntityType<SmelterBlockEntity>> SMELTER_BE = BLOCK_ENTITIES.register("smelter_be",
             () -> BlockEntityType.Builder.of(SmelterBlockEntity::new, ModBlocks.SMELTER.get()).build(null));
 
+    public static final RegistryObject<BlockEntityType<com.trd.multiblock.industrial.ccmachine.CCMachineBlockEntity>> CC_MACHINE_BE = BLOCK_ENTITIES.register("cc_machine_be",
+            () -> BlockEntityType.Builder.of(com.trd.multiblock.industrial.ccmachine.CCMachineBlockEntity::new, ModBlocks.CC_MACHINE.get()).build(null));
+
 
     public static final RegistryObject<BlockEntityType<SwitchBlockEntity>> SWITCH_BE =
             BLOCK_ENTITIES.register("switch_be", () ->
