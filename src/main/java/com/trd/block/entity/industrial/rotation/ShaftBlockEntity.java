@@ -600,16 +600,22 @@ public class ShaftBlockEntity extends KineticNodeBlockEntity {
             }
         }
         if (neighbor instanceof BearingBlockEntity bearing) {
-            return bearing.hasShaft() && bearing.getShaftDiameter() == thisDiameter;
+            return isEndToEnd && bearing.hasShaft() && bearing.getShaftDiameter() == thisDiameter;
+        }
+        if (neighbor instanceof ClutchBlockEntity clutch) {
+            return isEndToEnd && clutch.hasShaft() && clutch.getShaftDiameter() == thisDiameter;
+        }
+        if (neighbor instanceof TachometerBlockEntity tach) {
+            return isEndToEnd && tach.hasShaft() && tach.getShaftDiameter() == thisDiameter;
         }
         if (neighbor instanceof MotorElectroBlockEntity) {
-            return thisDiameter == ShaftDiameter.LIGHT;
+            return isEndToEnd && thisDiameter == ShaftDiameter.LIGHT;
         }
         if (neighbor instanceof StatorBlockEntity stator) {
             // Вал разрешает соединение со статором, если тот смотрит на вал
             return stator.canConnectMechanically(neighborPos, myPos, this);
         }
-        return true;
+        return isEndToEnd;
     }
 
     private net.minecraft.world.phys.Vec3 getBevelPos(BlockPos pos, Direction.Axis axis, boolean isStart) {

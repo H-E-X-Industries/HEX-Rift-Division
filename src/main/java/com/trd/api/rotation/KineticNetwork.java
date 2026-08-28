@@ -18,7 +18,7 @@ public class KineticNetwork {
     private final Set<BlockPos> members = new HashSet<>();
     private final Set<BlockPos> generators = new HashSet<>();
     
-    private long currentSpeed = 0;
+    private double currentSpeed = 0.0;
     private long totalGeneratedTorque = 0;
     private long totalConsumedTorque = 0;
     private double totalInertia = 1.0;
@@ -49,7 +49,8 @@ public class KineticNetwork {
             this.needsRecalculation = false;
         }
 
-        long oldSpeed = this.currentSpeed;
+        long oldSpeedLong = (long) Math.round(this.currentSpeed);
+        double oldSpeed = this.currentSpeed;
         
         // OVERLOAD CHECK: если сеть критически перегружена (>= 125%) — принудительно останавливаем
         if (isOverloaded && loadFactor >= 1.25) {
@@ -58,37 +59,60 @@ public class KineticNetwork {
 
         // 1. РАЗГОН / ТОРМОЖЕНИЕ
         if (totalGeneratedTorque > 0) {
-            long effectiveTorque = totalGeneratedTorque - totalConsumedTorque;
-            if (loadFactor < 1.25 && effectiveTorque <= 0 && Math.abs(this.currentSpeed) < Math.abs(this.targetNetworkSpeed)) {
-                effectiveTorque = 1;
-            }
+            double speedDiff = (double) targetNetworkSpeed - this.currentSpeed;
+            double absSpeed = Math.abs(this.currentSpeed);
+            double absTarget = Math.abs((double) targetNetworkSpeed);
 
-            long deltaSpeed = (long) (effectiveTorque * 10 / totalInertia);
-            if (deltaSpeed == 0 && effectiveTorque != 0) deltaSpeed = (long) Math.signum(effectiveTorque);
+            // Проверяем, разгоняемся ли мы в сторону целевой скорости или замедляемся
+            boolean accelerating = (targetNetworkSpeed != 0 && Math.signum(this.currentSpeed) == Math.signum(targetNetworkSpeed) && absSpeed < absTarget)
+                    || (this.currentSpeed == 0 && targetNetworkSpeed != 0);
 
-            if (this.currentSpeed < targetNetworkSpeed) {
-                this.currentSpeed = Math.min(targetNetworkSpeed, this.currentSpeed + Math.max(1, deltaSpeed));
-            } else if (this.currentSpeed > targetNetworkSpeed) {
-                this.currentSpeed = Math.max(targetNetworkSpeed, this.currentSpeed - Math.max(1, Math.abs(deltaSpeed)));
+            if (accelerating) {
+                // Эффективный разгоняющий момент с учётом потребителей
+                double effectiveTorque = totalGeneratedTorque - totalConsumedTorque;
+                if (loadFactor < 1.25 && effectiveTorque <= 0) {
+                    effectiveTorque = 0.5; // Минимальный момент для выхода на целевую скорость
+                }
+
+                double deltaSpeed = (effectiveTorque * 10.0) / this.totalInertia;
+                if (speedDiff > 0) {
+                    this.currentSpeed = Math.min((double) targetNetworkSpeed, this.currentSpeed + Math.max(0.0001, deltaSpeed));
+                } else if (speedDiff < 0) {
+                    this.currentSpeed = Math.max((double) targetNetworkSpeed, this.currentSpeed - Math.max(0.0001, deltaSpeed));
+                }
+            } else {
+                // Замедление к целевой скорости (при снижении оборотов мотора или перегрузке)
+                double decelTorque = totalConsumedTorque + 15.0 + 0.5 * totalGeneratedTorque;
+                double deltaSpeed = (decelTorque * 10.0) / this.totalInertia;
+                if (speedDiff > 0) {
+                    this.currentSpeed = Math.min((double) targetNetworkSpeed, this.currentSpeed + Math.max(0.0001, deltaSpeed));
+                } else if (speedDiff < 0) {
+                    this.currentSpeed = Math.max((double) targetNetworkSpeed, this.currentSpeed - Math.max(0.0001, deltaSpeed));
+                }
             }
         } else {
-            // ТОРМОЖЕНИЕ (Инерция)
-            long frictionTorque = (long) (2 + totalInertia * 0.01);
-            long deltaSpeed = (long) (frictionTorque * 5 / totalInertia);
-            if (deltaSpeed == 0) deltaSpeed = 1;
+            // ТОРМОЖЕНИЕ ПО ИНЕРЦИИ (генераторы выключены)
+            // Потребители (станки, дробители) + базовое сопротивление выбега (~в 3 раза медленнее разгона)
+            double brakingTorque = totalConsumedTorque + 15.0 + 0.2 * members.size();
+            double deltaSpeed = (brakingTorque * 10.0) / this.totalInertia;
 
             if (this.currentSpeed > 0) {
-                this.currentSpeed = Math.max(0, this.currentSpeed - deltaSpeed);
+                this.currentSpeed = Math.max(0.0, this.currentSpeed - deltaSpeed);
             } else if (this.currentSpeed < 0) {
-                this.currentSpeed = Math.min(0, this.currentSpeed + deltaSpeed);
+                this.currentSpeed = Math.min(0.0, this.currentSpeed + deltaSpeed);
+            }
+
+            if (Math.abs(this.currentSpeed) < 0.001) {
+                this.currentSpeed = 0.0;
             }
         }
 
-        if (oldSpeed != this.currentSpeed) {
+        long newSpeedLong = (long) Math.round(this.currentSpeed);
+        if (oldSpeedLong != newSpeedLong) {
             updateMembers(level);
             return true;
         }
-        return false;
+        return oldSpeed != this.currentSpeed;
     }
 
     public void recalculate(ServerLevel level) {
@@ -108,7 +132,7 @@ public class KineticNetwork {
                 if (absScale > 0.001f) {
                     this.totalConsumedTorque += (long) (node.getConsumedTorque() * absScale);
                 }
-                node.setSpeed(this.currentSpeed);
+                node.setSpeed((long) Math.round(this.currentSpeed));
                 checkNodeFailure(level, pos, node);
             }
         }
@@ -202,10 +226,11 @@ public class KineticNetwork {
     }
 
     private void updateMembers(ServerLevel level) {
+        long speedLong = (long) Math.round(this.currentSpeed);
         for (BlockPos pos : members) {
             BlockEntity be = level.getBlockEntity(pos);
             if (be instanceof Rotational node) {
-                node.setSpeed(this.currentSpeed);
+                node.setSpeed(speedLong);
                 checkNodeFailure(level, pos, node);
                 
                 if (totalGeneratedTorque > node.getMaxTorque()) {
@@ -218,7 +243,7 @@ public class KineticNetwork {
     public CompoundTag serializeNBT() {
         CompoundTag nbt = new CompoundTag();
         nbt.putUUID("Id", networkId);
-        nbt.putLong("Speed", currentSpeed);
+        nbt.putDouble("Speed", currentSpeed);
         nbt.putBoolean("Overloaded", isOverloaded);
         ListTag membersTag = new ListTag();
         for (BlockPos pos : members) {
@@ -235,7 +260,11 @@ public class KineticNetwork {
 
     public static KineticNetwork deserializeNBT(CompoundTag nbt) {
         KineticNetwork net = new KineticNetwork(nbt.getUUID("Id"));
-        net.currentSpeed = nbt.getLong("Speed");
+        if (nbt.contains("Speed", Tag.TAG_DOUBLE)) {
+            net.currentSpeed = nbt.getDouble("Speed");
+        } else {
+            net.currentSpeed = (double) nbt.getLong("Speed");
+        }
         net.isOverloaded = nbt.getBoolean("Overloaded");
         ListTag membersTag = nbt.getList("Members", Tag.TAG_LONG);
         for (int i = 0; i < membersTag.size(); i++) {
@@ -255,10 +284,12 @@ public class KineticNetwork {
     public void removeMember(BlockPos pos) { this.members.remove(pos); this.generators.remove(pos); }
     public void requestRecalculation() { this.needsRecalculation = true; }
     public Set<BlockPos> getMembers() { return members; }
-    public long getSpeed() { return currentSpeed; }
+    public long getSpeed() { return (long) Math.round(currentSpeed); }
+    public double getExactSpeed() { return currentSpeed; }
     public Set<BlockPos> getGenerators() { return generators; }
     public long getTargetSpeed() { return targetNetworkSpeed; }
-    public void setCurrentSpeed(long speed) { this.currentSpeed = speed; }
+    public void setCurrentSpeed(double speed) { this.currentSpeed = speed; }
+    public void setCurrentSpeed(long speed) { this.currentSpeed = (double) speed; }
     public long getTotalTorque() { return totalGeneratedTorque; }
     public double getTotalInertia() { return totalInertia; }
     public boolean isOverloaded() { return isOverloaded; }

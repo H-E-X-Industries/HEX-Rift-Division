@@ -52,6 +52,18 @@ public class ClutchBlockEntity extends KineticNodeBlockEntity {
             return false;
         }
 
+        if (neighbor instanceof ShaftBlockEntity shaft) {
+            if (shaft.getBlockState().getBlock() instanceof com.trd.block.basic.industrial.rotation.ShaftBlock sb) {
+                return sb.getDiameter() == this.shaftDiameter;
+            }
+        } else if (neighbor instanceof BearingBlockEntity bearing) {
+            return bearing.hasShaft() && bearing.getShaftDiameter() == this.shaftDiameter;
+        } else if (neighbor instanceof ClutchBlockEntity otherClutch) {
+            return otherClutch.hasShaft() && otherClutch.getShaftDiameter() == this.shaftDiameter;
+        } else if (neighbor instanceof TachometerBlockEntity tach) {
+            return tach.hasShaft() && tach.getShaftDiameter() == this.shaftDiameter;
+        }
+
         return true;
     }
 
@@ -100,6 +112,18 @@ public class ClutchBlockEntity extends KineticNodeBlockEntity {
             return (long) (shaftMaterial.baseTorque() * shaftDiameter.getTorqueMultiplier());
         }
         return 10000;
+    }
+
+    @Override
+    public long getVisualSpeed() {
+        if (!this.hasShaft) return 0;
+        BlockState state = getBlockState();
+        if (!state.hasProperty(ClutchBlock.FACING)) return 0;
+        Direction facing = state.getValue(ClutchBlock.FACING);
+        if (facing == Direction.SOUTH || facing == Direction.EAST || facing == Direction.UP) {
+            return -this.speed;
+        }
+        return this.speed;
     }
 
     @Override
