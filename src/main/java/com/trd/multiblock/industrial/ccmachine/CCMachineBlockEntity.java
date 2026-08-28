@@ -8,6 +8,7 @@ import com.trd.api.metallurgy.system.MetalUnits2;
 import com.trd.api.metallurgy.system.recipe.MoldRecipe;
 import com.trd.api.metallurgy.system.recipe.MoldRecipeRegistry;
 import com.trd.block.entity.ModBlockEntities;
+import com.trd.event.SlagItem;
 import com.trd.menu.industrial.CCMachineMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -42,14 +43,21 @@ import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class CCMachineBlockEntity extends BlockEntity implements MenuProvider, IMetalReceiver {
 
-    // Буфер металла: 3 блока = 81 * 3 CU
-    public static final int METAL_CAPACITY = 3 * MetalUnits2.UNITS_PER_BLOCK; // 243
+    // Буфер металла: 1 блок = 81 CU (вся заготовка остывает за раз)
+    public static final int METAL_CAPACITY = MetalUnits2.UNITS_PER_BLOCK; // 81
     public static final int TANK_CAPACITY = 64000;
     // 1000 мб воды -> 9 ед (CU) металла, получаем тот же объём пара н.д.
     public static final int WATER_PER_9_UNITS = 1000;
-    public static final int CAST_TIME = 100; // тиков на одну деталь
+    // Время остывания всего буфера за раз:
+    //  - буфер заполнен полностью (81/81) — остывание МГНОВЕННОЕ (1 тик)
+    //  - буфер заполнен частично — 5 секунд (100 тиков)
+    public static final int CAST_TIME_INSTANT = 1;
+    public static final int CAST_TIME_PARTIAL = 100;
 
     // слоты машинного инвентаря
     public static final int SLOT_MOLD = 0;
@@ -60,6 +68,7 @@ public class CCMachineBlockEntity extends BlockEntity implements MenuProvider, I
     private Metal currentMetal = null;
     private int storedUnits = 0;
     private int castProgress = 0;
+    private int castTargetTime = 0;
 
     private final FluidTank waterTank = new FluidTank(TANK_CAPACITY) {
         @Override
@@ -122,7 +131,8 @@ public class CCMachineBlockEntity extends BlockEntity implements MenuProvider, I
                 case 4 -> steamTank.getFluidAmount();
                 case 5 -> TANK_CAPACITY;
                 case 6 -> castProgress;
-                case 7 -> CAST_TIME;
+                case 7 -> castTargetTime > 0 ? castTargetTime
+                        : (storedUnits >= METAL_CAPACITY ? CAST_TIME_INSTANT : CAST_TIME_PARTIAL);
                 case 8 -> currentMetal != null ? currentMetal.getColor() : -1;
                 default -> 0;
             };
@@ -150,55 +160,68 @@ public class CCMachineBlockEntity extends BlockEntity implements MenuProvider, I
         MoldRecipe recipe = mold.isEmpty() ? null : MoldRecipeRegistry.getRecipe(mold.getItem());
 
         if (this.currentMetal == null || this.storedUnits <= 0 || recipe == null) {
-            if (this.castProgress != 0) {
-                this.castProgress = 0;
-                syncChanged();
-            }
+            resetCast();
             return;
         }
 
         int required = recipe.getRequiredUnits();
-        int waterNeeded = Math.max(1, (required * WATER_PER_9_UNITS) / MetalUnits2.UNITS_PER_INGOT);
+        // ВЕСЬ буфер остывает за раз, а не по одному предмету
+        int items = this.storedUnits / required;
+        if (items <= 0) {
+            resetCast();
+            return;
+        }
+        int batchUnits = items * required;
 
         ItemStack result = recipe.createOutput(this.currentMetal);
-        if (result.isEmpty() || !canOutput(result)) {
-            if (this.castProgress != 0) {
-                this.castProgress = 0;
-                syncChanged();
-            }
+        if (result.isEmpty() || !canOutput(result, items)) {
+            resetCast();
             return;
         }
+
+        // воды на весь буфер
+        int waterNeeded = Math.max(1, (batchUnits * WATER_PER_9_UNITS) / MetalUnits2.UNITS_PER_INGOT);
 
         // ресурсы
-        if (this.storedUnits < required
-                || waterTank.getFluidAmount() < waterNeeded
+        if (waterTank.getFluidAmount() < waterNeeded
                 || (steamTank.getCapacity() - steamTank.getFluidAmount()) < waterNeeded) {
-            if (this.castProgress != 0) {
-                this.castProgress = 0;
-                syncChanged();
-            }
+            resetCast();
             return;
         }
 
+        // НЕПРЕРЫВНОЕ ЛИТЬЁ: пересчитываем скорость каждый тик по текущему заполнению буфера.
+        // Полный буфер (81/81) — металл конвертируется МГНОВЕННО (текущий тик).
+        // Неполный буфер — остывание занимает 5 секунд.
+        this.castTargetTime = (this.storedUnits >= METAL_CAPACITY) ? CAST_TIME_INSTANT : CAST_TIME_PARTIAL;
+
         this.castProgress++;
-        if (this.castProgress >= CAST_TIME) {
-            finishCast(recipe, result, required, waterNeeded);
-        } else if (this.castProgress % 20 == 0) {
+        if (this.castProgress >= this.castTargetTime) {
+            finishCast(result, batchUnits, waterNeeded, items);
+        } else if (this.castProgress % 40 == 0) {
             syncChanged();
         }
     }
 
-    private void finishCast(MoldRecipe recipe, ItemStack result, int required, int waterNeeded) {
-        this.storedUnits -= required;
+    private void resetCast() {
+        if (this.castProgress != 0 || this.castTargetTime != 0) {
+            this.castProgress = 0;
+            this.castTargetTime = 0;
+            syncChanged();
+        }
+    }
+
+    private void finishCast(ItemStack result, int batchUnits, int waterNeeded, int items) {
+        this.storedUnits -= batchUnits;
         if (this.storedUnits <= 0) {
             this.storedUnits = 0;
             this.currentMetal = null;
         }
         waterTank.drain(waterNeeded, IFluidHandler.FluidAction.EXECUTE);
         steamTank.fill(new FluidStack(ModFluids.LOW_PRESSURE_STEAM_SOURCE.get(), waterNeeded), IFluidHandler.FluidAction.EXECUTE);
-        addToOutput(result.copy());
+        addToOutput(result, items);
 
         this.castProgress = 0;
+        this.castTargetTime = 0;
 
         if (level instanceof ServerLevel serverLevel) {
             serverLevel.sendParticles(ParticleTypes.POOF,
@@ -209,25 +232,34 @@ public class CCMachineBlockEntity extends BlockEntity implements MenuProvider, I
         syncChanged();
     }
 
-    private boolean canOutput(ItemStack result) {
+    private boolean canOutput(ItemStack result, int count) {
+        int space = 0;
         for (int i = SLOT_OUTPUT_START; i < INVENTORY_SIZE; i++) {
             ItemStack slot = inventory.getStackInSlot(i);
-            if (slot.isEmpty()) return true;
-            if (ItemStack.isSameItemSameTags(slot, result) && slot.getCount() < slot.getMaxStackSize()) return true;
+            if (slot.isEmpty()) {
+                space += result.getMaxStackSize();
+            } else if (ItemStack.isSameItemSameTags(slot, result)) {
+                space += slot.getMaxStackSize() - slot.getCount();
+            }
+            if (space >= count) return true;
         }
         return false;
     }
 
-    private void addToOutput(ItemStack result) {
-        for (int i = SLOT_OUTPUT_START; i < INVENTORY_SIZE; i++) {
+    private void addToOutput(ItemStack result, int count) {
+        int remaining = count;
+        for (int i = SLOT_OUTPUT_START; i < INVENTORY_SIZE && remaining > 0; i++) {
             ItemStack slot = inventory.getStackInSlot(i);
             if (slot.isEmpty()) {
-                inventory.setStackInSlot(i, result);
-                return;
-            }
-            if (ItemStack.isSameItemSameTags(slot, result) && slot.getCount() < slot.getMaxStackSize()) {
-                slot.grow(result.getCount());
-                return;
+                ItemStack toAdd = result.copy();
+                int add = Math.min(remaining, result.getMaxStackSize());
+                toAdd.setCount(add);
+                inventory.setStackInSlot(i, toAdd);
+                remaining -= add;
+            } else if (ItemStack.isSameItemSameTags(slot, result) && slot.getCount() < slot.getMaxStackSize()) {
+                int add = Math.min(remaining, slot.getMaxStackSize() - slot.getCount());
+                slot.grow(add);
+                remaining -= add;
             }
         }
     }
@@ -268,6 +300,22 @@ public class CCMachineBlockEntity extends BlockEntity implements MenuProvider, I
     @Override
     public float getFillLevel() {
         return (float) storedUnits / METAL_CAPACITY;
+    }
+
+    public List<ItemStack> dumpMetalAsSlag() {
+        List<ItemStack> slagItems = new ArrayList<>();
+        if (currentMetal != null && storedUnits > 0) {
+            ItemStack slag = SlagItem.createSlag(currentMetal, storedUnits);
+            if (!slag.getTag().contains("HotTime")) {
+                slag.getOrCreateTag().putInt("HotTime", SlagItem.BASE_COOLING_TIME);
+                slag.getOrCreateTag().putInt("HotTimeMax", SlagItem.BASE_COOLING_TIME);
+            }
+            slagItems.add(slag);
+            this.currentMetal = null;
+            this.storedUnits = 0;
+            syncChanged();
+        }
+        return slagItems;
     }
 
     // ============ Геттеры для GUI ============

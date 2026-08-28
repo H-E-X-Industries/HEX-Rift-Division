@@ -53,7 +53,10 @@ public class CCMachineBlock extends BaseEntityBlock implements IMultiblockContro
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return this.defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
+        // Перед машины (лицевая сторона) ставится К игроку, литейные порты (%)
+        // оказываются СЗАДИ — поэтому без getOpposite() (facing направлен на игрока,
+        // а структура поворачивается так, что конусы % уходят в противоположную сторону).
+        return this.defaultBlockState().setValue(FACING, context.getHorizontalDirection());
     }
 
     @Override
@@ -125,6 +128,10 @@ public class CCMachineBlock extends BaseEntityBlock implements IMultiblockContro
                     if (!inv.getStackInSlot(i).isEmpty()) {
                         Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), inv.getStackInSlot(i));
                     }
+                }
+                // Выбрасываем накопленный металл как шлак
+                for (ItemStack slag : machine.dumpMetalAsSlag()) {
+                    Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), slag);
                 }
             }
             Direction facing = state.getValue(FACING);

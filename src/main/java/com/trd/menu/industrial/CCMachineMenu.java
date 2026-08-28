@@ -28,7 +28,7 @@ public class CCMachineMenu extends AbstractContainerMenu {
         this.data = data;
         this.levelAccess = ContainerLevelAccess.create(entity.getLevel(), entity.getBlockPos());
 
-        // индекс 0 — слот формы (80,38)
+        // слот формы (0)
         this.addSlot(new SlotItemHandler(entity.getInventory(), CCMachineBlockEntity.SLOT_MOLD, 80, 38) {
             @Override
             public boolean mayPlace(ItemStack stack) {
@@ -36,7 +36,7 @@ public class CCMachineMenu extends AbstractContainerMenu {
             }
         });
 
-        // индексы 1-6 — выходные слоты, сетка 3x2 (62,60 ... 98,78)
+        // выходные слоты 1-6, сетка 3×2
         for (int i = 0; i < CCMachineBlockEntity.SLOT_OUTPUT_COUNT; i++) {
             int col = i % 3;
             int row = i / 3;
@@ -49,14 +49,14 @@ public class CCMachineMenu extends AbstractContainerMenu {
             });
         }
 
-        // инвентарь игрока (индексы 7-42)
+        // инвентарь игрока (7-42)
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
                 this.addSlot(new Slot(inv, col + row * 9 + 9, 8 + col * 18, 118 + row * 18));
             }
         }
         for (int i = 0; i < 9; i++) {
-            this.addSlot(new Slot(inv, i, 8 + i * 18, 172));
+            this.addSlot(new Slot(inv, i, 8 + i * 18, 176));
         }
 
         this.addDataSlots(data);
@@ -69,15 +69,17 @@ public class CCMachineMenu extends AbstractContainerMenu {
         return new CCMachineMenu(id, inv, (CCMachineBlockEntity) entity, data);
     }
 
-    public int getMetalUnits() { return data.get(0); }
-    public int getMetalCapacity() { return data.get(1); }
-    public int getWaterAmount() { return data.get(2); }
-    public int getWaterCapacity() { return data.get(3); }
-    public int getSteamAmount() { return data.get(4); }
-    public int getSteamCapacity() { return data.get(5); }
-    public int getCastProgress() { return data.get(6); }
-    public int getCastRequired() { return data.get(7); }
-    public int getMetalColor() { return data.get(8); }
+    // === Getters для GUI (как в SmelterMenu) ===
+    public int getMetalUnits()      { return data.get(0); }
+    public int getMetalCapacity()   { return data.get(1); }
+    public int getWaterAmount()     { return data.get(2); }
+    public int getWaterCapacity()   { return data.get(3); }
+    public int getSteamAmount()     { return data.get(4); }
+    public int getSteamCapacity()   { return data.get(5); }
+    public int getCastProgress()    { return data.get(6); }
+    public int getCastRequired()    { return data.get(7); }
+    public int getMetalColor()      { return data.get(8); }
+
     public CCMachineBlockEntity getBlockEntity() { return blockEntity; }
 
     @Override
@@ -95,12 +97,12 @@ public class CCMachineMenu extends AbstractContainerMenu {
             returnStack = stack.copy();
 
             if (index < 7) {
-                // из машины в инвентарь игрока
+                // из машины в инвентарь игрока (7-42)
                 if (!this.moveItemStackTo(stack, 7, 43, true)) {
                     return ItemStack.EMPTY;
                 }
             } else {
-                // из инвентаря в машину — только форма в слот формы
+                // из инвентаря в машину — только форма в слот формы (0)
                 if (MoldRecipeRegistry.hasRecipe(stack.getItem())) {
                     if (!this.moveItemStackTo(stack, 0, 1, false)) {
                         return ItemStack.EMPTY;

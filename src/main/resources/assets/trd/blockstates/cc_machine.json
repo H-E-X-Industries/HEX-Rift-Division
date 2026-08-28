@@ -1,8 +1,8 @@
 {
   "variants": {
-    "facing=north": { "model": "trd:block/cc_machine" },
-    "facing=east":  { "model": "trd:block/cc_machine", "y": 90 },
-    "facing=south": { "model": "trd:block/cc_machine", "y": 180 },
-    "facing=west":  { "model": "trd:block/cc_machine", "y": 270 }
+    "facing=north": { "model": "trd:block/cc_machine", "y": 270 },
+    "facing=east":  { "model": "trd:block/cc_machine", "y": 0 },
+    "facing=south": { "model": "trd:block/cc_machine", "y": 90 },
+    "facing=west":  { "model": "trd:block/cc_machine", "y": 180}
   }
 }
