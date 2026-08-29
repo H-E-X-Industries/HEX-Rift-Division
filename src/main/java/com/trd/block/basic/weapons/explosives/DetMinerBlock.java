@@ -1,5 +1,6 @@
 package com.trd.block.basic.weapons.explosives;
 
+import com.trd.api.vein.VeinBiomeResolver;
 import com.trd.api.vein.VeinManager;
 import com.trd.block.basic.ModBlocks;
 import com.trd.block.entity.conglomerate.ConglomerateBlockEntity;
@@ -8,7 +9,9 @@ import com.trd.item.conglomerates.ConglomerateItem;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -19,6 +22,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -119,10 +123,14 @@ public class DetMinerBlock extends Block implements IDetonatable {
             }
 
             if (vein != null && serverLevel.random.nextFloat() < CONGLOMERATE_CHUNK_CHANCE) {
+                Holder<Biome> biome = serverLevel.getBiome(targetPos);
                 ItemStack chunk = ConglomerateItem.createFromVein(
                         vein.getComposition().getFullComposition(),
                         CONGLOMERATE_OU_EXTRACT,
-                        vein.getTypeName()
+                        vein.getTypeName(),
+                        VeinBiomeResolver.of(biome),
+                        biome.unwrapKey().map(ResourceKey::location).orElse(null),
+                        biome.value().getBaseTemperature()
                 );
                 allDrops.add(chunk);
             } else {

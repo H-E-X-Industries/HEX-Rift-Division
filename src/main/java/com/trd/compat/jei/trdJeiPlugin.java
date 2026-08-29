@@ -12,6 +12,7 @@ import com.trd.api.metallurgy.system.recipe.MoldRecipe;
 import com.trd.api.metallurgy.system.recipe.MoldRecipeRegistry;
 import com.trd.block.basic.ModBlocks;
 import com.trd.block.entity.industrial.rotation.MillstoneBlockEntity;
+import com.trd.event.HotItemHandler;
 import com.trd.event.SlagItem;
 import com.trd.item.ModItems;
 import com.trd.main.MainRegistry;
@@ -109,6 +110,8 @@ public class trdJeiPlugin implements IModPlugin {
             RecipeType.create(MainRegistry.MOD_ID, "centrifuge", CentrifugeWrapper.class);
     public static final RecipeType<CentrifugeCylinderWrapper> CENTRIFUGE_CYLINDER_TYPE =
             RecipeType.create(MainRegistry.MOD_ID, "centrifuge_cylinder", CentrifugeCylinderWrapper.class);
+    public static final RecipeType<ForgingWrapper> FORGING_TYPE =
+            RecipeType.create(MainRegistry.MOD_ID, "forging", ForgingWrapper.class);
 
     public record ElectricFurnaceWrapper(net.minecraft.world.item.crafting.AbstractCookingRecipe recipe, int cookTime, int energyPerTick) {}
     public record SmeltingWrapper(ItemStack input, Metal metal, int outputUnits, int temp, float heatConsumption, int timeTicks, int inputCount) {}
@@ -123,6 +126,7 @@ public class trdJeiPlugin implements IModPlugin {
     public record VishelashivatelWrapper(com.trd.multiblock.industrial.vishelashivatel.VishelashivatelRecipe recipe) {}
     public record CentrifugeWrapper(CentrifugeRecipe recipe) {}
     public record CentrifugeCylinderWrapper(CentrifugeCylinderRecipe recipe) {}
+    public record ForgingWrapper(ItemStack hotIngot, ItemStack hammer, ItemStack hotPlate, ItemStack hammerDamaged, Metal metal, int requiredTemp) {}
 
     @Override
     public void registerCategories(IRecipeCategoryRegistration registration) {
@@ -141,6 +145,7 @@ public class trdJeiPlugin implements IModPlugin {
         registration.addRecipeCategories(new VishelashivatelCategory(guiHelper));
         registration.addRecipeCategories(new CentrifugeCategory(guiHelper));
         registration.addRecipeCategories(new CentrifugeCylinderCategory(guiHelper));
+        registration.addRecipeCategories(new ForgingCategory(guiHelper));
     }
 
     @Override
@@ -303,6 +308,35 @@ public class trdJeiPlugin implements IModPlugin {
             centrifugeCylinderRecipes.add(new CentrifugeCylinderWrapper(recipe));
         }
         registration.addRecipes(CENTRIFUGE_CYLINDER_TYPE, centrifugeCylinderRecipes);
+
+        // === РУЧНАЯ КОВКА НА НАКОВАЛЬНЕ ===
+        List<ForgingWrapper> forgingRecipes = new ArrayList<>();
+        MoldRecipe plateRecipe = MoldRecipeRegistry.getRecipe(ModItems.MOLD_PLATE.get());
+        if (plateRecipe != null) {
+            for (Metal metal : MetallurgyRegistry.getAllMetals()) {
+                // Для ковки нужен слиток и доступная пластина
+                if (metal.getIngot() == null) continue;
+                ItemStack plate = plateRecipe.createOutput(metal);
+                if (plate.isEmpty()) continue;
+
+                // Нагретый до необходимой температуры слиток
+                ItemStack hotIngot = new ItemStack(metal.getIngot());
+                HotItemHandler.setHot(hotIngot, metal.getMeltingPoint(), false);
+
+                // Нагретая пластина (перенос тегов нагрева, как в AnvilForgeEventHandler)
+                ItemStack hotPlate = plate.copy();
+                HotItemHandler.setHot(hotPlate, metal.getMeltingPoint(), false);
+
+                // Молот: целый на входе и с -1 прочности (1 урона) на выходе
+                ItemStack hammer = new ItemStack(ModItems.HAMMER.get());
+                ItemStack hammerDamaged = new ItemStack(ModItems.HAMMER.get());
+                hammerDamaged.setDamageValue(1);
+
+                int requiredTemp = (int) (metal.getMeltingPoint() * 0.15f);
+                forgingRecipes.add(new ForgingWrapper(hotIngot, hammer, hotPlate, hammerDamaged, metal, requiredTemp));
+            }
+        }
+        registration.addRecipes(FORGING_TYPE, forgingRecipes);
     }
 
     @Override
@@ -321,6 +355,7 @@ public class trdJeiPlugin implements IModPlugin {
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.CENTRIFUGE_CONUS.get()), CENTRIFUGE_TYPE);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.CENTRIFUGE_CYLINDER.get()), CENTRIFUGE_CYLINDER_TYPE);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.CENTRIFUGE_MOTOR.get()), CENTRIFUGE_TYPE, CENTRIFUGE_CYLINDER_TYPE);
+        registration.addRecipeCatalyst(new ItemStack(net.minecraft.world.level.block.Blocks.ANVIL), FORGING_TYPE);
     }
 
     private static ItemStack createLiquidMetalStack(Metal metal, int amount) {
@@ -977,6 +1012,61 @@ public class trdJeiPlugin implements IModPlugin {
         public void draw(CentrifugeCylinderWrapper recipe, IRecipeSlotsView view, GuiGraphics gg, double mx, double my) {
             var font = Minecraft.getInstance().font;
             gg.drawString(font, String.format("%.1fs", recipe.recipe().getProcessTime() / 20f), 24, 33, 0xFF555555, false);
+        }
+    }
+
+    // === РУЧНАЯ КОВКА НА НАКОВАЛЬНЕ ===
+    // Шаблон jei_cast_gui.png (120x60), как у плавки и литья:
+    // входы на (5,13)/(23,13), наковальня в центре (52,13), выходы на (81,13)/(99,13)
+    public static class ForgingCategory implements IRecipeCategory<ForgingWrapper> {
+        private final IDrawable background;
+        private final IDrawable icon;
+        private final Component title;
+
+        public ForgingCategory(IGuiHelper guiHelper) {
+            this.background = guiHelper.createDrawable(
+                    new ResourceLocation(MainRegistry.MOD_ID, "textures/gui/jei/jei_cast_gui.png"),
+                    0, 0, 120, 60);
+            this.icon = guiHelper.createDrawableIngredient(VanillaTypes.ITEM_STACK,
+                    new ItemStack(net.minecraft.world.level.block.Blocks.ANVIL));
+            this.title = Component.translatable("jei.category.trd.forging");
+        }
+
+        @Override public RecipeType<ForgingWrapper> getRecipeType() { return FORGING_TYPE; }
+        @Override public Component getTitle() { return title; }
+        @Override public IDrawable getBackground() { return background; }
+        @Override public IDrawable getIcon() { return icon; }
+
+        @Override
+        public void setRecipe(IRecipeLayoutBuilder builder, ForgingWrapper recipe, IFocusGroup focuses) {
+            // Нагретый слиток
+            builder.addSlot(RecipeIngredientRole.INPUT, 5, 13).addItemStack(recipe.hotIngot());
+            // Молот
+            builder.addSlot(RecipeIngredientRole.INPUT, 23, 13).addItemStack(recipe.hammer());
+            // Пустые ячейки справа от наковальни
+            builder.addSlot(RecipeIngredientRole.INPUT, 5, 31);
+            builder.addSlot(RecipeIngredientRole.INPUT, 23, 31);
+
+            // Нагретая пластина
+            builder.addSlot(RecipeIngredientRole.OUTPUT, 81, 13).addItemStack(recipe.hotPlate());
+            // Тот же молот, но с -1 прочности
+            builder.addSlot(RecipeIngredientRole.OUTPUT, 99, 13).addItemStack(recipe.hammerDamaged());
+            builder.addSlot(RecipeIngredientRole.OUTPUT, 81, 31);
+            builder.addSlot(RecipeIngredientRole.OUTPUT, 99, 31);
+        }
+
+        @Override
+        public void draw(ForgingWrapper recipe, IRecipeSlotsView view, GuiGraphics gg, double mx, double my) {
+            // Наковальня в серединном слоте (аналог машины в плавке/литье)
+            ItemStack anvil = new ItemStack(net.minecraft.world.level.block.Blocks.ANVIL);
+            gg.renderItem(anvil, 52, 13);
+            gg.renderItemDecorations(Minecraft.getInstance().font, anvil, 52, 13);
+
+            var font = Minecraft.getInstance().font;
+            // Необходимая температура ковки
+            gg.drawString(font, recipe.requiredTemp() + "°C", 42, 41, 0xFF555555, false);
+            // Нагрев до температуры плавления
+            gg.drawString(font, recipe.metal().getMeltingPoint() + "°C", 42, 51, 0xFF555555, false);
         }
     }
 }

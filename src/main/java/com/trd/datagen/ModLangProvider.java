@@ -121,6 +121,7 @@ public class ModLangProvider extends LanguageProvider {
         add("jei.category.trd.coccer_oven", "Coke Oven");
         add("jei.category.trd.chemical_plant", "Chemical Plant");
         add("jei.category.trd.vishelashivatel", "Leacher");
+        add("jei.category.trd.forging", "Forging");
 
         // Metals
         add("metal.trd.gold", "Gold");
@@ -507,11 +508,22 @@ public class ModLangProvider extends LanguageProvider {
         add("tooltip.trd.fuel_tank.type_not_set", "§aType: §cnot set");
 
         // ═══ Tooltip: Conglomerate ═══
-        add("tooltip.trd.conglomerate.empty", "§7Empty chunk");
+add("tooltip.trd.conglomerate.empty", "§7Empty chunk");
         add("tooltip.trd.conglomerate.contains_fractions", "§eContains fractions:");
-        add("tooltip.trd.conglomerate.fraction", "%s: %d%%");
-        add("tooltip.trd.conglomerate.ou", "§8OU: %d");
-        add("tooltip.trd.conglomerate.vein_type", "§8Vein type: %s");
+        add("tooltip.trd.conglomerate.biome", "Mining biome: ");
+        add("tooltip.trd.conglomerate.layer", "§7  L%d: %s");
+        add("tooltip.trd.conglomerate.ou", "OU: %d");
+        add("tooltip.trd.conglomerate.temperature", "Biome temperature: ");
+        add("tooltip.trd.conglomerate.vein_type", "Vein type: ");
+
+        add("vein.trd.depth.surface", "Surface");
+        add("vein.trd.depth.medium", "Medium-depth");
+        add("vein.trd.depth.deep", "Deep");
+
+        add("vein.trd.fraction.light_metal", "Light Metals: %d%%");
+        add("vein.trd.fraction.heavy_metal", "Heavy Metals: %d%%");
+        add("vein.trd.fraction.noble_metal", "Noble Metals: %d%%");
+        add("vein.trd.fraction.rare_earth", "Rare Earth: %d%%");
 
         // ═══ Tooltip: Energy Cell ═══
         add("tooltip.trd.energy_cell.energy_stored", "§eEnergy: %s / %s JE");
@@ -1207,7 +1219,7 @@ public class ModLangProvider extends LanguageProvider {
         add("jei.category.trd.electric_furnace", "Электропечь");
         add("jei.category.trd.coccer_oven", "Коксовая печь");
         add("jei.category.trd.chemical_plant", "Химическая установка");
-
+        add("jei.category.trd.forging", "Ковка");
         // Литые кирки
 
         add("item.trd.cast_pickaxe.desc.charge", "§7Зажмите ПКМ для мощного удара");
@@ -1678,11 +1690,22 @@ public class ModLangProvider extends LanguageProvider {
         add("tooltip.trd.fuel_tank.type_not_set", "§aТип: §cне задан");
 
         // ═══ Tooltip: Conglomerate ═══
-        add("tooltip.trd.conglomerate.empty", "§7Пустой кусок");
+add("tooltip.trd.conglomerate.empty", "§7Пустой кусок");
         add("tooltip.trd.conglomerate.contains_fractions", "§eСодержит фракции:");
-        add("tooltip.trd.conglomerate.fraction", "%s: %d%%");
-        add("tooltip.trd.conglomerate.ou", "§8OU: %d");
-        add("tooltip.trd.conglomerate.vein_type", "§8Тип жилы: %s");
+        add("tooltip.trd.conglomerate.biome", "Биом добычи: ");
+        add("tooltip.trd.conglomerate.layer", "§7  L%d: %s");
+        add("tooltip.trd.conglomerate.ou", "OU: %d");
+        add("tooltip.trd.conglomerate.temperature", "Температура биома: ");
+        add("tooltip.trd.conglomerate.vein_type", "Тип жилы: ");
+
+        add("vein.trd.depth.surface", "Поверхностная");
+        add("vein.trd.depth.medium", "Средне-глубинная");
+        add("vein.trd.depth.deep", "Глубинная");
+
+        add("vein.trd.fraction.light_metal", "Лёгкие металлы: %d%%");
+        add("vein.trd.fraction.heavy_metal", "Тяжёлые металлы: %d%%");
+        add("vein.trd.fraction.noble_metal", "Благородные металлы: %d%%");
+        add("vein.trd.fraction.rare_earth", "Редкоземельные металлы: %d%%");
 
         // ═══ Tooltip: Energy Cell ═══
         add("tooltip.trd.energy_cell.energy_stored", "§eЭнергия: %s / %s JE");

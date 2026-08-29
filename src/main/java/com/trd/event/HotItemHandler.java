@@ -204,9 +204,10 @@ public class HotItemHandler {
         }
 
         // Урон и поджог от горячих предметов.
-        // Если в ЛЕВОЙ руке (offhand) кочерга — игрок защищён от горячих предметов в инвентаре.
-        boolean hasPokerInOffhand = player.getOffhandItem().getItem() instanceof PokerItem;
-        if (hasHotItem && maxHeatRatio > 0.15f && !hasPokerInOffhand) {
+        // Если в ЛЕВОЙ руке (offhand) или в ОСНОВНОЙ (mainhand) кочерга — игрок защищён от горячих предметов в инвентаре.
+        boolean hasPoker = player.getOffhandItem().getItem() instanceof PokerItem
+                || player.getMainHandItem().getItem() instanceof PokerItem;
+        if (hasHotItem && maxHeatRatio > 0.15f && !hasPoker) {
             int fireSeconds = (int) (maxHeatRatio * 5);
             float damageAmount = (maxTemp / 1200f) * maxHeatRatio * 1.5f;
 
