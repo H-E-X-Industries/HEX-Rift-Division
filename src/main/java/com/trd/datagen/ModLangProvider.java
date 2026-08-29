@@ -510,8 +510,10 @@ public class ModLangProvider extends LanguageProvider {
         // ═══ Tooltip: Conglomerate ═══
 add("tooltip.trd.conglomerate.empty", "§7Empty chunk");
         add("tooltip.trd.conglomerate.contains_fractions", "§eContains fractions:");
+        add("tooltip.trd.conglomerate.biome", "Mining biome: ");
         add("tooltip.trd.conglomerate.layer", "§7  L%d: %s");
         add("tooltip.trd.conglomerate.ou", "OU: %d");
+        add("tooltip.trd.conglomerate.temperature", "Biome temperature: ");
         add("tooltip.trd.conglomerate.vein_type", "Vein type: ");
 
         add("vein.trd.depth.surface", "Surface");
@@ -1690,8 +1692,10 @@ add("tooltip.trd.conglomerate.empty", "§7Empty chunk");
         // ═══ Tooltip: Conglomerate ═══
 add("tooltip.trd.conglomerate.empty", "§7Пустой кусок");
         add("tooltip.trd.conglomerate.contains_fractions", "§eСодержит фракции:");
+        add("tooltip.trd.conglomerate.biome", "Биом добычи: ");
         add("tooltip.trd.conglomerate.layer", "§7  L%d: %s");
         add("tooltip.trd.conglomerate.ou", "OU: %d");
+        add("tooltip.trd.conglomerate.temperature", "Температура биома: ");
         add("tooltip.trd.conglomerate.vein_type", "Тип жилы: ");
 
         add("vein.trd.depth.surface", "Поверхностная");

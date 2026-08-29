@@ -7,11 +7,14 @@ import com.trd.block.entity.conglomerate.ConglomerateBlockEntity;
 import com.trd.item.ModItems;
 import com.trd.item.conglomerates.ConglomerateItem;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
@@ -71,11 +74,14 @@ public class ConglomerateBlock extends BaseEntityBlock {
         };
 
         if (level.random.nextFloat() < chunkChance) {
+            Holder<Biome> biome = level.getBiome(pos);
             ItemStack chunk = ConglomerateItem.createFromVein(
                     vein.getComposition().getFractions(),
                     ConglomerateBlockEntity.OU_PER_CHARGE,
                     vein.getTypeName(),
-                    VeinBiomeResolver.of(level.getBiome(pos))
+                    VeinBiomeResolver.of(biome),
+                    biome.unwrapKey().map(ResourceKey::location).orElse(null),
+                    biome.value().getBaseTemperature()
             );
             Block.popResource(level, pos, chunk);
         } else {

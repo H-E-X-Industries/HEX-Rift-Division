@@ -1,5 +1,6 @@
 package com.trd.item.conglomerates;
 
+import com.trd.api.metallurgy.system.Metal;
 import com.trd.api.metallurgy.system.MetallurgyRegistry;
 import com.trd.api.vein.FractionLayerMatrix;
 import com.trd.api.vein.FractionType;
@@ -37,14 +38,18 @@ public class ConglomerateItem extends Item {
         return createFromVein(fractions, ou, typeName, VeinModifier.NONE);
     }
 
-    /**
-     * Создаёт кусок и запекает в него веса металлов (с учётом биом-бустов).
-     * Список весов читается в «Weights»: фракция → металл → вес обильности.
-     * Используется на Этапах 2+ при разделении фракций и выщелачивании.
-     * Множители фракций (температура) и металлов (биом-теги) сохраняются в
-     * «FractionBoost»/«MetalBoost» для отображения в тултипе.
-     */
     public static ItemStack createFromVein(Map<FractionType, Integer> fractions, int ou, String typeName, VeinModifier modifier) {
+        return createFromVein(fractions, ou, typeName, modifier, null, null);
+    }
+
+    /**
+     * Как {@link #createFromVein(Map, int, String, VeinModifier)}, но дополнительно
+     * запекает источник жилы для тултипа: ключ биома ({@code namespace:path}) и
+     * базовую температуру биома. Биом/температура добываются в момент добычи куска.
+     */
+    public static ItemStack createFromVein(Map<FractionType, Integer> fractions, int ou, String typeName,
+                                           VeinModifier modifier,
+                                           @Nullable ResourceLocation biomeKey, @Nullable Float temperature) {
         ItemStack stack = new ItemStack(com.trd.item.ModItems.CONGLOMERATE_CHUNK.get());
         CompoundTag tag = new CompoundTag();
 
@@ -76,6 +81,9 @@ public class ConglomerateItem extends Item {
             }
         }
         if (!metalBoost.isEmpty()) tag.put("MetalBoost", metalBoost);
+
+        if (biomeKey != null) tag.putString("Biome", biomeKey.toString());
+        if (temperature != null) tag.putFloat("Temp", temperature);
 
         tag.putInt("OU", ou);
         tag.putString("VeinType", typeName);
@@ -163,6 +171,31 @@ public class ConglomerateItem extends Item {
         return boosts.contains(metal) ? boosts.getFloat(metal) : 1.0f;
     }
 
+    /** Ключ биома добычи ({@code namespace:path}) или {@code null}, если кусок старый. */
+    @Nullable
+    public static String getBiomeKey(ItemStack stack) {
+        if (!stack.hasTag()) return null;
+        CompoundTag tag = stack.getTag();
+        return tag.contains("Biome", CompoundTag.TAG_STRING) ? tag.getString("Biome") : null;
+    }
+
+    /** Базовая температура биома добычи. {@code null}, если кусок старый. */
+    @Nullable
+    public static Float getTemperature(ItemStack stack) {
+        if (!stack.hasTag()) return null;
+        CompoundTag tag = stack.getTag();
+        return tag.contains("Temp", CompoundTag.TAG_FLOAT) ? tag.getFloat("Temp") : null;
+    }
+
+    // Цвета тултипа
+    private static final int C_BIOME_NAME = 0x55FFFF;         // голубой (как металл-бусты)
+    private static final int C_METAL_BOOST = 0x55FFFF;        // голубой
+    private static final int C_TEMPERATURE = 0xFF5555;        // красный (как фракция-бусты)
+    private static final int C_FRACTION_BOOST = 0xFF5555;     // красный
+    private static final int C_DEPTH_SURFACE = 0x55FF55;      // зелёный
+    private static final int C_DEPTH_MEDIUM = 0xFFFF55;       // жёлтый
+    private static final int C_DEPTH_DEEP = 0xAA00AA;         // фиолетовый
+
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         Map<FractionType, Integer> fractions = getFractions(stack);
@@ -173,10 +206,13 @@ public class ConglomerateItem extends Item {
 
         tooltip.add(Component.translatable("tooltip.trd.conglomerate.contains_fractions"));
         for (FractionType fraction : fractions.keySet()) {
-            Component header = Component.translatable("vein.trd.fraction." + fraction.getName(), fractions.get(fraction))
-                    .withStyle(style -> style.withColor(fraction.getColor()))
-                    .append(Component.literal(" (" + formatBoost(getFractionBoost(stack, fraction)) + ")")
-                            .withStyle(style -> style.withColor(ChatFormatting.GRAY)));
+            MutableComponent header = Component.translatable("vein.trd.fraction." + fraction.getName(), fractions.get(fraction))
+                    .withStyle(style -> style.withColor(fraction.getColor()));
+            float fractionBoost = getFractionBoost(stack, fraction);
+            if (fractionBoost != 1.0f) {
+                header.append(Component.literal(" (" + formatBoost(fractionBoost) + ")")
+                        .withStyle(style -> style.withColor(C_FRACTION_BOOST)));
+            }
             tooltip.add(header);
 
             FractionLayerMatrix matrix = FractionLayerMatrix.forFraction(fraction);
@@ -203,30 +239,69 @@ public class ConglomerateItem extends Item {
                     .withStyle(ChatFormatting.WHITE)
                     .append(depthComponent(type)));
         }
+
+        String biomeKey = getBiomeKey(stack);
+        if (biomeKey != null) {
+            tooltip.add(Component.translatable("tooltip.trd.conglomerate.biome")
+                    .withStyle(ChatFormatting.WHITE)
+                    .append(biomeComponent(biomeKey)));
+        }
+        Float temperature = getTemperature(stack);
+        if (temperature != null) {
+            tooltip.add(Component.translatable("tooltip.trd.conglomerate.temperature")
+                    .withStyle(ChatFormatting.WHITE)
+                    .append(Component.literal(String.format(Locale.ROOT, "%.1f", temperature))
+                            .withStyle(style -> style.withColor(C_TEMPERATURE))));
+        }
     }
 
-    /** Название металла из metal-реестра (цвет — цвет металла) + его буст в скобках. */
+    /** Название металла из metal-реестра (цвет — цвет металла) + его буст слева в скобках. */
     private MutableComponent metalWithBoost(String metalId, float boost) {
         MutableComponent name = MetallurgyRegistry.get(new ResourceLocation(MainRegistry.MOD_ID, metalId))
                 .map(metal -> (MutableComponent) Component.translatable(metal.getTranslationKey())
-                        .withStyle(style -> style.withColor(metal.getColor())))
+                        .withStyle(style -> style.withColor(metalDisplayColor(metalId, metal.getColor()))))
                 .orElseGet(() -> {
                     Item granule = MetalGranules.forMetal(metalId);
                     return granule != null ? granule.getDescription().copy() : Component.literal(metalId);
                 });
-        return name.append(Component.literal(" (" + formatBoost(boost) + ")")
-                .withStyle(style -> style.withColor(ChatFormatting.GRAY)));
+        if (boost != 1.0f) {
+            name.append(Component.literal(" (" + formatBoost(boost) + ")")
+                    .withStyle(style -> style.withColor(C_METAL_BOOST)));
+        }
+        return name;
     }
 
-    /** Локализованное название глубины жилы с цветом: поверхностная — зелёная, средняя — голубая, глубинная — фиолетовая. */
+    /**
+     * Цвет названия металла в тултипе. Исключение: вольфрам слишком тёмный на фоне
+     * тултипа, поэтому для него используется цвет титана.
+     */
+    private int metalDisplayColor(String metalId, int metalColor) {
+        if (metalId.equals("tungsten")) {
+            return MetallurgyRegistry.get(new ResourceLocation(MainRegistry.MOD_ID, "titanium"))
+                    .map(Metal::getColor)
+                    .orElse(0x767676);
+        }
+        return metalColor;
+    }
+
+    /** Локализованное название биома добычи (голубой). */
+    private Component biomeComponent(String biomeKey) {
+        if (biomeKey.contains(":")) {
+            return Component.translatable("biome." + biomeKey.replace(':', '.'))
+                    .withStyle(style -> style.withColor(C_BIOME_NAME));
+        }
+        return Component.literal(biomeKey).withStyle(style -> style.withColor(C_BIOME_NAME));
+    }
+
+    /** Локализованное название глубины жилы с цветом: поверхностная — зелёная, средняя — жёлтая, глубинная — фиолетовая. */
     private Component depthComponent(String depth) {
         int color = switch (depth) {
-            case "surface" -> 0x55FF55;
-            case "medium" -> 0x55FFFF;
-            case "deep" -> 0xAA00AA;
-            default -> ChatFormatting.WHITE.getColor();
+            case "surface" -> C_DEPTH_SURFACE;
+            case "medium" -> C_DEPTH_MEDIUM;
+            case "deep" -> C_DEPTH_DEEP;
+            default -> -1;
         };
-        if (color == ChatFormatting.WHITE.getColor()) {
+        if (color == -1) {
             return Component.literal(depth);
         }
         return Component.translatable("vein.trd.depth." + depth)
