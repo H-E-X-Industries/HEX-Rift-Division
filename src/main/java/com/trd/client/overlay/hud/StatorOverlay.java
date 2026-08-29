@@ -2,6 +2,7 @@ package com.trd.client.overlay.hud;
 
 import com.trd.block.basic.industrial.rotation.StatorBlock;
 import com.trd.block.entity.industrial.rotation.StatorBlockEntity;
+import com.trd.item.industrial.energy.StatorCoilItem;
 import com.trd.multiblock.system.IMultiblockPart;
 import com.trd.multiblock.system.MultiblockPartBlock;
 import net.minecraft.client.Minecraft;
@@ -54,7 +55,7 @@ public class StatorOverlay {
             net.minecraft.world.item.ItemStack stack = stator.getCoilsInventory().getStackInSlot(i);
             if (!stack.isEmpty()) {
                 coilCount++;
-                if (stack.getItem() instanceof com.trd.item.energy.StatorCoilItem coil) {
+                if (stack.getItem() instanceof StatorCoilItem coil) {
                     totalConversion += coil.getEnergyConversionRate();
                 }
             }

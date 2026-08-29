@@ -4,7 +4,7 @@ import com.trd.api.fluids.system.FluidNetwork;
 import com.trd.api.fluids.system.FluidNetworkManager;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.block.entity.industrial.fluids.ValveBlockEntity;
-import com.trd.item.tools.FluidIdentifierItem;
+import com.trd.item.industrial.fluids.FluidIdentifierItem;
 import com.trd.sound.ModSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

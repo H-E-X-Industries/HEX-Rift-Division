@@ -1,4 +1,4 @@
-package com.trd.item.energy;
+package com.trd.item.industrial.energy;
 
 import com.trd.api.energy.ModRecipes;
 import com.trd.item.ModItems;

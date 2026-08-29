@@ -1,4 +1,4 @@
-package com.trd.item.tools;
+package com.trd.item.industrial.fluids;
 
 import com.trd.block.basic.industrial.fluids.FluidPipeBlock;
 import net.minecraft.ChatFormatting;

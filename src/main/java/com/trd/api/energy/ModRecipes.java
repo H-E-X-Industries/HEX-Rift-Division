@@ -1,6 +1,6 @@
 package com.trd.api.energy;
 
-import com.trd.item.energy.WireCoilWindingRecipe;
+import com.trd.item.industrial.energy.WireCoilWindingRecipe;
 import com.trd.main.MainRegistry;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;

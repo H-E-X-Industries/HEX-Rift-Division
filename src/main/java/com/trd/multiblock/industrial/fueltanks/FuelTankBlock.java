@@ -3,7 +3,7 @@ package com.trd.multiblock.industrial.fueltanks;
 import com.trd.api.fluids.system.BaseFluidType;
 import com.trd.block.basic.ModBlocks;
 import com.trd.block.entity.ModBlockEntities;
-import com.trd.item.tools.FluidIdentifierItem;
+import com.trd.item.industrial.fluids.FluidIdentifierItem;
 import com.trd.multiblock.system.*;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;

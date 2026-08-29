@@ -1,6 +1,6 @@
 package com.trd.network.packet.fluids;
 
-import com.trd.item.tools.FluidIdentifierItem;
+import com.trd.item.industrial.fluids.FluidIdentifierItem;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;

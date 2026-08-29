@@ -7,6 +7,7 @@ import com.trd.api.rotation.Rotational;
 import com.trd.block.basic.industrial.rotation.StatorBlock;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.capability.ModCapabilities;
+import com.trd.item.industrial.energy.StatorCoilItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -150,7 +151,7 @@ public class StatorBlockEntity extends KineticNodeBlockEntity implements IEnergy
         long totalLoad = 0;
         for (int i = 0; i < 12; i++) {
             net.minecraft.world.item.ItemStack stack = coilsInventory.getStackInSlot(i);
-            if (stack.getItem() instanceof com.trd.item.energy.StatorCoilItem coil) {
+            if (stack.getItem() instanceof StatorCoilItem coil) {
                 long load = coil.getBaseTorqueLoad();
                 net.minecraft.world.item.ItemStack opposite = coilsInventory.getStackInSlot((i + 6) % 12);
                 if (opposite.isEmpty()) {
@@ -254,7 +255,7 @@ public class StatorBlockEntity extends KineticNodeBlockEntity implements IEnergy
                     long totalConversion = 0;
                     for (int i = 0; i < 12; i++) {
                         net.minecraft.world.item.ItemStack stack = coilsInventory.getStackInSlot(i);
-                        if (stack.getItem() instanceof com.trd.item.energy.StatorCoilItem coil) {
+                        if (stack.getItem() instanceof StatorCoilItem coil) {
                             totalConversion += coil.getEnergyConversionRate();
                         }
                     }
@@ -280,7 +281,7 @@ public class StatorBlockEntity extends KineticNodeBlockEntity implements IEnergy
         long sum = 0;
         for (int i = 0; i < coilsInventory.getSlots(); i++) {
             net.minecraft.world.item.ItemStack stack = coilsInventory.getStackInSlot(i);
-            if (stack.getItem() instanceof com.trd.item.energy.StatorCoilItem coil) {
+            if (stack.getItem() instanceof StatorCoilItem coil) {
                 sum += coil.getEnergyBuffer();
             }
         }

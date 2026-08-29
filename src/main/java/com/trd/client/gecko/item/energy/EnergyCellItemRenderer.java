@@ -1,6 +1,6 @@
 package com.trd.client.gecko.item.energy;
 
-import com.trd.item.energy.EnergyCellItem;
+import com.trd.item.industrial.energy.EnergyCellItem;
 import software.bernie.geckolib.renderer.GeoItemRenderer;
 
 public class EnergyCellItemRenderer extends GeoItemRenderer<EnergyCellItem> {

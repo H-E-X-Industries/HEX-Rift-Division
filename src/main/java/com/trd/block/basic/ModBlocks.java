@@ -65,7 +65,7 @@ import com.trd.block.basic.necrosis.NecrosisPortalBlock;
 import com.trd.block.basic.necrosis.hive.DepthWormNestBlock;
 import com.trd.block.basic.necrosis.hive.HiveSoilBlock;
 import com.trd.block.basic.weapons.TurretLightPlacerBlock;
-import com.trd.item.energy.MachineBatteryBlockItem;
+import com.trd.item.industrial.energy.MachineBatteryBlockItem;
 import com.trd.main.MainRegistry;
 import com.trd.item.ModItems;
 

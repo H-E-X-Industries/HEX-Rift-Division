@@ -2,7 +2,7 @@ package com.trd.client.render.flywheel;
 
 import com.trd.block.basic.industrial.rotation.StatorBlock;
 import com.trd.block.entity.industrial.rotation.StatorBlockEntity;
-import com.trd.item.ModItems;
+import com.trd.item.industrial.energy.StatorCoilItem;
 import dev.engine_room.flywheel.api.instance.Instance;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
 import dev.engine_room.flywheel.lib.instance.InstanceTypes;
@@ -83,7 +83,7 @@ public class StatorVisual extends AbstractBlockEntityVisual<StatorBlockEntity> i
             for (int i = 0; i < handler.getSlots(); i++) {
                 if (!handler.getStackInSlot(i).isEmpty()) {
                     net.minecraft.world.item.ItemStack stack = handler.getStackInSlot(i);
-                    if (stack.getItem() instanceof com.trd.item.energy.StatorCoilItem coilItem) {
+                    if (stack.getItem() instanceof StatorCoilItem coilItem) {
                         String material = coilItem.getMaterialName();
                         PartialModel model = ModModels.STATOR_COILS.getOrDefault(material, ModModels.STATOR_COILS.get("copper"));
                         if (model == null) continue; // fallback just in case

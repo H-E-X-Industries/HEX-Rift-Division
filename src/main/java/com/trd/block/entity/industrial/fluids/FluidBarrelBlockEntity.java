@@ -5,6 +5,7 @@ import com.trd.block.basic.ModBlocks;
 import com.trd.block.basic.industrial.fluids.FluidBarrelBlock;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.item.ModItems;
+import com.trd.item.industrial.fluids.FluidIdentifierItem;
 import com.trd.menu.industrial.FluidBarrelMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -75,7 +76,7 @@ public class FluidBarrelBlockEntity extends FluidNodeBlockEntity implements Menu
         @Override protected void onContentsChanged(int slot) { setChanged(); }
 
         @Override public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            if (slot == IDENTIFIER_SLOT) return stack.getItem() instanceof com.trd.item.tools.FluidIdentifierItem;
+            if (slot == IDENTIFIER_SLOT) return stack.getItem() instanceof FluidIdentifierItem;
             if (slot == FILL_IN_SLOT) return stack.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).isPresent();
             if (slot == DRAIN_IN_SLOT) {
                 if (stack.getItem() instanceof com.trd.item.tools.InfiniteFluidBarrelItem) return true;
@@ -207,8 +208,8 @@ public class FluidBarrelBlockEntity extends FluidNodeBlockEntity implements Menu
     protected void updateIdentifierFilter() {
         if (level == null || level.isClientSide) return;
         ItemStack idStack = itemHandler.getStackInSlot(IDENTIFIER_SLOT);
-        if (idStack.isEmpty() || !(idStack.getItem() instanceof com.trd.item.tools.FluidIdentifierItem)) return;
-        String selected = com.trd.item.tools.FluidIdentifierItem.getSelectedFluid(idStack);
+        if (idStack.isEmpty() || !(idStack.getItem() instanceof FluidIdentifierItem)) return;
+        String selected = FluidIdentifierItem.getSelectedFluid(idStack);
         if (selected.isEmpty() || selected.equals("none")) return;
         if (selected.equals(fluidFilter)) return;
         setFilter(selected);

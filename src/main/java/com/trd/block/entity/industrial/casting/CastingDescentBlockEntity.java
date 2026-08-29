@@ -276,17 +276,18 @@ public class CastingDescentBlockEntity extends BlockEntity {
                 lastKnownDistance = i;
                 return pot;
             }
-            // Структурная часть машины непрерывного литья
+            // Структурная часть машины непрерывного литья.
+            // Металл можно заливать ТОЛЬКО над ЗАДНЕЙ частью машины — под литейным
+            // спуском должен находиться литейный порт (% , PartRole.CASTING_PORT) верхнего слоя.
             if (be instanceof com.trd.multiblock.system.MultiblockPartEntity part) {
-                CCMachineBlockEntity machine = resolveMachine(level, part);
-                if (machine != null) {
-                    lastKnownDistance = i;
-                    return machine;
+                if (part.getPartRole() == com.trd.multiblock.system.PartRole.CASTING_PORT) {
+                    CCMachineBlockEntity machine = resolveMachine(level, part);
+                    if (machine != null) {
+                        lastKnownDistance = i;
+                        return machine;
+                    }
                 }
-            }
-            if (be instanceof CCMachineBlockEntity) {
-                lastKnownDistance = i;
-                return (CCMachineBlockEntity) be;
+                return null;
             }
             if (!level.getBlockState(checkPos).isAir()) return null;
         }

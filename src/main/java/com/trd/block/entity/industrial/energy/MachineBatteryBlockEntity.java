@@ -1,7 +1,7 @@
 package com.trd.block.entity.industrial.energy;
 
 import com.trd.api.energy.*;
-import com.trd.item.energy.EnergyCellItem;
+import com.trd.item.industrial.energy.EnergyCellItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;

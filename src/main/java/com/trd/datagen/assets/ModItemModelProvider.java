@@ -3,6 +3,9 @@ package com.trd.datagen.assets;
 import com.trd.api.fluids.ModFluids;
 import com.trd.block.basic.ModBlocks;
 import com.trd.datagen.ResourceDatagenHelper;
+import com.trd.item.industrial.rotation.FlywheelItem;
+import com.trd.item.industrial.rotation.GearItem;
+import com.trd.item.industrial.rotation.PulleyItem;
 import com.trd.main.MainRegistry;
 import net.minecraftforge.client.model.generators.ModelFile;
 import net.minecraft.data.PackOutput;
@@ -187,7 +190,7 @@ public class ModItemModelProvider extends ItemModelProvider {
 
     public void generateAllPulleys() {
         for (RegistryObject<Item> itemObj : com.trd.item.ModItems.ITEMS.getEntries()) {
-            if (itemObj.get() instanceof com.trd.item.rotation.PulleyItem pulley) {
+            if (itemObj.get() instanceof PulleyItem pulley) {
                 String name = itemObj.getId().getPath(); // должно быть "pulley"
 
                 ResourceLocation objModel = modLoc("models/block/" + name + ".obj");
@@ -208,7 +211,7 @@ public class ModItemModelProvider extends ItemModelProvider {
 
     public void generateAllFlywheels() {
         for (RegistryObject<Item> itemObj : com.trd.item.ModItems.ITEMS.getEntries()) {
-            if (itemObj.get() instanceof com.trd.item.rotation.FlywheelItem flywheel) {
+            if (itemObj.get() instanceof FlywheelItem flywheel) {
                 String name = itemObj.getId().getPath(); // например "flywheel_light"
 
                 ResourceLocation objModel = modLoc("models/block/" + name + ".obj");
@@ -229,7 +232,7 @@ public class ModItemModelProvider extends ItemModelProvider {
     public void generateAllGears() {
         for (RegistryObject<Item> itemObj : com.trd.item.ModItems.ITEMS.getEntries()) {
             // Проверяем, что это именно шестерня
-            if (itemObj.get() instanceof com.trd.item.rotation.GearItem gear) {
+            if (itemObj.get() instanceof GearItem gear) {
                 String name = itemObj.getId().getPath(); // например, gear1_steel
                 int size = gear.getGearSize();
 

@@ -3,7 +3,7 @@ package com.trd.client.overlay.gui;
 import com.trd.api.fluids.ModFluids;
 import com.trd.api.fluids.system.FluidDropItem;
 import com.trd.api.fluids.system.FluidPropertyHelper;
-import com.trd.item.tools.FluidIdentifierItem;
+import com.trd.item.industrial.fluids.FluidIdentifierItem;
 import com.trd.main.MainRegistry;
 import com.trd.network.ModPacketHandler;
 import com.trd.network.packet.fluids.ClearFluidHistoryPacket;
@@ -292,7 +292,38 @@ public class GUIFluidIdentifier extends Screen {
             }
 
             Component name = getFluidDisplayName(fluidId);
-            graphics.drawString(this.font, name, listX + 20, entryY + 5, getFluidColor(fluidId), false);
+            int color = getFluidColor(fluidId);
+            // Длинные названия жидкостей не обрезаются, а прокручиваются слева направо
+            // (правая грань обрезки аналогична панели выбора рецепта станка и реакционной камеры)
+            int tX = listX + 22;
+            int tY = entryY + 5;
+            int tW = this.font.width(name);
+            int maxTextW = 99 - 22 - 10;
+            if (tW > maxTextW) {
+                int scrollRange = tW - maxTextW;
+                double cycle = (net.minecraft.Util.getMillis() % 4000) / 4000.0;
+                int offset = 0;
+                if (cycle > 0.1 && cycle < 0.4) {
+                    offset = (int)((cycle - 0.1) / 0.3 * scrollRange);
+                } else if (cycle >= 0.4 && cycle <= 0.6) {
+                    offset = scrollRange;
+                } else if (cycle > 0.6 && cycle < 0.9) {
+                    offset = (int)((0.9 - cycle) / 0.3 * scrollRange);
+                }
+                // Прокручивающееся название ограничиваем ТАКЖЕ вертикально областью списка,
+                // чтобы текст не отображался, когда плашка частично ушла за видимую часть списка.
+                int textTop = Math.max(entryY, listY);
+                int textBottom = Math.min(entryY + 19, listY + 141);
+                if (textTop < textBottom) {
+                    graphics.disableScissor();
+                    graphics.enableScissor(tX, textTop, tX + maxTextW, textBottom);
+                    graphics.drawString(this.font, name, tX - offset, tY, color, false);
+                    graphics.disableScissor();
+                    graphics.enableScissor(listX, listY, listX + 99, listY + 141);
+                }
+            } else {
+                graphics.drawString(this.font, name, tX, tY, color, false);
+            }
         }
 
         graphics.disableScissor();

@@ -1,4 +1,4 @@
-package com.trd.item.energy;
+package com.trd.item.industrial.energy;
 
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.world.item.BlockItem;

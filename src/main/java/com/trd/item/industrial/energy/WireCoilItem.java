@@ -1,4 +1,4 @@
-package com.trd.item.energy;
+package com.trd.item.industrial.energy;
 
 import com.trd.block.entity.industrial.energy.ConnectorBlockEntity;
 import net.minecraft.core.BlockPos;

@@ -3,7 +3,7 @@ package com.trd.network.packet.activators;
 
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
-import com.trd.item.activators.MultiDetonatorItem;
+import com.trd.item.weapons.activators.MultiDetonatorItem;
 
 import java.util.function.Supplier;
 

@@ -1,8 +1,8 @@
 package com.trd.multiblock.industrial.centrifuge.conus;
 
 import com.trd.block.entity.ModBlockEntities;
-import com.trd.item.energy.EnergyCellItem;
-import com.trd.item.energy.ModBatteryItem;
+import com.trd.item.industrial.energy.EnergyCellItem;
+import com.trd.item.industrial.energy.ModBatteryItem;
 import com.trd.menu.industrial.CentrifugeMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

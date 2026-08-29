@@ -4,6 +4,7 @@ import com.trd.api.fluids.system.BarrelTier;
 import com.trd.api.fluids.system.BaseFluidType;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.block.entity.industrial.fluids.FluidBarrelBlockEntity;
+import com.trd.item.industrial.fluids.FluidIdentifierItem;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -40,8 +41,6 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.shapes.Shapes;
-
-import java.util.List;
 
 public class FluidBarrelBlock extends BaseEntityBlock {
 
@@ -159,9 +158,9 @@ public class FluidBarrelBlock extends BaseEntityBlock {
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         net.minecraft.world.item.ItemStack stack = player.getItemInHand(hand);
 
-        if (stack.getItem() instanceof com.trd.item.tools.FluidIdentifierItem) {
+        if (stack.getItem() instanceof FluidIdentifierItem) {
             if (!level.isClientSide && level.getBlockEntity(pos) instanceof FluidBarrelBlockEntity be) {
-                String selectedFluidId = com.trd.item.tools.FluidIdentifierItem.getSelectedFluid(stack);
+                String selectedFluidId = FluidIdentifierItem.getSelectedFluid(stack);
                 be.setFilter(selectedFluidId);
                 if (selectedFluidId.equals("none")) {
                     player.displayClientMessage(Component.translatable("message.trd.fluid_barrel.filter_reset"), true);

@@ -13,6 +13,7 @@ import com.trd.datagen.stats.ModBlockLootTableProvider;
 import com.trd.entity.mobs.depth_worm.DepthWormBrutalEntity;
 import com.trd.entity.mobs.grenadier.GrenadierZombieEntity;
 import com.trd.event.SlagItem;
+import com.trd.item.industrial.energy.WireCoilItem;
 import com.trd.multiblock.industrial.centrifuge.conus.CentrifugeRecipes;
 import com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderRecipes;
 import com.trd.multiblock.industrial.coccer.CoccerOvenRecipeRegistry;
@@ -52,7 +53,7 @@ import com.trd.entity.ModEntities;
 import com.trd.entity.mobs.depth_worm.DepthWormEntity;
 import com.trd.entity.weapons.turrets.TurretLightEntity;
 import com.trd.event.CrateBreaker;
-import com.trd.item.energy.ModBatteryItem;
+import com.trd.item.industrial.energy.ModBatteryItem;
 import com.trd.menu.ModMenuTypes;
 import com.trd.network.ModPacketHandler;
 import com.trd.sound.ModSounds;
@@ -238,7 +239,7 @@ public class MainRegistry {
             // Катушка: пустая и заряженная версии в креативной вкладке
             event.accept(ModItems.WIRE_COIL.get());
             net.minecraft.world.item.ItemStack fullCoil = new net.minecraft.world.item.ItemStack(ModItems.WIRE_COIL.get());
-            com.trd.item.energy.WireCoilItem.setWires(fullCoil, com.trd.item.energy.WireCoilItem.MAX_WIRES);
+            WireCoilItem.setWires(fullCoil, WireCoilItem.MAX_WIRES);
             event.accept(fullCoil);
 
             event.accept(ModItems.INFINITE_FLUID_BARREL);

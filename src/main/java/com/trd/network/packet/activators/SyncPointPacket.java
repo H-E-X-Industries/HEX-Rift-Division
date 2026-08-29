@@ -7,7 +7,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.network.NetworkEvent;
-import com.trd.item.activators.MultiDetonatorItem;
+import com.trd.item.weapons.activators.MultiDetonatorItem;
 
 import java.util.function.Supplier;
 

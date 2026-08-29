@@ -4,13 +4,12 @@ import com.trd.api.rotation.Rotational;
 import com.trd.api.rotation.ShaftDiameter;
 import com.trd.block.basic.industrial.rotation.ShaftBlock;
 import com.trd.block.entity.ModBlockEntities;
+import com.trd.item.industrial.rotation.PulleyItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 
 public class ShaftBlockEntity extends KineticNodeBlockEntity {
 
@@ -392,8 +391,8 @@ public class ShaftBlockEntity extends KineticNodeBlockEntity {
             }
 
             if (isBeltConnection) {
-                if (this.getAttachedPulley().getItem() instanceof com.trd.item.rotation.PulleyItem p1 &&
-                        neighborShaft.getAttachedPulley().getItem() instanceof com.trd.item.rotation.PulleyItem p2) {
+                if (this.getAttachedPulley().getItem() instanceof PulleyItem p1 &&
+                        neighborShaft.getAttachedPulley().getItem() instanceof PulleyItem p2) {
                     return (float) p1.getDiameterPixels() / p2.getDiameterPixels();
                 }
             }

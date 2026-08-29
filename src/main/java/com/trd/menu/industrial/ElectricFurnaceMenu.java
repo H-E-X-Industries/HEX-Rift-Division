@@ -1,8 +1,8 @@
 package com.trd.menu.industrial;
 
 import com.trd.block.entity.industrial.energy.ElectricFurnaceBlockEntity;
-import com.trd.item.energy.EnergyCellItem;
-import com.trd.item.energy.ModBatteryItem;
+import com.trd.item.industrial.energy.EnergyCellItem;
+import com.trd.item.industrial.energy.ModBatteryItem;
 import com.trd.menu.ModMenuTypes;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;

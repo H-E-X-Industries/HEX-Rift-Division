@@ -1,4 +1,4 @@
-package com.trd.item.activators;
+package com.trd.item.weapons.activators;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
