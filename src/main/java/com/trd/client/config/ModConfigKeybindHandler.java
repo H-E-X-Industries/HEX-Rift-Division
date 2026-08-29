@@ -7,7 +7,7 @@ import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.lwjgl.glfw.GLFW;
 import com.trd.client.overlay.gui.GUIMultiDetonator;
-import com.trd.item.activators.MultiDetonatorItem;
+import com.trd.item.weapons.activators.MultiDetonatorItem;
 import com.trd.network.ModPacketHandler;
 import com.trd.network.packet.guns.PacketUnloadGun;
 

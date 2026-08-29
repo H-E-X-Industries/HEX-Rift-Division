@@ -1,7 +1,7 @@
 package com.trd.block.basic.industrial.energy;
 
 
-import com.trd.item.energy.EnergyCellItem;
+import com.trd.item.industrial.energy.EnergyCellItem;
 import com.trd.item.tools.ScrewdriverItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -16,7 +16,6 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -38,10 +37,8 @@ import net.minecraftforge.network.NetworkHooks;
 import com.trd.api.energy.EnergyNetworkManager;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.block.entity.industrial.energy.MachineBatteryBlockEntity;
-import com.trd.util.EnergyFormatter;
 
 import javax.annotation.Nullable;
-import java.util.List;
 
 /**
  * Универсальный класс блока каркаса энергохранилища.
@@ -311,21 +308,6 @@ public class MachineBatteryBlock extends BaseEntityBlock {
         }
     }
 
-    @Override
-    public void appendHoverText(ItemStack pStack, @Nullable BlockGetter pLevel, List<Component> pTooltip, TooltipFlag pFlag) {
-        super.appendHoverText(pStack, pLevel, pTooltip, pFlag);
-
-        long energy = 0;
-        CompoundTag nbt = pStack.getTag();
-        if (nbt != null && nbt.contains("BlockEntityTag")) {
-            energy = nbt.getCompound("BlockEntityTag").getLong("Energy");
-        }
-
-        String energyStr = EnergyFormatter.format(energy);
-        pTooltip.add(Component.translatable("tooltip.trd.machine_battery.frame"));
-        pTooltip.add(Component.translatable("tooltip.trd.machine_battery.energy", energyStr));
-        pTooltip.add(Component.translatable("tooltip.trd.machine_battery.insert_cells"));
-    }
 
     @Override
     public RenderShape getRenderShape(BlockState state) {

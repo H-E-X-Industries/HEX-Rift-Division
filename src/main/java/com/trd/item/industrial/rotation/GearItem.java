@@ -1,4 +1,4 @@
-package com.trd.item.rotation;
+package com.trd.item.industrial.rotation;
 
 import com.trd.api.rotation.ShaftDiameter;
 import com.trd.api.rotation.ShaftMaterial;

@@ -1,9 +1,9 @@
 package com.trd.multiblock.industrial.centrifuge.cylinder;
 
 import com.trd.block.entity.ModBlockEntities;
-import com.trd.item.energy.EnergyCellItem;
-import com.trd.item.energy.ModBatteryItem;
-import com.trd.item.tools.FluidIdentifierItem;
+import com.trd.item.industrial.energy.EnergyCellItem;
+import com.trd.item.industrial.energy.ModBatteryItem;
+import com.trd.item.industrial.fluids.FluidIdentifierItem;
 import com.trd.menu.industrial.CentrifugeCylinderMenu;
 import com.trd.multiblock.system.IFluidTankProvider;
 import net.minecraft.core.BlockPos;

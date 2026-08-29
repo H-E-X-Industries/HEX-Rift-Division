@@ -9,16 +9,16 @@ import com.trd.event.LiquidMetalItem;
 import com.trd.item.armor.GrenadierArmorMaterial;
 import com.trd.item.armor.GrenadierGogglesItem;
 import com.trd.item.conglomerates.ConglomerateItem;
-import com.trd.item.energy.EnergyCellItem;
+import com.trd.item.industrial.energy.EnergyCellItem;
 import com.trd.item.food.FoodZamaz;
 import com.trd.event.SlagItem;
-import com.trd.item.industrial.HammerItem;
+import com.trd.item.industrial.fluids.FluidIdentifierItem;
+import com.trd.item.industrial.fluids.HammerItem;
+import com.trd.item.industrial.rotation.*;
 import com.trd.item.mobs.DepthWormBrutalSpawnEggItem;
 import com.trd.item.mobs.MoryLahItem;
-import com.trd.item.energy.StatorCoilItem;
-import com.trd.item.energy.WireCoilItem;
-import com.trd.item.rotation.GearItem;
-import com.trd.item.rotation.StatorMultiblockItem;
+import com.trd.item.industrial.energy.StatorCoilItem;
+import com.trd.item.industrial.energy.WireCoilItem;
 import com.trd.item.tools.*;
 import com.trd.item.tools.cast_pickaxes.materials.CastPickaxeIronItem;
 import com.trd.item.tools.cast_pickaxes.materials.CastPickaxeSteelItem;
@@ -38,11 +38,11 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import com.trd.block.basic.ModBlocks;
-import com.trd.item.activators.DetonatorItem;
-import com.trd.item.activators.MultiDetonatorItem;
-import com.trd.item.activators.RangeDetonatorItem;
-import com.trd.item.energy.ItemCreativeBattery;
-import com.trd.item.energy.ModBatteryItem;
+import com.trd.item.weapons.activators.DetonatorItem;
+import com.trd.item.weapons.activators.MultiDetonatorItem;
+import com.trd.item.weapons.activators.RangeDetonatorItem;
+import com.trd.item.industrial.energy.ItemCreativeBattery;
+import com.trd.item.industrial.energy.ModBatteryItem;
 import com.trd.item.weapons.guns.MachineGunItem;
 import com.trd.item.mobs.DepthWormSpawnEggItem;
 import com.trd.item.weapons.ammo.AmmoTurretItem;
@@ -142,7 +142,7 @@ public class ModItems {
                     .durability(128)));
     // ИНСТРУМЕНТЫ
     public static final RegistryObject<Item> BELT = ITEMS.register("belt",
-            () -> new com.trd.item.rotation.BeltItem(new Item.Properties()));
+            () -> new BeltItem(new Item.Properties()));
 
     // Базовый предмет-капля (без привязки к жидкости, используется как "none" / заглушка)
     public static final RegistryObject<Item> FLUID_IDENTIFIER_DROP = ITEMS.register("fluid_identifier_drop",
@@ -150,7 +150,7 @@ public class ModItems {
 
     // ШКИВЫ
     public static final RegistryObject<Item> PULLEY = ITEMS.register("pulley",
-            () -> new com.trd.item.rotation.PulleyItem(new Item.Properties(),
+            () -> new PulleyItem(new Item.Properties(),
                     1, // Размер для BlockState (PULLEY_SIZE = 1)
                     12, // Физический диаметр в пикселях (для передаточного числа)
                     com.trd.api.rotation.ShaftMaterial.IRON,
@@ -158,7 +158,7 @@ public class ModItems {
                     com.trd.api.rotation.ShaftDiameter.MEDIUM));
 
     public static final RegistryObject<Item> FLYWHEEL_LIGHT = ITEMS.register("flywheel_light",
-            () -> new com.trd.item.rotation.FlywheelItem(new Item.Properties(),
+            () -> new FlywheelItem(new Item.Properties(),
                     com.trd.api.rotation.ShaftDiameter.LIGHT,
                     com.trd.api.rotation.ShaftDiameter.MEDIUM));
 
@@ -491,10 +491,10 @@ public class ModItems {
             () -> new GearItem(new Item.Properties(), 1, ShaftMaterial.STEEL));
 
     public static final RegistryObject<Item> BEVEL_GEAR = ITEMS.register("bevel_gear",
-            () -> new com.trd.item.rotation.BevelGearItem(new Item.Properties(), ShaftMaterial.STEEL));
+            () -> new BevelGearItem(new Item.Properties(), ShaftMaterial.STEEL));
 
     public static final RegistryObject<Item> COPPER_ROTOR = ITEMS.register("copper_rotor",
-            () -> new com.trd.item.rotation.RotorItem(new Item.Properties()));
+            () -> new RotorItem(new Item.Properties()));
 
 
     public static final RegistryObject<Item> GEAR2_STEEL = ITEMS.register("gear2_steel",

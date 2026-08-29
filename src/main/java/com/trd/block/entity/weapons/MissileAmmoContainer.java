@@ -8,8 +8,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
-import com.trd.item.energy.EnergyCellItem;
-import com.trd.item.energy.ModBatteryItem;
+import com.trd.item.industrial.energy.EnergyCellItem;
+import com.trd.item.industrial.energy.ModBatteryItem;
 import com.trd.item.weapons.turrets.TurretChipItem;
 
 /**

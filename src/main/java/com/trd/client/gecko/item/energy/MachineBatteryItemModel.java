@@ -2,7 +2,7 @@ package com.trd.client.gecko.item.energy;
 
 import com.trd.main.MainRegistry;
 import net.minecraft.resources.ResourceLocation;
-import com.trd.item.energy.MachineBatteryBlockItem;
+import com.trd.item.industrial.energy.MachineBatteryBlockItem;
 import software.bernie.geckolib.model.GeoModel;
 
 public class MachineBatteryItemModel extends GeoModel<MachineBatteryBlockItem> {

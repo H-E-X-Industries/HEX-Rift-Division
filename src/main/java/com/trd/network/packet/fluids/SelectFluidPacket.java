@@ -1,6 +1,6 @@
 package com.trd.network.packet.fluids;
 
-import com.trd.item.tools.FluidIdentifierItem;
+import com.trd.item.industrial.fluids.FluidIdentifierItem;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;

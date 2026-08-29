@@ -9,7 +9,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import com.trd.item.activators.MultiDetonatorItem;
+import com.trd.item.weapons.activators.MultiDetonatorItem;
 import com.trd.network.ModPacketHandler;
 import com.trd.network.packet.activators.ClearPointPacket;
 import com.trd.network.packet.activators.DetonateAllPacket;

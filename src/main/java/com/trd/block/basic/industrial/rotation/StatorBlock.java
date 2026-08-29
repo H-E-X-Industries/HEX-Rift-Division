@@ -3,6 +3,7 @@ package com.trd.block.basic.industrial.rotation;
 import com.trd.api.energy.EnergyNetworkManager;
 import com.trd.api.rotation.KineticNetworkManager;
 import com.trd.block.entity.industrial.rotation.StatorBlockEntity;
+import com.trd.item.industrial.energy.StatorCoilItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -163,7 +164,7 @@ public class StatorBlock extends BaseEntityBlock implements IMultiblockControlle
         if (!(be instanceof StatorBlockEntity)) return InteractionResult.PASS;
 
         ItemStack stackInHand = player.getItemInHand(hand);
-        boolean isCoil = stackInHand.getItem() instanceof com.trd.item.energy.StatorCoilItem;
+        boolean isCoil = stackInHand.getItem() instanceof StatorCoilItem;
         boolean isScrewdriver = stackInHand.getItem() == ModItems.SCREWDRIVER.get();
 
         // The stator is a 3x3x1 multiblock, but this block is the controller.

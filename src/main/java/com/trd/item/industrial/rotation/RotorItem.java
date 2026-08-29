@@ -1,4 +1,4 @@
-package com.trd.item.rotation;
+package com.trd.item.industrial.rotation;
 
 import com.trd.block.basic.industrial.rotation.ShaftBlock;
 import com.trd.block.entity.industrial.rotation.ShaftBlockEntity;

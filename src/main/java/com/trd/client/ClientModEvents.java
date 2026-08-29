@@ -10,7 +10,8 @@ import com.trd.client.overlay.hud.WaterPumpHUD;
 import com.trd.client.overlay.hud.RedstoneRadioOverlay;
 import com.trd.client.overlay.hud.PaintablePipeOverlay;
 import com.trd.client.render.ber.ConveyorRenderer;
-import com.trd.item.tools.FluidIdentifierItem;
+import com.trd.item.industrial.energy.WireCoilItem;
+import com.trd.item.industrial.fluids.FluidIdentifierItem;
 import com.trd.main.ResourceRegistry;
 import com.trd.block.basic.ModBlocks;
 import com.trd.block.entity.industrial.fluids.FluidPipeBlockEntity;
@@ -105,7 +106,7 @@ public class ClientModEvents {
             ItemProperties.register(item,
                     new ResourceLocation(MainRegistry.MOD_ID, "wires"),
                     (pStack, pLevel, pEntity, pSeed) ->
-                            com.trd.item.energy.WireCoilItem.getWires(pStack) > 0 ? 1.0f : 0.0f);
+                            WireCoilItem.getWires(pStack) > 0 ? 1.0f : 0.0f);
         });
         event.registerBlockEntityRenderer(ModBlockEntities.CONVEYOR_BE.get(), ConveyorRenderer::new);
         net.minecraft.client.gui.screens.MenuScreens.register(ModMenuTypes.STEEL_STORAGE_MENU.get(), SteelStorageScreen::new);

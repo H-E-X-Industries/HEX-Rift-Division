@@ -1,5 +1,6 @@
 package com.trd.event;
 
+import com.trd.item.tools.PokerItem;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.TickEvent;
@@ -202,8 +203,10 @@ public class HotItemHandler {
             }
         }
 
-        // Урон и поджог от горячих предметов
-        if (hasHotItem && maxHeatRatio > 0.15f) {
+        // Урон и поджог от горячих предметов.
+        // Если в ЛЕВОЙ руке (offhand) кочерга — игрок защищён от горячих предметов в инвентаре.
+        boolean hasPokerInOffhand = player.getOffhandItem().getItem() instanceof PokerItem;
+        if (hasHotItem && maxHeatRatio > 0.15f && !hasPokerInOffhand) {
             int fireSeconds = (int) (maxHeatRatio * 5);
             float damageAmount = (maxTemp / 1200f) * maxHeatRatio * 1.5f;
 

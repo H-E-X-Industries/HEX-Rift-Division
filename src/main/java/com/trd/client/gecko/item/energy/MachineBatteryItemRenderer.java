@@ -1,6 +1,6 @@
 package com.trd.client.gecko.item.energy;
 
-import com.trd.item.energy.MachineBatteryBlockItem;
+import com.trd.item.industrial.energy.MachineBatteryBlockItem;
 import software.bernie.geckolib.renderer.GeoItemRenderer;
 
 public class MachineBatteryItemRenderer extends GeoItemRenderer<MachineBatteryBlockItem> {

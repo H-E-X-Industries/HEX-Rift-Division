@@ -2,8 +2,7 @@ package com.trd.block.basic.industrial.fluids;
 
 import com.trd.api.fluids.system.*;
 import com.trd.block.entity.industrial.fluids.FluidPipeBlockEntity;
-import com.trd.block.entity.industrial.fluids.FluidBarrelBlockEntity;
-import com.trd.item.tools.FluidIdentifierItem;
+import com.trd.item.industrial.fluids.FluidIdentifierItem;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

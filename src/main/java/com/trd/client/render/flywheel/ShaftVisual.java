@@ -2,6 +2,8 @@ package com.trd.client.render.flywheel;
 
 import com.trd.block.basic.industrial.rotation.ShaftBlock;
 import com.trd.block.entity.industrial.rotation.ShaftBlockEntity;
+import com.trd.item.industrial.rotation.GearItem;
+import com.trd.item.industrial.rotation.PulleyItem;
 import com.trd.main.MainRegistry;
 import dev.engine_room.flywheel.api.instance.Instance;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
@@ -118,7 +120,7 @@ public class ShaftVisual extends AbstractBlockEntityVisual<ShaftBlockEntity> imp
         net.minecraft.world.item.ItemStack gearStack = blockEntity.getAttachedGear();
         int gearSize = blockState.getValue(ShaftBlock.GEAR_SIZE);
 
-        if (gearSize > 0 && !gearStack.isEmpty() && gearStack.getItem() instanceof com.trd.item.rotation.GearItem) {
+        if (gearSize > 0 && !gearStack.isEmpty() && gearStack.getItem() instanceof GearItem) {
             net.minecraft.resources.ResourceLocation gearId = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(gearStack.getItem());
             String gearName = gearId != null ? gearId.getPath() : "";
             PartialModel gearModel = ModModels.GEAR_MODELS.get(gearName);
@@ -466,7 +468,7 @@ public class ShaftVisual extends AbstractBlockEntityVisual<ShaftBlockEntity> imp
     }
 
     private float getPulleyRadius(ShaftBlockEntity be) {
-        if (be.hasPulley() && be.getAttachedPulley().getItem() instanceof com.trd.item.rotation.PulleyItem pulley) {
+        if (be.hasPulley() && be.getAttachedPulley().getItem() instanceof PulleyItem pulley) {
             return (pulley.getDiameterPixels() / 2.0f + 1.0f) / 16.0f;
         }
         return 0f;

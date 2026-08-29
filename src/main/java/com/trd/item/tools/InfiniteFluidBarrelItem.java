@@ -15,11 +15,5 @@ public class InfiniteFluidBarrelItem extends Item {
         super(properties.stacksTo(1)); // Не стакается
     }
 
-    @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.translatable("tooltip.trd.infinite_barrel.slot"));
-        tooltip.add(Component.translatable("tooltip.trd.infinite_barrel.tank"));
-        tooltip.add(Component.translatable("tooltip.trd.infinite_barrel.fill"));
-        tooltip.add(Component.translatable("tooltip.trd.infinite_barrel.source"));
-    }
+
 }

@@ -1,4 +1,4 @@
-package com.trd.item.industrial;
+package com.trd.item.industrial.fluids;
 
 import net.minecraft.world.item.Item;
 

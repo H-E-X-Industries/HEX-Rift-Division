@@ -14,7 +14,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.network.NetworkEvent;
 import com.trd.block.basic.weapons.explosives.IDetonatable;
-import com.trd.item.activators.MultiDetonatorItem;
+import com.trd.item.weapons.activators.MultiDetonatorItem;
 import com.trd.sound.ModSounds;
 
 import java.util.function.Supplier;

@@ -2,6 +2,9 @@ package com.trd.datagen.assets;
 
 import com.trd.block.basic.industrial.fluids.FluidPipeBlock;
 import com.trd.block.basic.industrial.fluids.FluidBarrelBlock;
+import com.trd.item.industrial.rotation.FlywheelItem;
+import com.trd.item.industrial.rotation.GearItem;
+import com.trd.item.industrial.rotation.PulleyItem;
 import com.trd.main.ResourceRegistry;
 import com.trd.block.basic.necrosis.hive.HiveRootsBlock;
 import net.minecraft.core.Direction;
@@ -282,7 +285,7 @@ public class ModBlockStateProvider extends BlockStateProvider {
 
     public void generatePulleyBlockModels() {
         for (RegistryObject<Item> itemObj : com.trd.item.ModItems.ITEMS.getEntries()) {
-            if (itemObj.get() instanceof com.trd.item.rotation.PulleyItem pulley) {
+            if (itemObj.get() instanceof PulleyItem pulley) {
                 String name = itemObj.getId().getPath();
 
                 ResourceLocation objModel = modLoc("models/block/" + name + ".obj");
@@ -301,7 +304,7 @@ public class ModBlockStateProvider extends BlockStateProvider {
 
     public void generateFlywheelBlockModels() {
         for (RegistryObject<Item> itemObj : com.trd.item.ModItems.ITEMS.getEntries()) {
-            if (itemObj.get() instanceof com.trd.item.rotation.FlywheelItem flywheel) {
+            if (itemObj.get() instanceof FlywheelItem flywheel) {
                 String name = itemObj.getId().getPath();
 
                 ResourceLocation objModel = modLoc("models/block/" + name + ".obj");
@@ -570,7 +573,7 @@ public class ModBlockStateProvider extends BlockStateProvider {
 
     public void generateGearBlockModels() {
         for (RegistryObject<Item> itemObj : com.trd.item.ModItems.ITEMS.getEntries()) {
-            if (itemObj.get() instanceof com.trd.item.rotation.GearItem gear) {
+            if (itemObj.get() instanceof GearItem gear) {
                 String name = itemObj.getId().getPath();
                 int size = gear.getGearSize();
 
