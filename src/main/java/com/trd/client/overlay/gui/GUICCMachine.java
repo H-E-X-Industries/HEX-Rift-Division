@@ -1,6 +1,8 @@
 package com.trd.client.overlay.gui;
 
 import com.trd.api.fluids.ModFluids;
+import com.trd.api.metallurgy.system.Metal;
+import com.trd.api.metallurgy.system.MetalUnits2;
 import com.trd.main.MainRegistry;
 import com.trd.menu.industrial.CCMachineMenu;
 import net.minecraft.client.gui.GuiGraphics;
@@ -55,14 +57,19 @@ public class GUICCMachine extends AbstractContainerScreen<CCMachineMenu> {
         // фон GUI
         gui.blit(TEXTURE, x, y, 0, 0, this.imageWidth, this.imageHeight);
 
-        // металл (стиль плавильни — цветная заливка по маске)
-        renderMetalBar(gui, x + METAL_X, y + METAL_Y);
-
-        // жидкости (стиль бочки — сегменты, сброс цвета, линия поверхности)
+        // Жидкости рисуем ПЕРВЫМИ, а цветной металл — ПОСЛЕДНИМ.
+        // В 1.20.1 gui.setColor() — глобальный множитель на кадр (и особенно его кэширует
+        // батчинг в Embeddium/Oculus), поэтому если металл рисовать раньше, его цвет
+        // "протекает" в жидкости, делая их ярче. Рисуя металл последним, этого не будет.
+        gui.setColor(1.0f, 1.0f, 1.0f, 1.0f);
         renderFluidTank(gui, x + WATER_X, y + WATER_Y, TANK_W, TANK_H,
                 new FluidStack(Fluids.WATER, menu.getWaterAmount()), menu.getWaterCapacity());
         renderFluidTank(gui, x + STEAM_X, y + STEAM_Y, TANK_W, TANK_H,
                 new FluidStack(ModFluids.LOW_PRESSURE_STEAM_SOURCE.get(), menu.getSteamAmount()), menu.getSteamCapacity());
+
+        // металл рисуем последним (стиль плавильни — цветная заливка по маске)
+        gui.setColor(1.0f, 1.0f, 1.0f, 1.0f);
+        renderMetalBar(gui, x + METAL_X, y + METAL_Y);
     }
 
     /** Рендер металла. Логика из GUISmelter: цвет из data, заливка снизу вверх по маске-текстуре. */
@@ -86,6 +93,9 @@ public class GUICCMachine extends AbstractContainerScreen<CCMachineMenu> {
         int vOffset = METAL_V + (METAL_H - fillHeight);
         gui.blit(TEXTURE, x, top, METAL_U, vOffset, METAL_W, fillHeight);
         gui.setColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+        // светлая полоска 1px на границе металла (как у плавильни)
+        gui.fill(x, top, x + METAL_W, top + 1, 0x40FFFFFF);
     }
 
     /** Рендер жидкостного бака. Полностью скопирован из GUIFluidBarrel. */
@@ -146,49 +156,50 @@ public class GUICCMachine extends AbstractContainerScreen<CCMachineMenu> {
             renderFluidTooltip(gui, mouseX, mouseY,
                     new FluidStack(ModFluids.LOW_PRESSURE_STEAM_SOURCE.get(), menu.getSteamAmount()),
                     menu.getSteamCapacity(), "gui.trd.cc_machine.steam");
-        } else if (isHovering(MOLD_X, MOLD_Y, SLOT_SIZE, SLOT_SIZE, mouseX, mouseY)) {
-            gui.renderTooltip(this.font, Component.translatable("gui.trd.cc_machine.mold_slot"), mouseX, mouseY);
-        } else {
-            boolean hoveringOutput = false;
-            for (int i = 0; i < 6; i++) {
-                int col = i % 3;
-                int row = i / 3;
-                if (isHovering(OUT_X + col * 18, OUT_Y + row * 18, SLOT_SIZE, SLOT_SIZE, mouseX, mouseY)) {
-                    hoveringOutput = true;
-                    break;
-                }
-            }
-            if (hoveringOutput) {
-                gui.renderTooltip(this.font, Component.translatable("gui.trd.cc_machine.output_slot"), mouseX, mouseY);
-            }
         }
     }
 
-    /** Тултип металла в стиле GUISmelter: список строк, заголовок цветом металла, прогресс. */
+    /** Тултип металла 1 в 1 как у плавильни: цветное название, без шифта блоки/слитки/самородки, с шифтом единицы. */
     private void renderMetalTooltip(GuiGraphics gui, int mx, int my) {
         List<Component> lines = new ArrayList<>();
+        lines.add(Component.translatable("gui.trd.cc_machine.metal_title"));
 
-        int color = menu.getMetalColor();
-        if (color < 0) color = 0xAAAAAA;
+        Metal metal = menu.getBlockEntity().getStoredMetal();
+        if (metal == null) {
+            lines.add(Component.translatable("gui.trd.smelter.metal_tank.empty"));
+        } else {
+            boolean showExact = hasShiftDown();
+            int units = menu.getMetalUnits();
+            MetalUnits2.MetalStack converted = MetalUnits2.convertFromUnits(units);
+            String name = Component.translatable(metal.getTranslationKey()).getString();
 
-        // Заголовок цветом текущего металла (как "§6§lMolten Metals:" в плавильне)
-        lines.add(Component.translatable("gui.trd.cc_machine.metal_title")
-                .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(color))));
-
-        // Количество единиц
-        lines.add(Component.translatable("gui.trd.cc_machine.metal_amount",
-                        menu.getMetalUnits(), menu.getMetalCapacity())
-                .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAAAA))));
-
-        // Прогресс литья + оставшееся время (как remaining в плавильне)
-        int progress = menu.getCastProgress();
-        int required = menu.getCastRequired();
-        if (required > 0) {
-            int remaining = required - progress;
-            float seconds = remaining / 20.0f;
-            lines.add(Component.translatable("gui.trd.cc_machine.cast_remaining",
-                            String.format("%.1f", Math.max(0, seconds)))
-                    .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFFAA00))));
+            if (showExact) {
+                lines.add(Component.literal(name + ": " + units + " ед.")
+                        .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(metal.getColor()))));
+            } else {
+                StringBuilder sb = new StringBuilder();
+                if (converted.blocks() > 0) sb.append(converted.blocks())
+                        .append(Component.translatable("gui.trd.smelter.metal_tank.block_abbr").getString()).append(" ");
+                if (converted.ingots() > 0) sb.append(converted.ingots())
+                        .append(Component.translatable("gui.trd.smelter.metal_tank.ingot_abbr").getString()).append(" ");
+                if (converted.nuggets() > 0) sb.append(converted.nuggets())
+                        .append(Component.translatable("gui.trd.smelter.metal_tank.nugget_abbr").getString()).append(" ");
+                if (sb.length() == 0) sb.append("0");
+                lines.add(Component.literal(name + ": " + sb.toString())
+                        .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(metal.getColor()))));
+            }
+            int capacity = menu.getMetalCapacity();
+            if (showExact) {
+                lines.add(Component.translatable("gui.trd.smelter.metal_tank.total_exact", units, capacity));
+            } else {
+                MetalUnits2.MetalStack totalConv = MetalUnits2.convertFromUnits(units);
+                int maxBlocks = capacity / MetalUnits2.UNITS_PER_BLOCK;
+                lines.add(Component.translatable("gui.trd.smelter.metal_tank.total_converted",
+                        totalConv.blocks(), totalConv.ingots(), totalConv.nuggets(), maxBlocks));
+            }
+            lines.add(Component.translatable(showExact
+                    ? "gui.trd.smelter.metal_tank.shift_hide"
+                    : "gui.trd.smelter.metal_tank.shift_show"));
         }
 
         gui.renderComponentTooltip(this.font, lines, mx, my);

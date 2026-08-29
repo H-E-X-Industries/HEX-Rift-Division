@@ -170,6 +170,7 @@ public class ClientModEvents {
         event.registerEntityRenderer(ModEntities.GRENADIER_ZOMBIE.get(), ZombieRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.CASTING_DESCENT.get(), CastingDescentRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.CASTING_POT.get(), com.trd.client.renderer.CastingPotRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.CC_MACHINE_BE.get(), com.trd.client.renderer.CCMachineRenderer::new);
 
         ModEntities.GRENADE_NUC_PROJECTILE.ifPresent(entityType ->
                 EntityRenderers.register(entityType, ThrownItemRenderer::new));
