@@ -1,7 +1,9 @@
 package com.trd.worldgen.feature;
 
+import com.trd.api.vein.VeinBiomeResolver;
 import com.trd.api.vein.VeinCompositionGenerator;
 import com.trd.api.vein.VeinManager;
+import com.trd.api.vein.VeinModifier;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
@@ -95,8 +97,11 @@ public class SpecialVeinFeature extends Feature<SpecialVeinConfiguration> {
 
             // Регистрируем свою порцию жилы в менеджере (детерминированный UUID:
             // соседние чанки сольют свои порции с этой же записью).
+            // Модификатор биома — чистая функция координат (биом центра жилы детерминирован),
+            // поэтому состав жилы остаётся одинаковым во всех чанках.
+            VeinModifier modifier = VeinBiomeResolver.of(level.getBiome(BlockPos.containing(vein.cx, vein.cy, vein.cz)));
             var composition = VeinCompositionGenerator.generate(
-                    vein.cy, RandomSource.create(vein.seed ^ 0xC0FFEE1234L));
+                    vein.cy, RandomSource.create(vein.seed ^ 0xC0FFEE1234L), modifier);
             UUID veinId = CrossChunkVeins.veinUuid(serverLevel.getSeed(), vein, cfg.veinId());
             VeinManager.get(serverLevel).registerVeinPortion(veinId, portion, composition, vein.cy);
         });

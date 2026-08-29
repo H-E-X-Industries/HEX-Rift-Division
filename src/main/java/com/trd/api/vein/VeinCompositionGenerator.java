@@ -18,6 +18,15 @@ public class VeinCompositionGenerator {
     );
 
     public static VeinComposition generate(int y, RandomSource random) {
+        return generate(y, random, VeinModifier.NONE);
+    }
+
+    /**
+     * Генерация состава жилы с учётом биом-модификаторов (температура сдвигает
+     * веса фракций). Используется на этапе генерации жилы — результат (проценты
+     * фракций) детерминирован сидом жилы и запекается в VeinManager.
+     */
+    public static VeinComposition generate(int y, RandomSource random, VeinModifier modifier) {
         // depthFactor: 0.0 на Y=320, 1.0 на Y=-64
         float depthFactor = 1.0f - ((y + 64.0f) / 384.0f);
         depthFactor = Math.max(0.0f, Math.min(1.0f, depthFactor));
@@ -38,8 +47,11 @@ public class VeinCompositionGenerator {
         Collections.shuffle(available, new java.util.Random(random.nextLong()));
         List<FractionEntry> selected = new ArrayList<>(available.subList(0, Math.min(count, available.size())));
 
-        // Распределяем проценты
-        int totalWeight = selected.stream().mapToInt(e -> e.weight).sum();
+        // Распределяем проценты. Температурный модификатор утяжеляет «свои» фракции.
+        int totalWeight = 0;
+        for (FractionEntry entry : selected) {
+            totalWeight += boostedWeight(entry, modifier);
+        }
         Map<FractionType, Integer> composition = new LinkedHashMap<>();
         int remaining = 100;
 
@@ -49,7 +61,8 @@ public class VeinCompositionGenerator {
             if (i == selected.size() - 1) {
                 percent = remaining;
             } else {
-                percent = (entry.weight * 90) / totalWeight;
+                int weight = boostedWeight(entry, modifier);
+                percent = (weight * 90) / totalWeight;
                 int variation = Math.max(2, percent / 4);
                 percent = percent - variation + random.nextInt(variation * 2 + 1);
                 percent = Math.max(5, Math.min(remaining - 5 * (selected.size() - i - 1), percent));
@@ -59,6 +72,10 @@ public class VeinCompositionGenerator {
         }
 
         return new VeinComposition(composition);
+    }
+
+    private static int boostedWeight(FractionEntry entry, VeinModifier modifier) {
+        return Math.max(1, Math.round(entry.weight * modifier.fractionMultiplier(entry.fraction)));
     }
 
     private record FractionEntry(FractionType fraction, float minDepth, float maxDepth, int weight) {}

@@ -1,5 +1,6 @@
 package com.trd.block.basic.weapons.explosives;
 
+import com.trd.api.vein.VeinBiomeResolver;
 import com.trd.api.vein.VeinManager;
 import com.trd.block.basic.ModBlocks;
 import com.trd.block.entity.conglomerate.ConglomerateBlockEntity;
@@ -122,7 +123,8 @@ public class DetMinerBlock extends Block implements IDetonatable {
                 ItemStack chunk = ConglomerateItem.createFromVein(
                         vein.getComposition().getFullComposition(),
                         CONGLOMERATE_OU_EXTRACT,
-                        vein.getTypeName()
+                        vein.getTypeName(),
+                        VeinBiomeResolver.of(serverLevel.getBiome(targetPos))
                 );
                 allDrops.add(chunk);
             } else {

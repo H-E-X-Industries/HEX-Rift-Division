@@ -115,7 +115,14 @@ dependencies {
     compileOnly fg.deobf(files('libs/oculus-mc1.20.1-1.8.0.jar'))
     compileOnly fg.deobf(files('libs/embeddium-0.3.31+mc1.20.1.jar'))
 
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
+
+}
+
+test {
+    useJUnitPlatform()
 }
 
 tasks.named('processResources', ProcessResources).configure {

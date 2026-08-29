@@ -1,7 +1,9 @@
 package com.trd.worldgen.feature;
 
+import com.trd.api.vein.VeinBiomeResolver;
 import com.trd.api.vein.VeinCompositionGenerator;
 import com.trd.api.vein.VeinManager;
+import com.trd.api.vein.VeinModifier;
 import com.trd.block.basic.ModBlocks;
 import com.trd.block.entity.conglomerate.ConglomerateBlockEntity;
 import com.mojang.serialization.Codec;
@@ -89,9 +91,11 @@ public class ConglomerateVeinFeature extends Feature<ConglomerateVeinConfigurati
 
             if (normalBlocks.isEmpty()) return;
 
-            // Состав жилы детерминирован сидом жилы — все чанки получают одинаковый
+            // Состав жилы детерминирован сидом жилы — все чанки получают одинаковый.
+            // Биом-модификатор — чистая функция координат (биом центра жилы детерминирован).
+            VeinModifier modifier = VeinBiomeResolver.of(level.getBiome(BlockPos.containing(vein.cx, vein.cy, vein.cz)));
             var composition = VeinCompositionGenerator.generate(
-                    vein.cy, RandomSource.create(vein.seed ^ 0xC0FFEE1234L));
+                    vein.cy, RandomSource.create(vein.seed ^ 0xC0FFEE1234L), modifier);
 
             UUID veinId = CrossChunkVeins.veinUuid(serverLevel.getSeed(), vein, cfg.veinId());
             VeinManager.get(serverLevel).registerVeinPortion(veinId, normalBlocks, composition, vein.cy);

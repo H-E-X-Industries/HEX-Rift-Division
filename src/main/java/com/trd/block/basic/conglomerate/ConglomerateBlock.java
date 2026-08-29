@@ -1,5 +1,6 @@
 package com.trd.block.basic.conglomerate;
 
+import com.trd.api.vein.VeinBiomeResolver;
 import com.trd.api.vein.VeinManager;
 import com.trd.block.basic.ModBlocks;
 import com.trd.block.entity.conglomerate.ConglomerateBlockEntity;
@@ -73,7 +74,8 @@ public class ConglomerateBlock extends BaseEntityBlock {
             ItemStack chunk = ConglomerateItem.createFromVein(
                     vein.getComposition().getFractions(),
                     ConglomerateBlockEntity.OU_PER_CHARGE,
-                    vein.getTypeName()
+                    vein.getTypeName(),
+                    VeinBiomeResolver.of(level.getBiome(pos))
             );
             Block.popResource(level, pos, chunk);
         } else {
