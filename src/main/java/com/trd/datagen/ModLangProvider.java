@@ -121,6 +121,7 @@ public class ModLangProvider extends LanguageProvider {
         add("jei.category.trd.coccer_oven", "Coke Oven");
         add("jei.category.trd.chemical_plant", "Chemical Plant");
         add("jei.category.trd.vishelashivatel", "Leacher");
+        add("jei.category.trd.forging", "Forging");
 
         // Metals
         add("metal.trd.gold", "Gold");
@@ -1207,7 +1208,7 @@ public class ModLangProvider extends LanguageProvider {
         add("jei.category.trd.electric_furnace", "Электропечь");
         add("jei.category.trd.coccer_oven", "Коксовая печь");
         add("jei.category.trd.chemical_plant", "Химическая установка");
-
+        add("jei.category.trd.forging", "Ковка");
         // Литые кирки
 
         add("item.trd.cast_pickaxe.desc.charge", "§7Зажмите ПКМ для мощного удара");

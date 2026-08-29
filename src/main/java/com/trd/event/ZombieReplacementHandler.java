@@ -21,6 +21,11 @@ public class ZombieReplacementHandler {
 
     @SubscribeEvent
     public static void onZombieFinalizeSpawn(MobSpawnEvent.FinalizeSpawn event) {
+        // Естественный спавн гренадёра ОТКЛЮЧЁН: он появляется только через яйцо призыва.
+        // Раньше ванильный зомби заменялся на гренадёра с шансом REPLACEMENT_CHANCE.
+        // Оставлена возможность вручную вернуть механизм, раскомментировав блок ниже.
+
+        /*
         // Проверяем, что это ванильный зомби
         if (event.getEntity().getType() != EntityType.ZOMBIE) return;
         if (event.getEntity() instanceof GrenadierZombieEntity) return;
@@ -72,5 +77,6 @@ public class ZombieReplacementHandler {
                 );
             }
         }
+        */
     }
 }
