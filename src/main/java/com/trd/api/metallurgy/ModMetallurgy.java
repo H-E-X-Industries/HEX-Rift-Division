@@ -91,9 +91,10 @@ public class ModMetallurgy {
                 steel,
                 18, // Точный выход: 18 единиц = 2 слитка стали
                 1.5f, // Потребление 1.5 градуса/тик
-                200   // 10 секунд плавки
+                60   // 3 секунды плавки
         );
         MetallurgyRegistry.addAlloyRecipe(steelAlloy);
+
         MetallurgyRegistry.addSmeltRecipe(ModItems.CAST_PICKAXE_STEEL_BASE.get(), steel, 45, 1440, 1.2f, 180);
         MetallurgyRegistry.addSmeltRecipe(ModItems.STEEL_PLATE.get(), steel, 9, 1440, 1.2f, 60);
 
@@ -103,7 +104,20 @@ public class ModMetallurgy {
                 ResourceRegistry.getSmallUnit("aluminum"),
                 ResourceRegistry.getBlock("aluminum"));
         MetallurgyRegistry.addSmeltRecipe(ModItems.ALUMINUM_PLATE.get(), aluminum, 9, 660, 0.4f, 60);
-        MetallurgyRegistry.addSmeltRecipe(ModItems.ALUMINA.get(), aluminum, 9, 660, 0.6f, 60, 2);
+       AlloyRecipe aluminaAlloy = new AlloyRecipe(
+                new AlloySlot[]{
+                        new AlloySlot(ModItems.ALUMINA.get(), 2),
+                        new AlloySlot(null, 0),
+                        new AlloySlot(null, 0),
+                        new AlloySlot(null, 0)
+                },
+                aluminum,
+                9,
+                0.6f,
+                40
+        );
+        MetallurgyRegistry.addAlloyRecipe(aluminaAlloy);
+
 
         // === БРОНЗА ===
         Metal bronze = registerMetalWithItems("bronze", 0xcb9a3e, 930, 0.6f,

@@ -294,12 +294,12 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
                 } else if (be instanceof SteamEngineBlockEntity steamEngine) {
                     return steamEngine.getCapabilityForPart(cap, side, role);
                 } else if (be instanceof CCMachineBlockEntity ccMachine) {
-                    // Машина непрерывного литья: порт $ принимает жидкости (вода/пар)
-                    // CASTING_PORT (литейные порты сверху) никакие жидкости не принимает
-                    if (role == PartRole.CASTING_PORT) {
-                        return LazyOptional.empty();
+                    // Машина непрерывного литья: жидкости принимаются ТОЛЬКО с боковых сторон
+                    // через порты $ (UNIVERSAL_CONNECTOR). Литейные порты % сверху — только приём металла.
+                    if (role == PartRole.UNIVERSAL_CONNECTOR) {
+                        return ccMachine.getPortCapability(cap, this.worldPosition, side);
                     }
-                    return ccMachine.getCapability(cap, side);
+                    return LazyOptional.empty();
                 } else if (be instanceof IFluidTankProvider provider) {
                     return provider.getFluidHandlerCapability().cast();
                 }
@@ -346,12 +346,14 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
                         return LazyOptional.empty();
                     }
                     
-                    // Машина непрерывного литья: предметы/жидкости ТОЛЬКО с боковых портов ($)
-                    // CASTING_PORT (литейные порты сверху) — только приём металла, никаких предметов/жидкостей
-                    if (be instanceof CCMachineBlockEntity) {
-                        if (role == PartRole.CASTING_PORT) {
-                            return LazyOptional.empty();
+                    // Машина непрерывного литья: предметы доступны ТОЛЬКО через жидкостные порты ($),
+                    // как у выщелачивателя (сцеп-порты). В слот формы можно вставлять форму,
+                    // из выходных слотов можно забирать предметы. Литейные порты % — только приём металла.
+                    if (be instanceof CCMachineBlockEntity ccMachine) {
+                        if (role == PartRole.UNIVERSAL_CONNECTOR) {
+                            return ccMachine.getPortCapability(cap, this.worldPosition, side);
                         }
+                        return LazyOptional.empty();
                     }
                     return be.getCapability(cap, side);
                 }

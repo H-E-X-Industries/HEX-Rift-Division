@@ -39,6 +39,7 @@ import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.templates.FluidTank;
+import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -387,11 +388,85 @@ public class CCMachineBlockEntity extends BlockEntity implements MenuProvider, I
 
     private final LazyOptional<ItemStackHandler> itemHandler = LazyOptional.of(() -> inventory);
 
+    /**
+     * Хендлер для автоматизации (воронки/трубы/извлекатели):
+     * вставлять можно только литейную форму в слот формы (0),
+     * высасывать можно только из выходных слотов (1..6).
+     * Из слота формы извлекатели НЕ могут забрать форму.
+     */
+    private final LazyOptional<IItemHandler> automationHandler = LazyOptional.of(() -> new IItemHandler() {
+        @Override
+        public int getSlots() { return inventory.getSlots(); }
+
+        @Override
+        public ItemStack getStackInSlot(int slot) { return inventory.getStackInSlot(slot); }
+
+        @Override
+        public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+            if (slot != SLOT_MOLD) return stack;
+            return inventory.insertItem(slot, stack, simulate);
+        }
+
+        @Override
+        public ItemStack extractItem(int slot, int amount, boolean simulate) {
+            if (slot < SLOT_OUTPUT_START || slot >= INVENTORY_SIZE) {
+                return ItemStack.EMPTY; // из слота формы нельзя высасывать
+            }
+            return inventory.extractItem(slot, amount, simulate);
+        }
+
+        @Override
+        public int getSlotLimit(int slot) { return inventory.getSlotLimit(slot); }
+
+        @Override
+        public boolean isItemValid(int slot, ItemStack stack) { return inventory.isItemValid(slot, stack); }
+    });
+
+    /** Предметный хендлер для жидкостных портов ($) мультиблока. */
+    public LazyOptional<IItemHandler> getItemPortCapability() {
+        return automationHandler;
+    }
+
+    /**
+     * Хендлер порта. Зовётся ТОЛЬКО для портов $ (UNIVERSAL_CONNECTOR).
+     * Жидкости: принимаются только с боковых сторон машины (фронт/тыл нельзя).
+     * Предметы: доступны со всех граней порта (форма во вход, извлечение из выходов).
+     */
+    public <T> LazyOptional<T> getPortCapability(@NotNull Capability<T> cap, BlockPos portPos, @Nullable Direction side) {
+        if (cap == ForgeCapabilities.ITEM_HANDLER) {
+            return automationHandler.cast();
+        }
+        if (cap == ForgeCapabilities.FLUID_HANDLER) {
+            if (side != null) {
+                Direction allowed = getAllowedLateralSide(portPos);
+                if (side != allowed) {
+                    return LazyOptional.empty();
+                }
+            }
+            return fluidHandler.cast();
+        }
+        return LazyOptional.empty();
+    }
+
+    /** Боковая грань машины (лево/право относительно лицевой стороны), наружу которой смотрит данный порт. */
+    private Direction getAllowedLateralSide(BlockPos portPos) {
+        Direction facing = Direction.NORTH;
+        if (getBlockState().hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING)) {
+            facing = getBlockState().getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING);
+        }
+        int dx = portPos.getX() - worldPosition.getX();
+        int dz = portPos.getZ() - worldPosition.getZ();
+        Direction cw = facing.getClockWise();
+        int dot = dx * cw.getStepX() + dz * cw.getStepZ();
+        return dot > 0 ? cw : facing.getCounterClockWise();
+    }
+
     @NotNull
     @Override
     public <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
-        // вода/пар/предметы — ТОЛЬКО с боковых сторон (не сверху/снизу)
-        if (side == Direction.UP || side == Direction.DOWN) {
+        // Автоматизация — ТОЛЬКО через жидкостные порты ($). Напрямую к контроллеру
+        // предметы/жидкости не подаются внешними машинами (side == null — внутренний доступ).
+        if (side != null) {
             return super.getCapability(cap, side);
         }
         if (cap == ForgeCapabilities.FLUID_HANDLER) {
@@ -408,6 +483,7 @@ public class CCMachineBlockEntity extends BlockEntity implements MenuProvider, I
         super.invalidateCaps();
         fluidHandler.invalidate();
         itemHandler.invalidate();
+        automationHandler.invalidate();
     }
 
     // ============ NBT ============
