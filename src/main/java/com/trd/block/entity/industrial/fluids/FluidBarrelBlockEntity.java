@@ -337,15 +337,23 @@ public class FluidBarrelBlockEntity extends FluidNodeBlockEntity implements Menu
                     }
                 }
             } else {
-                var result = FluidUtil.tryEmptyContainer(drainIn, fluidTank, fluidTank.getSpace(), null, true);
-                if (result.isSuccess()) {
-                    ItemStack drained = result.getResult();
+                // 1) Симуляция опустошения: сколько реально можно слить, НЕ трогая ни резервуар, ни бочку.
+                var sim = FluidUtil.tryEmptyContainer(drainIn, fluidTank, fluidTank.getSpace(), null, false);
+                if (sim.isSuccess()) {
+                    ItemStack drained = sim.getResult();
                     FluidStack remaining = FluidUtil.getFluidContained(drained).orElse(FluidStack.EMPTY);
                     if (remaining.isEmpty()) {
-                        // Полностью опустошён → в слот опустошённых предметов-хранилищ.
-                        if (insertOrMerge(DRAIN_OUT_SLOT, drained)) drainIn.shrink(1);
+                        // Контейнер опустошается полностью → он должен попасть в слот опустошённых.
+                        // Если выходной слот не может принять результат — НЕ сливаем жидкость,
+                        // иначе при забитом выходе бочка/контейнер бесконечно наполняла бы резервуар.
+                        if (canInsert(DRAIN_OUT_SLOT, drained)) {
+                            FluidUtil.tryEmptyContainer(drainIn, fluidTank, fluidTank.getSpace(), null, true);
+                            insertOrMerge(DRAIN_OUT_SLOT, drained);
+                            drainIn.shrink(1);
+                        }
                     } else {
-                        // В бочке/контейнере ещё осталась жидкость → остаётся в верхнем слоте.
+                        // Резервуар не вместил всё → частично опустошаем, бочка остаётся в верхнем слоте.
+                        FluidUtil.tryEmptyContainer(drainIn, fluidTank, fluidTank.getSpace(), null, true);
                         itemHandler.setStackInSlot(DRAIN_IN_SLOT, drained);
                     }
                 }
@@ -355,9 +363,17 @@ public class FluidBarrelBlockEntity extends FluidNodeBlockEntity implements Menu
         if (fluidTank.getFluidAmount() > 0) {
             ItemStack fillIn = itemHandler.getStackInSlot(FILL_IN_SLOT);
             if (!fillIn.isEmpty()) {
-                var result = FluidUtil.tryFillContainer(fillIn, fluidTank, fluidTank.getFluidAmount(), null, true);
-                if (result.isSuccess()) {
-                    if (insertOrMerge(FILL_OUT_SLOT, result.getResult())) fillIn.shrink(1);
+                // 1) Симуляция наполнения (не трогаем резервуар/контейнер).
+                var sim = FluidUtil.tryFillContainer(fillIn, fluidTank, fluidTank.getFluidAmount(), null, false);
+                if (sim.isSuccess()) {
+                    ItemStack filled = sim.getResult();
+                    // 2) Наполняем контейнер и переносим на выход ТОЛЬКО если выход способен его принять,
+                    //    иначе контейнер бесконечно выкачивал бы жидкость при забитом выходе.
+                    if (canInsert(FILL_OUT_SLOT, filled)) {
+                        FluidUtil.tryFillContainer(fillIn, fluidTank, fluidTank.getFluidAmount(), null, true);
+                        insertOrMerge(FILL_OUT_SLOT, filled);
+                        fillIn.shrink(1);
+                    }
                 }
             }
         }
@@ -374,6 +390,15 @@ public class FluidBarrelBlockEntity extends FluidNodeBlockEntity implements Menu
             return true;
         }
         return false;
+    }
+
+    /** Может ли слот принять стек (без фактического изменения). */
+    protected boolean canInsert(int slot, ItemStack stack) {
+        if (stack.isEmpty()) return true;
+        ItemStack existing = itemHandler.getStackInSlot(slot);
+        if (existing.isEmpty()) return true;
+        return ItemStack.isSameItemSameTags(existing, stack)
+                && existing.getCount() + stack.getCount() <= existing.getMaxStackSize();
     }
 
     public void setFilter(String newFilter) {
