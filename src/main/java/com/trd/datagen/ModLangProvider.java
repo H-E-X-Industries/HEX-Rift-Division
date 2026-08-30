@@ -83,6 +83,8 @@ public class ModLangProvider extends LanguageProvider {
         add("tooltip.trd.max_torque", "Max Torque");
         add("tooltip.trd.inertia", "Inertia");
         add("message.trd.too_far_from_support", "Unsupported span! Max distance from support for this diameter: %s blocks.");
+        add("message.trd.bevel_already_present", "This shaft already has a bevel gear! Only one bevel gear per shaft is allowed.");
+        add("message.trd.bevel_tjunction_blocked", "Cannot attach here: this shaft is a bevel gear T-junction cross-piece!");
 
         // Heater Tiers
         add("gui.trd.heater.tier0", "Tier 0");
@@ -2121,6 +2123,8 @@ public class ModLangProvider extends LanguageProvider {
         add("tooltip.trd.max_torque", "Макс. момент");
         add("tooltip.trd.inertia", "Инерция");
         add("message.trd.too_far_from_support", "Слишком длинный пролёт! Макс. расстояние от опоры для этого диаметра: %s бл.");
+        add("message.trd.bevel_already_present", "На этом валу уже есть коническая шестерня! Разрешена только одна на вал.");
+        add("message.trd.bevel_tjunction_blocked", "Нельзя установить насадку: этот вал является узлом пересечения конических шестерней!");
 
         // Fluids
         addFluidTranslations("hydrogen_peroxide", "Пероксид водорода", null, "Hydrogen Peroxide");

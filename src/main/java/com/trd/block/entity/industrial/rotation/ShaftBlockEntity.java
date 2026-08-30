@@ -54,6 +54,47 @@ public class ShaftBlockEntity extends KineticNodeBlockEntity {
         return hasGear() || hasPulley() || hasRotor() || hasFlywheel();
     }
 
+    /**
+     * Проверяет, является ли этот вал T-образным узлом конических шестерней.
+     * Т.е. проходит ли через позицию этого вала луч зубцов хотя бы одной конической
+     * шестерни на соседнем перпендикулярном вале.
+     *
+     * Если да — на этот вал нельзя надевать центральные насадки (шестерни, шкивы, маховики, роторы).
+     * Конические шестерни при этом могут стоять, но только на концах самого вала.
+     */
+    public boolean isBevelTJunctionShaft() {
+        if (level == null || worldPosition == null) return false;
+        if (!level.isLoaded(worldPosition)) return false;
+
+        BlockState myState = getBlockState();
+        if (!myState.hasProperty(ShaftBlock.FACING)) return false;
+        Direction.Axis myAxis = myState.getValue(ShaftBlock.FACING).getAxis();
+
+        // Проверяем все 4 перпендикулярных направления от этого вала
+        for (Direction perpDir : Direction.values()) {
+            if (perpDir.getAxis() == myAxis) continue; // вдоль оси — пропускаем
+
+            // Сосед по перпендикуляру
+            BlockPos neighborPos = worldPosition.relative(perpDir);
+            if (!level.isLoaded(neighborPos)) continue;
+
+            net.minecraft.world.level.block.entity.BlockEntity neighborBE = level.getBlockEntity(neighborPos);
+            if (!(neighborBE instanceof ShaftBlockEntity neighborShaft)) continue;
+
+            // Если у соседа есть коническая шестерня и её луч проходит через нас
+            Direction neighborBevelDir = neighborShaft.getBevelDirection();
+            if (neighborBevelDir == null) continue;
+
+            // Луч соседа: neighborPos → neighborPos.relative(neighborBevelDir)
+            // Проходит ли этот луч через worldPosition?
+            BlockPos neighborRayEnd = neighborPos.relative(neighborBevelDir);
+            if (neighborRayEnd.equals(worldPosition)) {
+                return true; // Луч конической шестерни соседа попадает прямо в нас!
+            }
+        }
+        return false;
+    }
+
     public ItemStack getAttachedFlywheel() {
         return attachedFlywheel;
     }
@@ -190,9 +231,29 @@ public class ShaftBlockEntity extends KineticNodeBlockEntity {
         if (!state.hasProperty(ShaftBlock.FACING))
             return new Direction[0];
         Direction facing = state.getValue(ShaftBlock.FACING);
-        if (hasGear() || hasBevelStart() || hasBevelEnd())
+        // Шестерни (gear) позволяют распространение во все стороны (боковые зубья).
+        // Конические шестерни — НЕТ: соединение идёт через getPotentialConnections,
+        // поэтому пропагируем только вдоль оси вала.
+        if (hasGear())
             return Direction.values();
         return new Direction[] { facing, facing.getOpposite() };
+    }
+
+    /**
+     * Возвращает Direction зубцов конической шестерни этого вала.
+     * HAS_BEVEL_START означает, что шестерня стоит на стороне с меньшей координатой (Negative)
+     * HAS_BEVEL_END означает, что шестерня стоит на стороне с большей координатой (Positive)
+     * Направление зубцов всегда указывает наружу (от центра вала).
+     */
+    @org.jetbrains.annotations.Nullable
+    public Direction getBevelDirection() {
+        if (!hasBevelStart() && !hasBevelEnd()) return null;
+        Direction.Axis axis = getBlockState().getValue(ShaftBlock.FACING).getAxis();
+        if (hasBevelStart()) {
+            return Direction.fromAxisAndDirection(axis, Direction.AxisDirection.NEGATIVE);
+        } else {
+            return Direction.fromAxisAndDirection(axis, Direction.AxisDirection.POSITIVE);
+        }
     }
 
     @Override
@@ -332,21 +393,38 @@ public class ShaftBlockEntity extends KineticNodeBlockEntity {
             }
         }
 
-        // 3. Конические шестерни (Bevel Gears)
+        // 3. Конические шестерни (Bevel Gears) — поиск по лучу
+        // Алгоритм: луч из нашей шестерни в направлении зубцов попадает в точку пересечения
+        // (myPos + bevelDir). Затем сканируем 4 перпендикулярных позиции вокруг этой точки —
+        // там могут стоять валы с конической шестернёй, луч которых тоже достигает этой точки.
         if (this.hasBevelStart() || this.hasBevelEnd()) {
-            for (BlockPos pos : BlockPos.betweenClosed(myPos.offset(-1, -1, -1), myPos.offset(1, 1, 1))) {
-                if (pos.equals(myPos))
-                    continue;
-                BlockState otherState = level.getBlockState(pos);
-                if (otherState.getBlock() instanceof ShaftBlock) {
+            Direction bevelDir = getBevelDirection();
+            if (bevelDir != null) {
+                // Точка пересечения: 1 блок в направлении зубцов
+                BlockPos intersectionPoint = myPos.relative(bevelDir);
+
+                // Сканируем 4 перпендикулярных направления от точки пересечения
+                for (Direction perpDir : Direction.values()) {
+                    if (perpDir.getAxis() == bevelDir.getAxis()) continue; // только перпендикулярные
+
+                    // Потенциальный партнёр находится по другую сторону от точки пересечения
+                    // (т.е. его луч dirB = perpDir, и он идёт ОТ него К точке пересечения)
+                    BlockPos partnerPos = intersectionPoint.relative(perpDir.getOpposite());
+                    if (partnerPos.equals(myPos)) continue;
+                    if (!level.isLoaded(partnerPos)) continue;
+
+                    BlockState otherState = level.getBlockState(partnerPos);
+                    if (!(otherState.getBlock() instanceof ShaftBlock)) continue;
+
                     boolean otherHasBevel = (otherState.hasProperty(ShaftBlock.HAS_BEVEL_START) && otherState.getValue(ShaftBlock.HAS_BEVEL_START))
                             || (otherState.hasProperty(ShaftBlock.HAS_BEVEL_END) && otherState.getValue(ShaftBlock.HAS_BEVEL_END));
-                    if (otherHasBevel) {
-                        Direction.Axis otherAxis = otherState.getValue(ShaftBlock.FACING).getAxis();
-                        if (axis != otherAxis) {
-                            list.add(pos.immutable()); // Точная проверка расстояния будет в canConnectMechanically
-                        }
-                    }
+                    if (!otherHasBevel) continue;
+
+                    Direction.Axis otherAxis = otherState.getValue(ShaftBlock.FACING).getAxis();
+                    // Партнёр должен быть строго перпендикулярного вала
+                    if (otherAxis == bevelDir.getAxis()) continue;
+
+                    list.add(partnerPos.immutable());
                 }
             }
         }
@@ -409,48 +487,28 @@ public class ShaftBlockEntity extends KineticNodeBlockEntity {
         Direction.Axis myAxis = myFacing.getAxis();
         Direction.Axis neighborAxis = neighborFacing.getAxis();
 
-        // Проверка соединения конических шестерней (Bevel Gears)
+        // Соединение конических шестерней (Bevel Gears) — расчёт знака передачи
+        // Коническая пара 1:1, знак определяется относительным расположением валов.
+        // Физика: d1 = компонента (neighbor-my) вдоль оси A, d2 — вдоль оси B.
+        // Если оба вала "расходятся" от точки пересечения → знак отрицательный (реверс),
+        // если один к точке, другой от → положительный.
         if (myAxis != neighborAxis && (this.hasBevelStart() || this.hasBevelEnd())
                 && (neighborShaft.hasBevelStart() || neighborShaft.hasBevelEnd())) {
-            java.util.List<net.minecraft.world.phys.Vec3> myBevels = new java.util.ArrayList<>();
-            java.util.List<Boolean> myStarts = new java.util.ArrayList<>();
-            if (this.hasBevelStart()) {
-                myBevels.add(getBevelPos(myPos, myAxis, true));
-                myStarts.add(true);
-            }
-            if (this.hasBevelEnd()) {
-                myBevels.add(getBevelPos(myPos, myAxis, false));
-                myStarts.add(false);
-            }
-
-            java.util.List<net.minecraft.world.phys.Vec3> neighborBevels = new java.util.ArrayList<>();
-            java.util.List<Boolean> neighborStarts = new java.util.ArrayList<>();
-            if (neighborShaft.hasBevelStart()) {
-                neighborBevels.add(getBevelPos(neighborPos, neighborAxis, true));
-                neighborStarts.add(true);
-            }
-            if (neighborShaft.hasBevelEnd()) {
-                neighborBevels.add(getBevelPos(neighborPos, neighborAxis, false));
-                neighborStarts.add(false);
-            }
-
-            for (int i = 0; i < myBevels.size(); i++) {
-                net.minecraft.world.phys.Vec3 g1 = myBevels.get(i);
-                for (int j = 0; j < neighborBevels.size(); j++) {
-                    net.minecraft.world.phys.Vec3 g2 = neighborBevels.get(j);
-                    if (g1.distanceToSqr(g2) < 0.6) { // Exactly 0.5 expected (0.5^2 + 0.5^2 = 0.5)
-                        net.minecraft.world.phys.Vec3 diff = g2.subtract(g1);
-                        double d1 = getAxisValue(diff, myAxis);
-                        double d2 = getAxisValue(diff, neighborAxis);
-                        double prod = d1 * d2;
-                        if (Math.abs(prod) > 0.001) {
-                            return (float) Math.signum(prod);
-                        }
-                        boolean isStart1 = myStarts.get(i);
-                        boolean isStart2 = neighborStarts.get(j);
-                        return (isStart1 == isStart2) ? -1.0f : 1.0f;
-                    }
+            Direction dirA = this.getBevelDirection();
+            Direction dirB = neighborShaft.getBevelDirection();
+            if (dirA != null && dirB != null && dirA.getAxis() != dirB.getAxis()) {
+                // Компонента вектора (B→A) вдоль оси A и вдоль оси B
+                int dx = neighborPos.getX() - myPos.getX();
+                int dy = neighborPos.getY() - myPos.getY();
+                int dz = neighborPos.getZ() - myPos.getZ();
+                int d1 = switch (myAxis) { case X -> dx; case Y -> dy; case Z -> dz; };
+                int d2 = switch (neighborAxis) { case X -> dx; case Y -> dy; case Z -> dz; };
+                double prod = (double) d1 * d2;
+                if (Math.abs(prod) > 0.001) {
+                    return (float) Math.signum(prod);
                 }
+                // Fallback: разные направления зубцов → реверс
+                return -1.0f;
             }
         }
 
@@ -529,24 +587,40 @@ public class ShaftBlockEntity extends KineticNodeBlockEntity {
             if (isEndToEnd) {
                 return thisDiameter == otherDiameter;
             } else {
-                // Проверка соединения конических шестерней (Bevel Gears)
+                // Проверка соединения конических шестерней (Bevel Gears) — метод пересечения лучей
+                // Принцип: каждая коническая шестерня испускает луч длиной 1 блок в направлении
+                // зубцов. Соединение происходит ТОЛЬКО если оба луча встречаются в одной точке,
+                // и оси валов строго перпендикулярны.
+                //
+                // Формула: myPos.relative(dirA) == neighborPos.relative(dirB)
+                //
+                // Это автоматически отсекает случай разрыва вала (два конца одной оси — у них
+                // лучи параллельны и встречаются в одной точке, но оси НЕ перпендикулярны).
                 if (myAxis != otherAxis && (this.hasBevelStart() || this.hasBevelEnd())
                         && (otherShaft.hasBevelStart() || otherShaft.hasBevelEnd())) {
-                    java.util.List<net.minecraft.world.phys.Vec3> myBevels = new java.util.ArrayList<>();
-                    if (this.hasBevelStart())
-                        myBevels.add(getBevelPos(myPos, myAxis, true));
-                    if (this.hasBevelEnd())
-                        myBevels.add(getBevelPos(myPos, myAxis, false));
+                    Direction dirA = this.getBevelDirection();
+                    Direction dirB = otherShaft.getBevelDirection();
 
-                    java.util.List<net.minecraft.world.phys.Vec3> neighborBevels = new java.util.ArrayList<>();
-                    if (otherShaft.hasBevelStart())
-                        neighborBevels.add(getBevelPos(neighborPos, otherAxis, true));
-                    if (otherShaft.hasBevelEnd())
-                        neighborBevels.add(getBevelPos(neighborPos, otherAxis, false));
+                    if (dirA != null && dirB != null) {
+                        // Строгая проверка: оси ДОЛЖНЫ быть перпендикулярны (уже гарантировано myAxis != otherAxis)
+                        // и направления зубцов тоже не должны быть коллинеарны
+                        if (dirA.getAxis() != dirB.getAxis()) {
+                            BlockPos intersectionA = myPos.relative(dirA);
+                            BlockPos intersectionB = neighborPos.relative(dirB);
 
-                    for (net.minecraft.world.phys.Vec3 g1 : myBevels) {
-                        for (net.minecraft.world.phys.Vec3 g2 : neighborBevels) {
-                            if (g1.distanceToSqr(g2) < 0.6) { // Exactly 0.5 distance
+                            if (intersectionA.equals(intersectionB)) {
+                                // Лучи встретились — проверяем Т-образное пересечение:
+                                // если точка пересечения — это вал с центральными насадками,
+                                // соединение запрещено (нельзя надевать шестерни/шкивы на такой вал)
+                                BlockPos intersection = intersectionA;
+                                if (level != null && level.isLoaded(intersection)) {
+                                    net.minecraft.world.level.block.entity.BlockEntity intBE = level.getBlockEntity(intersection);
+                                    if (intBE instanceof ShaftBlockEntity intShaft) {
+                                        if (intShaft.hasCentralAttachment()) {
+                                            return false; // T-образный вал занят другой насадкой
+                                        }
+                                    }
+                                }
                                 return true;
                             }
                         }
@@ -643,21 +717,6 @@ public class ShaftBlockEntity extends KineticNodeBlockEntity {
         return isCollinear;
     }
 
-    private net.minecraft.world.phys.Vec3 getBevelPos(BlockPos pos, Direction.Axis axis, boolean isStart) {
-        double offset = isStart ? -0.5 : 0.5;
-        double x = pos.getX() + 0.5 + (axis == Direction.Axis.X ? offset : 0);
-        double y = pos.getY() + 0.5 + (axis == Direction.Axis.Y ? offset : 0);
-        double z = pos.getZ() + 0.5 + (axis == Direction.Axis.Z ? offset : 0);
-        return new net.minecraft.world.phys.Vec3(x, y, z);
-    }
-
-    private double getAxisValue(net.minecraft.world.phys.Vec3 vec, Direction.Axis axis) {
-        return switch (axis) {
-            case X -> vec.x;
-            case Y -> vec.y;
-            case Z -> vec.z;
-        };
-    }
 
     // setSpeed, shouldSyncSpeed, setNetworkScale, getNetworkScale — унаследованы от KineticNodeBlockEntity
 

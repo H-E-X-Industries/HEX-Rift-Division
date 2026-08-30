@@ -122,9 +122,12 @@ public abstract class KineticNodeBlockEntity extends BlockEntity implements Rota
                     .get((ServerLevel) level)
                     .getNetworkFor(worldPosition);
             if (net != null) {
+                // Восстанавливаем скорость из текущего состояния сети.
+                // НЕ вызываем requestRecalculation() здесь: полный пересчёт
+                // сети делается централизованно через postLoadRebuildTimer в
+                // KineticNetworkManager.tickAllNetworks() — когда все BE уже загружены.
                 this.speed = (long) (net.getSpeed() * this.networkScale);
                 this.lastSyncedSpeed = this.speed;
-                net.requestRecalculation();
             }
         }
     }
