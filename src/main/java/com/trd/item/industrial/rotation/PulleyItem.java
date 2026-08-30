@@ -42,6 +42,15 @@ public class PulleyItem extends Item {
                 if (targetBE.hasCentralAttachment()) {
                     return InteractionResult.PASS;
                 }
+                // Запрет установки шкива на вал T-образного узла конической шестерни
+                if (targetBE.isBevelTJunctionShaft()) {
+                    if (!level.isClientSide && context.getPlayer() != null) {
+                        context.getPlayer().displayClientMessage(
+                                net.minecraft.network.chat.Component.translatable("message.trd.bevel_tjunction_blocked")
+                                        .withStyle(net.minecraft.ChatFormatting.RED), true);
+                    }
+                    return InteractionResult.FAIL;
+                }
             } else {
                 return InteractionResult.PASS;
             }

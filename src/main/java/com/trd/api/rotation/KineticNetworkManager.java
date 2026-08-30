@@ -30,6 +30,14 @@ public class KineticNetworkManager extends SavedData {
     private final Set<BlockPos> pendingStructuralFailures = new HashSet<>();
     private final ServerLevel level;
 
+    /**
+     * После загрузки мира из NBT ждём этот таймер тиков перед первым пересчётом сети.
+     * За это время все BlockEntity успевают инициализироваться (onLoad + tick).
+     * При достижении 0 выполняется полный ребилд всех сетей от начала.
+     * -1 = таймер не активен (обычный режим работы).
+     */
+    private int postLoadRebuildTimer = -1;
+
     public KineticNetworkManager(ServerLevel level) {
         this.level = level;
     }
@@ -75,6 +83,8 @@ public class KineticNetworkManager extends SavedData {
         }
         LOGGER.info("[Kinetic] Loaded {} networks from NBT. needsRecalculation=true for all.",
                 manager.networks.size());
+        // Запускаем таймер отложенного пересчёта: ждём 20 тиков, пока все BE загрузятся
+        manager.postLoadRebuildTimer = 20;
         return manager;
     }
 
@@ -457,6 +467,17 @@ public class KineticNetworkManager extends SavedData {
     }
 
     public void tickAllNetworks() {
+        // Таймер отложенного пересчёта после загрузки из NBT
+        if (postLoadRebuildTimer > 0) {
+            postLoadRebuildTimer--;
+            return; // Пока ждём — не тикаем сети (не трогаем до готовности)
+        }
+        if (postLoadRebuildTimer == 0) {
+            postLoadRebuildTimer = -1; // Деактивируем таймер
+            performFullRebuild();
+            return;
+        }
+
         processPendingFailures();
         processPendingBreakages();
         // Итерируем готовое множество уникальных сетей — без аллокации нового HashSet каждый тик!
@@ -469,6 +490,46 @@ public class KineticNetworkManager extends SavedData {
         if (anyChanged) {
             this.setDirty();
         }
+    }
+
+    /**
+     * Полный ребилд всех кинетических сетей с нуля.
+     *
+     * Вызывается один раз спустя 20 тиков после загрузки мира из NBT.
+     * К этому моменту все BlockEntity уже загружены и инициализированы,
+     * поэтому getPotentialConnections() и canConnectMechanically() работают корректно.
+     *
+     * Алгоритм:
+     * 1. Собираем все позиции, которые были в сетях
+     * 2. Полностью сбрасываем все сети
+     * 3. Перестраиваем BFS от каждого незарегистрированного блока
+     */
+    private void performFullRebuild() {
+        LOGGER.info("[Kinetic] Post-load full rebuild started ({} known members across {} networks)",
+                blockToNetwork.size(), networks.size());
+
+        // Снимок всех известных позиций
+        Set<BlockPos> allKnownPositions = new HashSet<>(blockToNetwork.keySet());
+
+        // Полный сброс
+        blockToNetwork.clear();
+        networks.clear();
+
+        // Перестраиваем BFS от каждого незарегистрированного блока
+        for (BlockPos pos : allKnownPositions) {
+            if (blockToNetwork.containsKey(pos)) continue; // уже вошёл в новую сеть
+            if (!level.isLoaded(pos)) {
+                // Блок в незагруженном чанке — пропускаем, onLoad пересоберёт сеть при загрузке
+                continue;
+            }
+            if (!(level.getBlockEntity(pos) instanceof Rotational)) continue;
+
+            createNewNetworkFrom(pos, null);
+        }
+
+        LOGGER.info("[Kinetic] Post-load full rebuild done. Networks: {}, mapped blocks: {}",
+                networks.size(), blockToNetwork.size());
+        this.setDirty();
     }
 
     public KineticNetwork getNetworkFor(BlockPos pos) {
