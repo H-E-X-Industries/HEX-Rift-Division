@@ -1,0 +1,64 @@
+
+> Configure project :
+MixinGradle is skipping eclipse integration, extension not found
+Java: 17.0.12, JVM: 17.0.12+8-LTS-286 (Oracle Corporation), Arch: amd64
+files(...) dependencies are not deobfuscated. Use a flatDir repository instead: https://docs.gradle.org/current/userguide/declaring_repositories.html#sub:flat_dir_resolver
+Cannot deobfuscate dependency of type DefaultFileCollectionDependency_Decorated, using obfuscated version!
+files(...) dependencies are not deobfuscated. Use a flatDir repository instead: https://docs.gradle.org/current/userguide/declaring_repositories.html#sub:flat_dir_resolver
+Cannot deobfuscate dependency of type DefaultFileCollectionDependency_Decorated, using obfuscated version!
+Neither the 'eclipse' nor the 'idea' plugins were found, but IDE resource copy has been enabled.
+
+> Task :downloadMcpConfig
+> Task :extractSrg UP-TO-DATE
+> Task :createMcpToSrg UP-TO-DATE
+
+> Task :compileJava
+Note: SpongePowered MIXIN Annotation Processor Version=0.8.5 (MixinGradle Version=0.7.38)
+Note: Supported obfuscation types: ObfuscationServiceMCP supports [notch] ObfuscationServiceFG3 supports [searge]
+Note: Loading searge mappings from C:\Users\Администратор\Desktop\Crustal Incursion\build\createMcpToSrg\output.tsrg
+Note: Writing refmap to C:\Users\Администратор\Desktop\Crustal Incursion\build\tmp\compileJava\compileJava-refmap.json
+C:\Users\Администратор\Desktop\Crustal Incursion\src\main\java\com\trd\compat\irisflw\mixin\flw\MixinFlwPrograms.java:21: warning: Unable to locate obfuscation mapping for @Shadow field
+   @Shadow
+   ^
+C:\Users\Администратор\Desktop\Crustal Incursion\src\main\java\com\trd\compat\irisflw\mixin\flw\MixinFlwPrograms.java:23: warning: Unable to locate obfuscation mapping for @Shadow field
+   @Shadow
+   ^
+C:\Users\Администратор\Desktop\Crustal Incursion\src\main\java\com\trd\compat\irisflw\mixin\iris\MixinShadowRenderer.java:23: warning: Unable to locate obfuscation mapping for @Shadow field
+   @Shadow
+   ^
+C:\Users\Администратор\Desktop\Crustal Incursion\src\main\java\com\trd\compat\irisflw\mixin\iris\MixinShadowRenderer.java:36: warning: Unable to locate obfuscation mapping for @Shadow field
+   @Shadow
+   ^
+C:\Users\Администратор\Desktop\Crustal Incursion\src\main\java\com\trd\compat\irisflw\mixin\flw\FlwCompilationAccessor.java:10: warning: Unable to locate obfuscation mapping for @Accessor target generatedSource
+   @Accessor
+   ^
+C:\Users\Администратор\Desktop\Crustal Incursion\src\main\java\com\trd\compat\irisflw\mixin\flw\FlwCompilationAccessor.java:13: warning: Unable to locate obfuscation mapping for @Accessor target fullSource
+   @Accessor
+   ^
+C:\Users\Администратор\Desktop\Crustal Incursion\src\main\java\com\trd\compat\irisflw\mixin\flw\SimpleQuadMeshAccessor.java:10: warning: Unable to locate obfuscation mapping for @Accessor target vertexList
+   @Accessor
+   ^
+C:\Users\Администратор\Desktop\Crustal Incursion\src\main\java\com\trd\compat\irisflw\mixin\flw\FlwCompilationAccessor.java:16: warning: Unable to locate obfuscation mapping for @Accessor target dumpSource
+   @Invoker("dumpSource")
+   ^
+Note: Writing refmap to C:\Users\Администратор\Desktop\Crustal Incursion\build\tmp\compileJava\compileJava-refmap.json
+Note: Writing searge composite mappings to C:\Users\Администратор\Desktop\Crustal Incursion\build\tmp\compileJava\compileJava-mappings.tsrg
+Note: Writing refmap to C:\Users\Администратор\Desktop\Crustal Incursion\build\tmp\compileJava\compileJava-refmap.json
+Note: Writing refmap to C:\Users\Администратор\Desktop\Crustal Incursion\build\tmp\compileJava\compileJava-refmap.json
+Note: Writing searge composite mappings to C:\Users\Администратор\Desktop\Crustal Incursion\build\tmp\compileJava\compileJava-mappings.tsrg
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+8 warnings
+
+[Incubating] Problems report is available at: file:///C:/Users/%D0%90%D0%B4%D0%BC%D0%B8%D0%BD%D0%B8%D1%81%D1%82%D1%80%D0%B0%D1%82%D0%BE%D1%80/Desktop/Crustal%20Incursion/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.14/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 15s
+4 actionable tasks: 2 executed, 2 up-to-date

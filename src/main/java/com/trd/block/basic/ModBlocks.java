@@ -704,6 +704,12 @@ public class ModBlocks {
                     .strength(5.0f, 6.0f)
                     .requiresCorrectToolForDrops()));
 
+    public static final RegistryObject<Block> OPTIC_MICROSCOPE = registerBlock("optic_microscope",
+            () -> new Block(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)
+                    .noOcclusion()
+                    .strength(5.0f, 6.0f)
+                    .requiresCorrectToolForDrops()));
+
     public static final RegistryObject<Block> CLUTCH = registerBlock("clutch",
             () -> new com.trd.block.basic.industrial.rotation.ClutchBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)
                     .noOcclusion()

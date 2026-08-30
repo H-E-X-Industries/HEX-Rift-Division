@@ -76,6 +76,9 @@ public class ModLangProvider extends LanguageProvider {
         add("tooltip.trd.detminer.hardness", "Only affects blocks with hardness < 30");
         add("tooltip.trd.detminer.conglomerate", "Has a chance to extract resources from conglomerate");
         add("item.trd.fluid_identifier", "Fluid Identifier");
+        add("item.trd.pipette", "Pipette");
+        add("item.trd.pipette_idustrial", "Industrial Pipette");
+        add("item.trd.fluid_tank_iron", "Fluid Container");
         add("message.trd.selected_fluid", "Selected");
         add("tooltip.trd.no_fluid", "No fluid selected");
         add("tooltip.trd.shaft_material", "Material");
@@ -122,6 +125,9 @@ public class ModLangProvider extends LanguageProvider {
         add("jei.category.trd.chemical_plant", "Chemical Plant");
         add("jei.category.trd.vishelashivatel", "Leacher");
         add("jei.category.trd.forging", "Forging");
+
+        // === ЖИДКОСТЬ ↔ КОНТЕЙНЕР ===
+        add("jei.category.trd.fluid_container", "Fluid Containers");
 
         // Metals
         add("metal.trd.gold", "Gold");
@@ -1220,6 +1226,9 @@ add("tooltip.trd.conglomerate.empty", "§7Empty chunk");
         add("jei.category.trd.coccer_oven", "Коксовая печь");
         add("jei.category.trd.chemical_plant", "Химическая установка");
         add("jei.category.trd.forging", "Ковка");
+
+        // === ЖИДКОСТЬ ↔ КОНТЕЙНЕР ===
+        add("jei.category.trd.fluid_container", "Жидкостные контейнеры");
         // Литые кирки
 
         add("item.trd.cast_pickaxe.desc.charge", "§7Зажмите ПКМ для мощного удара");
@@ -2137,6 +2146,9 @@ add("tooltip.trd.conglomerate.empty", "§7Пустой кусок");
 
         // Жидкостный идентификатор
         add("item.trd.fluid_identifier", "Жидкостный идентификатор");
+        add("item.trd.pipette", "Пипетка");
+        add("item.trd.pipette_idustrial", "Промышленная пипетка");
+        add("item.trd.fluid_tank_iron", "Жидкостный контейнер");
         add("message.trd.selected_fluid", "Выбрано");
         add("tooltip.trd.no_fluid", "Жидкость не выбрана");
         add("tooltip.trd.shaft_material", "Материал");

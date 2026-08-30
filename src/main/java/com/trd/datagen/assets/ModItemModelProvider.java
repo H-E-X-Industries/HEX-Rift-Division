@@ -152,6 +152,11 @@ public class ModItemModelProvider extends ItemModelProvider {
         simpleItem(ModItems.FIREBRICK);
         simpleItem(ModItems.REINFORCEDBRICK);
         simpleItem(ModItems.INFINITE_FLUID_BARREL);
+        // Жидкостные контейнеры: пустые = только база, наполненные = база + оверлей (trd:filled).
+        // Оверлей окрашивается в цвет залитой жидкости (item color handler).
+        twoLayerItem(ModItems.PIPETTE, "pipette", "pipette_overlay");
+        twoLayerItem(ModItems.PIPETTE_IDUSTRIAL, "pipette_idustrial", "pipette_idustrial_overlay");
+        twoLayerItem(ModItems.FLUID_TANK_IRON, "fluid_tank_iron", "fluid_tank_iron_overlay");
         simpleBlockItem(ModBlocks.CONNECTOR);
         simpleBlockItem(ModBlocks.MEDIUM_CONNECTOR);
         simpleBlockItem(ModBlocks.LARGE_CONNECTOR);
@@ -258,6 +263,22 @@ public class ModItemModelProvider extends ItemModelProvider {
         return withExistingParent(item.getId().getPath(),
                 new ResourceLocation("item/generated")).texture("layer0",
                 new ResourceLocation(MainRegistry.MOD_ID, "item/" + item.getId().getPath()));
+    }
+
+    /** Двухслойный предмет: базовая текстура + оверлей (слой1), наполненый вариант при trd:filled=1. */
+    private ItemModelBuilder twoLayerItem(RegistryObject<Item> item, String base, String overlay) {
+        // Модель оверлея (только для наполненного состояния)
+        ItemModelBuilder filledModel = getBuilder(item.getId().getPath() + "_filled")
+                .parent(new ModelFile.UncheckedModelFile("item/generated"))
+                .texture("layer0", modLoc("item/" + base))
+                .texture("layer1", modLoc("item/" + overlay));
+        // Базовая модель: пустой вариант (без оверлея), переключается по trd:filled
+        return withExistingParent(item.getId().getPath(), new ResourceLocation("item/generated"))
+                .texture("layer0", modLoc("item/" + base))
+                .override()
+                .predicate(new ResourceLocation(MainRegistry.MOD_ID, "filled"), 1.0f)
+                .model(filledModel)
+                .end();
     }
 
     private ItemModelBuilder simpleBlockItem(RegistryObject<Block> block) {

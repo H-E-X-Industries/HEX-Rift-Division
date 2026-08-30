@@ -14,6 +14,7 @@ import com.trd.entity.mobs.depth_worm.DepthWormBrutalEntity;
 import com.trd.entity.mobs.grenadier.GrenadierZombieEntity;
 import com.trd.event.SlagItem;
 import com.trd.item.industrial.energy.WireCoilItem;
+import com.trd.item.industrial.fluids.FluidContainerItem;
 import com.trd.multiblock.industrial.centrifuge.conus.CentrifugeRecipes;
 import com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderRecipes;
 import com.trd.multiblock.industrial.coccer.CoccerOvenRecipeRegistry;
@@ -341,6 +342,11 @@ public class MainRegistry {
             event.accept(ModItems.PROTECTOR_LEAD);
             event.accept(ModItems.PROTECTOR_TUNGSTEN);
 
+            event.accept(ModItems.PIPETTE.get());
+            event.accept(ModItems.PIPETTE_IDUSTRIAL.get());
+            event.accept(ModItems.FLUID_TANK_IRON.get());
+
+
             event.accept(ModBlocks.BRONZE_FLUID_PIPE);
             event.accept(ModBlocks.STEEL_FLUID_PIPE);
             event.accept(ModBlocks.LEAD_FLUID_PIPE);
@@ -387,6 +393,8 @@ public class MainRegistry {
 
             event.accept(ModBlocks.REDSTONE_RADIO_TRANSMITTER.get());
             event.accept(ModBlocks.REDSTONE_RADIO_RECEIVER.get());
+
+            event.accept(ModBlocks.OPTIC_MICROSCOPE.get());
         }
 
 
@@ -492,6 +500,14 @@ public class MainRegistry {
                 event.accept(entry.get());
             }
 
+            // Предзаполненные контейнеры: автоматически выбираются только совместимые жидкости
+            // (по макс. коррозии/температуре самих пипеток/контейнера), чтобы предмет
+            // не растворялся сразу в руках игрока.
+            java.util.List<net.minecraft.world.level.material.Fluid> fluids = com.trd.api.fluids.ModFluids.getAllSourceFluids();
+            addAllFilledContainers(event, ModItems.PIPETTE.get(), fluids);
+            addAllFilledContainers(event, ModItems.PIPETTE_IDUSTRIAL.get(), fluids);
+            addAllFilledContainers(event, ModItems.FLUID_TANK_IRON.get(), fluids);
+
         }
 
         if (event.getTab() == ModCreativeTabs.trd_NATURE_TAB.get()) {
@@ -530,6 +546,17 @@ public class MainRegistry {
             event.accept(ModItems.GRENADIER_ZOMBIE_SPAWN_EGG.get());
         }
 
+    }
+
+    /** Добавляет предзаполненные контейнеры во вкладку — для каждой совместимой жидкости. */
+    private static void addAllFilledContainers(BuildCreativeModeTabContentsEvent event, Item item,
+                                               java.util.List<net.minecraft.world.level.material.Fluid> fluids) {
+        for (net.minecraft.world.level.material.Fluid fluid : fluids) {
+            ItemStack stack = FluidContainerItem.createFilled(item, fluid);
+            if (!stack.isEmpty()) {
+                event.accept(stack);
+            }
+        }
     }
 
     // Метод регистрации атрибутов (здоровье, урон и т.д.)

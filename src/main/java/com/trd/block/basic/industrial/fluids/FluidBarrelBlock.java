@@ -222,12 +222,28 @@ public class FluidBarrelBlock extends BaseEntityBlock {
         net.minecraft.world.level.block.entity.BlockEntity blockEntity = pParams.getOptionalParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.BLOCK_ENTITY);
         if (blockEntity instanceof FluidBarrelBlockEntity barrel) {
             net.minecraft.world.item.ItemStack itemStack = new net.minecraft.world.item.ItemStack(this);
-            net.minecraft.nbt.CompoundTag nbt = new net.minecraft.nbt.CompoundTag();
-            barrel.saveAdditional(nbt);
-            itemStack.addTagElement("BlockEntityTag", nbt);
+            // Полностью пустая бочка выпадает чистой — БЕЗ жидкости и БЕЗ выбранного фильтра.
+            if (!barrel.fluidTank.isEmpty()) {
+                net.minecraft.nbt.CompoundTag nbt = new net.minecraft.nbt.CompoundTag();
+                barrel.saveAdditional(nbt);
+                itemStack.addTagElement("BlockEntityTag", nbt);
+            }
             return java.util.Collections.singletonList(itemStack);
         }
         return super.getDrops(pState, pParams);
+    }
+
+    @Override
+    public net.minecraft.world.item.ItemStack getCloneItemStack(BlockState state, net.minecraft.world.phys.HitResult target, BlockGetter level, net.minecraft.core.BlockPos pos, Player player) {
+        net.minecraft.world.item.ItemStack stack = super.getCloneItemStack(state, target, level, pos, player);
+        BlockEntity be = level.getBlockEntity(pos);
+        if (be instanceof FluidBarrelBlockEntity barrel && !barrel.fluidTank.isEmpty()) {
+            net.minecraft.nbt.CompoundTag nbt = new net.minecraft.nbt.CompoundTag();
+            barrel.saveAdditional(nbt);
+            nbt.remove("Inventory");
+            stack.addTagElement("BlockEntityTag", nbt);
+        }
+        return stack;
     }
 
     private int getFluidColor(@Nullable Fluid fluid) {
