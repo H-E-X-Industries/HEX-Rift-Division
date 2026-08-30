@@ -88,8 +88,28 @@ public class ConglomerateItem extends Item {
         tag.putInt("OU", ou);
         tag.putString("VeinType", typeName);
 
+        // Новые куски по умолчанию НЕ проанализированы: подробности состава станут
+        // доступны только после анализа в оптическом микроскопе.
+        tag.putBoolean("Analyzed", false);
+
         stack.setTag(tag);
         return stack;
+    }
+
+    /**
+     * Проанализирован ли кусок в оптическом микроскопе.
+     * Старые куски без тега «Analyzed» считаются проанализированными (совместимость с сейвами).
+     */
+    public static boolean isAnalyzed(ItemStack stack) {
+        if (!stack.hasTag()) return true;
+        CompoundTag tag = stack.getTag();
+        if (!tag.contains("Analyzed", CompoundTag.TAG_BYTE)) return true;
+        return tag.getBoolean("Analyzed");
+    }
+
+    /** Помечает кусок как проанализированный (после анализа в оптическом микроскопе). */
+    public static void setAnalyzed(ItemStack stack) {
+        stack.getOrCreateTag().putBoolean("Analyzed", true);
     }
 
     public static Map<FractionType, Integer> getFractions(ItemStack stack) {
@@ -198,6 +218,12 @@ public class ConglomerateItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
+        if (!isAnalyzed(stack)) {
+            tooltip.add(Component.translatable("tooltip.trd.conglomerate.requires_analysis")
+                    .withStyle(ChatFormatting.RED));
+            return;
+        }
+
         Map<FractionType, Integer> fractions = getFractions(stack);
         if (fractions.isEmpty()) {
             tooltip.add(Component.translatable("tooltip.trd.conglomerate.empty"));

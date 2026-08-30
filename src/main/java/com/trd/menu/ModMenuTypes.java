@@ -74,6 +74,10 @@ public class ModMenuTypes {
     public static final RegistryObject<MenuType<ElectricFurnaceMenu>> ELECTRIC_FURNACE_MENU =
             MENUS.register("electric_furnace",
                     () -> IForgeMenuType.create((windowId, inv, data) -> new ElectricFurnaceMenu(windowId, inv, data)));
+
+    public static final RegistryObject<MenuType<OpticMicroscopeMenu>> OPTIC_MICROSCOPE_MENU =
+            MENUS.register("optic_microscope",
+                    () -> IForgeMenuType.create((windowId, inv, data) -> new OpticMicroscopeMenu(windowId, inv, data)));
     public static final RegistryObject<MenuType<SmallSmelterMenu>> SMALL_SMELTER_MENU =
             MENUS.register("small_smelter_menu", () -> IForgeMenuType.create(SmallSmelterMenu::create));
 

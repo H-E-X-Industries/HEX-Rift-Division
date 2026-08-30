@@ -128,6 +128,7 @@ public class ClientModEvents {
 
         MenuScreens.register(COCCER_OVEN_MENU.get(), CoccerOvenScreen::new);
         MenuScreens.register(ModMenuTypes.ELECTRIC_FURNACE_MENU.get(), GUIElectricFurnace::new);
+        MenuScreens.register(ModMenuTypes.OPTIC_MICROSCOPE_MENU.get(), GUIOpticMicroscope::new);
         MenuScreens.register(ModMenuTypes.SMALL_SMELTER_MENU.get(), GUISmallSmelter::new);
         MenuScreens.register(ModMenuTypes.MACHINE_BATTERY_MENU.get(), GUIMachineBattery::new);
         MenuScreens.register(ModMenuTypes.MOTOR_ELECTRO_MENU.get(), GUIMotorElectro::new);
