@@ -126,6 +126,9 @@ public class ModLangProvider extends LanguageProvider {
         add("jei.category.trd.vishelashivatel", "Leacher");
         add("jei.category.trd.forging", "Forging");
 
+        // === ЖИДКОСТЬ ↔ КОНТЕЙНЕР ===
+        add("jei.category.trd.fluid_container", "Fluid Containers");
+
         // Metals
         add("metal.trd.gold", "Gold");
         add("metal.trd.iron", "Iron");
@@ -1223,6 +1226,9 @@ add("tooltip.trd.conglomerate.empty", "§7Empty chunk");
         add("jei.category.trd.coccer_oven", "Коксовая печь");
         add("jei.category.trd.chemical_plant", "Химическая установка");
         add("jei.category.trd.forging", "Ковка");
+
+        // === ЖИДКОСТЬ ↔ КОНТЕЙНЕР ===
+        add("jei.category.trd.fluid_container", "Жидкостные контейнеры");
         // Литые кирки
 
         add("item.trd.cast_pickaxe.desc.charge", "§7Зажмите ПКМ для мощного удара");

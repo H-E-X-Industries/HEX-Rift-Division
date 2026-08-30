@@ -160,7 +160,7 @@ public class MultiblockPartBlock extends BaseEntityBlock implements net.minecraf
                         ItemStack ctrlDrop = new ItemStack(ctrlState.getBlock());
                         BlockEntity ctrlBe = level.getBlockEntity(ctrlPos);
 
-                        if (ctrlBe instanceof com.trd.block.entity.industrial.fluids.FluidBarrelBlockEntity) {
+                        if (ctrlBe instanceof com.trd.block.entity.industrial.fluids.FluidBarrelBlockEntity barrel && !barrel.fluidTank.isEmpty()) {
                             net.minecraft.nbt.CompoundTag beNbt = ctrlBe.saveWithoutMetadata();
                             beNbt.remove("Inventory");
                             ctrlDrop.addTagElement("BlockEntityTag", beNbt);
@@ -201,7 +201,7 @@ public class MultiblockPartBlock extends BaseEntityBlock implements net.minecraf
                         ItemStack ctrlDrop = new ItemStack(ctrlState.getBlock());
                         BlockEntity ctrlBe = level.getBlockEntity(ctrlPos);
 
-                        if (ctrlBe instanceof com.trd.block.entity.industrial.fluids.FluidBarrelBlockEntity) {
+                        if (ctrlBe instanceof com.trd.block.entity.industrial.fluids.FluidBarrelBlockEntity barrel && !barrel.fluidTank.isEmpty()) {
                             net.minecraft.nbt.CompoundTag beNbt = ctrlBe.saveWithoutMetadata();
                             beNbt.remove("Inventory");
                             ctrlDrop.addTagElement("BlockEntityTag", beNbt);

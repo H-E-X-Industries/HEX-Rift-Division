@@ -15,6 +15,7 @@ import com.trd.block.entity.industrial.rotation.MillstoneBlockEntity;
 import com.trd.event.HotItemHandler;
 import com.trd.event.SlagItem;
 import com.trd.item.ModItems;
+import com.trd.item.industrial.fluids.FluidContainerItem;
 import com.trd.main.MainRegistry;
 import com.trd.multiblock.industrial.centrifuge.conus.CentrifugeRecipe;
 import com.trd.multiblock.industrial.centrifuge.conus.CentrifugeRecipes;
@@ -45,6 +46,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.material.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 
 import java.util.ArrayList;
@@ -112,6 +114,8 @@ public class trdJeiPlugin implements IModPlugin {
             RecipeType.create(MainRegistry.MOD_ID, "centrifuge_cylinder", CentrifugeCylinderWrapper.class);
     public static final RecipeType<ForgingWrapper> FORGING_TYPE =
             RecipeType.create(MainRegistry.MOD_ID, "forging", ForgingWrapper.class);
+    public static final RecipeType<FluidContainerWrapper> FLUID_CONTAINER_TYPE =
+            RecipeType.create(MainRegistry.MOD_ID, "fluid_container", FluidContainerWrapper.class);
 
     public record ElectricFurnaceWrapper(net.minecraft.world.item.crafting.AbstractCookingRecipe recipe, int cookTime, int energyPerTick) {}
     public record SmeltingWrapper(ItemStack input, Metal metal, int outputUnits, int temp, float heatConsumption, int timeTicks, int inputCount) {}
@@ -127,6 +131,8 @@ public class trdJeiPlugin implements IModPlugin {
     public record CentrifugeWrapper(CentrifugeRecipe recipe) {}
     public record CentrifugeCylinderWrapper(CentrifugeCylinderRecipe recipe) {}
     public record ForgingWrapper(ItemStack hotIngot, ItemStack hammer, ItemStack hotPlate, ItemStack hammerDamaged, Metal metal, int requiredTemp) {}
+
+    public record FluidContainerWrapper(ItemStack input, ItemStack output, boolean fill) {}
 
     @Override
     public void registerCategories(IRecipeCategoryRegistration registration) {
@@ -146,6 +152,7 @@ public class trdJeiPlugin implements IModPlugin {
         registration.addRecipeCategories(new CentrifugeCategory(guiHelper));
         registration.addRecipeCategories(new CentrifugeCylinderCategory(guiHelper));
         registration.addRecipeCategories(new ForgingCategory(guiHelper));
+        registration.addRecipeCategories(new FluidContainerCategory(guiHelper));
     }
 
     @Override
@@ -337,6 +344,29 @@ public class trdJeiPlugin implements IModPlugin {
             }
         }
         registration.addRecipes(FORGING_TYPE, forgingRecipes);
+
+        // === ЖИДКОСТЬ ↔ КОНТЕЙНЕР (пипетки / жидкостные контейнеры) ===
+        List<FluidContainerWrapper> fluidContainerRecipes = new ArrayList<>();
+        Item[] containers = {
+                ModItems.PIPETTE.get(),
+                ModItems.PIPETTE_IDUSTRIAL.get(),
+                ModItems.FLUID_TANK_IRON.get()
+        };
+        for (Item container : containers) {
+            if (!(container instanceof FluidContainerItem fci)) continue;
+            for (Fluid fluid : ModFluids.getAllSourceFluids()) {
+                ItemStack filled = FluidContainerItem.createFilled(container, fluid);
+                if (filled.isEmpty()) continue; // несовместимая жидкость — контейнер растворится
+                int cap = fci.getCapacity();
+                ItemStack drop = fluidDropStack(new FluidStack(fluid, cap));
+                if (drop.isEmpty()) continue;
+                // Жидкость → заполненный контейнер
+                fluidContainerRecipes.add(new FluidContainerWrapper(drop, filled.copy(), true));
+                // Заполненный контейнер → жидкость
+                fluidContainerRecipes.add(new FluidContainerWrapper(filled.copy(), drop, false));
+            }
+        }
+        registration.addRecipes(FLUID_CONTAINER_TYPE, fluidContainerRecipes);
     }
 
     @Override
@@ -356,6 +386,9 @@ public class trdJeiPlugin implements IModPlugin {
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.CENTRIFUGE_CYLINDER.get()), CENTRIFUGE_CYLINDER_TYPE);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.CENTRIFUGE_MOTOR.get()), CENTRIFUGE_TYPE, CENTRIFUGE_CYLINDER_TYPE);
         registration.addRecipeCatalyst(new ItemStack(net.minecraft.world.level.block.Blocks.ANVIL), FORGING_TYPE);
+        registration.addRecipeCatalyst(new ItemStack(ModItems.PIPETTE.get()), FLUID_CONTAINER_TYPE);
+        registration.addRecipeCatalyst(new ItemStack(ModItems.PIPETTE_IDUSTRIAL.get()), FLUID_CONTAINER_TYPE);
+        registration.addRecipeCatalyst(new ItemStack(ModItems.FLUID_TANK_IRON.get()), FLUID_CONTAINER_TYPE);
     }
 
     private static ItemStack createLiquidMetalStack(Metal metal, int amount) {
@@ -1067,6 +1100,41 @@ public class trdJeiPlugin implements IModPlugin {
             gg.drawString(font, recipe.requiredTemp() + "°C", 42, 41, 0xFF555555, false);
             // Нагрев до температуры плавления
             gg.drawString(font, recipe.metal().getMeltingPoint() + "°C", 42, 51, 0xFF555555, false);
+        }
+    }
+
+    // === ЖИДКОСТЬ ↔ КОНТЕЙНЕР (пипетки / жидкостные контейнеры) ===
+    // Шаблон jei_universal_gui2.png (76x60): вход на (5,22), выход на (55,22)
+    public static class FluidContainerCategory implements IRecipeCategory<FluidContainerWrapper> {
+        private static final ResourceLocation TEXTURE =
+                new ResourceLocation(MainRegistry.MOD_ID, "textures/gui/jei/jei_universal_gui2.png");
+
+        private final IDrawable background;
+        private final IDrawable icon;
+        private final Component title;
+
+        public FluidContainerCategory(IGuiHelper guiHelper) {
+            this.background = guiHelper.createDrawable(TEXTURE, 0, 0, 76, 60);
+            this.icon = guiHelper.createDrawableIngredient(VanillaTypes.ITEM_STACK,
+                    new ItemStack(ModItems.FLUID_TANK_IRON.get()));
+            this.title = Component.translatable("jei.category.trd.fluid_container");
+        }
+
+        @Override public RecipeType<FluidContainerWrapper> getRecipeType() { return FLUID_CONTAINER_TYPE; }
+        @Override public Component getTitle() { return title; }
+        @Override public IDrawable getBackground() { return background; }
+        @Override public IDrawable getIcon() { return icon; }
+
+        @Override
+        public void setRecipe(IRecipeLayoutBuilder builder, FluidContainerWrapper recipe, IFocusGroup focuses) {
+            builder.addSlot(RecipeIngredientRole.INPUT, 5, 22)
+                    .addItemStack(recipe.input());
+            builder.addSlot(RecipeIngredientRole.OUTPUT, 55, 22)
+                    .addItemStack(recipe.output());
+        }
+
+        @Override
+        public void draw(FluidContainerWrapper recipe, IRecipeSlotsView view, GuiGraphics gg, double mx, double my) {
         }
     }
 }
