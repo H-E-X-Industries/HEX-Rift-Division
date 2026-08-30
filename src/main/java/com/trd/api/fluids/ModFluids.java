@@ -255,4 +255,25 @@ public class ModFluids {
     public static Map<String, RegistryObject<Item>> getAllFluidDrops() {
         return new HashMap<>(FLUID_DROPS);
     }
+
+    /** Все исходные жидкости мода (источники) + ванильные вода/лава. */
+    public static java.util.List<net.minecraft.world.level.material.Fluid> getAllSourceFluids() {
+        java.util.List<net.minecraft.world.level.material.Fluid> fluids = new java.util.ArrayList<>();
+        fluids.add(net.minecraft.world.level.material.Fluids.WATER);
+        fluids.add(net.minecraft.world.level.material.Fluids.LAVA);
+        fluids.add(HYDROGEN_PEROXIDE_SOURCE.get());
+        fluids.add(SULFURIC_ACID_SOURCE.get());
+        fluids.add(NATURAL_GAS_SOURCE.get());
+        fluids.add(STEAM_SOURCE.get());
+        fluids.add(LOW_PRESSURE_STEAM_SOURCE.get());
+        fluids.add(MERCURY_SOURCE.get());
+        fluids.add(SODIUM_SULFATE_SOURCE.get());
+        fluids.add(HYDROGEN_CHLORINE_SOURCE.get());
+        fluids.add(CARBON_DIOXIDE_SOURCE.get());
+        fluids.add(SODA_SOURCE.get());
+        fluids.add(SODIUM_HYDROXIDE_SOURCE.get());
+        fluids.add(RED_SLUDGE_SOURCE.get());
+        fluids.add(ALUMINATE_SOLUTION_SOURCE.get());
+        return fluids;
+    }
 }

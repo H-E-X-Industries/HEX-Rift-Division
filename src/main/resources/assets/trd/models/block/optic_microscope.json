@@ -1,10 +1,10 @@
 {
   "loader": "forge:obj",
-  "model": "trd:models/block/jernova.obj",
+  "model": "trd:models/block/optic_microscope.obj",
   "flip_v": true,
   "textures": {
-    "motor_texture": "trd:block/jernova",
-    "particle": "trd:block/jernova"
+    "motor_texture": "trd:block/optic_microscope",
+    "particle": "trd:block/optic_microscope"
   },
   "transform": {
     "translation": [0.50, 0.0, 0.5],

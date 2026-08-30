@@ -12,6 +12,7 @@ import com.trd.item.conglomerates.ConglomerateItem;
 import com.trd.item.industrial.energy.EnergyCellItem;
 import com.trd.item.food.FoodZamaz;
 import com.trd.event.SlagItem;
+import com.trd.item.industrial.fluids.FluidContainerItem;
 import com.trd.item.industrial.fluids.FluidIdentifierItem;
 import com.trd.item.industrial.fluids.HammerItem;
 import com.trd.item.industrial.rotation.*;
@@ -62,16 +63,16 @@ public class ModItems {
 
 
     public static final RegistryObject<Item> CORRUPTED_BARREL_ITEM = ITEMS.register("corrupted_barrel",
-            () -> new BlockItem(ModBlocks.CORRUPTED_BARREL.get(), new Item.Properties()));
+            () -> new com.trd.item.industrial.fluids.BarrelBlockItem(ModBlocks.CORRUPTED_BARREL.get(), com.trd.api.fluids.system.BarrelTier.CORRUPTED, new Item.Properties().stacksTo(1)));
 
     public static final RegistryObject<Item> LEAKING_BARREL_ITEM = ITEMS.register("leaking_barrel",
-            () -> new BlockItem(ModBlocks.LEAKING_BARREL.get(), new Item.Properties()));
+            () -> new com.trd.item.industrial.fluids.BarrelBlockItem(ModBlocks.LEAKING_BARREL.get(), com.trd.api.fluids.system.BarrelTier.LEAKING, new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> IRON_BARREL_ITEM = ITEMS.register("iron_barrel",
-            () -> new BlockItem(ModBlocks.IRON_BARREL.get(), new Item.Properties()));
+            () -> new com.trd.item.industrial.fluids.BarrelBlockItem(ModBlocks.IRON_BARREL.get(), com.trd.api.fluids.system.BarrelTier.IRON, new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> STEEL_BARREL_ITEM = ITEMS.register("steel_barrel",
-            () -> new BlockItem(ModBlocks.STEEL_BARREL.get(), new Item.Properties()));
+            () -> new com.trd.item.industrial.fluids.BarrelBlockItem(ModBlocks.STEEL_BARREL.get(), com.trd.api.fluids.system.BarrelTier.STEEL, new Item.Properties().stacksTo(1)));
     public static final RegistryObject<Item> LEAD_BARREL_ITEM = ITEMS.register("lead_barrel",
-            () -> new BlockItem(ModBlocks.LEAD_BARREL.get(), new Item.Properties()));
+            () -> new com.trd.item.industrial.fluids.BarrelBlockItem(ModBlocks.LEAD_BARREL.get(), com.trd.api.fluids.system.BarrelTier.LEAD, new Item.Properties().stacksTo(1)));
 
     public static final RegistryObject<Item> PROTECTOR_STEEL = ITEMS.register("protector_steel",
             () -> new ProtectorItem(720, 40, 5, new Item.Properties().stacksTo(1)));
@@ -255,6 +256,18 @@ public class ModItems {
 
     public static final RegistryObject<Item> INFINITE_FLUID_BARREL = ITEMS.register("infinite_fluid_barrel",
             () -> new com.trd.item.tools.InfiniteFluidBarrelItem(new Item.Properties()));
+
+    // ─── Жидкостные контейнеры-предметы ───
+    // capacity, maxCorrosion, maxTemperature
+    // Пипетки не стакаются (stacksTo 1); жидкостный контейнер стакается (жидкость в NBT).
+    public static final RegistryObject<Item> PIPETTE = ITEMS.register("pipette",
+            () -> new FluidContainerItem(new Item.Properties().stacksTo(1), 100, 30, 100));
+
+    public static final RegistryObject<Item> PIPETTE_IDUSTRIAL = ITEMS.register("pipette_idustrial",
+            () -> new FluidContainerItem(new Item.Properties().stacksTo(1), 250, 240, 270));
+
+    public static final RegistryObject<Item> FLUID_TANK_IRON = ITEMS.register("fluid_tank_iron",
+            () -> new FluidContainerItem(new Item.Properties(), 1000, 75, 1000));
 
 
 

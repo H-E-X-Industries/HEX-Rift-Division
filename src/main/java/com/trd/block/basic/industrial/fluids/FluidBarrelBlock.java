@@ -230,6 +230,19 @@ public class FluidBarrelBlock extends BaseEntityBlock {
         return super.getDrops(pState, pParams);
     }
 
+    @Override
+    public net.minecraft.world.item.ItemStack getCloneItemStack(BlockState state, net.minecraft.world.phys.HitResult target, BlockGetter level, net.minecraft.core.BlockPos pos, Player player) {
+        net.minecraft.world.item.ItemStack stack = super.getCloneItemStack(state, target, level, pos, player);
+        BlockEntity be = level.getBlockEntity(pos);
+        if (be instanceof FluidBarrelBlockEntity barrel) {
+            net.minecraft.nbt.CompoundTag nbt = new net.minecraft.nbt.CompoundTag();
+            barrel.saveAdditional(nbt);
+            nbt.remove("Inventory");
+            stack.addTagElement("BlockEntityTag", nbt);
+        }
+        return stack;
+    }
+
     private int getFluidColor(@Nullable Fluid fluid) {
         if (fluid == null) return 0xFFFFFF;
         net.minecraftforge.fluids.FluidType type = fluid.getFluidType();

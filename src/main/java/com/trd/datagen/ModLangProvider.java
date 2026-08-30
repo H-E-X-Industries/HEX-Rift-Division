@@ -76,6 +76,9 @@ public class ModLangProvider extends LanguageProvider {
         add("tooltip.trd.detminer.hardness", "Only affects blocks with hardness < 30");
         add("tooltip.trd.detminer.conglomerate", "Has a chance to extract resources from conglomerate");
         add("item.trd.fluid_identifier", "Fluid Identifier");
+        add("item.trd.pipette", "Pipette");
+        add("item.trd.pipette_idustrial", "Industrial Pipette");
+        add("item.trd.fluid_tank_iron", "Fluid Container");
         add("message.trd.selected_fluid", "Selected");
         add("tooltip.trd.no_fluid", "No fluid selected");
         add("tooltip.trd.shaft_material", "Material");
@@ -2137,6 +2140,9 @@ add("tooltip.trd.conglomerate.empty", "§7Пустой кусок");
 
         // Жидкостный идентификатор
         add("item.trd.fluid_identifier", "Жидкостный идентификатор");
+        add("item.trd.pipette", "Пипетка");
+        add("item.trd.pipette_idustrial", "Промышленная пипетка");
+        add("item.trd.fluid_tank_iron", "Жидкостный контейнер");
         add("message.trd.selected_fluid", "Выбрано");
         add("tooltip.trd.no_fluid", "Жидкость не выбрана");
         add("tooltip.trd.shaft_material", "Материал");

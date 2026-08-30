@@ -11,6 +11,7 @@ import com.trd.client.overlay.hud.RedstoneRadioOverlay;
 import com.trd.client.overlay.hud.PaintablePipeOverlay;
 import com.trd.client.render.ber.ConveyorRenderer;
 import com.trd.item.industrial.energy.WireCoilItem;
+import com.trd.item.industrial.fluids.FluidContainerItem;
 import com.trd.item.industrial.fluids.FluidIdentifierItem;
 import com.trd.main.ResourceRegistry;
 import com.trd.block.basic.ModBlocks;
@@ -108,6 +109,20 @@ public class ClientModEvents {
                     (pStack, pLevel, pEntity, pSeed) ->
                             WireCoilItem.getWires(pStack) > 0 ? 1.0f : 0.0f);
         });
+
+        // Жидкостные контейнеры: оверлей появляется только когда что-то залито
+        ItemProperties.register(ModItems.PIPETTE.get(),
+                new ResourceLocation(MainRegistry.MOD_ID, "filled"),
+                (pStack, pLevel, pEntity, pSeed) ->
+                        FluidContainerItem.isFilled(pStack) ? 1.0f : 0.0f);
+        ItemProperties.register(ModItems.PIPETTE_IDUSTRIAL.get(),
+                new ResourceLocation(MainRegistry.MOD_ID, "filled"),
+                (pStack, pLevel, pEntity, pSeed) ->
+                        FluidContainerItem.isFilled(pStack) ? 1.0f : 0.0f);
+        ItemProperties.register(ModItems.FLUID_TANK_IRON.get(),
+                new ResourceLocation(MainRegistry.MOD_ID, "filled"),
+                (pStack, pLevel, pEntity, pSeed) ->
+                        FluidContainerItem.isFilled(pStack) ? 1.0f : 0.0f);
         event.registerBlockEntityRenderer(ModBlockEntities.CONVEYOR_BE.get(), ConveyorRenderer::new);
         net.minecraft.client.gui.screens.MenuScreens.register(ModMenuTypes.STEEL_STORAGE_MENU.get(), SteelStorageScreen::new);
 
@@ -617,6 +632,17 @@ public class ClientModEvents {
             }
             return 0xFFFFFFFF;
         }, ModItems.FLUID_IDENTIFIER.get());
+
+        // === ЖИДКОСТНЫЕ КОНТЕЙНЕРЫ: оверлей (слой 1) окрашивается в цвет залитой жидкости ===
+        event.getItemColors().register((stack, tintIndex) -> {
+            if (tintIndex == 1 && stack.getItem() instanceof FluidContainerItem) {
+                FluidStack fluid = FluidContainerItem.getFluid(stack);
+                if (!fluid.isEmpty()) {
+                    return com.trd.api.fluids.system.FluidInfoHelper.getColor(fluid);
+                }
+            }
+            return 0xFFFFFFFF;
+        }, ModItems.PIPETTE.get(), ModItems.PIPETTE_IDUSTRIAL.get(), ModItems.FLUID_TANK_IRON.get());
 
 
 

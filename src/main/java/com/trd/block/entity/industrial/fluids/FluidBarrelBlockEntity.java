@@ -339,7 +339,15 @@ public class FluidBarrelBlockEntity extends FluidNodeBlockEntity implements Menu
             } else {
                 var result = FluidUtil.tryEmptyContainer(drainIn, fluidTank, fluidTank.getSpace(), null, true);
                 if (result.isSuccess()) {
-                    if (insertOrMerge(DRAIN_OUT_SLOT, result.getResult())) drainIn.shrink(1);
+                    ItemStack drained = result.getResult();
+                    FluidStack remaining = FluidUtil.getFluidContained(drained).orElse(FluidStack.EMPTY);
+                    if (remaining.isEmpty()) {
+                        // Полностью опустошён → в слот опустошённых предметов-хранилищ.
+                        if (insertOrMerge(DRAIN_OUT_SLOT, drained)) drainIn.shrink(1);
+                    } else {
+                        // В бочке/контейнере ещё осталась жидкость → остаётся в верхнем слоте.
+                        itemHandler.setStackInSlot(DRAIN_IN_SLOT, drained);
+                    }
                 }
             }
         }
