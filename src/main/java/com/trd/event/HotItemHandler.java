@@ -154,6 +154,8 @@ public class HotItemHandler {
         float maxHeatRatio = 0f;
         int maxTemp = ROOM_TEMP;
         boolean inventoryChanged = false;
+        boolean shouldCool = (player.level().getGameTime() % 10 == 0);
+        float deltaTicks = 10f;
 
         // Обрабатываем весь инвентарь
         for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
@@ -169,34 +171,32 @@ public class HotItemHandler {
             if (meltingPoint <= 0) meltingPoint = 1000;
 
             if (hotTime > 0) {
-                // === КВАДРАТИЧНОЕ ОХЛАЖДЕНИЕ ===
                 float heatRatio = hotTime / (float) maxTime;
 
-                float baseRate = (float) maxTime / 10000f;
-                if (baseRate < 0.05f) baseRate = 0.05f;
+                if (shouldCool) {
+                    // === КВАДРАТИЧНОЕ ОХЛАЖДЕНИЕ НА СИНХРОНИЗИРОВАННЫХ ИНТЕРВАЛАХ ===
+                    float baseRate = (float) maxTime / 10000f;
+                    if (baseRate < 0.05f) baseRate = 0.05f;
 
-                float quadraticMultiplier = 1.0f + (QUADRATIC_FACTOR * heatRatio * heatRatio);
+                    float quadraticMultiplier = 1.0f + (QUADRATIC_FACTOR * heatRatio * heatRatio);
+                    float coolingRate = baseRate * quadraticMultiplier;
+                    if (coolingRate < 0.02f) coolingRate = 0.02f;
 
-                float coolingRate = baseRate * quadraticMultiplier;
+                    float newHotTime = Math.max(0, hotTime - (coolingRate * deltaTicks));
 
-                if (coolingRate < 0.02f) coolingRate = 0.02f;
-
-                float newHotTime = Math.max(0, hotTime - coolingRate);
-
-                // Обновляем NBT
-                if (newHotTime <= 0.5f) {
-                    clearHotTags(stack);
-                    newHotTime = 0;
-                } else {
-                    stack.getOrCreateTag().putFloat("HotTime", newHotTime);
+                    // Обновляем NBT
+                    if (newHotTime <= 0.5f) {
+                        clearHotTags(stack);
+                    } else {
+                        stack.getOrCreateTag().putFloat("HotTime", newHotTime);
+                    }
+                    inventoryChanged = true;
                 }
 
                 hasHotItem = true;
                 maxHeatRatio = Math.max(maxHeatRatio, heatRatio);
                 int currentTemp = getTemperature(stack);
                 maxTemp = Math.max(maxTemp, currentTemp);
-
-                inventoryChanged = true;
             } else {
                 clearHotTags(stack);
                 inventoryChanged = true;
@@ -225,9 +225,29 @@ public class HotItemHandler {
             damageCooldown.remove(playerId);
         }
 
-        // Синхронизация инвентаря раз в секунду
-        if (inventoryChanged && player.level().getGameTime() % 20 == 0) {
+        // Немедленная синхронизация инвентаря и контейнера при изменении NBT
+        if (inventoryChanged) {
             player.getInventory().setChanged();
+            player.containerMenu.broadcastChanges();
+        }
+    }
+
+    @SubscribeEvent
+    public static void onItemToss(net.minecraftforge.event.entity.item.ItemTossEvent event) {
+        if (event.getPlayer() != null && !event.getPlayer().level().isClientSide) {
+            event.getPlayer().getInventory().setChanged();
+            event.getPlayer().containerMenu.broadcastChanges();
+        }
+    }
+
+    @SubscribeEvent
+    public static void onItemPickup(net.minecraftforge.event.entity.player.EntityItemPickupEvent event) {
+        if (event.getEntity() != null && !event.getEntity().level().isClientSide) {
+            ItemStack stack = event.getItem().getItem();
+            if (isHot(stack)) {
+                event.getEntity().getInventory().setChanged();
+                event.getEntity().containerMenu.broadcastChanges();
+            }
         }
     }
 
