@@ -265,8 +265,6 @@ public class FluidPipeBlock extends Block implements EntityBlock, SimpleWaterlog
 
                 if (tempC > tier.getMaxTemperature() || corr > tier.getMaxCorrosivity()) {
                     level.destroyBlock(pos, false);
-                    BlockState fluidBlock = fluidState.createLegacyBlock();
-                    if (!fluidBlock.isAir()) level.setBlock(pos, fluidBlock, 3);
                     level.playSound(null, pos, net.minecraft.sounds.SoundEvents.LAVA_EXTINGUISH, net.minecraft.sounds.SoundSource.BLOCKS, 1.0F, 1.0F);
                     return true;
                 }

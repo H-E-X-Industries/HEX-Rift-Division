@@ -80,7 +80,7 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
         }
     };
 
-    private final ContainerData data = new SimpleContainerData(9) {
+    private final ContainerData data = new SimpleContainerData(11) {
         @Override
         public void set(int index, int value) {
             switch (index) {
@@ -93,6 +93,8 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
                 case 6 -> networkConnected = value;
                 case 7 -> isOverstressed = (value == 1);
                 case 8 -> isTooSlow = (value == 1);
+                case 9 -> blade1MaxDurability = value;
+                case 10 -> blade2MaxDurability = value;
             }
         }
 
@@ -108,6 +110,8 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
                 case 6 -> networkConnected;
                 case 7 -> isOverstressed ? 1 : 0;
                 case 8 -> isTooSlow ? 1 : 0;
+                case 9 -> blade1MaxDurability;
+                case 10 -> blade2MaxDurability;
                 default -> 0;
             };
         }
@@ -117,6 +121,8 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
     private int maxProgress = MAX_PROGRESS;
     private int blade1Durability = 0;
     private int blade2Durability = 0;
+    private int blade1MaxDurability = 0;
+    private int blade2MaxDurability = 0;
     private int hasBlade1 = 0;
     private int hasBlade2 = 0;
     
@@ -419,14 +425,13 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
         }
 
         if (!be.isTooSlow && !be.isOverstressed && be.hasBlade1 == 1 && be.hasBlade2 == 1 && absSpeed > 0) {
-            AABB area = new AABB(pos).inflate(1.0, 1.0, 1.0).move(0, 1.5, 0);
-            List<Entity> entities = level.getEntitiesOfClass(Entity.class, area);
+            Direction facing = state.hasProperty(DrobitelBlock.FACING) ? state.getValue(DrobitelBlock.FACING) : Direction.NORTH;
+            AABB recessAABB = getRecessAABB(pos, facing);
+            AABB searchArea = recessAABB.inflate(0.5, 0.5, 0.5);
+            List<Entity> entities = level.getEntitiesOfClass(Entity.class, searchArea);
             for (Entity entity : entities) {
                 if (entity instanceof ItemEntity itemEntity) {
-                    double dx = (pos.getX() + 0.5) - itemEntity.getX();
-                    double dz = (pos.getZ() + 0.5) - itemEntity.getZ();
-                    
-                    if (Math.abs(dx) < 0.6 && Math.abs(dz) < 0.6 && itemEntity.getY() <= pos.getY() + 0.55) {
+                    if (isEntityInRecess(itemEntity, recessAABB)) {
                         ItemStack stack = itemEntity.getItem();
                         IItemHandler handler = be.externalHandler.orElse(null);
                         ItemStack remainder = (handler != null) ? net.minecraftforge.items.ItemHandlerHelper.insertItemStacked(handler, stack, false) : stack;
@@ -438,10 +443,7 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
                         }
                     }
                 } else if (entity instanceof LivingEntity livingEntity) {
-                    double dx = (pos.getX() + 0.5) - livingEntity.getX();
-                    double dz = (pos.getZ() + 0.5) - livingEntity.getZ();
-                    
-                    if (Math.abs(dx) < 1.2 && Math.abs(dz) < 1.2 && livingEntity.getY() >= pos.getY()) {
+                    if (isEntityInRecess(livingEntity, recessAABB)) {
                         livingEntity.setDeltaMovement(livingEntity.getDeltaMovement().multiply(0.5, 0, 0.5).add(0, -0.1, 0));
                         
                         livingEntity.hurt(new net.minecraft.world.damagesource.DamageSource(level.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.DAMAGE_TYPE).getHolderOrThrow(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.DAMAGE_TYPE, new net.minecraft.resources.ResourceLocation("trd", "crusher")))), 5.0f);
@@ -477,6 +479,28 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
         }
     }
 
+    public static AABB getRecessAABB(BlockPos pos, Direction facing) {
+        if (facing.getAxis() == Direction.Axis.X) {
+            return new AABB(
+                    pos.getX() - 0.75, pos.getY() + 0.5, pos.getZ() - 0.5,
+                    pos.getX() + 1.75, pos.getY() + 2.0, pos.getZ() + 1.5
+            );
+        } else {
+            return new AABB(
+                    pos.getX() - 0.5, pos.getY() + 0.5, pos.getZ() - 0.75,
+                    pos.getX() + 1.5, pos.getY() + 2.0, pos.getZ() + 1.75
+            );
+        }
+    }
+
+    public static boolean isEntityInRecess(Entity entity, AABB recessAABB) {
+        if (entity.getY() >= recessAABB.maxY - 0.01) {
+            return false;
+        }
+        AABB checkArea = recessAABB.inflate(0.0, 0.05, 0.0);
+        return checkArea.intersects(entity.getBoundingBox());
+    }
+
     private void updateBladeData() {
         int slot1 = INPUT_SLOTS + OUTPUT_SLOTS;
         int slot2 = INPUT_SLOTS + OUTPUT_SLOTS + 1;
@@ -488,6 +512,8 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
         hasBlade2 = !b2.isEmpty() ? 1 : 0;
         blade1Durability = hasBlade1 == 1 ? b1.getMaxDamage() - b1.getDamageValue() : 0;
         blade2Durability = hasBlade2 == 1 ? b2.getMaxDamage() - b2.getDamageValue() : 0;
+        blade1MaxDurability = hasBlade1 == 1 ? b1.getMaxDamage() : 0;
+        blade2MaxDurability = hasBlade2 == 1 ? b2.getMaxDamage() : 0;
     }
 
     private boolean canProcess() {

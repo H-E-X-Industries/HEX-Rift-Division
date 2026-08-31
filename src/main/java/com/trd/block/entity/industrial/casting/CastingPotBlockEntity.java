@@ -234,13 +234,11 @@ public class CastingPotBlockEntity extends BlockEntity implements IMetalReceiver
 
         // Если ещё горячий - сохраняем эту информацию в NBT для переноса
         if (HotItemHandler.isHot(outputItem)) {
-            // Копируем все теги горячести
-            CompoundTag hotTags = new CompoundTag();
-            hotTags.putFloat("HotTime", HotItemHandler.getHotTime(outputItem));
-            hotTags.putInt("HotTimeMax", HotItemHandler.getHotTimeMax(outputItem));
-            hotTags.putInt("MeltingPoint", HotItemHandler.getMeltingPoint(outputItem));
-            hotTags.putBoolean("CooledInPot", false); // Теперь в руках - обычное охлаждение
-            result.setTag(hotTags);
+            CompoundTag tag = result.getOrCreateTag();
+            tag.putFloat("HotTime", HotItemHandler.getHotTime(outputItem));
+            tag.putInt("HotTimeMax", HotItemHandler.getHotTimeMax(outputItem));
+            tag.putInt("MeltingPoint", HotItemHandler.getMeltingPoint(outputItem));
+            tag.putBoolean("CooledInPot", false); // Теперь в руках - обычное охлаждение
         }
 
         this.outputItem = ItemStack.EMPTY;

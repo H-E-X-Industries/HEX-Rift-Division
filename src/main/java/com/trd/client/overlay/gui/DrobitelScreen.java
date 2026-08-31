@@ -51,7 +51,11 @@ public class DrobitelScreen extends AbstractContainerScreen<DrobitelMenu> {
         // Полоска прочности 1: 66,29 | 44×2 | уменьшается справа налево (левая часть на месте)
         if (menu.hasBlade1()) {
             int dur = menu.getBlade1Durability();
-            int w = (int) ((dur / 256f) * 44);
+            int maxDur = menu.getBlade1MaxDurability();
+            if (maxDur <= 0) maxDur = 1500;
+            float ratio = Math.max(0.0f, Math.min(1.0f, (float) dur / maxDur));
+            int w = (int) Math.ceil(ratio * 44);
+            if (dur > 0 && w == 0) w = 1;
             if (w > 0) {
                 guiGraphics.blit(GUI, x + 66, y + 29, 0, 192, w, 2);
             }
@@ -60,7 +64,11 @@ public class DrobitelScreen extends AbstractContainerScreen<DrobitelMenu> {
         // Полоска прочности 2: 66,79 | 44×2 | уменьшается справа налево
         if (menu.hasBlade2()) {
             int dur = menu.getBlade2Durability();
-            int w = (int) ((dur / 256f) * 44);
+            int maxDur = menu.getBlade2MaxDurability();
+            if (maxDur <= 0) maxDur = 1500;
+            float ratio = Math.max(0.0f, Math.min(1.0f, (float) dur / maxDur));
+            int w = (int) Math.ceil(ratio * 44);
+            if (dur > 0 && w == 0) w = 1;
             if (w > 0) {
                 guiGraphics.blit(GUI, x + 66, y + 79, 0, 192, w, 2);
             }
@@ -80,6 +88,23 @@ public class DrobitelScreen extends AbstractContainerScreen<DrobitelMenu> {
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(guiGraphics);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
-        this.renderTooltip(guiGraphics, mouseX, mouseY);
+
+        if (isHovering(66, 27, 44, 20, mouseX, mouseY)) {
+            if (menu.hasBlade1()) {
+                int dur = menu.getBlade1Durability();
+                int maxDur = menu.getBlade1MaxDurability();
+                if (maxDur <= 0) maxDur = 1500;
+                guiGraphics.renderTooltip(this.font, Component.literal(dur + " / " + maxDur), mouseX, mouseY);
+            }
+        } else if (isHovering(66, 63, 44, 20, mouseX, mouseY)) {
+            if (menu.hasBlade2()) {
+                int dur = menu.getBlade2Durability();
+                int maxDur = menu.getBlade2MaxDurability();
+                if (maxDur <= 0) maxDur = 1500;
+                guiGraphics.renderTooltip(this.font, Component.literal(dur + " / " + maxDur), mouseX, mouseY);
+            }
+        } else {
+            this.renderTooltip(guiGraphics, mouseX, mouseY);
+        }
     }
 }
