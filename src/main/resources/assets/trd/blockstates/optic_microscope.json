@@ -1,7 +1,19 @@
 {
   "variants": {
-    "": {
+    "facing=north": {
       "model": "trd:block/optic_microscope"
+    },
+    "facing=east": {
+      "model": "trd:block/optic_microscope",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "trd:block/optic_microscope",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "trd:block/optic_microscope",
+      "y": 270
     }
   }
 }

@@ -172,6 +172,15 @@ public class ModLangProvider extends LanguageProvider {
         add("gui.trd.electric_furnace.energy_tooltip", "%s / %s JE");
         add("gui.trd.electric_furnace.progress_tooltip", "§6Remaining: §f%s sec");
 
+        // ═══ GUI: Optic Microscope ═══
+        add("block.trd.optic_microscope", "Optic Microscope");
+        add("gui.trd.optic_microscope", "Optic Microscope");
+        add("gui.trd.optic_microscope.empty", "Empty");
+        add("gui.trd.optic_microscope.amount", "%s / %s mB");
+        add("gui.trd.optic_microscope.progress_tooltip", "§6Analysis: §f%s sec");
+        add("gui.trd.optic_microscope.tooltip", "Sulfuric Acid: %s mB");
+        add("jei.category.trd.optic_microscope", "Optic Microscope");
+
         // ═══ GUI: Fluid Barrel / Fuel Tank (shared) ═══
         add("gui.trd.fluid_barrel.empty", "Empty");
         add("gui.trd.fluid_barrel.amount", "%s / %s mB");
@@ -516,7 +525,9 @@ public class ModLangProvider extends LanguageProvider {
         add("tooltip.trd.fuel_tank.type_not_set", "§aType: §cnot set");
 
         // ═══ Tooltip: Conglomerate ═══
-add("tooltip.trd.conglomerate.empty", "§7Empty chunk");
+ add("tooltip.trd.conglomerate.empty", "§7Empty chunk");
+        add("tooltip.trd.conglomerate.requires_analysis", "§cComposition analysis required.");
+        add("tooltip.trd.conglomerate.example", "Example result: how a chunk looks after analysis");
         add("tooltip.trd.conglomerate.contains_fractions", "§eContains fractions:");
         add("tooltip.trd.conglomerate.biome", "Mining biome: ");
         add("tooltip.trd.conglomerate.layer", "§7  L%d: %s");
@@ -1408,6 +1419,15 @@ add("tooltip.trd.conglomerate.empty", "§7Empty chunk");
         add("gui.trd.electric_furnace.energy_tooltip", "%s / %s JE");
         add("gui.trd.electric_furnace.progress_tooltip", "§6Осталось: §f%s сек");
 
+        // ═══ GUI: Optic Microscope ═══
+        add("block.trd.optic_microscope", "Оптический микроскоп");
+        add("gui.trd.optic_microscope", "Оптический микроскоп");
+        add("gui.trd.optic_microscope.empty", "Пусто");
+        add("gui.trd.optic_microscope.amount", "%s / %s мБ");
+        add("gui.trd.optic_microscope.progress_tooltip", "§6Анализ: §f%s сек");
+        add("gui.trd.optic_microscope.tooltip", "Серная кислота: %s мБ");
+        add("jei.category.trd.optic_microscope", "Оптический микроскоп");
+
         // ═══ GUI: Fluid Barrel / Fuel Tank (shared) ═══
         add("tooltip.trd.explosion_resistance", "Взрывоустойчивость: %s");
         add("gui.trd.fluid_barrel.empty", "Пусто");
@@ -1701,7 +1721,9 @@ add("tooltip.trd.conglomerate.empty", "§7Empty chunk");
         add("tooltip.trd.fuel_tank.type_not_set", "§aТип: §cне задан");
 
         // ═══ Tooltip: Conglomerate ═══
-add("tooltip.trd.conglomerate.empty", "§7Пустой кусок");
+ add("tooltip.trd.conglomerate.empty", "§7Пустой кусок");
+        add("tooltip.trd.conglomerate.requires_analysis", "§cНеобходим анализ состава.");
+        add("tooltip.trd.conglomerate.example", "Пример: так выглядит кусок после анализа");
         add("tooltip.trd.conglomerate.contains_fractions", "§eСодержит фракции:");
         add("tooltip.trd.conglomerate.biome", "Биом добычи: ");
         add("tooltip.trd.conglomerate.layer", "§7  L%d: %s");

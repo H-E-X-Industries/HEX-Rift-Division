@@ -705,7 +705,7 @@ public class ModBlocks {
                     .requiresCorrectToolForDrops()));
 
     public static final RegistryObject<Block> OPTIC_MICROSCOPE = registerBlock("optic_microscope",
-            () -> new Block(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)
+            () -> new OpticMicroscopeBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)
                     .noOcclusion()
                     .strength(5.0f, 6.0f)
                     .requiresCorrectToolForDrops()));

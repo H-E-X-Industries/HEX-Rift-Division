@@ -12,7 +12,7 @@ import com.trd.block.entity.industrial.fluids.*;
 
 import com.trd.block.entity.industrial.rotation.MillstoneBlockEntity;
 import com.trd.block.entity.industrial.casting.SmallSmelterBlockEntity;
-import com.trd.block.entity.industrial.rotation.BearingBlockEntity;
+import com.trd.block.entity.industrial.OpticMicroscopeBlockEntity;import com.trd.block.entity.industrial.rotation.BearingBlockEntity;
 import com.trd.block.entity.industrial.rotation.MotorElectroBlockEntity;
 import com.trd.block.entity.industrial.rotation.HandCrankBlockEntity;
 import com.trd.block.entity.industrial.rotation.ShaftBlockEntity;
@@ -146,6 +146,11 @@ public class ModBlockEntities {
     public static final RegistryObject<BlockEntityType<ElectricFurnaceBlockEntity>> ELECTRIC_FURNACE_BE =
             BLOCK_ENTITIES.register("electric_furnace",
                     () -> BlockEntityType.Builder.of(ElectricFurnaceBlockEntity::new, ModBlocks.ELECTRO_FURNACE.get()).build(null));
+
+    public static final RegistryObject<BlockEntityType<OpticMicroscopeBlockEntity>> OPTIC_MICROSCOPE_BE =
+            BLOCK_ENTITIES.register("optic_microscope",
+                    () -> BlockEntityType.Builder.of(OpticMicroscopeBlockEntity::new,
+                            ModBlocks.OPTIC_MICROSCOPE.get()).build(null));
     public static final RegistryObject<BlockEntityType<TurretLightPlacerBlockEntity>> TURRET_LIGHT_PLACER_BE =
             BLOCK_ENTITIES.register("turret_light_placer",
                     () -> BlockEntityType.Builder.of(TurretLightPlacerBlockEntity::new, ModBlocks.TURRET_LIGHT_PLACER.get()).build(null));

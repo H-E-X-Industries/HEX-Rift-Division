@@ -261,13 +261,13 @@ public class ModItems {
     // capacity, maxCorrosion, maxTemperature
     // Пипетки не стакаются (stacksTo 1); жидкостный контейнер стакается (жидкость в NBT).
     public static final RegistryObject<Item> PIPETTE = ITEMS.register("pipette",
-            () -> new FluidContainerItem(new Item.Properties().stacksTo(1), 100, 30, 100));
+            () -> new FluidContainerItem(new Item.Properties().stacksTo(1), 50, 80, 100));
 
     public static final RegistryObject<Item> PIPETTE_IDUSTRIAL = ITEMS.register("pipette_idustrial",
-            () -> new FluidContainerItem(new Item.Properties().stacksTo(1), 250, 240, 270));
+            () -> new FluidContainerItem(new Item.Properties().stacksTo(1), 100, 240, 270));
 
     public static final RegistryObject<Item> FLUID_TANK_IRON = ITEMS.register("fluid_tank_iron",
-            () -> new FluidContainerItem(new Item.Properties(), 1000, 75, 1000));
+            () -> new FluidContainerItem(new Item.Properties(), 1000, 80, 1050));
 
 
 
