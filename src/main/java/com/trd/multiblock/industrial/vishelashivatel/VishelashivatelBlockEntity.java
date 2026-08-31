@@ -495,9 +495,13 @@ public class VishelashivatelBlockEntity extends com.trd.block.entity.industrial.
         // Расход жидкости
         fluidTank.drain(op.fluidCost, IFluidHandler.FluidAction.EXECUTE);
 
-        // Вычисляем выход ДО расхода предмета
+        // Вычисляем выход ДО расхода предмета.
+        // Важно: передаём одиночный предмет, иначе выходные куски/ядро наследуют
+        // размер всей входной стопки (copy()), и одна единица дыбится в целую стопку.
         ItemStack input = inventory.getStackInSlot(INPUT_SLOT);
-        List<ItemStack> outputs = FractionLeachLogic.computeOutputs(op, input);
+        ItemStack single = input.copy();
+        single.setCount(1);
+        List<ItemStack> outputs = FractionLeachLogic.computeOutputs(op, single);
 
         // Расход предмета и выход
         if (!input.isEmpty()) input.shrink(1);

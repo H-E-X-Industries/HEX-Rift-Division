@@ -125,9 +125,12 @@ public final class FractionLeachLogic {
         Fluid fluid = tankFluid.getFluid();
         String state = FractionChunkItem.getState(input);
 
-        // Промывка водой: только сырой кусок
+        // Промывка водой: сырой и обжаренный кусок -> очищенный.
+        // Обжаренный кусок (из коксовой печи напрямую из сырого) промывается
+        // водой, чтобы снять зольность и стать доступным для модульной переработки.
         if (fluid == Fluids.WATER) {
-            if (FractionChunkItem.STATE_RAW.equals(state)) {
+            if (FractionChunkItem.STATE_RAW.equals(state)
+                    || FractionChunkItem.STATE_ROASTED.equals(state)) {
                 return new Op(OpType.WASH, fluid, WASH_COST, WASH_TIME, WASH_RPM, WASH_TORQUE);
             }
             return null;

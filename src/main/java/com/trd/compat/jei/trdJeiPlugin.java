@@ -206,6 +206,25 @@ public class trdJeiPlugin implements IModPlugin {
                     }
                     return IIngredientSubtypeInterpreter.NONE;
                 });
+
+        // Кусок фракции: различаем по типу фракции (металлу), чтобы нажатие R на
+        // кусок (например, обжаренный алюминиевый) показывало ЖЕЛ-цепочку именно этого
+        // металла, а не рецепты всех фракций/металлов сразу.
+        registration.registerSubtypeInterpreter(VanillaTypes.ITEM_STACK, com.trd.item.ModItems.FRACTION_CHUNK.get(),
+                (stack, context) -> {
+                    com.trd.api.vein.FractionType fraction =
+                            com.trd.item.conglomerates.FractionChunkItem.getFraction(stack);
+                    return fraction != null ? fraction.name() : IIngredientSubtypeInterpreter.NONE;
+                });
+
+        // Кусочек металла: различаем по металлу (плавка/обжарка только этого металла).
+        registration.registerSubtypeInterpreter(VanillaTypes.ITEM_STACK, com.trd.item.ModItems.METAL_PIECE.get(),
+                (stack, context) -> {
+                    String metal = com.trd.item.conglomerates.MetalPieceItem.getMetal(stack);
+                    return metal != null && !metal.isEmpty()
+                            ? metal
+                            : IIngredientSubtypeInterpreter.NONE;
+                });
     }
 
     @Override
@@ -552,6 +571,24 @@ public class trdJeiPlugin implements IModPlugin {
         // Актуальный объём для тултипа (FluidDropItem читает этот тег)
         stack.getOrCreateTag().putInt("FluidVolume", fluid.getAmount());
         return stack;
+    }
+
+    /**
+     * Ищет в фокусах ЖЕЛ-категории конкретный кусок конгломерата (игрок нажал R по нему).
+     * Возвращает пустой стак, если фокуса нет (тогда категория строит случайный пример).
+     */
+    private static ItemStack findFocusedConglomerate(IFocusGroup focuses) {
+        for (RecipeIngredientRole role : new RecipeIngredientRole[]{
+                RecipeIngredientRole.INPUT, RecipeIngredientRole.OUTPUT}) {
+            ItemStack found = focuses.getFocuses(VanillaTypes.ITEM_STACK, role)
+                    .map(f -> f.getTypedValue().getIngredient())
+                    .filter(v -> v != null && v.getItem() instanceof ConglomerateItem)
+                    .map(ItemStack::copy)
+                    .findFirst()
+                    .orElse(ItemStack.EMPTY);
+            if (!found.isEmpty()) return found;
+        }
+        return ItemStack.EMPTY;
     }
 
     /**
@@ -1363,9 +1400,17 @@ public class trdJeiPlugin implements IModPlugin {
 
         @Override
         public void setRecipe(IRecipeLayoutBuilder builder, OpticMicroscopeWrapper recipe, IFocusGroup focuses) {
-            // Каждый раз при показе рецепта генерируем новый случайный кусок,
-            // чтобы пример менялся при каждом открытии JEI.
-            ItemStack unanalyzed = buildRandomChunk();
+            // Если игрок нажал R на конкретном конгломерате — показываем именно этот кусок
+            // (как вход на анализ и как проанализированный выход), а не случайный пример.
+            // Иначе генерируем новый случайный кусок, чтобы пример менялся при каждом открытии.
+            ItemStack focusChunk = findFocusedConglomerate(focuses);
+            ItemStack unanalyzed;
+            if (focusChunk.isEmpty()) {
+                unanalyzed = buildRandomChunk();
+            } else {
+                unanalyzed = focusChunk.copy();
+                unanalyzed.getOrCreateTag().putBoolean("Analyzed", false);
+            }
             ItemStack analyzed = unanalyzed.copy();
             ConglomerateItem.setAnalyzed(analyzed);
             analyzed.getOrCreateTag().putBoolean(ConglomerateItem.TAG_EXAMPLE, true);

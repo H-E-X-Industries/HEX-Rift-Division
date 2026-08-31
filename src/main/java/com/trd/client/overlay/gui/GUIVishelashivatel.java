@@ -183,7 +183,12 @@ public class GUIVishelashivatel extends AbstractContainerScreen<VishelashivatelM
                     .withStyle(ChatFormatting.GRAY));
         }
 
-        if (!any) return;
+        if (!any) {
+            // Статичного рецепта для предмета нет (например, динамический кусок фракции) —
+            // показываем обычный тултип самого предмета, а не ничего.
+            this.renderTooltip(gui, mx, my);
+            return;
+        }
         gui.renderComponentTooltip(this.font, lines, mx, my);
     }
 }

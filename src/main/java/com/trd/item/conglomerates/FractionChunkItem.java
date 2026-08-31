@@ -127,6 +127,19 @@ public class FractionChunkItem extends Item {
         return stack.getTag().getInt(TAG_OU);
     }
 
+    /**
+     * Оставшийся объём куска: сумма OU по ещё не извлечённым слоям.
+     * Уменьшается по мере модульной переработки (ядро), в отличие от
+     * исходного {@code OU} (полного объёма на момент создания куска).
+     */
+    public static int getRemainingOU(ItemStack stack) {
+        Map<Integer, Map<String, Integer>> layers = getLayerMap(stack);
+        return layers.values().stream()
+                .flatMap(m -> m.values().stream())
+                .mapToInt(Integer::intValue)
+                .sum();
+    }
+
     public static String getState(ItemStack stack) {
         if (!stack.hasTag()) return STATE_RAW;
         return stack.getTag().getString(TAG_STATE);
@@ -265,7 +278,7 @@ public class FractionChunkItem extends Item {
             tooltip.add(header);
         }
 
-        tooltip.add(Component.translatable("tooltip.trd.fraction_chunk.ou", example ? "X" : getOU(stack))
+        tooltip.add(Component.translatable("tooltip.trd.fraction_chunk.ou", example ? "X" : getRemainingOU(stack))
                 .withStyle(ChatFormatting.WHITE));
 
         String state = getState(stack);
