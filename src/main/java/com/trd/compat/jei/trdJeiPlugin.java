@@ -158,14 +158,18 @@ public class trdJeiPlugin implements IModPlugin {
 
     /**
      * Переработка куска фракции в выщелащивателе.
-     * {@code inputChunk} — кусок (с состоянием), {@code fluid} — реагент/вода,
-     * {@code outputs} — ядро и/или кусочки металлов.
+     * {@code step} — идентификатор шага цепочки для перестройки под сфокусированный
+     * кусок: {@code WASH} — промывка водой, {@code LEACH} — модульная переработка
+     * слоя с индексом {@code layerIndex}. {@code inputChunk/fluid/outputs} хранят
+     * «запасной» случайный пример (используется, когда игрок не сфокусировал кусок).
      */
     public record ChunkProcessWrapper(ItemStack inputChunk, FluidStack fluid, List<ItemStack> outputs,
-                                      boolean isWash, long minRpm, int timeTicks) {}
+                                      boolean isWash, long minRpm, int timeTicks,
+                                      FractionType fraction, int layerIndex) {}
 
     /** Обжарка куска фракции или кусочка металла в коксовой печи. */
-    public record ChunkRoastWrapper(ItemStack input, ItemStack output, FluidStack sludgeOutput) {}
+    public record ChunkRoastWrapper(ItemStack input, ItemStack output, FluidStack sludgeOutput,
+                                    FractionType fraction) {}
 
     @Override
     public void registerCategories(IRecipeCategoryRegistration registration) {
@@ -207,23 +211,27 @@ public class trdJeiPlugin implements IModPlugin {
                     return IIngredientSubtypeInterpreter.NONE;
                 });
 
-        // Кусок фракции: различаем по типу фракции (металлу), чтобы нажатие R на
-        // кусок (например, обжаренный алюминиевый) показывало ЖЕЛ-цепочку именно этого
-        // металла, а не рецепты всех фракций/металлов сразу.
+        // Кусок фракции: различаем по типу фракции + состоянию (сырой/промытый/обжаренный),
+        // чтобы нажатие R на конкретном варианте показывало ЖЕЛ-цепочку именно этого варианта.
         registration.registerSubtypeInterpreter(VanillaTypes.ITEM_STACK, com.trd.item.ModItems.FRACTION_CHUNK.get(),
                 (stack, context) -> {
                     com.trd.api.vein.FractionType fraction =
                             com.trd.item.conglomerates.FractionChunkItem.getFraction(stack);
-                    return fraction != null ? fraction.name() : IIngredientSubtypeInterpreter.NONE;
+                    if (fraction == null) return IIngredientSubtypeInterpreter.NONE;
+                    boolean washed = com.trd.item.conglomerates.FractionChunkItem.isWashed(stack);
+                    boolean roasted = com.trd.item.conglomerates.FractionChunkItem.isRoasted(stack);
+                    String state = roasted ? "roasted" : (washed ? "washed" : "raw");
+                    return fraction.name() + ":" + state;
                 });
 
-        // Кусочек металла: различаем по металлу (плавка/обжарка только этого металла).
+        // Кусочек металла: различаем по металлу + обжаренности, чтобы нажатие R
+        // на обжаренном/необжаренном кусочке показывало только соответствующий рецепт.
         registration.registerSubtypeInterpreter(VanillaTypes.ITEM_STACK, com.trd.item.ModItems.METAL_PIECE.get(),
                 (stack, context) -> {
                     String metal = com.trd.item.conglomerates.MetalPieceItem.getMetal(stack);
-                    return metal != null && !metal.isEmpty()
-                            ? metal
-                            : IIngredientSubtypeInterpreter.NONE;
+                    if (metal == null || metal.isEmpty()) return IIngredientSubtypeInterpreter.NONE;
+                    boolean roasted = com.trd.item.conglomerates.MetalPieceItem.isRoasted(stack);
+                    return metal + ":" + (roasted ? "roasted" : "raw");
                 });
     }
 
@@ -457,9 +465,12 @@ public class trdJeiPlugin implements IModPlugin {
         registerChunkProcessing(registration);
     }
     // Промывка водой + модульная переработка реагентом в выщелащивателе,
-    // а также обжарка кусков/кусочков в коксовой печи. Примеры строятся
-    // динамически по слоистой структуре фракции, поэтому кусок «пирог» в JEI
-    // всегда показан с рандомизированными слоями (как в OpticMicroscopeCategory).
+    // а также обжарка кусков/кусочков в коксовой печи.
+    //
+    // Регистрируются «шаблоны» шагов цепочки (промывка, один шаг на слой, обжарка),
+    // а в категории setRecipe перестраивает каждый шаг под сфокусированный кусок
+    // (его реальный NBT), если игрок нажал R/R по конкретному куску. Без фокуса
+    // показывается случайный пример — кусок «пирог» с рандомизированными слоями.
     private static void registerChunkProcessing(IRecipeRegistration registration) {
         List<ChunkProcessWrapper> process = new ArrayList<>();
         List<ChunkRoastWrapper> roast = new ArrayList<>();
@@ -469,24 +480,24 @@ public class trdJeiPlugin implements IModPlugin {
             FractionLayerMatrix matrix = FractionLayerMatrix.forFraction(fraction);
             int ou = 12 + new Random().nextInt(9);
 
-            // --- Промывка водой: raw -> clean ---
+            // --- Промывка водой: raw -> washed (шаг layerIndex = -1) ---
             ItemStack raw = FractionChunkItem.create(fraction, ou, true);
             ItemStack washed = FractionChunkItem.create(fraction, ou, true);
-            FractionChunkItem.setState(washed, FractionChunkItem.STATE_CLEAN);
+            FractionChunkItem.setWashed(washed, true);
             process.add(new ChunkProcessWrapper(
                     raw, new FluidStack(net.minecraft.world.level.material.Fluids.WATER, 100),
                     List.of(washed), true,
                     com.trd.multiblock.industrial.vishelashivatel.FractionLeachLogic.WASH_RPM,
-                    60));
+                    60, fraction, -1));
 
-            // --- Модульная переработка: по одному примеру на непустой слой ---
+            // --- Модульная переработка: по одному шаблону на непустой слой ---
             List<FractionLayerMatrix.Layer> layers = matrix.getLayers();
             for (FractionLayerMatrix.Layer layer : layers) {
                 if (layer.isEmpty()) continue;
                 int index = layer.index();
                 Fluid reagent = matrix.getLayerFluid(index);
                 ItemStack input = FractionChunkItem.create(fraction, ou, true);
-                FractionChunkItem.setState(input, FractionChunkItem.STATE_CLEAN);
+                FractionChunkItem.setWashed(input, true);
                 FractionChunkItem.setProcessedLayers(input, index);
                 // Прогоняем реальную логику, чтобы выходы совпадали с игровыми
                 com.trd.multiblock.industrial.vishelashivatel.FractionLeachLogic.Op op =
@@ -499,16 +510,16 @@ public class trdJeiPlugin implements IModPlugin {
                 process.add(new ChunkProcessWrapper(
                         input, new FluidStack(reagent, 250),
                         outputs.stream().map(ItemStack::copy).toList(), false,
-                        com.trd.multiblock.industrial.vishelashivatel.FractionLeachLogic.LEACH_RPM, 60));
+                        com.trd.multiblock.industrial.vishelashivatel.FractionLeachLogic.LEACH_RPM, 60,
+                        fraction, index));
             }
 
-            // --- Обжарка куска фракции (raw/clean -> roasted, +50 мБ красного шлама) ---
+            // --- Обжарка куска фракции (только сырой -> обжаренный, +50 мБ красного шлама) ---
             ItemStack roastInput = FractionChunkItem.create(fraction, ou, true);
-            FractionChunkItem.setState(roastInput, FractionChunkItem.STATE_CLEAN);
             ItemStack roastOutput = FractionChunkItem.create(fraction, ou, true);
-            FractionChunkItem.setState(roastOutput, FractionChunkItem.STATE_ROASTED);
+            FractionChunkItem.setRoasted(roastOutput, true);
             roast.add(new ChunkRoastWrapper(roastInput, roastOutput,
-                    com.trd.multiblock.industrial.coccer.CoccerRoastLogic.getSludge()));
+                    com.trd.multiblock.industrial.coccer.CoccerRoastLogic.getSludge(), fraction));
         }
 
         // --- Обжарка кусочков металлов (все металлы фракций) ---
@@ -522,7 +533,7 @@ public class trdJeiPlugin implements IModPlugin {
                 ItemStack roastedPiece = piece.copy();
                 com.trd.item.conglomerates.MetalPieceItem.setRoasted(roastedPiece, true);
                 roast.add(new ChunkRoastWrapper(piece, roastedPiece,
-                        com.trd.multiblock.industrial.coccer.CoccerRoastLogic.getSludge()));
+                        com.trd.multiblock.industrial.coccer.CoccerRoastLogic.getSludge(), null));
             }
         }
 
@@ -589,6 +600,62 @@ public class trdJeiPlugin implements IModPlugin {
             if (!found.isEmpty()) return found;
         }
         return ItemStack.EMPTY;
+    }
+
+    /** Ищет сфокусированный кусок фракции (с реальным NBT) — для динамической цепочки. */
+    private static ItemStack findFocusedFractionChunk(IFocusGroup focuses) {
+        for (RecipeIngredientRole role : new RecipeIngredientRole[]{
+                RecipeIngredientRole.INPUT, RecipeIngredientRole.OUTPUT}) {
+            ItemStack found = focuses.getFocuses(VanillaTypes.ITEM_STACK, role)
+                    .map(f -> f.getTypedValue().getIngredient())
+                    .filter(v -> v != null && v.getItem() instanceof com.trd.item.conglomerates.FractionChunkItem)
+                    .map(ItemStack::copy)
+                    .findFirst()
+                    .orElse(ItemStack.EMPTY);
+            if (!found.isEmpty()) return found;
+        }
+        return ItemStack.EMPTY;
+    }
+
+    /**
+     * Перестраивает шаг выщелащивателя под сфокусированный кусок {@code focus}
+     * (его реальные слои/веса). {@code recipe} — шаблон, задающий тип шага
+     * ({@code layerIndex < 0} — промывка водой; иначе извлечение слоя).
+     */
+    private static ChunkProcessWrapper rebuildStepForFocus(ItemStack focus, ChunkProcessWrapper recipe) {
+        FractionType fraction = FractionChunkItem.getFraction(focus);
+        long rpm = recipe.minRpm();
+        int time = recipe.timeTicks();
+        boolean isWash = recipe.layerIndex() < 0;
+
+        if (isWash) {
+            // Промывка водой: непромытый кусок -> промытый (флаг обжарки сохраняется)
+            ItemStack in = focus.copy();
+            FractionChunkItem.setAnalyzed(in, true);
+            ItemStack out = in.copy();
+            FractionChunkItem.setWashed(out, true);
+            return new ChunkProcessWrapper(in, new FluidStack(net.minecraft.world.level.material.Fluids.WATER, 100),
+                    List.of(out), true, rpm, time, fraction, -1);
+        }
+
+        int index = recipe.layerIndex();
+        FractionLayerMatrix matrix = FractionLayerMatrix.forFraction(fraction);
+        Fluid reagent = matrix.getLayerFluid(index);
+        ItemStack input = focus.copy();
+        FractionChunkItem.setAnalyzed(input, true);
+        FractionChunkItem.setWashed(input, true);
+        FractionChunkItem.setProcessedLayers(input, index);
+        com.trd.multiblock.industrial.vishelashivatel.FractionLeachLogic.Op op =
+                new com.trd.multiblock.industrial.vishelashivatel.FractionLeachLogic.Op(
+                        com.trd.multiblock.industrial.vishelashivatel.FractionLeachLogic.OpType.EXTRACT,
+                        reagent, 250, 60,
+                        com.trd.multiblock.industrial.vishelashivatel.FractionLeachLogic.LEACH_RPM,
+                        com.trd.multiblock.industrial.vishelashivatel.FractionLeachLogic.LEACH_TORQUE);
+        List<ItemStack> outputs = new ArrayList<>(
+                com.trd.multiblock.industrial.vishelashivatel.FractionLeachLogic.computeOutputs(op, input));
+        return new ChunkProcessWrapper(input, new FluidStack(reagent, 250), outputs, false,
+                com.trd.multiblock.industrial.vishelashivatel.FractionLeachLogic.LEACH_RPM, 60,
+                fraction, index);
     }
 
     /**
@@ -1400,24 +1467,35 @@ public class trdJeiPlugin implements IModPlugin {
 
         @Override
         public void setRecipe(IRecipeLayoutBuilder builder, OpticMicroscopeWrapper recipe, IFocusGroup focuses) {
-            // Если игрок нажал R на конкретном конгломерате — показываем именно этот кусок
-            // (как вход на анализ и как проанализированный выход), а не случайный пример.
-            // Иначе генерируем новый случайный кусок, чтобы пример менялся при каждом открытии.
             ItemStack focusChunk = findFocusedConglomerate(focuses);
+            boolean hasFocus = !focusChunk.isEmpty();
+
             ItemStack unanalyzed;
-            if (focusChunk.isEmpty()) {
-                unanalyzed = buildRandomChunk();
+            if (hasFocus) {
+                if (ConglomerateItem.isAnalyzed(focusChunk)) {
+                    // Уже проанализированный: показываем его как вход и выход
+                    // (микроскоп бесполезен, но вкладка остаётся видимой в цепочке).
+                    unanalyzed = focusChunk.copy();
+                } else {
+                    unanalyzed = focusChunk.copy();
+                    unanalyzed.getOrCreateTag().putBoolean("Analyzed", false);
+                }
             } else {
-                unanalyzed = focusChunk.copy();
-                unanalyzed.getOrCreateTag().putBoolean("Analyzed", false);
+                unanalyzed = buildRandomChunk();
             }
             ItemStack analyzed = unanalyzed.copy();
             ConglomerateItem.setAnalyzed(analyzed);
-            analyzed.getOrCreateTag().putBoolean(ConglomerateItem.TAG_EXAMPLE, true);
+            if (!hasFocus) {
+                analyzed.getOrCreateTag().putBoolean(ConglomerateItem.TAG_EXAMPLE, true);
+            }
             ItemStack filledPipette = FluidContainerItem.createFilled(ModItems.PIPETTE.get(),
                     ModFluids.SULFURIC_ACID_SOURCE.get());
 
-            // На входе: неисследованный конгломерат + пипетка с серной кислотой
+            // Всегда 1 штука на входе и выходе (независимо от стака в фокусе)
+            unanalyzed.setCount(1);
+            analyzed.setCount(1);
+
+            // На входе: конгломерат + пипетка с серной кислотой
             builder.addSlot(RecipeIngredientRole.INPUT, 5, 13)
                     .addItemStack(unanalyzed);
             builder.addSlot(RecipeIngredientRole.INPUT, 23, 13)
@@ -1425,7 +1503,7 @@ public class trdJeiPlugin implements IModPlugin {
             builder.addSlot(RecipeIngredientRole.INPUT, 5, 31);
             builder.addSlot(RecipeIngredientRole.INPUT, 23, 31);
 
-            // На выходе: исследованный конгломерат + пустая пипетка
+            // На выходе: проанализированный конгломерат + пустая пипетка
             builder.addSlot(RecipeIngredientRole.OUTPUT, 81, 13)
                     .addItemStack(analyzed);
             builder.addSlot(RecipeIngredientRole.OUTPUT, 99, 13)
@@ -1467,16 +1545,31 @@ public class trdJeiPlugin implements IModPlugin {
 
         @Override
         public void setRecipe(IRecipeLayoutBuilder builder, ChunkProcessWrapper recipe, IFocusGroup focuses) {
-            builder.addSlot(RecipeIngredientRole.INPUT, 5, 22)
-                    .addItemStack(recipe.inputChunk().copy());
+            ItemStack focus = findFocusedFractionChunk(focuses);
 
-            ItemStack fluidDrop = fluidDropStack(recipe.fluid());
+            // Перестройка шага под сфокусированный кусок (реальный NBT). Без фокуса
+            // (или если фокус — иная фракция) показываем запасной случайный пример.
+            ItemStack input = recipe.inputChunk().copy();
+            FluidStack fluid = recipe.fluid();
+            List<ItemStack> outputs = new ArrayList<>(recipe.outputs());
+            if (!focus.isEmpty()
+                    && recipe.fraction() != null
+                    && recipe.fraction() == FractionChunkItem.getFraction(focus)) {
+                ChunkProcessWrapper rebuilt = rebuildStepForFocus(focus, recipe);
+                input = rebuilt.inputChunk().copy();
+                fluid = rebuilt.fluid();
+                outputs = rebuilt.outputs().stream().map(ItemStack::copy).toList();
+            }
+
+            builder.addSlot(RecipeIngredientRole.INPUT, 5, 22)
+                    .addItemStack(input);
+
+            ItemStack fluidDrop = fluidDropStack(fluid);
             if (!fluidDrop.isEmpty()) {
                 builder.addSlot(RecipeIngredientRole.INPUT, 23, 22)
                         .addItemStack(fluidDrop);
             }
 
-            List<ItemStack> outputs = recipe.outputs();
             for (int i = 0; i < outputs.size() && i < 3; i++) {
                 ItemStack out = outputs.get(i);
                 if (!out.isEmpty()) {
@@ -1516,10 +1609,24 @@ public class trdJeiPlugin implements IModPlugin {
 
         @Override
         public void setRecipe(IRecipeLayoutBuilder builder, ChunkRoastWrapper recipe, IFocusGroup focuses) {
+            ItemStack focus = findFocusedFractionChunk(focuses);
+
+            ItemStack input = recipe.input().copy();
+            ItemStack output = recipe.output().copy();
+            // Перестройка обжарки куска под сфокусированный кусок: обжарить можно
+            // только сырой кусок (не промытый, не обжаренный) -> обжаренный.
+            if (!focus.isEmpty() && recipe.fraction() != null
+                    && recipe.fraction() == FractionChunkItem.getFraction(focus)) {
+                input = focus.copy();
+                FractionChunkItem.setAnalyzed(input, true);
+                output = input.copy();
+                FractionChunkItem.setRoasted(output, true);
+            }
+
             builder.addSlot(RecipeIngredientRole.INPUT, 5, 22)
-                    .addItemStack(recipe.input().copy());
+                    .addItemStack(input);
             builder.addSlot(RecipeIngredientRole.OUTPUT, 55, 22)
-                    .addItemStack(recipe.output().copy());
+                    .addItemStack(output);
             ItemStack sludge = fluidDropStack(recipe.sludgeOutput());
             if (!sludge.isEmpty()) {
                 builder.addSlot(RecipeIngredientRole.OUTPUT, 73, 22)
@@ -1559,10 +1666,24 @@ public class trdJeiPlugin implements IModPlugin {
 
         @Override
         public void setRecipe(IRecipeLayoutBuilder builder, ConglomerateDrobitelWrapper recipe, IFocusGroup focuses) {
-            builder.addSlot(RecipeIngredientRole.INPUT, 5, 22)
-                    .addItemStack(recipe.input().copy());
+            ItemStack focusChunk = findFocusedConglomerate(focuses);
 
-            List<ItemStack> outputs = recipe.outputs();
+            // Если игрок нажал R на конкретном конгломерате — показываем именно его
+            // и его реальные выходы (а не случайный пример из шаблона).
+            ItemStack input;
+            List<ItemStack> outputs;
+            if (!focusChunk.isEmpty()) {
+                input = focusChunk.copy();
+                input.setCount(1);
+                outputs = ConglomerateItem.splitToFractions(focusChunk);
+            } else {
+                input = recipe.input().copy();
+                outputs = recipe.outputs();
+            }
+
+            builder.addSlot(RecipeIngredientRole.INPUT, 5, 22)
+                    .addItemStack(input);
+
             for (int i = 0; i < outputs.size() && i < CHAMBER_OUTPUT_SLOTS.length; i++) {
                 ItemStack stack = outputs.get(i);
                 if (!stack.isEmpty()) {

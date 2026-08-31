@@ -17,6 +17,7 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -45,6 +46,7 @@ import java.util.Map;
  */
 public class FractionChunkItem extends Item {
 
+    /** Устаревшие строковые состояния (совместимость со старыми сейвами). */
     public static final String STATE_RAW = "raw";
     public static final String STATE_CLEAN = "clean";
     public static final String STATE_ROASTED = "roasted";
@@ -55,6 +57,8 @@ public class FractionChunkItem extends Item {
     public static final String TAG_LAYERS = "Layers";
     public static final String TAG_WEIGHTS = "Weights";
     public static final String TAG_STATE = "State";
+    public static final String TAG_WASHED = "Washed";
+    public static final String TAG_ROASTED = "Roasted";
     public static final String TAG_PROCESSED = "ProcessedLayers";
     public static final String TAG_ANALYZED = "Analyzed";
     public static final String TAG_EXAMPLE = "Example";
@@ -101,7 +105,8 @@ public class FractionChunkItem extends Item {
         matrix.bakeWeights(com.trd.api.vein.VeinModifier.NONE).forEach(weightsTag::putInt);
         tag.put(TAG_WEIGHTS, weightsTag);
 
-        tag.putString(TAG_STATE, STATE_RAW);
+        tag.putBoolean(TAG_WASHED, false);
+        tag.putBoolean(TAG_ROASTED, false);
         tag.putInt(TAG_PROCESSED, 0);
         tag.putBoolean(TAG_ANALYZED, analyzed);
 
@@ -140,22 +145,86 @@ public class FractionChunkItem extends Item {
                 .sum();
     }
 
-    public static String getState(ItemStack stack) {
-        if (!stack.hasTag()) return STATE_RAW;
-        return stack.getTag().getString(TAG_STATE);
+    /**
+     * Состояние куска описывается двумя независимыми флагами: промыто водой
+     * ({@code Washed}) и обжарено ({@code Roasted}). Флаги накапливаются: например,
+     * «обжаренный, промытый водой» — это {@code Washed=true, Roasted=true}. Это
+     * позволяет сохранять состояние как приписку в теге и прослеживать цепочку
+     * переработки в JEI, вместо взаимозаменяемой строки состояния.
+     *
+     * <p>Легаси: старый кусок с тегом {@code State} мигрирует в флаги при чтении.</p>
+     */
+
+    /** Промыт ли водой (очищен). */
+    public static boolean isWashed(ItemStack stack) {
+        if (!stack.hasTag()) return false;
+        CompoundTag tag = stack.getTag();
+        if (tag.contains(TAG_WASHED, CompoundTag.TAG_BYTE)) {
+            return tag.getBoolean(TAG_WASHED);
+        }
+        // Легаси: строка состояния
+        return STATE_CLEAN.equals(stack.getTag().getString(TAG_STATE));
     }
 
-    public static void setState(ItemStack stack, String state) {
-        stack.getOrCreateTag().putString(TAG_STATE, state);
+    public static void setWashed(ItemStack stack, boolean washed) {
+        stack.getOrCreateTag().putBoolean(TAG_WASHED, washed);
     }
 
-    public static boolean isClean(ItemStack stack) {
-        String s = getState(stack);
-        return STATE_CLEAN.equals(s) || STATE_ROASTED.equals(s);
-    }
-
+    /** Обжарен ли в коксовой печи (даже если после промывки водой). */
     public static boolean isRoasted(ItemStack stack) {
-        return STATE_ROASTED.equals(getState(stack));
+        if (!stack.hasTag()) return false;
+        CompoundTag tag = stack.getTag();
+        if (tag.contains(TAG_ROASTED, CompoundTag.TAG_BYTE)) {
+            return tag.getBoolean(TAG_ROASTED);
+        }
+        // Легаси: строка состояния
+        return STATE_ROASTED.equals(stack.getTag().getString(TAG_STATE));
+    }
+
+    public static void setRoasted(ItemStack stack, boolean roasted) {
+        stack.getOrCreateTag().putBoolean(TAG_ROASTED, roasted);
+    }
+
+    /**
+     * Возвращаем полный NBT как «значимый» для сравнения стаков: разные состояния
+     * (промыт/обжарен) должны оставаться разными предметами в JEI, а не сливаться
+     * в один по {@code item}. Без этого JEI 1.20.1 может считать сырой, промытый
+     * и обжаренный куски одной и той же вещью.
+     */
+    @Nullable
+    @Override
+    public CompoundTag getShareTag(ItemStack stack) {
+        return stack.getTag();
+    }
+
+    /** Сырой кусок: ещё не промыт и не обжарен (единственный, который можно обжарить). */
+    public static boolean isRaw(ItemStack stack) {
+        return !isWashed(stack) && !isRoasted(stack);
+    }
+
+    /**
+     * Легаси-метод: результирующая строка состояния для старых потребителей.
+     * Для комбинированных состояний возвращает наиболее подходящее одиночное слово.
+     */
+    public static String getState(ItemStack stack) {
+        boolean washed = isWashed(stack);
+        boolean roasted = isRoasted(stack);
+        if (roasted && washed) return STATE_CLEAN;
+        if (roasted) return STATE_ROASTED;
+        if (washed) return STATE_CLEAN;
+        return STATE_RAW;
+    }
+
+    /** Легаси-метод записи строки состояния (мигрирует в флаги). */
+    public static void setState(ItemStack stack, String state) {
+        if (STATE_ROASTED.equals(state)) {
+            setRoasted(stack, true);
+        } else if (STATE_CLEAN.equals(state)) {
+            setWashed(stack, true);
+        } else {
+            setRoasted(stack, false);
+            setWashed(stack, false);
+        }
     }
 
     public static boolean isAnalyzed(ItemStack stack) {
@@ -221,31 +290,32 @@ public class FractionChunkItem extends Item {
     // ══════════════════ ЦВЕТ (для тинта текстуры) ══════════════════
 
     /**
-     * Цвет отображения куска. Сырой — тёмный оттенок цвета фракции, очищенный — светлый,
-     * обжаренный — с оранжевым сдвигом.
+     * Цвет отображения куска. Сырой — тёмный оттенок цвета фракции, промытый — светлый,
+     * обжаренный — с оранжевым сдвигом (поверх света, если промыт).
      */
     public static int getDisplayColor(ItemStack stack) {
         FractionType fraction = getFraction(stack);
         int base = fraction != null ? fraction.getColor() : 0xFFFFFF;
-        float factor = 0.55f; // сырой: тёмный
-        String state = getState(stack);
-        if (STATE_CLEAN.equals(state)) {
-            factor = 1.0f;
-        } else if (STATE_ROASTED.equals(state)) {
-            // оранжевый сдвиг
-            int r = (int) (255 * 0.9f);
-            int g = (int) (255 * 0.5f);
-            int bRel = (int) (255 * 0.2f);
-            int br = (base >> 16) & 0xFF, bg = (base >> 8) & 0xFF, bb = base & 0xFF;
-            int nr = Math.min(255, (int) (br * 0.7f) + (int) (r * 0.3f));
-            int ng = Math.min(255, (int) (bg * 0.7f) + g);
-            int nb = Math.min(255, (int) (bb * 0.7f) + bRel);
+        boolean washed = isWashed(stack);
+        boolean roasted = isRoasted(stack);
+
+        // Базовый цвет: тёмный (сырой) или светлый (промыт)
+        float factor = washed ? 1.0f : 0.55f;
+        int br = (int) (((base >> 16) & 0xFF) * factor);
+        int bg = (int) (((base >> 8) & 0xFF) * factor);
+        int bb = (int) ((base & 0xFF) * factor);
+
+        if (roasted) {
+            // Оранжевый сдвиг поверх текущего цвета
+            int ar = (int) (255 * 0.9f);
+            int ag = (int) (255 * 0.5f);
+            int ab = (int) (255 * 0.2f);
+            int nr = Math.min(255, (int) (br * 0.7f) + (int) (ar * 0.3f));
+            int ng = Math.min(255, (int) (bg * 0.7f) + ag);
+            int nb = Math.min(255, (int) (bb * 0.7f) + ab);
             return (nr << 16) | (ng << 8) | nb;
         }
-        int r = (int) (((base >> 16) & 0xFF) * factor);
-        int g = (int) (((base >> 8) & 0xFF) * factor);
-        int b = (int) ((base & 0xFF) * factor);
-        return (r << 16) | (g << 8) | b;
+        return (br << 16) | (bg << 8) | bb;
     }
 
     // ══════════════════ ТУЛТИП ══════════════════
@@ -254,15 +324,30 @@ public class FractionChunkItem extends Item {
     public Component getName(ItemStack stack) {
         FractionType fraction = getFraction(stack);
         String baseName = fraction != null
-                ? Component.translatable("vein.trd.fraction." + fraction.getName()).getString()
+                ? Component.translatable("vein.trd.fraction_name." + fraction.getName()).getString()
                 : Component.translatable("item.trd.fraction_chunk").getString();
-        String state = getState(stack);
-        String stateSuffix = switch (state) {
-            case STATE_CLEAN -> Component.translatable("tooltip.trd.fraction_chunk.state.clean").getString();
-            case STATE_ROASTED -> Component.translatable("tooltip.trd.fraction_chunk.state.roasted").getString();
-            default -> Component.translatable("tooltip.trd.fraction_chunk.state.raw").getString();
-        };
-        return Component.literal(baseName + " (" + stateSuffix + ")");
+        return Component.literal(baseName);
+    }
+
+    /**
+     * История состояний куска слева направо (порядок приобретения), разделённая
+     * запятыми: напр. «Сырой» → «Сырой, промыт водой» → «Сырой, промыт водой, обжарен».
+     * Отображается в тултипе (не в названии).
+     */
+    public static String getStateHistory(ItemStack stack) {
+        List<String> parts = new ArrayList<>();
+        boolean washed = isWashed(stack);
+        boolean roasted = isRoasted(stack);
+        if (!washed && !roasted) {
+            return Component.translatable("tooltip.trd.fraction_chunk.state.raw").getString();
+        }
+        if (washed) {
+            parts.add(Component.translatable("tooltip.trd.fraction_chunk.state.clean").getString());
+        }
+        if (roasted) {
+            parts.add(Component.translatable("tooltip.trd.fraction_chunk.state.roasted").getString());
+        }
+        return String.join(", ", parts);
     }
 
     @Override
@@ -272,7 +357,7 @@ public class FractionChunkItem extends Item {
 
         if (fraction != null) {
             MutableComponent header = (fraction != null
-                    ? Component.translatable("vein.trd.fraction." + fraction.getName(), example ? "X" : "")
+                    ? Component.translatable("vein.trd.fraction_name." + fraction.getName())
                     : Component.empty())
                     .withStyle(style -> style.withColor(fractionColor(fraction)));
             tooltip.add(header);
@@ -281,9 +366,7 @@ public class FractionChunkItem extends Item {
         tooltip.add(Component.translatable("tooltip.trd.fraction_chunk.ou", example ? "X" : getRemainingOU(stack))
                 .withStyle(ChatFormatting.WHITE));
 
-        String state = getState(stack);
-        tooltip.add(Component.translatable("tooltip.trd.fraction_chunk.state." + state)
-                .withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.literal(getStateHistory(stack)).withStyle(ChatFormatting.GRAY));
 
         if (isAnalyzed(stack) && !example) {
             Map<Integer, Map<String, Integer>> layers = getLayerMap(stack);

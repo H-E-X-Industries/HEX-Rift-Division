@@ -59,6 +59,18 @@ public class MetalPieceItem extends Item {
         stack.getOrCreateTag().putBoolean(TAG_ROAST, roasted);
     }
 
+    /**
+     * Возвращаем полный NBT как «значимый» для сравнения стаков: разные состояния
+     * (металл, обжаренность) должны оставаться разными предметами в JEI, а не
+     * сливаться в один по {@code item}. Без этого JEI 1.20.1 может считать
+     * обжаренный и необжаренный кусочек одним и тем же.
+     */
+    @Nullable
+    @Override
+    public CompoundTag getShareTag(ItemStack stack) {
+        return stack.getTag();
+    }
+
     /** Цвет металла из металлургии (для тинта текстуры). Обжаренный — оранжевее. */
     public static int getDisplayColor(ItemStack stack) {
         String metalId = getMetal(stack);

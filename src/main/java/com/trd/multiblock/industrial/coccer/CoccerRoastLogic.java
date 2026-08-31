@@ -27,8 +27,9 @@ public final class CoccerRoastLogic {
             return !MetalPieceItem.isRoasted(stack);
         }
         if (stack.getItem() instanceof FractionChunkItem) {
-            String state = FractionChunkItem.getState(stack);
-            return !FractionChunkItem.STATE_ROASTED.equals(state);
+            // Обжарить можно ТОЛЬКО сырой кусок фракции (не промытый водой и не обжаренный).
+            // Промытые нельзя — иначе их можно бесконечно обжаривать.
+            return FractionChunkItem.isRaw(stack);
         }
         return false;
     }
@@ -42,7 +43,7 @@ public final class CoccerRoastLogic {
         }
         if (input.getItem() instanceof FractionChunkItem) {
             ItemStack out = input.copy();
-            FractionChunkItem.setState(out, FractionChunkItem.STATE_ROASTED);
+            FractionChunkItem.setRoasted(out, true);
             return out;
         }
         return ItemStack.EMPTY;

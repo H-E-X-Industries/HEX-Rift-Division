@@ -109,10 +109,10 @@ public class VishelashivatelOverlay {
                 maxW = Math.max(maxW, font.width(fracLine));
             }
 
-            // Текущий OU
+            // Текущий OU и состояние
             int currentOu = FractionChunkItem.getOU(input);
-            String state = FractionChunkItem.getState(input);
-            String ouLine = "OU: " + currentOu + " | " + Component.translatable("tooltip.trd.fraction_chunk.state." + state).getString();
+            String state = FractionChunkItem.getStateHistory(input);
+            String ouLine = "OU: " + currentOu + " | " + state;
             lines.add(ouLine);
             colors.add(0xFFFFFF);
             maxW = Math.max(maxW, font.width(ouLine));

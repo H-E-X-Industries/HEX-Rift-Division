@@ -546,12 +546,18 @@ public class ModLangProvider extends LanguageProvider {
         add("vein.trd.fraction.noble_metal", "Noble Metals: %d%%");
         add("vein.trd.fraction.rare_earth", "Rare Earth: %d%%");
 
+        add("vein.trd.fraction_name.light_metal", "Light Metal Ore Chunk");
+        add("vein.trd.fraction_name.heavy_metal", "Heavy Metal Ore Chunk");
+        add("vein.trd.fraction_name.noble_metal", "Noble Metal Ore Chunk");
+        add("vein.trd.fraction_name.rare_earth", "Rare Earth Ore Chunk");
+
         // ═══ Tooltip: Fraction Chunk ═══
         add("tooltip.trd.fraction_chunk.ou", "OU: %d");
         add("tooltip.trd.fraction_chunk.layer", "§7  L%d: %s");
         add("tooltip.trd.fraction_chunk.state.raw", "Raw ore");
-        add("tooltip.trd.fraction_chunk.state.clean", "Cleaned");
+        add("tooltip.trd.fraction_chunk.state.clean", "Washed");
         add("tooltip.trd.fraction_chunk.state.roasted", "Roasted");
+        add("tooltip.trd.fraction_chunk.state.roasted_washed", "Roasted, washed");
         add("tooltip.trd.fraction_chunk.requires_analysis", "§cComposition analysis required.");
         add("tooltip.trd.fraction_chunk.depleted", "§cFully depleted");
 
@@ -1768,12 +1774,18 @@ public class ModLangProvider extends LanguageProvider {
         add("vein.trd.fraction.noble_metal", "Благородные металлы: %d%%");
         add("vein.trd.fraction.rare_earth", "Редкоземельные металлы: %d%%");
 
+        add("vein.trd.fraction_name.light_metal", "Кусок лёгких металлов");
+        add("vein.trd.fraction_name.heavy_metal", "Кусок тяжёлых металлов");
+        add("vein.trd.fraction_name.noble_metal", "Кусок благородных металлов");
+        add("vein.trd.fraction_name.rare_earth", "Кусок редкоземельных металлов");
+
         // ═══ Tooltip: Fraction Chunk ═══
         add("tooltip.trd.fraction_chunk.ou", "OU: %d");
         add("tooltip.trd.fraction_chunk.layer", "§7  L%d: %s");
         add("tooltip.trd.fraction_chunk.state.raw", "Сырая руда");
-        add("tooltip.trd.fraction_chunk.state.clean", "Очищено");
+        add("tooltip.trd.fraction_chunk.state.clean", "Промыто водой");
         add("tooltip.trd.fraction_chunk.state.roasted", "Обжарено");
+        add("tooltip.trd.fraction_chunk.state.roasted_washed", "Обжарено, промыто водой");
         add("tooltip.trd.fraction_chunk.requires_analysis", "§cНеобходим анализ состава.");
         add("tooltip.trd.fraction_chunk.depleted", "§cПолностью выработано");
 

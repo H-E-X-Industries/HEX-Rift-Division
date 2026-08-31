@@ -123,21 +123,21 @@ public final class FractionLeachLogic {
         if (tankFluid.isEmpty()) return null;
 
         Fluid fluid = tankFluid.getFluid();
-        String state = FractionChunkItem.getState(input);
+        boolean washed = FractionChunkItem.isWashed(input);
+        boolean roasted = FractionChunkItem.isRoasted(input);
 
-        // Промывка водой: сырой и обжаренный кусок -> очищенный.
-        // Обжаренный кусок (из коксовой печи напрямую из сырого) промывается
-        // водой, чтобы снять зольность и стать доступным для модульной переработки.
+        // Промывка водой: непромытый кусок (сырой или уже обжаренный) -> промытый.
+        // Промывка сохраняет флаг обжарки (обжаренный кусок остаётся «обжаренный,
+        // промытый водой»).
         if (fluid == Fluids.WATER) {
-            if (FractionChunkItem.STATE_RAW.equals(state)
-                    || FractionChunkItem.STATE_ROASTED.equals(state)) {
+            if (!washed) {
                 return new Op(OpType.WASH, fluid, WASH_COST, WASH_TIME, WASH_RPM, WASH_TORQUE);
             }
             return null;
         }
 
-        // Модульная переработка: только чистый/обжаренный кусок
-        if (FractionChunkItem.STATE_RAW.equals(state)) return null;
+        // Модульная переработка: только промытый кусок (например «обжаренный, промытый водой»)
+        if (!washed) return null;
         if (!FractionChunkItem.isAnalyzed(input)) return null;
 
         FractionType fraction = FractionChunkItem.getFraction(input);
@@ -158,7 +158,7 @@ public final class FractionLeachLogic {
 
         if (op.type == OpType.WASH) {
             ItemStack clean = input.copy();
-            FractionChunkItem.setState(clean, FractionChunkItem.STATE_CLEAN);
+            FractionChunkItem.setWashed(clean, true);
             result.add(clean);
             return result;
         }
@@ -181,7 +181,7 @@ public final class FractionLeachLogic {
             emitMetalPieces(metals, result);
             ItemStack core = input.copy();
             FractionChunkItem.setProcessedLayers(core, next + 1);
-            FractionChunkItem.setState(core, FractionChunkItem.STATE_CLEAN);
+            FractionChunkItem.setWashed(core, true);
             if (!FractionChunkItem.getLayerMap(core).isEmpty()) {
                 result.add(core);
             }
@@ -197,22 +197,25 @@ public final class FractionLeachLogic {
             ItemStack core = input.copy();
             explodeUpTo(core, reagentIndex);
             FractionChunkItem.setProcessedLayers(core, reagentIndex + 1);
-            FractionChunkItem.setState(core, FractionChunkItem.STATE_CLEAN);
+            FractionChunkItem.setWashed(core, true);
             if (!FractionChunkItem.getLayerMap(core).isEmpty()) {
                 result.add(core);
             }
             return result;
         }
 
-        // Прокрутка: реагент не совпадает ни с одним необработанным слоем.
-        // Весь оставшийся объём превращаем в уценённые кусочки дешёвых металлов.
-        int remainingOu = layers.values().stream().flatMap(m -> m.values().stream())
-                .mapToInt(Integer::intValue).sum();
-        if (remainingOu <= 0) return result;
+        // Прокрутка: реагент не совпадает ни с одним необработанным слоем
+        // (обычно он мельче самого недоизвлечённого слоя). Вместо недоизвлечённого
+        // редкого металла выпадают уценённые кусочки дешёвых металлов в меньшем количестве.
+        // Бюджет уценки считается от OU именно следующего (недоизвлечённого) слоя,
+        // а не от всей суммы остатка.
+        Map<String, Integer> nextLayer = layers.getOrDefault(next, Map.of());
+        int nextLayerOu = nextLayer.values().stream().mapToInt(Integer::intValue).sum();
+        if (nextLayerOu <= 0) return result;
 
         // Дешёвые металлы — из уже извлечённых (более мелких) слоёв; веса из запечённого NBT
         Map<String, Integer> weights = cheapWeights(matrix, input, next);
-        int budget = Math.max(1, Math.round(remainingOu * SCROLL_DISCOUNT));
+        int budget = Math.max(1, Math.round(nextLayerOu * SCROLL_DISCOUNT));
         Map<String, Integer> outByMetal = com.trd.api.vein.DistributionMath.distribute(budget, weights);
         for (Map.Entry<String, Integer> e : outByMetal.entrySet()) {
             if (e.getValue() > 0) {
