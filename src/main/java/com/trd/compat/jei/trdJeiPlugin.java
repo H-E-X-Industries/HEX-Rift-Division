@@ -211,6 +211,16 @@ public class trdJeiPlugin implements IModPlugin {
                     return IIngredientSubtypeInterpreter.NONE;
                 });
 
+        // Кусок конгломерата: различаем по состоянию изученности (проанализирован/нет),
+        // чтобы микроскоп показывался только для не-изученных кусков. Вход рецепта
+        // микроскопа — не-изученный кусок, поэтому клик по уже изученному не даст
+        // совпадения, и вкладка микроскопа в "Uses" не появится.
+        registration.registerSubtypeInterpreter(VanillaTypes.ITEM_STACK, com.trd.item.ModItems.CONGLOMERATE_CHUNK.get(),
+                (stack, context) ->
+                        com.trd.item.conglomerates.ConglomerateItem.isAnalyzed(stack)
+                                ? "analyzed"
+                                : IIngredientSubtypeInterpreter.NONE);
+
         // Кусок фракции: различаем по типу фракции + состоянию (сырой/промытый/обжаренный),
         // чтобы нажатие R на конкретном варианте показывало ЖЕЛ-цепочку именно этого варианта.
         registration.registerSubtypeInterpreter(VanillaTypes.ITEM_STACK, com.trd.item.ModItems.FRACTION_CHUNK.get(),
@@ -325,13 +335,12 @@ public class trdJeiPlugin implements IModPlugin {
         registration.addRecipes(DROBITEL_TYPE, drobitelRecipes);
 
         // === ДРОБИТЕЛЬ: динамические рецепты конгломерат → куски фракций ===
+        // Регистрируем шаблоны как для НЕизученных, так и для изученных кусков,
+        // чтобы клик по любому из них находил рецепт дробителя (JEI матчит по подтипу).
         List<ConglomerateDrobitelWrapper> conglomerateRecipes = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
             ItemStack chunk = buildRandomChunk();
-            List<ItemStack> results = ConglomerateItem.splitToFractions(chunk);
-            if (!results.isEmpty()) {
-                conglomerateRecipes.add(new ConglomerateDrobitelWrapper(chunk, results));
-            }
+            addDrobitelVariant(conglomerateRecipes, chunk);
         }
         registration.addRecipes(CONGLOMERATE_DROBITEL_TYPE, conglomerateRecipes);
 
@@ -629,9 +638,12 @@ public class trdJeiPlugin implements IModPlugin {
         boolean isWash = recipe.layerIndex() < 0;
 
         if (isWash) {
-            // Промывка водой: непромытый кусок -> промытый (флаг обжарки сохраняется)
+            // Промывка водой: сырой (непромытый) кусок -> промытый (флаг обжарки сохраняется).
+            // Вход всегда НЕпромытый, даже если фокус уже промыт, — иначе JEI показал бы
+            // бессмысленное «промывка промытого → промытый».
             ItemStack in = focus.copy();
             FractionChunkItem.setAnalyzed(in, true);
+            FractionChunkItem.setWashed(in, false);
             ItemStack out = in.copy();
             FractionChunkItem.setWashed(out, true);
             return new ChunkProcessWrapper(in, new FluidStack(net.minecraft.world.level.material.Fluids.WATER, 100),
@@ -659,12 +671,26 @@ public class trdJeiPlugin implements IModPlugin {
     }
 
     /**
+     * Регистрирует дробильный рецепт для куска конгломерата в обоих состояниях
+     * изученности (неизученный и изученный), чтобы JEI мог найти рецепт по подтипу.
+     * {@code setRecipe} категории при фокусе сама подставит реальный кусок.
+     */
+    private static void addDrobitelVariant(List<ConglomerateDrobitelWrapper> list, ItemStack chunk) {
+        List<ItemStack> results = ConglomerateItem.splitToFractions(chunk);
+        if (results.isEmpty()) return;
+        list.add(new ConglomerateDrobitelWrapper(chunk.copy(), results));
+        ItemStack analyzed = chunk.copy();
+        ConglomerateItem.setAnalyzed(analyzed);
+        list.add(new ConglomerateDrobitelWrapper(analyzed,
+                ConglomerateItem.splitToFractions(analyzed)));
+    }
+
+    /**
      * Генерирует случайный кусок конгломерата с полным набором параметров
      * (фракции, металлы, бусты фракций/металлов, биом, температура) — будто его
      * реально добыли. Используется как наглядный пример для рецепта JEI.
      */
-    private static ItemStack buildRandomChunk() {
-        Random random = new Random();
+    private static ItemStack buildRandomChunk() {        Random random = new Random();
         FractionType[] all = FractionType.values();
         int count = Math.min(2 + random.nextInt(Math.min(3, all.length - 1)), all.length);
 
@@ -1470,16 +1496,13 @@ public class trdJeiPlugin implements IModPlugin {
             ItemStack focusChunk = findFocusedConglomerate(focuses);
             boolean hasFocus = !focusChunk.isEmpty();
 
+            // Если игрок нажал R на конкретном конгломерате — показываем именно его
+            // (его не-изученную версию на входе, изученную на выходе). Микроскоп
+            // для уже проанализированных кусков скрывает TrdRecipeFilterPlugin.
             ItemStack unanalyzed;
             if (hasFocus) {
-                if (ConglomerateItem.isAnalyzed(focusChunk)) {
-                    // Уже проанализированный: показываем его как вход и выход
-                    // (микроскоп бесполезен, но вкладка остаётся видимой в цепочке).
-                    unanalyzed = focusChunk.copy();
-                } else {
-                    unanalyzed = focusChunk.copy();
-                    unanalyzed.getOrCreateTag().putBoolean("Analyzed", false);
-                }
+                unanalyzed = focusChunk.copy();
+                unanalyzed.getOrCreateTag().putBoolean("Analyzed", false);
             } else {
                 unanalyzed = buildRandomChunk();
             }
@@ -1495,7 +1518,7 @@ public class trdJeiPlugin implements IModPlugin {
             unanalyzed.setCount(1);
             analyzed.setCount(1);
 
-            // На входе: конгломерат + пипетка с серной кислотой
+            // На входе: неисследованный конгломерат + пипетка с серной кислотой
             builder.addSlot(RecipeIngredientRole.INPUT, 5, 13)
                     .addItemStack(unanalyzed);
             builder.addSlot(RecipeIngredientRole.INPUT, 23, 13)
@@ -1503,7 +1526,7 @@ public class trdJeiPlugin implements IModPlugin {
             builder.addSlot(RecipeIngredientRole.INPUT, 5, 31);
             builder.addSlot(RecipeIngredientRole.INPUT, 23, 31);
 
-            // На выходе: проанализированный конгломерат + пустая пипетка
+            // На выходе: исследованный конгломерат + пустая пипетка
             builder.addSlot(RecipeIngredientRole.OUTPUT, 81, 13)
                     .addItemStack(analyzed);
             builder.addSlot(RecipeIngredientRole.OUTPUT, 99, 13)

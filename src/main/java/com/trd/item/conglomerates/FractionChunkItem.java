@@ -355,14 +355,6 @@ public class FractionChunkItem extends Item {
         boolean example = stack.getOrCreateTag().getBoolean(TAG_EXAMPLE);
         FractionType fraction = getFraction(stack);
 
-        if (fraction != null) {
-            MutableComponent header = (fraction != null
-                    ? Component.translatable("vein.trd.fraction_name." + fraction.getName())
-                    : Component.empty())
-                    .withStyle(style -> style.withColor(fractionColor(fraction)));
-            tooltip.add(header);
-        }
-
         tooltip.add(Component.translatable("tooltip.trd.fraction_chunk.ou", example ? "X" : getRemainingOU(stack))
                 .withStyle(ChatFormatting.WHITE));
 
