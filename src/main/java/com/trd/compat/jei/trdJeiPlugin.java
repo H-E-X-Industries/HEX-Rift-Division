@@ -10,11 +10,14 @@ import com.trd.api.metallurgy.system.recipe.AlloyRecipe;
 import com.trd.api.metallurgy.system.recipe.AlloySlot;
 import com.trd.api.metallurgy.system.recipe.MoldRecipe;
 import com.trd.api.metallurgy.system.recipe.MoldRecipeRegistry;
+import com.trd.api.vein.FractionType;
+import com.trd.api.vein.VeinModifier;
 import com.trd.block.basic.ModBlocks;
 import com.trd.block.entity.industrial.rotation.MillstoneBlockEntity;
 import com.trd.event.HotItemHandler;
 import com.trd.event.SlagItem;
 import com.trd.item.ModItems;
+import com.trd.item.conglomerates.ConglomerateItem;
 import com.trd.item.industrial.fluids.FluidContainerItem;
 import com.trd.main.MainRegistry;
 import com.trd.multiblock.industrial.centrifuge.conus.CentrifugeRecipe;
@@ -51,8 +54,10 @@ import net.minecraftforge.fluids.FluidStack;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 @JeiPlugin
 public class trdJeiPlugin implements IModPlugin {
@@ -116,6 +121,8 @@ public class trdJeiPlugin implements IModPlugin {
             RecipeType.create(MainRegistry.MOD_ID, "forging", ForgingWrapper.class);
     public static final RecipeType<FluidContainerWrapper> FLUID_CONTAINER_TYPE =
             RecipeType.create(MainRegistry.MOD_ID, "fluid_container", FluidContainerWrapper.class);
+    public static final RecipeType<OpticMicroscopeWrapper> OPTIC_MICROSCOPE_TYPE =
+            RecipeType.create(MainRegistry.MOD_ID, "optic_microscope", OpticMicroscopeWrapper.class);
 
     public record ElectricFurnaceWrapper(net.minecraft.world.item.crafting.AbstractCookingRecipe recipe, int cookTime, int energyPerTick) {}
     public record SmeltingWrapper(ItemStack input, Metal metal, int outputUnits, int temp, float heatConsumption, int timeTicks, int inputCount) {}
@@ -133,6 +140,8 @@ public class trdJeiPlugin implements IModPlugin {
     public record ForgingWrapper(ItemStack hotIngot, ItemStack hammer, ItemStack hotPlate, ItemStack hammerDamaged, Metal metal, int requiredTemp) {}
 
     public record FluidContainerWrapper(ItemStack input, ItemStack output, boolean fill) {}
+
+    public record OpticMicroscopeWrapper() {}
 
     @Override
     public void registerCategories(IRecipeCategoryRegistration registration) {
@@ -153,6 +162,7 @@ public class trdJeiPlugin implements IModPlugin {
         registration.addRecipeCategories(new CentrifugeCylinderCategory(guiHelper));
         registration.addRecipeCategories(new ForgingCategory(guiHelper));
         registration.addRecipeCategories(new FluidContainerCategory(guiHelper));
+        registration.addRecipeCategories(new OpticMicroscopeCategory(guiHelper));
     }
 
     @Override
@@ -367,6 +377,11 @@ public class trdJeiPlugin implements IModPlugin {
             }
         }
         registration.addRecipes(FLUID_CONTAINER_TYPE, fluidContainerRecipes);
+
+        // === ОПТИЧЕСКИЙ МИКРОСКОП (анализ конгломерата) ===
+        // Параметры куска генерируются заново при каждом рендере категории (см. OpticMicroscopeCategory),
+        // поэтому пример меняется при каждом открытии JEI.
+        registration.addRecipes(OPTIC_MICROSCOPE_TYPE, List.of(new OpticMicroscopeWrapper()));
     }
 
     @Override
@@ -389,6 +404,7 @@ public class trdJeiPlugin implements IModPlugin {
         registration.addRecipeCatalyst(new ItemStack(ModItems.PIPETTE.get()), FLUID_CONTAINER_TYPE);
         registration.addRecipeCatalyst(new ItemStack(ModItems.PIPETTE_IDUSTRIAL.get()), FLUID_CONTAINER_TYPE);
         registration.addRecipeCatalyst(new ItemStack(ModItems.FLUID_TANK_IRON.get()), FLUID_CONTAINER_TYPE);
+        registration.addRecipeCatalyst(new ItemStack(ModBlocks.OPTIC_MICROSCOPE.get()), OPTIC_MICROSCOPE_TYPE);
     }
 
     private static ItemStack createLiquidMetalStack(Metal metal, int amount) {
@@ -406,6 +422,58 @@ public class trdJeiPlugin implements IModPlugin {
         // Актуальный объём для тултипа (FluidDropItem читает этот тег)
         stack.getOrCreateTag().putInt("FluidVolume", fluid.getAmount());
         return stack;
+    }
+
+    /**
+     * Генерирует случайный кусок конгломерата с полным набором параметров
+     * (фракции, металлы, бусты фракций/металлов, биом, температура) — будто его
+     * реально добыли. Используется как наглядный пример для рецепта JEI.
+     */
+    private static ItemStack buildRandomChunk() {
+        Random random = new Random();
+        FractionType[] all = FractionType.values();
+        int count = Math.min(2 + random.nextInt(Math.min(3, all.length - 1)), all.length);
+
+        List<FractionType> fracs = new ArrayList<>();
+        boolean[] used = new boolean[all.length];
+        while (fracs.size() < count) {
+            int k = random.nextInt(all.length);
+            if (!used[k]) {
+                used[k] = true;
+                fracs.add(all[k]);
+            }
+        }
+
+        Map<FractionType, Integer> fractions = new LinkedHashMap<>();
+        int remaining = 100;
+        for (int i = 0; i < count; i++) {
+            if (i == count - 1) {
+                fractions.put(fracs.get(i), remaining);
+            } else {
+                int max = Math.max(11, remaining - (count - 1 - i) * 10);
+                int p = 10 + random.nextInt(max - 9);
+                fractions.put(fracs.get(i), Math.min(p, remaining));
+                remaining = Math.max(1, remaining - fractions.get(fracs.get(i)));
+            }
+        }
+
+        int ou = 2 + random.nextInt(18);
+        String veinType = new String[]{"surface", "medium", "deep"}[random.nextInt(3)];
+        ResourceLocation biome = new ResourceLocation("minecraft", new String[]{
+                "badlands", "desert", "jungle", "mountains", "taiga", "snowy_plains"}[random.nextInt(6)]);
+        float temp = -0.5f + random.nextFloat() * 3.0f;
+
+        Map<FractionType, Float> fms = new LinkedHashMap<>();
+        for (FractionType f : fracs) {
+            if (random.nextBoolean()) fms.put(f, 1.05f + random.nextFloat() * 0.6f);
+        }
+        Map<String, Float> mms = new LinkedHashMap<>();
+        for (FractionType f : fracs) {
+            if (random.nextBoolean()) mms.put(f.getPrimaryMetal(), 1.05f + random.nextFloat() * 0.8f);
+        }
+        VeinModifier mod = VeinModifier.of(fms, mms);
+
+        return ConglomerateItem.createFromVein(fractions, ou, veinType, mod, biome, temp);
     }
 
     // ==================== КАТЕГОРИИ ====================
@@ -1135,6 +1203,71 @@ public class trdJeiPlugin implements IModPlugin {
 
         @Override
         public void draw(FluidContainerWrapper recipe, IRecipeSlotsView view, GuiGraphics gg, double mx, double my) {
+        }
+    }
+
+    // === ОПТИЧЕСКИЙ МИКРОСКОП (анализ конгломерата) ===
+    // Шаблон jei_cast_gui.png (120x60): входы на (5,13)/(23,13), машина в центре (52,13),
+    // выходы на (81,13)/(99,13).
+    public static class OpticMicroscopeCategory implements IRecipeCategory<OpticMicroscopeWrapper> {
+        private static final ResourceLocation TEXTURE =
+                new ResourceLocation(MainRegistry.MOD_ID, "textures/gui/jei/jei_cast_gui.png");
+
+        private final IDrawable background;
+        private final IDrawable icon;
+        private final Component title;
+        private final ItemStack machine;
+
+        public OpticMicroscopeCategory(IGuiHelper guiHelper) {
+            this.background = guiHelper.createDrawable(TEXTURE, 0, 0, 120, 60);
+            this.icon = guiHelper.createDrawableIngredient(VanillaTypes.ITEM_STACK,
+                    new ItemStack(ModBlocks.OPTIC_MICROSCOPE.get()));
+            this.title = Component.translatable("jei.category.trd.optic_microscope");
+            this.machine = new ItemStack(ModBlocks.OPTIC_MICROSCOPE.get());
+        }
+
+        @Override public RecipeType<OpticMicroscopeWrapper> getRecipeType() { return OPTIC_MICROSCOPE_TYPE; }
+        @Override public Component getTitle() { return title; }
+        @Override public IDrawable getBackground() { return background; }
+        @Override public IDrawable getIcon() { return icon; }
+
+        @Override
+        public void setRecipe(IRecipeLayoutBuilder builder, OpticMicroscopeWrapper recipe, IFocusGroup focuses) {
+            // Каждый раз при показе рецепта генерируем новый случайный кусок,
+            // чтобы пример менялся при каждом открытии JEI.
+            ItemStack unanalyzed = buildRandomChunk();
+            ItemStack analyzed = unanalyzed.copy();
+            ConglomerateItem.setAnalyzed(analyzed);
+            analyzed.getOrCreateTag().putBoolean(ConglomerateItem.TAG_EXAMPLE, true);
+            ItemStack filledPipette = FluidContainerItem.createFilled(ModItems.PIPETTE.get(),
+                    ModFluids.SULFURIC_ACID_SOURCE.get());
+
+            // На входе: неисследованный конгломерат + пипетка с серной кислотой
+            builder.addSlot(RecipeIngredientRole.INPUT, 5, 13)
+                    .addItemStack(unanalyzed);
+            builder.addSlot(RecipeIngredientRole.INPUT, 23, 13)
+                    .addItemStack(filledPipette);
+            builder.addSlot(RecipeIngredientRole.INPUT, 5, 31);
+            builder.addSlot(RecipeIngredientRole.INPUT, 23, 31);
+
+            // На выходе: исследованный конгломерат + пустая пипетка
+            builder.addSlot(RecipeIngredientRole.OUTPUT, 81, 13)
+                    .addItemStack(analyzed);
+            builder.addSlot(RecipeIngredientRole.OUTPUT, 99, 13)
+                    .addItemStack(new ItemStack(ModItems.PIPETTE.get()));
+            builder.addSlot(RecipeIngredientRole.OUTPUT, 81, 31);
+            builder.addSlot(RecipeIngredientRole.OUTPUT, 99, 31);
+        }
+
+        @Override
+        public void draw(OpticMicroscopeWrapper recipe, IRecipeSlotsView view, GuiGraphics gg, double mx, double my) {
+            // Сам микроскоп в центральном слоте
+            gg.renderItem(machine, 52, 13);
+            gg.renderItemDecorations(Minecraft.getInstance().font, machine, 52, 13);
+
+            var font = Minecraft.getInstance().font;
+            gg.drawString(font, "30s", 42, 41, 0xFF555555, false);
+            gg.drawString(font, "50 mB", 42, 51, 0xFF555555, false);
         }
     }
 }

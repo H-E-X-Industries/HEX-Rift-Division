@@ -4,6 +4,7 @@ import com.trd.api.fluids.ModFluids;
 import com.trd.main.MainRegistry;
 import com.trd.menu.industrial.OpticMicroscopeMenu;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -63,18 +64,12 @@ public class GUIOpticMicroscope extends AbstractContainerScreen<OpticMicroscopeM
         if (relX >= TANK_X && relX < TANK_X + TANK_W
                 && relY >= TANK_Y && relY < TANK_Y + TANK_H) {
             List<Component> tooltip = new ArrayList<>();
-            FluidStack fluid = menu.getFluid();
-
-            if (fluid.isEmpty()) {
-                tooltip.add(Component.translatable("gui.trd.optic_microscope.empty").withStyle(ChatFormatting.GRAY));
-            } else {
-                MutableComponent fluidName = fluid.getDisplayName().copy();
-                int tintColor = IClientFluidTypeExtensions.of(fluid.getFluid()).getTintColor() | 0xFF000000;
-                fluidName = fluidName.withStyle(Style.EMPTY.withColor(TextColor.fromRgb(tintColor)));
-                tooltip.add(fluidName);
-                tooltip.add(Component.translatable("gui.trd.optic_microscope.amount", fluid.getAmount(), menu.getCapacity())
-                        .withStyle(ChatFormatting.GRAY));
-            }
+            int amount = menu.getFluidAmount();
+            int tintColor = IClientFluidTypeExtensions.of(com.trd.api.fluids.ModFluids.SULFURIC_ACID_SOURCE.get())
+                    .getTintColor() | 0xFF000000;
+            // Всегда пишем название реактива и его количество, даже при 0 мБ.
+            tooltip.add(Component.translatable("gui.trd.optic_microscope.tooltip", amount)
+                    .withStyle(style -> style.withColor(TextColor.fromRgb(tintColor))));
             graphics.renderComponentTooltip(this.font, tooltip, mouseX, mouseY);
         }
 

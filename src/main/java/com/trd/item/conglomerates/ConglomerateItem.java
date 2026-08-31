@@ -216,8 +216,19 @@ public class ConglomerateItem extends Item {
     private static final int C_DEPTH_MEDIUM = 0xFFFF55;       // жёлтый
     private static final int C_DEPTH_DEEP = 0xAA00AA;         // фиолетовый
 
+    /** Флаг примерного (рандомного) куска для JEI — в тултипе показывается пометка «это пример». */
+    public static final String TAG_EXAMPLE = "Example";
+
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
+        boolean example = stack.getOrCreateTag().getBoolean(TAG_EXAMPLE);
+
+        // Пример из JEI — ярко-красная пометка, что это лишь пример результата.
+        if (example) {
+            tooltip.add(Component.translatable("tooltip.trd.conglomerate.example")
+                    .withStyle(ChatFormatting.RED));
+        }
+
         if (!isAnalyzed(stack)) {
             tooltip.add(Component.translatable("tooltip.trd.conglomerate.requires_analysis")
                     .withStyle(ChatFormatting.RED));
@@ -232,52 +243,66 @@ public class ConglomerateItem extends Item {
 
         tooltip.add(Component.translatable("tooltip.trd.conglomerate.contains_fractions"));
         for (FractionType fraction : fractions.keySet()) {
-            MutableComponent header = Component.translatable("vein.trd.fraction." + fraction.getName(), fractions.get(fraction))
+            MutableComponent header = Component.translatable("vein.trd.fraction." + fraction.getName(),
+                            example ? "X" : fractions.get(fraction))
                     .withStyle(style -> style.withColor(fraction.getColor()));
-            float fractionBoost = getFractionBoost(stack, fraction);
-            if (fractionBoost != 1.0f) {
-                header.append(Component.literal(" (" + formatBoost(fractionBoost) + ")")
-                        .withStyle(style -> style.withColor(C_FRACTION_BOOST)));
+            if (!example) {
+                float fractionBoost = getFractionBoost(stack, fraction);
+                if (fractionBoost != 1.0f) {
+                    header.append(Component.literal(" (" + formatBoost(fractionBoost) + ")")
+                            .withStyle(style -> style.withColor(C_FRACTION_BOOST)));
+                }
             }
             tooltip.add(header);
 
             FractionLayerMatrix matrix = FractionLayerMatrix.forFraction(fraction);
             for (FractionLayerMatrix.Layer layer : matrix.getLayers()) {
                 if (layer.isEmpty()) continue;
-                MutableComponent metals = Component.empty();
-                boolean first = true;
-                for (FractionLayerMatrix.MetalEntry entry : layer.metals()) {
-                    if (!first) metals.append(", ");
-                    first = false;
-                    metals.append(metalWithBoost(entry.metal(), getMetalBoost(stack, entry.metal())));
+                if (example) {
+                    tooltip.add(Component.translatable("tooltip.trd.conglomerate.layer",
+                            layer.index() + 1, Component.literal("X")));
+                } else {
+                    MutableComponent metals = Component.empty();
+                    boolean first = true;
+                    for (FractionLayerMatrix.MetalEntry entry : layer.metals()) {
+                        if (!first) metals.append(", ");
+                        first = false;
+                        metals.append(metalWithBoost(entry.metal(), getMetalBoost(stack, entry.metal())));
+                    }
+                    tooltip.add(Component.translatable("tooltip.trd.conglomerate.layer", layer.index() + 1, metals));
                 }
-                tooltip.add(Component.translatable("tooltip.trd.conglomerate.layer", layer.index() + 1, metals));
             }
         }
 
-        int ou = getOU(stack);
-        tooltip.add(Component.translatable("tooltip.trd.conglomerate.ou", ou)
+        tooltip.add(Component.translatable("tooltip.trd.conglomerate.ou", example ? "X" : getOU(stack))
                 .withStyle(ChatFormatting.WHITE));
 
         String type = getVeinType(stack);
-        if (!type.equals("unknown")) {
+        boolean showVein = example || !type.equals("unknown");
+        if (showVein) {
             tooltip.add(Component.translatable("tooltip.trd.conglomerate.vein_type")
                     .withStyle(ChatFormatting.WHITE)
-                    .append(depthComponent(type)));
+                    .append(example ? Component.literal("X") : depthComponent(type)));
         }
 
         String biomeKey = getBiomeKey(stack);
-        if (biomeKey != null) {
+        if (example || biomeKey != null) {
             tooltip.add(Component.translatable("tooltip.trd.conglomerate.biome")
                     .withStyle(ChatFormatting.WHITE)
-                    .append(biomeComponent(biomeKey)));
+                    .append(example ? Component.literal("X") : biomeComponent(biomeKey)));
         }
+
         Float temperature = getTemperature(stack);
-        if (temperature != null) {
-            tooltip.add(Component.translatable("tooltip.trd.conglomerate.temperature")
-                    .withStyle(ChatFormatting.WHITE)
-                    .append(Component.literal(String.format(Locale.ROOT, "%.1f", temperature))
-                            .withStyle(style -> style.withColor(C_TEMPERATURE))));
+        if (example || temperature != null) {
+            MutableComponent tempLine = Component.translatable("tooltip.trd.conglomerate.temperature")
+                    .withStyle(ChatFormatting.WHITE);
+            if (example) {
+                tempLine.append(Component.literal("X").withStyle(style -> style.withColor(C_TEMPERATURE)));
+            } else {
+                tempLine.append(Component.literal(String.format(Locale.ROOT, "%.1f", temperature))
+                        .withStyle(style -> style.withColor(C_TEMPERATURE)));
+            }
+            tooltip.add(tempLine);
         }
     }
 

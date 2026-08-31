@@ -48,8 +48,8 @@ public class OpticMicroscopeBlockEntity extends BlockEntity {
     public static final int TANK_CAPACITY = 100;
     /** Сколько кислоты уходит за один анализ. */
     public static final int ACID_PER_ANALYSIS = 50;
-    /** Время анализа в тиках (3 секунды). */
-    public static final int MAX_PROGRESS = 60;
+    /** Время анализа в тиках (30 секунд). */
+    public static final int MAX_PROGRESS = 600;
 
     private final ItemStackHandler itemHandler = new ItemStackHandler(TOTAL_SLOTS) {
         @Override
@@ -149,55 +149,74 @@ public class OpticMicroscopeBlockEntity extends BlockEntity {
     }
 
     /**
-     * Основная логика анализа. Если во входе кусок — либо сразу переносим на выход
-     * (уже проанализированный), либо запускаем/продолжаем анализ при наличии кислоты.
+     * Основная логика анализа. Обрабатывает строго ОДИН кусок за раз: анализ запускается
+     * только если выход способен принять результат, а по завершении на выход переносится
+     * ровно один предмет (вход уменьшается на один, остаток анализируется следующей итерацией).
+     * Уже проанализированный кусок просто остаётся в слоте.
      */
     private void processAnalysis() {
         ItemStack input = itemHandler.getStackInSlot(INPUT_SLOT);
         if (input.isEmpty()) {
-            if (progress != 0 || maxProgress != 0) {
-                progress = 0;
-                maxProgress = 0;
-                setChanged();
-            }
+            resetProgress();
             return;
         }
 
         // Уже проанализированный — просто оставляем в слоте, ничего не тратим и не двигаем.
         if (ConglomerateItem.isAnalyzed(input)) {
+            resetProgress();
             return;
         }
 
-        // Не проанализирован. Нужна серная кислота в буфере.
-        if (getSulfuricAcidAmount() < ACID_PER_ANALYSIS) {
-            if (progress != 0 || maxProgress != 0) {
-                progress = 0;
-                maxProgress = 0;
-                setChanged();
+        // Нельзя начать анализ, пока выход не примет результат (перерабатываем по одному).
+        if (maxProgress == 0) {
+            if (getSulfuricAcidAmount() < ACID_PER_ANALYSIS || !canAcceptOutput()) {
+                return; // ждём: не хватает кислоты или выход занят
             }
-            return;
+            maxProgress = MAX_PROGRESS;
+            progress = 0;
         }
 
-        if (maxProgress == 0) maxProgress = MAX_PROGRESS;
         progress++;
         setChanged();
 
         if (progress >= maxProgress) {
-            finishAnalysis(input);
+            if (placeResult(input)) {
+                resetProgress();
+            }
+            // Если выход занят — ждём (progress остаётся на максимуме), кислота не списывается.
+        }
+    }
+
+    /** Есть ли куда положить результат анализа. Куски конгломерата не стакаются, поэтому нужен свободный выход. */
+    private boolean canAcceptOutput() {
+        return itemHandler.getStackInSlot(OUTPUT_SLOT).isEmpty();
+    }
+
+    /**
+     * Переносит ОДИН проанализированный кусок на выход, списывая кислоту.
+     * Возвращает {@code true}, если перенос удался.
+     */
+    private boolean placeResult(ItemStack input) {
+        if (!canAcceptOutput()) return false;
+
+        // Списываем кислоту
+        fluidTank.drain(new FluidStack(com.trd.api.fluids.ModFluids.SULFURIC_ACID_SOURCE.get(), ACID_PER_ANALYSIS),
+                IFluidHandler.FluidAction.EXECUTE);
+
+        ItemStack out = input.copy();
+        out.setCount(1);
+        ConglomerateItem.setAnalyzed(out);
+        itemHandler.setStackInSlot(OUTPUT_SLOT, out);
+        itemHandler.getStackInSlot(INPUT_SLOT).shrink(1);
+        return true;
+    }
+
+    private void resetProgress() {
+        if (progress != 0 || maxProgress != 0) {
             progress = 0;
             maxProgress = 0;
             setChanged();
         }
-    }
-
-    private void finishAnalysis(ItemStack input) {
-        // Списываем кислоту
-        fluidTank.drain(new FluidStack(com.trd.api.fluids.ModFluids.SULFURIC_ACID_SOURCE.get(), ACID_PER_ANALYSIS),
-                IFluidHandler.FluidAction.EXECUTE);
-        // Помечаем кусок проанализированным и переносим на выход
-        ConglomerateItem.setAnalyzed(input);
-        itemHandler.setStackInSlot(OUTPUT_SLOT, input);
-        itemHandler.setStackInSlot(INPUT_SLOT, ItemStack.EMPTY);
     }
 
     private int getSulfuricAcidAmount() {
