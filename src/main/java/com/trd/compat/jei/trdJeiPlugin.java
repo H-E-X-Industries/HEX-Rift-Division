@@ -10,6 +10,7 @@ import com.trd.api.metallurgy.system.recipe.AlloyRecipe;
 import com.trd.api.metallurgy.system.recipe.AlloySlot;
 import com.trd.api.metallurgy.system.recipe.MoldRecipe;
 import com.trd.api.metallurgy.system.recipe.MoldRecipeRegistry;
+import com.trd.api.vein.FractionLayerMatrix;
 import com.trd.api.vein.FractionType;
 import com.trd.api.vein.VeinModifier;
 import com.trd.block.basic.ModBlocks;
@@ -18,6 +19,7 @@ import com.trd.event.HotItemHandler;
 import com.trd.event.SlagItem;
 import com.trd.item.ModItems;
 import com.trd.item.conglomerates.ConglomerateItem;
+import com.trd.item.conglomerates.FractionChunkItem;
 import com.trd.item.industrial.fluids.FluidContainerItem;
 import com.trd.main.MainRegistry;
 import com.trd.multiblock.industrial.centrifuge.conus.CentrifugeRecipe;
@@ -123,6 +125,12 @@ public class trdJeiPlugin implements IModPlugin {
             RecipeType.create(MainRegistry.MOD_ID, "fluid_container", FluidContainerWrapper.class);
     public static final RecipeType<OpticMicroscopeWrapper> OPTIC_MICROSCOPE_TYPE =
             RecipeType.create(MainRegistry.MOD_ID, "optic_microscope", OpticMicroscopeWrapper.class);
+    // Переработка кусков фракций в выщелащивателе (промывка + модульная переработка)
+    public static final RecipeType<ChunkProcessWrapper> CHUNK_PROCESS_TYPE =
+            RecipeType.create(MainRegistry.MOD_ID, "chunk_process", ChunkProcessWrapper.class);
+    // Обжарка кусков фракций / кусочков металлов в коксовой печи
+    public static final RecipeType<ChunkRoastWrapper> CHUNK_ROAST_TYPE =
+            RecipeType.create(MainRegistry.MOD_ID, "chunk_roast", ChunkRoastWrapper.class);
 
     public record ElectricFurnaceWrapper(net.minecraft.world.item.crafting.AbstractCookingRecipe recipe, int cookTime, int energyPerTick) {}
     public record SmeltingWrapper(ItemStack input, Metal metal, int outputUnits, int temp, float heatConsumption, int timeTicks, int inputCount) {}
@@ -142,6 +150,17 @@ public class trdJeiPlugin implements IModPlugin {
     public record FluidContainerWrapper(ItemStack input, ItemStack output, boolean fill) {}
 
     public record OpticMicroscopeWrapper() {}
+
+    /**
+     * Переработка куска фракции в выщелащивателе.
+     * {@code inputChunk} — кусок (с состоянием), {@code fluid} — реагент/вода,
+     * {@code outputs} — ядро и/или кусочки металлов.
+     */
+    public record ChunkProcessWrapper(ItemStack inputChunk, FluidStack fluid, List<ItemStack> outputs,
+                                      boolean isWash, long minRpm, int timeTicks) {}
+
+    /** Обжарка куска фракции или кусочка металла в коксовой печи. */
+    public record ChunkRoastWrapper(ItemStack input, ItemStack output, FluidStack sludgeOutput) {}
 
     @Override
     public void registerCategories(IRecipeCategoryRegistration registration) {
@@ -163,6 +182,8 @@ public class trdJeiPlugin implements IModPlugin {
         registration.addRecipeCategories(new ForgingCategory(guiHelper));
         registration.addRecipeCategories(new FluidContainerCategory(guiHelper));
         registration.addRecipeCategories(new OpticMicroscopeCategory(guiHelper));
+        registration.addRecipeCategories(new ChunkProcessCategory(guiHelper));
+        registration.addRecipeCategories(new ChunkRoastCategory(guiHelper));
     }
 
     @Override
@@ -382,6 +403,80 @@ public class trdJeiPlugin implements IModPlugin {
         // Параметры куска генерируются заново при каждом рендере категории (см. OpticMicroscopeCategory),
         // поэтому пример меняется при каждом открытии JEI.
         registration.addRecipes(OPTIC_MICROSCOPE_TYPE, List.of(new OpticMicroscopeWrapper()));
+        registerChunkProcessing(registration);
+    }
+    // Промывка водой + модульная переработка реагентом в выщелащивателе,
+    // а также обжарка кусков/кусочков в коксовой печи. Примеры строятся
+    // динамически по слоистой структуре фракции, поэтому кусок «пирог» в JEI
+    // всегда показан с рандомизированными слоями (как в OpticMicroscopeCategory).
+    private static void registerChunkProcessing(IRecipeRegistration registration) {
+        List<ChunkProcessWrapper> process = new ArrayList<>();
+        List<ChunkRoastWrapper> roast = new ArrayList<>();
+
+        FractionType[] fractions = FractionType.values();
+        for (FractionType fraction : fractions) {
+            FractionLayerMatrix matrix = FractionLayerMatrix.forFraction(fraction);
+            int ou = 12 + new Random().nextInt(9);
+
+            // --- Промывка водой: raw -> clean ---
+            ItemStack raw = FractionChunkItem.create(fraction, ou, true);
+            ItemStack washed = FractionChunkItem.create(fraction, ou, true);
+            FractionChunkItem.setState(washed, FractionChunkItem.STATE_CLEAN);
+            process.add(new ChunkProcessWrapper(
+                    raw, new FluidStack(net.minecraft.world.level.material.Fluids.WATER, 100),
+                    List.of(washed), true,
+                    com.trd.multiblock.industrial.vishelashivatel.FractionLeachLogic.WASH_RPM,
+                    60));
+
+            // --- Модульная переработка: по одному примеру на непустой слой ---
+            List<FractionLayerMatrix.Layer> layers = matrix.getLayers();
+            for (FractionLayerMatrix.Layer layer : layers) {
+                if (layer.isEmpty()) continue;
+                int index = layer.index();
+                Fluid reagent = matrix.getLayerFluid(index);
+                ItemStack input = FractionChunkItem.create(fraction, ou, true);
+                FractionChunkItem.setState(input, FractionChunkItem.STATE_CLEAN);
+                FractionChunkItem.setProcessedLayers(input, index);
+                // Прогоняем реальную логику, чтобы выходы совпадали с игровыми
+                com.trd.multiblock.industrial.vishelashivatel.FractionLeachLogic.Op op =
+                        new com.trd.multiblock.industrial.vishelashivatel.FractionLeachLogic.Op(
+                                com.trd.multiblock.industrial.vishelashivatel.FractionLeachLogic.OpType.EXTRACT,
+                                reagent, 250, 60,
+                                com.trd.multiblock.industrial.vishelashivatel.FractionLeachLogic.LEACH_RPM,
+                                com.trd.multiblock.industrial.vishelashivatel.FractionLeachLogic.LEACH_TORQUE);
+                var outputs = com.trd.multiblock.industrial.vishelashivatel.FractionLeachLogic.computeOutputs(op, input);
+                process.add(new ChunkProcessWrapper(
+                        input, new FluidStack(reagent, 250),
+                        outputs.stream().map(ItemStack::copy).toList(), false,
+                        com.trd.multiblock.industrial.vishelashivatel.FractionLeachLogic.LEACH_RPM, 60));
+            }
+
+            // --- Обжарка куска фракции (raw/clean -> roasted, +50 мБ красного шлама) ---
+            ItemStack roastInput = FractionChunkItem.create(fraction, ou, true);
+            FractionChunkItem.setState(roastInput, FractionChunkItem.STATE_CLEAN);
+            ItemStack roastOutput = FractionChunkItem.create(fraction, ou, true);
+            FractionChunkItem.setState(roastOutput, FractionChunkItem.STATE_ROASTED);
+            roast.add(new ChunkRoastWrapper(roastInput, roastOutput,
+                    com.trd.multiblock.industrial.coccer.CoccerRoastLogic.getSludge()));
+        }
+
+        // --- Обжарка кусочков металлов (все металлы фракций) ---
+        for (FractionLayerMatrix matrixLoc : new FractionLayerMatrix[]{
+                FractionLayerMatrix.forFraction(FractionType.LIGHT_METAL),
+                FractionLayerMatrix.forFraction(FractionType.HEAVY_METAL),
+                FractionLayerMatrix.forFraction(FractionType.NOBLE_METAL),
+                FractionLayerMatrix.forFraction(FractionType.RARE_EARTH)}) {
+            for (String metal : matrixLoc.getAllMetalWeights().keySet()) {
+                ItemStack piece = com.trd.item.conglomerates.MetalPieceItem.create(metal);
+                ItemStack roastedPiece = piece.copy();
+                com.trd.item.conglomerates.MetalPieceItem.setRoasted(roastedPiece, true);
+                roast.add(new ChunkRoastWrapper(piece, roastedPiece,
+                        com.trd.multiblock.industrial.coccer.CoccerRoastLogic.getSludge()));
+            }
+        }
+
+        registration.addRecipes(CHUNK_PROCESS_TYPE, process);
+        registration.addRecipes(CHUNK_ROAST_TYPE, roast);
     }
 
     @Override
@@ -405,6 +500,8 @@ public class trdJeiPlugin implements IModPlugin {
         registration.addRecipeCatalyst(new ItemStack(ModItems.PIPETTE_IDUSTRIAL.get()), FLUID_CONTAINER_TYPE);
         registration.addRecipeCatalyst(new ItemStack(ModItems.FLUID_TANK_IRON.get()), FLUID_CONTAINER_TYPE);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.OPTIC_MICROSCOPE.get()), OPTIC_MICROSCOPE_TYPE);
+        registration.addRecipeCatalyst(new ItemStack(ModBlocks.VISHELASHIVATEL.get()), CHUNK_PROCESS_TYPE);
+        registration.addRecipeCatalyst(new ItemStack(ModBlocks.COCCER_OVEN.get()), CHUNK_ROAST_TYPE);
     }
 
     private static ItemStack createLiquidMetalStack(Metal metal, int amount) {
@@ -1268,6 +1365,98 @@ public class trdJeiPlugin implements IModPlugin {
             var font = Minecraft.getInstance().font;
             gg.drawString(font, "30s", 42, 41, 0xFF555555, false);
             gg.drawString(font, "50 mB", 42, 51, 0xFF555555, false);
+        }
+    }
+
+    // === ПЕРЕРАБОТКА КУСКОВ ФРАКЦИЙ В ВЫЩЕЛАЩИВАТЕЛЕ ===
+    // Шаблон 130x60 (gui6): входы на (5,22)/(23,22), выходы до 3 на (73+i*18,22)
+    public static class ChunkProcessCategory implements IRecipeCategory<ChunkProcessWrapper> {
+        private final IDrawable background;
+        private final IDrawable icon;
+        private final Component title;
+
+        public ChunkProcessCategory(IGuiHelper guiHelper) {
+            this.background = guiHelper.createDrawable(TEXTURE_UNIVERSAL_130x60, 0, 0, 130, 60);
+            this.icon = guiHelper.createDrawableIngredient(VanillaTypes.ITEM_STACK,
+                    new ItemStack(ModBlocks.VISHELASHIVATEL.get()));
+            this.title = Component.translatable("jei.category.trd.chunk_process");
+        }
+
+        @Override public RecipeType<ChunkProcessWrapper> getRecipeType() { return CHUNK_PROCESS_TYPE; }
+        @Override public Component getTitle() { return title; }
+        @Override public IDrawable getBackground() { return background; }
+        @Override public IDrawable getIcon() { return icon; }
+
+        @Override
+        public void setRecipe(IRecipeLayoutBuilder builder, ChunkProcessWrapper recipe, IFocusGroup focuses) {
+            builder.addSlot(RecipeIngredientRole.INPUT, 5, 22)
+                    .addItemStack(recipe.inputChunk().copy());
+
+            ItemStack fluidDrop = fluidDropStack(recipe.fluid());
+            if (!fluidDrop.isEmpty()) {
+                builder.addSlot(RecipeIngredientRole.INPUT, 23, 22)
+                        .addItemStack(fluidDrop);
+            }
+
+            List<ItemStack> outputs = recipe.outputs();
+            for (int i = 0; i < outputs.size() && i < 3; i++) {
+                ItemStack out = outputs.get(i);
+                if (!out.isEmpty()) {
+                    builder.addSlot(RecipeIngredientRole.OUTPUT, 73 + i * 18, 22)
+                            .addItemStack(out.copy());
+                }
+            }
+        }
+
+        @Override
+        public void draw(ChunkProcessWrapper recipe, IRecipeSlotsView view, GuiGraphics gg, double mx, double my) {
+            var font = Minecraft.getInstance().font;
+            gg.drawString(font, (recipe.isWash() ? "Wash" : "Leach") + " " + recipe.minRpm() + " RPM",
+                    4, 42, 0xFF555555, false);
+            gg.drawString(font, String.format("%.1fs", recipe.timeTicks() / 20f), 4, 50, 0xFF555555, false);
+        }
+    }
+
+    // === ОБЖАРКА КУСКОВ ФРАКЦИЙ / КУСОЧКОВ МЕТАЛЛОВ В КОКСОВОЙ ПЕЧИ ===
+    // Шаблон коксовой печи 90x64 (gui5): вход на (5,22), выходы на (55,22)/(73,22)
+    public static class ChunkRoastCategory implements IRecipeCategory<ChunkRoastWrapper> {
+        private final IDrawable background;
+        private final IDrawable icon;
+        private final Component title;
+
+        public ChunkRoastCategory(IGuiHelper guiHelper) {
+            this.background = guiHelper.createDrawable(TEXTURE_COKE_OVEN, 0, 0, 90, 64);
+            this.icon = guiHelper.createDrawableIngredient(VanillaTypes.ITEM_STACK,
+                    new ItemStack(ModBlocks.COCCER_OVEN.get()));
+            this.title = Component.translatable("jei.category.trd.chunk_roast");
+        }
+
+        @Override public RecipeType<ChunkRoastWrapper> getRecipeType() { return CHUNK_ROAST_TYPE; }
+        @Override public Component getTitle() { return title; }
+        @Override public IDrawable getBackground() { return background; }
+        @Override public IDrawable getIcon() { return icon; }
+
+        @Override
+        public void setRecipe(IRecipeLayoutBuilder builder, ChunkRoastWrapper recipe, IFocusGroup focuses) {
+            builder.addSlot(RecipeIngredientRole.INPUT, 5, 22)
+                    .addItemStack(recipe.input().copy());
+            builder.addSlot(RecipeIngredientRole.OUTPUT, 55, 22)
+                    .addItemStack(recipe.output().copy());
+            ItemStack sludge = fluidDropStack(recipe.sludgeOutput());
+            if (!sludge.isEmpty()) {
+                builder.addSlot(RecipeIngredientRole.OUTPUT, 73, 22)
+                        .addItemStack(sludge);
+            }
+        }
+
+        @Override
+        public void draw(ChunkRoastWrapper recipe, IRecipeSlotsView view, GuiGraphics gg, double mx, double my) {
+            var font = Minecraft.getInstance().font;
+            gg.drawString(font, com.trd.multiblock.industrial.coccer.CoccerRoastLogic.ROAST_TEMP + "°C",
+                    26, 33, 0xFF555555, false);
+            gg.drawString(font,
+                    String.format("%.1fs", com.trd.multiblock.industrial.coccer.CoccerRoastLogic.ROAST_TIME / 20f),
+                    26, 43, 0xFF555555, false);
         }
     }
 }

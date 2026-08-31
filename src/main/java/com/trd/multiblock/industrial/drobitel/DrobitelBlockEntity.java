@@ -514,6 +514,10 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
 
     private List<ItemStack> getResults(ItemStack input) {
         if (input.isEmpty()) return List.of();
+        // Кусок конгломерата делится на куски фракций (динамический выход по NBT)
+        if (input.getItem() instanceof com.trd.item.conglomerates.ConglomerateItem) {
+            return com.trd.item.conglomerates.ConglomerateItem.splitToFractions(input);
+        }
         List<ItemStack> result = RECIPES.get(input.getItem());
         if (result == null) {
             return List.of(new ItemStack(ModItems.TRASH.get()));

@@ -107,6 +107,8 @@ public class ModItemModelProvider extends ItemModelProvider {
         simpleItem(ModItems.MISSILE_100MM_FIRE);
         simpleItem(ModItems.HARD_ROCK);
         simpleItem(ModItems.CONGLOMERATE_CHUNK);
+        texturedItem(ModItems.FRACTION_CHUNK, "ore_chunk_raw");
+        texturedItem(ModItems.METAL_PIECE, "ore_chunk");
         simpleItem(ModItems.CREATIVE_BATTERY);
         simpleItem(ModItems.BATTERY);
         simpleItem(ModItems.TEXTURE_TEST);
@@ -263,6 +265,13 @@ public class ModItemModelProvider extends ItemModelProvider {
         return withExistingParent(item.getId().getPath(),
                 new ResourceLocation("item/generated")).texture("layer0",
                 new ResourceLocation(MainRegistry.MOD_ID, "item/" + item.getId().getPath()));
+    }
+
+    /** Предмет с произвольной текстурой (например для перекрашиваемых кусков руды). */
+    private ItemModelBuilder texturedItem(RegistryObject<Item> item, String texture) {
+        return withExistingParent(item.getId().getPath(),
+                new ResourceLocation("item/generated")).texture("layer0",
+                new ResourceLocation(MainRegistry.MOD_ID, "item/" + texture));
     }
 
     /** Двухслойный предмет: базовая текстура + оверлей (слой1), наполненый вариант при trd:filled=1. */

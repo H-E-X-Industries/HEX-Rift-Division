@@ -44,7 +44,7 @@ public class SmelterMenu extends AbstractContainerMenu {
                 public boolean mayPlace(ItemStack stack) {
                     // Шлак или рецепт плавки
                     if (stack.getItem() instanceof com.trd.event.SlagItem) return true;
-                    return MetallurgyRegistry.getSmeltRecipe(stack.getItem()) != null;
+                    return MetallurgyRegistry.getSmeltRecipe(stack) != null;
                 }
             });
         }
@@ -108,7 +108,7 @@ public class SmelterMenu extends AbstractContainerMenu {
                 }
             } else {
                 // Из инвентаря в печь
-                boolean isSmeltable = MetallurgyRegistry.getSmeltRecipe(stack.getItem()) != null;
+                boolean isSmeltable = MetallurgyRegistry.getSmeltRecipe(stack) != null;
                 boolean isSlag = stack.getItem() instanceof com.trd.event.SlagItem;
 
                 if (isSmeltable || isSlag) {

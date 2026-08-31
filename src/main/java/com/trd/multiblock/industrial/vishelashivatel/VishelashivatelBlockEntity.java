@@ -101,6 +101,8 @@ public class VishelashivatelBlockEntity extends com.trd.block.entity.industrial.
     private int maxProgress = 0;
     /** Текущий рабочий рецепт (пересчитывается каждый тик). */
     private VishelashivatelRecipe currentRecipe = null;
+    /** Текущая динамическая операция переработки куска фракции (приоритетнее статического рецепта). */
+    private FractionLeachLogic.Op currentOp = null;
     /** Последнее отданное сети значение потребления (для перерасчёта сети). */
     private long lastConsumedTorque = 0;
 
@@ -126,6 +128,7 @@ public class VishelashivatelBlockEntity extends com.trd.block.entity.industrial.
 
     @Override
     public long getConsumedTorque() {
+        if (currentOp != null && isOpWorking(currentOp)) return currentOp.consumedTorque;
         return currentRecipe != null && isWorking() ? currentRecipe.getConsumedTorque() : 0L;
     }
 
@@ -352,8 +355,27 @@ public class VishelashivatelBlockEntity extends com.trd.block.entity.industrial.
         return canFitOutputs();
     }
 
+    /** Проверка готовности динамической (кусок фракции) операции. */
+    public boolean isOpWorking(FractionLeachLogic.Op op) {
+        if (op == null) return false;
+        long absSpeed = Math.abs(getSpeed());
+        if (absSpeed < op.minRpm) return false;
+        FluidStack tankFluid = fluidTank.getFluid();
+        if (tankFluid.isEmpty()) return false;
+        if (tankFluid.getAmount() < op.fluidCost) return false;
+        return canFitOpOutputs(op);
+    }
+
     private boolean canFitOutputs() {
         for (ItemStack result : currentRecipe.getItemOutputs()) {
+            if (!canInsert(result)) return false;
+        }
+        return true;
+    }
+
+    private boolean canFitOpOutputs(FractionLeachLogic.Op op) {
+        ItemStack input = inventory.getStackInSlot(INPUT_SLOT);
+        for (ItemStack result : FractionLeachLogic.computeOutputs(op, input)) {
             if (!canInsert(result)) return false;
         }
         return true;
@@ -382,24 +404,53 @@ public class VishelashivatelBlockEntity extends com.trd.block.entity.industrial.
         ItemStack input = be.inventory.getStackInSlot(INPUT_SLOT);
         FluidStack tankFluid = be.fluidTank.getFluid();
 
-        VishelashivatelRecipe recipe = VishelashivatelRecipes.findMatching(input, tankFluid);
-        if (recipe != be.currentRecipe) {
-            be.currentRecipe = recipe;
-            be.progress = 0;
-            be.maxProgress = recipe != null ? recipe.getProcessTime() : 0;
-            changed = true;
-        }
-
-        if (be.currentRecipe != null && be.isWorking()) {
-            be.progress++;
-            changed = true;
-
-            if (be.progress >= be.maxProgress) {
-                be.finishProcessing();
+        // Динамическая переработка куска фракции приоритетнее статического рецепта
+        FractionLeachLogic.Op op = FractionLeachLogic.find(input, tankFluid);
+        if (op != be.currentOp) {
+            be.currentOp = op;
+            if (op != null) {
+                be.currentRecipe = null;
+                be.progress = 0;
+                be.maxProgress = op.processTime;
+                changed = true;
+            } else {
                 be.progress = 0;
             }
+        }
+
+        if (be.currentOp != null && be.currentOp == op && be.isOpWorking(be.currentOp)) {
+            be.progress++;
+            changed = true;
+            if (be.progress >= be.maxProgress) {
+                be.finishOpProcessing();
+                be.currentOp = null;
+                be.currentRecipe = null;
+                be.progress = 0;
+            }
+        } else if (be.currentOp == null) {
+            VishelashivatelRecipe recipe = VishelashivatelRecipes.findMatching(input, tankFluid);
+            if (recipe != be.currentRecipe) {
+                be.currentRecipe = recipe;
+                be.progress = 0;
+                be.maxProgress = recipe != null ? recipe.getProcessTime() : 0;
+                changed = true;
+            }
+
+            if (be.currentRecipe != null && be.isWorking()) {
+                be.progress++;
+                changed = true;
+                if (be.progress >= be.maxProgress) {
+                    be.finishProcessing();
+                    be.progress = 0;
+                }
+            } else {
+                if (be.progress > 0) {
+                    be.progress = 0;
+                    changed = true;
+                }
+            }
         } else {
-            // Непрерывность: пропало вращение / жидкость / предметы — прогресс сбрасывается
+            // Операция активна, но условия не выполнены (сброс прогресса)
             if (be.progress > 0) {
                 be.progress = 0;
                 changed = true;
@@ -433,6 +484,25 @@ public class VishelashivatelBlockEntity extends com.trd.block.entity.industrial.
         // Выход
         for (ItemStack result : recipe.getItemOutputs()) {
             insertResult(result.copy());
+        }
+    }
+
+    /** Завершение динамической (кусок фракции) операции. */
+    private void finishOpProcessing() {
+        FractionLeachLogic.Op op = this.currentOp;
+        if (op == null) return;
+
+        // Расход жидкости
+        fluidTank.drain(op.fluidCost, IFluidHandler.FluidAction.EXECUTE);
+
+        // Вычисляем выход ДО расхода предмета
+        ItemStack input = inventory.getStackInSlot(INPUT_SLOT);
+        List<ItemStack> outputs = FractionLeachLogic.computeOutputs(op, input);
+
+        // Расход предмета и выход
+        if (!input.isEmpty()) input.shrink(1);
+        for (ItemStack result : outputs) {
+            if (!result.isEmpty()) insertResult(result.copy());
         }
     }
 

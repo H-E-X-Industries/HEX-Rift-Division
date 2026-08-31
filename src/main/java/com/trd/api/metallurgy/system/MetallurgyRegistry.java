@@ -2,9 +2,11 @@ package com.trd.api.metallurgy.system;
 
 import com.trd.api.metallurgy.system.recipe.AlloyRecipe;
 import com.trd.api.metallurgy.system.recipe.SmeltRecipe;
+import com.trd.item.conglomerates.MetalPieceItem;
 import com.trd.main.MainRegistry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.*;
 
@@ -86,6 +88,25 @@ public class MetallurgyRegistry {
 
     public static SmeltRecipe getSmeltRecipe(Item input) {
         return SMELT_RECIPES.get(input);
+    }
+
+    /**
+     * Рецепт плавки с учётом NBT предмета. Кусочек металла (один предмет одного
+     * типа) даёт разный металл в зависимости от тега Metal, поэтому обычный
+     * поиск по {@link Item} здесь не подходит: 1 кусочек = 1 самородок.
+     */
+    public static SmeltRecipe getSmeltRecipe(ItemStack stack) {
+        if (stack.isEmpty()) return null;
+        if (stack.getItem() instanceof MetalPieceItem) {
+            String metalId = MetalPieceItem.getMetal(stack);
+            if (metalId == null) return null;
+            Metal metal = get(new ResourceLocation(MainRegistry.MOD_ID, metalId)).orElse(null);
+            if (metal == null || metal.getSmallUnits() <= 0) return null;
+            float nuggetHeat = metal.getHeatConsumptionPerTick() / 3.0f;
+            return new SmeltRecipe(stack.getItem(), metal, metal.getSmallUnits(),
+                    metal.getMeltingPoint(), nuggetHeat, NUGGET_SMELT_TIME, 1);
+        }
+        return getSmeltRecipe(stack.getItem());
     }
 
     public static List<AlloyRecipe> getAllAlloyRecipes() {

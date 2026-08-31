@@ -46,10 +46,11 @@ public class VishelashivatelRecipes {
 
     /**
      * Разрешён ли тип жидкости к заливке: только те, что используются
-     * хотя бы в одном рецепте.
+     * хотя бы в одном рецепте или в динамической переработке кусков фракций.
      */
     public static boolean isFluidUsed(Fluid fluid) {
         if (fluid == null) return false;
+        if (FractionLeachLogic.isProcessingFluid(fluid)) return true;
         for (VishelashivatelRecipe recipe : RECIPES) {
             if (recipe.getRequiredFluid().getFluid() == fluid) return true;
         }

@@ -9,6 +9,8 @@ import com.trd.event.LiquidMetalItem;
 import com.trd.item.armor.GrenadierArmorMaterial;
 import com.trd.item.armor.GrenadierGogglesItem;
 import com.trd.item.conglomerates.ConglomerateItem;
+import com.trd.item.conglomerates.FractionChunkItem;
+import com.trd.item.conglomerates.MetalPieceItem;
 import com.trd.item.industrial.energy.EnergyCellItem;
 import com.trd.item.food.FoodZamaz;
 import com.trd.event.SlagItem;
@@ -297,6 +299,14 @@ public class ModItems {
     // Conglomerate items
     public static final RegistryObject<Item> CONGLOMERATE_CHUNK = ITEMS.register("conglomerate_chunk",
             () -> new ConglomerateItem(new Item.Properties()));
+
+    /** Кусок фракции («пирог») — текстура ore_chunk_raw, тинт по цвету фракции и состоянию. */
+    public static final RegistryObject<Item> FRACTION_CHUNK = ITEMS.register("fraction_chunk",
+            () -> new FractionChunkItem(new Item.Properties()));
+
+    /** Кусочек металла — текстура ore_chunk, тинт по цвету металла. */
+    public static final RegistryObject<Item> METAL_PIECE = ITEMS.register("metal_piece",
+            () -> new MetalPieceItem(new Item.Properties()));
 
 
 

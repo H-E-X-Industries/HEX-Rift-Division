@@ -127,6 +127,8 @@ public class ModLangProvider extends LanguageProvider {
         add("jei.category.trd.chemical_plant", "Chemical Plant");
         add("jei.category.trd.vishelashivatel", "Leacher");
         add("jei.category.trd.forging", "Forging");
+        add("jei.category.trd.chunk_process", "Fraction Processing");
+        add("jei.category.trd.chunk_roast", "Chunk Roasting");
 
         // === ЖИДКОСТЬ ↔ КОНТЕЙНЕР ===
         add("jei.category.trd.fluid_container", "Fluid Containers");
@@ -543,6 +545,22 @@ public class ModLangProvider extends LanguageProvider {
         add("vein.trd.fraction.heavy_metal", "Heavy Metals: %d%%");
         add("vein.trd.fraction.noble_metal", "Noble Metals: %d%%");
         add("vein.trd.fraction.rare_earth", "Rare Earth: %d%%");
+
+        // ═══ Tooltip: Fraction Chunk ═══
+        add("tooltip.trd.fraction_chunk.ou", "OU: %d");
+        add("tooltip.trd.fraction_chunk.layer", "§7  L%d: %s");
+        add("tooltip.trd.fraction_chunk.state.raw", "Raw ore");
+        add("tooltip.trd.fraction_chunk.state.clean", "Cleaned");
+        add("tooltip.trd.fraction_chunk.state.roasted", "Roasted");
+        add("tooltip.trd.fraction_chunk.requires_analysis", "§cComposition analysis required.");
+        add("tooltip.trd.fraction_chunk.depleted", "§cFully depleted");
+
+        // ═══ Tooltip: Metal Piece ═══
+        add("tooltip.trd.metal_piece.roasted", "Roasted");
+
+        // ═══ Items: Conglomerate processing ═══
+        add("item.trd.fraction_chunk", "Ore Fraction");
+        add("item.trd.metal_piece", "Metal Piece");
 
         // ═══ Tooltip: Energy Cell ═══
         add("tooltip.trd.energy_cell.energy_stored", "§eEnergy: %s / %s JE");
@@ -1167,6 +1185,8 @@ public class ModLangProvider extends LanguageProvider {
         // ═══ Выщелащиватель ═══
         add(ModBlocks.VISHELASHIVATEL.get(), "Рудный выщелачиватель");
         add("jei.category.trd.vishelashivatel", "Рудный выщелачиватель");
+        add("jei.category.trd.chunk_process", "Переработка кусков руды");
+        add("jei.category.trd.chunk_roast", "Обжарка кусков");
         add("recipe.trd.leather_from_rotten_flesh", "Производство кожи");
         add("recipe.trd.soda_crystal", "Содовые кристаллы (выщелачивание)");
         add("gui.trd.vishelashivatel.empty_tank", "Пусто");
@@ -1739,6 +1759,22 @@ public class ModLangProvider extends LanguageProvider {
         add("vein.trd.fraction.heavy_metal", "Тяжёлые металлы: %d%%");
         add("vein.trd.fraction.noble_metal", "Благородные металлы: %d%%");
         add("vein.trd.fraction.rare_earth", "Редкоземельные металлы: %d%%");
+
+        // ═══ Tooltip: Fraction Chunk ═══
+        add("tooltip.trd.fraction_chunk.ou", "OU: %d");
+        add("tooltip.trd.fraction_chunk.layer", "§7  L%d: %s");
+        add("tooltip.trd.fraction_chunk.state.raw", "Сырая руда");
+        add("tooltip.trd.fraction_chunk.state.clean", "Очищено");
+        add("tooltip.trd.fraction_chunk.state.roasted", "Обжарено");
+        add("tooltip.trd.fraction_chunk.requires_analysis", "§cНеобходим анализ состава.");
+        add("tooltip.trd.fraction_chunk.depleted", "§cПолностью выработано");
+
+        // ═══ Tooltip: Metal Piece ═══
+        add("tooltip.trd.metal_piece.roasted", "Обжарено");
+
+        // ═══ Items: Conglomerate processing ═══
+        add("item.trd.fraction_chunk", "Кусок руды");
+        add("item.trd.metal_piece", "Кусочек металла");
 
         // ═══ Tooltip: Energy Cell ═══
         add("tooltip.trd.energy_cell.energy_stored", "§eЭнергия: %s / %s JE");

@@ -208,11 +208,47 @@ public class CoccerOvenBlockEntity extends BlockEntity implements MenuProvider, 
             be.temperature = Math.max(0, be.temperature - cooling);
         }
 
-        // === ЛОГИКА РЕЦЕПТА ===
+        // === ЛОГИКА РЕЦЕПТА (включая обжарку кусков в коксовой печи) ===
         ItemStack input = be.inventory.getStackInSlot(0);
 
         if (input.isEmpty()) {
             be.resetRecipe();
+        } else if (CoccerRoastLogic.isRoastable(input)) {
+            // Динамическая обжарка кусков фракций / кусочков металлов (сохраняет NBT)
+            ItemStack output = be.inventory.getStackInSlot(1);
+            ItemStack roasted = CoccerRoastLogic.getRoastedOutput(input);
+            FluidStack sludge = CoccerRoastLogic.getSludge();
+
+            boolean canOutputItem = output.isEmpty()
+                    || (ItemStack.isSameItemSameTags(output, roasted)
+                        && output.getCount() + 1 <= output.getMaxStackSize());
+            boolean canOutputFluid = be.fluidTank.fill(sludge, IFluidHandler.FluidAction.SIMULATE) == sludge.getAmount();
+
+            if (canOutputItem && canOutputFluid) {
+                if (be.temperature >= CoccerRoastLogic.ROAST_TEMP) {
+                    be.isProcessing = true;
+                    float multiplier = Math.min(2.0f, be.temperature / (float) CoccerRoastLogic.ROAST_TEMP);
+                    be.progress += multiplier;
+                    be.maxProgress = CoccerRoastLogic.ROAST_TIME;
+                    be.requiredTemp = CoccerRoastLogic.ROAST_TEMP;
+                    be.currentRecipe = null;
+
+                    if (be.progress >= be.maxProgress) {
+                        input.shrink(1);
+                        if (output.isEmpty()) {
+                            be.inventory.setStackInSlot(1, roasted.copy());
+                        } else {
+                            output.grow(1);
+                        }
+                        be.fluidTank.fill(sludge.copy(), IFluidHandler.FluidAction.EXECUTE);
+                        be.resetRecipe();
+                    }
+                } else {
+                    be.isProcessing = false;
+                }
+            } else {
+                be.isProcessing = false;
+            }
         } else {
             if (be.currentRecipe == null || !ItemStack.isSameItemSameTags(be.inputSnapshot, input)) {
                 be.resetRecipe();

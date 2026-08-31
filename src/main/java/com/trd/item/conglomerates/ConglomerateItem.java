@@ -207,6 +207,38 @@ public class ConglomerateItem extends Item {
         return tag.contains("Temp", CompoundTag.TAG_FLOAT) ? tag.getFloat("Temp") : null;
     }
 
+    /**
+     * Делит кусок конгломерата на отдельные сырые куски фракций (дробитель).
+     * Доля OU каждой фракции пропорциональна её проценту в составе куска
+     * (процент от общего OU). Возвращает один {@link FractionChunkItem} на каждую
+     * ненулевую фракцию. Анализ источника передаётся в куски фракций.
+     */
+    public static List<ItemStack> splitToFractions(ItemStack stack) {
+        List<ItemStack> result = new java.util.ArrayList<>();
+        if (stack.isEmpty() || !(stack.getItem() instanceof ConglomerateItem)) return result;
+
+        Map<FractionType, Integer> fractions = getFractions(stack);
+        int totalOu = getOU(stack);
+        if (fractions.isEmpty() || totalOu <= 0) return result;
+        boolean analyzed = isAnalyzed(stack);
+
+        // Сумма процентов может быть меньше 100 (остаток — шлак)
+        int totalPercent = fractions.values().stream().mapToInt(Integer::intValue).sum();
+        if (totalPercent <= 0) return result;
+
+        // Целое деление по проценту, с остатком на последнюю фракцию (DistributionMath)
+        Map<FractionType, Integer> ouByFraction = com.trd.api.vein.DistributionMath.distribute(
+                totalOu, (Map<FractionType, Integer>) fractions);
+
+        for (FractionType fraction : fractions.keySet()) {
+            int ou = ouByFraction.getOrDefault(fraction, 0);
+            if (ou <= 0) continue;
+            result.add(com.trd.item.conglomerates.FractionChunkItem.create(fraction, ou, analyzed));
+        }
+
+        return result;
+    }
+
     // Цвета тултипа
     private static final int C_BIOME_NAME = 0x55FFFF;         // голубой (как металл-бусты)
     private static final int C_METAL_BOOST = 0x55FFFF;        // голубой

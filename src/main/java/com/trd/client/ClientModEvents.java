@@ -838,5 +838,21 @@ public class ClientModEvents {
             }
             return 0xFFFFFF;
         }, ModItems.LIQUID_METAL.get());
+
+        // Кусок фракции: текстура ore_chunk_raw, тинт по цвету фракции и состоянию
+        event.register((stack, tintIndex) -> {
+            if (tintIndex == 0 && stack.getItem() instanceof com.trd.item.conglomerates.FractionChunkItem) {
+                return com.trd.item.conglomerates.FractionChunkItem.getDisplayColor(stack);
+            }
+            return 0xFFFFFF;
+        }, ModItems.FRACTION_CHUNK.get());
+
+        // Кусочек металла: текстура ore_chunk, тинт по цвету металла
+        event.register((stack, tintIndex) -> {
+            if (tintIndex == 0 && stack.getItem() instanceof com.trd.item.conglomerates.MetalPieceItem) {
+                return com.trd.item.conglomerates.MetalPieceItem.getDisplayColor(stack);
+            }
+            return 0xFFFFFF;
+        }, ModItems.METAL_PIECE.get());
     }
 }

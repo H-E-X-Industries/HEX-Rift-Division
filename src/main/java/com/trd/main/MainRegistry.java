@@ -470,6 +470,8 @@ public class MainRegistry {
             event.accept(ModItems.REINFORCEDBRICK.get());
 
             event.accept(ModItems.CONGLOMERATE_CHUNK);
+            event.accept(ModItems.FRACTION_CHUNK);
+            event.accept(ModItems.METAL_PIECE);
             event.accept(ModItems.HARD_ROCK);
             event.accept(ModItems.DOLOMITE_CHUNK);
             event.accept(ModItems.LIMESTONE_CHUNK);

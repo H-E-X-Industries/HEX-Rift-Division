@@ -71,7 +71,7 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
         public boolean isItemValid(int slot, ItemStack stack) {
             if (slot < 4) return true;
             if (stack.getItem() instanceof SlagItem) return true;
-            return MetallurgyRegistry.getSmeltRecipe(stack.getItem()) != null;
+            return MetallurgyRegistry.getSmeltRecipe(stack) != null;
         }
     };
 
@@ -360,7 +360,7 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
             }
 
             // === ПРОВЕРЯЕМ, ПЛАВИТСЯ ЛИ ЭТОТ ПРЕДМЕТ ===
-            boolean isMeltable = MetallurgyRegistry.getSmeltRecipe(stack.getItem()) != null;
+            boolean isMeltable = MetallurgyRegistry.getSmeltRecipe(stack) != null;
 
             if (isMeltable) {
 
@@ -634,7 +634,7 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
                         continue;
                     }
                 } else {
-                    SmeltRecipe recipe = MetallurgyRegistry.getSmeltRecipe(stack.getItem());
+                    SmeltRecipe recipe = MetallurgyRegistry.getSmeltRecipe(stack);
                     if (recipe != null) {
                         bottomSlots[i].recipe = recipe;
                         bottomSlots[i].maxProgress = recipe.getTotalHeatConsumption();
@@ -797,7 +797,7 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
                 Metal metal = SlagItem.getMetal(stack);
                 if (metal != null) maxTemp = Math.max(maxTemp, metal.getMeltingPoint());
             } else {
-                SmeltRecipe recipe = MetallurgyRegistry.getSmeltRecipe(stack.getItem());
+                SmeltRecipe recipe = MetallurgyRegistry.getSmeltRecipe(stack);
                 if (recipe != null) maxTemp = Math.max(maxTemp, recipe.minTemp());
             }
         }
@@ -902,7 +902,7 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
      */
     private int getMeltingPointForItem(ItemStack stack) {
         // Проверяем рецепт плавки
-        SmeltRecipe recipe = MetallurgyRegistry.getSmeltRecipe(stack.getItem());
+        SmeltRecipe recipe = MetallurgyRegistry.getSmeltRecipe(stack);
         if (recipe != null) {
             return recipe.minTemp();
         }
@@ -1283,7 +1283,11 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
                         ResourceLocation itemId = new ResourceLocation(slotTag.getString("RecipeItem"));
                         Item item = ForgeRegistries.ITEMS.getValue(itemId);
                         if (item != null) {
-                            bottomSlots[i].recipe = MetallurgyRegistry.getSmeltRecipe(item);
+                            // Учитываем NBT (кусочки металлов разных металлов — один Item)
+                            ItemStack saved = inventory.getStackInSlot(4 + i);
+                            SmeltRecipe recipe = MetallurgyRegistry.getSmeltRecipe(saved);
+                            bottomSlots[i].recipe = recipe != null ? recipe
+                                    : MetallurgyRegistry.getSmeltRecipe(item);
                         }
                     }
                 } else {
