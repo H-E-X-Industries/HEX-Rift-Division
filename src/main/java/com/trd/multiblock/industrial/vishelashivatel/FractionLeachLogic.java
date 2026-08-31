@@ -75,6 +75,29 @@ public final class FractionLeachLogic {
             this.minRpm = minRpm;
             this.consumedTorque = consumedTorque;
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof Op op)) return false;
+            return type == op.type
+                    && fluidCost == op.fluidCost
+                    && processTime == op.processTime
+                    && minRpm == op.minRpm
+                    && consumedTorque == op.consumedTorque
+                    && requiredFluid == op.requiredFluid;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = type != null ? type.hashCode() : 0;
+            result = 31 * result + (requiredFluid != null ? requiredFluid.hashCode() : 0);
+            result = 31 * result + fluidCost;
+            result = 31 * result + processTime;
+            result = 31 * result + (int) (minRpm ^ (minRpm >>> 32));
+            result = 31 * result + (int) (consumedTorque ^ (consumedTorque >>> 32));
+            return result;
+        }
     }
 
     private static final int WASH_COST = 100;    // мБ воды

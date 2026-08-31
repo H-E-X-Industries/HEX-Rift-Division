@@ -406,7 +406,7 @@ public class VishelashivatelBlockEntity extends com.trd.block.entity.industrial.
 
         // Динамическая переработка куска фракции приоритетнее статического рецепта
         FractionLeachLogic.Op op = FractionLeachLogic.find(input, tankFluid);
-        if (op != be.currentOp) {
+        if (!java.util.Objects.equals(op, be.currentOp)) {
             be.currentOp = op;
             if (op != null) {
                 be.currentRecipe = null;
@@ -418,7 +418,7 @@ public class VishelashivatelBlockEntity extends com.trd.block.entity.industrial.
             }
         }
 
-        if (be.currentOp != null && be.currentOp == op && be.isOpWorking(be.currentOp)) {
+        if (be.currentOp != null && java.util.Objects.equals(be.currentOp, op) && be.isOpWorking(be.currentOp)) {
             be.progress++;
             changed = true;
             if (be.progress >= be.maxProgress) {
@@ -563,6 +563,18 @@ public class VishelashivatelBlockEntity extends com.trd.block.entity.industrial.
         tag.putInt("Progress", progress);
         tag.putInt("MaxProgress", maxProgress);
         tag.putString("StoredFluid", storedFluidId);
+    }
+
+    @Override
+    public CompoundTag getUpdateTag() {
+        CompoundTag tag = super.getUpdateTag();
+        saveAdditional(tag);
+        return tag;
+    }
+
+    @Override
+    public net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket.create(this);
     }
 
     @Override

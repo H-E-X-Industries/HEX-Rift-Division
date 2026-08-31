@@ -75,6 +75,22 @@ public class MetalPieceItem extends Item {
     }
 
     @Override
+    public Component getName(ItemStack stack) {
+        String metalId = getMetal(stack);
+        MutableComponent metalName = metalId != null
+                ? MetallurgyRegistry.get(new ResourceLocation(MainRegistry.MOD_ID, metalId))
+                    .map(metal -> (MutableComponent) Component.translatable(metal.getTranslationKey())
+                            .withStyle(style -> style.withColor(TextColor.fromRgb(metal.getColor()))))
+                    .orElseGet(() -> Component.literal(metalId != null ? metalId : ""))
+                : Component.literal("");
+        if (isRoasted(stack)) {
+            metalName.append(Component.literal(" (").append(
+                    Component.translatable("tooltip.trd.metal_piece.roasted")).append(")"));
+        }
+        return metalName;
+    }
+
+    @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         String metalId = getMetal(stack);
         if (metalId != null) {

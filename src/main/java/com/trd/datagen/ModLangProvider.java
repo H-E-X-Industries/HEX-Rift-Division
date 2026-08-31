@@ -1102,6 +1102,10 @@ public class ModLangProvider extends LanguageProvider {
         add("hud.trd.leacher.input", "input");
         add("hud.trd.leacher.output", "output");
         add("hud.trd.leacher.progress", "Progress: %s%%");
+        add("hud.trd.leacher.wash", "Wash");
+        add("hud.trd.leacher.extract", "Extract");
+        add("hud.trd.leacher.fraction", "Fraction");
+        add("jei.category.trd.conglomerate_drobitel", "Conglomerate Crushing");
 
         // ═══ Centrifuge ═══
         add(ModBlocks.CENTRIFUGE_MOTOR.get(), "Centrifuge Motor");
@@ -1202,6 +1206,10 @@ public class ModLangProvider extends LanguageProvider {
         add("hud.trd.leacher.input", "вход");
         add("hud.trd.leacher.output", "выход");
         add("hud.trd.leacher.progress", "Прогресс: %s%%");
+        add("hud.trd.leacher.wash", "Промывка");
+        add("hud.trd.leacher.extract", "Извлечение");
+        add("hud.trd.leacher.fraction", "Фракция");
+        add("jei.category.trd.conglomerate_drobitel", "Дробление конгломерата");
 
         // ═══ GUI: Машина непрерывного литья ═══
         add("gui.trd.cc_machine.metal_title", "§6§lРасплавленный металл");

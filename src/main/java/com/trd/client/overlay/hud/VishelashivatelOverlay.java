@@ -1,6 +1,10 @@
 package com.trd.client.overlay.hud;
 
 import com.trd.main.MainRegistry;
+import com.trd.api.vein.FractionLayerMatrix;
+import com.trd.api.vein.FractionType;
+import com.trd.item.conglomerates.FractionChunkItem;
+import com.trd.multiblock.industrial.vishelashivatel.FractionLeachLogic;
 import com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlockEntity;
 import com.trd.multiblock.industrial.vishelashivatel.VishelashivatelRecipe;
 import com.trd.multiblock.industrial.vishelashivatel.VishelashivatelRecipes;
@@ -59,13 +63,23 @@ public class VishelashivatelOverlay {
         int x = screenW / 2 + 12;
         int y = screenH / 2 + 4;
 
-        // На клиенте serverTick не вызывается — рецепт резолвим так же, как в тултипе GUI:
-        // по входному предмету, чтобы игрок видел требования до заливки жидкости
         FluidStack tankFluid = be.getFluidTank().getFluid();
         ItemStack input = be.getInventory().getStackInSlot(VishelashivatelBlockEntity.INPUT_SLOT);
+
+        // Сначала проверяем статический рецепт
         VishelashivatelRecipe recipe = VishelashivatelRecipes.findForInput(input);
 
-        if (recipe == null) {
+        // Если статического нет — проверяем динамическую переработку кусков фракций
+        FractionLeachLogic.Op dynamicOp = null;
+        FractionType dynamicFraction = null;
+        if (recipe == null && !input.isEmpty()) {
+            dynamicOp = FractionLeachLogic.find(input, tankFluid);
+            if (dynamicOp != null) {
+                dynamicFraction = FractionChunkItem.getFraction(input);
+            }
+        }
+
+        if (recipe == null && dynamicOp == null) {
             String txt = Component.translatable("hud.trd.leacher.no_recipe").getString();
             int w = font.width(txt);
             if (x + w + 4 > screenW) x = screenW / 2 - w - 12;
@@ -78,49 +92,107 @@ public class VishelashivatelOverlay {
         List<Integer> colors = new ArrayList<>();
         int maxW = 0;
 
-        // Рецепт
-        String recipeName = "§e" + Component.translatable("recipe.trd." + recipe.getId().getPath()).getString();
-        lines.add(recipeName);
-        colors.add(0xFFFFFF);
-        maxW = Math.max(maxW, font.width(recipeName));
+        if (dynamicOp != null) {
+            // === Динамический рецепт (кусок фракции) ===
+            String typeLabel = dynamicOp.type == FractionLeachLogic.OpType.WASH
+                    ? "§e" + Component.translatable("hud.trd.leacher.wash").getString()
+                    : "§e" + Component.translatable("hud.trd.leacher.extract").getString();
+            lines.add(typeLabel);
+            colors.add(0xFFFFFF);
+            maxW = Math.max(maxW, font.width(typeLabel));
 
-        // Входная жидкость
-        FluidStack required = recipe.getRequiredFluid();
-        int cur = be.getFluidTank().getFluid().getAmount();
-        String arrowIn = Component.translatable("hud.trd.leacher.arrow_in").getString(); // -->
-        String fluidLine = arrowIn + " " + Component.translatable("hud.trd.leacher.input").getString()
-                + " " + cur + "/" + required.getAmount() + " mB " + required.getDisplayName().getString();
-        lines.add(fluidLine);
-        colors.add(IClientFluidTypeExtensions.of(required.getFluid()).getTintColor() | 0xFF000000);
-        maxW = Math.max(maxW, font.width(fluidLine));
-
-        // Входной предмет
-        ItemStack requiredItem = recipe.getItemInput();
-        String itemLine = requiredItem.getHoverName().getString() + ": "
-                + input.getCount() + "/" + requiredItem.getCount();
-        lines.add(itemLine);
-        colors.add(0xFFFF00); // Yellow
-        maxW = Math.max(maxW, font.width(itemLine));
-
-        // Выходы
-        for (ItemStack out : recipe.getItemOutputs()) {
-            int outCur = 0;
-            for (int i = VishelashivatelBlockEntity.FIRST_OUTPUT_SLOT;
-                 i < VishelashivatelBlockEntity.FIRST_OUTPUT_SLOT + VishelashivatelBlockEntity.OUTPUT_SLOTS; i++) {
-                ItemStack slot = be.getInventory().getStackInSlot(i);
-                if (!slot.isEmpty() && ItemStack.isSameItemSameTags(slot, out)) {
-                    outCur += slot.getCount();
-                }
+            if (dynamicFraction != null) {
+                String fracName = Component.translatable("vein.trd.fraction." + dynamicFraction.getName()).getString();
+                String fracLine = Component.translatable("hud.trd.leacher.fraction").getString() + ": " + fracName;
+                lines.add(fracLine);
+                colors.add(dynamicFraction.getColor());
+                maxW = Math.max(maxW, font.width(fracLine));
             }
-            String line = out.getHoverName().getString() + " ("
-                    + Component.translatable("hud.trd.leacher.output").getString() + "): " + outCur;
-            lines.add(line);
-            colors.add(0xFFFF00); // Yellow
-            maxW = Math.max(maxW, font.width(line));
+
+            // Текущий OU
+            int currentOu = FractionChunkItem.getOU(input);
+            String state = FractionChunkItem.getState(input);
+            String ouLine = "OU: " + currentOu + " | " + Component.translatable("tooltip.trd.fraction_chunk.state." + state).getString();
+            lines.add(ouLine);
+            colors.add(0xFFFFFF);
+            maxW = Math.max(maxW, font.width(ouLine));
+
+            // Оставшиеся слои
+            java.util.Map<Integer, java.util.Map<String, Integer>> layers = FractionChunkItem.getLayerMap(input);
+            if (!layers.isEmpty()) {
+                for (java.util.Map.Entry<Integer, java.util.Map<String, Integer>> e : layers.entrySet()) {
+                    FractionLayerMatrix matrix = FractionLayerMatrix.forFraction(dynamicFraction);
+                    FractionLayerMatrix.Layer layer = matrix.getLayer(e.getKey());
+                    StringBuilder metals = new StringBuilder();
+                    boolean first = true;
+                    for (String metal : e.getValue().keySet()) {
+                        if (!first) metals.append(", ");
+                        first = false;
+                        metals.append(metal);
+                    }
+                    String layerLine = "  L" + (layer != null ? layer.index() + 1 : e.getKey() + 1) + ": " + metals;
+                    lines.add(layerLine);
+                    colors.add(0xAAAAAA);
+                    maxW = Math.max(maxW, font.width(layerLine));
+                }
+            } else {
+                String depleted = "  " + Component.translatable("tooltip.trd.fraction_chunk.depleted").getString();
+                lines.add(depleted);
+                colors.add(0xFF5555);
+                maxW = Math.max(maxW, font.width(depleted));
+            }
+
+            // Жидкость
+            if (!tankFluid.isEmpty()) {
+                String fluidLine = Component.translatable("hud.trd.leacher.arrow_in").getString()
+                        + " " + tankFluid.getAmount() + "/" + dynamicOp.fluidCost + " mB "
+                        + tankFluid.getDisplayName().getString();
+                lines.add(fluidLine);
+                colors.add(IClientFluidTypeExtensions.of(tankFluid.getFluid()).getTintColor() | 0xFF000000);
+                maxW = Math.max(maxW, font.width(fluidLine));
+            }
+        } else {
+            // === Статический рецепт ===
+            String recipeName = "§e" + Component.translatable("recipe.trd." + recipe.getId().getPath()).getString();
+            lines.add(recipeName);
+            colors.add(0xFFFFFF);
+            maxW = Math.max(maxW, font.width(recipeName));
+
+            FluidStack required = recipe.getRequiredFluid();
+            int cur = be.getFluidTank().getFluid().getAmount();
+            String arrowIn = Component.translatable("hud.trd.leacher.arrow_in").getString();
+            String fluidLine = arrowIn + " " + Component.translatable("hud.trd.leacher.input").getString()
+                    + " " + cur + "/" + required.getAmount() + " mB " + required.getDisplayName().getString();
+            lines.add(fluidLine);
+            colors.add(IClientFluidTypeExtensions.of(required.getFluid()).getTintColor() | 0xFF000000);
+            maxW = Math.max(maxW, font.width(fluidLine));
+
+            ItemStack requiredItem = recipe.getItemInput();
+            String itemLine = requiredItem.getHoverName().getString() + ": "
+                    + input.getCount() + "/" + requiredItem.getCount();
+            lines.add(itemLine);
+            colors.add(0xFFFF00);
+            maxW = Math.max(maxW, font.width(itemLine));
+
+            for (ItemStack out : recipe.getItemOutputs()) {
+                int outCur = 0;
+                for (int i = VishelashivatelBlockEntity.FIRST_OUTPUT_SLOT;
+                     i < VishelashivatelBlockEntity.FIRST_OUTPUT_SLOT + VishelashivatelBlockEntity.OUTPUT_SLOTS; i++) {
+                    ItemStack slot = be.getInventory().getStackInSlot(i);
+                    if (!slot.isEmpty() && ItemStack.isSameItemSameTags(slot, out)) {
+                        outCur += slot.getCount();
+                    }
+                }
+                String line = out.getHoverName().getString() + " ("
+                        + Component.translatable("hud.trd.leacher.output").getString() + "): " + outCur;
+                lines.add(line);
+                colors.add(0xFFFF00);
+                maxW = Math.max(maxW, font.width(line));
+            }
         }
 
         // Прогресс
-        int maxProgress = recipe.getProcessTime();
+        int maxProgress = dynamicOp != null ? dynamicOp.processTime : (recipe != null ? recipe.getProcessTime() : 0);
         if (maxProgress > 0) {
             double percent = (double) be.getProgress() / maxProgress;
             int totalBars = 20;
@@ -143,7 +215,7 @@ public class VishelashivatelOverlay {
 
         // Скорость вращения
         long curSpeed = Math.abs(be.getSpeed());
-        long reqSpeed = recipe.getMinRpm();
+        long reqSpeed = dynamicOp != null ? dynamicOp.minRpm : (recipe != null ? recipe.getMinRpm() : 0);
         String s = "RPM: " + curSpeed + "/" + reqSpeed;
         lines.add(s);
         colors.add(curSpeed >= reqSpeed ? 0x00FF00 : 0xFF0000);

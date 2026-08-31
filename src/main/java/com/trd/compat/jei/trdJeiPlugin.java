@@ -93,6 +93,8 @@ public class trdJeiPlugin implements IModPlugin {
     public static final RecipeType<DrobitelWrapper> DROBITEL_TYPE =
             RecipeType.create(MainRegistry.MOD_ID, "drobitel", DrobitelWrapper.class);
     public record DrobitelWrapper(Item input, List<ItemStack> outputs) {}
+    /** Динамический рецепт дробления конгломерата → куски фракций. */
+    public record ConglomerateDrobitelWrapper(ItemStack input, List<ItemStack> outputs) {}
     public static final RecipeType<SmeltingWrapper> SMELTING_TYPE =
             RecipeType.create(MainRegistry.MOD_ID, "smelting", SmeltingWrapper.class);
     public static final RecipeType<CastingWrapper> CASTING_TYPE =
@@ -131,6 +133,9 @@ public class trdJeiPlugin implements IModPlugin {
     // Обжарка кусков фракций / кусочков металлов в коксовой печи
     public static final RecipeType<ChunkRoastWrapper> CHUNK_ROAST_TYPE =
             RecipeType.create(MainRegistry.MOD_ID, "chunk_roast", ChunkRoastWrapper.class);
+    // Динамическое дробление конгломерата → куски фракций
+    public static final RecipeType<ConglomerateDrobitelWrapper> CONGLOMERATE_DROBITEL_TYPE =
+            RecipeType.create(MainRegistry.MOD_ID, "conglomerate_drobitel", ConglomerateDrobitelWrapper.class);
 
     public record ElectricFurnaceWrapper(net.minecraft.world.item.crafting.AbstractCookingRecipe recipe, int cookTime, int energyPerTick) {}
     public record SmeltingWrapper(ItemStack input, Metal metal, int outputUnits, int temp, float heatConsumption, int timeTicks, int inputCount) {}
@@ -184,6 +189,7 @@ public class trdJeiPlugin implements IModPlugin {
         registration.addRecipeCategories(new OpticMicroscopeCategory(guiHelper));
         registration.addRecipeCategories(new ChunkProcessCategory(guiHelper));
         registration.addRecipeCategories(new ChunkRoastCategory(guiHelper));
+        registration.addRecipeCategories(new ConglomerateDrobitelCategory(guiHelper));
     }
 
     @Override
@@ -233,6 +239,21 @@ public class trdJeiPlugin implements IModPlugin {
             ));
         }
 
+        // === Кусочки металлов (динамическая плавка по NBT: 1 кусочек = 1 самородок) ===
+        for (FractionType fraction : FractionType.values()) {
+            for (String metalId : FractionLayerMatrix.forFraction(fraction).getAllMetalWeights().keySet()) {
+                Metal metal = MetallurgyRegistry.get(
+                        new ResourceLocation(MainRegistry.MOD_ID, metalId)).orElse(null);
+                if (metal == null) continue;
+                ItemStack piece = com.trd.item.conglomerates.MetalPieceItem.create(metalId);
+                float nuggetHeat = metal.getHeatConsumptionPerTick() / 3.0f;
+                smeltingRecipes.add(new SmeltingWrapper(
+                        piece, metal, metal.getSmallUnits(),
+                        metal.getMeltingPoint(), nuggetHeat,
+                        MetallurgyRegistry.NUGGET_SMELT_TIME, 1));
+            }
+        }
+
         registration.addRecipes(SMELTING_TYPE, smeltingRecipes);
 
         List<CastingWrapper> castingRecipes = new ArrayList<>();
@@ -275,6 +296,17 @@ public class trdJeiPlugin implements IModPlugin {
             ));
         }
         registration.addRecipes(DROBITEL_TYPE, drobitelRecipes);
+
+        // === ДРОБИТЕЛЬ: динамические рецепты конгломерат → куски фракций ===
+        List<ConglomerateDrobitelWrapper> conglomerateRecipes = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            ItemStack chunk = buildRandomChunk();
+            List<ItemStack> results = ConglomerateItem.splitToFractions(chunk);
+            if (!results.isEmpty()) {
+                conglomerateRecipes.add(new ConglomerateDrobitelWrapper(chunk, results));
+            }
+        }
+        registration.addRecipes(CONGLOMERATE_DROBITEL_TYPE, conglomerateRecipes);
 
         // === ЭЛЕКТРО-ПЕЧЬ ===
         List<ElectricFurnaceWrapper> electricRecipes = new ArrayList<>();
@@ -489,6 +521,7 @@ public class trdJeiPlugin implements IModPlugin {
         registration.addRecipeCatalyst(new ItemStack(ModItems.STEAM_ENGINE_ITEM.get()), STEAM_ENGINE_TYPE);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.LOW_PRESSURE_STEAM_CONDENSER.get()), CONDENSING_TYPE);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.DROBITEL.get()), DROBITEL_TYPE);
+        registration.addRecipeCatalyst(new ItemStack(ModBlocks.DROBITEL.get()), CONGLOMERATE_DROBITEL_TYPE);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.COCCER_OVEN.get()), COCCER_OVEN_TYPE);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.CHEMICAL_PLANT_REACTION_CHAMBER.get()), CHEMICAL_PLANT_TYPE);
         registration.addRecipeCatalyst(new ItemStack(ModBlocks.VISHELASHIVATEL.get()), VISHELASHIVATEL_TYPE);
@@ -1457,6 +1490,48 @@ public class trdJeiPlugin implements IModPlugin {
             gg.drawString(font,
                     String.format("%.1fs", com.trd.multiblock.industrial.coccer.CoccerRoastLogic.ROAST_TIME / 20f),
                     26, 43, 0xFF555555, false);
+        }
+    }
+
+    // === ДРОБИТЕЛЬ: ДИНАМИЧЕСКОЕ ДРОБЛЕНИЕ КОНГОЛОМЕРАТА → КУСКИ ФРАКЦИЙ ===
+    // Шаблон gui3 (102x60): вход на (5,22), выходы 2x2 на (63,13)
+    public static class ConglomerateDrobitelCategory implements IRecipeCategory<ConglomerateDrobitelWrapper> {
+        private final IDrawable background;
+        private final IDrawable icon;
+        private final Component title;
+
+        public ConglomerateDrobitelCategory(IGuiHelper guiHelper) {
+            this.background = guiHelper.createDrawable(TEXTURE_UNIVERSAL_102x60, 0, 0, 102, 60);
+            this.icon = guiHelper.createDrawableIngredient(VanillaTypes.ITEM_STACK,
+                    new ItemStack(ModBlocks.DROBITEL.get()));
+            this.title = Component.translatable("jei.category.trd.conglomerate_drobitel");
+        }
+
+        @Override public RecipeType<ConglomerateDrobitelWrapper> getRecipeType() { return CONGLOMERATE_DROBITEL_TYPE; }
+        @Override public Component getTitle() { return title; }
+        @Override public IDrawable getBackground() { return background; }
+        @Override public IDrawable getIcon() { return icon; }
+
+        @Override
+        public void setRecipe(IRecipeLayoutBuilder builder, ConglomerateDrobitelWrapper recipe, IFocusGroup focuses) {
+            builder.addSlot(RecipeIngredientRole.INPUT, 5, 22)
+                    .addItemStack(recipe.input().copy());
+
+            List<ItemStack> outputs = recipe.outputs();
+            for (int i = 0; i < outputs.size() && i < CHAMBER_OUTPUT_SLOTS.length; i++) {
+                ItemStack stack = outputs.get(i);
+                if (!stack.isEmpty()) {
+                    builder.addSlot(RecipeIngredientRole.OUTPUT, CHAMBER_OUTPUT_SLOTS[i][0], CHAMBER_OUTPUT_SLOTS[i][1])
+                            .addItemStack(stack.copy());
+                }
+            }
+        }
+
+        @Override
+        public void draw(ConglomerateDrobitelWrapper recipe, IRecipeSlotsView view, GuiGraphics gg, double mx, double my) {
+            var font = Minecraft.getInstance().font;
+            gg.drawString(font, recipe.input().getCount() + " -> " + recipe.outputs().size(),
+                    24, 33, 0xFF555555, false);
         }
     }
 }

@@ -185,10 +185,6 @@ public class CoccerOvenBlockEntity extends BlockEntity implements MenuProvider, 
         be.burnEntitiesInRecess(level, pos);
 
         // === ДЫМ ===
-        // Спавнится клиентски в CoccerOvenBlock.animateTick как у ванильного костра
-        // (сигнальный дым — высокий столб из центра над крышей мультиблока).
-        // Пока идёт рецепт — таймер обновляется, после его завершения дым
-        // продолжает идти ещё SMOKE_TAIL_TICKS тиков
         if (be.currentRecipe != null) {
             be.smokeTicks = SMOKE_TAIL_TICKS;
         } else if (be.smokeTicks > 0) {
@@ -234,11 +230,17 @@ public class CoccerOvenBlockEntity extends BlockEntity implements MenuProvider, 
                     be.currentRecipe = null;
 
                     if (be.progress >= be.maxProgress) {
-                        input.shrink(1);
-                        if (output.isEmpty()) {
+                        // Используем extractItem вместо shrink для корректного onContentsChanged
+                        be.inventory.extractItem(0, 1, false);
+                        // roasted считается ДО extractItem и содержит полный стак — ставим count=1
+                        roasted.setCount(1);
+                        // Проверяем, что output ещё подходит (мог измениться за тик)
+                        ItemStack currentOutput = be.inventory.getStackInSlot(1);
+                        if (currentOutput.isEmpty()) {
                             be.inventory.setStackInSlot(1, roasted.copy());
-                        } else {
-                            output.grow(1);
+                        } else if (ItemStack.isSameItemSameTags(currentOutput, roasted)
+                                && currentOutput.getCount() < currentOutput.getMaxStackSize()) {
+                            currentOutput.grow(1);
                         }
                         be.fluidTank.fill(sludge.copy(), IFluidHandler.FluidAction.EXECUTE);
                         be.resetRecipe();
@@ -278,12 +280,14 @@ public class CoccerOvenBlockEntity extends BlockEntity implements MenuProvider, 
                         be.progress += multiplier;
 
                         if (be.progress >= be.maxProgress) {
-                            input.shrink(1);
+                            // Используем extractItem вместо shrink для корректного onContentsChanged
+                            be.inventory.extractItem(0, 1, false);
                             if (recipe.hasItemOutput()) {
-                                if (output.isEmpty()) {
+                                ItemStack currentOutput = be.inventory.getStackInSlot(1);
+                                if (currentOutput.isEmpty()) {
                                     be.inventory.setStackInSlot(1, recipe.getOutputItem().copy());
                                 } else {
-                                    output.grow(recipe.getOutputItem().getCount());
+                                    currentOutput.grow(recipe.getOutputItem().getCount());
                                 }
                             }
                             if (recipe.hasFluidOutput()) {
@@ -316,6 +320,9 @@ public class CoccerOvenBlockEntity extends BlockEntity implements MenuProvider, 
     }
 
     private void pickupThrownItems(Level level, BlockPos pos) {
+        // Не подбираем предметы во время обработки, чтобы избежать циклической дупликации
+        if (isProcessing) return;
+
         IItemHandler handler = automationHandler.orElse(null);
         if (handler == null) return;
 

@@ -238,6 +238,21 @@ public class FractionChunkItem extends Item {
     // ══════════════════ ТУЛТИП ══════════════════
 
     @Override
+    public Component getName(ItemStack stack) {
+        FractionType fraction = getFraction(stack);
+        String baseName = fraction != null
+                ? Component.translatable("vein.trd.fraction." + fraction.getName()).getString()
+                : Component.translatable("item.trd.fraction_chunk").getString();
+        String state = getState(stack);
+        String stateSuffix = switch (state) {
+            case STATE_CLEAN -> Component.translatable("tooltip.trd.fraction_chunk.state.clean").getString();
+            case STATE_ROASTED -> Component.translatable("tooltip.trd.fraction_chunk.state.roasted").getString();
+            default -> Component.translatable("tooltip.trd.fraction_chunk.state.raw").getString();
+        };
+        return Component.literal(baseName + " (" + stateSuffix + ")");
+    }
+
+    @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         boolean example = stack.getOrCreateTag().getBoolean(TAG_EXAMPLE);
         FractionType fraction = getFraction(stack);
