@@ -50,6 +50,16 @@ public class BevelGearItem extends Item {
             if (isStart && state.getValue(ShaftBlock.HAS_BEVEL_START)) return InteractionResult.PASS;
             if (!isStart && state.getValue(ShaftBlock.HAS_BEVEL_END)) return InteractionResult.PASS;
 
+            // Запрет установки второй конической шестерни: на вале может быть только одна
+            if (state.getValue(ShaftBlock.HAS_BEVEL_START) || state.getValue(ShaftBlock.HAS_BEVEL_END)) {
+                if (context.getPlayer() != null) {
+                    context.getPlayer().displayClientMessage(
+                            net.minecraft.network.chat.Component.translatable("message.trd.bevel_already_present")
+                                    .withStyle(net.minecraft.ChatFormatting.RED), true);
+                }
+                return InteractionResult.FAIL;
+            }
+
             if (!level.isClientSide) {
                 Player player = context.getPlayer();
                 ItemStack stack = context.getItemInHand();

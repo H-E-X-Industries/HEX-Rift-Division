@@ -26,6 +26,15 @@ public class RotorItem extends Item {
         if (state.getBlock() instanceof ShaftBlock) {
             if (level.getBlockEntity(pos) instanceof ShaftBlockEntity shaftBE) {
                 if (!shaftBE.hasCentralAttachment()) {
+                    // Запрет установки ротора на вал T-образного узла конической шестерни
+                    if (shaftBE.isBevelTJunctionShaft()) {
+                        if (!level.isClientSide && context.getPlayer() != null) {
+                            context.getPlayer().displayClientMessage(
+                                    net.minecraft.network.chat.Component.translatable("message.trd.bevel_tjunction_blocked")
+                                            .withStyle(net.minecraft.ChatFormatting.RED), true);
+                        }
+                        return InteractionResult.FAIL;
+                    }
                     if (!level.isClientSide) {
                         ItemStack rotorStack = context.getItemInHand().copy();
                         rotorStack.setCount(1);
