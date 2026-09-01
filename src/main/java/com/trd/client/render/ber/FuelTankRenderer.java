@@ -52,7 +52,7 @@ public class FuelTankRenderer implements BlockEntityRenderer<FuelTankBlockEntity
         poseStack.translate(0.5, 0.5, 0.5);
 
         Font font = Minecraft.getInstance().font;
-        float width = font.width(fluidName);
+        String str = fluidName.getString();
 
         // Рисуем с двух сторон (спереди и сзади)
         for (int i = 0; i < 2; i++) {
@@ -71,38 +71,14 @@ public class FuelTankRenderer implements BlockEntityRenderer<FuelTankBlockEntity
             // Z: 1.5 блока - 2 пикселя (0.125 блока) = 1.375. Добавляем 0.001 для z-fighting = 1.376f
             poseStack.translate(0, 1.0f, 1.376f); 
             
-            // Максимальная ширина для текста - 1.8 блока
-            // Максимальная высота - 12 пикселей (0.75 блока)
-            float maxWidth = 1.8f;
+            // Максимальная ширина для текста - 26 пикселей блока (26 / 16 = 1.625 блока)
+            // Максимальная высота - 12 пикселей блока (12 / 16 = 0.75 блока)
+            float maxWidth = 26.0f / 16.0f; // 1.625f
             float maxHeight = 12.0f / 16.0f; // 0.75f
             float baseScale = 0.06f;
             
-            String str = fluidName.getString();
-            java.util.List<String> textLines = new java.util.ArrayList<>();
-            
-            // Если текст в одну строку шире maxWidth и в нем есть пробелы - бьем на 2 строки по центру
-            if (font.width(str) * baseScale > maxWidth && str.contains(" ")) {
-                int mid = str.length() / 2;
-                int bestSpace = -1;
-                int minDiff = Integer.MAX_VALUE;
-                for (int j = 0; j < str.length(); j++) {
-                    if (str.charAt(j) == ' ') {
-                        int diff = Math.abs(j - mid);
-                        if (diff < minDiff) {
-                            minDiff = diff;
-                            bestSpace = j;
-                        }
-                    }
-                }
-                if (bestSpace != -1) {
-                    textLines.add(str.substring(0, bestSpace));
-                    textLines.add(str.substring(bestSpace + 1));
-                } else {
-                    textLines.add(str);
-                }
-            } else {
-                textLines.add(str);
-            }
+            // Разделяем составные названия (с пробелами) на 2 строки; одиночные слова НЕ делим
+            java.util.List<String> textLines = splitTextIntoLines(str, font, maxWidth, baseScale);
             
             // Находим реальную максимальную ширину строки
             int maxLineW = 0;
@@ -111,42 +87,91 @@ public class FuelTankRenderer implements BlockEntityRenderer<FuelTankBlockEntity
                 if (w > maxLineW) maxLineW = w;
             }
             
+            // Динамический масштаб (пропорционально ширине и высоте)
             float dynamicScale = baseScale;
             if (maxLineW > 0) {
-                dynamicScale = Math.min(baseScale, maxWidth / (float)maxLineW);
+                dynamicScale = Math.min(baseScale, maxWidth / (float) maxLineW);
             }
             
             // Ограничение по высоте (максимум 12 пикселей блока)
-            float heightScale = maxHeight / (textLines.size() * font.lineHeight);
+            float totalHeight = textLines.size() * font.lineHeight;
+            float heightScale = maxHeight / totalHeight;
             dynamicScale = Math.min(dynamicScale, heightScale);
 
             // Масштабируем и переворачиваем текст
             poseStack.scale(dynamicScale, -dynamicScale, dynamicScale);
 
-            // Расчет позиций для текста слева и справа
-            float leftX = -1.5f / dynamicScale;
-            float rightX = 1.5f / dynamicScale;
+            // Координаты центров табличек:
+            // Левая табличка: px [20..46], центр = 33 px. Относительно центра контроллера (56 px) = 33 - 56 = -23 px (-1.4375 блока)
+            // Правая табличка: px [66..92], центр = 79 px. Относительно центра контроллера (56 px) = 79 - 56 = +23 px (+1.4375 блока)
+            float leftCenterX = (-23.0f / 16.0f) / dynamicScale;
+            float rightCenterX = (23.0f / 16.0f) / dynamicScale;
             
-            // Вычисляем стартовый Y для вертикального центрирования всего блока текста
-            float totalHeight = textLines.size() * font.lineHeight;
+            // Вычисляем стартовый Y для вертикального центрирования блока текста
             float startY = -totalHeight / 2f;
             
             // Рисуем каждую строку
             for (int j = 0; j < textLines.size(); j++) {
                 String line = textLines.get(j);
-                float w = font.width(line);
+                float w = (float) font.width(line);
                 float yOffset = startY + j * font.lineHeight;
                 
                 // Рисуем слева
-                font.drawInBatch(line, leftX - w / 2f, yOffset, tintColor, false, poseStack.last().pose(), bufferSource, Font.DisplayMode.NORMAL, 0, packedLight);
+                font.drawInBatch(line, leftCenterX - w / 2f, yOffset, tintColor, false, poseStack.last().pose(), bufferSource, Font.DisplayMode.NORMAL, 0, packedLight);
                 // Рисуем справа
-                font.drawInBatch(line, rightX - w / 2f, yOffset, tintColor, false, poseStack.last().pose(), bufferSource, Font.DisplayMode.NORMAL, 0, packedLight);
+                font.drawInBatch(line, rightCenterX - w / 2f, yOffset, tintColor, false, poseStack.last().pose(), bufferSource, Font.DisplayMode.NORMAL, 0, packedLight);
             }
 
             poseStack.popPose();
         }
 
         poseStack.popPose();
+    }
+
+    private java.util.List<String> splitTextIntoLines(String str, Font font, float maxWidth, float baseScale) {
+        java.util.List<String> textLines = new java.util.ArrayList<>();
+        if (str == null || str.isEmpty()) return textLines;
+
+        // Если текст в одну строку свободно помещается в базовый масштаб без превышения maxWidth — оставляем в 1 строку
+        if (font.width(str) * baseScale <= maxWidth) {
+            textLines.add(str);
+            return textLines;
+        }
+
+        // Если в названии есть пробелы (составное название из нескольких слов),
+        // разделяем на 2 строки по оптимальному пробелу, чтобы максимально сбалансировать ширину строк
+        if (str.contains(" ")) {
+            String bestLine1 = null;
+            String bestLine2 = null;
+            int minMaxW = Integer.MAX_VALUE;
+
+            for (int i = 0; i < str.length(); i++) {
+                if (str.charAt(i) == ' ') {
+                    String line1 = str.substring(0, i).trim();
+                    String line2 = str.substring(i + 1).trim();
+                    if (!line1.isEmpty() && !line2.isEmpty()) {
+                        int w1 = font.width(line1);
+                        int w2 = font.width(line2);
+                        int maxW = Math.max(w1, w2);
+                        if (maxW < minMaxW) {
+                            minMaxW = maxW;
+                            bestLine1 = line1;
+                            bestLine2 = line2;
+                        }
+                    }
+                }
+            }
+
+            if (bestLine1 != null && bestLine2 != null) {
+                textLines.add(bestLine1);
+                textLines.add(bestLine2);
+                return textLines;
+            }
+        }
+
+        // Одиночные слова (без пробелов, например "Хлороводород") НЕ разделяем — остаются в 1 строку
+        textLines.add(str);
+        return textLines;
     }
     
     @Override
