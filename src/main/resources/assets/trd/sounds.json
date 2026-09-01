@@ -1,4 +1,13 @@
 {
+  "boiler": {
+    "category": "block",
+    "subtitle": "sounds.trd.boiler",
+    "sounds": [
+      {
+        "name": "trd:boiler"
+      }
+    ]
+  },
   "airstrike": {
     "category": "player",
     "subtitle": "trd.subtitle.airstrike",
