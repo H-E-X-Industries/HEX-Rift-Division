@@ -10,6 +10,7 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -260,7 +261,8 @@ public class TurretLightLinkedEntity extends Monster implements GeoEntity, Range
 
         if (target != null && target != currentTargetCache) {
             if (this.lockSoundCooldown <= 0 && ModSounds.TURRET_LOCK.isPresent()) {
-                this.playSound(ModSounds.TURRET_LOCK.get(), 1.0F, 1.0F);
+                this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
+                        ModSounds.TURRET_LOCK.get(), SoundSource.BLOCKS, 1.5F, 1.0F);
                 this.lockSoundCooldown = 40;
             }
             currentTargetCache = target;
@@ -383,7 +385,10 @@ public class TurretLightLinkedEntity extends Monster implements GeoEntity, Range
         this.shotCooldown = SHOT_ANIMATION_LENGTH;
         this.setShooting(true);
         this.shootAnimTimer = 0;
-        this.playSound(ModSounds.TURRET_FIRE.get(), 1.0F, 1.0F);
+        if (ModSounds.TURRET_FIRE.isPresent()) {
+            this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
+                    ModSounds.TURRET_FIRE.get(), SoundSource.BLOCKS, 1.5F, 0.95F + this.random.nextFloat() * 0.1F);
+        }
 
         if (!this.level().isClientSide) {
             ServerLevel serverLevel = (ServerLevel) this.level();

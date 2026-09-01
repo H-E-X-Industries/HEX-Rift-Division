@@ -76,6 +76,16 @@ public class ModBlockLootTableProvider extends BlockLootSubProvider {
             if (exceptions.contains(block)) continue;
             if (block == ModBlocks.BEAM_COLLISION.get() || block == ModBlocks.MULTIBLOCK_PART.get() || block == ModBlocks.PIPE_SPOTS.get()) continue;
 
+            if (block instanceof net.minecraft.world.level.block.DoorBlock) {
+                this.add(block, this::createDoorTable);
+                continue;
+            }
+
+            if (block instanceof net.minecraft.world.level.block.SlabBlock) {
+                this.add(block, this::createSlabItemTable);
+                continue;
+            }
+
             this.dropSelf(block);
         }
     }

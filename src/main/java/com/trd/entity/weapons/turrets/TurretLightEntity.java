@@ -8,6 +8,7 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -212,7 +213,8 @@ public class TurretLightEntity extends Monster implements GeoEntity, RangedAttac
             if (target != null && target != currentTargetCache && this.isDeployed()) {
                 if (this.lockSoundCooldown <= 0) {
                     if (ModSounds.TURRET_LOCK.isPresent()) {
-                        this.playSound(ModSounds.TURRET_LOCK.get(), 1.0F, 1.0F);
+                        this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
+                                ModSounds.TURRET_LOCK.get(), SoundSource.BLOCKS, 1.5F, 1.0F);
                     }
                     this.lockSoundCooldown = 40;
                 }
@@ -330,9 +332,10 @@ public class TurretLightEntity extends Monster implements GeoEntity, RangedAttac
         this.setShooting(true);
         this.shootAnimTimer = 0;
 
-        // Воспроизведение звука
+        // Воспроизведение звука (3D-затухание до 24 блоков)
         if (ModSounds.TURRET_FIRE.isPresent()) {
-            this.playSound(ModSounds.TURRET_FIRE.get(), 1.0F, 1.0F);
+            this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
+                    ModSounds.TURRET_FIRE.get(), SoundSource.BLOCKS, 1.5F, 0.95F + this.random.nextFloat() * 0.1F);
         }
 
         // Создание пули (сервер)

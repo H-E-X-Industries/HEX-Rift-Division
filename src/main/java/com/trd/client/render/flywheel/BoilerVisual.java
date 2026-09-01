@@ -84,6 +84,7 @@ public class BoilerVisual extends AbstractBlockEntityVisual<BoilerBlockEntity> i
 
     @Override
     protected void _delete() {
+        com.trd.client.sound.BoilerSoundHandler.stop(pos);
         model.delete();
     }
 
