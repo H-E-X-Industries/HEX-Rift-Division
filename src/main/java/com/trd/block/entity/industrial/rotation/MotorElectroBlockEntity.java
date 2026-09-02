@@ -42,6 +42,9 @@ public class MotorElectroBlockEntity extends KineticNodeBlockEntity implements I
     private int targetRpm = MAX_RPM;
     private boolean reversed = false;
     private boolean hasEnergy = false;
+    private int powerDeficitTicks = 0;
+    private static final int MAX_DEFICIT_TICKS = 10; // 0.5 сек защиты от микропросадок сети
+    private int startSoundCooldown = 0;
 
     /**
      * Флаг фронта редстоун-сигнала.
@@ -208,23 +211,33 @@ public class MotorElectroBlockEntity extends KineticNodeBlockEntity implements I
     private void serverTick(ServerLevel serverLevel) {
         int consumption = getConsumptionPerTick();
 
+        if (startSoundCooldown > 0) {
+            startSoundCooldown--;
+        }
+
         if (energyStored >= consumption) {
             energyStored -= consumption;
+            powerDeficitTicks = 0;
             if (!hasEnergy) {
                 hasEnergy = true;
                 this.speed = 0;
                 this.lastSyncedSpeed = 0;
                 requestKineticRecalculation();
-                serverLevel.playSound(null, worldPosition.getX() + 0.5, worldPosition.getY() + 0.5, worldPosition.getZ() + 0.5,
-                        ModSounds.MOTOR_ELECTRO_START.get(), SoundSource.BLOCKS, 1.0f, 1.0f);
+                if (startSoundCooldown == 0) {
+                    serverLevel.playSound(null, worldPosition.getX() + 0.5, worldPosition.getY() + 0.5, worldPosition.getZ() + 0.5,
+                            ModSounds.MOTOR_ELECTRO_START.get(), SoundSource.BLOCKS, 1.0f, 1.0f);
+                    startSoundCooldown = 60; // 3 секунды защита от повторного срабатывания звука старта
+                }
             }
         } else {
-            energyStored = 0;
-            if (hasEnergy) {
-                hasEnergy = false;
-                this.speed = 0;
-                this.lastSyncedSpeed = 0;
-                requestKineticRecalculation();
+            powerDeficitTicks++;
+            if (powerDeficitTicks >= MAX_DEFICIT_TICKS) {
+                if (hasEnergy) {
+                    hasEnergy = false;
+                    this.speed = 0;
+                    this.lastSyncedSpeed = 0;
+                    requestKineticRecalculation();
+                }
             }
         }
 

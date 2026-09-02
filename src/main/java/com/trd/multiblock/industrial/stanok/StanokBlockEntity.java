@@ -28,6 +28,7 @@ import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.server.level.ServerLevel;
 import com.trd.sound.ModSounds;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,7 +77,7 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
     @Override
     public long getConsumedTorque() {
         StanokRecipe recipe = getCurrentRecipe();
-        if (recipe == null || !hasCarriage()) return 0L;
+        if (recipe == null || !hasCarriage() || !isCrafting) return 0L;
         return recipe.getConsumedTorque();
     }
 
@@ -273,6 +274,11 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
         setChanged();
         if (level != null && !level.isClientSide) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+            if (level instanceof ServerLevel sl) {
+                com.trd.api.rotation.KineticNetwork net =
+                        KineticNetworkManager.get(sl).getNetworkFor(worldPosition);
+                if (net != null) net.requestRecalculation();
+            }
         }
     }
 
@@ -367,6 +373,9 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
         if (crafting != be.isCrafting) {
             be.isCrafting = crafting;
             changed = true;
+            if (net != null) {
+                net.requestRecalculation();
+            }
         }
 
         // Обработка крафта

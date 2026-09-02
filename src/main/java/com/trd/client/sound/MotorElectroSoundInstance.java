@@ -22,6 +22,8 @@ public class MotorElectroSoundInstance extends AbstractTickableSoundInstance {
         this.pitch = 1.0f;
     }
 
+    private int stopDelay = 0;
+
     @Override
     public void tick() {
         if (this.motor.isRemoved() || this.motor.getLevel() == null) {
@@ -30,9 +32,13 @@ public class MotorElectroSoundInstance extends AbstractTickableSoundInstance {
         }
 
         if (!this.motor.isRunning()) {
-            this.stop();
+            stopDelay++;
+            if (stopDelay > 10) {
+                this.stop();
+            }
             return;
         }
+        stopDelay = 0;
     }
 
     public void stopSound() {
