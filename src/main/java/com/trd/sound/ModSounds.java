@@ -37,6 +37,11 @@ public class ModSounds {
     public static final RegistryObject<SoundEvent> MUKE_EXPLOSION = registerSoundEvents("mukeexplosion");
     public static final RegistryObject<SoundEvent> BOUNCE_RANDOM = registerSoundEvents("item.bounce_random");
     public static final RegistryObject<SoundEvent> BOILER = registerSoundEvents("boiler");
+    public static final RegistryObject<SoundEvent> STANOK_PRESS = registerSoundEvents("stanok_press");
+    public static final RegistryObject<SoundEvent> STANOK_WIRE = registerSoundEvents("stanok_wire");
+    public static final RegistryObject<SoundEvent> STANOK_FREZA = registerSoundEvents("stanok_freza");
+    public static final RegistryObject<SoundEvent> MOTOR_ELECTRO_START = registerSoundEvents("motor_electro_start");
+    public static final RegistryObject<SoundEvent> MOTOR_ELECTRO_LOOP = registerSoundEvents("motor_electro_loop");
     // Вспомогательный метод
     private static RegistryObject<SoundEvent> registerSoundEvents(String name) {
         // В 1.20.1 используем обычный конструктор ResourceLocation

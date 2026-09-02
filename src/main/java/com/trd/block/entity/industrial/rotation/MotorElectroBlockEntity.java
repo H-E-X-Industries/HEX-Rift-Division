@@ -22,6 +22,8 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.phys.AABB;
+import com.trd.sound.ModSounds;
+import net.minecraft.sounds.SoundSource;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 import org.jetbrains.annotations.NotNull;
@@ -166,6 +168,8 @@ public class MotorElectroBlockEntity extends KineticNodeBlockEntity implements I
 
     public boolean isReversed() { return reversed; }
 
+    public boolean isRunning() { return hasEnergy; }
+
     /**
      * Переключает направление вращения.
      * Вызывается только при редстоун-сигнале из MotorElectroBlock.neighborChanged.
@@ -186,6 +190,13 @@ public class MotorElectroBlockEntity extends KineticNodeBlockEntity implements I
 
     // ===================== TICK =====================
 
+    public static void clientTick(Level level, BlockPos pos, BlockState state, MotorElectroBlockEntity be) {
+        if (level.isClientSide) {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT,
+                    () -> () -> com.trd.client.sound.MotorElectroSoundHandler.tick(be));
+        }
+    }
+
     public static <T extends BlockEntity> BlockEntityTicker<T> createTicker() {
         return (level, pos, state, be) -> {
             if (!level.isClientSide && be instanceof MotorElectroBlockEntity motor) {
@@ -204,6 +215,8 @@ public class MotorElectroBlockEntity extends KineticNodeBlockEntity implements I
                 this.speed = 0;
                 this.lastSyncedSpeed = 0;
                 requestKineticRecalculation();
+                serverLevel.playSound(null, worldPosition.getX() + 0.5, worldPosition.getY() + 0.5, worldPosition.getZ() + 0.5,
+                        ModSounds.MOTOR_ELECTRO_START.get(), SoundSource.BLOCKS, 1.0f, 1.0f);
             }
         } else {
             energyStored = 0;
@@ -309,6 +322,24 @@ public class MotorElectroBlockEntity extends KineticNodeBlockEntity implements I
                 this.lastSyncedSpeed = this.speed;
                 net.requestRecalculation();
             }
+        }
+    }
+
+    @Override
+    public void setRemoved() {
+        super.setRemoved();
+        if (level != null && level.isClientSide) {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT,
+                    () -> () -> com.trd.client.sound.MotorElectroSoundHandler.stop(worldPosition));
+        }
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        super.onChunkUnloaded();
+        if (level != null && level.isClientSide) {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT,
+                    () -> () -> com.trd.client.sound.MotorElectroSoundHandler.stop(worldPosition));
         }
     }
 
