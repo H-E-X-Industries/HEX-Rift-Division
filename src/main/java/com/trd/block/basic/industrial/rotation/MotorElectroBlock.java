@@ -98,9 +98,9 @@ public class MotorElectroBlock extends BaseEntityBlock {
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(
             Level level, BlockState state, BlockEntityType<T> beType) {
-        if (level.isClientSide) return null;
-        return createTickerHelper(beType, ModBlockEntities.MOTOR_ELECTRO_BE.get(),
-                MotorElectroBlockEntity.createTicker());
+        return level.isClientSide
+                ? createTickerHelper(beType, ModBlockEntities.MOTOR_ELECTRO_BE.get(), MotorElectroBlockEntity::clientTick)
+                : createTickerHelper(beType, ModBlockEntities.MOTOR_ELECTRO_BE.get(), MotorElectroBlockEntity.createTicker());
     }
 
     // ===================== PLACE / REMOVE =====================

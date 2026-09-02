@@ -146,5 +146,66 @@
     "category": "player",
     "subtitle": "trd.subtitle.heavy_gunclick",
     "sounds": [ "trd:reload/heavy_gunclick" ]
+  },
+  "stanok_press": {
+    "category": "block",
+    "subtitle": "sounds.trd.stanok_press",
+    "sounds": [
+      {
+        "name": "trd:press",
+        "pitch": 0.95,
+        "attenuation_distance": 16
+      },
+      {
+        "name": "trd:press",
+        "pitch": 1.0,
+        "attenuation_distance": 16
+      },
+      {
+        "name": "trd:press",
+        "pitch": 1.05,
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "stanok_wire": {
+    "category": "block",
+    "subtitle": "sounds.trd.stanok_wire",
+    "sounds": [
+      {
+        "name": "trd:wire_carriage",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "stanok_freza": {
+    "category": "block",
+    "subtitle": "sounds.trd.stanok_freza",
+    "sounds": [
+      {
+        "name": "trd:frezer2",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "motor_electro_start": {
+    "category": "block",
+    "subtitle": "sounds.trd.motor_electro_start",
+    "sounds": [
+      {
+        "name": "trd:motor_electro_start",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "motor_electro_loop": {
+    "category": "block",
+    "subtitle": "sounds.trd.motor_electro_loop",
+    "sounds": [
+      {
+        "name": "trd:motor_electro_loop",
+        "attenuation_distance": 16
+      }
+    ]
   }
 }

@@ -27,6 +27,9 @@ import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.server.level.ServerLevel;
+import com.trd.sound.ModSounds;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,7 +77,7 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
     @Override
     public long getConsumedTorque() {
         StanokRecipe recipe = getCurrentRecipe();
-        if (recipe == null || !hasCarriage()) return 0L;
+        if (recipe == null || !hasCarriage() || !isCrafting) return 0L;
         return recipe.getConsumedTorque();
     }
 
@@ -170,6 +173,9 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
      */
     private int pressOperationCount = 0;
 
+    /** Флаг активности процесса крафта (для звуков и анимаций) */
+    private boolean isCrafting = false;
+
     // ────── ContainerData ──────
     private final ContainerData data = new ContainerData() {
         @Override
@@ -252,6 +258,9 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
 
     public ItemStackHandler getInventory() { return inventory; }
     public ContainerData getData()         { return data; }
+    public boolean isCrafting()            { return isCrafting; }
+    public int getProgress()               { return progress; }
+    public int getMaxProgress()            { return maxProgress; }
 
     @Nullable
     public ResourceLocation getCurrentRecipeId() { return currentRecipeId; }
@@ -265,6 +274,11 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
         setChanged();
         if (level != null && !level.isClientSide) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+            if (level instanceof ServerLevel sl) {
+                com.trd.api.rotation.KineticNetwork net =
+                        KineticNetworkManager.get(sl).getNetworkFor(worldPosition);
+                if (net != null) net.requestRecalculation();
+            }
         }
     }
 
@@ -291,6 +305,15 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
     private int getCarriageTypeOrdinal() {
         CarriageType t = getCurrentCarriageType();
         return t != null ? t.ordinal() : -1;
+    }
+
+    // ────── Клиентский тик (звуки и визуальные эффекты) ──────
+
+    public static void clientTick(Level level, BlockPos pos, BlockState state, StanokBlockEntity be) {
+        if (level.isClientSide) {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT,
+                    () -> () -> com.trd.client.sound.StanokSoundHandler.tick(be));
+        }
     }
 
     // ────── Серверный тик ──────
@@ -346,8 +369,28 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
             changed = true;
         }
 
+        boolean crafting = be.canProcess();
+        if (crafting != be.isCrafting) {
+            be.isCrafting = crafting;
+            changed = true;
+            if (net != null) {
+                net.requestRecalculation();
+            }
+        }
+
         // Обработка крафта
         if (be.canProcess()) {
+            // Звук пресса: одиночный удар на половине такта операции (где слиток сменяется пластиной)
+            if (carriage == CarriageType.PRESS && be.progress == be.maxProgress / 2) {
+                level.playSound(null, pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5,
+                        ModSounds.STANOK_PRESS.get(), SoundSource.BLOCKS, 1.0f, 1.0f);
+            }
+            // Звук фрезы: цикл в 4 секунды (80 тиков) во время процесса крафта
+            if (carriage == CarriageType.FREZA && be.progress % 80 == 0) {
+                level.playSound(null, pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5,
+                        ModSounds.STANOK_FREZA.get(), SoundSource.BLOCKS, 1.0f, 1.0f);
+            }
+
             be.progress++;
             if (be.progress >= be.maxProgress) {
                 be.finishProcessing();
@@ -516,6 +559,7 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
         tag.putInt("MaxProgress", maxProgress);
         tag.putInt("SpeedStatus", speedStatus);
         tag.putInt("PressOpCount", pressOperationCount);
+        tag.putBoolean("IsCrafting", isCrafting);
         tag.putLong("NetTorque", this.networkTorque);
         tag.putLong("NetConsumedTorque", this.networkConsumedTorque);
         if (currentRecipeId != null) tag.putString("RecipeId", currentRecipeId.toString());
@@ -529,6 +573,7 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
         maxProgress        = tag.getInt("MaxProgress");
         speedStatus        = tag.getInt("SpeedStatus");
         pressOperationCount = tag.getInt("PressOpCount");
+        isCrafting         = tag.getBoolean("IsCrafting");
         this.networkTorque = tag.getLong("NetTorque");
         this.networkConsumedTorque = tag.getLong("NetConsumedTorque");
         if (tag.contains("RecipeId")) {
@@ -579,6 +624,24 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
         super.invalidateCaps();
         itemHandlerOpt.invalidate();
         cargoPortHandlerOpt.invalidate();
+    }
+
+    @Override
+    public void setRemoved() {
+        super.setRemoved();
+        if (level != null && level.isClientSide) {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT,
+                    () -> () -> com.trd.client.sound.StanokSoundHandler.stop(worldPosition));
+        }
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        super.onChunkUnloaded();
+        if (level != null && level.isClientSide) {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT,
+                    () -> () -> com.trd.client.sound.StanokSoundHandler.stop(worldPosition));
+        }
     }
 
     // ────── MenuProvider ──────
