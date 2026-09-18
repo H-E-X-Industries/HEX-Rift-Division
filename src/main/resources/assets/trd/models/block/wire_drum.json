@@ -1,0 +1,16 @@
+﻿{
+  "loader": "forge:composite",
+  "textures": {
+    "particle": "trd:block/wire_drum"
+  },
+  "children": {
+    "main": {
+      "loader": "forge:obj",
+      "model": "trd:models/block/wire_drum.obj",
+      "flip_v": true,
+      "textures": {
+        "default": "trd:block/wire_drum"
+      }
+    }
+  }
+}

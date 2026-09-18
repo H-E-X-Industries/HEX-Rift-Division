@@ -188,3 +188,8 @@ idea {
         downloadJavadoc = true
     }
 }
+
+tasks.named('processResources', ProcessResources).configure {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
