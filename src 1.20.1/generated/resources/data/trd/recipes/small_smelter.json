@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": {
+      "item": "trd:firebrick"
+    },
+    "@": {
+      "item": "trd:reinforcedbrick"
+    },
+    "I": {
+      "item": "trd:dolomite_smes"
+    }
+  },
+  "pattern": [
+    "###",
+    "#I#",
+    "@@@"
+  ],
+  "result": {
+    "item": "trd:small_smelter"
+  },
+  "show_notification": true
+}

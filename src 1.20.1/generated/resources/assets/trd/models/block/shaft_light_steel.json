@@ -1,0 +1,9 @@
+{
+  "flip_v": true,
+  "loader": "forge:obj",
+  "model": "trd:models/block/shaft_light.obj",
+  "textures": {
+    "particle": "trd:block/shaft_light_steel",
+    "shaft_texture": "trd:block/shaft_light_steel"
+  }
+}

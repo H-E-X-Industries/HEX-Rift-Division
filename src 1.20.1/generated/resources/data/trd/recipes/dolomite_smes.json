@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "trd:dolomite_powder"
+    },
+    {
+      "item": "trd:dolomite_powder"
+    },
+    {
+      "item": "trd:dolomite_powder"
+    },
+    {
+      "item": "minecraft:clay_ball"
+    }
+  ],
+  "result": {
+    "count": 4,
+    "item": "trd:dolomite_smes"
+  }
+}

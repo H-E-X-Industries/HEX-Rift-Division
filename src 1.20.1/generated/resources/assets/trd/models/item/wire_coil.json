@@ -1,0 +1,14 @@
+{
+  "parent": "minecraft:item/generated",
+  "overrides": [
+    {
+      "model": "trd:item/wire_coil_filled",
+      "predicate": {
+        "trd:wires": 1.0
+      }
+    }
+  ],
+  "textures": {
+    "layer0": "trd:item/wire_coil_empty"
+  }
+}

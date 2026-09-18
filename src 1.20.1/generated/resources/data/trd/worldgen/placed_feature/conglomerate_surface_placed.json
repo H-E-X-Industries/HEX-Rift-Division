@@ -1,0 +1,8 @@
+{
+  "feature": "trd:conglomerate_surface",
+  "placement": [
+    {
+      "type": "minecraft:biome"
+    }
+  ]
+}

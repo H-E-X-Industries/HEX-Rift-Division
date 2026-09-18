@@ -1,0 +1,6 @@
+{
+  "type": "forge:add_features",
+  "biomes": "#minecraft:is_overworld",
+  "features": "trd:ore_fluorite_ore_deepslate_placed",
+  "step": "underground_ores"
+}

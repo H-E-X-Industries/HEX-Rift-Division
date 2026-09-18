@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/inner_stairs",
+  "textures": {
+    "bottom": "trd:block/concrete_hazard_old",
+    "side": "trd:block/concrete_hazard_old",
+    "top": "trd:block/concrete_hazard_old"
+  }
+}

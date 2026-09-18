@@ -1,0 +1,8 @@
+{
+  "feature": "trd:special_ore_bauxite",
+  "placement": [
+    {
+      "type": "minecraft:biome"
+    }
+  ]
+}

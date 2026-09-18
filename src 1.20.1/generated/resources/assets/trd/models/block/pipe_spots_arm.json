@@ -1,0 +1,9 @@
+{
+  "flip_v": true,
+  "loader": "forge:obj",
+  "model": "trd:models/block/base_pipe.obj",
+  "textures": {
+    "particle": "trd:block/pipe_spots_pipe",
+    "pipe_texture": "trd:block/pipe_spots_pipe"
+  }
+}

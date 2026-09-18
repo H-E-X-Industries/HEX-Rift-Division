@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "trd:block/concrete_hazard_old_slab"
+    },
+    "type=double": {
+      "model": "trd:block/concrete_hazard_old"
+    },
+    "type=top": {
+      "model": "trd:block/concrete_hazard_old_slab_top"
+    }
+  }
+}

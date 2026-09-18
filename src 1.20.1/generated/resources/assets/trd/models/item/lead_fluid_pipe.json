@@ -1,0 +1,10 @@
+{
+  "parent": "trd:item/pipe_template",
+  "flip_v": true,
+  "loader": "forge:obj",
+  "model": "trd:models/item/base_pipe_inventory.obj",
+  "textures": {
+    "particle": "trd:block/lead_pipe",
+    "pipe_texture": "trd:block/lead_pipe"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": {
+      "item": "minecraft:smooth_stone_slab"
+    },
+    "@": {
+      "item": "minecraft:smooth_stone"
+    },
+    "I": {
+      "item": "minecraft:stick"
+    }
+  },
+  "pattern": [
+    "  I",
+    "###",
+    "@@@"
+  ],
+  "result": {
+    "item": "trd:jernova"
+  },
+  "show_notification": true
+}

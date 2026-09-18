@@ -1,0 +1,6 @@
+{
+  "type": "forge:add_features",
+  "biomes": "#minecraft:is_overworld",
+  "features": "trd:ore_sulfur_ore_placed",
+  "step": "underground_ores"
+}

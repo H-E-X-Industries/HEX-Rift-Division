@@ -1,0 +1,8 @@
+{
+  "feature": "trd:conglomerate_deep",
+  "placement": [
+    {
+      "type": "minecraft:biome"
+    }
+  ]
+}

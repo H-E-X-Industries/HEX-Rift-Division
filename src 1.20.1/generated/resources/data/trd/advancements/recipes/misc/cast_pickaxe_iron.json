@@ -1,0 +1,35 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_cast_pickaxe_iron_base": {
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "trd:cast_pickaxe_iron_base"
+            ]
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "trd:cast_pickaxe_iron"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "requirements": [
+    [
+      "has_cast_pickaxe_iron_base",
+      "has_the_recipe"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "trd:cast_pickaxe_iron"
+    ]
+  },
+  "sends_telemetry_event": false
+}

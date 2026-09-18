@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "trd:block/smelter_small_bottom",
+    "east": "trd:block/smelter_small_side",
+    "north": "trd:block/smelter_small_back",
+    "particle": "trd:block/smelter_small_side",
+    "south": "trd:block/smelter_small_side",
+    "up": "trd:block/smelter_small_top",
+    "west": "trd:block/smelter_small_side"
+  }
+}

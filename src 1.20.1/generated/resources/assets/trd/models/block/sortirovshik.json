@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "trd:block/sortirovshik_magenta",
+    "east": "trd:block/sortirovshik_cyan",
+    "north": "trd:block/sortirovshik_orange",
+    "particle": "trd:block/sortirovshik_red",
+    "south": "trd:block/sortirovshik_yellow",
+    "up": "trd:block/sortirovshik_red",
+    "west": "trd:block/sortirovshik_green"
+  }
+}

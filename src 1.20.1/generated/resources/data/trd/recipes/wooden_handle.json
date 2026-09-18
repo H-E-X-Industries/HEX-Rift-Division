@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "@": {
+      "tag": "minecraft:logs"
+    }
+  },
+  "pattern": [
+    "  @",
+    " @ ",
+    "@  "
+  ],
+  "result": {
+    "item": "trd:wooden_handle"
+  },
+  "show_notification": true
+}

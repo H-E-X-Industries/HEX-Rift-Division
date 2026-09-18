@@ -1,0 +1,9 @@
+{
+  "flip_v": true,
+  "loader": "forge:obj",
+  "model": "trd:models/block/shaft_heavy.obj",
+  "textures": {
+    "particle": "trd:block/shaft_heavy_titanium",
+    "shaft_texture": "trd:block/shaft_heavy_titanium"
+  }
+}

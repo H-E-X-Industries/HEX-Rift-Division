@@ -1,0 +1,37 @@
+{
+  "type": "trd:special_vein",
+  "config": {
+    "density": 0.7,
+    "max_size": 25,
+    "max_stretch": 3.0,
+    "max_y": 150,
+    "min_size": 15,
+    "min_y": -64,
+    "rarity": 60,
+    "respect_air": true,
+    "state": {
+      "Name": "trd:bauxite"
+    },
+    "targets": [
+      {
+        "state": {
+          "Name": "trd:bauxite"
+        },
+        "target": {
+          "predicate_type": "minecraft:tag_match",
+          "tag": "minecraft:stone_ore_replaceables"
+        }
+      },
+      {
+        "state": {
+          "Name": "trd:bauxite"
+        },
+        "target": {
+          "predicate_type": "minecraft:tag_match",
+          "tag": "minecraft:deepslate_ore_replaceables"
+        }
+      }
+    ],
+    "vein_id": "special_ore_bauxite"
+  }
+}
