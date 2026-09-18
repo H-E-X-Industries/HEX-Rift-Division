@@ -1,9 +1,0 @@
-{
-  "shading": true,
-  "loader": "forge:obj",
-  "model": "trd:models/block/connecting_rod.obj",
-  "flip_v": true,
-  "textures": {
-    "default": "trd:block/connecting_rod"
-  }
-}

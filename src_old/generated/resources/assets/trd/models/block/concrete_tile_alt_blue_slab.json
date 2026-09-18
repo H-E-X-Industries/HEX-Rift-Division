@@ -1,8 +1,0 @@
-{
-  "parent": "minecraft:block/slab",
-  "textures": {
-    "bottom": "trd:block/concrete_tile_alt_blue",
-    "side": "trd:block/concrete_tile_alt_blue",
-    "top": "trd:block/concrete_tile_alt_blue"
-  }
-}

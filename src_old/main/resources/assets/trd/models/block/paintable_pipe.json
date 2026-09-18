@@ -1,7 +1,0 @@
-{
-  "parent": "block/cube_all",
-  "textures": {
-    "all": "trd:block/paintable_pipe",
-    "particle": "trd:block/paintable_pipe"
-  }
-}
