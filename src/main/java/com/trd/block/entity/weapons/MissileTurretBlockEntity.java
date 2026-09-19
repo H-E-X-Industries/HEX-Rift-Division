@@ -388,8 +388,8 @@ public class MissileTurretBlockEntity extends EnergyNodeBlockEntity {
             return;
         }
 
-        level.playSound(null, pos, ModSounds.MISSILE_LAUNCH2.get(),
-                SoundSource.BLOCKS, 0.5F, 0.8F + level.random.nextFloat() * 0.4F);
+        level.playSound(null, pos.getX() + 0.5, pos.getY() + LAUNCH_HEIGHT, pos.getZ() + 0.5,
+                ModSounds.MISSILE_LAUNCH2.get(), SoundSource.BLOCKS, 1.5F, 0.8F + level.random.nextFloat() * 0.4F);
 
         Vec3 basePos = Vec3.atCenterOf(pos).add(0, LAUNCH_HEIGHT, 0);
 

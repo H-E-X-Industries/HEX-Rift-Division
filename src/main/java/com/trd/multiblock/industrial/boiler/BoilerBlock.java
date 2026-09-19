@@ -157,6 +157,8 @@ public class BoilerBlock extends BaseEntityBlock implements IMultiblockControlle
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return level.isClientSide ? null : createTickerHelper(type, ModBlockEntities.BOILER_BE.get(), BoilerBlockEntity::serverTick);
+        return level.isClientSide
+                ? createTickerHelper(type, ModBlockEntities.BOILER_BE.get(), BoilerBlockEntity::clientTick)
+                : createTickerHelper(type, ModBlockEntities.BOILER_BE.get(), BoilerBlockEntity::serverTick);
     }
 }

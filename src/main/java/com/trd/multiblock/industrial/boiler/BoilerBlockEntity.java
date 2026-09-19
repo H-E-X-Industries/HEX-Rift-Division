@@ -154,6 +154,13 @@ public class BoilerBlockEntity extends BlockEntity {
         }
     }
 
+    public static void clientTick(Level level, BlockPos pos, BlockState state, BoilerBlockEntity be) {
+        if (level.isClientSide) {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT,
+                    () -> () -> com.trd.client.sound.BoilerSoundHandler.tick(be));
+        }
+    }
+
     public @NotNull <T> LazyOptional<T> getCapabilityForPart(@NotNull Capability<T> cap, @Nullable Direction side, PartRole role) {
         if (cap == ForgeCapabilities.FLUID_HANDLER) {
             if (role == PartRole.FLUID_INPUT) {

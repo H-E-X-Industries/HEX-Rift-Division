@@ -22,6 +22,8 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.phys.AABB;
+import com.trd.sound.ModSounds;
+import net.minecraft.sounds.SoundSource;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +42,9 @@ public class MotorElectroBlockEntity extends KineticNodeBlockEntity implements I
     private int targetRpm = MAX_RPM;
     private boolean reversed = false;
     private boolean hasEnergy = false;
+    private int powerDeficitTicks = 0;
+    private static final int MAX_DEFICIT_TICKS = 10; // 0.5 сек защиты от микропросадок сети
+    private int startSoundCooldown = 0;
 
     /**
      * Флаг фронта редстоун-сигнала.
@@ -166,6 +171,8 @@ public class MotorElectroBlockEntity extends KineticNodeBlockEntity implements I
 
     public boolean isReversed() { return reversed; }
 
+    public boolean isRunning() { return hasEnergy; }
+
     /**
      * Переключает направление вращения.
      * Вызывается только при редстоун-сигнале из MotorElectroBlock.neighborChanged.
@@ -186,6 +193,13 @@ public class MotorElectroBlockEntity extends KineticNodeBlockEntity implements I
 
     // ===================== TICK =====================
 
+    public static void clientTick(Level level, BlockPos pos, BlockState state, MotorElectroBlockEntity be) {
+        if (level.isClientSide) {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT,
+                    () -> () -> com.trd.client.sound.MotorElectroSoundHandler.tick(be));
+        }
+    }
+
     public static <T extends BlockEntity> BlockEntityTicker<T> createTicker() {
         return (level, pos, state, be) -> {
             if (!level.isClientSide && be instanceof MotorElectroBlockEntity motor) {
@@ -197,21 +211,33 @@ public class MotorElectroBlockEntity extends KineticNodeBlockEntity implements I
     private void serverTick(ServerLevel serverLevel) {
         int consumption = getConsumptionPerTick();
 
+        if (startSoundCooldown > 0) {
+            startSoundCooldown--;
+        }
+
         if (energyStored >= consumption) {
             energyStored -= consumption;
+            powerDeficitTicks = 0;
             if (!hasEnergy) {
                 hasEnergy = true;
                 this.speed = 0;
                 this.lastSyncedSpeed = 0;
                 requestKineticRecalculation();
+                if (startSoundCooldown == 0) {
+                    serverLevel.playSound(null, worldPosition.getX() + 0.5, worldPosition.getY() + 0.5, worldPosition.getZ() + 0.5,
+                            ModSounds.MOTOR_ELECTRO_START.get(), SoundSource.BLOCKS, 1.0f, 1.0f);
+                    startSoundCooldown = 60; // 3 секунды защита от повторного срабатывания звука старта
+                }
             }
         } else {
-            energyStored = 0;
-            if (hasEnergy) {
-                hasEnergy = false;
-                this.speed = 0;
-                this.lastSyncedSpeed = 0;
-                requestKineticRecalculation();
+            powerDeficitTicks++;
+            if (powerDeficitTicks >= MAX_DEFICIT_TICKS) {
+                if (hasEnergy) {
+                    hasEnergy = false;
+                    this.speed = 0;
+                    this.lastSyncedSpeed = 0;
+                    requestKineticRecalculation();
+                }
             }
         }
 
@@ -309,6 +335,24 @@ public class MotorElectroBlockEntity extends KineticNodeBlockEntity implements I
                 this.lastSyncedSpeed = this.speed;
                 net.requestRecalculation();
             }
+        }
+    }
+
+    @Override
+    public void setRemoved() {
+        super.setRemoved();
+        if (level != null && level.isClientSide) {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT,
+                    () -> () -> com.trd.client.sound.MotorElectroSoundHandler.stop(worldPosition));
+        }
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        super.onChunkUnloaded();
+        if (level != null && level.isClientSide) {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT,
+                    () -> () -> com.trd.client.sound.MotorElectroSoundHandler.stop(worldPosition));
         }
     }
 

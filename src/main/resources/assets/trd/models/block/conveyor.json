@@ -4,10 +4,9 @@
 	"textures": {
 		"3": "trd:block/conveyor_top",
 		"4": "trd:block/conveyor_north",
-		"5": "trd:block/conveyor_down",
-		"particle": "trd:block/conveyor",
 		"side_texture": "trd:block/conveyor_side",
-		"wall_texture": "trd:block/conveyor_wall"
+		"wall_texture": "trd:block/conveyor_wall",
+		"particle": "trd:block/conveyor"
 	},
 	"elements": [
 		{
@@ -19,7 +18,7 @@
 				"south": {"uv": [0, 0, 16, 8], "texture": "#side_texture"},
 				"west": {"uv": [16, 0, 0, 8], "texture": "#wall_texture"},
 				"up": {"uv": [0, 0, 16, 16], "texture": "#3"},
-				"down": {"uv": [0, 0, 16, 16], "texture": "#5"}
+				"down": {"uv": [0, 0, 16, 16], "texture": "#3"}
 			}
 		}
 	],

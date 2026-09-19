@@ -148,6 +148,7 @@ public class MotorVisual extends AbstractBlockEntityVisual<MotorElectroBlockEnti
 
     @Override
     protected void _delete() {
+        com.trd.client.sound.MotorElectroSoundHandler.stop(pos);
         base.delete();
         shaft.delete();
     }

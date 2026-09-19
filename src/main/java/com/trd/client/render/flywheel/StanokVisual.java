@@ -627,6 +627,7 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
     // ─── Удаление ───
     @Override
     protected void _delete() {
+        com.trd.client.sound.StanokSoundHandler.stop(pos);
         deleteIfNotNull(base, shaftWest, shaftEast,
                 pressCarriage, pressHead,
                 wireCarriage, wireDrumLeft, wireDrumRight,
