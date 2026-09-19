@@ -12,6 +12,7 @@ import com.trd.block.basic.deco.BeamCollisionBlock;
 import com.trd.block.basic.deco.BarbedWireBlock;
 import com.trd.block.basic.deco.LampBlock;
 import com.trd.block.basic.deco.SteelPropsBlock;
+import com.trd.block.basic.deco.WireFenceBlock;
 import com.trd.block.basic.industrial.*;
 import com.trd.block.basic.industrial.chemistry.ChemicalPlantPortBlock;
 import com.trd.block.basic.industrial.chemistry.ChemicalPlantReactionChamberBlock;
@@ -448,6 +449,10 @@ public class ModBlocks {
     public static final RegistryObject<Block> BARBED_WIRE = registerBlock("barbed_wire",
             () -> new BarbedWireBlock(BlockBehaviour.Properties.of()
                     .strength(2F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion().noCollission()));
+
+    public static final RegistryObject<Block> WIRE_FENCE = registerBlock("wire_fence",
+            () -> new WireFenceBlock(BlockBehaviour.Properties.of()
+                    .strength(2F, 6.0F).sound(SoundType.METAL).requiresCorrectToolForDrops().noOcclusion().forceSolidOn()));
 
 // ═══════════════════════════════════════════════════════
 // ДЕРЕВО

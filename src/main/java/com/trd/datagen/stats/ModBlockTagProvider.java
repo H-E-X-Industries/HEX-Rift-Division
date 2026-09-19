@@ -81,5 +81,18 @@ public class ModBlockTagProvider extends BlockTagsProvider {
         this.tag(BlockTags.MINEABLE_WITH_HOE)
                 .add(ModBlocks.SEQUOIA_LEAVES.get());
 
+        // --- ПРОВОЛОЧНЫЙ ЗАБОР ---
+        // Забор соединяется со всеми заборами (vanilla + свои)
+        this.tag(BlockTags.FENCES)
+                .add(ModBlocks.WIRE_FENCE.get());
+
+        // К каким блокам проводной забор «пускает» сетку (помимо самих заборов)
+        net.minecraft.tags.TagKey<net.minecraft.world.level.block.Block> wireFenceConnections =
+                net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.BLOCK,
+                        new net.minecraft.resources.ResourceLocation(MainRegistry.MOD_ID, "wire_fence_connections"));
+        this.tag(wireFenceConnections)
+                .add(ModBlocks.WIRE_FENCE.get())
+                .add(ModBlocks.STEEL_PROPS.get());
+
     }
 }

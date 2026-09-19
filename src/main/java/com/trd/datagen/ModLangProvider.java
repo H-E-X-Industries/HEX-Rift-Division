@@ -747,6 +747,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.BEAM_BLOCK.get(), "Beam Block");
         add(ModBlocks.STEEL_PROPS.get(), "Steel Props");
         add(ModBlocks.BARBED_WIRE.get(), "Barbed Wire");
+        add(ModBlocks.WIRE_FENCE.get(), "Wire Fence");
         add(ModBlocks.DIRT_ROUGH.get(), "Rough Dirt");
         add(ModBlocks.ROUND_LAMP.get(), "Round Lamp");
         add(ModBlocks.MORY_BLOCK.get(), "Mory Block");
@@ -2042,6 +2043,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.BEAM_BLOCK.get(), "Балка");
         add(ModBlocks.STEEL_PROPS.get(), "Стальные подпорки");
         add(ModBlocks.BARBED_WIRE.get(), "Колючая проволока");
+        add(ModBlocks.WIRE_FENCE.get(), "Проволочный забор");
         add(ModBlocks.FREAKY_ALIEN_BLOCK.get(), "Чокнутый инопланетный блок");
         add(ModBlocks.DECO_STEEL.get(), "Декоративный стальной блок");
         add(ModBlocks.DECO_STEEL_DARK.get(), "Тёмный декоративный стальной блок");
