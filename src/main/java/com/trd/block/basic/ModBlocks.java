@@ -12,6 +12,7 @@ import com.trd.block.basic.deco.BeamCollisionBlock;
 import com.trd.block.basic.deco.BarbedWireBlock;
 import com.trd.block.basic.deco.LampBlock;
 import com.trd.block.basic.deco.SteelPropsBlock;
+import com.trd.block.basic.deco.WireFenceAltBlock;
 import com.trd.block.basic.deco.WireFenceBlock;
 import com.trd.block.basic.industrial.*;
 import com.trd.block.basic.industrial.chemistry.ChemicalPlantPortBlock;
@@ -452,6 +453,10 @@ public class ModBlocks {
 
     public static final RegistryObject<Block> WIRE_FENCE = registerBlock("wire_fence",
             () -> new WireFenceBlock(BlockBehaviour.Properties.of()
+                    .strength(2F, 6.0F).sound(SoundType.METAL).requiresCorrectToolForDrops().noOcclusion().forceSolidOn()));
+
+    public static final RegistryObject<Block> WIRE_FENCE_ALT = registerBlock("wire_fence_alt",
+            () -> new WireFenceAltBlock(BlockBehaviour.Properties.of()
                     .strength(2F, 6.0F).sound(SoundType.METAL).requiresCorrectToolForDrops().noOcclusion().forceSolidOn()));
 
 // ═══════════════════════════════════════════════════════

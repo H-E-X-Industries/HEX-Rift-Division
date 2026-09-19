@@ -6,7 +6,7 @@
         "west": "false"
       },
       "apply": {
-        "model": "trd:block/wire_fence_post"
+        "model": "trd:block/wire_fence_post_alt"
       }
     },
     {
@@ -15,7 +15,7 @@
         "east": "false"
       },
       "apply": {
-        "model": "trd:block/wire_fence_post"
+        "model": "trd:block/wire_fence_post_alt"
       }
     },
     {
@@ -24,7 +24,7 @@
         "south": "false"
       },
       "apply": {
-        "model": "trd:block/wire_fence_post"
+        "model": "trd:block/wire_fence_post_alt"
       }
     },
     {
@@ -33,7 +33,7 @@
         "north": "false"
       },
       "apply": {
-        "model": "trd:block/wire_fence_post"
+        "model": "trd:block/wire_fence_post_alt"
       }
     },
     {
@@ -44,7 +44,7 @@
         "west": "true"
       },
       "apply": {
-        "model": "trd:block/wire_fence_post"
+        "model": "trd:block/wire_fence_post_alt"
       }
     },
     {
@@ -55,7 +55,7 @@
         "west": "false"
       },
       "apply": {
-        "model": "trd:block/wire_fence_post"
+        "model": "trd:block/wire_fence_post_alt"
       }
     },
 
@@ -67,7 +67,7 @@
         "south": "false"
       },
       "apply": {
-        "model": "trd:block/wire_fence_side"
+        "model": "trd:block/wire_fence_side_alt"
       }
     },
     {
@@ -78,7 +78,7 @@
         "west": "false"
       },
       "apply": {
-        "model": "trd:block/wire_fence_side",
+        "model": "trd:block/wire_fence_side_alt",
         "y": 90
       }
     },
@@ -89,7 +89,7 @@
         "west": "false"
       },
       "apply": {
-        "model": "trd:block/wire_fence_side_half",
+        "model": "trd:block/wire_fence_side_half_alt",
         "y": 90
       }
     },
@@ -100,7 +100,7 @@
         "north": "true"
       },
       "apply": {
-        "model": "trd:block/wire_fence_side_half",
+        "model": "trd:block/wire_fence_side_half_alt",
         "y": 90
       }
     },
@@ -111,7 +111,7 @@
         "south": "true"
       },
       "apply": {
-        "model": "trd:block/wire_fence_side_half",
+        "model": "trd:block/wire_fence_side_half_alt",
         "y": 90
       }
     },
@@ -122,7 +122,7 @@
         "east": "false"
       },
       "apply": {
-        "model": "trd:block/wire_fence_side_half",
+        "model": "trd:block/wire_fence_side_half_alt",
         "y": 270
       }
     },
@@ -133,7 +133,7 @@
         "north": "true"
       },
       "apply": {
-        "model": "trd:block/wire_fence_side_half",
+        "model": "trd:block/wire_fence_side_half_alt",
         "y": 270
       }
     },
@@ -144,7 +144,7 @@
         "south": "true"
       },
       "apply": {
-        "model": "trd:block/wire_fence_side_half",
+        "model": "trd:block/wire_fence_side_half_alt",
         "y": 270
       }
     },
@@ -155,7 +155,7 @@
         "south": "false"
       },
       "apply": {
-        "model": "trd:block/wire_fence_side_half"
+        "model": "trd:block/wire_fence_side_half_alt"
       }
     },
     {
@@ -165,7 +165,7 @@
         "east": "true"
       },
       "apply": {
-        "model": "trd:block/wire_fence_side_half"
+        "model": "trd:block/wire_fence_side_half_alt"
       }
     },
     {
@@ -175,7 +175,7 @@
         "west": "true"
       },
       "apply": {
-        "model": "trd:block/wire_fence_side_half"
+        "model": "trd:block/wire_fence_side_half_alt"
       }
     },
 
@@ -185,7 +185,7 @@
         "north": "false"
       },
       "apply": {
-        "model": "trd:block/wire_fence_side_half",
+        "model": "trd:block/wire_fence_side_half_alt",
         "y": 180
       }
     },
@@ -196,7 +196,7 @@
         "east": "true"
       },
       "apply": {
-        "model": "trd:block/wire_fence_side_half",
+        "model": "trd:block/wire_fence_side_half_alt",
         "y": 180
       }
     },
@@ -207,7 +207,7 @@
         "west": "true"
       },
       "apply": {
-        "model": "trd:block/wire_fence_side_half",
+        "model": "trd:block/wire_fence_side_half_alt",
         "y": 180
       }
     }

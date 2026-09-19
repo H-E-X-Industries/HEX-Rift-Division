@@ -33,6 +33,10 @@ public class WireFenceBlock extends FenceBlock {
         super(properties);
     }
 
+    protected VoxelShape postShape() {
+        return POST;
+    }
+
     @Override
     public boolean connectsTo(BlockState state, boolean isSticky, Direction direction) {
         if (isExceptionForConnection(state)) {
@@ -42,7 +46,7 @@ public class WireFenceBlock extends FenceBlock {
             return true;
         }
         Block block = state.getBlock();
-        return block instanceof WireFenceBlock
+        return block.getClass() == WireFenceBlock.class
                 || block instanceof SteelPropsBlock
                 || state.is(CONNECTS_TO)
                 || state.canOcclude();
@@ -65,7 +69,7 @@ public class WireFenceBlock extends FenceBlock {
             return PANEL_Z;
         }
 
-        VoxelShape shape = POST;
+        VoxelShape shape = postShape();
         if (east) {
             shape = Shapes.or(shape, HALF_X_EAST);
         }

@@ -94,5 +94,13 @@ public class ModBlockTagProvider extends BlockTagsProvider {
                 .add(ModBlocks.WIRE_FENCE.get())
                 .add(ModBlocks.STEEL_PROPS.get());
 
+        // Сеточный забор — отдельное семейство: соединяется только со своим типом
+        net.minecraft.tags.TagKey<net.minecraft.world.level.block.Block> wireFenceAltConnections =
+                net.minecraft.tags.TagKey.create(net.minecraft.core.registries.Registries.BLOCK,
+                        new net.minecraft.resources.ResourceLocation(MainRegistry.MOD_ID, "wire_fence_alt_connections"));
+        this.tag(wireFenceAltConnections)
+                .add(ModBlocks.WIRE_FENCE_ALT.get())
+                .add(ModBlocks.STEEL_PROPS.get());
+
     }
 }

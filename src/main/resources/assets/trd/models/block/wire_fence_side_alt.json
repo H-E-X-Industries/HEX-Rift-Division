@@ -1,13 +1,13 @@
 {
   "loader": "forge:obj",
-  "model": "trd:models/block/wire_fence_side_half_x.obj",
+  "model": "trd:models/block/wire_fence_side_alt.obj",
   "flip_v": true,
   "textures": {
-    "wire_fence_side_texture": "trd:block/wire_fence_side",
-    "particle": "trd:block/wire_fence_side"
+    "wire_fence_side_alt_texture": "trd:block/wire_fence_alt_side",
+    "particle": "trd:block/wire_fence_alt_side"
   },
   "transform": {
-    "translation": [0.5, 0.0, 0.5],
+    "translation": [0.50, 0.0, 0.5],
     "rotation": [0, 0, 0],
     "scale": 1.0
   },

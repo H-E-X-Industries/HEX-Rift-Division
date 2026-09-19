@@ -1,9 +1,9 @@
-# Half of wire fence side — spans X from center to -X edge (before transform)
-mtllib wire_fence_side.mtl
+# Made in Blockbench 5.1.6
+mtllib wire_fence_side_alt.mtl
 
-o half_x
-v 0 0 1.1102230246251565e-16
-v 0 1 -1.1102230246251565e-16
+o plane
+v 0.5 0 1.1102230246251565e-16
+v 0.5 1 -1.1102230246251565e-16
 v -0.5 0 1.1102230246251565e-16
 v -0.5 1 -1.1102230246251565e-16
 vt 1 0
