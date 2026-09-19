@@ -15,6 +15,7 @@ import com.trd.datagen.assets.ModBlockStateProvider;
 import com.trd.datagen.recipes.ModRecipeProvider;
 import com.trd.datagen.stats.ModBlockLootTableProvider;
 import com.trd.datagen.stats.ModBlockTagProvider;
+import com.trd.datagen.stats.ModItemTagProvider;
 import com.trd.datagen.assets.ModItemModelProvider;
 
 import java.util.List;
@@ -37,6 +38,7 @@ public class DataGenerators {
         generator.addProvider(event.includeClient(), new ModLangProvider(packOutput, "uk_ua"));
         CompletableFuture<HolderLookup.Provider> lookupProvider = event.getLookupProvider();
         ModBlockTagProvider blockTags = generator.addProvider(event.includeServer(), new ModBlockTagProvider(packOutput, lookupProvider, existingFileHelper));
+        generator.addProvider(event.includeServer(), new ModItemTagProvider(packOutput, lookupProvider, blockTags.contentsGetter(), existingFileHelper));
         generator.addProvider(event.includeServer(), new LootTableProvider(packOutput, Set.of(), List.of(new LootTableProvider.SubProviderEntry(ModBlockLootTableProvider::new, LootContextParamSets.BLOCK))));
         generator.addProvider(event.includeServer(), new ModRecipeProvider(packOutput));
         generator.addProvider(event.includeServer(), new ModWorldGenProvider(packOutput, lookupProvider));
