@@ -9,6 +9,7 @@ import com.trd.api.tooltip.ExplosionTooltipRegistry;
 import com.trd.block.basic.conglomerate.ConglomerateBlock;
 import com.trd.block.basic.deco.BeamBlock;
 import com.trd.block.basic.deco.BeamCollisionBlock;
+import com.trd.block.basic.deco.BarbedWireBlock;
 import com.trd.block.basic.deco.LampBlock;
 import com.trd.block.basic.deco.SteelPropsBlock;
 import com.trd.block.basic.industrial.*;
@@ -429,8 +430,8 @@ public class ModBlocks {
                     .strength(4.5F, 11.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
 
     public static final RegistryObject<Block> BARBED_WIRE = registerBlock("barbed_wire",
-            () -> new SteelPropsBlock(BlockBehaviour.Properties.of()
-                    .strength(4.5F, 11.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
+            () -> new BarbedWireBlock(BlockBehaviour.Properties.of()
+                    .strength(2F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion().noCollission()));
 
 // ═══════════════════════════════════════════════════════
 // ДЕРЕВО

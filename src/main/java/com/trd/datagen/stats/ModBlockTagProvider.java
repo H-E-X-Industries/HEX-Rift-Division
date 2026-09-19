@@ -65,6 +65,7 @@ public class ModBlockTagProvider extends BlockTagsProvider {
                 .add(ModBlocks.SEQUOIA_BARK.get())
                 .add(ModBlocks.SEQUOIA_BARK_MOSSY.get())
                 .add(ModBlocks.SEQUOIA_BARK_DARK.get())
+                .add(ModBlocks.BARBED_WIRE.get())
                 .add(ModBlocks.SEQUOIA_BARK_LIGHT.get());
 
         // Опционально: если хочешь, чтобы они горели в печке и от огня

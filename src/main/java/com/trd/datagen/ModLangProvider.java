@@ -62,6 +62,7 @@ public class ModLangProvider extends LanguageProvider {
     private void addEnglish() {
         // Death messages
         add("death.attack.crusher", "%1$s became minced meat");
+        add("death.attack.barbedWire", "%1$s was shredded by barbed wire");
 
         // Creative Tabs
         add("itemGroup.trd.trd_build_tab", "Building Blocks");
@@ -738,6 +739,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.CRATE_AMMO.get(), "Ammo Crate");
         add(ModBlocks.BEAM_BLOCK.get(), "Beam Block");
         add(ModBlocks.STEEL_PROPS.get(), "Steel Props");
+        add(ModBlocks.BARBED_WIRE.get(), "Barbed Wire");
         add(ModBlocks.DIRT_ROUGH.get(), "Rough Dirt");
         add(ModBlocks.ROUND_LAMP.get(), "Round Lamp");
         add(ModBlocks.MORY_BLOCK.get(), "Mory Block");
@@ -1182,6 +1184,7 @@ public class ModLangProvider extends LanguageProvider {
     private void addRussian() {
         // Death messages
         add("death.attack.crusher", "%1$s стал фаршем");
+        add("death.attack.barbedWire", "%1$s был изрезан колючей проволокой");
 
         // ═══ Коксовая печь ═══
         add(ModBlocks.COCCER_OVEN.get(), "Коксовая печь");
@@ -2024,6 +2027,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.CRATE_AMMO.get(), "Ящик с патронами");
         add(ModBlocks.BEAM_BLOCK.get(), "Балка");
         add(ModBlocks.STEEL_PROPS.get(), "Стальные подпорки");
+        add(ModBlocks.BARBED_WIRE.get(), "Колючая проволока");
         add(ModBlocks.FREAKY_ALIEN_BLOCK.get(), "Чокнутый инопланетный блок");
         add(ModBlocks.DECO_STEEL.get(), "Декоративный стальной блок");
         add(ModBlocks.DECO_STEEL_DARK.get(), "Тёмный декоративный стальной блок");
