@@ -126,6 +126,8 @@ public class ModBlockStateProvider extends BlockStateProvider {
         cubeAllWithItem(ModBlocks.BASALT_ROUGH);
 
         cubeAllWithItem(ModBlocks.CRATE);
+        cubeAllWithItem(ModBlocks.CONCRETE_MOSSY);
+        cubeAllWithItem(ModBlocks.CONCRETE_OLD);
         cubeAllWithItem(ModBlocks.CRATE_AMMO);
         cubeAllWithItem(ModBlocks.CONCRETE_REINFORCED);
         cubeAllWithItem(ModBlocks.CONCRETE_REINFORCED_HEAVY);
@@ -144,6 +146,16 @@ public class ModBlockStateProvider extends BlockStateProvider {
          modLoc("block/waste_log_side"),
          modLoc("block/waste_log_top"),
          modLoc("block/waste_log_top"));
+
+        columnBlockWithItem(ModBlocks.CONCRETE_PORT,
+                modLoc("block/concrete_port"),
+                modLoc("block/concrete"),
+                modLoc("block/concrete"));
+
+        columnBlockWithItem(ModBlocks.CONCRETE_LINE,
+                modLoc("block/concrete_line"),
+                modLoc("block/concrete"),
+                modLoc("block/concrete"));
 
 // Клапан: две модели — закрыт (красный) / открыт (зелёный)
         ModelFile valveClosed = models().cubeAll("valve_off", modLoc("block/valve_off"));
@@ -264,7 +276,8 @@ public class ModBlockStateProvider extends BlockStateProvider {
         generatePulleyBlockModels();
         generateFlywheelBlockModels();
 
-
+        stairsAndSlabs(ModBlocks.CONCRETE_MOSSY.get(), ModBlocks.CONCRETE_MOSSY_STAIRS.get(), ModBlocks.CONCRETE_MOSSY_SLAB.get());
+        stairsAndSlabs(ModBlocks.CONCRETE_OLD.get(), ModBlocks.CONCRETE_OLD_STAIRS.get(), ModBlocks.CONCRETE_OLD_SLAB.get());
         stairsAndSlabs(ModBlocks.CONCRETE_TILE_ALT.get(), ModBlocks.CONCRETE_TILE_ALT_STAIRS.get(), ModBlocks.CONCRETE_TILE_ALT_SLAB.get());
         stairsAndSlabs(ModBlocks.CONCRETE_TILE_ALT_BLUE.get(), ModBlocks.CONCRETE_TILE_ALT_BLUE_STAIRS.get(), ModBlocks.CONCRETE_TILE_ALT_BLUE_SLAB.get());
         stairsAndSlabs(ModBlocks.CONCRETE_REINFORCED.get(), ModBlocks.CONCRETE_REINFORCED_STAIRS.get(), ModBlocks.CONCRETE_REINFORCED_SLAB.get());

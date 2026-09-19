@@ -166,6 +166,12 @@ public class MainRegistry {
             event.accept(ModBlocks.CONCRETE.get());
             event.accept(ModBlocks.CONCRETE_SLAB.get());
             event.accept(ModBlocks.CONCRETE_STAIRS.get());
+            event.accept(ModBlocks.CONCRETE_OLD.get());
+            event.accept(ModBlocks.CONCRETE_OLD_SLAB.get());
+            event.accept(ModBlocks.CONCRETE_OLD_STAIRS.get());
+            event.accept(ModBlocks.CONCRETE_MOSSY.get());
+            event.accept(ModBlocks.CONCRETE_MOSSY_SLAB.get());
+            event.accept(ModBlocks.CONCRETE_MOSSY_STAIRS.get());
             event.accept(ModBlocks.CONCRETE_HAZARD_NEW.get());
             event.accept(ModBlocks.CONCRETE_HAZARD_NEW_SLAB.get());
             event.accept(ModBlocks.CONCRETE_HAZARD_NEW_STAIRS.get());
@@ -200,6 +206,7 @@ public class MainRegistry {
             event.accept(ModBlocks.SEQUOIA_SLAB.get());
             event.accept(ModBlocks.SEQUOIA_STAIRS.get());
 
+            event.accept(ModBlocks.CONCRETE_LINE.get());
             event.accept(ModBlocks.CONCRETE_NET.get());
             event.accept(ModBlocks.ARMORED_GLASS.get());
 
@@ -211,7 +218,6 @@ public class MainRegistry {
             event.accept(ModBlocks.TILE_LIGHT.get());
             event.accept(ModBlocks.SULFUR_TILE.get());
             event.accept(ModBlocks.SULFUR_BRICKS.get());
-            event.accept(ModBlocks.FREAKY_ALIEN_BLOCK.get());
             event.accept(ModBlocks.DECO_STEEL.get());
             event.accept(ModBlocks.DECO_STEEL_DARK.get());
             event.accept(ModBlocks.DECO_STEEL_SMOG.get());
@@ -219,6 +225,8 @@ public class MainRegistry {
             event.accept(ModBlocks.DECO_BEAM.get());
             event.accept(ModBlocks.BEAM_BLOCK.get());
             event.accept(ModBlocks.STEEL_PROPS.get());
+            event.accept(ModBlocks.WIRE_FENCE.get());
+            event.accept(ModBlocks.WIRE_FENCE_ALT.get());
             event.accept(ModBlocks.DECO_BARREL.get());
             event.accept(ModBlocks.BARBED_WIRE.get());
             event.accept(ModBlocks.ROUND_LAMP.get());
