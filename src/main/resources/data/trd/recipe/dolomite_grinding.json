@@ -1,0 +1,17 @@
+{
+    "input":  {
+                  "item":  "trd:dolomite"
+              },
+    "outputs":  [
+                    {
+                        "id":  "trd:dolomite_chunk",
+                        "count":  3
+                    },
+                    {
+                        "id":  "minecraft:gravel",
+                        "count":  1
+                    }
+                ],
+    "grinds":  6,
+    "type":  "trd:grinding"
+}

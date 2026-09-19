@@ -27,6 +27,9 @@ public class ModBlocks {
     public static final DeferredBlock<Block> SALT_ORE = registerBlock("salt_ore",
             () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_ORE)));
 
+    public static final DeferredBlock<Block> MILLSTONE = registerBlock("millstone",
+            () -> new com.trd.block.basic.industrial.MillstoneBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion()));
+
     private static <T extends Block> DeferredBlock<T> registerBlock(String name, Supplier<T> block) {
         DeferredBlock<T> toReturn = BLOCKS.register(name, block);
         registerBlockItem(name, toReturn);

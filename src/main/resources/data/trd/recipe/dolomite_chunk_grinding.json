@@ -1,0 +1,13 @@
+{
+    "input":  {
+                  "item":  "trd:dolomite_chunk"
+              },
+    "outputs":  [
+                    {
+                        "id":  "trd:dolomite_powder",
+                        "count":  1
+                    }
+                ],
+    "grinds":  2,
+    "type":  "trd:grinding"
+}

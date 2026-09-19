@@ -43,6 +43,16 @@ public class ModCreativeTabs {
                     })
                     .build());
 
+    public static final Supplier<CreativeModeTab> trd_TECH_TAB = CREATIVE_MODE_TABS.register("trd_tech_tab",
+            () -> CreativeModeTab.builder()
+                    .title(Component.translatable("itemGroup." + MainRegistry.MOD_ID + ".trd_tech_tab"))
+                    .icon(() -> new ItemStack(ModBlocks.MILLSTONE.get()))
+                    .withTabsBefore(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "trd_nature_tab"))
+                    .displayItems((parameters, output) -> {
+                        output.accept(ModBlocks.MILLSTONE.get());
+                    })
+                    .build());
+
     public static void register(IEventBus eventBus) {
         CREATIVE_MODE_TABS.register(eventBus);
     }

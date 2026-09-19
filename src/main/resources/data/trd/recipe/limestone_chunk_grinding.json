@@ -1,0 +1,13 @@
+{
+    "input":  {
+                  "item":  "trd:limestone_chunk"
+              },
+    "outputs":  [
+                    {
+                        "id":  "trd:limestone_powder",
+                        "count":  1
+                    }
+                ],
+    "grinds":  2,
+    "type":  "trd:grinding"
+}

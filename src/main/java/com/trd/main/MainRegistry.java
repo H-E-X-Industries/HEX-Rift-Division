@@ -14,9 +14,11 @@ public class MainRegistry {
     public MainRegistry(IEventBus modEventBus) {
         // Регистрация базовых компонентов
         com.trd.block.basic.ModBlocks.register(modEventBus);
+        com.trd.block.entity.ModBlockEntities.register(modEventBus);
         com.trd.item.ModItems.register(modEventBus);
         com.trd.main.ModCreativeTabs.register(modEventBus);
         com.trd.api.components.ModDataComponents.register(modEventBus);
+        com.trd.api.recipe.ModRecipes.register(modEventBus);
         
         modEventBus.addListener(this::commonSetup);
     }

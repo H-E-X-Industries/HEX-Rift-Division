@@ -1,0 +1,17 @@
+{
+    "input":  {
+                  "item":  "trd:bauxite"
+              },
+    "outputs":  [
+                    {
+                        "id":  "trd:bauxite_chunk",
+                        "count":  3
+                    },
+                    {
+                        "id":  "minecraft:gravel",
+                        "count":  1
+                    }
+                ],
+    "grinds":  5,
+    "type":  "trd:grinding"
+}
