@@ -16,6 +16,7 @@ public class MainRegistry {
         com.trd.block.basic.ModBlocks.register(modEventBus);
         com.trd.item.ModItems.register(modEventBus);
         com.trd.main.ModCreativeTabs.register(modEventBus);
+        com.trd.api.components.ModDataComponents.register(modEventBus);
         
         modEventBus.addListener(this::commonSetup);
     }
