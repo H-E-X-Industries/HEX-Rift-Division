@@ -5,7 +5,7 @@
   },
   "children": {
     "cc_machine_model": {
-      "loader": "forge:obj",
+      "loader": "neoforge:obj",
       "model": "trd:models/block/cc_machine.obj",
       "flip_v": true,
       "textures": {

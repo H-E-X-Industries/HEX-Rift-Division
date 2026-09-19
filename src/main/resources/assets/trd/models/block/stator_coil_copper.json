@@ -1,5 +1,5 @@
 {
-  "loader": "forge:obj",
+  "loader": "neoforge:obj",
   "model": "trd:models/block/stator_coil_copper.obj",
   "flip_v": true,
   "textures": {

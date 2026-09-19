@@ -5,7 +5,7 @@
   },
   "children": {
     "smelter_model": {
-      "loader": "forge:obj",
+      "loader": "neoforge:obj",
       "model": "trd:models/block/stator.obj",
       "flip_v": true,
       "textures": {

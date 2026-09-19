@@ -1,5 +1,5 @@
 {
-  "loader": "forge:obj",
+  "loader": "neoforge:obj",
   "model": "trd:models/block/handle.obj",
   "textures": {
     "particle": "trd:block/deco_beam_top"

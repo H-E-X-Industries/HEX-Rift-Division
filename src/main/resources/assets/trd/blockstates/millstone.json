@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "trd:block/jernova"
+    },
+    "facing=south": {
+      "model": "trd:block/jernova",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "trd:block/jernova",
+      "y": 270
+    },
+    "facing=east": {
+      "model": "trd:block/jernova",
+      "y": 90
+    }
+  }
+}

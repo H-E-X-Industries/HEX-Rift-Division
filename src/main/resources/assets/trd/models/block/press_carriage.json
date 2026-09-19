@@ -1,11 +1,11 @@
-﻿{
+{
   "loader": "forge:composite",
   "textures": {
     "particle": "trd:block/press_carriage"
   },
   "children": {
     "main": {
-      "loader": "forge:obj",
+      "loader": "neoforge:obj",
       "model": "trd:models/block/press_carriage.obj",
       "flip_v": true,
       "textures": {

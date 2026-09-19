@@ -1,6 +1,6 @@
 {
   "flip_v": true,
-  "loader": "forge:obj",
+  "loader": "neoforge:obj",
   "model": "trd:models/block/rotor.obj",
   "textures": {
     "m_f41ec8b5-684c-bb67-fb90-c1e5f22a5fdf": "trd:block/rotor",

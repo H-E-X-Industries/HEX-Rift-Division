@@ -1,6 +1,6 @@
 {
   "shading": true,
-  "loader": "forge:obj",
+  "loader": "neoforge:obj",
   "model": "trd:models/block/steam_engine_base.obj",
   "flip_v": true,
   "textures": {

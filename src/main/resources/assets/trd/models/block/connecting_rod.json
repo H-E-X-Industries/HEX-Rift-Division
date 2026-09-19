@@ -1,6 +1,6 @@
 {
   "shading": true,
-  "loader": "forge:obj",
+  "loader": "neoforge:obj",
   "model": "trd:models/block/connecting_rod.obj",
   "flip_v": true,
   "textures": {

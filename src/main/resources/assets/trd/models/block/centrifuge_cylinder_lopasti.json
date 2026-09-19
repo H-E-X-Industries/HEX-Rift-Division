@@ -1,5 +1,5 @@
 {
-  "loader": "forge:obj",
+  "loader": "neoforge:obj",
   "model": "trd:models/block/centrifuge_cylinder_lopasti.obj",
   "flip_v": true,
   "textures": {

@@ -5,7 +5,7 @@
   },
   "children": {
     "coccer_oven_model": {
-      "loader": "forge:obj",
+      "loader": "neoforge:obj",
       "model": "trd:models/block/coccer_oven.obj",
       "flip_v": true,
       "textures": {

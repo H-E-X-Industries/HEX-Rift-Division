@@ -1,5 +1,5 @@
 {
-  "loader": "forge:obj",
+  "loader": "neoforge:obj",
   "model": "trd:models/block/deco_barrel.obj",
   "flip_v": true,
   "textures": {

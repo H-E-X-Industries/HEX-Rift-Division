@@ -5,7 +5,7 @@
   },
   "children": {
     "main": {
-      "loader": "forge:obj",
+      "loader": "neoforge:obj",
       "model": "trd:models/block/boiler.obj",
       "flip_v": true,
       "textures": {

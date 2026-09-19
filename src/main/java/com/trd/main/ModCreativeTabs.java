@@ -27,6 +27,12 @@ public class ModCreativeTabs {
                         output.accept(ModItems.SEQUESTRUM.get());
                         output.accept(ModItems.SALT.get());
                         output.accept(ModItems.SULFUR.get());
+                        output.accept(ModItems.BAUXITE_CHUNK.get());
+                        output.accept(ModItems.BAUXITE_POWDER.get());
+                        output.accept(ModItems.DOLOMITE_CHUNK.get());
+                        output.accept(ModItems.DOLOMITE_POWDER.get());
+                        output.accept(ModItems.LIMESTONE_CHUNK.get());
+                        output.accept(ModItems.LIMESTONE_POWDER.get());
                     })
                     .build());
 
@@ -40,6 +46,10 @@ public class ModCreativeTabs {
                         output.accept(ModBlocks.ASBESOTS_ORE.get());
                         output.accept(ModBlocks.LIGNITE_ORE.get());
                         output.accept(ModBlocks.SALT_ORE.get());
+                        output.accept(ModBlocks.BAUXITE.get());
+                        output.accept(ModBlocks.DOLOMITE.get());
+                        output.accept(ModBlocks.LIMESTONE.get());
+                        output.accept(ModBlocks.SULFUR_CLUSTER.get());
                     })
                     .build());
 

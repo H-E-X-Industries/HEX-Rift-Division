@@ -1,5 +1,5 @@
 {
-  "loader": "forge:obj",
+  "loader": "neoforge:obj",
   "model": "trd:models/item/centrifuge_cylinder_item.obj",
   "flip_v": true,
   "textures": {

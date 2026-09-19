@@ -5,7 +5,7 @@
   },
   "children": {
     "steel_props_model": {
-      "loader": "forge:obj",
+      "loader": "neoforge:obj",
       "model": "trd:models/block/steel_props.obj",
       "flip_v": true,
       "textures": {

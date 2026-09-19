@@ -32,6 +32,21 @@ public class ModItems {
     public static final DeferredItem<Item> SULFUR = ITEMS.register("sulfur",
             () -> new Item(new Item.Properties()));
 
+    public static final DeferredItem<Item> BAUXITE_CHUNK = ITEMS.register("bauxite_chunk",
+            () -> new Item(new Item.Properties()));
+    public static final DeferredItem<Item> BAUXITE_POWDER = ITEMS.register("bauxite_powder",
+            () -> new Item(new Item.Properties()));
+
+    public static final DeferredItem<Item> DOLOMITE_CHUNK = ITEMS.register("dolomite_chunk",
+            () -> new Item(new Item.Properties()));
+    public static final DeferredItem<Item> DOLOMITE_POWDER = ITEMS.register("dolomite_powder",
+            () -> new Item(new Item.Properties()));
+
+    public static final DeferredItem<Item> LIMESTONE_CHUNK = ITEMS.register("limestone_chunk",
+            () -> new Item(new Item.Properties()));
+    public static final DeferredItem<Item> LIMESTONE_POWDER = ITEMS.register("limestone_powder",
+            () -> new Item(new Item.Properties()));
+
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);
     }

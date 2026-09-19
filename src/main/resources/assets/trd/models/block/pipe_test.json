@@ -5,7 +5,7 @@
   },
   "children": {
     "pipe_test_model": {
-      "loader": "forge:obj",
+      "loader": "neoforge:obj",
       "model": "trd:models/block/pipe_test.obj",
       "flip_v": true,
       "textures": {

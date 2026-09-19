@@ -1,6 +1,6 @@
 {
   "flip_v": true,
-  "loader": "forge:obj",
+  "loader": "neoforge:obj",
   "model": "trd:models/block/crusher_blades.obj",
   "textures": {
     "particle": "trd:block/crusher_blades"
