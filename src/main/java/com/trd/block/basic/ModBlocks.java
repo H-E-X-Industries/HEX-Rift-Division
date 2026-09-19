@@ -428,6 +428,9 @@ public class ModBlocks {
             () -> new SteelPropsBlock(BlockBehaviour.Properties.of()
                     .strength(4.5F, 11.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
 
+    public static final RegistryObject<Block> BARBED_WIRE = registerBlock("barbed_wire",
+            () -> new SteelPropsBlock(BlockBehaviour.Properties.of()
+                    .strength(4.5F, 11.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
 
 // ═══════════════════════════════════════════════════════
 // ДЕРЕВО
