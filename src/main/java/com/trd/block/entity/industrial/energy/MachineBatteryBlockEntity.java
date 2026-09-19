@@ -1,0 +1,561 @@
+package com.trd.block.entity.industrial.energy;
+
+import com.trd.api.energy.*;
+import com.trd.item.industrial.energy.EnergyCellItem;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerData;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.energy.IEnergyStorage;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.ItemStackHandler;
+import org.jetbrains.annotations.NotNull;
+
+import com.trd.block.basic.industrial.energy.MachineBatteryBlock;
+import com.trd.block.entity.ModBlockEntities;
+import com.trd.menu.industrial.MachineBatteryMenu;
+import software.bernie.geckolib.animatable.GeoBlockEntity;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.util.GeckoLibUtil;
+
+import javax.annotation.Nullable;
+
+/**
+ * Энергохранилище-каркас с настраиваемыми режимами работы и слотами для
+ * энергоячеек.
+ * Базовые параметры каркаса = 0. Все характеристики зависят от вставленных
+ * ячеек.
+ *
+ * 16 слотов для батареек:
+ * Слоты 0-3: CHARGE INPUT (незаряженные предметы кладут сюда)
+ * Слоты 4-7: CHARGE OUTPUT (заряженные перемещаются сюда)
+ * Слоты 8-11: DISCHARGE INPUT (заряженные предметы для разрядки)
+ * Слоты 12-15: DISCHARGE OUTPUT (разряженные перемещаются сюда)
+ *
+ * Режимы: 0 = BOTH, 1 = INPUT, 2 = OUTPUT, 3 = DISABLED
+ */
+public class MachineBatteryBlockEntity extends EnergyNodeBlockEntity
+        implements MenuProvider, GeoBlockEntity {
+
+    // ====================== КАРКАС: базовые параметры = 0 ======================
+    private long chargingSpeed = 0;
+    private long unchargingSpeed = 0;
+    private long lastEnergy = 0;
+
+    private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+
+    // Один режим работы (без редстоун-сигнала)
+    // 0 = BOTH, 1 = INPUT, 2 = OUTPUT, 3 = DISABLED
+    private long energyDelta = 0;
+
+    // ====================== СЛОТЫ ДЛЯ ЭНЕРГОЯЧЕЕК (4 штуки, 2x2)
+    // ======================
+    public static final int CELL_SLOT_COUNT = 4;
+    private final ItemStack[] cellSlots = new ItemStack[CELL_SLOT_COUNT];
+    private final boolean[] cellEmpty = new boolean[CELL_SLOT_COUNT];
+
+    // ====================== СЛОТЫ ДЛЯ БАТАРЕЕК (16 слотов) ======================
+    // 0-3: charge input, 4-7: charge output, 8-11: discharge input, 12-15:
+    // discharge output
+    public static final int TOTAL_ITEM_SLOTS = 16;
+    public static final int CHARGE_INPUT_START = 0;
+    public static final int CHARGE_INPUT_END = 4;
+    public static final int CHARGE_OUTPUT_START = 4;
+    public static final int CHARGE_OUTPUT_END = 8;
+    public static final int DISCHARGE_INPUT_START = 8;
+    public static final int DISCHARGE_INPUT_END = 12;
+    public static final int DISCHARGE_OUTPUT_START = 12;
+    public static final int DISCHARGE_OUTPUT_END = 16;
+
+    private final ItemStackHandler itemHandler = new ItemStackHandler(TOTAL_ITEM_SLOTS) {
+        @Override
+        protected void onContentsChanged(int slot) {
+            setChanged();
+        }
+
+        @Override
+        public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            // Только предметы с энергией допускаются в input-слоты
+            // Output-слоты не принимают предметы напрямую от игрока
+            if (slot >= CHARGE_INPUT_START && slot < CHARGE_INPUT_END) {
+                return stack.getCapability(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.ITEM) != null;
+            }
+            if (slot >= DISCHARGE_INPUT_START && slot < DISCHARGE_INPUT_END) {
+                return stack.getCapability(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.ITEM) != null;
+            }
+            // Output-слоты: предметы попадают только программно
+            return false;
+        }
+    };
+
+    protected final ContainerData data;
+
+    public MachineBatteryBlockEntity(BlockPos pos, BlockState state) {
+        super(ModBlockEntities.MACHINE_BATTERY_BE.get(), pos, state);
+
+        this.chargingSpeed = 0;
+        this.unchargingSpeed = 0;
+
+        for (int i = 0; i < CELL_SLOT_COUNT; i++) {
+            cellSlots[i] = ItemStack.EMPTY;
+            cellEmpty[i] = true;
+        }
+
+        // ContainerData: 2 поля (mode, priority)
+        this.data = new ContainerData() {
+            @Override
+            public int get(int index) {
+                return switch (index) {
+                    case 0 -> mode;
+                    case 1 -> priority.ordinal();
+                    default -> 0;
+                };
+            }
+
+            @Override
+            public void set(int index, int value) {
+                switch (index) {
+                    case 0 -> mode = value;
+                    case 1 -> priority = Priority.values()[Math.max(0, Math.min(value, Priority.values().length - 1))];
+                }
+            }
+
+            @Override
+            public int getCount() {
+                return 2;
+            }
+        };
+    }
+
+    // ====================== МЕТОДЫ ЭНЕРГОЯЧЕЕК ======================
+
+    public boolean insertCell(int slot, ItemStack stack) {
+        if (slot < 0 || slot >= CELL_SLOT_COUNT)
+            return false;
+        if (!cellEmpty[slot])
+            return false;
+        if (stack.isEmpty())
+            return false;
+        if (!(stack.getItem() instanceof EnergyCellItem cell))
+            return false;
+        if (!cell.isValidCell(stack))
+            return false;
+
+        ItemStack cellStack = stack.split(1);
+
+        long cellEnergy = EnergyCellItem.getStoredEnergy(cellStack);
+        if (cellEnergy > 0) {
+            this.energy += cellEnergy;
+            EnergyCellItem.setStoredEnergy(cellStack, 0);
+        }
+
+        cellSlots[slot] = cellStack;
+        cellEmpty[slot] = false;
+
+        recalculateCellStats();
+
+        if (energy > capacity) {
+            energy = capacity;
+        }
+
+        setChanged();
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+        }
+        return true;
+    }
+
+    public ItemStack extractCell(int slot) {
+        if (slot < 0 || slot >= CELL_SLOT_COUNT)
+            return ItemStack.EMPTY;
+        if (cellEmpty[slot])
+            return ItemStack.EMPTY;
+
+        ItemStack extracted = cellSlots[slot].copy();
+
+        long cellMax = EnergyCellItem.getMaxEnergy(extracted);
+        long cellCurrent = EnergyCellItem.getStoredEnergy(extracted);
+        long cellSpace = cellMax - cellCurrent;
+        long available = this.energy;
+        long toAbsorb = Math.min(cellSpace, available);
+
+        if (toAbsorb > 0) {
+            EnergyCellItem.setStoredEnergy(extracted, cellCurrent + toAbsorb);
+            this.energy -= toAbsorb;
+        }
+
+        cellSlots[slot] = ItemStack.EMPTY;
+        cellEmpty[slot] = true;
+
+        recalculateCellStats();
+
+        if (energy > capacity) {
+            energy = capacity;
+        }
+
+        setChanged();
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+        }
+        return extracted;
+    }
+
+    private void recalculateCellStats() {
+        long totalCapacity = 0;
+        long totalChargingSpeed = 0;
+        long totalUnchargingSpeed = 0;
+        int filledCount = 0;
+
+        for (int i = 0; i < CELL_SLOT_COUNT; i++) {
+            if (!cellEmpty[i] && cellSlots[i].getItem() instanceof EnergyCellItem cell) {
+                totalCapacity += cell.getCellCapacity(cellSlots[i]);
+                totalChargingSpeed += cell.getCellChargingSpeed(cellSlots[i]);
+                totalUnchargingSpeed += cell.getCellUnchargingSpeed(cellSlots[i]);
+                filledCount++;
+            }
+        }
+
+        this.capacity = totalCapacity;
+        this.chargingSpeed = totalChargingSpeed;
+        this.unchargingSpeed = totalUnchargingSpeed;
+    }
+
+    public boolean isCellEmpty(int slot) {
+        if (slot < 0 || slot >= CELL_SLOT_COUNT)
+            return true;
+        return cellEmpty[slot];
+    }
+
+    public ItemStack getCellStack(int slot) {
+        if (slot < 0 || slot >= CELL_SLOT_COUNT)
+            return ItemStack.EMPTY;
+        return cellSlots[slot];
+    }
+
+    public int getFilledCellCount() {
+        int count = 0;
+        for (int i = 0; i < CELL_SLOT_COUNT; i++) {
+            if (!cellEmpty[i])
+                count++;
+        }
+        return count;
+    }
+
+    // ====================== ЗАГРУЗКА / СОХРАНЕНИЕ ======================
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+
+        recalculateCellStats();
+    }
+
+
+    // ====================== TICK ======================
+
+    public static void tick(Level level, BlockPos pos, BlockState state, MachineBatteryBlockEntity be) {
+        if (level.isClientSide)
+            return;
+
+        EnergyNetworkManager manager = EnergyNetworkManager.get((ServerLevel) level);
+
+        long gameTime = level.getGameTime();
+
+        if (gameTime % 10 == 0) {
+            be.energyDelta = (be.energy - be.lastEnergy) / 10;
+            be.lastEnergy = be.energy;
+        }
+
+        be.validateCellFlags();
+
+        be.chargeItems();
+        be.dischargeItems();
+    }
+
+    private void validateCellFlags() {
+        boolean needRecalc = false;
+        for (int i = 0; i < CELL_SLOT_COUNT; i++) {
+            boolean shouldBeEmpty = cellSlots[i].isEmpty() || !(cellSlots[i].getItem() instanceof EnergyCellItem);
+            if (cellEmpty[i] != shouldBeEmpty) {
+                cellEmpty[i] = shouldBeEmpty;
+                if (shouldBeEmpty) {
+                    cellSlots[i] = ItemStack.EMPTY;
+                }
+                needRecalc = true;
+            }
+        }
+        if (needRecalc) {
+            recalculateCellStats();
+            if (energy > capacity)
+                energy = capacity;
+            setChanged();
+        }
+    }
+
+    // ====================== ЗАРЯДКА / РАЗРЯДКА (4+4 слоты) ======================
+
+    /**
+     * Зарядка предметов из слотов 0-3 (charge input).
+     * Когда предмет полностью заряжен, перемещаем в слоты 4-7 (charge output).
+     */
+    private void chargeItems() {
+        for (int i = CHARGE_INPUT_START; i < CHARGE_INPUT_END; i++) {
+            ItemStack stack = itemHandler.getStackInSlot(i);
+            if (stack.isEmpty())
+                continue;
+
+            long spaceAvailable = capacity - energy;
+            if (energy <= 0 && spaceAvailable <= 0)
+                continue; // нет энергии для зарядки
+
+            boolean charged = false;
+
+            IEnergyStorage target = stack.getCapability(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.ITEM);
+            if (target != null) {
+                if (target.canReceive()) {
+                    long wanted = Math.min(unchargingSpeed, energy);
+                    if (wanted > 0) {
+                        int maxTransfer = (int) Math.min(wanted, Integer.MAX_VALUE);
+                        int accepted = target.receiveEnergy(maxTransfer, false);
+                        if (accepted > 0) {
+                            this.energy -= accepted;
+                            setChanged();
+                        }
+                    }
+                }
+            }
+
+            // Проверяем, полностью ли заряжен предмет
+            if (isItemFullyCharged(stack)) {
+                // Пробуем переместить в output
+                int outputSlot = findFreeOutputSlot(CHARGE_OUTPUT_START, CHARGE_OUTPUT_END, stack);
+                if (outputSlot >= 0) {
+                    moveItem(i, outputSlot);
+                }
+            }
+        }
+    }
+
+    /**
+     * Разрядка предметов из слотов 8-11 (discharge input).
+     * Когда предмет полностью разряжен, перемещаем в слоты 12-15 (discharge
+     * output).
+     */
+    private void dischargeItems() {
+        for (int i = DISCHARGE_INPUT_START; i < DISCHARGE_INPUT_END; i++) {
+            ItemStack stack = itemHandler.getStackInSlot(i);
+            if (stack.isEmpty())
+                continue;
+
+            long spaceAvailable = capacity - energy;
+            if (spaceAvailable <= 0)
+                continue;
+
+            IEnergyStorage source = stack.getCapability(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.ITEM);
+            if (source != null) {
+                if (source.canExtract()) {
+                    long wanted = Math.min(chargingSpeed, capacity - energy);
+                    if (wanted > 0) {
+                        int maxTransfer = (int) Math.min(wanted, Integer.MAX_VALUE);
+                        int extracted = source.extractEnergy(maxTransfer, false);
+                        if (extracted > 0) {
+                            this.energy += extracted;
+                            setChanged();
+                        }
+                    }
+                }
+            }
+
+            // Проверяем, полностью ли разряжен предмет
+            if (isItemFullyDischarged(stack)) {
+                int outputSlot = findFreeOutputSlot(DISCHARGE_OUTPUT_START, DISCHARGE_OUTPUT_END, stack);
+                if (outputSlot >= 0) {
+                    moveItem(i, outputSlot);
+                }
+            }
+        }
+    }
+
+    private boolean isItemFullyCharged(ItemStack stack) {
+        IEnergyStorage storage = stack.getCapability(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.ITEM);
+        if (storage != null) {
+            return storage.getEnergyStored() >= storage.getMaxEnergyStored();
+        }
+        return false;
+    }
+
+    private boolean isItemFullyDischarged(ItemStack stack) {
+        IEnergyStorage storage = stack.getCapability(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.ITEM);
+        if (storage != null) {
+            return storage.getEnergyStored() <= 0;
+        }
+        return false;
+    }
+
+    private int findFreeOutputSlot(int start, int end, ItemStack stack) {
+        for (int i = start; i < end; i++) {
+            ItemStack existing = itemHandler.getStackInSlot(i);
+            if (existing.isEmpty()) {
+                return i;
+            }
+            // Стакаемые предметы
+            if (ItemStack.isSameItemSameComponents(existing, stack) && existing.getCount() < existing.getMaxStackSize()) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private void moveItem(int fromSlot, int toSlot) {
+        ItemStack source = itemHandler.getStackInSlot(fromSlot);
+        if (source.isEmpty())
+            return;
+
+        ItemStack existing = itemHandler.getStackInSlot(toSlot);
+        if (existing.isEmpty()) {
+            itemHandler.setStackInSlot(toSlot, source.copy());
+            itemHandler.setStackInSlot(fromSlot, ItemStack.EMPTY);
+        } else if (ItemStack.isSameItemSameComponents(existing, source)) {
+            int space = existing.getMaxStackSize() - existing.getCount();
+            int toMove = Math.min(source.getCount(), space);
+            if (toMove > 0) {
+                existing.grow(toMove);
+                source.shrink(toMove);
+            }
+        }
+        setChanged();
+    }
+
+    // ====================== ГЕТТЕРЫ ======================
+
+    public int getCurrentMode() {
+        return this.mode;
+    }
+
+    public long getEnergyDelta() {
+        return this.energyDelta;
+    }
+
+    public long getChargingSpeed() {
+        return this.chargingSpeed;
+    }
+
+    public long getUnchargingSpeed() {
+        return this.unchargingSpeed;
+    }
+
+    @Override
+    public long getProvideSpeed() {
+        return this.unchargingSpeed;
+    }
+
+    @Override
+    public long getReceiveSpeed() {
+        return this.chargingSpeed;
+    }
+
+    @Override
+    public boolean canConnectEnergy(Direction side) {
+        Direction facing = this.getBlockState().getValue(MachineBatteryBlock.FACING);
+        return side == facing.getOpposite();
+    }
+
+    public IItemHandler getItemHandler() {
+        return itemHandler;
+    }
+
+    // ====================== NBT ======================
+
+    @Override
+    public void loadAdditional(CompoundTag tag, net.minecraft.core.HolderLookup.Provider provider) {
+        super.loadAdditional(tag, provider);
+        this.lastEnergy = tag.getLong("lastEnergy");
+        this.energyDelta = tag.getLong("energyDelta");
+        if (tag.contains("Inventory")) {
+            itemHandler.deserializeNBT(provider, tag.getCompound("Inventory"));
+        }
+
+        for (int i = 0; i < CELL_SLOT_COUNT; i++) {
+            String key = "Cell_" + i;
+            if (tag.contains(key)) {
+                cellSlots[i] = ItemStack.parseOptional(provider, tag.getCompound(key));
+                cellEmpty[i] = cellSlots[i].isEmpty();
+            } else {
+                cellSlots[i] = ItemStack.EMPTY;
+                cellEmpty[i] = true;
+            }
+        }
+
+        recalculateCellStats();
+        if (energy > capacity)
+            energy = capacity;
+    }
+
+    @Override
+    protected void saveAdditional(CompoundTag tag, net.minecraft.core.HolderLookup.Provider provider) {
+        super.saveAdditional(tag, provider);
+        tag.putLong("lastEnergy", this.lastEnergy);
+        tag.putLong("energyDelta", this.energyDelta);
+        tag.put("Inventory", itemHandler.serializeNBT(provider));
+
+        for (int i = 0; i < CELL_SLOT_COUNT; i++) {
+            if (!cellSlots[i].isEmpty()) {
+                tag.put("Cell_" + i, (net.minecraft.nbt.Tag) cellSlots[i].save(provider));
+            }
+        }
+    }
+
+    // ====================== МЕНЮ ======================
+
+    @Override
+    public Component getDisplayName() {
+        return Component.translatable(this.getBlockState().getBlock().getDescriptionId());
+    }
+
+    @Nullable
+    @Override
+    public AbstractContainerMenu createMenu(int windowId, Inventory playerInventory, Player player) {
+        return new MachineBatteryMenu(windowId, playerInventory, this, this.data);
+    }
+
+    /**
+     * Обработка нажатия кнопок в GUI.
+     * buttonId 0 = переключение режима
+     * buttonId 1 = переключение приоритета
+     */
+    public void handleButtonPress(int buttonId) {
+        switch (buttonId) {
+            case 0 -> this.data.set(0, (this.mode + 1) % 4);
+            case 1 -> {
+                Priority[] priorities = Priority.values();
+                int currentIndex = this.priority.ordinal();
+                int nextIndex = (currentIndex + 1) % priorities.length;
+                this.data.set(1, nextIndex);
+            }
+        }
+        setChanged();
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+        }
+    }
+
+
+    @Override
+    public void registerControllers(software.bernie.geckolib.animation.AnimatableManager.ControllerRegistrar controllers) {
+    }
+
+    @Override
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
+        return cache;
+    }
+}

@@ -1,5 +1,6 @@
 {
   "textures": {
-    "particle": "trd:block/machine_battery"
-  }
+    "particle": "trd:block/steel_block"
+  },
+  "elements": []
 }

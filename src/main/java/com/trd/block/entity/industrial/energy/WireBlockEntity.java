@@ -1,0 +1,77 @@
+package com.trd.block.entity.industrial.energy;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.NotNull;
+import com.trd.api.energy.EnergyNetworkManager;
+import com.trd.api.energy.IEnergyConnector;
+import com.trd.block.entity.ModBlockEntities;
+
+import javax.annotation.Nullable;
+
+/**
+ * BlockEntity для провода.
+ * Это "тупой" коннектор - не хранит энергию, только соединяет блоки в сеть.
+ */
+public class WireBlockEntity extends BlockEntity implements IEnergyConnector {
+
+    public WireBlockEntity(BlockPos pos, BlockState state) {
+        super(ModBlockEntities.WIRE_BE.get(), pos, state);
+    }
+
+    // Позволяет подклассам (напр. PaintableWireBlockEntity) задать свой тип BE,
+    // сохраняя всю логику энергосети и капабилити.
+    protected WireBlockEntity(net.minecraft.world.level.block.entity.BlockEntityType<?> type, BlockPos pos, BlockState state) {
+        super(type, pos, state);
+    }
+
+    // --- IEnergyConnector ---
+    @Override
+    public boolean canConnectEnergy(Direction side) {
+        // Провод соединяется со всех сторон
+        return true;
+    }
+
+    // --- Capabilities ---
+    @Nullable
+    public IEnergyConnector getEnergyConnector(@Nullable Direction side) {
+        return this;
+    }
+
+    @Override
+    public void setRemoved() {
+        super.setRemoved();
+        // [ВАЖНО!] Сообщаем сети, что мы удалены
+        if (this.level != null && !this.level.isClientSide) {
+            EnergyNetworkManager.get((ServerLevel) this.level).removeNode(this.getBlockPos());
+        }
+    }
+
+
+    // И при загрузке/установке блока:
+    @Override
+    public void setLevel(Level pLevel) {
+        super.setLevel(pLevel);
+
+    }
+
+    // ==========================================
+    // ЖИЗНЕННЫЙ ЦИКЛ БЛОКА (БЕЗ ТИКЕРОВ!)
+    // ==========================================
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        // Добавляемся в сеть только когда BlockEntity полностью готов
+        if (this.level != null && !this.level.isClientSide) {
+            EnergyNetworkManager manager = EnergyNetworkManager.get((ServerLevel) this.level);
+            if (!manager.hasNode(this.getBlockPos())) {
+                manager.addNode(this.getBlockPos());
+            }
+        }
+    }
+}
+

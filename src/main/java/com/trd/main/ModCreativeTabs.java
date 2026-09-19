@@ -60,6 +60,20 @@ public class ModCreativeTabs {
                     .withTabsBefore(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "trd_nature_tab"))
                     .displayItems((parameters, output) -> {
                         output.accept(ModBlocks.MILLSTONE.get());
+                        output.accept(ModBlocks.MACHINE_BATTERY.get());
+                        output.accept(ModBlocks.CONVERTER_BLOCK.get());
+                        output.accept(ModBlocks.WIRE_COATED.get());
+                        output.accept(ModBlocks.SWITCH.get());
+                        output.accept(ModBlocks.CONNECTOR.get());
+                        output.accept(ModBlocks.MEDIUM_CONNECTOR.get());
+                        output.accept(ModBlocks.LARGE_CONNECTOR.get());
+                        output.accept(ModBlocks.PAINTABLE_WIRE.get());
+                        output.accept(ModBlocks.ELECTRO_FURNACE.get());
+                        output.accept(ModItems.WIRE_COIL.get());
+                        output.accept(ModItems.INDUSTRIAL_COPPER_WIRE.get());
+                        output.accept(ModItems.ENERGY_CELL.get());
+                        output.accept(ModItems.BATTERY.get());
+                        output.accept(ModItems.CREATIVE_BATTERY.get());
                     })
                     .build());
 

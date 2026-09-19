@@ -60,6 +60,7 @@ public class MillstoneVisual extends AbstractBlockEntityVisual<MillstoneBlockEnt
 
         if (blockEntity.isGrinding()) {
             // Вращаем на 360 градусов за время кулдауна (1 секунда, если GRIND_COOLDOWN = 20)
+            // +1.5f для компенсации задержки на клиенте, чтобы не было затыков
             float speed = 360.0f / (MillstoneBlockEntity.GRIND_COOLDOWN / 20.0f);
             visualAngle += speed * deltaSeconds;
         } else {

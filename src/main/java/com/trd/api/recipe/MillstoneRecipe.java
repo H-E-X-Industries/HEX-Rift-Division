@@ -88,7 +88,7 @@ public class MillstoneRecipe implements Recipe<SingleRecipeInput> {
 
         public static final StreamCodec<RegistryFriendlyByteBuf, MillstoneRecipe> STREAM_CODEC = StreamCodec.composite(
                 Ingredient.CONTENTS_STREAM_CODEC, MillstoneRecipe::getInput,
-                ItemStack.STREAM_CODEC.apply(ByteBufCodecs.list()), MillstoneRecipe::getOutputs,
+                ItemStack.LIST_STREAM_CODEC, MillstoneRecipe::getOutputs,
                 ByteBufCodecs.INT, MillstoneRecipe::getGrindsRequired,
                 MillstoneRecipe::new
         );
