@@ -303,6 +303,22 @@ public class ModBlocks {
             () -> new Block(BlockBehaviour.Properties.of()
                     .strength(4.0F, 18.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
 
+    public static final RegistryObject<Block> CONCRETE_LINE = registerBlock("concrete_line",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.0F, 18.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> CONCRETE_PORT = registerBlock("concrete_port",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.0F, 18.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> CONCRETE_MOSSY = registerBlock("concrete_mossy",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.0F, 18.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> CONCRETE_OLD = registerBlock("concrete_old",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(3.5F, 10.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
     public static final RegistryObject<Block> ARMORED_GLASS = registerBlock("armored_glass",
             () -> new GlassBlock(BlockBehaviour.Properties.of()
                     .strength(3.0F, 12.0F)
@@ -587,6 +603,12 @@ public class ModBlocks {
     public static final RegistryObject<StairBlock> CONCRETE_TILE_ALT_STAIRS = registerBlock("concrete_tile_alt_stairs",
             () -> new StairBlock(CONCRETE_TILE_ALT.get().defaultBlockState(),
                     BlockBehaviour.Properties.copy(CONCRETE_TILE_ALT.get())));
+    public static final RegistryObject<StairBlock> CONCRETE_MOSSY_STAIRS = registerBlock("concrete_mossy_stairs",
+            () -> new StairBlock(CONCRETE_MOSSY.get().defaultBlockState(),
+                    BlockBehaviour.Properties.copy(CONCRETE_MOSSY.get())));
+    public static final RegistryObject<StairBlock> CONCRETE_OLD_STAIRS = registerBlock("concrete_old_stairs",
+            () -> new StairBlock(CONCRETE_OLD.get().defaultBlockState(),
+                    BlockBehaviour.Properties.copy(CONCRETE_OLD.get())));
     public static final RegistryObject<StairBlock> CONCRETE_TILE_ALT_BLUE_STAIRS = registerBlock("concrete_tile_alt_blue_stairs",
             () -> new StairBlock(CONCRETE_TILE_ALT_BLUE.get().defaultBlockState(),
                     BlockBehaviour.Properties.copy(CONCRETE_TILE_ALT_BLUE.get())));
@@ -627,7 +649,10 @@ public class ModBlocks {
             () -> new StairBlock(CONCRETE_REINFORCED_HEAVY.get().defaultBlockState(),
                     BlockBehaviour.Properties.copy(CONCRETE_REINFORCED_HEAVY.get())));
 
-
+    public static final RegistryObject<SlabBlock> CONCRETE_MOSSY_SLAB = registerBlock("concrete_mossy_slab",
+            () -> new SlabBlock(BlockBehaviour.Properties.copy(CONCRETE_MOSSY.get())));
+    public static final RegistryObject<SlabBlock> CONCRETE_OLD_SLAB = registerBlock("concrete_old_slab",
+            () -> new SlabBlock(BlockBehaviour.Properties.copy(CONCRETE_OLD.get())));
     public static final RegistryObject<SlabBlock> CONCRETE_STRIPPED_SLAB = registerBlock("concrete_stripped_slab",
             () -> new SlabBlock(BlockBehaviour.Properties.copy(CONCRETE_STRIPPED.get())));
     public static final RegistryObject<SlabBlock> CONCRETE_REINFORCED_SLAB = registerBlock("concrete_reinforced_slab",
@@ -927,6 +952,14 @@ public class ModBlocks {
         ExplosionTooltipRegistry.register(CONCRETE_STAIRS);
         ExplosionTooltipRegistry.register(CONCRETE_SLAB);
 
+        ExplosionTooltipRegistry.register(CONCRETE_MOSSY);
+        ExplosionTooltipRegistry.register(CONCRETE_MOSSY_STAIRS);
+        ExplosionTooltipRegistry.register(CONCRETE_MOSSY_SLAB);
+
+        ExplosionTooltipRegistry.register(CONCRETE_OLD);
+        ExplosionTooltipRegistry.register(CONCRETE_OLD_STAIRS);
+        ExplosionTooltipRegistry.register(CONCRETE_OLD_SLAB);
+
         ExplosionTooltipRegistry.register(CONCRETE_HAZARD_NEW);
         ExplosionTooltipRegistry.register(CONCRETE_HAZARD_NEW_STAIRS);
         ExplosionTooltipRegistry.register(CONCRETE_HAZARD_NEW_SLAB);
@@ -977,6 +1010,9 @@ public class ModBlocks {
         ExplosionTooltipRegistry.register(STEEL_DOOR);
 
         ExplosionTooltipRegistry.register(ROUND_LAMP);
+
+        ExplosionTooltipRegistry.register(CONCRETE_PORT);
+        ExplosionTooltipRegistry.register(CONCRETE_LINE);
     }
 
     // Вспомогательный метод регистрации без предмета

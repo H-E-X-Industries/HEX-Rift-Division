@@ -166,6 +166,12 @@ public class MainRegistry {
             event.accept(ModBlocks.CONCRETE.get());
             event.accept(ModBlocks.CONCRETE_SLAB.get());
             event.accept(ModBlocks.CONCRETE_STAIRS.get());
+            event.accept(ModBlocks.CONCRETE_OLD.get());
+            event.accept(ModBlocks.CONCRETE_OLD_SLAB.get());
+            event.accept(ModBlocks.CONCRETE_OLD_STAIRS.get());
+            event.accept(ModBlocks.CONCRETE_MOSSY.get());
+            event.accept(ModBlocks.CONCRETE_MOSSY_SLAB.get());
+            event.accept(ModBlocks.CONCRETE_MOSSY_STAIRS.get());
             event.accept(ModBlocks.CONCRETE_HAZARD_NEW.get());
             event.accept(ModBlocks.CONCRETE_HAZARD_NEW_SLAB.get());
             event.accept(ModBlocks.CONCRETE_HAZARD_NEW_STAIRS.get());
@@ -200,6 +206,7 @@ public class MainRegistry {
             event.accept(ModBlocks.SEQUOIA_SLAB.get());
             event.accept(ModBlocks.SEQUOIA_STAIRS.get());
 
+            event.accept(ModBlocks.CONCRETE_LINE.get());
             event.accept(ModBlocks.CONCRETE_NET.get());
             event.accept(ModBlocks.ARMORED_GLASS.get());
 

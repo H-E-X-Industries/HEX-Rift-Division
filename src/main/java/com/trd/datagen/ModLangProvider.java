@@ -724,6 +724,13 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.CONCRETE_REINFORCED_HEAVY_SLAB.get(), "Dark Textured Concrete Slab");
         add(ModBlocks.CONCRETE_REINFORCED_HEAVY_STAIRS.get(), "Dark Textured Concrete Stairs");
         add(ModBlocks.CONCRETE_NET.get(), "Reinforced Concrete");
+        add(ModBlocks.CONCRETE_LINE.get(), "Industrial Line Concrete");
+        add(ModBlocks.CONCRETE_MOSSY.get(), "Mossy Concrete");
+        add(ModBlocks.CONCRETE_MOSSY_SLAB.get(), "Mossy Concrete Slab");
+        add(ModBlocks.CONCRETE_MOSSY_STAIRS.get(), "Mossy Concrete Stairs");
+        add(ModBlocks.CONCRETE_OLD.get(), "Old Concrete");
+        add(ModBlocks.CONCRETE_OLD_SLAB.get(), "Old Concrete Slab");
+        add(ModBlocks.CONCRETE_OLD_STAIRS.get(), "Old Concrete Stairs");
 
         // Bricks
         add(ModBlocks.FIREBRICK_BLOCK.get(), "Firebrick Block");
@@ -1986,7 +1993,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.CONCRETE_HAZARD_NEW.get(), "Бетон с разметкой");
         add(ModBlocks.CONCRETE_HAZARD_NEW_SLAB.get(), "Плита из бетона с разметкой");
         add(ModBlocks.CONCRETE_HAZARD_NEW_STAIRS.get(), "Ступени из бетона с разметкой");
-        add(ModBlocks.CONCRETE_HAZARD_OLD.get(), "Изношенный бетон с разметкой");
+        add(ModBlocks.CONCRETE_HAZARD_OLD.get(), "Истощённый бетон с разметкой");
         add(ModBlocks.CONCRETE_HAZARD_OLD_SLAB.get(), "Плита из изношенного бетона с разметкой");
         add(ModBlocks.CONCRETE_HAZARD_OLD_STAIRS.get(), "Ступени из изношенного бетона с разметкой");
         add(ModBlocks.CONCRETE_TILE.get(), "Бетонная плитка");
@@ -2008,6 +2015,13 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.CONCRETE_REINFORCED_HEAVY_SLAB.get(), "Плита из тёмного текстурированного бетона");
         add(ModBlocks.CONCRETE_REINFORCED_HEAVY_STAIRS.get(), "Ступени из тёмного текстурированного бетона");
         add(ModBlocks.CONCRETE_NET.get(), "Усиленный бетон");
+        add(ModBlocks.CONCRETE_LINE.get(), "Бетон «промышленная линия»");
+        add(ModBlocks.CONCRETE_MOSSY.get(), "Замшелый бетон");
+        add(ModBlocks.CONCRETE_MOSSY_SLAB.get(), "Плита из замшелого бетона");
+        add(ModBlocks.CONCRETE_MOSSY_STAIRS.get(), "Ступени из замшелого бетона");
+        add(ModBlocks.CONCRETE_OLD.get(), "Истощённый бетон");
+        add(ModBlocks.CONCRETE_OLD_SLAB.get(), "Плита из истощённого бетона");
+        add(ModBlocks.CONCRETE_OLD_STAIRS.get(), "Ступени из истощённого бетона");
         add(ModItems.SODA.get(), "Порошок соды");
         add(ModItems.SODA_CRYSTAL.get(), "Кристалл соды");
         add(ModItems.QUICKLIME.get(), "Негашёная известь");

@@ -19,7 +19,7 @@ public class ModCreativeTabs {
     public static final RegistryObject<CreativeModeTab> trd_BUILD_TAB = CREATIVE_MODE_TABS.register("trd_build_tab",
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup." + MainRegistry.MOD_ID + ".trd_build_tab"))
-                    .icon(() -> new ItemStack(ModBlocks.CONCRETE_HAZARD_OLD.get()))
+                    .icon(() -> new ItemStack(ModBlocks.CONCRETE_HAZARD_NEW.get()))
                     .build());
 
     // Вкладка TECH – должна быть после BUILD
