@@ -1,0 +1,463 @@
+package com.trd.entity.weapons.missiles;
+
+import com.trd.block.entity.weapons.MissileTurretBlockEntity;
+import com.trd.explosion.logic.ExplosionHE;
+import com.trd.explosion.logic.ExplosionFire;
+import com.trd.explosion.logic.ExplosionHENonDestructive;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.entity.IEntityAdditionalSpawnData;
+import net.minecraftforge.network.NetworkHooks;
+
+public class MissileLightEntity extends Projectile implements IEntityAdditionalSpawnData {
+
+    private static final EntityDataAccessor<Integer> TARGET_ID =
+            SynchedEntityData.defineId(MissileLightEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> ARMED =
+            SynchedEntityData.defineId(MissileLightEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> BOOST_PHASE =
+            SynchedEntityData.defineId(MissileLightEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<String> MISSILE_TYPE =
+            SynchedEntityData.defineId(MissileLightEntity.class, EntityDataSerializers.STRING);
+
+    // === КОНФИГ ===
+    public static final float SPEED = 1.67f;
+    public static final float MAX_TURN_RATE = 0.1f;
+    public static final int MAX_LIFETIME = 200;         // 10 секунд
+    public static final int BOOST_DURATION = 30;
+    public static final float DETONATION_RADIUS = 4.0f;
+    public static final float DETONATION_DAMAGE = 25.0f;
+    public static final float ARMING_DISTANCE = 2.0f;
+
+    // === STATE ===
+    private Vec3 launchPos;
+    private int age = 0;
+    private boolean exploded = false;
+    private LivingEntity cachedTarget = null;
+    private int targetCacheTimer = 0;
+    private int lostTargetTimer = 0;
+    private MissileTurretBlockEntity turretBlockEntity;
+    // Тип ракеты: "standard", "he", "fire"
+    private String missileType = "standard";
+
+    public MissileLightEntity(EntityType<? extends MissileLightEntity> type, Level level) {
+        super(type, level);
+        this.noPhysics = false;
+    }
+
+    public MissileLightEntity(Level level, Vec3 startPos, LivingEntity target, Entity owner, String missileType, MissileTurretBlockEntity turretBE) {
+        this(level, startPos, target, owner, missileType);
+        this.turretBlockEntity = turretBE;
+    }
+
+    public MissileLightEntity(Level level, Vec3 startPos, LivingEntity target, Entity owner, String missileType) {
+        this(com.trd.entity.ModEntities.MISSILE_LIGHT.get(), level);
+        this.setPos(startPos.x, startPos.y, startPos.z);
+        this.launchPos = startPos;
+        this.setTarget(target);
+        this.setOwner(owner);
+        this.missileType = missileType != null ? missileType : "standard";
+        this.entityData.set(MISSILE_TYPE, this.missileType);
+        this.entityData.set(BOOST_PHASE, true); // Начинаем с фазы набора высоты
+
+        // Начальная скорость ВВЕРХ
+        this.setDeltaMovement(0, SPEED * 0.8, 0);
+    }
+
+    @Override
+    protected void defineSynchedData() {
+        this.entityData.define(TARGET_ID, -1);
+        this.entityData.define(ARMED, false);
+        this.entityData.define(BOOST_PHASE, true);
+        this.entityData.define(MISSILE_TYPE, "standard");
+    }
+
+    public void setTarget(LivingEntity target) {
+        this.entityData.set(TARGET_ID, target != null ? target.getId() : -1);
+        this.cachedTarget = target;
+        this.targetCacheTimer = 5;
+        this.lostTargetTimer = 0;
+    }
+
+    public LivingEntity getTarget() {
+        int id = this.entityData.get(TARGET_ID);
+        if (id == -1) return null;
+
+        if (cachedTarget != null && cachedTarget.isAlive() && cachedTarget.getId() == id) {
+            return cachedTarget;
+        }
+
+        if (targetCacheTimer-- <= 0) {
+            targetCacheTimer = 5;
+            Entity e = this.level().getEntity(id);
+            if (e instanceof LivingEntity living && living.isAlive()) {
+                cachedTarget = living;
+                return living;
+            }
+            cachedTarget = null;
+        }
+        return cachedTarget;
+    }
+
+    public boolean isArmed() {
+        return this.entityData.get(ARMED);
+    }
+
+    public boolean isBoostPhase() {
+        return this.entityData.get(BOOST_PHASE);
+    }
+
+    public String getMissileType() {
+        return this.entityData.get(MISSILE_TYPE);
+    }
+
+    public void setMissileType(String type) {
+        this.missileType = type != null ? type : "standard";
+        this.entityData.set(MISSILE_TYPE, this.missileType);
+    }
+
+    // === TICK ===
+
+    @Override
+    public void tick() {
+        if (this.isRemoved() || exploded) return;
+
+        super.tick();
+        age++;
+
+        // Таймер жизни
+        if (age > MAX_LIFETIME) {
+            explode();
+            return;
+        }
+
+        // === НОВОЕ: фаза набора высоты (первые 2 секунды) ===
+        if (isBoostPhase()) {
+            if (age >= BOOST_DURATION) {
+                this.entityData.set(BOOST_PHASE, false);
+                this.entityData.set(ARMED, true);
+            } else {
+                this.setDeltaMovement(0, SPEED * 0.8, 0);
+                this.setYRot(0);
+                this.setXRot(-90);
+                this.yRotO = 0;
+                this.xRotO = -90;
+
+                // === ФИКС: проверяем столкновения даже во время набора высоты ===
+                Vec3 currentPos = this.position();
+                Vec3 motion = this.getDeltaMovement();
+                Vec3 nextPos = currentPos.add(motion);
+
+                BlockHitResult blockHit = this.level().clip(new net.minecraft.world.level.ClipContext(
+                        currentPos, nextPos,
+                        net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                        net.minecraft.world.level.ClipContext.Fluid.NONE,
+                        this
+                ));
+
+                if (blockHit.getType() != net.minecraft.world.phys.HitResult.Type.MISS) {
+                    this.setPos(blockHit.getLocation());
+                    explode();
+                    return;
+                }
+
+                checkEntityCollision(currentPos, nextPos);
+
+                this.setPos(nextPos.x, nextPos.y, nextPos.z);
+                alignRotationToVelocity();
+                spawnTrailParticles();
+                return;
+            }
+        }
+
+        // Обычная фаза наведения
+        Vec3 currentPos = this.position();
+        Vec3 currentVel = this.getDeltaMovement();
+        float currentSpeed = (float) currentVel.length();
+
+        if (currentSpeed < 0.05f) {
+            explode();
+            return;
+        }
+
+        // Наведение
+        if (isArmed()) {
+            LivingEntity target = getTarget();
+
+            if (target != null && target.isAlive()) {
+                lostTargetTimer = 0;
+
+                Vec3 targetPos = target.getBoundingBox().getCenter();
+                Vec3 toTarget = targetPos.subtract(currentPos).normalize();
+                Vec3 currentDir = currentVel.normalize();
+
+                // Плавный поворот
+                double dot = currentDir.dot(toTarget);
+                double angle = Math.acos(Math.max(-1.0, Math.min(1.0, dot)));
+                double maxAngle = MAX_TURN_RATE;
+
+                Vec3 newDir;
+                if (angle <= maxAngle) {
+                    newDir = toTarget;
+                } else {
+                    Vec3 cross = currentDir.cross(toTarget);
+                    if (cross.lengthSqr() < 0.0001) {
+                        newDir = toTarget;
+                    } else {
+                        cross = cross.normalize();
+                        newDir = rotateVector(currentDir, cross, maxAngle);
+                    }
+                }
+
+                this.setDeltaMovement(newDir.scale(SPEED));
+            } else {
+                // Цель потеряна — просто продолжаем лететь по текущему направлению
+                lostTargetTimer = 0;
+            }
+        }
+
+        // Движение
+        Vec3 motion = this.getDeltaMovement();
+        Vec3 nextPos = currentPos.add(motion);
+
+        // Проверка столкновения с блоками
+        BlockHitResult blockHit = this.level().clip(new net.minecraft.world.level.ClipContext(
+                currentPos, nextPos,
+                net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                net.minecraft.world.level.ClipContext.Fluid.NONE,
+                this
+        ));
+
+        if (blockHit.getType() != net.minecraft.world.phys.HitResult.Type.MISS) {
+            this.setPos(blockHit.getLocation());
+            explode();
+            return;
+        }
+
+        this.setPos(nextPos.x, nextPos.y, nextPos.z);
+
+        // Проверка столкновения с сущностями
+        checkEntityCollision(currentPos, nextPos);
+
+        // === ФИКС: правильный поворот модели ===
+        alignRotationToVelocity();
+
+        // Дымовой след
+        spawnTrailParticles();
+    }
+
+    private void spawnTrailParticles() {
+        if (this.level().isClientSide) {
+            Vec3 pos = this.position();
+            Vec3 vel = this.getDeltaMovement();
+
+            this.level().addParticle(
+                    ParticleTypes.SMOKE,
+                    pos.x, pos.y, pos.z,
+                    -vel.x * 0.1 + (random.nextDouble() - 0.5) * 0.05,
+                    -vel.y * 0.1 + (random.nextDouble() - 0.5) * 0.05,
+                    -vel.z * 0.1 + (random.nextDouble() - 0.5) * 0.05
+            );
+
+            if (this.tickCount % 3 == 0) {
+                this.level().addParticle(
+                        ParticleTypes.FLAME,
+                        pos.x, pos.y - 0.3, pos.z,
+                        (random.nextDouble() - 0.5) * 0.02,
+                        -0.05,
+                        (random.nextDouble() - 0.5) * 0.02
+                );
+            }
+        }
+    }
+
+    /**
+     * === ФИКС: верхушка блока (+Y) = лицо сущности, смотрит по направлению движения ===
+     */
+    private void alignRotationToVelocity() {
+        Vec3 vel = this.getDeltaMovement();
+        if (vel.lengthSqr() < 0.001) return;
+
+        double horizontalDist = Math.sqrt(vel.x * vel.x + vel.z * vel.z);
+
+        // === ФИКС: стандартные Minecraft-углы ===
+        float yaw = (float) (-Math.atan2(vel.x, vel.z) * (180D / Math.PI));
+        float pitch = (float) (-Math.atan2(vel.y, horizontalDist) * (180D / Math.PI));
+
+        this.setYRot(yaw);
+        this.setXRot(pitch);
+        this.yRotO = yaw;
+        this.xRotO = pitch;
+    }
+
+    private Vec3 rotateVector(Vec3 vec, Vec3 axis, double angle) {
+        double cos = Math.cos(angle);
+        double sin = Math.sin(angle);
+        double dot = vec.dot(axis);
+
+        return new Vec3(
+                axis.x * dot * (1 - cos) + vec.x * cos + (-axis.z * vec.y + axis.y * vec.z) * sin,
+                axis.y * dot * (1 - cos) + vec.y * cos + ( axis.z * vec.x - axis.x * vec.z) * sin,
+                axis.z * dot * (1 - cos) + vec.z * cos + (-axis.y * vec.x + axis.x * vec.y) * sin
+        );
+    }
+
+    private void checkEntityCollision(Vec3 start, Vec3 end) {
+        AABB searchBox = this.getBoundingBox().inflate(0.5);
+        var entities = this.level().getEntities(this, searchBox, e ->
+                e instanceof LivingEntity && e != this.getOwner() && e.isPickable()
+        );
+
+        for (Entity entity : entities) {
+            if (entity.getBoundingBox().intersects(this.getBoundingBox())) {
+                explode();
+                return;
+            }
+        }
+    }
+
+    @Override
+    protected void onHitEntity(EntityHitResult result) {
+        if (!this.level().isClientSide && !exploded) {
+            explode();
+        }
+    }
+
+    @Override
+    protected void onHitBlock(BlockHitResult result) {
+        if (!this.level().isClientSide && !exploded) {
+            explode();
+        }
+    }
+
+    public void explode() {
+        if (exploded) return;
+        exploded = true;
+
+        if (!this.level().isClientSide) {
+            String type = getMissileType();
+            Vec3 pos = this.position();
+            Entity owner = this.getOwner();
+            ServerLevel serverLevel = (ServerLevel) this.level();
+
+            switch (type) {
+                case "he" -> {
+                    // Фугасная ракета — мощный взрыв ExplosionHE (с разрушением блоков)
+                    ExplosionHE.explode(serverLevel, pos, owner, DETONATION_RADIUS * 1.5f, DETONATION_DAMAGE * 1.5f);
+                }
+                case "fire" -> {
+                    // Огненная ракета — ExplosionFire
+                    ExplosionFire.explode(serverLevel, pos, owner, DETONATION_RADIUS);
+                }
+                default -> {
+                    // Обычная ракета — фугасный взрыв БЕЗ разрушения блоков
+                    ExplosionHENonDestructive.explode(serverLevel, pos, owner, DETONATION_RADIUS, DETONATION_DAMAGE);
+                }
+            }
+        }
+        if (turretBlockEntity != null && !turretBlockEntity.isRemoved()) {
+            turretBlockEntity.incrementKills();
+        }
+        this.discard();
+    }
+
+    @Override
+    public Packet<ClientGamePacketListener> getAddEntityPacket() {
+        return NetworkHooks.getEntitySpawningPacket(this);
+    }
+
+    @Override
+    public void writeSpawnData(FriendlyByteBuf buffer) {
+        Vec3 motion = this.getDeltaMovement();
+        buffer.writeDouble(motion.x);
+        buffer.writeDouble(motion.y);
+        buffer.writeDouble(motion.z);
+        buffer.writeDouble(this.getX());
+        buffer.writeDouble(this.getY());
+        buffer.writeDouble(this.getZ());
+        buffer.writeFloat(this.getYRot());
+        buffer.writeFloat(this.getXRot());
+        buffer.writeInt(this.entityData.get(TARGET_ID));
+        buffer.writeBoolean(this.entityData.get(ARMED));
+        buffer.writeBoolean(this.entityData.get(BOOST_PHASE));
+        buffer.writeUtf(this.entityData.get(MISSILE_TYPE));
+    }
+
+    @Override
+    public void readSpawnData(FriendlyByteBuf buffer) {
+        double vx = buffer.readDouble();
+        double vy = buffer.readDouble();
+        double vz = buffer.readDouble();
+        double x = buffer.readDouble();
+        double y = buffer.readDouble();
+        double z = buffer.readDouble();
+        float yaw = buffer.readFloat();
+        float pitch = buffer.readFloat();
+        int targetId = buffer.readInt();
+        boolean armed = buffer.readBoolean();
+        boolean boost = buffer.readBoolean();
+        String missileType = buffer.readUtf();
+
+        this.setDeltaMovement(vx, vy, vz);
+        this.setPos(x, y, z);
+        this.setYRot(yaw);
+        this.setXRot(pitch);
+        this.yRotO = yaw;
+        this.xRotO = pitch;
+        this.entityData.set(TARGET_ID, targetId);
+        this.entityData.set(ARMED, armed);
+        this.entityData.set(BOOST_PHASE, boost);
+        this.entityData.set(MISSILE_TYPE, missileType);
+    }
+
+    @Override
+    protected void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putInt("Age", age);
+        tag.putBoolean("Exploded", exploded);
+        tag.putBoolean("Armed", isArmed());
+        tag.putBoolean("BoostPhase", isBoostPhase());
+        tag.putString("MissileType", getMissileType());
+        if (launchPos != null) {
+            tag.putDouble("LaunchX", launchPos.x);
+            tag.putDouble("LaunchY", launchPos.y);
+            tag.putDouble("LaunchZ", launchPos.z);
+        }
+    }
+
+    @Override
+    protected void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        age = tag.getInt("Age");
+        exploded = tag.getBoolean("Exploded");
+        this.entityData.set(ARMED, tag.getBoolean("Armed"));
+        this.entityData.set(BOOST_PHASE, tag.getBoolean("BoostPhase"));
+        if (tag.contains("MissileType")) {
+            this.entityData.set(MISSILE_TYPE, tag.getString("MissileType"));
+        }
+        if (tag.contains("LaunchX")) {
+            launchPos = new Vec3(
+                    tag.getDouble("LaunchX"),
+                    tag.getDouble("LaunchY"),
+                    tag.getDouble("LaunchZ")
+            );
+        }
+    }
+}

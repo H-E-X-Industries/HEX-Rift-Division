@@ -1,0 +1,77 @@
+{
+  "parent": "trd:block/stanok",
+  "display": {
+    "thirdperson_righthand": {
+      "translation": [
+        11.75,
+        0,
+        10
+      ],
+      "scale": [
+        0.25,
+        0.25,
+        0.25
+      ]
+    },
+    "thirdperson_lefthand": {
+      "translation": [
+        -12,
+        -10.5,
+        9.5
+      ],
+      "scale": [
+        0.25,
+        0.25,
+        0.25
+      ]
+    },
+    "firstperson_righthand": {
+      "translation": [
+        59,
+        -30,
+        -1.75
+      ]
+    },
+    "firstperson_lefthand": {
+      "translation": [
+        -10,
+        -27,
+        0.5
+      ]
+    },
+    "ground": {
+      "translation": [
+        17,
+        -9.5,
+        13
+      ],
+      "scale": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    },
+    "gui": {
+      "rotation": [
+        -151, 45, -180
+      ],
+      "scale": [
+        0.25,
+        0.25,
+        0.25
+      ],
+      "translation": [
+        -1.5,
+        3.5,
+        0
+      ]
+    },
+    "fixed": {
+      "translation": [
+        24.25,
+        -25.25,
+        16
+      ]
+    }
+  }
+}

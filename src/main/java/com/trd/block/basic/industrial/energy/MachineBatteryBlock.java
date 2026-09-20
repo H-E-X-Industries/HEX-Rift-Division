@@ -194,7 +194,7 @@ public class MachineBatteryBlock extends BaseEntityBlock {
 
             if (cellSlot >= 0) {
                 // --- ОТВЁРТКА: извлечение ячейки ---
-                if (heldItem.isEmpty()) {
+                if (heldItem.getItem() instanceof ScrewdriverItem) {
                     if (!battery.isCellEmpty(cellSlot)) {
                         ItemStack extracted = battery.extractCell(cellSlot);
                         if (!extracted.isEmpty()) {

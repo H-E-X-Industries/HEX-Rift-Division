@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "trd:block/stanok" },
+    "facing=south": { "model": "trd:block/stanok", "y": 180 },
+    "facing=west":  { "model": "trd:block/stanok", "y": 270 },
+    "facing=east":  { "model": "trd:block/stanok", "y": 90 }
+  }
+}

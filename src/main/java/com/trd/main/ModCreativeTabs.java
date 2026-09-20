@@ -74,6 +74,7 @@ public class ModCreativeTabs {
                         output.accept(ModItems.ENERGY_CELL.get());
                         output.accept(ModItems.BATTERY.get());
                         output.accept(ModItems.CREATIVE_BATTERY.get());
+                        output.accept(ModItems.SCREWDRIVER.get());
                     })
                     .build());
 

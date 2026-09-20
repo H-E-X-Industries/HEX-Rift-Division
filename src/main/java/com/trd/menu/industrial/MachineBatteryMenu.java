@@ -83,17 +83,17 @@ public class MachineBatteryMenu extends AbstractContainerMenu implements ILongEn
         this.addSlot(new SlotItemHandler(handler, 2, 8, 73));
         this.addSlot(new SlotItemHandler(handler, 3, 8, 91));
 
-        // 4 слота charge output: x=41, y=37,55,73,91
-        this.addSlot(new SlotItemHandler(handler, 4, 41, 37));
-        this.addSlot(new SlotItemHandler(handler, 5, 41, 55));
-        this.addSlot(new SlotItemHandler(handler, 6, 41, 73));
-        this.addSlot(new SlotItemHandler(handler, 7, 41, 91));
+        // 4 слота charge output: x=42, y=37,55,73,91
+        this.addSlot(new SlotItemHandler(handler, 4, 42, 37));
+        this.addSlot(new SlotItemHandler(handler, 5, 42, 55));
+        this.addSlot(new SlotItemHandler(handler, 6, 42, 73));
+        this.addSlot(new SlotItemHandler(handler, 7, 42, 91));
 
-        // 4 слота discharge input: x=151, y=37,55,73,91
-        this.addSlot(new SlotItemHandler(handler, 8, 151, 37));
-        this.addSlot(new SlotItemHandler(handler, 9, 151, 55));
-        this.addSlot(new SlotItemHandler(handler, 10, 151, 73));
-        this.addSlot(new SlotItemHandler(handler, 11, 151, 91));
+        // 4 слота discharge input: x=152, y=37,55,73,91
+        this.addSlot(new SlotItemHandler(handler, 8, 152, 37));
+        this.addSlot(new SlotItemHandler(handler, 9, 152, 55));
+        this.addSlot(new SlotItemHandler(handler, 10, 152, 73));
+        this.addSlot(new SlotItemHandler(handler, 11, 152, 91));
 
         // 4 слота discharge output: x=118, y=37,55,73,91
         this.addSlot(new SlotItemHandler(handler, 12, 118, 37));

@@ -1,0 +1,458 @@
+package com.trd.entity.mobs.depth_worm;
+
+import com.trd.api.hive.HiveNetwork;
+import com.trd.api.hive.HiveNetworkManager;
+import com.trd.api.hive.HiveNetworkMember;
+import com.trd.block.basic.ModBlocks;
+import com.trd.block.entity.hive.DepthWormNestBlockEntity;
+import com.trd.block.entity.hive.HiveSoilBlockEntity;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.phys.Vec3;
+
+import java.util.EnumSet;
+import java.util.UUID;
+
+public class ReturnToHiveGoal extends Goal {
+    private final DepthWormEntity worm;
+    private BlockPos targetPos;
+    private int nextSearchTick;
+    private boolean targetIsSoil = false;
+    private int stuckTicks = 0;
+    private BlockPos lastPos = BlockPos.ZERO;
+    private static final int STUCK_THRESHOLD = 40;
+
+    private enum ApproachPhase { NAVIGATING, SLIDING, ENTERING }
+    private ApproachPhase phase = ApproachPhase.NAVIGATING;
+    private int slidingTicks = 0;
+    private boolean routerActive = false;
+    private BlockPos routerTarget = null;
+    private static final double ROUTER_DISABLE_DISTANCE_SQ = 256.0;
+    private static final double ROUTER_ARRIVE_DISTANCE_SQ = 4.0;
+
+    public ReturnToHiveGoal(DepthWormEntity worm) {
+        this.worm = worm;
+        this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
+    }
+    // ⭐ НОВЫЕ ПОЛЯ
+    private BlockPos relayTarget = null;
+    private static final double RELAY_SWITCH_DISTANCE_SQ = 9.0; // 3 блока
+    private static final double LONG_RANGE_THRESHOLD_SQ = 4096.0; // 64^2 — увеличили с 32
+
+    // ⭐ НОВЫЙ МЕТОД: получить ID сети червя
+    private UUID getWormNetworkId() {
+        BlockPos bound = worm.getBoundNestPos();
+        if (bound != null) {
+            BlockEntity be = worm.level().getBlockEntity(bound);
+            if (be instanceof HiveNetworkMember member) return member.getNetworkId();
+        }
+        if (targetPos != null) {
+            BlockEntity be = worm.level().getBlockEntity(targetPos);
+            if (be instanceof HiveNetworkMember member) return member.getNetworkId();
+        }
+        return null;
+    }
+
+    // ⭐ НОВЫЙ МЕТОД: найти лучший промежуточный маяк
+    private BlockPos findNearestRelay() {
+        BlockPos lastExit = worm.getLastExitPos();
+        if (lastExit != null) {
+            double distToExit = worm.distanceToSqr(
+                    lastExit.getX()+0.5, lastExit.getY()+0.5, lastExit.getZ()+0.5);
+            double distToTarget = targetPos != null ? worm.distanceToSqr(
+                    targetPos.getX()+0.5, targetPos.getY()+0.5, targetPos.getZ()+0.5) : Double.MAX_VALUE;
+
+            if (distToExit < distToTarget && distToExit > 4.0 && worm.level().isLoaded(lastExit)) {
+                return lastExit;
+            }
+        }
+
+        UUID netId = getWormNetworkId();
+        if (netId == null) return null;
+        HiveNetworkManager manager = HiveNetworkManager.get(worm.level());
+        if (manager == null) return null;
+        HiveNetwork network = manager.getNetwork(netId);
+        if (network == null || network.members.isEmpty()) return null;
+
+        BlockPos best = null;
+        double bestScore = Double.MAX_VALUE;
+        Vec3 wormPos = worm.position();
+
+        for (BlockPos member : network.members) {
+            if (!worm.level().isLoaded(member)) continue;
+
+            double distToWorm = wormPos.distanceToSqr(
+                    member.getX()+0.5, member.getY()+0.5, member.getZ()+0.5);
+
+            if (distToWorm < 4.0) continue; // ⭐ Убрали верхний лимит
+
+            double distToTarget = targetPos != null ? targetPos.distSqr(member) : 0;
+            double score = distToWorm + distToTarget * 0.3;
+
+            if (score < bestScore) {
+                bestScore = score;
+                best = member;
+            }
+        }
+        return best;
+    }
+    @Override
+    public boolean canUse() {
+        if (worm.isColonist()) return false;
+
+        if (worm.isRetreating()) {
+            if (worm.getTarget() != null) worm.setTarget(null);
+        } else {
+            LivingEntity target = worm.getTarget();
+            if (target != null && target.isAlive()) return false;
+        }
+
+        BlockPos boundNest = worm.getBoundNestPos();
+        if (boundNest != null) {
+            if (worm.level().isLoaded(boundNest)) {
+                if (isValidEntryPoint(boundNest)) {
+                    this.targetPos = boundNest;
+                    this.targetIsSoil = isSoil(boundNest);
+                    return true;
+                }
+            } else {
+                this.targetPos = boundNest;
+                this.targetIsSoil = false;
+                return true;
+            }
+        }
+
+        return findAndSetNearestEntry();
+    }
+
+    private boolean findAndSetNearestEntry() {
+        BlockPos entry = findNearestEntryPoint();
+        if (entry != null) {
+            this.targetPos = entry;
+            this.targetIsSoil = isSoil(entry);
+            if (!targetIsSoil) {
+                worm.bindToNest(entry);
+            } else {
+                worm.bindToNest(findNearestNest(entry));
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isValidEntryPoint(BlockPos pos) {
+        BlockEntity be = worm.level().getBlockEntity(pos);
+        if (be instanceof DepthWormNestBlockEntity nest) return !nest.isFull() && nest.getNetworkId() != null;
+        if (be instanceof HiveSoilBlockEntity soil) {
+            UUID netId = soil.getNetworkId();
+            if (netId == null) return false;
+            HiveNetworkManager manager = HiveNetworkManager.get(worm.level());
+            if (manager != null) {
+                HiveNetwork network = manager.getNetwork(netId);
+                return network != null && !network.wormCounts.isEmpty();
+            }
+        }
+        return false;
+    }
+
+    private boolean isSoil(BlockPos pos) {
+        return worm.level().getBlockState(pos).is(ModBlocks.HIVE_SOIL.get());
+    }
+
+    private BlockPos findNearestNest(BlockPos entryPos) {
+        HiveNetworkManager manager = HiveNetworkManager.get(worm.level());
+        if (manager == null) return entryPos;
+        BlockEntity be = worm.level().getBlockEntity(entryPos);
+        if (!(be instanceof HiveNetworkMember member) || member.getNetworkId() == null) return entryPos;
+
+        HiveNetwork network = manager.getNetwork(member.getNetworkId());
+        if (network == null) return entryPos;
+
+        BlockPos nearest = null;
+        double minDist = Double.MAX_VALUE;
+        for (BlockPos nestPos : network.wormCounts.keySet()) {
+            double dist = entryPos.distSqr(nestPos);
+            if (dist < minDist) { minDist = dist; nearest = nestPos; }
+        }
+        return nearest != null ? nearest : entryPos;
+    }
+
+    private BlockPos findNearestEntryPoint() {
+        BlockPos wormPos = worm.blockPosition();
+        BlockPos bestEntry = null;
+        double bestDist = Double.MAX_VALUE;
+        int radius = worm.isRetreating() ? 32 : 24; // ⭐ retreating ищем чуть дальше
+
+        for (int x = -radius; x <= radius; x++) {
+            for (int y = -10; y <= 10; y++) {
+                for (int z = -radius; z <= radius; z++) {
+                    BlockPos p = wormPos.offset(x, y, z);
+                    if (!isValidHiveEntry(p)) continue;
+
+                    double d = worm.distanceToSqr(p.getX() + 0.5, p.getY() + 0.5, p.getZ() + 0.5);
+                    if (d < bestDist) {
+                        bestDist = d;
+                        bestEntry = p.immutable();
+                    }
+                }
+            }
+        }
+        return bestEntry;
+    }
+
+    private boolean isValidHiveEntry(BlockPos pos) {
+        if (worm.level().getBlockState(pos).is(ModBlocks.HIVE_ROOTS.get())) return false;
+
+        BlockEntity be = worm.level().getBlockEntity(pos);
+        if (be instanceof DepthWormNestBlockEntity nest) {
+            return !nest.isFull() && nest.getNetworkId() != null;
+        }
+        if (be instanceof HiveSoilBlockEntity soil) {
+            return isValidSoilEntry(pos);
+        }
+        return false;
+    }
+
+    private boolean isValidSoilEntry(BlockPos pos) {
+        BlockEntity be = worm.level().getBlockEntity(pos);
+        if (!(be instanceof HiveSoilBlockEntity soil) || soil.getNetworkId() == null) return false;
+        HiveNetworkManager manager = HiveNetworkManager.get(worm.level());
+        if (manager == null) return false;
+        HiveNetwork network = manager.getNetwork(soil.getNetworkId());
+        return network != null && !network.wormCounts.isEmpty();
+    }
+
+    @Override
+    public void start() {
+        this.phase = ApproachPhase.NAVIGATING;
+        this.stuckTicks = 0;
+        this.slidingTicks = 0; // ⭐
+        this.lastPos = worm.blockPosition();
+        this.routerActive = false;
+        this.routerTarget = null;
+        this.relayTarget = null;
+    }
+
+    @Override
+    public void tick() {
+        if (worm.isRetreating() && worm.getTarget() != null) {
+            worm.setTarget(null);
+        }
+
+        if (targetPos == null) return;
+
+        double targetX = targetPos.getX() + 0.5;
+        double targetZ = targetPos.getZ() + 0.5;
+        // ⭐ Для sliding/look/enter — центр блока (куда физически ползём)
+        double targetY = targetPos.getY() + 0.5;
+        // ⭐ Для pathfinding — уровень пола блока (куда pathfinder может дойти)
+        double navTargetY = targetPos.getY();
+
+        Vec3 wormPos = worm.position();
+        double distSq = wormPos.distanceToSqr(targetX, targetY, targetZ);
+        double navDistSq = wormPos.distanceToSqr(targetX, navTargetY, targetZ);
+        BlockPos currentBlockPos = worm.blockPosition();
+
+        // Мгновенное всасывание, если червь уже внутри блока улья
+        if (isValidHiveEntry(currentBlockPos)) {
+            this.targetPos = currentBlockPos;
+            this.targetIsSoil = isSoil(currentBlockPos);
+            enterNetwork(currentBlockPos);
+            return;
+        }
+
+        // Дальние расстояния — relay-навигация
+        if (navDistSq > LONG_RANGE_THRESHOLD_SQ) {
+            stuckTicks = 0;
+
+            if (relayTarget == null ||
+                    worm.distanceToSqr(relayTarget.getX()+0.5, relayTarget.getY()+0.5, relayTarget.getZ()+0.5) < RELAY_SWITCH_DISTANCE_SQ) {
+                relayTarget = findNearestRelay();
+            }
+
+            if (relayTarget != null) {
+                worm.getNavigation().moveTo(
+                        relayTarget.getX()+0.5, relayTarget.getY()+0.5, relayTarget.getZ()+0.5, 1.2D);
+                worm.getLookControl().setLookAt(
+                        relayTarget.getX()+0.5, relayTarget.getY()+0.5, relayTarget.getZ()+0.5,
+                        30.0F, 30.0F);
+            } else {
+                worm.getMoveControl().setWantedPosition(targetX, navTargetY, targetZ, 1.2D);
+                worm.getLookControl().setLookAt(targetX, targetY, targetZ);
+            }
+            return;
+        }
+
+        if (routerActive && navDistSq < ROUTER_DISABLE_DISTANCE_SQ) {
+            routerActive = false;
+            routerTarget = null;
+            phase = ApproachPhase.NAVIGATING;
+        }
+
+        if (currentBlockPos.equals(lastPos)) {
+            stuckTicks++;
+        } else {
+            stuckTicks = 0;
+            lastPos = currentBlockPos;
+        }
+
+        // ⭐ Определение фаз: sliding только если почти на том же Y
+        double dy = Math.abs(targetY - wormPos.y);
+        if (distSq < 1.5) {
+            phase = ApproachPhase.ENTERING;
+            slidingTicks = 0;
+        } else if (distSq < 8.0 && dy < 2.5) {
+            if (phase != ApproachPhase.SLIDING) slidingTicks = 0;
+            phase = ApproachPhase.SLIDING;
+        } else {
+            phase = ApproachPhase.NAVIGATING;
+            slidingTicks = 0;
+        }
+
+        switch (phase) {
+            case NAVIGATING -> {
+                boolean pathFound;
+                if (routerActive && routerTarget != null) {
+                    pathFound = worm.getNavigation().moveTo(routerTarget.getX() + 0.5, routerTarget.getY() + 0.5, routerTarget.getZ() + 0.5, 1.2D);
+                    double routerDistSq = worm.distanceToSqr(routerTarget.getX() + 0.5, routerTarget.getY() + 0.5, routerTarget.getZ() + 0.5);
+                    if (routerDistSq < ROUTER_ARRIVE_DISTANCE_SQ) {
+                        routerActive = false;
+                        routerTarget = null;
+                        pathFound = worm.getNavigation().moveTo(targetX, navTargetY, targetZ, 1.2D);
+                    }
+                } else {
+                    pathFound = worm.getNavigation().moveTo(targetX, navTargetY, targetZ, 1.2D);
+                    if (!pathFound) {
+                        // ⭐ Если цель прямо над/под (по горизонтали < 4 блоков), но pathfinder не справляется — форсируем sliding
+                        double horizDistSq = (targetX - wormPos.x) * (targetX - wormPos.x)
+                                + (targetZ - wormPos.z) * (targetZ - wormPos.z);
+                        if (horizDistSq < 16.0) {
+                            phase = ApproachPhase.SLIDING;
+                            slidingTicks = 0;
+                        } else {
+                            BlockPos lastExit = worm.getLastExitPos();
+                            if (lastExit != null && !lastExit.equals(targetPos)) {
+                                routerActive = true;
+                                routerTarget = lastExit;
+                                worm.getNavigation().moveTo(routerTarget.getX() + 0.5, routerTarget.getY() + 0.5, routerTarget.getZ() + 0.5, 1.2D);
+                            }
+                        }
+                    }
+                }
+                worm.getLookControl().setLookAt(targetX, targetY, targetZ);
+
+                if (stuckTicks > STUCK_THRESHOLD) {
+                    if (worm.onGround()) {
+                        worm.getJumpControl().jump();
+                    }
+                    relayTarget = null;
+                }
+            }
+
+            case SLIDING -> {
+                slidingTicks++;
+                if (slidingTicks > 40) {
+                    enterNetwork(targetPos);
+                    return;
+                }
+
+                // ⭐ Если цель заметно выше и мы на земле — прыгаем к ней
+                if (worm.onGround() && targetY - wormPos.y > 1.2) {
+                    worm.getJumpControl().jump();
+                    Vec3 toTargetHoriz = new Vec3(targetX - wormPos.x, 0, targetZ - wormPos.z).normalize();
+                    worm.setDeltaMovement(toTargetHoriz.scale(0.3).x, 0.4, toTargetHoriz.scale(0.3).z);
+                }
+
+                worm.getNavigation().stop();
+                Vec3 toTarget = new Vec3(targetX - wormPos.x, targetY - wormPos.y, targetZ - wormPos.z);
+                double dist = Math.sqrt(distSq);
+                double speed = Math.min(0.15, dist * 0.03);
+                Vec3 move = toTarget.normalize().scale(speed);
+                worm.setPos(wormPos.x + move.x, wormPos.y + move.y, wormPos.z + move.z);
+                worm.setDeltaMovement(Vec3.ZERO);
+                worm.getLookControl().setLookAt(targetX, targetY, targetZ, 30.0F, 30.0F);
+            }
+
+            case ENTERING -> {
+                worm.getNavigation().stop();
+                worm.setDeltaMovement(Vec3.ZERO);
+                if (stuckTicks > 5 || distSq < 2.0) {
+                    enterNetwork(targetPos);
+                }
+            }
+        }
+    }
+
+    private void enterNetwork(BlockPos entryPos) {
+        HiveNetworkManager manager = HiveNetworkManager.get(worm.level());
+        if (manager == null) return;
+
+        BlockEntity be = worm.level().getBlockEntity(entryPos);
+        UUID netId = (be instanceof HiveNetworkMember member) ? member.getNetworkId() : null;
+
+        if (netId == null) {
+            BlockEntity be2 = worm.level().getBlockEntity(worm.blockPosition());
+            if (be2 instanceof HiveNetworkMember member2) {
+                netId = member2.getNetworkId();
+            }
+        }
+
+        if (netId == null) return;
+
+        HiveNetwork network = manager.getNetwork(netId);
+        if (network == null) return;
+
+        int kills = worm.getKills();
+        if (kills > 0) network.addPoints(kills, worm.level());
+
+        BlockPos boundNest = worm.getBoundNestPos();
+        BlockPos actualNest = (boundNest == null || targetIsSoil) ? findNearestNest(entryPos) : boundNest;
+
+        CompoundTag tag = new CompoundTag();
+        worm.saveWithoutId(tag);
+        tag.putString("id", net.minecraftforge.registries.ForgeRegistries.ENTITY_TYPES.getKey(worm.getType()).toString());
+        tag.putInt("Kills", 0);
+
+        boolean success = manager.addWormToNetwork(netId, tag, entryPos, worm.level());
+
+        if (success) {
+            worm.setRetreating(false);
+            worm.setKills(0);
+            network.removeActiveWorm();
+            worm.discard();
+        } else {
+            this.targetPos = null;
+            this.stuckTicks = 0;
+            this.phase = ApproachPhase.NAVIGATING;
+        }
+    }
+
+    @Override
+    public boolean canContinueToUse() {
+        if (worm.isColonist()) return false;
+        if (targetPos == null) return false;
+        if (worm.isRetreating()) {
+        } else if (worm.getTarget() != null && worm.getTarget().isAlive()) {
+            return false;
+        }
+        if (stuckTicks > STUCK_THRESHOLD * 5) return false; // ⭐ 10 сек
+        return isValidEntryPoint(targetPos);
+    }
+
+    @Override
+    public void stop() {
+        this.targetPos = null;
+        this.targetIsSoil = false;
+        this.stuckTicks = 0;
+        this.slidingTicks = 0; // ⭐
+        this.lastPos = BlockPos.ZERO;
+        this.phase = ApproachPhase.NAVIGATING;
+        this.routerActive = false;
+        this.routerTarget = null;
+        relayTarget = null;
+        worm.getNavigation().stop();
+    }
+}

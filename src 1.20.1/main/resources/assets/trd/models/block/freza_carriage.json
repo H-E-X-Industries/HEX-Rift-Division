@@ -1,0 +1,17 @@
+{
+  "loader": "forge:composite",
+  "textures": {
+    "particle": "trd:block/freza_carriage"
+  },
+  "children": {
+    "main": {
+      "loader": "forge:obj",
+      "model": "trd:models/block/freza_carriage.obj",
+      "flip_v": true,
+      "textures": {
+        "default": "trd:block/freza_carriage",
+        "m_c74cd618-942f-752d-6f43-56687f5dac23": "trd:block/freza_carriage"
+      }
+    }
+  }
+}

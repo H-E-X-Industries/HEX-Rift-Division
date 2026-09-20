@@ -1,0 +1,490 @@
+package com.trd.block.entity.industrial.fluids;
+
+import com.trd.api.fluids.system.*;
+import com.trd.block.basic.ModBlocks;
+import com.trd.block.basic.industrial.fluids.FluidBarrelBlock;
+import com.trd.block.entity.ModBlockEntities;
+import com.trd.item.ModItems;
+import com.trd.item.industrial.fluids.FluidIdentifierItem;
+import com.trd.menu.industrial.FluidBarrelMenu;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerData;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.extensions.common.IClientFluidTypeExtensions;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.FluidUtil;
+import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.fluids.capability.templates.FluidTank;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemStackHandler;
+import net.minecraftforge.registries.ForgeRegistries;
+import org.joml.Vector3f;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+public class FluidBarrelBlockEntity extends FluidNodeBlockEntity implements MenuProvider, ITankWithMode {
+
+    // === HOOK METHODS для подклассов ===
+    protected int getMaxTransferRate() { return MAX_TRANSFER_RATE; }
+    protected int getTankCapacity() { return getTier().getCapacity(); }
+
+    public static final int MAX_TRANSFER_RATE = 200;
+    public static final int TOTAL_SLOTS = 6;
+    public static final int FILL_IN_SLOT = 0;
+    public static final int FILL_OUT_SLOT = 1;
+    public static final int DRAIN_IN_SLOT = 2;
+    public static final int DRAIN_OUT_SLOT = 3;
+    public static final int PROTECTOR_SLOT = 4;
+    public static final int IDENTIFIER_SLOT = 5;
+
+    public int mode = 0;
+    public String fluidFilter = "none";
+
+    public FluidTank fluidTank;
+    public IFluidHandler networkFluidHandler;
+
+    public final ItemStackHandler itemHandler = new ItemStackHandler(TOTAL_SLOTS) {
+        @Override protected void onContentsChanged(int slot) { setChanged(); }
+
+        @Override public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            if (slot == IDENTIFIER_SLOT) return stack.getItem() instanceof FluidIdentifierItem;
+            if (slot == FILL_IN_SLOT) return stack.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).isPresent();
+            if (slot == DRAIN_IN_SLOT) {
+                if (stack.getItem() instanceof com.trd.item.tools.InfiniteFluidBarrelItem) return true;
+                return stack.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).isPresent();
+            }
+            if (slot == PROTECTOR_SLOT) {
+                Item item = stack.getItem();
+                return item == ModItems.PROTECTOR_STEEL.get()
+                        || item == ModItems.PROTECTOR_LEAD.get()
+                        || item == ModItems.PROTECTOR_TUNGSTEN.get();
+            }
+            return false;
+        }
+
+        @Override public void deserializeNBT(CompoundTag nbt) {
+            super.deserializeNBT(nbt);
+            if (this.getSlots() != TOTAL_SLOTS) this.setSize(TOTAL_SLOTS);
+        }
+    };
+
+    private LazyOptional<IFluidHandler> lazyFluidHandler = LazyOptional.empty();
+    private LazyOptional<IItemHandler> lazyItemHandler = LazyOptional.empty();
+
+    protected final ContainerData data = new ContainerData() {
+        @Override public int get(int index) { return mode; }
+        @Override public void set(int index, int value) { mode = value; }
+        @Override public int getCount() { return 1; }
+    };
+
+    public FluidBarrelBlockEntity(BlockPos pos, BlockState state) {
+        this(ModBlockEntities.FLUID_BARREL_BE.get(), pos, state);
+    }
+
+    protected FluidBarrelBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
+        super(type, pos, state);
+        this.fluidTank = createTank(getTankCapacity());
+        this.networkFluidHandler = createNetworkHandler();
+    }
+    @Override
+    public void changeMode() {
+        this.mode = (this.mode + 1) % 4;
+        setChanged();
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+        }
+    }
+
+    @Override
+    public int getMode() {
+        return mode;
+    }
+    protected FluidTank createTank(int capacity) {
+        return new FluidTank(capacity) {
+            @Override protected void onContentsChanged() {
+                setChanged();
+                if (level != null && !level.isClientSide) {
+                    level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 3);
+                }
+            }
+            @Override public boolean isFluidValid(FluidStack stack) {
+                if (fluidFilter.equals("none")) return false;
+                ResourceLocation loc = ForgeRegistries.FLUIDS.getKey(stack.getFluid());
+                if (loc != null && !loc.toString().equals(fluidFilter)) return false;
+                return super.isFluidValid(stack);
+            }
+        };
+    }
+
+    protected IFluidHandler createNetworkHandler() {
+        return new IFluidHandler() {
+            @Override public int getTanks() { return fluidTank.getTanks(); }
+            @Override public @NotNull FluidStack getFluidInTank(int tank) { return fluidTank.getFluidInTank(tank); }
+            @Override public int getTankCapacity(int tank) { return fluidTank.getTankCapacity(tank); }
+            @Override public boolean isFluidValid(int tank, @NotNull FluidStack stack) { return fluidTank.isFluidValid(tank, stack); }
+
+            @Override public int fill(FluidStack resource, FluidAction action) {
+                if (mode == 2 || mode == 3) return 0;
+                FluidStack toFill = resource.copy();
+                toFill.setAmount(Math.min(toFill.getAmount(), getMaxTransferRate()));
+                return fluidTank.fill(toFill, action);
+            }
+            @Override public @NotNull FluidStack drain(FluidStack resource, FluidAction action) {
+                if (mode == 1 || mode == 3) return FluidStack.EMPTY;
+                int maxDrain = Math.min(resource.getAmount(), getMaxTransferRate());
+                FluidStack toDrain = resource.copy(); toDrain.setAmount(maxDrain);
+                return fluidTank.drain(toDrain, action);
+            }
+            @Override public @NotNull FluidStack drain(int maxDrain, FluidAction action) {
+                if (mode == 1 || mode == 3) return FluidStack.EMPTY;
+                return fluidTank.drain(Math.min(maxDrain, getMaxTransferRate()), action);
+            }
+        };
+    }
+
+    public BarrelTier getTier() {
+        Block b = getBlockState().getBlock();
+        return (b instanceof FluidBarrelBlock barrel) ? barrel.getTier() : BarrelTier.IRON;
+    }
+
+    private int[] getProtectorBonus() {
+        ItemStack stack = itemHandler.getStackInSlot(PROTECTOR_SLOT);
+        if (stack.isEmpty()) return new int[]{0, 0};
+        Item it = stack.getItem();
+        if (it == ModItems.PROTECTOR_STEEL.get()) return new int[]{720, 40};
+        if (it == ModItems.PROTECTOR_LEAD.get()) return new int[]{350, 225};
+        if (it == ModItems.PROTECTOR_TUNGSTEN.get()) return new int[]{1440, 270};
+        return new int[]{0, 0};
+    }
+
+    public int getTotalMeltingPoint() { return getTier().getMeltingPoint() + getProtectorBonus()[0]; }
+    public int getTotalCorrosionResistance() { return getTier().getCorrosionResistance() + getProtectorBonus()[1]; }
+
+    public static void tick(Level level, BlockPos pos, BlockState state, FluidBarrelBlockEntity be) {
+        if (level.isClientSide) {
+            be.spawnLeakParticles();
+            return;
+        }
+        be.updateIdentifierFilter();
+        be.processBuckets();
+        be.processLeaking();
+        be.checkDamage();
+    }
+
+    /**
+     * Копирует тип жидкости с идентификатора в слоте в фильтр бочки
+     * (та же логика, что у жидкостной центрифуги/выщелачивателя).
+     * Пустой или сброшенный ("none") идентификатор фильтр не меняет.
+     */
+    protected void updateIdentifierFilter() {
+        if (level == null || level.isClientSide) return;
+        ItemStack idStack = itemHandler.getStackInSlot(IDENTIFIER_SLOT);
+        if (idStack.isEmpty() || !(idStack.getItem() instanceof FluidIdentifierItem)) return;
+        String selected = FluidIdentifierItem.getSelectedFluid(idStack);
+        if (selected.isEmpty() || selected.equals("none")) return;
+        if (selected.equals(fluidFilter)) return;
+        setFilter(selected);
+    }
+
+    protected void processLeaking() {
+        if (!getTier().isLeaking() || fluidTank.isEmpty()) return;
+        if (level.getGameTime() % 20 != 0) return;
+        int rate = getTier().getLeakRate();
+        if (rate > 0) fluidTank.drain(rate, IFluidHandler.FluidAction.EXECUTE);
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    private void spawnLeakParticles() {
+        if (!getTier().isLeaking() || fluidTank.isEmpty()) return;
+        RandomSource rnd = level.random;
+        int chance = (getTier() == BarrelTier.CORRUPTED) ? 3 : 15;
+        if (rnd.nextInt(chance) != 0) return;
+
+        FluidStack fluid = fluidTank.getFluid();
+        int tint = IClientFluidTypeExtensions.of(fluid.getFluid()).getTintColor();
+        float r = ((tint >> 16) & 0xFF) / 255f;
+        float g = ((tint >> 8) & 0xFF) / 255f;
+        float b = (tint & 0xFF) / 255f;
+
+        double x = worldPosition.getX() + 0.1 + rnd.nextDouble() * 0.8;
+        double y = worldPosition.getY() + 0.95;
+        double z = worldPosition.getZ() + 0.1 + rnd.nextDouble() * 0.8;
+        double vy = -0.25 - rnd.nextDouble() * 0.15;
+
+        level.addParticle(new DustParticleOptions(new Vector3f(r, g, b), 1.0f), x, y, z, 0.0, vy, 0.0);
+    }
+
+    private void checkDamage() {
+        if (fluidTank.isEmpty()) return;
+
+        Block currentBlock = getBlockState().getBlock();
+        if (currentBlock == ModBlocks.CORRUPTED_BARREL.get() || currentBlock == ModBlocks.LEAKING_BARREL.get())
+            return;
+
+        FluidStack fluid = fluidTank.getFluid();
+        int temp = getFluidTemperatureCelsius(fluid);
+        int corr = getFluidCorrosivity(fluid);
+
+        int melt = getTotalMeltingPoint();
+        int cRes = getTotalCorrosionResistance();
+
+        int tempExcess = temp - melt;
+        int corrExcess = corr - cRes;
+        int maxExcess = Math.max(tempExcess, corrExcess);
+
+        Block target = null;
+        if (maxExcess > 100) {
+            target = ModBlocks.CORRUPTED_BARREL.get();
+        } else if (maxExcess > 0) {
+            target = ModBlocks.LEAKING_BARREL.get();
+        }
+
+        if (target != null) {
+            // === ЗАКРЫВАЕМ GUI ВСЕХ ИГРОКОВ, СМОТРЯЩИХ В ЭТУ БОЧКУ ===
+            closeAllViewers();
+
+            // === СОХРАНЯЕМ NBT ПЕРЕД ЗАМЕНОЙ ===
+            CompoundTag tag = saveWithoutMetadata();
+
+            // === ЗАМЕНЯЕМ БЛОК ===
+            BlockState currentState = getBlockState();
+            BlockState targetState = target.defaultBlockState();
+            if (targetState.hasProperty(FluidBarrelBlock.NORTH) && currentState.hasProperty(FluidBarrelBlock.NORTH)) {
+                targetState = targetState
+                        .setValue(FluidBarrelBlock.NORTH, currentState.getValue(FluidBarrelBlock.NORTH))
+                        .setValue(FluidBarrelBlock.SOUTH, currentState.getValue(FluidBarrelBlock.SOUTH))
+                        .setValue(FluidBarrelBlock.EAST, currentState.getValue(FluidBarrelBlock.EAST))
+                        .setValue(FluidBarrelBlock.WEST, currentState.getValue(FluidBarrelBlock.WEST));
+            }
+            level.setBlock(worldPosition, targetState, 3);
+
+            // === ЗВУК: ВОДА КАСАЕТСЯ ЛАВЫ (как будто жидкость проедает бочку) ===
+            level.playSound(null, worldPosition, SoundEvents.LAVA_EXTINGUISH, SoundSource.BLOCKS, 1.0F, 1.2F);
+
+            // === ЗАГРУЖАЕМ ДАННЫЕ В НОВУЮ БОЧКУ ===
+            BlockEntity newBe = level.getBlockEntity(worldPosition);
+            if (newBe instanceof FluidBarrelBlockEntity newBarrel) {
+                newBarrel.load(tag);
+                int cap = newBarrel.getTier().getCapacity();
+                if (newBarrel.fluidTank.getFluidAmount() > cap) {
+                    newBarrel.fluidTank.getFluid().setAmount(cap);
+                }
+                newBarrel.setChanged();
+            }
+        }
+    }
+
+    /**
+     * Принудительно закрывает GUI у всех игроков, которые смотрят в инвентарь этой бочки
+     */
+    private void closeAllViewers() {
+        if (level == null || level.isClientSide) return;
+
+        // Получаем список всех игроков на сервере
+        for (Player player : level.players()) {
+            if (player instanceof ServerPlayer serverPlayer) {
+                // Если игрок открыл контейнер и этот контейнер принадлежит нашей бочке
+                if (serverPlayer.containerMenu instanceof FluidBarrelMenu menu) {
+                    // Проверяем, что это именно наша бочка по позиции
+                    if (menu.getBlockEntity() == this) {
+                        serverPlayer.closeContainer();
+                    }
+                }
+            }
+        }
+    }
+
+    protected void processBuckets() {
+        ItemStack drainIn = itemHandler.getStackInSlot(DRAIN_IN_SLOT);
+        if (!drainIn.isEmpty()) {
+            if (drainIn.getItem() instanceof com.trd.item.tools.InfiniteFluidBarrelItem) {
+                if (!this.fluidFilter.equals("none")) {
+                    Fluid filterFluid = ForgeRegistries.FLUIDS.getValue(new ResourceLocation(this.fluidFilter));
+                    if (filterFluid != null && filterFluid != Fluids.EMPTY) {
+                        int space = fluidTank.getSpace();
+                        if (space > 0) {
+                            fluidTank.fill(new FluidStack(filterFluid, space), IFluidHandler.FluidAction.EXECUTE);
+                        }
+                    }
+                }
+            } else {
+                // 1) Симуляция опустошения: сколько реально можно слить, НЕ трогая ни резервуар, ни бочку.
+                var sim = FluidUtil.tryEmptyContainer(drainIn, fluidTank, fluidTank.getSpace(), null, false);
+                if (sim.isSuccess()) {
+                    ItemStack drained = sim.getResult();
+                    FluidStack remaining = FluidUtil.getFluidContained(drained).orElse(FluidStack.EMPTY);
+                    if (remaining.isEmpty()) {
+                        // Контейнер опустошается полностью → он должен попасть в слот опустошённых.
+                        // Если выходной слот не может принять результат — НЕ сливаем жидкость,
+                        // иначе при забитом выходе бочка/контейнер бесконечно наполняла бы резервуар.
+                        if (canInsert(DRAIN_OUT_SLOT, drained)) {
+                            FluidUtil.tryEmptyContainer(drainIn, fluidTank, fluidTank.getSpace(), null, true);
+                            insertOrMerge(DRAIN_OUT_SLOT, drained);
+                            drainIn.shrink(1);
+                        }
+                    } else {
+                        // Резервуар не вместил всё → частично опустошаем, бочка остаётся в верхнем слоте.
+                        FluidUtil.tryEmptyContainer(drainIn, fluidTank, fluidTank.getSpace(), null, true);
+                        itemHandler.setStackInSlot(DRAIN_IN_SLOT, drained);
+                    }
+                }
+            }
+        }
+
+        if (fluidTank.getFluidAmount() > 0) {
+            ItemStack fillIn = itemHandler.getStackInSlot(FILL_IN_SLOT);
+            if (!fillIn.isEmpty()) {
+                // 1) Симуляция наполнения (не трогаем резервуар/контейнер).
+                var sim = FluidUtil.tryFillContainer(fillIn, fluidTank, fluidTank.getFluidAmount(), null, false);
+                if (sim.isSuccess()) {
+                    ItemStack filled = sim.getResult();
+                    // 2) Наполняем контейнер и переносим на выход ТОЛЬКО если выход способен его принять,
+                    //    иначе контейнер бесконечно выкачивал бы жидкость при забитом выходе.
+                    if (canInsert(FILL_OUT_SLOT, filled)) {
+                        FluidUtil.tryFillContainer(fillIn, fluidTank, fluidTank.getFluidAmount(), null, true);
+                        insertOrMerge(FILL_OUT_SLOT, filled);
+                        fillIn.shrink(1);
+                    }
+                }
+            }
+        }
+    }
+
+    protected boolean insertOrMerge(int slot, ItemStack stack) {
+        if (stack.isEmpty()) return true;
+        ItemStack existing = itemHandler.getStackInSlot(slot);
+        if (existing.isEmpty()) {
+            itemHandler.setStackInSlot(slot, stack.copy());
+            return true;
+        } else if (ItemStack.isSameItemSameTags(existing, stack) && existing.getCount() + stack.getCount() <= existing.getMaxStackSize()) {
+            existing.grow(stack.getCount());
+            return true;
+        }
+        return false;
+    }
+
+    /** Может ли слот принять стек (без фактического изменения). */
+    protected boolean canInsert(int slot, ItemStack stack) {
+        if (stack.isEmpty()) return true;
+        ItemStack existing = itemHandler.getStackInSlot(slot);
+        if (existing.isEmpty()) return true;
+        return ItemStack.isSameItemSameTags(existing, stack)
+                && existing.getCount() + stack.getCount() <= existing.getMaxStackSize();
+    }
+
+    public void setFilter(String newFilter) {
+        this.fluidFilter = newFilter;
+        if (!newFilter.equals("none") && !fluidTank.isEmpty()) {
+            ResourceLocation cur = ForgeRegistries.FLUIDS.getKey(fluidTank.getFluid().getFluid());
+            if (cur != null && !cur.toString().equals(newFilter)) fluidTank.setFluid(FluidStack.EMPTY);
+        }
+        // при сбросе типа на "none" — сливаем всю жидкость
+        if (newFilter.equals("none") && !fluidTank.isEmpty()) {
+            fluidTank.setFluid(FluidStack.EMPTY);
+        }
+        setChanged();
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 3);
+        }
+    }
+
+
+    @Override public void onLoad() {
+        super.onLoad();
+        lazyFluidHandler = LazyOptional.of(() -> networkFluidHandler);
+        lazyItemHandler = LazyOptional.of(() -> itemHandler);
+    }
+
+    @Override public void invalidateCaps() {
+        super.invalidateCaps();
+        lazyFluidHandler.invalidate();
+        lazyItemHandler.invalidate();
+    }
+
+    protected int getFluidTemperatureCelsius(FluidStack stack) {
+        int nbtTemp = FluidPropertyHelper.getTemperature(stack);
+        Fluid fluid = stack.getFluid();
+        int defaultTemp = fluid.getFluidType().getTemperature();
+        if (nbtTemp != defaultTemp) return nbtTemp;
+        if (fluid == Fluids.WATER || fluid == Fluids.FLOWING_WATER) return 20;
+        if (fluid == Fluids.LAVA || fluid == Fluids.FLOWING_LAVA) return 1000;
+        if (fluid.getFluidType() instanceof BaseFluidType base) return base.getDisplayTemperature();
+        return defaultTemp - 273;
+    }
+
+    protected int getFluidCorrosivity(FluidStack stack) {
+        int nbt = FluidPropertyHelper.getCorrosivity(stack);
+        if (nbt > 0) return nbt;
+        if (stack.getFluid().getFluidType() instanceof BaseFluidType base) return base.getCorrosivity();
+        return 0;
+    }
+
+    @Override public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
+        if (cap == ForgeCapabilities.FLUID_HANDLER) return lazyFluidHandler.cast();
+        if (cap == ForgeCapabilities.ITEM_HANDLER) return lazyItemHandler.cast();
+        return super.getCapability(cap, side);
+    }
+
+    @Override public void load(CompoundTag tag) {
+        super.load(tag);
+        fluidTank.readFromNBT(tag);
+        itemHandler.deserializeNBT(tag.getCompound("Inventory"));
+        mode = tag.getInt("Mode");
+        if (tag.contains("FluidFilter")) this.fluidFilter = tag.getString("FluidFilter");
+        int cap = getTankCapacity();
+        if (fluidTank.getFluidAmount() > cap) {
+            fluidTank.getFluid().setAmount(cap);
+        }
+    }
+
+    @Override public void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
+        fluidTank.writeToNBT(tag);
+        tag.put("Inventory", itemHandler.serializeNBT());
+        tag.putInt("Mode", mode);
+        tag.putString("FluidFilter", this.fluidFilter);
+    }
+
+    @Override public CompoundTag getUpdateTag() { return saveWithoutMetadata(); }
+
+    @Nullable @Override public Packet<ClientGamePacketListener> getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Nullable @Override public AbstractContainerMenu createMenu(int id, Inventory inv, Player player) {
+        return new FluidBarrelMenu(id, inv, this, this.data);
+    }
+
+    @Override public Component getDisplayName() {
+        return Component.translatable("block.trd." + getTier().name().toLowerCase() + "_barrel");
+    }
+}

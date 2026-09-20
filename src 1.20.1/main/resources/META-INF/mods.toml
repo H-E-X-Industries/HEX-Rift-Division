@@ -1,0 +1,46 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="GPL-3.0"
+issueTrackerURL="https://github.com/H-E-X-Industries/HEX-Rift-Division"
+
+[[mods]]
+modId="trd"
+version="0.0.1-alpha"
+displayName="The Rift Division"
+authors="HEX Industries"
+description='''
+    A dark, necrotic expansion for Minecraft.
+    Master the forbidden arts and explore the trd.
+    '''
+displayTest="MATCH_VERSION"
+
+# Зависимость от Forge
+[[dependencies.trd]]
+modId="forge"
+mandatory=true
+versionRange="[47,)"
+ordering="NONE"
+side="BOTH"
+
+# Зависимость от самого Minecraft
+[[dependencies.trd]]
+modId="minecraft"
+mandatory=true
+versionRange="[1.20.1,1.21)"
+ordering="NONE"
+side="BOTH"
+
+# Зависимость от GeckoLib (обязательно, раз мы его используем в коде)
+[[dependencies.trd]]
+modId="geckolib"
+mandatory=true
+versionRange="[4.4,)"
+ordering="AFTER"
+side="BOTH"
+
+[[dependencies.trd]]
+modId="terrablender"
+mandatory=true
+versionRange="[3.0.0,)"
+ordering="AFTER"
+side="BOTH"

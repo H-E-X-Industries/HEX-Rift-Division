@@ -58,7 +58,10 @@ public class EnergyCellItem extends Item implements GeoItem {
      */
     public static void setStoredEnergy(ItemStack stack, long energy) {
         if (stack.isEmpty()) return;
-        net.minecraft.world.item.component.CustomData data = stack.getOrDefault(net.minecraft.core.component.DataComponents.CUSTOM_DATA, net.minecraft.world.item.component.CustomData.EMPTY); net.minecraft.nbt.CompoundTag tag = data.copyTag(); tag.putLong(TAG_ENERGY, Math.max(0, energy));
+        net.minecraft.world.item.component.CustomData data = stack.getOrDefault(net.minecraft.core.component.DataComponents.CUSTOM_DATA, net.minecraft.world.item.component.CustomData.EMPTY);
+        net.minecraft.nbt.CompoundTag tag = data.copyTag();
+        tag.putLong(TAG_ENERGY, Math.max(0, energy));
+        stack.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA, net.minecraft.world.item.component.CustomData.of(tag));
     }
 
     /**

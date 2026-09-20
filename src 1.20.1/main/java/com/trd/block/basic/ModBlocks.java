@@ -1,0 +1,1015 @@
+package com.trd.block.basic;
+
+import com.trd.api.energy.ConnectorTier;
+import com.trd.api.fluids.system.BarrelTier;
+import com.trd.api.fluids.system.PipeTier;
+import com.trd.api.rotation.ShaftDiameter;
+import com.trd.api.rotation.ShaftMaterial;
+import com.trd.api.tooltip.ExplosionTooltipRegistry;
+import com.trd.block.basic.conglomerate.ConglomerateBlock;
+import com.trd.block.basic.deco.BeamBlock;
+import com.trd.block.basic.deco.BeamCollisionBlock;
+import com.trd.block.basic.deco.LampBlock;
+import com.trd.block.basic.deco.SteelPropsBlock;
+import com.trd.block.basic.industrial.*;
+import com.trd.block.basic.industrial.chemistry.ChemicalPlantPortBlock;
+import com.trd.block.basic.industrial.chemistry.ChemicalPlantReactionChamberBlock;
+import com.trd.block.basic.industrial.fluids.FluidBarrelBlock;
+
+import com.trd.block.basic.industrial.fluids.FluidPipeBlock;
+
+import com.trd.block.basic.industrial.casting.CastingDescentBlock;
+import com.trd.block.basic.industrial.casting.CastingPotBlock;
+import com.trd.block.basic.industrial.casting.SmallSmelterBlock;
+import com.trd.block.basic.industrial.energy.*;
+
+import com.trd.block.basic.industrial.fluids.LowPressureSteamCondenserBlock;
+import com.trd.block.basic.industrial.fluids.PaintablePipeBlock;
+import com.trd.block.basic.industrial.rotation.BearingBlock;
+import com.trd.block.basic.industrial.rotation.MotorElectroBlock;
+import com.trd.block.basic.industrial.rotation.HandCrankBlock;
+import com.trd.block.basic.redstone.RedstoneRadioBlock;
+import com.trd.block.basic.industrial.rotation.ShaftBlock;
+import com.trd.block.basic.necrosis.hive.HiveRootsBlock;
+
+import com.trd.block.basic.weapons.MissileTurretBlock;
+
+import com.trd.multiblock.industrial.boiler.BoilerBlock;
+import com.trd.multiblock.industrial.centrifuge.conus.CentrifugeConusBlock;
+import com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderBlock;
+import com.trd.multiblock.industrial.drobitel.DrobitelBlock;
+import com.trd.multiblock.industrial.fueltanks.FuelTankBlock;
+import com.trd.multiblock.industrial.fueltanks.small.FuelTankSmallBlock;
+import com.trd.multiblock.industrial.heaters.HeaterBlock;
+import com.trd.multiblock.industrial.smelter.SmelterBlock;
+import com.trd.multiblock.industrial.steam_engine.SteamEngineBlock;
+import com.trd.multiblock.industrial.steel_storage.SteelStorageBlock;
+import com.trd.multiblock.system.MultiblockPartBlock;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockSetType;
+import net.minecraft.world.level.material.MapColor;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
+import com.trd.block.basic.direction.FullOBlock;
+import com.trd.block.basic.weapons.explosives.DetMinerBlock;
+import com.trd.block.basic.necrosis.NecrosisPortalBlock;
+import com.trd.block.basic.necrosis.hive.DepthWormNestBlock;
+import com.trd.block.basic.necrosis.hive.HiveSoilBlock;
+import com.trd.block.basic.weapons.TurretLightPlacerBlock;
+import com.trd.item.industrial.energy.MachineBatteryBlockItem;
+import com.trd.main.MainRegistry;
+import com.trd.item.ModItems;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Supplier;
+
+public class ModBlocks {
+    public static final DeferredRegister<Block> BLOCKS =
+            DeferredRegister.create(ForgeRegistries.BLOCKS, MainRegistry.MOD_ID);
+
+    //ЭНЕРГОСЕТЬ
+    public static final List<RegistryObject<Block>> BATTERY_BLOCKS = new ArrayList<>();
+
+    public static final RegistryObject<Block> MACHINE_BATTERY = registerBattery("machine_battery");
+
+    public static final RegistryObject<Block> CONVERTER_BLOCK = registerBlock("converter_block",
+            () -> new ConverterBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)));
+    public static final RegistryObject<Block> WIRE_COATED = registerBlock("wire_coated",
+            () -> new WireBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion()));
+    
+    public static final RegistryObject<Block> REDSTONE_RADIO_TRANSMITTER = registerBlock("redstone_radio_transmitter",
+            () -> new RedstoneRadioBlock(BlockBehaviour.Properties.copy(Blocks.REDSTONE_TORCH)
+                    .noOcclusion()
+                    .strength(0.0F)
+                    .instabreak()
+                    .lightLevel(state -> state.getValue(RedstoneRadioBlock.POWERED) ? 7 : 0), true));
+    
+    public static final RegistryObject<Block> REDSTONE_RADIO_RECEIVER = registerBlock("redstone_radio_receiver",
+            () -> new RedstoneRadioBlock(BlockBehaviour.Properties.copy(Blocks.REDSTONE_TORCH)
+                    .noOcclusion()
+                    .strength(0.0F)
+                    .instabreak()
+                    .lightLevel(state -> state.getValue(RedstoneRadioBlock.POWERED) ? 7 : 0), false));
+
+    public static final RegistryObject<Block> SWITCH = registerBlock("switch",
+            () -> new SwitchBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)));
+    public static final RegistryObject<Block> VALVE = registerBlock("valve",
+            () -> new com.trd.block.basic.industrial.fluids.ValveBlock(
+                    BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion()));
+
+
+    public static final RegistryObject<Block> CORRUPTED_BARREL = BLOCKS.register("corrupted_barrel",
+            () -> new FluidBarrelBlock(BarrelTier.CORRUPTED, BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_GRAY).strength(1.5f).sound(SoundType.METAL)));
+
+    public static final RegistryObject<Block> LEAKING_BARREL = BLOCKS.register("leaking_barrel",
+            () -> new FluidBarrelBlock(BarrelTier.LEAKING, BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BROWN).strength(2.0f).sound(SoundType.METAL)));
+
+    public static final RegistryObject<Block> IRON_BARREL = BLOCKS.register("iron_barrel",
+            () -> new FluidBarrelBlock(BarrelTier.IRON, BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(3.0f).requiresCorrectToolForDrops().sound(SoundType.METAL)));
+
+    public static final RegistryObject<Block> STEEL_BARREL = BLOCKS.register("steel_barrel",
+            () -> new FluidBarrelBlock(BarrelTier.STEEL, BlockBehaviour.Properties.of().mapColor(MapColor.METAL).strength(4.0f).requiresCorrectToolForDrops().sound(SoundType.METAL)));
+
+    public static final RegistryObject<Block> LEAD_BARREL = BLOCKS.register("lead_barrel",
+            () -> new FluidBarrelBlock(BarrelTier.LEAD, BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_BLUE).strength(4.0f).requiresCorrectToolForDrops().sound(SoundType.METAL)));
+
+    // Маленький (Ваш старый)
+    public static final RegistryObject<Block> CONNECTOR = registerBlock("connector",
+            () -> new ConnectorBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK),
+                    new ConnectorTier(16, 3, 0.03125f, 4, 6)));
+
+    // Средний
+    public static final RegistryObject<Block> MEDIUM_CONNECTOR = registerBlock("medium_connector",
+            () -> new ConnectorBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK),
+                    new ConnectorTier(32, 7, 0.035f, 6, 8)));
+
+    // Большой
+    public static final RegistryObject<Block> LARGE_CONNECTOR = registerBlock("large_connector",
+            () -> new ConnectorBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK),
+                    new ConnectorTier(200, 11, 0.055f, 8, 13)));
+
+    //трубы
+    public static final RegistryObject<Block> BRONZE_FLUID_PIPE = registerBlock("bronze_fluid_pipe",
+            () -> new FluidPipeBlock(PipeTier.BRONZE, BlockBehaviour.Properties.copy(Blocks.COPPER_BLOCK).noOcclusion()));
+
+    // Стальная труба
+    public static final RegistryObject<Block> STEEL_FLUID_PIPE = registerBlock("steel_fluid_pipe",
+            () -> new FluidPipeBlock(PipeTier.STEEL, BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion()));
+
+    // Свинцовая труба
+    public static final RegistryObject<Block> LEAD_FLUID_PIPE = registerBlock("lead_fluid_pipe",
+            () -> new FluidPipeBlock(PipeTier.LEAD, BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion()));
+
+    public static final RegistryObject<Block> TUNGSTEN_FLUID_PIPE = registerBlock("tungsten_fluid_pipe",
+            () -> new FluidPipeBlock(PipeTier.TUNGSTEN, BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion()));
+
+    public static final RegistryObject<Block> PAINTABLE_PIPE = registerBlock("paintable_pipe",
+            () -> new PaintablePipeBlock(PipeTier.STEEL,
+                    BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion()));
+
+    public static final RegistryObject<Block> PAINTABLE_WIRE = registerBlock("paintable_wire",
+            () -> new PaintableWireBlock(
+                    BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion()));
+
+    public static final RegistryObject<Block> CC_MACHINE = BLOCKS.register("cc_machine",
+            () -> new com.trd.multiblock.industrial.ccmachine.CCMachineBlock(BlockBehaviour.Properties.of()
+                    .strength(1.5F, 6.0F).sound(SoundType.NETHER_BRICKS).requiresCorrectToolForDrops().noOcclusion()));
+
+
+    // Конгломераты
+    public static final RegistryObject<Block> ASBESOTS_ORE = registerBlock("asbestos_ore",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(1.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> CINNABAR_ORE = registerBlock("cinnabar_ore",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(1.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> CINNABAR_ORE_DEEPSLATE = registerBlock("cinnabar_ore_deepslate",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(1.5F, 6.0F).sound(SoundType.DEEPSLATE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> COLTAN_ORE = registerBlock("coltan_ore",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(1.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> LIGNITE_ORE = registerBlock("lignite_ore",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(1.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> FLUORITE_ORE = registerBlock("fluorite_ore",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(1.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> FLUORITE_ORE_DEEPSLATE = registerBlock("fluorite_ore_deepslate",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(1.5F, 6.0F).sound(SoundType.DEEPSLATE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> RAREGROUND_ORE = registerBlock("rareground_ore",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(1.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> RAREGROUND_ORE_DEEPSLATE = registerBlock("rareground_ore_deepslate",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(1.5F, 6.0F).sound(SoundType.DEEPSLATE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> SEQUESTRUM_ORE = registerBlock("sequestrum_ore",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(1.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> SEQUESTRUM_ORE_DEEPSLATE = registerBlock("sequestrum_ore_deepslate",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(1.5F, 6.0F).sound(SoundType.DEEPSLATE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> SULFUR_ORE = registerBlock("sulfur_ore",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(1.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> SULFUR_ORE_DEEPSLATE = registerBlock("sulfur_ore_deepslate",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(1.5F, 6.0F).sound(SoundType.DEEPSLATE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> SULFUR_CLUSTER = registerBlock("sulfur_cluster",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(1.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+
+
+
+    public static final RegistryObject<Block> CONGLOMERATE = BLOCKS.register("conglomerate",
+            () -> new ConglomerateBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.STONE)
+                    .strength(-1.0F, 3600000.0F)
+                    .sound(SoundType.STONE)));
+
+    public static final RegistryObject<Block> DEPLETED_CONGLOMERATE = BLOCKS.register("depleted_conglomerate",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.STONE)
+                    .strength(3.0F, 6.0F)
+                    .sound(SoundType.STONE)
+                    .requiresCorrectToolForDrops()));
+
+    //ВЗРЫВЧАТКА
+    public static final RegistryObject<Block> DET_MINER = registerBlock("det_miner",
+            () -> new DetMinerBlock(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+    //ТУРЕЛИ
+    public static final RegistryObject<Block> TURRET_LIGHT_PLACER = BLOCKS.register("turret_light_placer",
+            () -> new TurretLightPlacerBlock(BlockBehaviour.Properties.copy(Blocks.STONE)
+                    .strength(5.0f, 4.0f).noOcclusion().requiresCorrectToolForDrops()));
+
+    //БЛОКИ УЛЬЯ
+    public static final RegistryObject<Block> DEPTH_WORM_NEST = registerBlock("depth_worm_nest",
+            () -> new DepthWormNestBlock(BlockBehaviour.Properties.copy(Blocks.MUD).sound(SoundType.MUD)));
+    public static final RegistryObject<Block> HIVE_SOIL = registerBlock("hive_soil",
+            () -> new HiveSoilBlock(BlockBehaviour.Properties.copy(Blocks.MUD).sound(SoundType.MUD)));
+    public static final RegistryObject<Block> DEPTH_WORM_NEST_DEAD = registerBlock("depth_worm_nest_dead",
+            () -> new DepthWormNestBlock(BlockBehaviour.Properties.copy(Blocks.MUD).sound(SoundType.MUD)));
+    public static final RegistryObject<Block> HIVE_SOIL_DEAD = registerBlock("hive_soil_dead",
+            () -> new HiveSoilBlock(BlockBehaviour.Properties.copy(Blocks.MUD).sound(SoundType.MUD)));
+    public static final RegistryObject<Block> HIVE_ROOTS = registerBlock("hive_roots",
+            () -> new HiveRootsBlock(BlockBehaviour.Properties.copy(Blocks.SPORE_BLOSSOM).noCollission().instabreak()));
+
+
+    public static final RegistryObject<Block> FUEL_TANK_BIG = BLOCKS.register("fuel_tank_big",
+            () -> new FuelTankBlock(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
+
+    public static final RegistryObject<Block> FUEL_TANK_SMALL = BLOCKS.register("fuel_tank_small",
+            () -> new FuelTankSmallBlock(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
+
+    public static final RegistryObject<Block> SMALL_SMELTER = registerBlock("small_smelter",
+            () -> new SmallSmelterBlock(BlockBehaviour.Properties.of()
+                    .strength(1.2F, 6.0F).sound(SoundType.NETHER_BRICKS).requiresCorrectToolForDrops()));
+
+
+    //ОБЫЧНЫЕ БЛОКИ
+
+
+    public static final RegistryObject<Block> MINERAL1 = registerBlock("mineral1",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(1.0F, 5.0F).sound(SoundType.ANCIENT_DEBRIS).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> MINERAL_BLOCK1 = registerBlock("mineral_block1",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(1.5F, 6.0F).sound(SoundType.METAL).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> DOLOMITE = registerBlock("dolomite",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(1.8F, 7.0F).sound(SoundType.BASALT).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> LIMESTONE = registerBlock("limestone",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(1.2F, 4.0F).sound(SoundType.BASALT).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> MINERAL3 = registerBlock("mineral3",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(1.3F, 5.0F).sound(SoundType.ANCIENT_DEBRIS).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> MINERAL2 = registerBlock("mineral2",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(1.1F, 4.0F).sound(SoundType.ANCIENT_DEBRIS).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> BAUXITE = registerBlock("bauxite",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(1.4F, 5.5F).sound(SoundType.BASALT).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> CRATE = registerBlock("crate",
+            () -> new Block(BlockBehaviour.Properties.copy(Blocks.BARREL).sound(SoundType.WOOD)));
+    public static final RegistryObject<Block> CRATE_AMMO = registerBlock("crate_ammo",
+            () -> new Block(BlockBehaviour.Properties.copy(Blocks.BARREL).sound(SoundType.WOOD)));
+
+
+
+    // ═══════════════════════════════════════════════════════
+// БЕТОННАЯ ЛИНЕЙКА (trd_BUILD_TAB)
+// ═══════════════════════════════════════════════════════
+
+    public static final RegistryObject<Block> CONCRETE = registerBlock("concrete",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.0F, 18.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> ARMORED_GLASS = registerBlock("armored_glass",
+            () -> new GlassBlock(BlockBehaviour.Properties.of()
+                    .strength(3.0F, 12.0F)
+                    .sound(SoundType.STONE)
+                    .requiresCorrectToolForDrops()
+                    .noOcclusion()
+                    .isValidSpawn((state, level, pos, entity) -> false)
+                    .isRedstoneConductor((state, level, pos) -> false)
+                    .isSuffocating((state, level, pos) -> false)
+                    .isViewBlocking((state, level, pos) -> false)));
+
+    public static final RegistryObject<Block> CONCRETE_HAZARD_NEW = registerBlock("concrete_hazard_new",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.0F, 18.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> CONCRETE_HAZARD_OLD = registerBlock("concrete_hazard_old",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.0F, 18.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> CONCRETE_TILE = registerBlock("concrete_tile",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.5F, 20.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> CONCRETE_TILE_ALT = registerBlock("concrete_tile_alt",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.5F, 20.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> CONCRETE_TILE_ALT_BLUE = registerBlock("concrete_tile_alt_blue",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.5F, 20.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> CONCRETE_STRIPPED = registerBlock("concrete_stripped",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.0F, 16.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> CONCRETE_REINFORCED = registerBlock("concrete_reinforced",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.0F, 16.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> CONCRETE_REINFORCED_HEAVY = registerBlock("concrete_reinforced_heavy",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.0F, 16.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> CONCRETE_NET = registerBlock("concrete_net",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.0F, 38.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+
+// ═══════════════════════════════════════════════════════
+// КИРПИЧИ
+// ═══════════════════════════════════════════════════════
+
+    public static final RegistryObject<Block> FIREBRICK_BLOCK = registerBlock("firebrick_block",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(3.0F, 12.0F).sound(SoundType.NETHER_BRICKS).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> REINFORCEDBRICK_BLOCK = registerBlock("reinforcedbrick_block",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(5.0F, 20.0F).sound(SoundType.NETHER_BRICKS).requiresCorrectToolForDrops()));
+
+
+// ═══════════════════════════════════════════════════════
+// МИНЕРАЛЫ / КАМНИ / ПЛИТКА
+// ═══════════════════════════════════════════════════════
+
+    public static final RegistryObject<Block> MINERAL_BLOCK2 = registerBlock("mineral_block2",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(3.0F, 9.0F).sound(SoundType.METAL).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> SALT_ORE = registerBlock("salt_ore",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(3.5F, 10.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> MINERAL_TILE = registerBlock("mineral_tile",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(3.5F, 10.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> DOLOMITE_TILE = registerBlock("dolomite_tile",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(3.0F, 9.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> TILE_LIGHT = registerBlock("tile_light",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(2.5F, 8.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> SULFUR_TILE = registerBlock("sulfur_tile",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(2.0F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> SULFUR_BRICKS = registerBlock("sulfur_bricks",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(2.5F, 7.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+
+// ═══════════════════════════════════════════════════════
+// МЕТАЛЛЫ / СТАЛЬ / БАЛКИ
+// ═══════════════════════════════════════════════════════
+
+    public static final RegistryObject<Block> DECO_STEEL = registerBlock("deco_steel",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(5.0F, 12.0F).sound(SoundType.NETHERITE_BLOCK).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> DECO_STEEL_DARK = registerBlock("deco_steel_dark",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(5.0F, 12.0F).sound(SoundType.NETHERITE_BLOCK).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> DECO_STEEL_SMOG = registerBlock("deco_steel_smog",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(5.0F, 12.0F).sound(SoundType.NETHERITE_BLOCK).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> DECO_LEAD = registerBlock("deco_lead",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(3.5F, 10.0F).sound(SoundType.NETHERITE_BLOCK).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> DECO_BEAM = registerBlock("deco_beam",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.0F, 10.0F).sound(SoundType.NETHERITE_BLOCK).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> BEAM_BLOCK = registerBlock("beam_block",
+            () -> new BeamBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)
+                    .strength(5.0f, 12.0f).noOcclusion().requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> STEEL_PROPS = registerBlock("steel_props",
+            () -> new SteelPropsBlock(BlockBehaviour.Properties.of()
+                    .strength(4.5F, 11.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
+
+
+// ═══════════════════════════════════════════════════════
+// ДЕРЕВО
+// ═══════════════════════════════════════════════════════
+
+    public static final RegistryObject<Block> SEQUOIA_PLANKS  = registerBlock("sequoia_planks",
+            () -> new Block(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)
+                    .strength(2.5f, 4.0f).requiresCorrectToolForDrops()));
+
+
+// ═══════════════════════════════════════════════════════
+// ПРОЧЕЕ / ДЕКОР / СПЕЦБЛОКИ
+// ═══════════════════════════════════════════════════════
+
+    public static final RegistryObject<Block> FREAKY_ALIEN_BLOCK = registerBlock("freaky_alien_block",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(3.0F, 10.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> ROUND_LAMP = registerBlock("round_lamp",
+            () -> new LampBlock(BlockBehaviour.Properties.of()
+                    .strength(6F, 30F)
+                    .sound(SoundType.STONE)
+                    .requiresCorrectToolForDrops()
+                    .noOcclusion()
+                    .lightLevel(state -> 15)));
+
+    public static final RegistryObject<Block> COCCER_OVEN = BLOCKS.register("coccer_oven",
+            () -> new com.trd.multiblock.industrial.coccer.CoccerOvenBlock(BlockBehaviour.Properties.of()
+                    .strength(2.0F, 6.0F).sound(SoundType.NETHER_BRICKS).requiresCorrectToolForDrops().noOcclusion()));
+
+    public static final RegistryObject<Block> MORY_BLOCK = registerBlock("mory_block",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(2.0F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> DECO_BARREL = registerBlock("deco_barrel",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(2.0F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
+
+    public static final RegistryObject<Block> ANTON_CHIGUR = registerBlock("anton_chigur",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(1.0F, 3.0F).sound(SoundType.WOOD).requiresCorrectToolForDrops()));
+
+
+    public static final RegistryObject<Block> PIPE_TEST = registerBlock("pipe_test",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> JERNOVA = registerBlock("jernova",
+            () -> new MillstoneBlock(BlockBehaviour.Properties.of()
+                    .strength(2.0F, 6.0F)
+                    .sound(SoundType.STONE)
+                    .requiresCorrectToolForDrops()
+                    .noOcclusion()));
+
+    public static final RegistryObject<Block> CENTRIFUGE_MOTOR = registerBlock("centrifuge_motor",
+            () -> new com.trd.multiblock.industrial.centrifuge.CentrifugeMotorBlock(BlockBehaviour.Properties.of()
+                    .strength(2.0F, 6.0F)
+                    .sound(SoundType.STONE)
+                    .requiresCorrectToolForDrops()
+                    .noOcclusion()));
+
+    public static final RegistryObject<Block> CENTRIFUGE_CONUS = registerBlock("centrifuge_conus",
+            () -> new CentrifugeConusBlock(BlockBehaviour.Properties.of()
+                    .strength(2.0F, 6.0F)
+                    .sound(SoundType.STONE)
+                    .requiresCorrectToolForDrops()
+                    .noOcclusion()));
+
+    public static final RegistryObject<Block> CENTRIFUGE_CYLINDER = registerBlock("centrifuge_cylinder",
+            () -> new CentrifugeCylinderBlock(BlockBehaviour.Properties.of()
+                    .strength(2.0F, 6.0F)
+                    .sound(SoundType.STONE)
+                    .requiresCorrectToolForDrops()
+                    .noOcclusion()));
+
+    public static final RegistryObject<Block> VISHELASHIVATEL = registerBlockWithoutItem("vishelashivatel",
+            () -> new com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlock(BlockBehaviour.Properties.of()
+                    .strength(3.0F, 10.0F)
+                    .noOcclusion()));
+    public static final RegistryObject<net.minecraft.world.item.Item> VISHELASHIVATEL_ITEM = ModItems.ITEMS.register("vishelashivatel",
+            () -> new com.trd.multiblock.system.MultiblockBlockItem(VISHELASHIVATEL.get(), new net.minecraft.world.item.Item.Properties()));
+
+
+    public static final RegistryObject<Block> CHEMICAL_PLANT_HEATER = registerBlock("chemical_plant_heater",
+            () -> new com.trd.block.basic.industrial.chemistry.ChemicalPlantHeaterBlock(BlockBehaviour.Properties.of()
+                    .strength(2.0F, 6.0F)
+                    .sound(SoundType.STONE)
+                    .requiresCorrectToolForDrops()
+                    .noOcclusion()));
+
+    public static final RegistryObject<Block> CHEMICAL_PLANT_REACTION_CHAMBER = registerBlock("chemical_plant_reaction_chamber",
+            () -> new ChemicalPlantReactionChamberBlock(BlockBehaviour.Properties.of()
+                    .strength(2.0F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
+
+    public static final RegistryObject<Block> CHEMICAL_PLANT_PORT = registerBlock("chemical_plant_port",
+            () -> new ChemicalPlantPortBlock(BlockBehaviour.Properties.of()
+                    .strength(2.0F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
+
+    public static final RegistryObject<Block> SMELTER = BLOCKS.register("smelter",
+            () -> new SmelterBlock(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.NETHER_BRICKS).requiresCorrectToolForDrops().noOcclusion()));
+    public static final RegistryObject<Block> DROBITEL = BLOCKS.register("drobitel",
+            () -> new DrobitelBlock(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
+    public static final RegistryObject<Block> STANOK = BLOCKS.register("stanok",
+            () -> new com.trd.multiblock.industrial.stanok.StanokBlock(BlockBehaviour.Properties.of()
+                    .strength(3.0F, 10.0F).sound(SoundType.METAL).requiresCorrectToolForDrops().noOcclusion()));
+    public static final RegistryObject<Block> CONCRETE_RED = registerBlock("concrete_red",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> CONCRETE_BLUE = registerBlock("concrete_blue",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> CONCRETE_GREEN = registerBlock("concrete_green",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> NECROSIS_TEST = registerBlock("necrosis_test",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> NECROSIS_TEST2 = registerBlock("necrosis_test2",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> NECROSIS_TEST3 = registerBlock("necrosis_test3",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> NECROSIS_TEST4 = registerBlock("necrosis_test4",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> NECROSIS_PORTAL = registerBlock("necrosis_portal",
+            () -> new NecrosisPortalBlock(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> DIRT_ROUGH = registerBlock("dirt_rough",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.ROOTED_DIRT).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> BASALT_ROUGH = registerBlock("basalt_rough",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> WASTE_LOG = registerBlock("waste_log",
+            () -> new FullOBlock(BlockBehaviour.Properties.copy(Blocks.OAK_WOOD).sound(SoundType.WOOD)));
+
+    public static final RegistryObject<Block> CASTING_DESCENT = registerBlock("casting_descent",
+            () -> new CastingDescentBlock(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.NETHER_BRICKS).requiresCorrectToolForDrops().noOcclusion()));
+    public static final RegistryObject<Block> CASTING_POT = registerBlock("casting_pot",
+            () -> new CastingPotBlock(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.NETHER_BRICKS).requiresCorrectToolForDrops().noOcclusion()));
+    public static final RegistryObject<Block> CONCRETE_ARMED_GLASS = registerBlock("concrete_armed_glass",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
+
+
+
+    //СТУПЕНИ И ПОЛУБЛОКИ
+    public static final RegistryObject<StairBlock> CONCRETE_TILE_ALT_STAIRS = registerBlock("concrete_tile_alt_stairs",
+            () -> new StairBlock(CONCRETE_TILE_ALT.get().defaultBlockState(),
+                    BlockBehaviour.Properties.copy(CONCRETE_TILE_ALT.get())));
+    public static final RegistryObject<StairBlock> CONCRETE_TILE_ALT_BLUE_STAIRS = registerBlock("concrete_tile_alt_blue_stairs",
+            () -> new StairBlock(CONCRETE_TILE_ALT_BLUE.get().defaultBlockState(),
+                    BlockBehaviour.Properties.copy(CONCRETE_TILE_ALT_BLUE.get())));
+    public static final RegistryObject<StairBlock> CONCRETE_STAIRS = registerBlock("concrete_stairs",
+            () -> new StairBlock(CONCRETE.get().defaultBlockState(),
+                    BlockBehaviour.Properties.copy(CONCRETE.get())));
+    public static final RegistryObject<StairBlock> CONCRETE_TILE_STAIRS = registerBlock("concrete_tile_stairs",
+            () -> new StairBlock(CONCRETE_TILE.get().defaultBlockState(),
+                    BlockBehaviour.Properties.copy(CONCRETE_TILE.get())));
+    public static final RegistryObject<StairBlock> FIREBRICK_STAIRS = registerBlock("firebrick_stairs",
+            () -> new StairBlock(FIREBRICK_BLOCK.get().defaultBlockState(),
+                    BlockBehaviour.Properties.copy(FIREBRICK_BLOCK.get())));
+    public static final RegistryObject<StairBlock> REINFORCEDBRICK_STAIRS = registerBlock("reinforcedbrick_stairs",
+            () -> new StairBlock(REINFORCEDBRICK_BLOCK.get().defaultBlockState(),
+                    BlockBehaviour.Properties.copy(REINFORCEDBRICK_BLOCK.get())));
+    public static final RegistryObject<SlabBlock> CONCRETE_SLAB = registerBlock("concrete_slab",
+            () -> new SlabBlock(BlockBehaviour.Properties.copy(CONCRETE.get())));
+    public static final RegistryObject<StairBlock> CONCRETE_RED_STAIRS = registerBlock("concrete_red_stairs",
+            () -> new StairBlock(CONCRETE_RED.get().defaultBlockState(),
+                    BlockBehaviour.Properties.copy(CONCRETE_RED.get())));
+    public static final RegistryObject<SlabBlock> CONCRETE_RED_SLAB = registerBlock("concrete_red_slab",
+            () -> new SlabBlock(BlockBehaviour.Properties.copy(CONCRETE_RED.get())));
+    public static final RegistryObject<StairBlock> CONCRETE_BLUE_STAIRS = registerBlock("concrete_blue_stairs",
+            () -> new StairBlock(CONCRETE_BLUE.get().defaultBlockState(),
+                    BlockBehaviour.Properties.copy(CONCRETE_BLUE.get())));
+    public static final RegistryObject<SlabBlock> CONCRETE_BLUE_SLAB = registerBlock("concrete_blue_slab",
+            () -> new SlabBlock(BlockBehaviour.Properties.copy(CONCRETE_BLUE.get())));
+    public static final RegistryObject<StairBlock> CONCRETE_GREEN_STAIRS = registerBlock("concrete_green_stairs",
+            () -> new StairBlock(CONCRETE_GREEN.get().defaultBlockState(),
+                    BlockBehaviour.Properties.copy(CONCRETE_GREEN.get())));
+    public static final RegistryObject<StairBlock> CONCRETE_STRIPPED_STAIRS = registerBlock("concrete_stripped_stairs",
+            () -> new StairBlock(CONCRETE_STRIPPED.get().defaultBlockState(),
+                    BlockBehaviour.Properties.copy(CONCRETE_STRIPPED.get())));
+    public static final RegistryObject<StairBlock> CONCRETE_REINFORCED_STAIRS = registerBlock("concrete_reinforced_stairs",
+            () -> new StairBlock(CONCRETE_REINFORCED.get().defaultBlockState(),
+                    BlockBehaviour.Properties.copy(CONCRETE_REINFORCED.get())));
+    public static final RegistryObject<StairBlock> CONCRETE_REINFORCED_HEAVY_STAIRS = registerBlock("concrete_reinforced_heavy_stairs",
+            () -> new StairBlock(CONCRETE_REINFORCED_HEAVY.get().defaultBlockState(),
+                    BlockBehaviour.Properties.copy(CONCRETE_REINFORCED_HEAVY.get())));
+
+
+    public static final RegistryObject<SlabBlock> CONCRETE_STRIPPED_SLAB = registerBlock("concrete_stripped_slab",
+            () -> new SlabBlock(BlockBehaviour.Properties.copy(CONCRETE_STRIPPED.get())));
+    public static final RegistryObject<SlabBlock> CONCRETE_REINFORCED_SLAB = registerBlock("concrete_reinforced_slab",
+            () -> new SlabBlock(BlockBehaviour.Properties.copy(CONCRETE_REINFORCED.get())));
+    public static final RegistryObject<SlabBlock> CONCRETE_REINFORCED_HEAVY_SLAB = registerBlock("concrete_reinforced_heavy_slab",
+            () -> new SlabBlock(BlockBehaviour.Properties.copy(CONCRETE_REINFORCED_HEAVY.get())));
+    public static final RegistryObject<SlabBlock> CONCRETE_TILE_SLAB = registerBlock("concrete_tile_slab",
+            () -> new SlabBlock(BlockBehaviour.Properties.copy(CONCRETE_TILE.get())));
+    public static final RegistryObject<SlabBlock> CONCRETE_TILE_ALT_SLAB = registerBlock("concrete_tile_alt_slab",
+            () -> new SlabBlock(BlockBehaviour.Properties.copy(CONCRETE_TILE_ALT.get())));
+    public static final RegistryObject<SlabBlock> CONCRETE_TILE_ALT_BLUE_SLAB = registerBlock("concrete_tile_alt_blue_slab",
+            () -> new SlabBlock(BlockBehaviour.Properties.copy(CONCRETE_TILE_ALT.get())));
+    public static final RegistryObject<SlabBlock> CONCRETE_GREEN_SLAB = registerBlock("concrete_green_slab",
+            () -> new SlabBlock(BlockBehaviour.Properties.copy(CONCRETE_GREEN.get())));
+    public static final RegistryObject<SlabBlock> FIREBRICK_SLAB = registerBlock("firebrick_slab",
+            () -> new SlabBlock(BlockBehaviour.Properties.copy(FIREBRICK_BLOCK.get())));
+    public static final RegistryObject<SlabBlock> REINFORCEDBRICK_SLAB = registerBlock("reinforcedbrick_slab",
+            () -> new SlabBlock(BlockBehaviour.Properties.copy(REINFORCEDBRICK_BLOCK.get())));
+    public static final RegistryObject<StairBlock> CONCRETE_HAZARD_NEW_STAIRS = registerBlock("concrete_hazard_new_stairs",
+            () -> new StairBlock(CONCRETE_HAZARD_NEW.get().defaultBlockState(),
+                    BlockBehaviour.Properties.copy(CONCRETE_HAZARD_NEW.get())));
+    public static final RegistryObject<SlabBlock> CONCRETE_HAZARD_NEW_SLAB = registerBlock("concrete_hazard_new_slab",
+            () -> new SlabBlock(BlockBehaviour.Properties.copy(CONCRETE_HAZARD_NEW.get())));
+    public static final RegistryObject<StairBlock> CONCRETE_HAZARD_OLD_STAIRS = registerBlock("concrete_hazard_old_stairs",
+            () -> new StairBlock(CONCRETE_HAZARD_OLD.get().defaultBlockState(),
+                    BlockBehaviour.Properties.copy(CONCRETE_HAZARD_OLD.get())));
+    public static final RegistryObject<SlabBlock> CONCRETE_HAZARD_OLD_SLAB = registerBlock("concrete_hazard_old_slab",
+            () -> new SlabBlock(BlockBehaviour.Properties.copy(CONCRETE_HAZARD_OLD.get())));
+
+
+
+
+
+
+    // ДВЕРИ
+    public static final RegistryObject<Block> SEQUOIA_DOOR = registerBlock("sequoia_door",
+            () -> new DoorBlock(
+                    BlockBehaviour.Properties.copy(Blocks.DARK_OAK_DOOR).sound(SoundType.WOOD).noOcclusion(),
+                    BlockSetType.DARK_OAK));
+
+    public static final RegistryObject<Block> STEEL_DOOR = registerBlock("steel_door",
+            () -> new DoorBlock(
+                    BlockBehaviour.Properties.of().strength(15.0F, 80.0F).sound(SoundType.METAL).noOcclusion(),
+                    BlockSetType.STONE));
+
+    // ЛЮКИ
+    public static final RegistryObject<Block> SEQUOIA_TRAPDOOR = registerBlock("sequoia_trapdoor",
+            () -> new TrapDoorBlock( // <--- ВОТ ТУТ ИСПРАВЬ
+                    BlockBehaviour.Properties.copy(Blocks.DARK_OAK_DOOR).sound(SoundType.WOOD).noOcclusion(),
+                    BlockSetType.DARK_OAK));
+
+
+
+
+    public static final RegistryObject<Block> PIPE_SPOTS = BLOCKS.register("pipe_spots",
+            () -> new FluidPipeBlock(
+                    com.trd.api.fluids.system.PipeTier.BRONZE, // <--- Просто даем ему любой тир-заглушку
+                    BlockBehaviour.Properties.copy(net.minecraft.world.level.block.Blocks.GLASS)
+                            .noCollission().noOcclusion().noLootTable()
+            ));
+
+
+//    //БЛОКИ-ВРАЩЕНИЯ
+
+
+    // Максимально чистая регистрация базового вала
+    // Меняем BLOCKS.register на твой метод registerBlock
+
+    public static final RegistryObject<Block> BEARING_BLOCK = registerBlock("bearing",
+            () -> new BearingBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)
+                    .noOcclusion() // Важно для рендера моделей внутри
+                    .strength(5.0f, 6.0f)
+                    .requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> TACHOMETER = registerBlock("tachometer",
+            () -> new com.trd.block.basic.industrial.rotation.TachometerBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)
+                    .noOcclusion()
+                    .strength(5.0f, 6.0f)
+                    .requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> OPTIC_MICROSCOPE = registerBlock("optic_microscope",
+            () -> new OpticMicroscopeBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)
+                    .noOcclusion()
+                    .strength(5.0f, 6.0f)
+                    .requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> CLUTCH = registerBlock("clutch",
+            () -> new com.trd.block.basic.industrial.rotation.ClutchBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)
+                    .noOcclusion()
+                    .strength(5.0f, 6.0f)
+                    .requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> MOTOR_ELECTRO = registerBlock("motor_electro",
+            () -> new MotorElectroBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion()));
+
+    public static final RegistryObject<Block> HAND_CRANK_BLOCK = registerBlock("hand_crank",
+            () -> new HandCrankBlock());
+
+    public static final RegistryObject<Block> STATOR_BLOCK = BLOCKS.register("stator",
+            () -> new com.trd.block.basic.industrial.rotation.StatorBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)
+                    .noOcclusion()
+                    .strength(5.0f, 6.0f)
+                    .requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> SHAFT_LIGHT_IRON = registerShaft(ShaftMaterial.IRON, ShaftDiameter.LIGHT);
+    public static final RegistryObject<Block> SHAFT_MEDIUM_IRON = registerShaft(ShaftMaterial.IRON, ShaftDiameter.MEDIUM);
+    public static final RegistryObject<Block> SHAFT_HEAVY_IRON = registerShaft(ShaftMaterial.IRON, ShaftDiameter.HEAVY);
+
+    // ВАЛЫ: ДЮРАЛЮМИНИЙ
+    public static final RegistryObject<Block> SHAFT_LIGHT_DURALUMIN = registerShaft(ShaftMaterial.DURALUMIN, ShaftDiameter.LIGHT);
+    public static final RegistryObject<Block> SHAFT_MEDIUM_DURALUMIN = registerShaft(ShaftMaterial.DURALUMIN, ShaftDiameter.MEDIUM);
+    public static final RegistryObject<Block> SHAFT_HEAVY_DURALUMIN = registerShaft(ShaftMaterial.DURALUMIN, ShaftDiameter.HEAVY);
+
+    // ВАЛЫ: СТАЛЬ
+    public static final RegistryObject<Block> SHAFT_LIGHT_STEEL = registerShaft(ShaftMaterial.STEEL, ShaftDiameter.LIGHT);
+    public static final RegistryObject<Block> SHAFT_MEDIUM_STEEL = registerShaft(ShaftMaterial.STEEL, ShaftDiameter.MEDIUM);
+    public static final RegistryObject<Block> SHAFT_HEAVY_STEEL = registerShaft(ShaftMaterial.STEEL, ShaftDiameter.HEAVY);
+
+    // ВАЛЫ: ТИТАН
+    public static final RegistryObject<Block> SHAFT_LIGHT_TITANIUM = registerShaft(ShaftMaterial.TITANIUM, ShaftDiameter.LIGHT);
+    public static final RegistryObject<Block> SHAFT_MEDIUM_TITANIUM = registerShaft(ShaftMaterial.TITANIUM, ShaftDiameter.MEDIUM);
+    public static final RegistryObject<Block> SHAFT_HEAVY_TITANIUM = registerShaft(ShaftMaterial.TITANIUM, ShaftDiameter.HEAVY);
+
+    // ВАЛЫ: КАРБИД ВОЛЬФРАМА
+    public static final RegistryObject<Block> SHAFT_LIGHT_TUNGSTEN_CARBIDE = registerShaft(ShaftMaterial.TUNGSTEN_CARBIDE, ShaftDiameter.LIGHT);
+    public static final RegistryObject<Block> SHAFT_MEDIUM_TUNGSTEN_CARBIDE = registerShaft(ShaftMaterial.TUNGSTEN_CARBIDE, ShaftDiameter.MEDIUM);
+    public static final RegistryObject<Block> SHAFT_HEAVY_TUNGSTEN_CARBIDE = registerShaft(ShaftMaterial.TUNGSTEN_CARBIDE, ShaftDiameter.HEAVY);
+
+    private static RegistryObject<Block> registerShaft(ShaftMaterial mat, ShaftDiameter dia) {
+        String name = "shaft_" + dia.name + "_" + mat.name();
+        // ТЕПЕРЬ ИСПОЛЬЗУЕМ registerBlock, чтобы создались и блок, и предмет!
+        return registerBlock(name, () -> new ShaftBlock(BlockBehaviour.Properties.of().strength(2.0f), mat, dia));
+    }
+
+    public static RegistryObject<Block> getShaft(ShaftMaterial mat, ShaftDiameter dia) {
+        if (mat == ShaftMaterial.IRON && dia == ShaftDiameter.LIGHT) return SHAFT_LIGHT_IRON;
+        if (mat == ShaftMaterial.IRON && dia == ShaftDiameter.MEDIUM) return SHAFT_MEDIUM_IRON;
+        if (mat == ShaftMaterial.IRON && dia == ShaftDiameter.HEAVY) return SHAFT_HEAVY_IRON;
+
+        if (mat == ShaftMaterial.DURALUMIN && dia == ShaftDiameter.LIGHT) return SHAFT_LIGHT_DURALUMIN;
+        if (mat == ShaftMaterial.DURALUMIN && dia == ShaftDiameter.MEDIUM) return SHAFT_MEDIUM_DURALUMIN;
+        if (mat == ShaftMaterial.DURALUMIN && dia == ShaftDiameter.HEAVY) return SHAFT_HEAVY_DURALUMIN;
+
+        if (mat == ShaftMaterial.STEEL && dia == ShaftDiameter.LIGHT) return SHAFT_LIGHT_STEEL;
+        if (mat == ShaftMaterial.STEEL && dia == ShaftDiameter.MEDIUM) return SHAFT_MEDIUM_STEEL;
+        if (mat == ShaftMaterial.STEEL && dia == ShaftDiameter.HEAVY) return SHAFT_HEAVY_STEEL;
+
+        if (mat == ShaftMaterial.TITANIUM && dia == ShaftDiameter.LIGHT) return SHAFT_LIGHT_TITANIUM;
+        if (mat == ShaftMaterial.TITANIUM && dia == ShaftDiameter.MEDIUM) return SHAFT_MEDIUM_TITANIUM;
+        if (mat == ShaftMaterial.TITANIUM && dia == ShaftDiameter.HEAVY) return SHAFT_HEAVY_TITANIUM;
+
+        if (mat == ShaftMaterial.TUNGSTEN_CARBIDE && dia == ShaftDiameter.LIGHT) return SHAFT_LIGHT_TUNGSTEN_CARBIDE;
+        if (mat == ShaftMaterial.TUNGSTEN_CARBIDE && dia == ShaftDiameter.MEDIUM) return SHAFT_MEDIUM_TUNGSTEN_CARBIDE;
+        if (mat == ShaftMaterial.TUNGSTEN_CARBIDE && dia == ShaftDiameter.HEAVY) return SHAFT_HEAVY_TUNGSTEN_CARBIDE;
+
+        return SHAFT_LIGHT_IRON;
+    }
+
+
+
+
+    public static final RegistryObject<Block> MISSILE_LIGHT = registerBlock("missile_light",
+            () -> new Block(BlockBehaviour.Properties.copy(Blocks.STONE)
+                    .strength(5.0f, 6.0f).noOcclusion().requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> BEAM_COLLISION = BLOCKS.register("beam_collision",
+            () -> new BeamCollisionBlock(BlockBehaviour.Properties.of()
+                    .strength(2.0f, 6.0f) // Изменили с -1.0f на 2.0f
+                    .noOcclusion()
+                    .noLootTable()));
+
+    public static final RegistryObject<Block> NUCLEAR_CHARGE = registerBlock("nuclear_charge",
+            () -> new Block(BlockBehaviour.Properties.copy(Blocks.STONE)));
+
+
+    public static final RegistryObject<Block> ELECTRO_FURNACE = registerBlock("electro_furnace",
+            () -> new ElectricFurnaceBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)));
+
+
+    //СЕКВОЯ
+
+
+    public static final RegistryObject<Block> SEQUOIA_BARK = registerBlock("sequoia_bark",
+            () -> new Block(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)));
+    public static final RegistryObject<Block> SEQUOIA_HEARTWOOD = registerBlock("sequoia_heartwood",
+            () -> new Block(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)));
+   public static final RegistryObject<SlabBlock> SEQUOIA_SLAB = registerBlock("sequoia_slab",
+            () -> new SlabBlock(BlockBehaviour.Properties.copy(SEQUOIA_PLANKS.get())));
+    public static final RegistryObject<StairBlock> SEQUOIA_STAIRS = registerBlock("sequoia_stairs",
+            () -> new StairBlock(SEQUOIA_PLANKS.get().defaultBlockState(),
+                    BlockBehaviour.Properties.copy(SEQUOIA_PLANKS.get())));
+    public static final RegistryObject<Block> SEQUOIA_ROOTS  = registerBlock("sequoia_roots",
+            () -> new Block(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS).strength(0.5f, 4.0f).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> SEQUOIA_ROOTS_MOSSY  = registerBlock("sequoia_roots_mossy",
+            () -> new Block(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS).strength(0.5f, 4.0f).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> SEQUOIA_BARK_DARK = registerBlock("sequoia_bark_dark",
+            () -> new Block(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)));
+    public static final RegistryObject<Block> SEQUOIA_BARK_LIGHT = registerBlock("sequoia_bark_light",
+            () -> new Block(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)));
+    public static final RegistryObject<Block> SEQUOIA_BARK_MOSSY = registerBlock("sequoia_bark_mossy",
+            () -> new Block(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)));
+    public static final RegistryObject<Block> SEQUOIA_BIOME_MOSS = registerBlock("sequoia_biome_moss",
+            () -> new Block(BlockBehaviour.Properties.copy(Blocks.MOSS_BLOCK)));
+    public static final RegistryObject<Block> SEQUOIA_LEAVES = registerBlock("sequoia_leaves",
+            () -> new LeavesBlock(BlockBehaviour.Properties.copy(Blocks.SPRUCE_LEAVES).noOcclusion()
+                    .isSuffocating((state, level, pos) -> false)
+                    .isViewBlocking((state, level, pos) -> false)) {
+                @Override
+                public boolean isFlammable(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+                    return true;
+                }
+                @Override
+                public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+                    return 60; // Как быстро сгорает
+                }
+                @Override
+                public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+                    return 30; // Шанс, что огонь перекинется на этот блок
+                }});
+
+    public static final RegistryObject<Block> LIGNITE_BLOCK = registerBlock("lignite_block",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+
+
+
+    public static final RegistryObject<Block> LPSC = registerBlock("lpsc",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
+
+
+    public static final RegistryObject<Block> CONVEYOR = registerBlock("conveyor",
+            () -> new ConveyorBlock(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F)
+                    .sound(SoundType.STONE)
+                    .requiresCorrectToolForDrops()
+                    .noOcclusion()));
+
+    public static final RegistryObject<Block> CONVEYOR_ELEVATOR = registerBlock("conveyor_elevator",
+            () -> new com.trd.block.basic.industrial.ConveyorElevatorBlock(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F)
+                    .sound(SoundType.STONE)
+                    .requiresCorrectToolForDrops()
+                    .noOcclusion()));
+
+    public static final RegistryObject<Block> CONVEYOR_VSTAVSHIK = registerBlock("conveyor_vstavshik",
+            () -> new ConveyorInserterBlock(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> CONVEYOR_IZVLEKATEL = registerBlock("conveyor_izvlekatel",
+            () -> new ConveyorExtractorBlock(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> SORTIROVSHIK = registerBlock("sortirovshik",
+            () -> new SortirovshikBlock(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+    //МУЛЬТИБЛОКИ
+    public static final RegistryObject<Block> MULTIBLOCK_PART = BLOCKS.register("multiblock_part",
+            () -> new MultiblockPartBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion()));
+
+    // 2. Регистрируем блок самого Нагревателя
+    public static final RegistryObject<Block> HEATER = BLOCKS.register("heater",
+            () -> new HeaterBlock(BlockBehaviour.Properties.copy(Blocks.NETHER_BRICKS).noOcclusion()));
+
+    public static final RegistryObject<Block> STEEL_STORAGE = BLOCKS.register("steel_storage",
+            () -> new SteelStorageBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion()));
+
+    public static final RegistryObject<Block> BOILER = BLOCKS.register("boiler",
+            () -> new BoilerBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion()));
+
+   //ZAMAZ
+   public static final RegistryObject<Block> STEAM_ENGINE = BLOCKS.register("steam_engine",
+           () -> new SteamEngineBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion()));
+   
+   public static final RegistryObject<Block> LOW_PRESSURE_STEAM_CONDENSER = registerBlock("low_pressure_steam_condenser",
+           () -> new LowPressureSteamCondenserBlock(BlockBehaviour.Properties.of()
+                   .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
+
+
+    public static final RegistryObject<Block> WATER_PUMP = registerBlockWithoutItem("water_pump",
+            () -> new WaterPumpBlock(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK).noOcclusion()));
+    public static final RegistryObject<Item> WATER_PUMP_ITEM = ModItems.ITEMS.register("water_pump",
+            () -> new com.trd.multiblock.system.MultiblockBlockItem(WATER_PUMP.get(), new Item.Properties()));
+
+    public static final RegistryObject<Block> TROMBONE = BLOCKS.register("trombone",
+            () -> new MissileTurretBlock(BlockBehaviour.Properties.copy(Blocks.STONE)
+                    .strength(5.0f, 6.0f).noOcclusion().requiresCorrectToolForDrops()));
+
+
+    static {
+        // ═══════════════════════════════════════════════════════
+        // БЕТОННАЯ ЛИНЕЙКА
+        // ═══════════════════════════════════════════════════════
+        ExplosionTooltipRegistry.register(CONCRETE);
+        ExplosionTooltipRegistry.register(CONCRETE_STAIRS);
+        ExplosionTooltipRegistry.register(CONCRETE_SLAB);
+
+        ExplosionTooltipRegistry.register(CONCRETE_HAZARD_NEW);
+        ExplosionTooltipRegistry.register(CONCRETE_HAZARD_NEW_STAIRS);
+        ExplosionTooltipRegistry.register(CONCRETE_HAZARD_NEW_SLAB);
+
+        ExplosionTooltipRegistry.register(CONCRETE_HAZARD_OLD);
+        ExplosionTooltipRegistry.register(CONCRETE_HAZARD_OLD_STAIRS);
+        ExplosionTooltipRegistry.register(CONCRETE_HAZARD_OLD_SLAB);
+
+        ExplosionTooltipRegistry.register(CONCRETE_TILE);
+        ExplosionTooltipRegistry.register(CONCRETE_TILE_STAIRS);
+        ExplosionTooltipRegistry.register(CONCRETE_TILE_SLAB);
+
+        ExplosionTooltipRegistry.register(CONCRETE_TILE_ALT);
+        ExplosionTooltipRegistry.register(CONCRETE_TILE_ALT_STAIRS);
+        ExplosionTooltipRegistry.register(CONCRETE_TILE_ALT_SLAB);
+
+        ExplosionTooltipRegistry.register(CONCRETE_TILE_ALT_BLUE);
+        ExplosionTooltipRegistry.register(CONCRETE_TILE_ALT_BLUE_STAIRS);
+        ExplosionTooltipRegistry.register(CONCRETE_TILE_ALT_BLUE_SLAB);
+
+        ExplosionTooltipRegistry.register(CONCRETE_STRIPPED);
+        ExplosionTooltipRegistry.register(CONCRETE_STRIPPED_STAIRS);
+        ExplosionTooltipRegistry.register(CONCRETE_STRIPPED_SLAB);
+
+        ExplosionTooltipRegistry.register(CONCRETE_REINFORCED);
+        ExplosionTooltipRegistry.register(CONCRETE_REINFORCED_STAIRS);
+        ExplosionTooltipRegistry.register(CONCRETE_REINFORCED_SLAB);
+
+        ExplosionTooltipRegistry.register(CONCRETE_REINFORCED_HEAVY);
+        ExplosionTooltipRegistry.register(CONCRETE_REINFORCED_HEAVY_STAIRS);
+        ExplosionTooltipRegistry.register(CONCRETE_REINFORCED_HEAVY_SLAB);
+
+        ExplosionTooltipRegistry.register(CONCRETE_NET);
+
+        // ═══════════════════════════════════════════════════════
+        // КИРПИЧИ
+        // ═══════════════════════════════════════════════════════
+        ExplosionTooltipRegistry.register(FIREBRICK_BLOCK);
+        ExplosionTooltipRegistry.register(FIREBRICK_STAIRS);
+        ExplosionTooltipRegistry.register(FIREBRICK_SLAB);
+
+        ExplosionTooltipRegistry.register(REINFORCEDBRICK_BLOCK);
+        ExplosionTooltipRegistry.register(REINFORCEDBRICK_STAIRS);
+        ExplosionTooltipRegistry.register(REINFORCEDBRICK_SLAB);
+
+        ExplosionTooltipRegistry.register(ARMORED_GLASS);
+
+        ExplosionTooltipRegistry.register(STEEL_DOOR);
+
+        ExplosionTooltipRegistry.register(ROUND_LAMP);
+    }
+
+    // Вспомогательный метод регистрации без предмета
+    private static <T extends Block> RegistryObject<T> registerBlockOnly(String name, Supplier<T> block) {
+        return BLOCKS.register(name, block);
+    }
+
+
+
+    // Вспомогательный метод: регистрирует блок И предмет для него
+    private static <T extends Block> RegistryObject<T> registerBlock(String name, Supplier<T> block) {
+        RegistryObject<T> toReturn = BLOCKS.register(name, block);
+        registerBlockItem(name, toReturn);
+        return toReturn;
+    }
+
+    // Регистрация предмета блока (чтобы он был в инвентаре)
+    private static <T extends Block> RegistryObject<Item> registerBlockItem(String name, RegistryObject<T> block) {
+        return ModItems.ITEMS.register(name, () -> new BlockItem(block.get(), new Item.Properties()));
+    }
+
+    private static <T extends Block> RegistryObject<T> registerBlockWithoutItem(String name, Supplier<T> block) {
+        return BLOCKS.register(name, block);
+    }
+
+    private static RegistryObject<Block> registerBattery(String name) {
+        RegistryObject<Block> batteryBlock = BLOCKS.register(name,
+                () -> new MachineBatteryBlock(Block.Properties.of().strength(5.0f).requiresCorrectToolForDrops().noOcclusion()));
+
+        ModItems.ITEMS.register(name,
+                () -> new MachineBatteryBlockItem(batteryBlock.get(), new Item.Properties()));
+
+        BATTERY_BLOCKS.add(batteryBlock);
+        return batteryBlock;
+    }
+
+    public static void register(IEventBus eventBus) {
+        BLOCKS.register(eventBus);
+    }
+}

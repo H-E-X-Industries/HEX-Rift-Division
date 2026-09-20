@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "trd:block/chemical_plant_heater" },
+    "facing=east":  { "model": "trd:block/chemical_plant_heater", "y": 90 },
+    "facing=south": { "model": "trd:block/chemical_plant_heater", "y": 180 },
+    "facing=west":  { "model": "trd:block/chemical_plant_heater", "y": 270 }
+  }
+}
