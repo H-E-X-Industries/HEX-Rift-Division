@@ -29,6 +29,8 @@ public class ModClientSetup {
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.MACHINE_BATTERY_BE.get(), com.trd.client.gecko.block.energy.MachineBatteryRenderer::new);
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.CONNECTOR_BE.get(), com.trd.client.render.ConnectorRenderer::new);
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.FUEL_TANK_BE.get(), com.trd.client.render.ber.FuelTankRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.PAINTABLE_PIPE_BE.get(), com.trd.client.render.ber.PaintableConduitRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.PAINTABLE_WIRE_BE.get(), com.trd.client.render.ber.PaintableConduitRenderer::new);
         // event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.FUEL_TANK_SMALL_BE.get(), com.trd.client.render.ber.FuelTankRenderer::new);
     }
 
@@ -57,6 +59,17 @@ public class ModClientSetup {
             }
             return -1; // Default no tint
         }, com.trd.item.ModItems.FLUID_IDENTIFIER.get());
+
+        event.register((stack, tintIndex) -> {
+            if (tintIndex == 1 && stack.getItem() instanceof com.trd.item.industrial.fluids.FluidContainerItem) {
+                net.neoforged.neoforge.fluids.FluidStack fluid = com.trd.item.industrial.fluids.FluidContainerItem.getFluid(stack);
+                if (!fluid.isEmpty()) {
+                    return net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions.of(fluid.getFluid())
+                            .getTintColor(fluid) | 0xFF000000;
+                }
+            }
+            return -1;
+        }, com.trd.item.ModItems.WOODEN_FLUID_CONTAINER.get(), com.trd.item.ModItems.IRON_FLUID_CONTAINER.get());
 
         for (net.neoforged.neoforge.registries.DeferredHolder<net.minecraft.world.item.Item, ? extends net.minecraft.world.item.Item> dropObj : com.trd.api.fluids.ModFluids.getAllFluidDrops().values()) {
             event.register((stack, tintIndex) -> {
