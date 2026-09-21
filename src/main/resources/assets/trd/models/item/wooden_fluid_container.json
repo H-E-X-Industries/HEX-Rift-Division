@@ -2,13 +2,13 @@
   "parent": "minecraft:item/generated",
   "overrides": [
     {
-      "model": "trd:item/fluid_tank_iron_filled",
+      "model": "trd:item/wooden_fluid_container_filled",
       "predicate": {
         "trd:filled": 1.0
       }
     }
   ],
   "textures": {
-    "layer0": "trd:item/fluid_tank_iron"
+    "layer0": "trd:item/pipette"
   }
 }

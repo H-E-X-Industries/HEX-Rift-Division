@@ -33,8 +33,12 @@ public class PaintableConduitRenderer<T extends BlockEntity & IPaintableConduit>
             pose.translate(0.5, 0.5, 0.5);
             pose.scale(1.004F, 1.004F, 1.004F);
             pose.translate(-0.5, -0.5, -0.5);
-            Minecraft.getInstance().getBlockRenderer().renderSingleBlock(
-                    mimic, pose, buffers, light, OverlayTexture.NO_OVERLAY, ModelData.EMPTY, null);
+            
+            RenderType renderType = net.minecraft.client.renderer.ItemBlockRenderTypes.getRenderType(mimic, false);
+            VertexConsumer mimicVc = buffers.getBuffer(renderType);
+            Minecraft.getInstance().getBlockRenderer().renderBatched(
+                    mimic, be.getBlockPos(), be.getLevel(), pose, mimicVc, false, be.getLevel().getRandom(), net.neoforged.neoforge.client.model.data.ModelData.EMPTY, renderType);
+            
             pose.popPose();
         }
 
@@ -47,25 +51,25 @@ public class PaintableConduitRenderer<T extends BlockEntity & IPaintableConduit>
     }
 
     private void renderHole(PoseStack pose, VertexConsumer vc, TextureAtlasSprite s, Direction dir, int light) {
-        Matrix4f mat = pose.last().pose();
-        Matrix3f nrm = pose.last().normal();
+        PoseStack.Pose poseEntry = pose.last();
+        Matrix4f mat = poseEntry.pose();
         float u0 = s.getU0(), u1 = s.getU1(), v0 = s.getV0(), v1 = s.getV1();
         float nx = dir.getStepX(), ny = dir.getStepY(), nz = dir.getStepZ();
         float[][] c = corners(dir);
-        quadVertex(vc, mat, nrm, c[0], u0, v1, nx, ny, nz, light);
-        quadVertex(vc, mat, nrm, c[1], u1, v1, nx, ny, nz, light);
-        quadVertex(vc, mat, nrm, c[2], u1, v0, nx, ny, nz, light);
-        quadVertex(vc, mat, nrm, c[3], u0, v0, nx, ny, nz, light);
+        quadVertex(vc, mat, poseEntry, c[0], u0, v1, nx, ny, nz, light);
+        quadVertex(vc, mat, poseEntry, c[1], u1, v1, nx, ny, nz, light);
+        quadVertex(vc, mat, poseEntry, c[2], u1, v0, nx, ny, nz, light);
+        quadVertex(vc, mat, poseEntry, c[3], u0, v0, nx, ny, nz, light);
     }
 
-    private void quadVertex(VertexConsumer vc, Matrix4f mat, Matrix3f nrm, float[] p,
+    private void quadVertex(VertexConsumer vc, Matrix4f mat, PoseStack.Pose poseEntry, float[] p,
                             float u, float v, float nx, float ny, float nz, int light) {
         vc.addVertex(mat, p[0], p[1], p[2])
           .setColor(255, 255, 255, 255)
           .setUv(u, v)
           .setOverlay(OverlayTexture.NO_OVERLAY)
           .setLight(light)
-          .setNormal(nrm, nx, ny, nz);
+          .setNormal(poseEntry, nx, ny, nz);
     }
 
     private static float[][] corners(Direction dir) {

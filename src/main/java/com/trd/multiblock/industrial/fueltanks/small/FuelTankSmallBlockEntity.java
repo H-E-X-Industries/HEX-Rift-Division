@@ -64,4 +64,10 @@ public class FuelTankSmallBlockEntity extends FluidBarrelBlockEntity implements 
     public AbstractContainerMenu createMenu(int id, Inventory inv, Player player) {
         return new FuelTankMenu(id, inv, this, this.data);
     }
+
+    public static void tick(Level level, BlockPos pos, BlockState state, FuelTankSmallBlockEntity be) {
+        if (level.isClientSide) return;
+        be.updateIdentifierFilter();
+        be.processBuckets();
+    }
 }
