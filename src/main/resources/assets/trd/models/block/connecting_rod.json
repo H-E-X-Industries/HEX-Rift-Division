@@ -4,7 +4,7 @@
   "model": "trd:models/block/connecting_rod.obj",
   "flip_v": true,
   "textures": {
-    "default": "trd:block/connecting_rod",
-    "particle": "trd:block/deco_beam_top"
+    "particle": "trd:block/deco_beam_top",
+    "m_b418d196-28f3-9c55-5db6-06fa62531982": "trd:block/connecting_rod"
   }
 }

@@ -1,5 +1,5 @@
 # Made in Blockbench 5.1.6
-mtllib ../block/base_pipe.mtl
+mtllib base_pipe.mtl
 
 o nearZ_1
 v 0.632743163416431 0.029411764705882387 0.3672566213611814

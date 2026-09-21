@@ -1,0 +1,3332 @@
+{
+  "variants": {
+    "facing=down,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=down,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 180
+    },
+    "facing=east,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=east,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=north,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90
+    },
+    "facing=south,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=south,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 180
+    },
+    "facing=up,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=up,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide"
+    },
+    "facing=west,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=0,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=0,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=0,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=0,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=1,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=2,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=false,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=false,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=true,has_bevel_start=false,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=false,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=0": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=1": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=2": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    },
+    "facing=west,gear_size=3,has_bevel_end=true,has_bevel_start=true,has_flywheel=true,pulley_size=3": {
+      "model": "trd:block/shaft_light_tungsten_carbide",
+      "x": 90,
+      "y": 270
+    }
+  }
+}

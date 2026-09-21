@@ -3,6 +3,6 @@
   "model": "trd:models/block/stator_coil_copper.obj",
   "flip_v": true,
   "textures": {
-    "default": "trd:block/stator_coil_copper"
+    "m_a198eb51-7948-7bbb-1762-47c211f32aa4": "trd:block/stator_coil_copper"
   }
 }

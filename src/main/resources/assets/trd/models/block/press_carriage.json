@@ -1,5 +1,5 @@
 {
-  "loader": "forge:composite",
+  "loader": "neoforge:composite",
   "textures": {
     "particle": "trd:block/press_carriage"
   },
@@ -9,7 +9,7 @@
       "model": "trd:models/block/press_carriage.obj",
       "flip_v": true,
       "textures": {
-        "default": "trd:block/press_carriage"
+        "m_a5f4c66a-2392-d123-5536-5ca4c5c37dac": "trd:block/press_carriage"
       }
     }
   }

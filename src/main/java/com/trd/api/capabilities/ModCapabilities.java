@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
  * Универсальная система Capabilities для 1.21.1
  * (Замена старой системе LazyOptional из 1.20.1)
  */
-@EventBusSubscriber(modid = MainRegistry.MOD_ID, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = MainRegistry.MOD_ID)
 public class ModCapabilities {
 
     // =========================================================

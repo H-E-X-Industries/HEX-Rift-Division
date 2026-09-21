@@ -3,7 +3,7 @@
   "model": "trd:models/block/clutch.obj",
   "flip_v": true,
   "textures": {
-    "clutch_texture": "trd:block/clutch",
-    "particle": "trd:block/clutch"
+    "particle": "trd:block/clutch",
+    "m_3adb87d7-b55d-3986-bb2a-39305a0b9b3a": "trd:block/clutch"
   }
 }

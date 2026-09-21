@@ -1,5 +1,5 @@
 {
-  "loader": "forge:composite",
+  "loader": "neoforge:composite",
   "textures": {
     "particle": "trd:block/wire_drum"
   },
@@ -9,7 +9,7 @@
       "model": "trd:models/block/wire_drum.obj",
       "flip_v": true,
       "textures": {
-        "default": "trd:block/wire_drum"
+        "m_a887751e-40d3-3fa9-49d9-613e488be755": "trd:block/wire_drum"
       }
     }
   }

@@ -1,0 +1,105 @@
+package com.trd.menu.industrial;
+
+import com.trd.block.entity.industrial.fluids.FluidBarrelBlockEntity;
+
+import com.trd.menu.ModMenuTypes;
+
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerData;
+import net.minecraft.world.inventory.SimpleContainerData;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.items.SlotItemHandler;
+
+public class FuelTankMenu extends AbstractContainerMenu {
+    public final FluidBarrelBlockEntity blockEntity;
+    private final ContainerData data;
+
+    public FuelTankMenu(int pContainerId, Inventory inv, FluidBarrelBlockEntity entity, ContainerData data) {
+        super(ModMenuTypes.FUEL_TANK_MENU.get(), pContainerId);
+        this.blockEntity = entity;
+        this.data = data;
+
+        net.neoforged.neoforge.items.IItemHandler handler = entity.itemHandler;
+        this.addSlot(new SlotItemHandler(handler, 0, 102, 8));
+        this.addSlot(new SlotItemHandler(handler, 1, 102, 44));
+        this.addSlot(new SlotItemHandler(handler, 2, 124, 8));
+        this.addSlot(new SlotItemHandler(handler, 3, 124, 44));
+        this.addSlot(new SlotItemHandler(handler, 4, 40, 8));
+        this.addSlot(new SlotItemHandler(handler, FluidBarrelBlockEntity.IDENTIFIER_SLOT, 17, 26));
+
+        addPlayerInventory(inv);
+        addPlayerHotbar(inv);
+        addDataSlots(data);
+    }
+
+    public FuelTankMenu(int pContainerId, Inventory inv, FriendlyByteBuf extraData) {
+        this(pContainerId, inv,
+                (FluidBarrelBlockEntity) inv.player.level().getBlockEntity(extraData.readBlockPos()),
+                new SimpleContainerData(1));
+    }
+
+    public FluidStack getFluid() { return blockEntity.fluidTank.getFluid(); }
+    public int getCapacity() { return blockEntity.fluidTank.getCapacity(); }
+    public int getMode() { return data.get(0); }
+
+    public FluidBarrelBlockEntity getBlockEntity() {
+        return this.blockEntity;
+    }
+
+    @Override
+    public boolean stillValid(Player player) {
+        return blockEntity.getLevel() != null &&
+                player.distanceToSqr(blockEntity.getBlockPos().getCenter()) < 64.0;
+    }
+
+    private void addPlayerInventory(Inventory playerInventory) {
+        for (int i = 0; i < 3; ++i) {
+            for (int l = 0; l < 9; ++l) {
+                this.addSlot(new Slot(playerInventory, l + i * 9 + 9, 8 + l * 18, 66 + i * 18));
+            }
+        }
+    }
+
+    private void addPlayerHotbar(Inventory playerInventory) {
+        for (int i = 0; i < 9; ++i) {
+            this.addSlot(new Slot(playerInventory, i, 8 + i * 18, 124));
+        }
+    }
+
+    @Override
+    public ItemStack quickMoveStack(Player playerIn, int index) {
+        ItemStack stack = ItemStack.EMPTY;
+        Slot slot = this.slots.get(index);
+        if (slot != null && slot.hasItem()) {
+            ItemStack slotStack = slot.getItem();
+            stack = slotStack.copy();
+
+            // Из цистерны (0-5) в инвентарь (6-42)
+            if (index < 6) {
+                if (!this.moveItemStackTo(slotStack, 6, 42, true)) {
+                    return ItemStack.EMPTY;
+                }
+            } else {
+                // Из инвентаря в цистерну
+                if (!this.moveItemStackTo(slotStack, 0, 1, false) &&   // fill input
+                        !this.moveItemStackTo(slotStack, 2, 3, false) &&   // drain input
+                        !this.moveItemStackTo(slotStack, 4, 5, false) &&   // protector
+                        !this.moveItemStackTo(slotStack, 5, 6, false)) {   // identifier
+                    return ItemStack.EMPTY;
+                }
+            }
+
+            if (slotStack.isEmpty()) {
+                slot.set(ItemStack.EMPTY);
+            } else {
+                slot.setChanged();
+            }
+        }
+        return stack;
+    }
+}

@@ -1,0 +1,14 @@
+{
+  "parent": "minecraft:item/generated",
+  "overrides": [
+    {
+      "model": "trd:item/pipette_filled",
+      "predicate": {
+        "trd:filled": 1.0
+      }
+    }
+  ],
+  "textures": {
+    "layer0": "trd:item/pipette"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "trd:block/sequoia_slab"
+    },
+    "type=double": {
+      "model": "trd:block/sequoia_planks"
+    },
+    "type=top": {
+      "model": "trd:block/sequoia_slab_top"
+    }
+  }
+}

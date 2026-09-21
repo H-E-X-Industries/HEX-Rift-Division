@@ -3,12 +3,20 @@
   "model": "trd:models/block/round_lamp.obj",
   "flip_v": true,
   "textures": {
-    "round_lamp_texture": "trd:block/round_lamp",
-    "particle": "trd:block/round_lamp"
+    "particle": "trd:block/round_lamp",
+    "m_007ecb49-f56c-491c-8a6e-4a74b184671c": "trd:block/round_lamp"
   },
   "transform": {
-    "translation": [0.5, 0.0, 0.5],
-    "rotation": [0, 0, 0],
+    "translation": [
+      0.5,
+      0.0,
+      0.5
+    ],
+    "rotation": [
+      0,
+      0,
+      0
+    ],
     "scale": 1.0
   }
 }

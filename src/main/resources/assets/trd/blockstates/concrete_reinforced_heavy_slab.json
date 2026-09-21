@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "trd:block/concrete_reinforced_heavy_slab"
+    },
+    "type=double": {
+      "model": "trd:block/concrete_reinforced_heavy"
+    },
+    "type=top": {
+      "model": "trd:block/concrete_reinforced_heavy_slab_top"
+    }
+  }
+}

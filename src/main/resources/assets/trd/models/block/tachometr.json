@@ -3,7 +3,7 @@
   "model": "trd:models/block/tachometr.obj",
   "flip_v": true,
   "textures": {
-    "tachometr_texture": "trd:block/tachometr",
-    "particle": "trd:block/tachometr"
+    "particle": "trd:block/tachometr",
+    "m_d8119843-c74a-da8f-e653-e94dd05de040": "trd:block/tachometr"
   }
 }

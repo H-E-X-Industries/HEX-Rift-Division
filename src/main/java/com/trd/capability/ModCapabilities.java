@@ -10,7 +10,7 @@ import com.trd.api.energy.IEnergyProvider;
 import com.trd.api.energy.IEnergyReceiver;
 import com.trd.main.MainRegistry;
 
-@net.neoforged.fml.common.EventBusSubscriber(modid = com.trd.main.MainRegistry.MOD_ID, bus = net.neoforged.fml.common.EventBusSubscriber.Bus.MOD)
+@net.neoforged.fml.common.EventBusSubscriber(modid = com.trd.main.MainRegistry.MOD_ID)
 public class ModCapabilities {
     public static final net.neoforged.neoforge.capabilities.ItemCapability<com.trd.api.energy.IEnergyProvider, Void> ENERGY_PROVIDER_ITEM = net.neoforged.neoforge.capabilities.ItemCapability.createVoid(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(com.trd.main.MainRegistry.MOD_ID, "energy_provider"), com.trd.api.energy.IEnergyProvider.class);
     public static final net.neoforged.neoforge.capabilities.ItemCapability<com.trd.api.energy.IEnergyReceiver, Void> ENERGY_RECEIVER_ITEM = net.neoforged.neoforge.capabilities.ItemCapability.createVoid(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(com.trd.main.MainRegistry.MOD_ID, "energy_receiver"), com.trd.api.energy.IEnergyReceiver.class);
@@ -143,5 +143,57 @@ public class ModCapabilities {
     event.registerItem(ENERGY_PROVIDER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 1000000, 5000, 5000), com.trd.item.ModItems.ENERGY_CELL.get());
     event.registerItem(ENERGY_RECEIVER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 1000000, 5000, 5000), com.trd.item.ModItems.ENERGY_CELL.get());
     event.registerItem(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.ITEM, (stack, ctx) -> new com.trd.api.energy.ForgeItemWrapper(new com.trd.api.energy.ItemEnergyStorage(stack, 1000000, 5000, 5000)), com.trd.item.ModItems.ENERGY_CELL.get());
+
+    // Fluid Capabilities
+    event.registerBlockEntity(
+            net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
+            com.trd.block.entity.ModBlockEntities.MULTIBLOCK_PART.get(),
+            (be, side) -> {
+                if (be.getControllerPos() != null && be.getLevel() != null) {
+                    com.trd.multiblock.system.PartRole role = be.getPartRole();
+                    if (role == com.trd.multiblock.system.PartRole.FLUID_CONNECTOR || 
+                        role == com.trd.multiblock.system.PartRole.UNIVERSAL_CONNECTOR || 
+                        role == com.trd.multiblock.system.PartRole.FLUID_INPUT || 
+                        role == com.trd.multiblock.system.PartRole.FLUID_OUTPUT || 
+                        role == com.trd.multiblock.system.PartRole.FLUID_LADDER) {
+                        
+                        net.minecraft.world.level.block.entity.BlockEntity core = be.getLevel().getBlockEntity(be.getControllerPos());
+                        if (core instanceof com.trd.multiblock.industrial.boiler.BoilerBlockEntity boiler) {
+                            return boiler.getCapabilityForPart(side, role);
+                        } else if (core instanceof com.trd.multiblock.industrial.fueltanks.small.FuelTankSmallBlockEntity smallTank) {
+                            return smallTank.getCapabilityForPart(side, role);
+                        } else if (core instanceof com.trd.multiblock.industrial.steam_engine.SteamEngineBlockEntity steamEngine) {
+                            return steamEngine.getCapabilityForPart(side, role);
+                        } else if (core instanceof com.trd.multiblock.industrial.cc_machine.CCMachineBlockEntity ccMachine) {
+                            if (role == com.trd.multiblock.system.PartRole.UNIVERSAL_CONNECTOR) {
+                                return ccMachine.getFluidPortCapability(be.getBlockPos(), side);
+                            }
+                            return null;
+                        } else if (core instanceof com.trd.multiblock.system.IFluidTankProvider provider) {
+                            return provider.getFluidHandlerCapability();
+                        }
+                    }
+                }
+                return null;
+            }
+    );
+
+    event.registerBlockEntity(
+            net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
+            com.trd.block.entity.ModBlockEntities.FUEL_TANK_BE.get(),
+            (be, side) -> be.getFluidHandlerCapability()
+    );
+
+    event.registerBlockEntity(
+            net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
+            com.trd.block.entity.ModBlockEntities.FUEL_TANK_SMALL_BE.get(),
+            (be, side) -> be.getFluidHandlerCapability()
+    );
+
+    event.registerBlockEntity(
+            net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
+            com.trd.block.entity.ModBlockEntities.FLUID_BARREL_BE.get(),
+            (be, side) -> be.getFluidHandlerCapability()
+    );
 }
 }

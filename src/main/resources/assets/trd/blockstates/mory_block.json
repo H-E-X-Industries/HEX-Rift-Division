@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "trd:block/mory_block"
+    }
+  }
+}

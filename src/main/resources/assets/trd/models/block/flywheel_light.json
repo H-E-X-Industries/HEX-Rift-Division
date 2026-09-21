@@ -1,0 +1,8 @@
+{
+  "flip_v": true,
+  "loader": "neoforge:obj",
+  "model": "trd:models/block/flywheel_light.obj",
+  "textures": {
+    "m_1649c001-7db6-0977-b0c3-addee99e0ca4": "trd:block/flywheel_light"
+  }
+}

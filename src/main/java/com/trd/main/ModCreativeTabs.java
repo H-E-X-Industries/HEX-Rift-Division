@@ -75,6 +75,27 @@ public class ModCreativeTabs {
                         output.accept(ModItems.BATTERY.get());
                         output.accept(ModItems.CREATIVE_BATTERY.get());
                         output.accept(ModItems.SCREWDRIVER.get());
+                        // Fluid System
+                        output.accept(ModItems.FLUID_IDENTIFIER.get());
+                        output.accept(ModItems.INFINITE_FLUID_BARREL.get());
+                        output.accept(ModItems.WOODEN_FLUID_CONTAINER.get());
+                        output.accept(ModItems.IRON_FLUID_CONTAINER.get());
+                        output.accept(ModBlocks.CORRUPTED_BARREL.get());
+                        output.accept(ModBlocks.LEAKING_BARREL.get());
+                        output.accept(ModBlocks.IRON_BARREL.get());
+                        output.accept(ModBlocks.STEEL_BARREL.get());
+                        output.accept(ModBlocks.LEAD_BARREL.get());
+                        output.accept(ModBlocks.DECO_BARREL.get());
+                        output.accept(ModBlocks.BRONZE_FLUID_PIPE.get());
+                        output.accept(ModBlocks.STEEL_FLUID_PIPE.get());
+                        output.accept(ModBlocks.LEAD_FLUID_PIPE.get());
+                        output.accept(ModBlocks.TUNGSTEN_FLUID_PIPE.get());
+                        output.accept(ModBlocks.WATER_PUMP.get());
+                        output.accept(ModBlocks.VALVE.get());
+                        output.accept(ModBlocks.LOW_PRESSURE_STEAM_CONDENSER.get());
+                        output.accept(ModBlocks.PAINTABLE_PIPE.get());
+                        output.accept(ModBlocks.FUEL_TANK_BIG.get());
+                        output.accept(ModBlocks.FUEL_TANK_SMALL.get());
                     })
                     .build());
 

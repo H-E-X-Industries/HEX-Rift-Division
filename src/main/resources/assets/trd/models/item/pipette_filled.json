@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "trd:item/pipette",
+    "layer1": "trd:item/pipette_overlay"
+  }
+}

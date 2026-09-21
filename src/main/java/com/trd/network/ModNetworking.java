@@ -34,5 +34,23 @@ public class ModNetworking {
             SyncMotorRpmPacket.STREAM_CODEC,
             SyncMotorRpmPacket::handle
         );
+
+        registrar.playToServer(
+            com.trd.network.packet.fluids.SelectFluidPacket.TYPE,
+            com.trd.network.packet.fluids.SelectFluidPacket.STREAM_CODEC,
+            com.trd.network.packet.fluids.SelectFluidPacket::handle
+        );
+
+        registrar.playToServer(
+            com.trd.network.packet.fluids.ToggleFavoriteFluidPacket.TYPE,
+            com.trd.network.packet.fluids.ToggleFavoriteFluidPacket.STREAM_CODEC,
+            com.trd.network.packet.fluids.ToggleFavoriteFluidPacket::handle
+        );
+
+        registrar.playToServer(
+            com.trd.network.packet.fluids.ClearFluidHistoryPacket.TYPE,
+            com.trd.network.packet.fluids.ClearFluidHistoryPacket.STREAM_CODEC,
+            com.trd.network.packet.fluids.ClearFluidHistoryPacket::handle
+        );
     }
 }

@@ -1,7 +1,6 @@
 {
-  "parent": "block/cube_all",
+  "parent": "minecraft:block/cube_all",
   "textures": {
-    "all": "trd:block/paintable_pipe",
-    "particle": "trd:block/paintable_pipe"
+    "all": "trd:block/paintable_pipe"
   }
 }

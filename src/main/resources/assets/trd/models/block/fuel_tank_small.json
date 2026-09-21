@@ -1,5 +1,5 @@
 {
-  "loader": "forge:composite",
+  "loader": "neoforge:composite",
   "textures": {
     "particle": "trd:block/deco_beam_top"
   },
@@ -9,42 +9,106 @@
       "model": "trd:models/block/fuel_tank_small.obj",
       "flip_v": true,
       "textures": {
-        "default": "trd:block/fuel_tank_small"
+        "m_21f1778b-80fa-cd60-4306-79d6427d95ae": "trd:block/fuel_tank_small"
       }
     }
   },
   "display": {
     "thirdperson_righthand": {
-      "translation": [0, 0.75, 0],
-      "scale": [0.1, 0.1, 0.1]
+      "translation": [
+        0,
+        0.75,
+        0
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ]
     },
     "thirdperson_lefthand": {
-      "scale": [0.1, 0.1, 0.1]
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ]
     },
     "firstperson_righthand": {
-      "rotation": [0, 39.25, 0],
-      "scale": [0.2, 0.2, 0.2]
+      "rotation": [
+        0,
+        39.25,
+        0
+      ],
+      "scale": [
+        0.2,
+        0.2,
+        0.2
+      ]
     },
     "firstperson_lefthand": {
-      "rotation": [0, -51, 0],
-      "scale": [0.2, 0.2, 0.2]
+      "rotation": [
+        0,
+        -51,
+        0
+      ],
+      "scale": [
+        0.2,
+        0.2,
+        0.2
+      ]
     },
     "ground": {
-      "translation": [0, 0.75, 0],
-      "scale": [0.1, 0.1, 0.1]
+      "translation": [
+        0,
+        0.75,
+        0
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ]
     },
     "gui": {
-      "rotation": [-151, 44.7, -180],
-      "translation": [-0.5, -0.75, 3],
-      "scale": [0.22, 0.22, 0.22]
+      "rotation": [
+        -151,
+        44.7,
+        -180
+      ],
+      "translation": [
+        -0.5,
+        -0.75,
+        3
+      ],
+      "scale": [
+        0.22,
+        0.22,
+        0.22
+      ]
     },
     "head": {
-      "translation": [0, 7.25, 0],
-      "scale": [0.1, 0.1, 0.1]
+      "translation": [
+        0,
+        7.25,
+        0
+      ],
+      "scale": [
+        0.1,
+        0.1,
+        0.1
+      ]
     },
     "fixed": {
-      "rotation": [-90, 0, 0],
-      "scale": [0.25, 0.25, 0.25]
+      "rotation": [
+        -90,
+        0,
+        0
+      ],
+      "scale": [
+        0.25,
+        0.25,
+        0.25
+      ]
     }
   }
 }

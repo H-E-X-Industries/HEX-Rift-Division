@@ -1,5 +1,7 @@
 {
-  "multipart": [
-    { "apply": { "model": "trd:block/paintable_pipe" } }
-  ]
+  "variants": {
+    "": {
+      "model": "trd:block/paintable_pipe"
+    }
+  }
 }

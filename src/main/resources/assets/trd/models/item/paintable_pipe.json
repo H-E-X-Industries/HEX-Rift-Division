@@ -1,1 +1,3 @@
-{ "parent": "trd:block/paintable_pipe" }
+{
+  "parent": "trd:block/paintable_pipe"
+}

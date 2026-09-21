@@ -1,5 +1,5 @@
 {
-  "loader": "forge:composite",
+  "loader": "neoforge:composite",
   "textures": {
     "particle": "trd:block/freza_attachment"
   },

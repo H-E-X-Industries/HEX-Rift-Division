@@ -4,6 +4,6 @@
   "model": "trd:models/block/crankshaft.obj",
   "flip_v": true,
   "textures": {
-    "default": "trd:block/crankshaft"
+    "m_c6320383-6df4-0a74-b062-8f7771ba1329": "trd:block/crankshaft"
   }
 }

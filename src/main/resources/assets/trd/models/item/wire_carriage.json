@@ -1,5 +1,5 @@
 {
-  "loader": "forge:composite",
+  "loader": "neoforge:composite",
   "textures": {
     "particle": "trd:block/wire_carriage"
   },
@@ -9,7 +9,7 @@
       "model": "trd:models/block/wire_carriage.obj",
       "flip_v": true,
       "textures": {
-        "default": "trd:block/wire_carriage"
+        "m_b55a4f51-f104-e618-3ab3-29c27f03235d": "trd:block/wire_carriage"
       }
     }
   },
@@ -66,7 +66,9 @@
     },
     "gui": {
       "rotation": [
-        -151, 45, -180
+        -151,
+        45,
+        -180
       ],
       "translation": [
         -5,

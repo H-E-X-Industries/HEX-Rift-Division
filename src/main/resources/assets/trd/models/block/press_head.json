@@ -1,5 +1,5 @@
 {
-  "loader": "forge:composite",
+  "loader": "neoforge:composite",
   "textures": {
     "particle": "trd:block/press_head"
   },
@@ -9,7 +9,7 @@
       "model": "trd:models/block/press_head.obj",
       "flip_v": true,
       "textures": {
-        "default": "trd:block/press_head"
+        "m_a9ccd205-7d26-5a67-5672-35b4936cf62f": "trd:block/press_head"
       }
     }
   }

@@ -1,0 +1,40 @@
+{
+  "variants": {
+    "facing=down,powered=false": {
+      "model": "trd:block/valve_off"
+    },
+    "facing=down,powered=true": {
+      "model": "trd:block/valve_on"
+    },
+    "facing=east,powered=false": {
+      "model": "trd:block/valve_off"
+    },
+    "facing=east,powered=true": {
+      "model": "trd:block/valve_on"
+    },
+    "facing=north,powered=false": {
+      "model": "trd:block/valve_off"
+    },
+    "facing=north,powered=true": {
+      "model": "trd:block/valve_on"
+    },
+    "facing=south,powered=false": {
+      "model": "trd:block/valve_off"
+    },
+    "facing=south,powered=true": {
+      "model": "trd:block/valve_on"
+    },
+    "facing=up,powered=false": {
+      "model": "trd:block/valve_off"
+    },
+    "facing=up,powered=true": {
+      "model": "trd:block/valve_on"
+    },
+    "facing=west,powered=false": {
+      "model": "trd:block/valve_off"
+    },
+    "facing=west,powered=true": {
+      "model": "trd:block/valve_on"
+    }
+  }
+}

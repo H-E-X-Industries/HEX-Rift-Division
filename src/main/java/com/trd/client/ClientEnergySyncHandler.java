@@ -4,11 +4,11 @@ package com.trd.client;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
+
 import com.trd.api.energy.ILongEnergyMenu;
 import com.trd.menu.industrial.MachineBatteryMenu;
 
-@OnlyIn(Dist.CLIENT)
+
 public class ClientEnergySyncHandler {
     public static void handle(int containerId, long energy, long maxEnergy, long delta,
                               long chargingSpeed, long unchargingSpeed, int filledCellCount) {

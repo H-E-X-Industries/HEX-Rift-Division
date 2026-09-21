@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "trd:item/depth_worm_brutal_spawn_egg"
+  }
+}

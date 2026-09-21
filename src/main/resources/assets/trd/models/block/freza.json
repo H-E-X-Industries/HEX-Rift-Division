@@ -1,5 +1,5 @@
 {
-  "loader": "forge:composite",
+  "loader": "neoforge:composite",
   "textures": {
     "particle": "trd:block/freza"
   },
@@ -9,7 +9,6 @@
       "model": "trd:models/block/freza.obj",
       "flip_v": true,
       "textures": {
-        "default": "trd:block/freza",
         "m_b77a6fc4-7c69-32a3-9b05-2d946224644e": "trd:block/freza"
       }
     }

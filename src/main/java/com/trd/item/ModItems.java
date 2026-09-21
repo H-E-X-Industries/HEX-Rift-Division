@@ -20,6 +20,13 @@ public class ModItems {
     public static final DeferredItem<Item> STEEL_PLATE = ITEMS.register("steel_plate",
             () -> new Item(new Item.Properties()));
             
+    public static final DeferredItem<Item> PROTECTOR_STEEL = ITEMS.register("protector_steel",
+            () -> new Item(new Item.Properties()));
+    public static final DeferredItem<Item> PROTECTOR_LEAD = ITEMS.register("protector_lead",
+            () -> new Item(new Item.Properties()));
+    public static final DeferredItem<Item> PROTECTOR_TUNGSTEN = ITEMS.register("protector_tungsten",
+            () -> new Item(new Item.Properties()));
+            
     public static final DeferredItem<Item> INDUSTRIAL_COPPER_PLATE = ITEMS.register("industrial_copper_plate",
             () -> new Item(new Item.Properties()));
             
@@ -59,6 +66,12 @@ public class ModItems {
     public static final DeferredItem<Item> GOLD_WIRE = ITEMS.register("gold_wire", () -> new Item(new Item.Properties()));
     public static final DeferredItem<Item> NEODYMIUM_WIRE = ITEMS.register("neodymium_wire", () -> new Item(new Item.Properties()));
     public static final DeferredItem<Item> SCREWDRIVER = ITEMS.register("screwdriver", () -> new com.trd.item.tools.ScrewdriverItem(new Item.Properties().stacksTo(1)));
+
+    public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> FLUID_IDENTIFIER = ITEMS.register("fluid_identifier", () -> new com.trd.item.industrial.fluids.FluidIdentifierItem(new net.minecraft.world.item.Item.Properties().stacksTo(1)));
+    public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> INFINITE_FLUID_BARREL = ITEMS.register("infinite_fluid_barrel", () -> new com.trd.item.tools.InfiniteFluidBarrelItem(new net.minecraft.world.item.Item.Properties().stacksTo(1)));
+    public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> WOODEN_FLUID_CONTAINER = ITEMS.register("wooden_fluid_container", () -> new com.trd.item.industrial.fluids.FluidContainerItem(new net.minecraft.world.item.Item.Properties().stacksTo(16), 1000, 100, 1000));
+    public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> IRON_FLUID_CONTAINER = ITEMS.register("iron_fluid_container", () -> new com.trd.item.industrial.fluids.FluidContainerItem(new net.minecraft.world.item.Item.Properties().stacksTo(16), 4000, 1000, 2000));
+
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);
     }

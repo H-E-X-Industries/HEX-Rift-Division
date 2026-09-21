@@ -1,5 +1,5 @@
 {
-  "loader": "forge:composite",
+  "loader": "neoforge:composite",
   "textures": {
     "particle": "trd:block/stanok"
   },
@@ -9,7 +9,7 @@
       "model": "trd:models/block/stanok.obj",
       "flip_v": true,
       "textures": {
-        "default": "trd:block/stanok"
+        "m_c2326e86-99bb-72e2-1feb-877b29c193b6": "trd:block/stanok"
       },
       "render_type": "minecraft:cutout"
     }

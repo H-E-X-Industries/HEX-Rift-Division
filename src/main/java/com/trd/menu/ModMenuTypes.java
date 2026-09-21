@@ -18,7 +18,14 @@ public class ModMenuTypes {
             DeferredRegister.create(Registries.MENU, MainRegistry.MOD_ID);
     public static final java.util.function.Supplier<MenuType<com.trd.menu.industrial.ElectricFurnaceMenu>> ELECTRIC_FURNACE_MENU = MENUS.register("electric_furnace_menu", () -> net.neoforged.neoforge.common.extensions.IMenuTypeExtension.create((id, inv, data) -> new com.trd.menu.industrial.ElectricFurnaceMenu(id, inv, data)));
 
-    public static final Supplier<MenuType<MachineBatteryMenu>> MACHINE_BATTERY_MENU =
+    
+
+    public static final java.util.function.Supplier<net.minecraft.world.inventory.MenuType<com.trd.menu.industrial.FluidBarrelMenu>> FLUID_BARREL_MENU = 
+            MENUS.register("fluid_barrel_menu", () -> net.neoforged.neoforge.common.extensions.IMenuTypeExtension.create(com.trd.menu.industrial.FluidBarrelMenu::new));
+            
+    public static final java.util.function.Supplier<net.minecraft.world.inventory.MenuType<com.trd.menu.industrial.FuelTankMenu>> FUEL_TANK_MENU = 
+            MENUS.register("fuel_tank_menu", () -> net.neoforged.neoforge.common.extensions.IMenuTypeExtension.create(com.trd.menu.industrial.FuelTankMenu::new));
+public static final Supplier<MenuType<MachineBatteryMenu>> MACHINE_BATTERY_MENU =
             MENUS.register("machine_battery_menu", () -> IMenuTypeExtension.create(MachineBatteryMenu::new));
 
     public static void register(IEventBus eventBus) {

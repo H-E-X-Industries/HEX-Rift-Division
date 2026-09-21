@@ -55,6 +55,31 @@ public class ModBlocks {
     public static final DeferredBlock<Block> MILLSTONE = registerBlock("millstone",
             () -> new com.trd.block.basic.industrial.MillstoneBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion()));
 
+    // Fluid Barrels
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> CORRUPTED_BARREL = registerBlock("corrupted_barrel", () -> new com.trd.block.basic.industrial.fluids.FluidBarrelBlock(com.trd.api.fluids.system.BarrelTier.CORRUPTED, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> LEAKING_BARREL = registerBlock("leaking_barrel", () -> new com.trd.block.basic.industrial.fluids.FluidBarrelBlock(com.trd.api.fluids.system.BarrelTier.LEAKING, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> IRON_BARREL = registerBlock("iron_barrel", () -> new com.trd.block.basic.industrial.fluids.FluidBarrelBlock(com.trd.api.fluids.system.BarrelTier.IRON, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> STEEL_BARREL = registerBlock("steel_barrel", () -> new com.trd.block.basic.industrial.fluids.FluidBarrelBlock(com.trd.api.fluids.system.BarrelTier.STEEL, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> LEAD_BARREL = registerBlock("lead_barrel", () -> new com.trd.block.basic.industrial.fluids.FluidBarrelBlock(com.trd.api.fluids.system.BarrelTier.LEAD, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> DECO_BARREL = registerBlock("deco_barrel", () -> new com.trd.block.basic.industrial.fluids.FluidBarrelBlock(com.trd.api.fluids.system.BarrelTier.IRON, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
+
+    // Fluid Pipes
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> BRONZE_FLUID_PIPE = registerBlock("bronze_fluid_pipe", () -> new com.trd.block.basic.industrial.fluids.FluidPipeBlock(com.trd.api.fluids.system.PipeTier.BRONZE, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> STEEL_FLUID_PIPE = registerBlock("steel_fluid_pipe", () -> new com.trd.block.basic.industrial.fluids.FluidPipeBlock(com.trd.api.fluids.system.PipeTier.STEEL, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> LEAD_FLUID_PIPE = registerBlock("lead_fluid_pipe", () -> new com.trd.block.basic.industrial.fluids.FluidPipeBlock(com.trd.api.fluids.system.PipeTier.LEAD, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> TUNGSTEN_FLUID_PIPE = registerBlock("tungsten_fluid_pipe", () -> new com.trd.block.basic.industrial.fluids.FluidPipeBlock(com.trd.api.fluids.system.PipeTier.TUNGSTEN, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
+    
+    // Other Fluid Blocks
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> WATER_PUMP = registerBlock("water_pump", () -> new net.minecraft.world.level.block.Block(net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> VALVE = registerBlock("valve", () -> new com.trd.block.basic.industrial.fluids.ValveBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> LOW_PRESSURE_STEAM_CONDENSER = registerBlock("low_pressure_steam_condenser", () -> new com.trd.block.basic.industrial.fluids.LowPressureSteamCondenserBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> PAINTABLE_PIPE = registerBlock("paintable_pipe", () -> new com.trd.block.basic.industrial.fluids.PaintablePipeBlock(com.trd.api.fluids.system.PipeTier.BRONZE, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
+
+    // Fuel Tanks
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> FUEL_TANK_BIG = BLOCKS.register("fuel_tank_big", () -> new com.trd.multiblock.industrial.fueltanks.FuelTankBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.of().noOcclusion()));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> FUEL_TANK_SMALL = BLOCKS.register("fuel_tank_small", () -> new com.trd.multiblock.industrial.fueltanks.small.FuelTankSmallBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.of().noOcclusion()));
+
+
     private static <T extends Block> DeferredBlock<T> registerBlock(String name, Supplier<T> block) {
         DeferredBlock<T> toReturn = BLOCKS.register(name, block);
         registerBlockItem(name, toReturn);
@@ -72,7 +97,14 @@ public class ModBlocks {
         return batteryBlock;
     }
 
+    public static final DeferredBlock<Block> MULTIBLOCK_PART = registerBlock("multiblock_part",
+            () -> new com.trd.multiblock.system.MultiblockPartBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().isViewBlocking((state, getter, pos) -> false)));
+
     public static void register(net.neoforged.bus.api.IEventBus eventBus) {
         BLOCKS.register(eventBus);
+
+        ModItems.ITEMS.register("fuel_tank_big", () -> new com.trd.multiblock.system.FuelTankBlockItem(FUEL_TANK_BIG.get(), 2592000, new net.minecraft.world.item.Item.Properties()));
+        ModItems.ITEMS.register("fuel_tank_small", () -> new com.trd.multiblock.system.FuelTankBlockItem(FUEL_TANK_SMALL.get(), 288000, new net.minecraft.world.item.Item.Properties()));
+
     }
 }

@@ -1,5 +1,7 @@
 {
-  "multipart": [
-    { "apply": { "model": "trd:block/paintable_wire" } }
-  ]
+  "variants": {
+    "": {
+      "model": "trd:block/paintable_wire"
+    }
+  }
 }

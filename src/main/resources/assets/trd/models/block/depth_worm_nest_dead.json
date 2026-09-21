@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "trd:block/depth_worm_nest_dead"
+  }
+}

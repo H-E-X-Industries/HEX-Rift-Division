@@ -3,7 +3,7 @@
   "model": "trd:models/block/vishelashivatel_lopasti.obj",
   "flip_v": true,
   "textures": {
-    "default": "trd:block/vishelashivatel",
-    "particle": "trd:block/vishelashivatel"
+    "particle": "trd:block/vishelashivatel",
+    "m_df0e7cd4-f989-881a-978d-2e378ac5f9a2": "trd:block/vishelashivatel"
   }
 }

@@ -20,6 +20,7 @@ public class MainRegistry {
         com.trd.api.components.ModDataComponents.register(modEventBus);
         com.trd.api.recipe.ModRecipes.register(modEventBus);
         com.trd.api.energy.ModRecipes.register(modEventBus);
+        com.trd.api.fluids.ModFluids.register(modEventBus);
         com.trd.menu.ModMenuTypes.register(modEventBus);
         
         modEventBus.addListener(this::commonSetup);
