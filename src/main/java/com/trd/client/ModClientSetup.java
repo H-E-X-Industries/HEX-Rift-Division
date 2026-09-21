@@ -38,16 +38,21 @@ public class ModClientSetup {
             if (tintIndex == 1) { // 1 is usually the overlay layer with the fluid drop
                 String fluidId = com.trd.item.industrial.fluids.FluidIdentifierItem.getSelectedFluid(stack);
                 if (!fluidId.equals("none")) {
+                    if (fluidId.contains("lava")) return 0xFFE64306;
+                    if (fluidId.contains("water")) return 0xFF4487FF;
+
                     try {
                         net.minecraft.resources.ResourceLocation id = net.minecraft.resources.ResourceLocation.tryParse(fluidId);
                         if (id != null) {
                             net.minecraft.world.level.material.Fluid fluid = net.minecraft.core.registries.BuiltInRegistries.FLUID.getOptional(id).orElse(null);
                             if (fluid != null) {
                                 return net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions.of(fluid.getFluidType())
-                                        .getTintColor(new net.neoforged.neoforge.fluids.FluidStack(fluid, 1000));
+                                        .getTintColor(new net.neoforged.neoforge.fluids.FluidStack(fluid, 1000)) | 0xFF000000;
                             }
                         }
                     } catch (Exception e) {}
+                } else {
+                    return 0xFF717070; // none
                 }
             }
             return -1; // Default no tint
@@ -57,12 +62,18 @@ public class ModClientSetup {
             event.register((stack, tintIndex) -> {
                 if (tintIndex == 0) {
                     if (stack.getItem() instanceof com.trd.api.fluids.system.FluidDropItem drop) {
-                        return drop.getFluidTintColor();
+                        return net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions.of(drop.getFluidType())
+                                .getTintColor() | 0xFF000000;
                     }
                 }
                 return -1;
             }, dropObj.get());
         }
+
+        // Overwrite specific ones
+        event.register((stack, tintIndex) -> tintIndex == 0 ? 0xFF717070 : -1, com.trd.api.fluids.ModFluids.FLUID_DROP_NONE.get());
+        event.register((stack, tintIndex) -> tintIndex == 0 ? 0xFFE64306 : -1, com.trd.api.fluids.ModFluids.FLUID_DROP_LAVA.get());
+        event.register((stack, tintIndex) -> tintIndex == 0 ? 0xFF4487FF : -1, com.trd.api.fluids.ModFluids.FLUID_DROP_WATER.get());
     }
 
     @SubscribeEvent
