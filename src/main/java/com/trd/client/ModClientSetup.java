@@ -50,8 +50,60 @@ public class ModClientSetup {
                     } catch (Exception e) {}
                 }
             }
-            return 0xFFFFFF; // Default white
+            return -1; // Default no tint
         }, com.trd.item.ModItems.FLUID_IDENTIFIER.get());
+
+        for (net.neoforged.neoforge.registries.DeferredHolder<net.minecraft.world.item.Item, ? extends net.minecraft.world.item.Item> dropObj : com.trd.api.fluids.ModFluids.getAllFluidDrops().values()) {
+            event.register((stack, tintIndex) -> {
+                if (tintIndex == 0) {
+                    if (stack.getItem() instanceof com.trd.api.fluids.system.FluidDropItem drop) {
+                        return drop.getFluidTintColor();
+                    }
+                }
+                return -1;
+            }, dropObj.get());
+        }
+    }
+
+    @SubscribeEvent
+    public static void registerBlockColors(net.neoforged.neoforge.client.event.RegisterColorHandlersEvent.Block event) {
+        event.register((state, level, pos, tintIndex) -> {
+            if (tintIndex == 1 && level != null && pos != null) {
+                if (level.getBlockEntity(pos) instanceof com.trd.block.entity.industrial.fluids.FluidPipeBlockEntity be) {
+                    net.minecraft.world.level.material.Fluid fluid = be.getFilterFluid();
+                    if (fluid != null && fluid != net.minecraft.world.level.material.Fluids.EMPTY) {
+                        if (fluid == net.minecraft.world.level.material.Fluids.LAVA || fluid == net.minecraft.world.level.material.Fluids.FLOWING_LAVA) {
+                            return 0xFF5500;
+                        }
+                        if (fluid == net.minecraft.world.level.material.Fluids.WATER || fluid == net.minecraft.world.level.material.Fluids.FLOWING_WATER) {
+                            return 0x3F76E4;
+                        }
+                        return net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions.of(fluid.getFluidType())
+                                .getTintColor(new net.neoforged.neoforge.fluids.FluidStack(fluid, 1000));
+                    }
+                }
+            }
+            return -1;
+        }, com.trd.block.basic.ModBlocks.BRONZE_FLUID_PIPE.get(), com.trd.block.basic.ModBlocks.STEEL_FLUID_PIPE.get(), com.trd.block.basic.ModBlocks.LEAD_FLUID_PIPE.get(), com.trd.block.basic.ModBlocks.TUNGSTEN_FLUID_PIPE.get());
+    }
+
+    @SubscribeEvent
+    public static void onModifyBakingResult(net.neoforged.neoforge.client.event.ModelEvent.ModifyBakingResult event) {
+        net.minecraft.world.level.block.Block[] pipes = {
+                com.trd.block.basic.ModBlocks.BRONZE_FLUID_PIPE.get(),
+                com.trd.block.basic.ModBlocks.STEEL_FLUID_PIPE.get(),
+                com.trd.block.basic.ModBlocks.LEAD_FLUID_PIPE.get(),
+                com.trd.block.basic.ModBlocks.TUNGSTEN_FLUID_PIPE.get()
+        };
+        for (net.minecraft.world.level.block.Block pipe : pipes) {
+            for (net.minecraft.world.level.block.state.BlockState state : pipe.getStateDefinition().getPossibleStates()) {
+                net.minecraft.client.resources.model.ModelResourceLocation location = net.minecraft.client.renderer.block.BlockModelShaper.stateToModelLocation(state);
+                net.minecraft.client.resources.model.BakedModel original = event.getModels().get(location);
+                if (original != null) {
+                    event.getModels().put(location, new com.trd.client.render.PipeBakedModel(original));
+                }
+            }
+        }
     }
 
     @SubscribeEvent

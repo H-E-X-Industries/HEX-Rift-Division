@@ -158,17 +158,8 @@ public class ModCapabilities {
                         role == com.trd.multiblock.system.PartRole.FLUID_LADDER) {
                         
                         net.minecraft.world.level.block.entity.BlockEntity core = be.getLevel().getBlockEntity(be.getControllerPos());
-                        if (core instanceof com.trd.multiblock.industrial.boiler.BoilerBlockEntity boiler) {
-                            return boiler.getCapabilityForPart(side, role);
-                        } else if (core instanceof com.trd.multiblock.industrial.fueltanks.small.FuelTankSmallBlockEntity smallTank) {
+                        if (core instanceof com.trd.multiblock.industrial.fueltanks.small.FuelTankSmallBlockEntity smallTank) {
                             return smallTank.getCapabilityForPart(side, role);
-                        } else if (core instanceof com.trd.multiblock.industrial.steam_engine.SteamEngineBlockEntity steamEngine) {
-                            return steamEngine.getCapabilityForPart(side, role);
-                        } else if (core instanceof com.trd.multiblock.industrial.cc_machine.CCMachineBlockEntity ccMachine) {
-                            if (role == com.trd.multiblock.system.PartRole.UNIVERSAL_CONNECTOR) {
-                                return ccMachine.getFluidPortCapability(be.getBlockPos(), side);
-                            }
-                            return null;
                         } else if (core instanceof com.trd.multiblock.system.IFluidTankProvider provider) {
                             return provider.getFluidHandlerCapability();
                         }
@@ -193,7 +184,7 @@ public class ModCapabilities {
     event.registerBlockEntity(
             net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
             com.trd.block.entity.ModBlockEntities.FLUID_BARREL_BE.get(),
-            (be, side) -> be.getFluidHandlerCapability()
+            (be, side) -> be.networkFluidHandler
     );
 }
 }
