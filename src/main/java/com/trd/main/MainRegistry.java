@@ -414,7 +414,10 @@ public class MainRegistry {
             event.accept(ModItems.CAST_PICKAXE_STEEL);
 
             event.accept(ModItems.GRENADIER_GOGGLES);
+
             event.accept(ModBlocks.DET_MINER);
+            event.accept(ModBlocks.AVIABOMB_MINE);
+
             event.accept(ModItems.DETONATOR);
             event.accept(ModItems.RANGE_DETONATOR);
             event.accept(ModItems.GRENADE);
@@ -549,6 +552,7 @@ public class MainRegistry {
             event.accept(ModBlocks.SEQUOIA_LEAVES.get());
             event.accept(ModBlocks.SEQUOIA_BIOME_MOSS.get());
             event.accept(ModBlocks.BASALT_ROUGH.get());
+            event.accept(ModBlocks.BASALT_SCORCHED.get());
             event.accept(ModItems.DEPTH_WORM_SPAWN_EGG);
             event.accept(ModItems.DEPTH_WORM_BRUTAL_SPAWN_EGG);
             event.accept(ModBlocks.DEPTH_WORM_NEST);

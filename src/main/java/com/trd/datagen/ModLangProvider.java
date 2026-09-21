@@ -892,6 +892,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.MINERAL1.get(), "Sapphire-Bearing Cluster");
         add(ModBlocks.MINERAL3.get(), "Deep Sapphire-Bearing Cluster");
         add(ModBlocks.BASALT_ROUGH.get(), "Rough Basalt");
+        add(ModBlocks.BASALT_SCORCHED.get(), "Scorched Basalt");
 
         // Spawn Eggs
         add(ModItems.DEPTH_WORM_SPAWN_EGG.get(), "Depth Worm Spawn Egg");
@@ -2224,6 +2225,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.MINERAL1.get(), "Сапфироносный кластер");
         add(ModBlocks.MINERAL3.get(), "Глубинный сапфироносный кластер");
         add(ModBlocks.BASALT_ROUGH.get(), "Грубый базальт");
+        add(ModBlocks.BASALT_SCORCHED.get(), "Запёкшийся базальт");
 
         // Яйца призыва
         add(ModItems.DEPTH_WORM_SPAWN_EGG.get(), "Яйцо призыва глубинного червя");

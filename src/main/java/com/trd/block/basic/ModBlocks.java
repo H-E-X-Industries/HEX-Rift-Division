@@ -14,6 +14,7 @@ import com.trd.block.basic.deco.LampBlock;
 import com.trd.block.basic.deco.SteelPropsBlock;
 import com.trd.block.basic.deco.WireFenceAltBlock;
 import com.trd.block.basic.deco.WireFenceBlock;
+import com.trd.block.basic.direction.SideOBlock;
 import com.trd.block.basic.industrial.*;
 import com.trd.block.basic.industrial.chemistry.ChemicalPlantPortBlock;
 import com.trd.block.basic.industrial.chemistry.ChemicalPlantReactionChamberBlock;
@@ -500,6 +501,10 @@ public class ModBlocks {
             () -> new Block(BlockBehaviour.Properties.of()
                     .strength(1.0F, 3.0F).sound(SoundType.WOOD).requiresCorrectToolForDrops()));
 
+    public static final RegistryObject<Block> AVIABOMB_MINE = registerBlock("aviabomb_mine",
+            () -> new SideOBlock(BlockBehaviour.Properties.of()
+                    .strength(2.0F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
+
 
     public static final RegistryObject<Block> PIPE_TEST = registerBlock("pipe_test",
             () -> new Block(BlockBehaviour.Properties.of()
@@ -593,6 +598,9 @@ public class ModBlocks {
                     .strength(0.5F, 6.0F).sound(SoundType.ROOTED_DIRT).requiresCorrectToolForDrops()));
     public static final RegistryObject<Block> BASALT_ROUGH = registerBlock("basalt_rough",
             () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> BASALT_SCORCHED = registerBlock("basalt_scorched",
+            () -> new ScorchedBasaltBlock(BlockBehaviour.Properties.of()
                     .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
     public static final RegistryObject<Block> WASTE_LOG = registerBlock("waste_log",
             () -> new FullOBlock(BlockBehaviour.Properties.copy(Blocks.OAK_WOOD).sound(SoundType.WOOD)));

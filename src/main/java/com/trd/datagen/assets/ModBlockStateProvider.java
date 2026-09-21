@@ -7,6 +7,7 @@ import com.trd.item.industrial.rotation.GearItem;
 import com.trd.item.industrial.rotation.PulleyItem;
 import com.trd.main.ResourceRegistry;
 import com.trd.block.basic.necrosis.hive.HiveRootsBlock;
+import com.trd.block.basic.ScorchedBasaltBlock;
 import net.minecraft.core.Direction;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
@@ -124,6 +125,7 @@ public class ModBlockStateProvider extends BlockStateProvider {
         cubeAllWithItem(ModBlocks.CONCRETE_NET);
         cubeAllWithItem(ModBlocks.DIRT_ROUGH);
         cubeAllWithItem(ModBlocks.BASALT_ROUGH);
+        scorchedBasaltBlockWithItem(ModBlocks.BASALT_SCORCHED);
 
         cubeAllWithItem(ModBlocks.CRATE);
         cubeAllWithItem(ModBlocks.CONCRETE_MOSSY);
@@ -830,6 +832,21 @@ public class ModBlockStateProvider extends BlockStateProvider {
     // Использует одну текстуру для всех сторон
     public void cubeAllWithItem(RegistryObject<Block> block) {
         simpleBlockWithItem(block.get(), cubeAll(block.get()));
+    }
+
+    // Генерация базальта кратера: по ступеням LIGHT подставляются разные,
+    // постепенно светлеющие текстуры (+50% к осветлению на самой светлой)
+    public void scorchedBasaltBlockWithItem(RegistryObject<Block> block) {
+        String name = block.getId().getPath();
+        ModelFile[] models = new ModelFile[ScorchedBasaltBlock.MAX_LIGHT + 1];
+        for (int light = 0; light <= ScorchedBasaltBlock.MAX_LIGHT; light++) {
+            models[light] = models().cubeAll(name + "_" + light, modLoc("block/" + name + "_" + light));
+        }
+        getVariantBuilder(block.get())
+                .forAllStates(state -> ConfiguredModel.builder()
+                        .modelFile(models[state.getValue(ScorchedBasaltBlock.LIGHT)])
+                        .build());
+        simpleBlockItem(block.get(), models[0]);
     }
 
     // 4. Метод для прозрачных блоков (стекло, решетки) с поддержкой Cutout
