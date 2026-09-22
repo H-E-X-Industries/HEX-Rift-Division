@@ -52,5 +52,23 @@ public class ModNetworking {
             com.trd.network.packet.fluids.ClearFluidHistoryPacket.STREAM_CODEC,
             com.trd.network.packet.fluids.ClearFluidHistoryPacket::handle
         );
+
+        registrar.playToClient(
+            com.trd.network.packet.conveyor.SyncConveyorNetworkPacket.TYPE,
+            com.trd.network.packet.conveyor.SyncConveyorNetworkPacket.STREAM_CODEC,
+            com.trd.network.packet.conveyor.SyncConveyorNetworkPacket::handle
+        );
+
+        registrar.playToServer(
+            com.trd.network.packet.conveyor.UpdateSortirovshikFilterC2SPacket.TYPE,
+            com.trd.network.packet.conveyor.UpdateSortirovshikFilterC2SPacket.STREAM_CODEC,
+            com.trd.network.packet.conveyor.UpdateSortirovshikFilterC2SPacket::handle
+        );
+
+        registrar.playToServer(
+            com.trd.network.packet.conveyor.UpdateSortirovshikModeC2SPacket.TYPE,
+            com.trd.network.packet.conveyor.UpdateSortirovshikModeC2SPacket.STREAM_CODEC,
+            com.trd.network.packet.conveyor.UpdateSortirovshikModeC2SPacket::handle
+        );
     }
 }

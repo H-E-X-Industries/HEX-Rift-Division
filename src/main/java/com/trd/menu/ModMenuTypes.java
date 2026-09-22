@@ -25,8 +25,12 @@ public class ModMenuTypes {
             
     public static final java.util.function.Supplier<net.minecraft.world.inventory.MenuType<com.trd.menu.industrial.FuelTankMenu>> FUEL_TANK_MENU = 
             MENUS.register("fuel_tank_menu", () -> net.neoforged.neoforge.common.extensions.IMenuTypeExtension.create(com.trd.menu.industrial.FuelTankMenu::new));
-public static final Supplier<MenuType<MachineBatteryMenu>> MACHINE_BATTERY_MENU =
+    public static final Supplier<MenuType<MachineBatteryMenu>> MACHINE_BATTERY_MENU =
             MENUS.register("machine_battery_menu", () -> IMenuTypeExtension.create(MachineBatteryMenu::new));
+    public static final java.util.function.Supplier<MenuType<com.trd.menu.industrial.ConveyorBufferMenu>> CONVEYOR_BUFFER_MENU =
+            MENUS.register("conveyor_buffer", () -> net.neoforged.neoforge.common.extensions.IMenuTypeExtension.create(com.trd.menu.industrial.ConveyorBufferMenu::new));
+    public static final java.util.function.Supplier<MenuType<com.trd.menu.industrial.SortirovshikMenu>> SORTIROVSHIK_MENU =
+            MENUS.register("sortirovshik_menu", () -> net.neoforged.neoforge.common.extensions.IMenuTypeExtension.create(com.trd.menu.industrial.SortirovshikMenu::new));
 
     public static void register(IEventBus eventBus) {
         MENUS.register(eventBus);

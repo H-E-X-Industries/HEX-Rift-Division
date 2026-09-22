@@ -63,6 +63,25 @@ public class ModBlockEntities {
     public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.industrial.energy.ConnectorBlockEntity>> CONNECTOR_BE = BLOCK_ENTITIES.register("connector", () -> BlockEntityType.Builder.of(com.trd.block.entity.industrial.energy.ConnectorBlockEntity::new, ModBlocks.CONNECTOR.get(), ModBlocks.MEDIUM_CONNECTOR.get(), ModBlocks.LARGE_CONNECTOR.get()).build(null));
     public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.industrial.energy.PaintableWireBlockEntity>> PAINTABLE_WIRE_BE = BLOCK_ENTITIES.register("paintable_wire_be", () -> BlockEntityType.Builder.of(com.trd.block.entity.industrial.energy.PaintableWireBlockEntity::new, ModBlocks.PAINTABLE_WIRE.get()).build(null));
 
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.industrial.conveyors.ConveyorBufferBlockEntity>> CONVEYOR_BUFFER_BE =
+            BLOCK_ENTITIES.register("conveyor_buffer", () -> BlockEntityType.Builder.of(
+                    (pos, state) -> {
+                        if (state.is(com.trd.block.basic.ModBlocks.CONVEYOR_IZVLEKATEL.get()))
+                            return new com.trd.block.entity.industrial.conveyors.ConveyorBufferBlockEntity(pos, state, com.trd.block.entity.industrial.conveyors.ConveyorBufferBlockEntity.Mode.EXTRACTOR);
+                        return new com.trd.block.entity.industrial.conveyors.ConveyorBufferBlockEntity(pos, state, com.trd.block.entity.industrial.conveyors.ConveyorBufferBlockEntity.Mode.INSERTER);
+                    },
+                    com.trd.block.basic.ModBlocks.CONVEYOR_VSTAVSHIK.get(),
+                    com.trd.block.basic.ModBlocks.CONVEYOR_IZVLEKATEL.get()
+            ).build(null));
+
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.industrial.conveyors.ConveyorBlockEntity>> CONVEYOR_BE =
+            BLOCK_ENTITIES.register("conveyor",
+                    () -> BlockEntityType.Builder.of(com.trd.block.entity.industrial.conveyors.ConveyorBlockEntity::new, com.trd.block.basic.ModBlocks.CONVEYOR.get(), com.trd.block.basic.ModBlocks.CONVEYOR_ELEVATOR.get()).build(null));
+
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.industrial.conveyors.SortirovshikBlockEntity>> SORTIROVSHIK_BE =
+            BLOCK_ENTITIES.register("sortirovshik_be",
+                    () -> BlockEntityType.Builder.of(com.trd.block.entity.industrial.conveyors.SortirovshikBlockEntity::new, com.trd.block.basic.ModBlocks.SORTIROVSHIK.get()).build(null));
+
     public static final java.util.function.Supplier<BlockEntityType<MillstoneBlockEntity>> MILLSTONE = BLOCK_ENTITIES.register("millstone",
             () -> BlockEntityType.Builder.of(MillstoneBlockEntity::new, ModBlocks.MILLSTONE.get()).build(null));
 

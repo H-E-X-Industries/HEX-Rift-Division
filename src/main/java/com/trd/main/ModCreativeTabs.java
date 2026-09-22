@@ -75,6 +75,14 @@ public class ModCreativeTabs {
                         output.accept(ModItems.BATTERY.get());
                         output.accept(ModItems.CREATIVE_BATTERY.get());
                         output.accept(ModItems.SCREWDRIVER.get());
+                        
+                        // Conveyors
+                        output.accept(ModBlocks.CONVEYOR.get());
+                        output.accept(ModBlocks.CONVEYOR_ELEVATOR.get());
+                        output.accept(ModBlocks.CONVEYOR_VSTAVSHIK.get());
+                        output.accept(ModBlocks.CONVEYOR_IZVLEKATEL.get());
+                        output.accept(ModBlocks.SORTIROVSHIK.get());
+                        
                         // Fluid System
                         output.accept(ModItems.FLUID_IDENTIFIER.get());
                         output.accept(ModItems.INFINITE_FLUID_BARREL.get());
