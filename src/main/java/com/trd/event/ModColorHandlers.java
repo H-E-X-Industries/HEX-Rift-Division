@@ -21,13 +21,20 @@ public class ModColorHandlers {
         }, ModBlocks.SEQUOIA_LEAVES.get());
 
         // Затемнение твёрдых блоков к эпицентру/краю воронки: чем выше DARKNESS, тем темнее.
-        // Максимум — 30% темноты (канал падает до ~178) на самом краю воронки.
+        // Максимум — общий уровень затемнения кратера (50%, см. CraterTints.MAX_DARKNESS_RATIO).
         event.register((state, level, pos, tintIndex) -> {
             int dark = state.getValue(CraterBasaltBlock.DARKNESS);
-            float f = 1.0f - 0.30f * (dark / (float) CraterBasaltBlock.MAX_DARK);
+            float f = 1.0f - com.trd.client.render.CraterTints.MAX_DARKNESS_RATIO
+                    * (dark / (float) CraterBasaltBlock.MAX_DARK);
             int c = (int) (255.0f * f);
             return 0xFF000000 | (c << 16) | (c << 8) | c;
         }, ModBlocks.BASALT_SOFT.get(), ModBlocks.BASALT_SOFT_2.get(), ModBlocks.BASALT_SOFT_3.get(), ModBlocks.WASTE_GRASS.get());
+
+        // Затемнение ванильных твёрдых блоков в кольце у края воронки (копии моделей
+        // с тинт-индексом подменяются в CraterTints.onModelBake, позицию знает только клиент).
+        event.register((state, level, pos, tintIndex) ->
+                com.trd.client.render.CraterTints.tintColor(level, pos),
+                com.trd.client.render.CraterTints.TINTED_BLOCKS);
     }
 
     // Красим предмет в инвентаре

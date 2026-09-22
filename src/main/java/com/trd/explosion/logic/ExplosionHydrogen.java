@@ -2,6 +2,8 @@ package com.trd.explosion.logic;
 
 import com.trd.block.basic.CraterBasaltBlock;
 import com.trd.block.basic.ModBlocks;
+import com.trd.network.ModPacketHandler;
+import com.trd.network.packet.explosion.SyncCraterPacket;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.core.BlockPos;
@@ -34,6 +36,7 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.network.PacketDistributor;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -84,8 +87,8 @@ public class ExplosionHydrogen {
     public static float CRATER_BUDGET = 70.0f;
     public static int CRATER_EDGE_AIR_RANGE = 5;
     public static float CRATER_GRADIENT_RADIUS = 24.0f;
-    public static float CRATER_SOFT_CORE_RADIUS = 6.0f;
-    public static float CRATER_RIM_BAND = 5.0f;
+    public static float CRATER_SOFT_CORE_RADIUS = 4.0f;
+    public static float CRATER_RIM_BAND = 10.0f;
     public static int CRATER_MAX_JOBS = 200_000;
 
     public static float GLASS_DESTROY_PROB_ZONE_1 = 0.8f;
@@ -311,13 +314,20 @@ public class ExplosionHydrogen {
             BlockPos pos = new BlockPos(x, y, z);
             BlockState s = level.getBlockState(pos);
             if (s.isAir()) return;
-            if (!s.getFluidState().isEmpty()) return;
+
+            double dist = Math.sqrt(d2);
+
+            // Любые жидкости в зоне 1 выпариваются ударной волной.
+            if (!s.getFluidState().isEmpty() || s.getBlock() instanceof LiquidBlock) {
+                if (dist <= zone1Radius && !rayBlocked(x + 0.5, y + 0.5, z + 0.5)) {
+                    destroy.add(pos.asLong());
+                }
+                return;
+            }
             if (isWaste(s)) return;
 
             float hardness = s.getDestroySpeed(level, pos);
             if (hardness < 0) return;
-
-            double dist = Math.sqrt(d2);
 
             if (isGlass(s)) {
                 float prob = dist <= zone1Radius ? GLASS_DESTROY_PROB_ZONE_1 : GLASS_DESTROY_PROB_ZONE_2;
@@ -331,7 +341,7 @@ public class ExplosionHydrogen {
             if (dist <= zone1Radius) {
                 if (isLog(s, level, pos)) {
                     if (!rayBlocked(x + 0.5, y + 0.5, z + 0.5)) replaceLog.add(pos.asLong());
-                } else if (s.is(Blocks.GRASS_BLOCK)) {
+                } else if (isNaturalSoil(s)) {
                     if (!rayBlocked(x + 0.5, y + 0.5, z + 0.5)) replaceGrass.add(pos.asLong());
                 } else if (isWoodenStairs(s, level, pos)) {
                     if (!rayBlocked(x + 0.5, y + 0.5, z + 0.5)) replaceStairs.add(pos.asLong());
@@ -371,8 +381,8 @@ public class ExplosionHydrogen {
                 BlockPos pos = BlockPos.of(l);
                 if (!level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4)) continue;
                 BlockState cur = level.getBlockState(pos);
-                if (!cur.is(Blocks.GRASS_BLOCK)) continue;
-                int dark = Math.max(grassDarkness(pos), rimDarkness(pos));
+                if (!isNaturalSoil(cur)) continue;
+                int dark = rimDarkness(pos);
                 level.setBlock(pos, ModBlocks.WASTE_GRASS.get().defaultBlockState()
                         .setValue(CraterBasaltBlock.DARKNESS, dark), 3);
             }
@@ -560,14 +570,6 @@ public class ExplosionHydrogen {
             level.setBlock(pos, Blocks.FIRE.defaultBlockState(), 3);
         }
 
-        private int grassDarkness(BlockPos pos) {
-            double dx = pos.getX() + 0.5 - center.x;
-            double dy = pos.getY() + 0.5 - center.y;
-            double dz = pos.getZ() + 0.5 - center.z;
-            double t = Math.min(1.0, Math.sqrt(dx * dx + dy * dy + dz * dz) / zone1Radius);
-            return (int) Math.round((1.0 - t) * CraterBasaltBlock.MAX_DARK);
-        }
-
         /** Затемнение кольца вокруг края воронки: максимум на самом ободе, 0 дальше {@link #CRATER_RIM_BAND}. */
         private int rimDarkness(BlockPos pos) {
             double dx = pos.getX() + 0.5 - center.x;
@@ -684,11 +686,10 @@ public class ExplosionHydrogen {
                 long l = carve.getLong(applyCarve);
                 BlockPos pos = BlockPos.of(l);
                 if (!level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4)) continue;
-                BlockState s = level.getBlockState(pos);
-                if (s.isAir()) continue;
-                if (!s.getFluidState().isEmpty()) continue;
-                if (s.getDestroySpeed(level, pos) < 0) continue;
-                level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+BlockState s = level.getBlockState(pos);
+            if (s.isAir()) continue;
+            if (s.getDestroySpeed(level, pos) < 0) continue;
+            level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
             }
             return true;
         }
@@ -731,7 +732,6 @@ public class ExplosionHydrogen {
                 BlockState s = level.getBlockState(pos);
                 if (s.isAir()) continue;
                 if (!s.getFluidState().isEmpty()) continue;
-                if (isBakedBasalt(s)) continue;
 
                 if (job.destroy()) {
                     level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
@@ -754,10 +754,15 @@ public class ExplosionHydrogen {
         private void enqueueEdgeTarget(BlockPos pos, BlockState state) {
             if (basaltJobs.size() >= CRATER_MAX_JOBS) return;
             if (!state.getFluidState().isEmpty()) return;
-            if (isBakedBasalt(state)) return;
 
             float hardness = state.getDestroySpeed(level, pos);
             if (hardness < 0) return;
+
+            // Уже существующий базальт (чужая воронка) сносится начисто.
+            if (isBakedBasalt(state)) {
+                basaltJobs.addLast(new BasaltJob(pos, true));
+                return;
+            }
 
             boolean weak = hardness <= WEAK_BLOCK_HARDNESS;
             if (!weak && !state.isCollisionShapeFullBlock(level, pos)) return;
@@ -765,13 +770,7 @@ public class ExplosionHydrogen {
         }
 
         private Block pickSoftBasalt(BlockPos pos) {
-            BlockPos anchor = gradientAnchor;
-            if (anchor == null) anchor = pos;
-            double dx = pos.getX() - anchor.getX();
-            double dz = pos.getZ() - anchor.getZ();
-            double dist = Math.sqrt(dx * dx + dz * dz);
-            if (dist <= CRATER_SOFT_CORE_RADIUS) return ModBlocks.BASALT_SOFT.get();
-            return softBasaltNoise(pos) ? ModBlocks.BASALT_SOFT_2.get() : ModBlocks.BASALT_SOFT_3.get();
+            return ModBlocks.BASALT_SOFT.get();
         }
 
         private int darknessLevel(BlockPos pos) {
@@ -800,6 +799,9 @@ public class ExplosionHydrogen {
 
         QUEUE.addLast(state);
         if (!DRAIN_PENDING) scheduleDrain(level.getServer());
+
+        ModPacketHandler.INSTANCE.send(PacketDistributor.DIMENSION.with(() -> level.dimension()),
+                new SyncCraterPacket(center.x, center.y, center.z, CRATER_RADIUS, CRATER_RIM_BAND));
 
         scheduleLateSweep(level, center);
     }
@@ -850,6 +852,11 @@ public class ExplosionHydrogen {
                 || s.is(ModBlocks.WASTE_PLANKS_SLAB.get());
     }
 
+    /** Естественная почва, выгорающая в {@code waste_grass}: дёрн, подзол, мицелий. */
+    private static boolean isNaturalSoil(BlockState s) {
+        return s.is(Blocks.GRASS_BLOCK) || s.is(Blocks.PODZOL) || s.is(Blocks.MYCELIUM);
+    }
+
     private static boolean isGlass(BlockState s) {
         Block b = s.getBlock();
         if (!(b instanceof AbstractGlassBlock) && !(b instanceof IronBarsBlock)) {
@@ -888,7 +895,7 @@ public class ExplosionHydrogen {
 
     private static boolean shouldDestroy(BlockState s, ServerLevel level, BlockPos pos) {
         if (s.isAir()) return false;
-        if (!s.getFluidState().isEmpty()) return false;
+        if (!s.getFluidState().isEmpty() || s.getBlock() instanceof LiquidBlock) return true;
         float hardness = s.getDestroySpeed(level, pos);
         if (hardness < 0) return false;
         return hardness < WEAK_BLOCK_HARDNESS || isZone1Burnable(s, level, pos, hardness);
@@ -905,7 +912,6 @@ public class ExplosionHydrogen {
     }
 
     private static boolean isBarrier(ServerLevel level, BlockState state, BlockPos pos) {
-        if (isBakedBasalt(state)) return true;
         return state.getDestroySpeed(level, pos) < 0;
     }
 
@@ -915,16 +921,6 @@ public class ExplosionHydrogen {
                 || state.is(ModBlocks.BASALT_SOFT.get())
                 || state.is(ModBlocks.BASALT_SOFT_2.get())
                 || state.is(ModBlocks.BASALT_SOFT_3.get());
-    }
-
-    private static boolean softBasaltNoise(BlockPos pos) {
-        long h = pos.asLong() * 0x9E3779B97F4A7C15L;
-        h ^= h >>> 33;
-        h *= 0xFF51AFD7ED558CCDL;
-        h ^= h >>> 33;
-        h *= 0xC4CEB9FE1A85EC53L;
-        h ^= h >>> 33;
-        return (h & 1) == 0;
     }
 
     private static double hash01(long seed, long pos) {
