@@ -205,6 +205,9 @@ public class MainRegistry {
             event.accept(ModBlocks.SEQUOIA_PLANKS.get());
             event.accept(ModBlocks.SEQUOIA_SLAB.get());
             event.accept(ModBlocks.SEQUOIA_STAIRS.get());
+            event.accept(ModBlocks.WASTE_PLANKS.get());
+            event.accept(ModBlocks.WASTE_PLANKS_STAIRS.get());
+            event.accept(ModBlocks.WASTE_PLANKS_SLAB.get());
 
             event.accept(ModBlocks.CONCRETE_LINE.get());
             event.accept(ModBlocks.CONCRETE_NET.get());

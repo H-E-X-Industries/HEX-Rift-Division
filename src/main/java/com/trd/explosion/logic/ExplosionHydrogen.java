@@ -22,10 +22,14 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.level.block.AbstractGlassBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.IronBarsBlock;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
+import net.minecraft.world.level.block.SlabBlock;
+import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -81,7 +85,17 @@ public class ExplosionHydrogen {
     public static int CRATER_EDGE_AIR_RANGE = 5;
     public static float CRATER_GRADIENT_RADIUS = 24.0f;
     public static float CRATER_SOFT_CORE_RADIUS = 6.0f;
+    public static float CRATER_RIM_BAND = 5.0f;
     public static int CRATER_MAX_JOBS = 200_000;
+
+    public static float GLASS_DESTROY_PROB_ZONE_1 = 0.8f;
+    public static float GLASS_DESTROY_PROB_ZONE_2 = 0.4f;
+    public static float FIRE_START_RADIUS = 15.0f;
+    public static float FIRE_FADE_RADIUS = ZONE_1_RADIUS * 0.75f;
+    public static float FIRE_BASE_DENSITY = 0.9f;
+    public static float FIRE_NOISE_CENTER = 0.0f;
+    public static float FIRE_NOISE_EDGE = 1.0f;
+    public static float FIRE_THRESHOLD = 0.5f;
 
     public static long DEFAULT_TICK_BUDGET_NANOS = 3_000_000L;
     public static long MIN_TICK_BUDGET_NANOS = 400_000L;
@@ -97,7 +111,7 @@ public class ExplosionHydrogen {
     private static long tickBudgetNanos = DEFAULT_TICK_BUDGET_NANOS;
     private static long lastDrainNanos = System.nanoTime();
 
-    private enum Phase { SCAN, APPLY, CARVE, CARVE_APPLY, BASALT, DAMAGE, FINISH }
+    private enum Phase { SCAN, APPLY, CARVE, CARVE_APPLY, BASALT, FIRE, DAMAGE, FINISH }
 
     private static final class FloatRef {
         float value;
@@ -138,13 +152,26 @@ public class ExplosionHydrogen {
 
         final LongArrayList replaceLog = new LongArrayList();
         final LongArrayList replaceGrass = new LongArrayList();
+        final LongArrayList replacePlanks = new LongArrayList();
+        final LongArrayList replaceStairs = new LongArrayList();
+        final LongArrayList replaceSlabs = new LongArrayList();
         final LongArrayList destroy = new LongArrayList();
         final List<EntityTarget> entities = new ArrayList<>();
 
         int applyLog;
         int applyGrass;
+        int applyPlanks;
+        int applyStairs;
+        int applySlabs;
         int applyDestroy;
         int applyEntity;
+
+        final float fireStart;
+        final float fireEnd;
+        final double fireInnerSq;
+        final double fireOuterSq;
+        final int fireMinX, fireMaxX, fireMinY, fireMaxY, fireMinZ, fireMaxZ;
+        int fireX, fireY, fireZ;
 
         final FloatRef rayResist = new FloatRef();
 
@@ -168,6 +195,10 @@ public class ExplosionHydrogen {
             this.zone2Radius = ZONE_2_RADIUS;
             this.zone1Sq = (double) zone1Radius * zone1Radius;
             this.zone2Sq = (double) zone2Radius * zone2Radius;
+            this.fireStart = FIRE_START_RADIUS;
+            this.fireEnd = FIRE_FADE_RADIUS;
+            this.fireInnerSq = (double) fireStart * fireStart;
+            this.fireOuterSq = (double) fireEnd * fireEnd;
             this.seed = level.getSeed();
             this.gradientAnchor = findCraterFloor(level, center);
 
@@ -185,6 +216,16 @@ public class ExplosionHydrogen {
             scanX = minX;
             scanY = minY;
             scanZ = minZ;
+            int fR = (int) Math.ceil(fireEnd);
+            fireMinX = cx - fR;
+            fireMaxX = cx + fR;
+            fireMinY = Math.max(level.getMinBuildHeight(), cy - fR);
+            fireMaxY = Math.min(level.getMaxBuildHeight() - 1, cy + fR);
+            fireMinZ = cz - fR;
+            fireMaxZ = cz + fR;
+            fireX = fireMinX;
+            fireY = fireMinY;
+            fireZ = fireMinZ;
 
             int rXZ = (int) Math.ceil(CRATER_RADIUS);
             int rYUp = (int) Math.ceil(CRATER_RADIUS * CRATER_UP_STRETCH);
@@ -221,6 +262,10 @@ public class ExplosionHydrogen {
                     }
                     case BASALT -> {
                         if (!basaltPhase(deadline)) return false;
+                        phase = Phase.FIRE;
+                    }
+                    case FIRE -> {
+                        if (!fireScan(deadline)) return false;
                         phase = Phase.DAMAGE;
                     }
                     case DAMAGE -> {
@@ -273,11 +318,27 @@ public class ExplosionHydrogen {
             if (hardness < 0) return;
 
             double dist = Math.sqrt(d2);
+
+            if (isGlass(s)) {
+                float prob = dist <= zone1Radius ? GLASS_DESTROY_PROB_ZONE_1 : GLASS_DESTROY_PROB_ZONE_2;
+                if (hash01(seed, pos.asLong()) < prob
+                        && !rayBlocked(x + 0.5, y + 0.5, z + 0.5)) {
+                    destroy.add(pos.asLong());
+                }
+                return;
+            }
+
             if (dist <= zone1Radius) {
                 if (isLog(s, level, pos)) {
                     if (!rayBlocked(x + 0.5, y + 0.5, z + 0.5)) replaceLog.add(pos.asLong());
                 } else if (s.is(Blocks.GRASS_BLOCK)) {
                     if (!rayBlocked(x + 0.5, y + 0.5, z + 0.5)) replaceGrass.add(pos.asLong());
+                } else if (isWoodenStairs(s, level, pos)) {
+                    if (!rayBlocked(x + 0.5, y + 0.5, z + 0.5)) replaceStairs.add(pos.asLong());
+                } else if (isWoodenSlab(s, level, pos)) {
+                    if (!rayBlocked(x + 0.5, y + 0.5, z + 0.5)) replaceSlabs.add(pos.asLong());
+                } else if (isWoodPlanks(s, level, pos)) {
+                    if (!rayBlocked(x + 0.5, y + 0.5, z + 0.5)) replacePlanks.add(pos.asLong());
                 } else if (isZone1Burnable(s, level, pos, hardness)) {
                     if (!rayBlocked(x + 0.5, y + 0.5, z + 0.5)) destroy.add(pos.asLong());
                 }
@@ -311,7 +372,42 @@ public class ExplosionHydrogen {
                 if (!level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4)) continue;
                 BlockState cur = level.getBlockState(pos);
                 if (!cur.is(Blocks.GRASS_BLOCK)) continue;
-                level.setBlock(pos, ModBlocks.WASTE_GRASS.get().defaultBlockState(), 3);
+                int dark = Math.max(grassDarkness(pos), rimDarkness(pos));
+                level.setBlock(pos, ModBlocks.WASTE_GRASS.get().defaultBlockState()
+                        .setValue(CraterBasaltBlock.DARKNESS, dark), 3);
+            }
+            for (; applyPlanks < replacePlanks.size(); applyPlanks++) {
+                if (System.nanoTime() > deadline) return false;
+                long l = replacePlanks.getLong(applyPlanks);
+                BlockPos pos = BlockPos.of(l);
+                if (!level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4)) continue;
+                BlockState cur = level.getBlockState(pos);
+                if (!isWoodPlanks(cur, level, pos)) continue;
+                level.setBlock(pos, ModBlocks.WASTE_PLANKS.get().defaultBlockState(), 3);
+            }
+            for (; applyStairs < replaceStairs.size(); applyStairs++) {
+                if (System.nanoTime() > deadline) return false;
+                long l = replaceStairs.getLong(applyStairs);
+                BlockPos pos = BlockPos.of(l);
+                if (!level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4)) continue;
+                BlockState cur = level.getBlockState(pos);
+                if (!isWoodenStairs(cur, level, pos)) continue;
+                level.setBlock(pos, ModBlocks.WASTE_PLANKS_STAIRS.get().defaultBlockState()
+                        .setValue(StairBlock.FACING, cur.getValue(StairBlock.FACING))
+                        .setValue(StairBlock.HALF, cur.getValue(StairBlock.HALF))
+                        .setValue(StairBlock.SHAPE, cur.getValue(StairBlock.SHAPE))
+                        .setValue(StairBlock.WATERLOGGED, cur.getValue(StairBlock.WATERLOGGED)), 3);
+            }
+            for (; applySlabs < replaceSlabs.size(); applySlabs++) {
+                if (System.nanoTime() > deadline) return false;
+                long l = replaceSlabs.getLong(applySlabs);
+                BlockPos pos = BlockPos.of(l);
+                if (!level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4)) continue;
+                BlockState cur = level.getBlockState(pos);
+                if (!isWoodenSlab(cur, level, pos)) continue;
+                level.setBlock(pos, ModBlocks.WASTE_PLANKS_SLAB.get().defaultBlockState()
+                        .setValue(SlabBlock.TYPE, cur.getValue(SlabBlock.TYPE))
+                        .setValue(SlabBlock.WATERLOGGED, cur.getValue(SlabBlock.WATERLOGGED)), 3);
             }
             for (; applyDestroy < destroy.size(); applyDestroy++) {
                 if (System.nanoTime() > deadline) return false;
@@ -411,6 +507,77 @@ public class ExplosionHydrogen {
 
             rayResist.blocked = blocked;
             rayResist.value = resist;
+        }
+
+        // ==================== ОГОНЬ ====================
+
+        private boolean fireScan(long deadline) {
+            int x = fireX, y = fireY, z = fireZ;
+            for (; x <= fireMaxX; x++) {
+                for (; y <= fireMaxY; y++) {
+                    for (; z <= fireMaxZ; z++) {
+                        if (System.nanoTime() > deadline) {
+                            fireX = x;
+                            fireY = y;
+                            fireZ = z;
+                            return false;
+                        }
+                        tryFire(x, y, z);
+                    }
+                    z = fireMinZ;
+                }
+                y = fireMinY;
+            }
+            return true;
+        }
+
+        private void tryFire(int x, int y, int z) {
+            double dx = x + 0.5 - center.x;
+            double dy = y + 0.5 - center.y;
+            double dz = z + 0.5 - center.z;
+            double d2 = dx * dx + dy * dy + dz * dz;
+            if (d2 < fireInnerSq || d2 > fireOuterSq) return;
+            if (!level.hasChunk(x >> 4, z >> 4)) return;
+
+            BlockPos pos = new BlockPos(x, y, z);
+            if (!level.getBlockState(pos).isAir()) return;
+
+            BlockPos belowPos = pos.below();
+            if (!level.hasChunk(belowPos.getX() >> 4, belowPos.getZ() >> 4)) return;
+            BlockState below = level.getBlockState(belowPos);
+            if (below.isAir() || !below.getFluidState().isEmpty()) return;
+
+            boolean burnable = below.isFlammable(level, belowPos, Direction.UP);
+            if (!burnable && !Blocks.FIRE.defaultBlockState().canSurvive(level, pos)) return;
+
+            double t = Math.min(1.0, (Math.sqrt(d2) - fireStart) / (fireEnd - fireStart));
+            double base = FIRE_BASE_DENSITY * (1.0 - t);
+            double noise = FIRE_NOISE_CENTER + (FIRE_NOISE_EDGE - FIRE_NOISE_CENTER) * t;
+            double p = base + (hash01(seed, pos.asLong()) - 0.5) * 2.0 * noise;
+            if (p < FIRE_THRESHOLD) return;
+            if (rayBlocked(x + 0.5, y + 0.5, z + 0.5)) return;
+
+            level.setBlock(pos, Blocks.FIRE.defaultBlockState(), 3);
+        }
+
+        private int grassDarkness(BlockPos pos) {
+            double dx = pos.getX() + 0.5 - center.x;
+            double dy = pos.getY() + 0.5 - center.y;
+            double dz = pos.getZ() + 0.5 - center.z;
+            double t = Math.min(1.0, Math.sqrt(dx * dx + dy * dy + dz * dz) / zone1Radius);
+            return (int) Math.round((1.0 - t) * CraterBasaltBlock.MAX_DARK);
+        }
+
+        /** Затемнение кольца вокруг края воронки: максимум на самом ободе, 0 дальше {@link #CRATER_RIM_BAND}. */
+        private int rimDarkness(BlockPos pos) {
+            double dx = pos.getX() + 0.5 - center.x;
+            double dy = pos.getY() + 0.5 - center.y;
+            double dz = pos.getZ() + 0.5 - center.z;
+            double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            double delta = Math.abs(dist - CRATER_RADIUS);
+            if (delta > CRATER_RIM_BAND) return 0;
+            double t = 1.0 - delta / CRATER_RIM_BAND;
+            return (int) Math.round(t * CraterBasaltBlock.MAX_DARK);
         }
 
         // ==================== БАЗАЛЬТОВАЯ ВОРОНКА ====================
@@ -569,7 +736,7 @@ public class ExplosionHydrogen {
                 if (job.destroy()) {
                     level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
                 } else {
-                    int dark = darknessLevel(pos);
+                    int dark = Math.max(darknessLevel(pos), rimDarkness(pos));
                     level.setBlock(pos,
                             pickSoftBasalt(pos).defaultBlockState()
                                     .setValue(CraterBasaltBlock.DARKNESS, dark), 3);
@@ -676,7 +843,34 @@ public class ExplosionHydrogen {
     // ==================== КЛАССИФИКАЦИЯ БЛОКОВ ====================
 
     private static boolean isWaste(BlockState s) {
-        return s.is(ModBlocks.WASTE_LOG.get()) || s.is(ModBlocks.WASTE_GRASS.get());
+        return s.is(ModBlocks.WASTE_LOG.get())
+                || s.is(ModBlocks.WASTE_GRASS.get())
+                || s.is(ModBlocks.WASTE_PLANKS.get())
+                || s.is(ModBlocks.WASTE_PLANKS_STAIRS.get())
+                || s.is(ModBlocks.WASTE_PLANKS_SLAB.get());
+    }
+
+    private static boolean isGlass(BlockState s) {
+        Block b = s.getBlock();
+        if (!(b instanceof AbstractGlassBlock) && !(b instanceof IronBarsBlock)) {
+            return false;
+        }
+        return !s.is(ModBlocks.ARMORED_GLASS.get()) && !s.is(ModBlocks.CONCRETE_ARMED_GLASS.get());
+    }
+
+    private static boolean isWoodenStairs(BlockState s, ServerLevel level, BlockPos pos) {
+        return s.getBlock() instanceof StairBlock && s.getSoundType(level, pos, null) == SoundType.WOOD;
+    }
+
+    private static boolean isWoodenSlab(BlockState s, ServerLevel level, BlockPos pos) {
+        return s.getBlock() instanceof SlabBlock && s.getSoundType(level, pos, null) == SoundType.WOOD;
+    }
+
+    private static boolean isWoodPlanks(BlockState s, ServerLevel level, BlockPos pos) {
+        if (s.is(BlockTags.PLANKS)) return true;
+        if (s.getSoundType(level, pos, null) != SoundType.WOOD) return false;
+        if (s.hasProperty(RotatedPillarBlock.AXIS)) return false;
+        return s.isCollisionShapeFullBlock(level, pos);
     }
 
     private static boolean isLog(BlockState s, ServerLevel level, BlockPos pos) {
@@ -731,6 +925,17 @@ public class ExplosionHydrogen {
         h *= 0xC4CEB9FE1A85EC53L;
         h ^= h >>> 33;
         return (h & 1) == 0;
+    }
+
+    private static double hash01(long seed, long pos) {
+        long h = pos * 0x9E3779B97F4A7C15L;
+        h = (h ^ (h >>> 30)) * 0xBF58476D1CE4E5B9L;
+        h = (h ^ (h >>> 27)) * 0x94D049BB133111EBL;
+        h = (h ^ (h >>> 31)) ^ (seed * 0x9E3779B97F4A7C15L);
+        h = (h ^ (h >>> 30)) * 0xBF58476D1CE4E5B9L;
+        h = (h ^ (h >>> 27)) * 0x94D049BB133111EBL;
+        h = h ^ (h >>> 31);
+        return (h & 0xFFFFFFFFL) / 4294967296.0;
     }
 
     private static double blastJitter(long seed, int x, int y, int z) {

@@ -63,7 +63,6 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
-import com.trd.block.basic.direction.FullOBlock;
 import com.trd.block.basic.weapons.explosives.DetMinerBlock;
 import com.trd.block.basic.necrosis.NecrosisPortalBlock;
 import com.trd.block.basic.necrosis.hive.DepthWormNestBlock;
@@ -615,7 +614,15 @@ public class ModBlocks {
             () -> new RotatedPillarBlock(BlockBehaviour.Properties.copy(Blocks.OAK_WOOD).sound(SoundType.WOOD)));
 
     public static final RegistryObject<Block> WASTE_GRASS = registerBlock("waste_grass",
-            () -> new FullOBlock(BlockBehaviour.Properties.copy(Blocks.GRASS_BLOCK).sound(SoundType.GRASS)));
+            () -> new WasteGrassBlock(BlockBehaviour.Properties.copy(Blocks.GRASS_BLOCK).sound(SoundType.GRASS)));
+
+    public static final RegistryObject<Block> WASTE_PLANKS = registerBlock("waste_planks",
+            () -> new Block(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)));
+    public static final RegistryObject<StairBlock> WASTE_PLANKS_STAIRS = registerBlock("waste_planks_stairs",
+            () -> new StairBlock(WASTE_PLANKS.get().defaultBlockState(),
+                    BlockBehaviour.Properties.copy(WASTE_PLANKS.get())));
+    public static final RegistryObject<SlabBlock> WASTE_PLANKS_SLAB = registerBlock("waste_planks_slab",
+            () -> new SlabBlock(BlockBehaviour.Properties.copy(WASTE_PLANKS.get())));
 
     public static final RegistryObject<Block> CASTING_DESCENT = registerBlock("casting_descent",
             () -> new CastingDescentBlock(BlockBehaviour.Properties.of()

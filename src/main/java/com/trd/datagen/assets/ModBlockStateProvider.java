@@ -152,10 +152,13 @@ public class ModBlockStateProvider extends BlockStateProvider {
          modLoc("block/waste_log_top"));
        simpleBlockItem(ModBlocks.WASTE_LOG.get(), models().getExistingFile(blockTexture(ModBlocks.WASTE_LOG.get())));
 
-        columnBlockWithItem(ModBlocks.WASTE_GRASS,
+        tintedColumnBlockWithItem(ModBlocks.WASTE_GRASS,
                 modLoc("block/waste_grass"),
                 modLoc("block/waste_grass_top"),
                 modLoc("block/dirt"));
+
+        blockWithItem(ModBlocks.WASTE_PLANKS);
+        stairsAndSlabs(ModBlocks.WASTE_PLANKS.get(), ModBlocks.WASTE_PLANKS_STAIRS.get(), ModBlocks.WASTE_PLANKS_SLAB.get());
 
         columnBlockWithItem(ModBlocks.CONCRETE_PORT,
                 modLoc("block/concrete_port"),
@@ -658,6 +661,30 @@ public class ModBlockStateProvider extends BlockStateProvider {
     private void columnBlockWithItem(RegistryObject<Block> blockObject, ResourceLocation side, ResourceLocation top, ResourceLocation bottom) {
         simpleBlock(blockObject.get(), models().cubeBottomTop(blockObject.getId().getPath(), side, bottom, top));
         simpleBlockItem(blockObject.get(), models().getExistingFile(blockTexture(blockObject.get())));
+    }
+
+    // Колонна с color-tint'ом на всех гранях: ступень затемнения DARKNESS применяется
+    // цветовым хендлером в коде — как у мягкого базальта кратера (без дубликатов текстур).
+    private void tintedColumnBlockWithItem(RegistryObject<Block> blockObject, ResourceLocation side, ResourceLocation top, ResourceLocation bottom) {
+        String name = blockObject.getId().getPath();
+        ModelFile model = models().getBuilder(name)
+                .texture("side", side)
+                .texture("top", top)
+                .texture("bottom", bottom)
+                .texture("particle", side)
+                .element()
+                .from(0f, 0f, 0f).to(16f, 16f, 16f)
+                .allFaces((dir, face) -> {
+                    switch (dir) {
+                        case UP -> face.texture("#top").cullface(dir).tintindex(0);
+                        case DOWN -> face.texture("#bottom").cullface(dir).tintindex(0);
+                        default -> face.texture("#side").cullface(dir).tintindex(0);
+                    }
+                })
+                .end();
+        getVariantBuilder(blockObject.get())
+                .forAllStates(state -> ConfiguredModel.builder().modelFile(model).build());
+        simpleBlockItem(blockObject.get(), model);
     }
 
     private <T extends Block> void customObjBlock(RegistryObject<T> blockObject) {

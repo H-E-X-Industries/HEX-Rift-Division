@@ -763,6 +763,10 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.NECROSIS_TEST4.get(), "Necrosis Test Block 4");
         add(ModBlocks.NECROSIS_PORTAL.get(), "Necrosis Portal");
         add(ModBlocks.WASTE_LOG.get(), "Waste Log");
+        add(ModBlocks.WASTE_GRASS.get(), "Waste Grass");
+        add(ModBlocks.WASTE_PLANKS.get(), "Waste Planks");
+        add(ModBlocks.WASTE_PLANKS_STAIRS.get(), "Waste Planks Stairs");
+        add(ModBlocks.WASTE_PLANKS_SLAB.get(), "Waste Planks Slab");
 
         // Kinetic & Shafts
         add(ModBlocks.HAND_CRANK_BLOCK.get(), "Hand Crank");
@@ -2074,6 +2078,10 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.NECROSIS_TEST4.get(), "Тестовый блок Некроза 4");
         add(ModBlocks.NECROSIS_PORTAL.get(), "Портал Некроза");
         add(ModBlocks.WASTE_LOG.get(), "Обугленное бревно");
+        add(ModBlocks.WASTE_GRASS.get(), "Выжженная трава");
+        add(ModBlocks.WASTE_PLANKS.get(), "Обугленные доски");
+        add(ModBlocks.WASTE_PLANKS_STAIRS.get(), "Обугленные ступени");
+        add(ModBlocks.WASTE_PLANKS_SLAB.get(), "Обугленная плита");
 
         // Кинетика и валы
         add(ModBlocks.HAND_CRANK_BLOCK.get(), "Ручной привод");
