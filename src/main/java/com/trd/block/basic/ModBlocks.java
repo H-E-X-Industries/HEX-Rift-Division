@@ -612,7 +612,7 @@ public class ModBlocks {
             () -> new CraterBasaltBlock(BlockBehaviour.Properties.of()
                     .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
     public static final RegistryObject<Block> WASTE_LOG = registerBlock("waste_log",
-            () -> new FullOBlock(BlockBehaviour.Properties.copy(Blocks.OAK_WOOD).sound(SoundType.WOOD)));
+            () -> new RotatedPillarBlock(BlockBehaviour.Properties.copy(Blocks.OAK_WOOD).sound(SoundType.WOOD)));
 
     public static final RegistryObject<Block> WASTE_GRASS = registerBlock("waste_grass",
             () -> new FullOBlock(BlockBehaviour.Properties.copy(Blocks.GRASS_BLOCK).sound(SoundType.GRASS)));

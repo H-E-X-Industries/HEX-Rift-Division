@@ -147,10 +147,10 @@ public class ModBlockStateProvider extends BlockStateProvider {
 
 
         //СТАТИЧНИЫЕ БЛОКИ У КОТОРЫХ РАЗНОЕ ДНО/ВЕРХ, ПРИМЕР:
-       columnBlockWithItem(ModBlocks.WASTE_LOG,
+       axisBlock((RotatedPillarBlock) ModBlocks.WASTE_LOG.get(),
          modLoc("block/waste_log_side"),
-         modLoc("block/waste_log_top"),
          modLoc("block/waste_log_top"));
+       simpleBlockItem(ModBlocks.WASTE_LOG.get(), models().getExistingFile(blockTexture(ModBlocks.WASTE_LOG.get())));
 
         columnBlockWithItem(ModBlocks.WASTE_GRASS,
                 modLoc("block/waste_grass"),

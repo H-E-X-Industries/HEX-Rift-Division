@@ -2,23 +2,31 @@ package com.trd.explosion.logic;
 
 import com.trd.block.basic.CraterBasaltBlock;
 import com.trd.block.basic.ModBlocks;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlock;
+import net.minecraft.world.level.block.RotatedPillarBlock;
+import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -26,271 +34,674 @@ import net.minecraft.world.phys.Vec3;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
- * Водородный взрыв гранаты: «яйцевидная» ударная волна вокруг точки детонации.
- * В бока волна уходит на {@code BLAST_RADIUS}, ВВЕРХ вытянута на {@code BLAST_UP_STRETCH}
- * (+30%), ВНИЗ приплюснута на {@code BLAST_DOWN_SQUASH} (≈1/3 глубины). Так воронка
- * остаётся знаковой и заметной, но волна не «закапывается» вниз и захватывает рельеф
- * со всех сторон: склон, гору, низину, потолок.
+ * Водородный взрыв гранаты — радиальные зоны поражения:
+ * до {@link #ZONE_1_RADIUS} блоки «сгорают» (брёвна — в обугленное {@code waste_log},
+ * трава — в выжженную {@code waste_grass}, легковоспламеняющееся удаляется), до
+ * {@link #ZONE_2_RADIUS} сполько хрупкое (прочность ниже {@link #WEAK_BLOCK_HARDNESS})
+ * сносит ударной волной. Урон мобам и время горения линейно падают с расстоянием.
  *
- * <p>Алгоритм:
- * <ol>
- *     <li>Целевая область — вытянутый по вертикали объём (верх +30%, низ до 1/3) вокруг
- *         эпицентра с лёгким детерминированным «дрожанием» границы (3D-шум), поэтому край
- *         кратера живой, а не идеально гладкая математическая фигура.</li>
- *     <li>Для КАЖДОЙ целевой ячейки пускается луч от эпицентра к её центру (3D-DDA).
- *         Луч глушится барьером (бедрок) либо исчерпанием энергии (учитывается прочность
- *         пробиваемых блоков). Ячейка выжигается только если луч до неё «долетел»:
- *         укрытия из прочных блоков работают, но волна честно расширяется во все стороны.</li>
-*     <li>Ячейки выжигаются батчами по тикам. В мягкий базальт с градиентом затемнения
-     *         запекáются ИСКЛЮЧИТЕЛЬНО твёрдые цельные блоки; слабые (листва, трава) сносятся;
-     *         жидкости не трогаются вообще. Твердь за пределами воронки печётся сквозь воздух
-     *         на глубину до {@link #BASALT_EDGE_AIR_RANGE} пустых клеток (пол пещеры под дном
-     *         тоже покрывается базальтом). Урон мобам — только по достигнутой лучами зоне,
-     *         тип урона {@code trd:cremated}.</li>
- * </ol>
+ * <p>В центре (ядро {@link #CRATER_RADIUS}) плюс к этому выдавливается классическая
+ * базальтовая воронка: луч-достижимый объём выжигается в воздух, а его края запекáются
+ * в мягкий базальт градиентом. Радиус ядра вложен в первую зону, поэтому на практике
+ * центр — это кратер, периферия — выжженные остатки, внешняя часть — ударная волна.
+ *
+ * <p>Возможность разрушить/заменить блок или нанести полный урон мобу проверяется лучом
+ * от эпицентра до цели: блок с сопротивлением взрыву больше {@link #ARMOR_BLOCK_RESISTANCE}
+ * до цели гасит эффект. Для урона каждые {@link #RESIST_PER_STEP} суммарного сопротивления
+ * пройденных блоков стоят {@link #STEP_DAMAGE_DROP} урона.
+ *
+ * <p>Вся работа размазана по тикам с адаптивным бюджетом времени (работа на быстрых машинах
+ * растёт, на отстающих — ужимается), невыгруженные чанки не подгружаются принудительно.
+ * Выпавший дроп и XP в зоне поражения зачищаются.
  */
 public class ExplosionHydrogen {
 
-    // ========== СФЕРА ВЗРЫВА ==========
-    /** Горизонтальный радиус ударной волны (вбок). */
-    public static float BLAST_RADIUS = 16.0f;
-    /** Во сколько раз волна вытянута ВВЕРХ (1.3 = на 30% выше эпицентра). */
-    public static float BLAST_UP_STRETCH = 1.3f;
-    /** Во сколько раз волна приплюснута ВНИЗ (0.33 ≈ 1/3 глубины). */
-    public static float BLAST_DOWN_SQUASH = 0.33f;
-    /** Амплитуда неровности границы сферы (м): чтобы край был слегка «живым». */
-    public static float BLAST_JITTER = 0.9f;
-    /** Частота шума границы: меньше — крупные «волны», больше — мелкий крап. */
-    public static float BLAST_NOISE_SCALE = 0.22f;
-
-    // ========== ЭНЕРГИЯ ЛУЧА ==========
-    /**
-     * Энергия луча: расходуется на каждый пройденный блок (воздух = 1, блок = прочность).
-     * Когда кончается — луч гаснет, дальше блоки не выжигаются (защита укрытиями).
-     */
-    public static float BLAST_BUDGET = 70.0f;
-
-    // ========== УРОН ==========
-    /** Максимальный урон в эпицентре (крепкий моб ~12 хп * 10 = 60 хп). */
-    public static float MAX_ENTITY_DAMAGE = 120f;
-    /** Минимальный урон на краю зоны поражения. */
-    public static float MIN_ENTITY_DAMAGE = 25f;
-    /** Секунды поджога после взрыва. */
-    public static int FIRE_SECONDS = 8;
-
-    // ========== БАЗАЛЬТОВОЕ ПРИПЕКАНИЕ ==========
-    public static int BASALT_JOBS_PER_TICK = 12000;
-    public static int BASALT_QUEUE_CAP = 200000;
-    /** Блоки с прочностью не выше этой не пекутся в базальт, а просто уничтожаются. */
-    public static float WEAK_BLOCK_HARDNESS = 0.4f;
-    /** Максимум пустых клеток между кратером и твёрдым блоком, который тоже запекётся в базальт. */
-    public static int BASALT_EDGE_AIR_RANGE = 5;
-    /** Радиус, на котором базальт достигает максимального осветления (граница кратера). */
-    public static float GRADIENT_RADIUS = 24.0f;
-    /** Радиус эпицентра с чистым basalt_soft (увеличен на 4 блока относительно исходного). */
-    public static float SOFT_CORE_RADIUS = 6.0f;
-
-    /** Сколько блоков очищать за тик (безопасно для TPS на больших взрывах). */
-    public static int BLOCKS_PER_TICK = 6000;
-
-    /** Кастомный тип урона — кремация. Сообщение о смерти из death.attack.cremated. */
     public static final ResourceKey<DamageType> CREMATION =
             ResourceKey.create(Registries.DAMAGE_TYPE, new ResourceLocation("trd", "cremated"));
 
-    private record BasaltJob(BlockPos pos, Vec3 center, boolean destroy) {}
+    public static float ZONE_1_RADIUS = 30.0f;
+    public static float ZONE_2_RADIUS = 40.0f;
+    public static float MAX_DAMAGE = 500.0f;
+    public static float MIN_DAMAGE = 10.0f;
+    public static int MAX_FIRE_SECONDS = 30;
+    public static float WEAK_BLOCK_HARDNESS = 0.4f;
+    public static float ARMOR_BLOCK_RESISTANCE = 10.0f;
+    public static float RESIST_PER_STEP = 5.0f;
+    public static float STEP_DAMAGE_DROP = 0.10f;
 
-    /** Шаг обхода {@link #enqueueScorchedEdges}: пустая ячейка и сколько воздуха она от воронки. */
+    public static float CRATER_RADIUS = 16.0f;
+    public static float CRATER_UP_STRETCH = 1.3f;
+    public static float CRATER_DOWN_SQUASH = 0.33f;
+    public static float CRATER_JITTER = 0.9f;
+    public static float CRATER_NOISE_SCALE = 0.22f;
+    public static float CRATER_BUDGET = 70.0f;
+    public static int CRATER_EDGE_AIR_RANGE = 5;
+    public static float CRATER_GRADIENT_RADIUS = 24.0f;
+    public static float CRATER_SOFT_CORE_RADIUS = 6.0f;
+    public static int CRATER_MAX_JOBS = 200_000;
+
+    public static long DEFAULT_TICK_BUDGET_NANOS = 3_000_000L;
+    public static long MIN_TICK_BUDGET_NANOS = 400_000L;
+    public static long MAX_TICK_BUDGET_NANOS = 8_000_000L;
+    public static long SLOW_GAP_NANOS = 58_000_000L;
+    public static long FAST_GAP_NANOS = 40_000_000L;
+    public static long IDLE_GAP_NANOS = 250_000_000L;
+    public static int MAX_QUEUED_EXPLOSIONS = 32;
+
+    private static final ArrayDeque<State> QUEUE = new ArrayDeque<>();
+    private static boolean DRAIN_PENDING = false;
+
+    private static long tickBudgetNanos = DEFAULT_TICK_BUDGET_NANOS;
+    private static long lastDrainNanos = System.nanoTime();
+
+    private enum Phase { SCAN, APPLY, CARVE, CARVE_APPLY, BASALT, DAMAGE, FINISH }
+
+    private static final class FloatRef {
+        float value;
+        boolean blocked;
+    }
+
+    private record BasaltJob(BlockPos pos, boolean destroy) {}
+
     private record Flood(BlockPos pos, int depth) {}
 
-    private static final Deque<BasaltJob> BASALT_QUEUE = new ArrayDeque<>();
+    private static final class EntityTarget {
+        final LivingEntity entity;
+        final float baseDamage;
+        final int baseFire;
 
-    /** Опорная точка градиента осветления: центральный нижний блок дна кратера. */
-    private static BlockPos GRADIENT_ANCHOR;
+        EntityTarget(LivingEntity entity, float baseDamage, int baseFire) {
+            this.entity = entity;
+            this.baseDamage = baseDamage;
+            this.baseFire = baseFire;
+        }
+    }
 
-    /** Результат построения кратера: ячейки на очистку и зона, достигнутая лучами. */
-    private record CarveData(List<BlockPos> carve, Set<Long> zone) {}
-
-    /** Состояние одного взрыва, переносимое между батчами очистки блоков. */
-    private static final class CarveState {
+    private static final class State {
         final ServerLevel level;
         final Vec3 center;
-        final List<BlockPos> clear;
-        int ptr;
+        final DamageSource damageSource;
+        final Entity sourceEntity;
 
-        CarveState(ServerLevel level, Vec3 center, List<BlockPos> clear) {
+        final double zone1Sq;
+        final double zone2Sq;
+        final float zone1Radius;
+        final float zone2Radius;
+
+        final int minX, maxX, minY, maxY, minZ, maxZ;
+        int scanX, scanY, scanZ;
+
+        Phase phase = Phase.SCAN;
+
+        final LongArrayList replaceLog = new LongArrayList();
+        final LongArrayList replaceGrass = new LongArrayList();
+        final LongArrayList destroy = new LongArrayList();
+        final List<EntityTarget> entities = new ArrayList<>();
+
+        int applyLog;
+        int applyGrass;
+        int applyDestroy;
+        int applyEntity;
+
+        final FloatRef rayResist = new FloatRef();
+
+        final long seed;
+        final BlockPos gradientAnchor;
+        final int crMinX, crMaxX, crMinY, crMaxY, crMinZ, crMaxZ;
+        int crX, crY, crZ;
+        final LongArrayList carve = new LongArrayList();
+        int applyCarve;
+        boolean bfsDone;
+        final Deque<Flood> floodQueue = new ArrayDeque<>();
+        final LongOpenHashSet floodVisited = new LongOpenHashSet(CRATER_MAX_JOBS / 4);
+        final ArrayDeque<BasaltJob> basaltJobs = new ArrayDeque<>();
+
+        State(ServerLevel level, Vec3 center, Entity source, DamageSource damageSource) {
             this.level = level;
             this.center = center;
-            this.clear = clear;
+            this.damageSource = damageSource;
+            this.sourceEntity = source;
+            this.zone1Radius = ZONE_1_RADIUS;
+            this.zone2Radius = ZONE_2_RADIUS;
+            this.zone1Sq = (double) zone1Radius * zone1Radius;
+            this.zone2Sq = (double) zone2Radius * zone2Radius;
+            this.seed = level.getSeed();
+            this.gradientAnchor = findCraterFloor(level, center);
+
+            int cx = (int) Math.floor(center.x);
+            int cy = (int) Math.floor(center.y);
+            int cz = (int) Math.floor(center.z);
+            int r = (int) Math.ceil(zone2Radius);
+
+            minX = cx - r;
+            maxX = cx + r;
+            minY = Math.max(level.getMinBuildHeight(), cy - r);
+            maxY = Math.min(level.getMaxBuildHeight() - 1, cy + r);
+            minZ = cz - r;
+            maxZ = cz + r;
+            scanX = minX;
+            scanY = minY;
+            scanZ = minZ;
+
+            int rXZ = (int) Math.ceil(CRATER_RADIUS);
+            int rYUp = (int) Math.ceil(CRATER_RADIUS * CRATER_UP_STRETCH);
+            int rYDown = (int) Math.ceil(CRATER_RADIUS * CRATER_DOWN_SQUASH);
+            crMinX = cx - rXZ;
+            crMaxX = cx + rXZ;
+            crMinY = Math.max(level.getMinBuildHeight(), cy - rYDown);
+            crMaxY = Math.min(level.getMaxBuildHeight() - 1, cy + rYUp);
+            crMinZ = cz - rXZ;
+            crMaxZ = cz + rXZ;
+            crX = crMinX;
+            crY = crMinY;
+            crZ = crMinZ;
         }
-    }
 
-    public static void explode(ServerLevel level, Vec3 center, Entity source) {
-        level.playSound(null, center.x, center.y, center.z,
-                SoundEvents.GENERIC_EXPLODE, SoundSource.BLOCKS,
-                6.0F, 0.4F);
-
-        long seed = level.getSeed();
-        GRADIENT_ANCHOR = findCraterFloor(level, center);
-
-        discardItemsNearby(level, center, BLAST_RADIUS * BLAST_UP_STRETCH + 2.0f);
-
-        // 1) Выясняем, до каких ячеек шара долетают лучи (не огибая препятствия).
-        CarveData data = buildCarveData(level, center, seed);
-        CarveState state = new CarveState(level, center, data.carve());
-
-        // 2) Урон мобам наносим сразу — только по достигнутому лучами объёму.
-        applyDamage(level, center, source, data.zone());
-
-        // 3) Очистка блоков батчами по тикам.
-        if (data.carve().isEmpty()) {
-            finishBlast(level, center, data.carve());
-        } else {
-            level.getServer().tell(new net.minecraft.server.TickTask(0, () -> runCarveBatch(state)));
-        }
-    }
-
-    // ==================== ПОСТРОЕНИЕ КРАТЕРА ====================
-
-    /**
-     * Перебираем все ячейки шара радиуса BLAST_RADIUS вокруг эпицентра и выжигаем только те,
-     * до которых долетел прямой луч от эпицентра (3D-DDA с расходом энергии на прочность).
-     */
-    private static CarveData buildCarveData(ServerLevel level, Vec3 center, long seed) {
-        int minY = level.getMinBuildHeight();
-        int maxY = level.getMaxBuildHeight();
-        int cx = (int) Math.floor(center.x);
-        int cy = (int) Math.floor(center.y);
-        int cz = (int) Math.floor(center.z);
-        int rXZ = (int) Math.ceil(BLAST_RADIUS);
-        int rYUp = (int) Math.ceil(BLAST_RADIUS * BLAST_UP_STRETCH);
-        int rYDown = (int) Math.ceil(BLAST_RADIUS * BLAST_DOWN_SQUASH);
-
-        List<BlockPos> carve = new ArrayList<>();
-        Set<Long> zone = new HashSet<>();
-
-        for (int x = cx - rXZ; x <= cx + rXZ; x++) {
-            for (int y = Math.max(cy - rYDown, minY); y <= Math.min(cy + rYUp, maxY - 1); y++) {
-                for (int z = cz - rXZ; z <= cz + rXZ; z++) {
-                    if (!isInBlastRegion(center, seed, x, y, z)) continue;
-                    if (!rayReaches(level, center, x, y, z, BLAST_BUDGET)) continue;
-
-                    BlockPos pos = new BlockPos(x, y, z);
-                    carve.add(pos);
-                    zone.add(pos.asLong());
+        boolean work(long deadline) {
+            while (true) {
+                switch (phase) {
+                    case SCAN -> {
+                        if (!scan(deadline)) return false;
+                        phase = Phase.APPLY;
+                    }
+                    case APPLY -> {
+                        if (!apply(deadline)) return false;
+                        phase = Phase.CARVE;
+                    }
+                    case CARVE -> {
+                        if (!carveScan(deadline)) return false;
+                        phase = Phase.CARVE_APPLY;
+                    }
+                    case CARVE_APPLY -> {
+                        if (!carveApply(deadline)) return false;
+                        phase = Phase.BASALT;
+                    }
+                    case BASALT -> {
+                        if (!basaltPhase(deadline)) return false;
+                        phase = Phase.DAMAGE;
+                    }
+                    case DAMAGE -> {
+                        if (!damage(deadline)) return false;
+                        phase = Phase.FINISH;
+                    }
+                    case FINISH -> {
+                        discardItemsNearby(level, center, zone2Radius + 2.0f);
+                        return true;
+                    }
                 }
             }
         }
-        return new CarveData(carve, zone);
-    }
 
-    /** Целевая область взрыва: точка в «яйцевидном» объёме — верх вытянут, низ приплюснут. */
-    private static boolean isInBlastRegion(Vec3 center, long seed, int x, int y, int z) {
-        double dx = (x + 0.5) - center.x;
-        double dy = (y + 0.5) - center.y;
-        double dz = (z + 0.5) - center.z;
+        private boolean scan(long deadline) {
+            int x = scanX, y = scanY, z = scanZ;
+            for (; x <= maxX; x++) {
+                for (; y <= maxY; y++) {
+                    for (; z <= maxZ; z++) {
+                        if (System.nanoTime() > deadline) {
+                            scanX = x;
+                            scanY = y;
+                            scanZ = z;
+                            return false;
+                        }
+                        processCell(x, y, z);
+                    }
+                    z = minZ;
+                }
+                y = minY;
+            }
+            return true;
+        }
 
-        double vRadius = dy >= 0
-                ? BLAST_RADIUS * BLAST_UP_STRETCH
-                : BLAST_RADIUS * BLAST_DOWN_SQUASH;
+        private void processCell(int x, int y, int z) {
+            double dx = x + 0.5 - center.x;
+            double dy = y + 0.5 - center.y;
+            double dz = z + 0.5 - center.z;
+            double d2 = dx * dx + dy * dy + dz * dz;
+            if (d2 > zone2Sq) return;
+            if (!level.hasChunk(x >> 4, z >> 4)) return;
 
-        double horizontal = (dx * dx + dz * dz) / (BLAST_RADIUS * BLAST_RADIUS);
-        double vertical = (dy * dy) / (vRadius * vRadius);
-        double jitter = (blastJitter(seed, x, y, z) * BLAST_JITTER) / BLAST_RADIUS;
-        return horizontal + vertical + jitter <= 1.0;
-    }
-
-    /**
-     * Трассировка луча от эпицентра к центру ячейки (3D-DDA, Аманатидес–Ву).
-     * Луч глушится первым барьером (бедрок/базальт) или исчерпанием энергии.
-     */
-    private static boolean rayReaches(ServerLevel level, Vec3 center,
-                                      int tx, int ty, int tz, float budget) {
-        int px = (int) Math.floor(center.x);
-        int py = (int) Math.floor(center.y);
-        int pz = (int) Math.floor(center.z);
-
-        double dx = (tx + 0.5) - center.x;
-        double dy = (ty + 0.5) - center.y;
-        double dz = (tz + 0.5) - center.z;
-
-        int stepX = (int) Math.signum(dx);
-        int stepY = (int) Math.signum(dy);
-        int stepZ = (int) Math.signum(dz);
-
-        double tDeltaX = dx == 0 ? Double.POSITIVE_INFINITY : Math.abs(1.0 / dx);
-        double tDeltaY = dy == 0 ? Double.POSITIVE_INFINITY : Math.abs(1.0 / dy);
-        double tDeltaZ = dz == 0 ? Double.POSITIVE_INFINITY : Math.abs(1.0 / dz);
-
-        double tMaxX = dx == 0 ? Double.POSITIVE_INFINITY : (dx > 0 ? (px + 1 - center.x) : (center.x - px)) * tDeltaX;
-        double tMaxY = dy == 0 ? Double.POSITIVE_INFINITY : (dy > 0 ? (py + 1 - center.y) : (center.y - py)) * tDeltaY;
-        double tMaxZ = dz == 0 ? Double.POSITIVE_INFINITY : (dz > 0 ? (pz + 1 - center.z) : (center.z - pz)) * tDeltaZ;
-
-        float spent = 0.0f;
-
-        for (int guard = 0; guard < 1024; guard++) {
-            BlockPos pos = new BlockPos(px, py, pz);
+            BlockPos pos = new BlockPos(x, y, z);
             BlockState s = level.getBlockState(pos);
-            if (isBarrier(level, s, pos)) return false;
+            if (s.isAir()) return;
+            if (!s.getFluidState().isEmpty()) return;
+            if (isWaste(s)) return;
 
-            float cost = blockCost(s, level, pos);
-            if (!Float.isFinite(cost)) return false;
-            spent += cost;
-            if (spent > budget) return false;
+            float hardness = s.getDestroySpeed(level, pos);
+            if (hardness < 0) return;
 
-            if (px == tx && py == ty && pz == tz) return true;
+            double dist = Math.sqrt(d2);
+            if (dist <= zone1Radius) {
+                if (isLog(s, level, pos)) {
+                    if (!rayBlocked(x + 0.5, y + 0.5, z + 0.5)) replaceLog.add(pos.asLong());
+                } else if (s.is(Blocks.GRASS_BLOCK)) {
+                    if (!rayBlocked(x + 0.5, y + 0.5, z + 0.5)) replaceGrass.add(pos.asLong());
+                } else if (isZone1Burnable(s, level, pos, hardness)) {
+                    if (!rayBlocked(x + 0.5, y + 0.5, z + 0.5)) destroy.add(pos.asLong());
+                }
+            } else if (hardness < WEAK_BLOCK_HARDNESS) {
+                if (!rayBlocked(x + 0.5, y + 0.5, z + 0.5)) destroy.add(pos.asLong());
+            }
+        }
 
-            if (tMaxX < tMaxY) {
-                if (tMaxX < tMaxZ) {
-                    px += stepX;
-                    tMaxX += tDeltaX;
+        private boolean rayBlocked(double tx, double ty, double tz) {
+            ray(tx, ty, tz);
+            return rayResist.blocked;
+        }
+
+        private boolean apply(long deadline) {
+            for (; applyLog < replaceLog.size(); applyLog++) {
+                if (System.nanoTime() > deadline) return false;
+                long l = replaceLog.getLong(applyLog);
+                BlockPos pos = BlockPos.of(l);
+                if (!level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4)) continue;
+                BlockState cur = level.getBlockState(pos);
+                if (!isLog(cur, level, pos)) continue;
+                Direction.Axis axis = cur.hasProperty(RotatedPillarBlock.AXIS)
+                        ? cur.getValue(RotatedPillarBlock.AXIS) : Direction.Axis.Y;
+                level.setBlock(pos,
+                        ModBlocks.WASTE_LOG.get().defaultBlockState().setValue(RotatedPillarBlock.AXIS, axis), 3);
+            }
+            for (; applyGrass < replaceGrass.size(); applyGrass++) {
+                if (System.nanoTime() > deadline) return false;
+                long l = replaceGrass.getLong(applyGrass);
+                BlockPos pos = BlockPos.of(l);
+                if (!level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4)) continue;
+                BlockState cur = level.getBlockState(pos);
+                if (!cur.is(Blocks.GRASS_BLOCK)) continue;
+                level.setBlock(pos, ModBlocks.WASTE_GRASS.get().defaultBlockState(), 3);
+            }
+            for (; applyDestroy < destroy.size(); applyDestroy++) {
+                if (System.nanoTime() > deadline) return false;
+                long l = destroy.getLong(applyDestroy);
+                BlockPos pos = BlockPos.of(l);
+                if (!level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4)) continue;
+                BlockState cur = level.getBlockState(pos);
+                if (!shouldDestroy(cur, level, pos)) continue;
+                level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+            }
+            return true;
+        }
+
+        private boolean damage(long deadline) {
+            for (; applyEntity < entities.size(); applyEntity++) {
+                if (System.nanoTime() > deadline) return false;
+                EntityTarget t = entities.get(applyEntity);
+                LivingEntity e = t.entity;
+                if (!e.isAlive()) continue;
+
+                Vec3 c = e.getBoundingBox().getCenter();
+                ray(c.x, c.y, c.z);
+
+                double steps = rayResist.value / RESIST_PER_STEP;
+                float mult = Math.max(0.0f, 1.0f - (float) (STEP_DAMAGE_DROP * Math.floor(steps)));
+                float dmg = t.baseDamage * mult;
+                if (dmg > 0) e.hurt(damageSource, dmg);
+                if (t.baseFire > 0) e.setSecondsOnFire(t.baseFire);
+            }
+            return true;
+        }
+
+        /** 3D-DDA от эпицентра до точки: стартовая и целевая ячейки не учитываются. */
+        private void ray(double tx, double ty, double tz) {
+            double cx = center.x;
+            double cy = center.y;
+            double cz = center.z;
+            double dx = tx - cx;
+            double dy = ty - cy;
+            double dz = tz - cz;
+
+            int px = (int) Math.floor(cx);
+            int py = (int) Math.floor(cy);
+            int pz = (int) Math.floor(cz);
+            int startX = px, startY = py, startZ = pz;
+            int ex = (int) Math.floor(tx);
+            int ey = (int) Math.floor(ty);
+            int ez = (int) Math.floor(tz);
+
+            int stepX = (int) Math.signum(dx);
+            int stepY = (int) Math.signum(dy);
+            int stepZ = (int) Math.signum(dz);
+
+            double tDeltaX = dx == 0 ? Double.POSITIVE_INFINITY : Math.abs(1.0 / dx);
+            double tDeltaY = dy == 0 ? Double.POSITIVE_INFINITY : Math.abs(1.0 / dy);
+            double tDeltaZ = dz == 0 ? Double.POSITIVE_INFINITY : Math.abs(1.0 / dz);
+
+            double tMaxX = dx == 0 ? Double.POSITIVE_INFINITY
+                    : (stepX > 0 ? (px + 1 - cx) : (cx - px)) * tDeltaX;
+            double tMaxY = dy == 0 ? Double.POSITIVE_INFINITY
+                    : (stepY > 0 ? (py + 1 - cy) : (cy - py)) * tDeltaY;
+            double tMaxZ = dz == 0 ? Double.POSITIVE_INFINITY
+                    : (stepZ > 0 ? (pz + 1 - cz) : (cz - pz)) * tDeltaZ;
+
+            boolean blocked = false;
+            float resist = 0.0f;
+
+            for (int guard = 0; guard < 512; guard++) {
+                if (px == ex && py == ey && pz == ez) break;
+                if (px != startX || py != startY || pz != startZ) {
+                    if (level.hasChunk(px >> 4, pz >> 4)) {
+                        BlockState s = level.getBlockState(new BlockPos(px, py, pz));
+                        if (!s.isAir() && s.getFluidState().isEmpty()
+                                && !(s.getBlock() instanceof LiquidBlock)) {
+                            float r = s.getBlock().getExplosionResistance();
+                            resist += r;
+                            if (r > ARMOR_BLOCK_RESISTANCE) blocked = true;
+                        }
+                    }
+                }
+                if (tMaxX < tMaxY) {
+                    if (tMaxX < tMaxZ) {
+                        px += stepX;
+                        tMaxX += tDeltaX;
+                    } else {
+                        pz += stepZ;
+                        tMaxZ += tDeltaZ;
+                    }
+                } else if (tMaxY < tMaxZ) {
+                    py += stepY;
+                    tMaxY += tDeltaY;
                 } else {
                     pz += stepZ;
                     tMaxZ += tDeltaZ;
                 }
-            } else if (tMaxY < tMaxZ) {
-                py += stepY;
-                tMaxY += tDeltaY;
-            } else {
-                pz += stepZ;
-                tMaxZ += tDeltaZ;
             }
+
+            rayResist.blocked = blocked;
+            rayResist.value = resist;
         }
-        return false;
+
+        // ==================== БАЗАЛЬТОВАЯ ВОРОНКА ====================
+
+        private boolean carveScan(long deadline) {
+            int x = crX, y = crY, z = crZ;
+            for (; x <= crMaxX; x++) {
+                for (; y <= crMaxY; y++) {
+                    for (; z <= crMaxZ; z++) {
+                        if (System.nanoTime() > deadline) {
+                            crX = x;
+                            crY = y;
+                            crZ = z;
+                            return false;
+                        }
+                        if (isInCraterRegion(x, y, z) && rayReaches(x, y, z)) {
+                            carve.add(BlockPos.asLong(x, y, z));
+                        }
+                    }
+                    z = crMinZ;
+                }
+                y = crMinY;
+            }
+            return true;
+        }
+
+        private boolean isInCraterRegion(int x, int y, int z) {
+            double dx = (x + 0.5) - center.x;
+            double dy = (y + 0.5) - center.y;
+            double dz = (z + 0.5) - center.z;
+
+            double vRadius = dy >= 0
+                    ? CRATER_RADIUS * CRATER_UP_STRETCH
+                    : CRATER_RADIUS * CRATER_DOWN_SQUASH;
+
+            double horizontal = (dx * dx + dz * dz) / (CRATER_RADIUS * CRATER_RADIUS);
+            double vertical = (dy * dy) / (vRadius * vRadius);
+            double jitter = (blastJitter(seed, x, y, z) * CRATER_JITTER) / CRATER_RADIUS;
+            return horizontal + vertical + jitter <= 1.0;
+        }
+
+        private boolean rayReaches(int tx, int ty, int tz) {
+            double cx = center.x;
+            double cy = center.y;
+            double cz = center.z;
+
+            int px = (int) Math.floor(cx);
+            int py = (int) Math.floor(cy);
+            int pz = (int) Math.floor(cz);
+
+            double dx = (tx + 0.5) - cx;
+            double dy = (ty + 0.5) - cy;
+            double dz = (tz + 0.5) - cz;
+
+            int stepX = (int) Math.signum(dx);
+            int stepY = (int) Math.signum(dy);
+            int stepZ = (int) Math.signum(dz);
+
+            double tDeltaX = dx == 0 ? Double.POSITIVE_INFINITY : Math.abs(1.0 / dx);
+            double tDeltaY = dy == 0 ? Double.POSITIVE_INFINITY : Math.abs(1.0 / dy);
+            double tDeltaZ = dz == 0 ? Double.POSITIVE_INFINITY : Math.abs(1.0 / dz);
+
+            double tMaxX = dx == 0 ? Double.POSITIVE_INFINITY : (dx > 0 ? (px + 1 - cx) : (cx - px)) * tDeltaX;
+            double tMaxY = dy == 0 ? Double.POSITIVE_INFINITY : (dy > 0 ? (py + 1 - cy) : (cy - py)) * tDeltaY;
+            double tMaxZ = dz == 0 ? Double.POSITIVE_INFINITY : (dz > 0 ? (pz + 1 - cz) : (cz - pz)) * tDeltaZ;
+
+            float spent = 0.0f;
+
+            for (int guard = 0; guard < 1024; guard++) {
+                if (!level.hasChunk(px >> 4, pz >> 4)) return false;
+                BlockPos pos = new BlockPos(px, py, pz);
+                BlockState s = level.getBlockState(pos);
+                if (isBarrier(level, s, pos)) return false;
+
+                float cost = blockCost(s, level, pos);
+                if (!Float.isFinite(cost)) return false;
+                spent += cost;
+                if (spent > CRATER_BUDGET) return false;
+
+                if (px == tx && py == ty && pz == tz) return true;
+
+                if (tMaxX < tMaxY) {
+                    if (tMaxX < tMaxZ) {
+                        px += stepX;
+                        tMaxX += tDeltaX;
+                    } else {
+                        pz += stepZ;
+                        tMaxZ += tDeltaZ;
+                    }
+                } else if (tMaxY < tMaxZ) {
+                    py += stepY;
+                    tMaxY += tDeltaY;
+                } else {
+                    pz += stepZ;
+                    tMaxZ += tDeltaZ;
+                }
+            }
+            return false;
+        }
+
+        private boolean carveApply(long deadline) {
+            for (; applyCarve < carve.size(); applyCarve++) {
+                if (System.nanoTime() > deadline) return false;
+                long l = carve.getLong(applyCarve);
+                BlockPos pos = BlockPos.of(l);
+                if (!level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4)) continue;
+                BlockState s = level.getBlockState(pos);
+                if (s.isAir()) continue;
+                if (!s.getFluidState().isEmpty()) continue;
+                if (s.getDestroySpeed(level, pos) < 0) continue;
+                level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+            }
+            return true;
+        }
+
+        private boolean basaltPhase(long deadline) {
+            if (!bfsDone) {
+                for (; !floodQueueFull() && floodQueueSeeded < carve.size(); floodQueueSeeded++) {
+                    if (System.nanoTime() > deadline) return false;
+                    long l = carve.getLong(floodQueueSeeded);
+                    if (floodVisited.add(l)) floodQueue.addLast(new Flood(BlockPos.of(l), 0));
+                }
+                while (!floodQueue.isEmpty()) {
+                    if (System.nanoTime() > deadline) return false;
+                    if (floodVisited.size() >= CRATER_MAX_JOBS || basaltJobs.size() >= CRATER_MAX_JOBS) {
+                        floodQueue.clear();
+                        break;
+                    }
+                    Flood f = floodQueue.pollFirst();
+                    for (Direction d : Direction.values()) {
+                        BlockPos nb = f.pos().relative(d);
+                        if (!level.hasChunk(nb.getX() >> 4, nb.getZ() >> 4)) continue;
+                        BlockState ns = level.getBlockState(nb);
+                        if (ns.isAir()) {
+                            if (f.depth() + 1 < CRATER_EDGE_AIR_RANGE && floodVisited.add(nb.asLong())) {
+                                floodQueue.addLast(new Flood(nb, f.depth() + 1));
+                            }
+                        } else if (floodVisited.add(nb.asLong())) {
+                            enqueueEdgeTarget(nb, ns);
+                        }
+                    }
+                }
+                bfsDone = true;
+            }
+
+            while (!basaltJobs.isEmpty()) {
+                if (System.nanoTime() > deadline) return false;
+                BasaltJob job = basaltJobs.pollFirst();
+                BlockPos pos = job.pos();
+                if (!level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4)) continue;
+                BlockState s = level.getBlockState(pos);
+                if (s.isAir()) continue;
+                if (!s.getFluidState().isEmpty()) continue;
+                if (isBakedBasalt(s)) continue;
+
+                if (job.destroy()) {
+                    level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+                } else {
+                    int dark = darknessLevel(pos);
+                    level.setBlock(pos,
+                            pickSoftBasalt(pos).defaultBlockState()
+                                    .setValue(CraterBasaltBlock.DARKNESS, dark), 3);
+                }
+            }
+            return true;
+        }
+
+        int floodQueueSeeded;
+
+        private boolean floodQueueFull() {
+            return basaltJobs.size() >= CRATER_MAX_JOBS || floodVisited.size() >= CRATER_MAX_JOBS;
+        }
+
+        private void enqueueEdgeTarget(BlockPos pos, BlockState state) {
+            if (basaltJobs.size() >= CRATER_MAX_JOBS) return;
+            if (!state.getFluidState().isEmpty()) return;
+            if (isBakedBasalt(state)) return;
+
+            float hardness = state.getDestroySpeed(level, pos);
+            if (hardness < 0) return;
+
+            boolean weak = hardness <= WEAK_BLOCK_HARDNESS;
+            if (!weak && !state.isCollisionShapeFullBlock(level, pos)) return;
+            basaltJobs.addLast(new BasaltJob(pos, weak));
+        }
+
+        private Block pickSoftBasalt(BlockPos pos) {
+            BlockPos anchor = gradientAnchor;
+            if (anchor == null) anchor = pos;
+            double dx = pos.getX() - anchor.getX();
+            double dz = pos.getZ() - anchor.getZ();
+            double dist = Math.sqrt(dx * dx + dz * dz);
+            if (dist <= CRATER_SOFT_CORE_RADIUS) return ModBlocks.BASALT_SOFT.get();
+            return softBasaltNoise(pos) ? ModBlocks.BASALT_SOFT_2.get() : ModBlocks.BASALT_SOFT_3.get();
+        }
+
+        private int darknessLevel(BlockPos pos) {
+            BlockPos anchor = gradientAnchor;
+            if (anchor == null) anchor = pos;
+            double dx = pos.getX() - anchor.getX();
+            double dy = pos.getY() - anchor.getY();
+            double dz = pos.getZ() - anchor.getZ();
+            double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+            double t = Math.min(1.0, dist / CRATER_GRADIENT_RADIUS);
+            return (int) Math.round((1.0 - t) * CraterBasaltBlock.MAX_DARK);
+        }
     }
 
-    private static void runCarveBatch(CarveState state) {
-        ServerLevel level = state.level;
-        int end = Math.min(state.ptr + BLOCKS_PER_TICK, state.clear.size());
-        for (int i = state.ptr; i < end; i++) {
-            clearBlockAndEnqueue(level, state.clear.get(i));
-        }
-        state.ptr = end;
+    // ==================== ТОЧКА ВХОДА ====================
 
-        if (state.ptr < state.clear.size()) {
-            level.getServer().tell(new net.minecraft.server.TickTask(1, () -> runCarveBatch(state)));
-        } else {
-            finishBlast(level, state.center, state.clear);
+    public static void explode(ServerLevel level, Vec3 center, Entity source) {
+        level.playSound(null, center.x, center.y, center.z,
+                SoundEvents.GENERIC_EXPLODE, SoundSource.BLOCKS, 6.0F, 0.4F);
+
+        discardItemsNearby(level, center, ZONE_2_RADIUS + 2.0f);
+
+        if (QUEUE.size() >= MAX_QUEUED_EXPLOSIONS) return;
+        State state = new State(level, center, source, cremationSource(level, source));
+        collectEntities(state);
+
+        QUEUE.addLast(state);
+        if (!DRAIN_PENDING) scheduleDrain(level.getServer());
+
+        scheduleLateSweep(level, center);
+    }
+
+    // ==================== ПЛАНИРОВЩИК ====================
+
+    private static void scheduleDrain(MinecraftServer server) {
+        DRAIN_PENDING = true;
+        server.tell(new TickTask(1, () -> drainScheduled(server)));
+    }
+
+    private static void drainScheduled(MinecraftServer server) {
+        DRAIN_PENDING = false;
+
+        long now = System.nanoTime();
+        adaptBudget(now);
+        long deadline = now + tickBudgetNanos;
+
+        while (!QUEUE.isEmpty()) {
+            State st = QUEUE.peek();
+            if (!st.work(deadline)) break;
+            QUEUE.poll();
+        }
+
+        if (!QUEUE.isEmpty() && !DRAIN_PENDING) {
+            scheduleDrain(server);
         }
     }
 
-    private static void clearBlockAndEnqueue(ServerLevel level, BlockPos pos) {
-        BlockState s = level.getBlockState(pos);
-        if (s.isAir()) return;
-        if (!s.getFluidState().isEmpty()) return; // жидкости не выжигаем и не пекём
-        float cost = blockCost(s, level, pos);
-        if (!Float.isFinite(cost)) return; // непроницаемые блоки (бедрок и т.п.) не трогаем
-        level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
+    private static void adaptBudget(long now) {
+        long gap = now - lastDrainNanos;
+        lastDrainNanos = now;
+        if (gap > IDLE_GAP_NANOS) return;
+        if (gap > SLOW_GAP_NANOS) {
+            tickBudgetNanos = Math.max(MIN_TICK_BUDGET_NANOS, tickBudgetNanos - tickBudgetNanos / 4);
+        } else if (gap > 0) {
+            tickBudgetNanos = Math.min(MAX_TICK_BUDGET_NANOS, tickBudgetNanos + Math.max(1, tickBudgetNanos / 8));
+        }
     }
 
-    /**
-     * Цена прохода через ячейку: воздух — 1 (шаг луча), блок — его прочность (минимум 1).
-     * Бедрок и прочие нексрушимые отмечены бесконечностью — луч через них не идёт.
-     */
+    // ==================== КЛАССИФИКАЦИЯ БЛОКОВ ====================
+
+    private static boolean isWaste(BlockState s) {
+        return s.is(ModBlocks.WASTE_LOG.get()) || s.is(ModBlocks.WASTE_GRASS.get());
+    }
+
+    private static boolean isLog(BlockState s, ServerLevel level, BlockPos pos) {
+        if (s.is(BlockTags.LOGS)) return true;
+        return s.hasProperty(RotatedPillarBlock.AXIS)
+                && s.getSoundType(level, pos, null) == SoundType.WOOD;
+    }
+
+    private static boolean isZone1Burnable(BlockState s, ServerLevel level, BlockPos pos, float hardness) {
+        if (hardness < WEAK_BLOCK_HARDNESS) return true;
+        if (s.is(Blocks.COBWEB)) return true;
+        SoundType sound = s.getSoundType(level, pos, null);
+        return sound == SoundType.WOOD || sound == SoundType.WOOL;
+    }
+
+    private static boolean shouldDestroy(BlockState s, ServerLevel level, BlockPos pos) {
+        if (s.isAir()) return false;
+        if (!s.getFluidState().isEmpty()) return false;
+        float hardness = s.getDestroySpeed(level, pos);
+        if (hardness < 0) return false;
+        return hardness < WEAK_BLOCK_HARDNESS || isZone1Burnable(s, level, pos, hardness);
+    }
+
+    // ==================== ВОРОНКА: УТИЛИТЫ ====================
+
     private static float blockCost(BlockState state, ServerLevel level, BlockPos pos) {
         if (state.isAir()) return 1.0f;
         if (state.getFluidState().isSource() || state.getBlock() instanceof LiquidBlock) return 0.6f;
@@ -299,170 +710,19 @@ public class ExplosionHydrogen {
         return Math.max(1.0f, hardness);
     }
 
-    /** Непроницаемые барьеры луча: запёкшийся мягкий базальт и нексрушимые блоки. */
     private static boolean isBarrier(ServerLevel level, BlockState state, BlockPos pos) {
         if (isBakedBasalt(state)) return true;
         return state.getDestroySpeed(level, pos) < 0;
     }
 
-    // ==================== УРОН МОБАМ ====================
-
-    /** После полной очистки блоков: обновить градиентный якорь и подчистить остатки. */
-    private static void finishBlast(ServerLevel level, Vec3 center, List<BlockPos> carved) {
-        GRADIENT_ANCHOR = findCraterFloor(level, center);
-        enqueueScorchedEdges(level, center, carved);
-        drainBasaltJobs(level);
-        discardItemsNearby(level, center, BLAST_RADIUS * BLAST_UP_STRETCH + 2.0f);
+    private static boolean isBakedBasalt(BlockState state) {
+        return state.is(ModBlocks.BASALT_SCORCHED.get())
+                || state.is(ModBlocks.BASALT_ROUGH.get())
+                || state.is(ModBlocks.BASALT_SOFT.get())
+                || state.is(ModBlocks.BASALT_SOFT_2.get())
+                || state.is(ModBlocks.BASALT_SOFT_3.get());
     }
 
-    private static void applyDamage(ServerLevel level, Vec3 center, Entity source, Set<Long> zone) {
-        float zoneRadius = BLAST_RADIUS * BLAST_UP_STRETCH;
-        List<LivingEntity> entities = level.getEntitiesOfClass(LivingEntity.class,
-                new AABB(center, center).inflate(zoneRadius + 3.0));
-
-        DamageSource damageSource = cremationSource(level, source);
-
-        for (LivingEntity entity : entities) {
-            if (entity == source || !entity.isAlive()) continue;
-            if (!entityInBlast(zone, entity)) continue;
-
-            double d = entity.distanceToSqr(center);
-            double t = Math.sqrt(d) / zoneRadius;
-            t = Math.max(0.0, Math.min(1.0, t));
-            float damage = MAX_ENTITY_DAMAGE + (MIN_ENTITY_DAMAGE - MAX_ENTITY_DAMAGE) * (float) t;
-
-            entity.hurt(damageSource, damage);
-            entity.setSecondsOnFire(FIRE_SECONDS);
-        }
-    }
-
-    /** Точки хитбокса: сущность поражена, если хотя бы одна лежит в достигнутой лучами зоне. */
-    private static boolean entityInBlast(Set<Long> zone, LivingEntity entity) {
-        AABB box = entity.getBoundingBox();
-        double cx = (box.minX + box.maxX) * 0.5;
-        double cz = (box.minZ + box.maxZ) * 0.5;
-        double h = box.maxY - box.minY;
-
-        if (pointInZone(zone, cx, box.minY + h * 0.15, cz)) return true;
-        if (pointInZone(zone, cx, box.minY + h * 0.5, cz)) return true;
-        if (pointInZone(zone, cx, box.maxY - 0.1, cz)) return true;
-        if (pointInZone(zone, box.minX, box.minY + h * 0.05, box.minZ)) return true;
-        if (pointInZone(zone, box.maxX, box.minY + h * 0.05, box.minZ)) return true;
-        if (pointInZone(zone, box.minX, box.minY + h * 0.05, box.maxZ)) return true;
-        return pointInZone(zone, box.maxX, box.minY + h * 0.05, box.maxZ);
-    }
-
-    /** Точка в зоне, если её блок (или блок под ней) достигнут лучом. */
-    private static boolean pointInZone(Set<Long> zone, double px, double py, double pz) {
-        int by = (int) Math.floor(py);
-        long key = BlockPos.asLong((int) Math.floor(px), by, (int) Math.floor(pz));
-        if (zone.contains(key)) return true;
-        return zone.contains(BlockPos.asLong((int) Math.floor(px), by - 1, (int) Math.floor(pz)));
-    }
-
-    private static DamageSource cremationSource(ServerLevel level, Entity source) {
-        Holder<DamageType> holder = level.registryAccess()
-                .registryOrThrow(Registries.DAMAGE_TYPE).getHolder(CREMATION).orElse(null);
-        if (holder != null) {
-            return new DamageSource(holder, source, source);
-        }
-        return level.damageSources().explosion(source, source);
-    }
-
-    // ==================== БАЗАЛЬТОВОЕ ПРИПЕКАНИЕ ====================
-
-    /**
-     * Запекание ЗА пределами выжженного объёма. BFS от всех выжженных (теперь пустых) ячеек
-     * сквозь воздух на глубину до {@code BASALT_EDGE_AIR_RANGE-1}. Твёрдые блоки в зоне
-     * досягаемости прохода печётся в базальт: так пол пещеры под дном воронки или уступ
-     * за её краем всё равно покрываются слоем базальта.
-     */
-    private static void enqueueScorchedEdges(ServerLevel level, Vec3 center, List<BlockPos> carved) {
-        if (BASALT_QUEUE.size() >= BASALT_QUEUE_CAP) return;
-
-        Deque<Flood> queue = new ArrayDeque<>();
-        Set<Long> visited = new HashSet<>();
-        for (BlockPos p : carved) {
-            if (visited.add(p.asLong())) queue.addLast(new Flood(p, 0));
-        }
-
-        while (!queue.isEmpty()) {
-            if (visited.size() >= BASALT_QUEUE_CAP) break;
-            Flood f = queue.pollFirst();
-            for (Direction d : Direction.values()) {
-                BlockPos nb = f.pos().relative(d);
-                BlockState ns = level.getBlockState(nb);
-                if (ns.isAir()) {
-                    if (f.depth() + 1 < BASALT_EDGE_AIR_RANGE && visited.add(nb.asLong())) {
-                        queue.addLast(new Flood(nb, f.depth() + 1));
-                    }
-                } else {
-                    enqueueEdgeTarget(level, center, nb, ns);
-                }
-            }
-        }
-    }
-
-    /** Классификация найденного за краем блока:
-     * - жидкости пропускаются (не уничтожаются и не пекутся);
-     * - крепкие ЦЕЛЬНЫЕ твёрдые блоки запекутся в мягкий базальт;
-     * - блоки с крайне низкой прочностью (листва, цветы, трава…) просто уничтожатся;
-     * - крепкие, но нецельные блоки (плиты, заборы…) не трогаются. */
-    private static void enqueueEdgeTarget(ServerLevel level, Vec3 center, BlockPos pos, BlockState state) {
-        if (BASALT_QUEUE.size() >= BASALT_QUEUE_CAP) return;
-        if (!state.getFluidState().isEmpty() || state.getBlock() instanceof LiquidBlock) return; // жидкости
-        if (isBakedBasalt(state)) return;
-
-        float hardness = state.getDestroySpeed(level, pos);
-        if (hardness < 0) return; // нексрушимые (бедрок и т.п.)
-
-        boolean weak = hardness <= WEAK_BLOCK_HARDNESS;
-        if (!weak && !state.isCollisionShapeFullBlock(level, pos)) return; // базальт — ЛИШЬ цельные
-        BASALT_QUEUE.addLast(new BasaltJob(pos, center, weak));
-    }
-
-    /** Применяет накопленные базальтовые заготовки батчами по BASALT_JOBS_PER_TICK за тик. */
-    private static void drainBasaltJobs(ServerLevel level) {
-        int processed = 0;
-        while (!BASALT_QUEUE.isEmpty() && processed < BASALT_JOBS_PER_TICK) {
-            BasaltJob job = BASALT_QUEUE.pollFirst();
-            if (job == null) break;
-            processed++;
-
-            BlockState s = level.getBlockState(job.pos());
-            if (s.isAir()) continue;
-            if (isBakedBasalt(s)) continue;
-
-            if (job.destroy()) {
-                level.setBlock(job.pos(), Blocks.AIR.defaultBlockState(), 3);
-            } else {
-                int dark = darknessLevel(job.pos());
-                level.setBlock(job.pos(),
-                        pickSoftBasalt(job.pos()).defaultBlockState()
-                                .setValue(CraterBasaltBlock.DARKNESS, dark), 3);
-            }
-        }
-        if (!BASALT_QUEUE.isEmpty()) {
-            level.getServer().tell(new net.minecraft.server.TickTask(1, () -> drainBasaltJobs(level)));
-        }
-    }
-
-    /**
-     * Текстура мягкого базальта: эпицентр (в радиусе SOFT_CORE_RADIUS) — чистый basalt_soft
-     * (он выделяется по цвету, поэтому только в эпицентре), остальное — «крап» из
-     * basalt_soft_2 и basalt_soft_3.
-     */
-    private static Block pickSoftBasalt(BlockPos pos) {
-        BlockPos anchor = GRADIENT_ANCHOR;
-        if (anchor == null) anchor = pos; // запасной вариант, если якорь ещё не найден
-        double dx = pos.getX() - anchor.getX();
-        double dz = pos.getZ() - anchor.getZ();
-        double dist = Math.sqrt(dx * dx + dz * dz);
-        if (dist <= SOFT_CORE_RADIUS) return ModBlocks.BASALT_SOFT.get();
-        return softBasaltNoise(pos) ? ModBlocks.BASALT_SOFT_2.get() : ModBlocks.BASALT_SOFT_3.get();
-    }
-
-    /** Детерминированный «крап» basalt_soft_2 / basalt_soft_3 по хешу ячейки (не полосатый). */
     private static boolean softBasaltNoise(BlockPos pos) {
         long h = pos.asLong() * 0x9E3779B97F4A7C15L;
         h ^= h >>> 33;
@@ -473,65 +733,10 @@ public class ExplosionHydrogen {
         return (h & 1) == 0;
     }
 
-    /**
-     * Ступень затемнения мягкого базальта по расстоянию от центрального нижнего блока
-     * дна кратера: у эпицентра максимум (MAX_DARK, +50% темноты), к ободу — 0 (обычная
-     * текстура). Окрашивание делается цветовым тинтом в коде, без дубликатов текстур.
-     */
-    private static int darknessLevel(BlockPos pos) {
-        BlockPos anchor = GRADIENT_ANCHOR;
-        if (anchor == null) {
-            anchor = pos; // запасной вариант, если якорь ещё не найден
-        }
-        double dx = pos.getX() - anchor.getX();
-        double dy = pos.getY() - anchor.getY();
-        double dz = pos.getZ() - anchor.getZ();
-        double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-        double t = Math.min(1.0, dist / GRADIENT_RADIUS);
-        return (int) Math.round((1.0 - t) * CraterBasaltBlock.MAX_DARK);
-    }
-
-    /** Уже запёкшиеся базальтовые блоки (их вторично не обрабатываем). */
-    private static boolean isBakedBasalt(BlockState state) {
-        return state.is(ModBlocks.BASALT_SCORCHED.get())
-                || state.is(ModBlocks.BASALT_ROUGH.get())
-                || state.is(ModBlocks.BASALT_SOFT.get())
-                || state.is(ModBlocks.BASALT_SOFT_2.get())
-                || state.is(ModBlocks.BASALT_SOFT_3.get());
-    }
-
-    // ==================== УТИЛИТЫ ====================
-
-    private static void discardItemsNearby(ServerLevel level, Vec3 center, float radius) {
-        List<ItemEntity> items = level.getEntitiesOfClass(ItemEntity.class,
-                new AABB(center, center).inflate(radius));
-        for (ItemEntity item : items) {
-            item.discard();
-        }
-    }
-
-    /** Ищет дно кратера: первый цельный непустой блок в колонне под эпицентром. */
-    private static BlockPos findCraterFloor(ServerLevel level, Vec3 center) {
-        int x = (int) Math.floor(center.x);
-        int z = (int) Math.floor(center.z);
-        for (int y = (int) Math.floor(center.y); y >= level.getMinBuildHeight(); y--) {
-            BlockPos p = new BlockPos(x, y, z);
-            BlockState s = level.getBlockState(p);
-            if (s.isAir()) continue;
-            if (s.getFluidState().isSource()) continue;
-            return p;
-        }
-        return new BlockPos(x, (int) Math.floor(center.y), z);
-    }
-
-    /**
-     * Плавный value-noise в 3D ([-1..1]): лёгкая неровность границы сферы,
-     * делает край кратера «живым», а не идеально гладким.
-     */
     private static double blastJitter(long seed, int x, int y, int z) {
-        double sx = x * BLAST_NOISE_SCALE;
-        double sy = y * BLAST_NOISE_SCALE;
-        double sz = z * BLAST_NOISE_SCALE;
+        double sx = x * CRATER_NOISE_SCALE;
+        double sy = y * CRATER_NOISE_SCALE;
+        double sz = z * CRATER_NOISE_SCALE;
         int x0 = (int) Math.floor(sx);
         int y0 = (int) Math.floor(sy);
         int z0 = (int) Math.floor(sz);
@@ -565,5 +770,78 @@ public class ExplosionHydrogen {
         h = (h ^ (h >>> 13)) * 1274126177L;
         h = h ^ (h >>> 16);
         return ((h & 0xFFFF) / 65535.0) * 2.0 - 1.0;
+    }
+
+    private static BlockPos findCraterFloor(ServerLevel level, Vec3 center) {
+        int x = (int) Math.floor(center.x);
+        int z = (int) Math.floor(center.z);
+        for (int y = (int) Math.floor(center.y); y >= level.getMinBuildHeight(); y--) {
+            BlockPos p = new BlockPos(x, y, z);
+            BlockState s = level.getBlockState(p);
+            if (s.isAir()) continue;
+            if (s.getFluidState().isSource()) continue;
+            return p;
+        }
+        return new BlockPos(x, (int) Math.floor(center.y), z);
+    }
+
+    // ==================== УРОН МОБАМ ====================
+
+    private static void collectEntities(State state) {
+        ServerLevel level = state.level;
+        Vec3 center = state.center;
+        List<LivingEntity> found = level.getEntitiesOfClass(LivingEntity.class,
+                new AABB(center, center).inflate(state.zone2Radius + 3.0));
+
+        for (LivingEntity e : found) {
+            if (e == state.sourceEntity || !e.isAlive()) continue;
+            double d = e.distanceToSqr(center);
+            if (d > state.zone2Sq) continue;
+
+            double dist = Math.sqrt(d);
+            float t = (float) (dist / state.zone2Radius);
+            t = Math.max(0.0f, Math.min(1.0f, t));
+            float baseDamage = MAX_DAMAGE + (MIN_DAMAGE - MAX_DAMAGE) * t;
+            int baseFire = Math.round(MAX_FIRE_SECONDS * (1.0f - t));
+            state.entities.add(new EntityTarget(e, baseDamage, baseFire));
+        }
+    }
+
+    private static DamageSource cremationSource(ServerLevel level, Entity source) {
+        Holder<DamageType> holder = level.registryAccess()
+                .registryOrThrow(Registries.DAMAGE_TYPE).getHolder(CREMATION).orElse(null);
+        if (holder != null) {
+            return new DamageSource(holder, source, source);
+        }
+        return level.damageSources().explosion(source, source);
+    }
+
+    // ==================== УТИЛИТЫ ====================
+
+    private static void discardItemsNearby(ServerLevel level, Vec3 center, float radius) {
+        AABB box = new AABB(center, center).inflate(radius);
+        for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, box)) {
+            item.discard();
+        }
+        for (ExperienceOrb orb : level.getEntitiesOfClass(ExperienceOrb.class, box)) {
+            orb.discard();
+        }
+    }
+
+    private static void scheduleLateSweep(ServerLevel level, Vec3 center) {
+        MinecraftServer server = level.getServer();
+        Runnable task = new Runnable() {
+            int ticks = 25;
+
+            @Override
+            public void run() {
+                if (--ticks <= 0) {
+                    discardItemsNearby(level, center, ZONE_2_RADIUS + 2.0f);
+                    return;
+                }
+                server.tell(new TickTask(1, this));
+            }
+        };
+        server.tell(new TickTask(1, task));
     }
 }
