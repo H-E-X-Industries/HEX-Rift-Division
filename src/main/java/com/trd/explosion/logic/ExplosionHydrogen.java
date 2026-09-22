@@ -570,7 +570,7 @@ public class ExplosionHydrogen {
             level.setBlock(pos, Blocks.FIRE.defaultBlockState(), 3);
         }
 
-        /** Затемнение кольца вокруг края воронки: максимум на самом ободе, 0 дальше {@link #CRATER_RIM_BAND}. */
+        /** Затемнение кольца вокруг края воронки для подменённой почвы (waste_grass): максимум на ободе, 0 дальше {@link #CRATER_RIM_BAND}. */
         private int rimDarkness(BlockPos pos) {
             double dx = pos.getX() + 0.5 - center.x;
             double dy = pos.getY() + 0.5 - center.y;

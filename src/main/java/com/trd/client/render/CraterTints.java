@@ -45,7 +45,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * БЕЗ замены блоков в мире: на мод-событии {@link ModelEvent.ModifyBakingResult} моделям
  * целевых блоков приклеивается тинт-индекс, а {@link #tintColor} в момент сборки чанка
  * вычисляет ступень затемнения по расстоянию до ближайшего кратера (максимум 50%,
- * только ВНУТРИ воронки, чтобы обод контрастно выделялся на ярком окружении).
+ * симметрично вокруг края: и в чаше, и на внешнем ободе вокруг базальта).
  * Мир при этом не меняется: сломал/поставил блок — цвет исходный, лагов нет.
  */
 @Mod.EventBusSubscriber(modid = MainRegistry.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
@@ -240,8 +240,9 @@ public final class CraterTints {
     }
 
     /**
-     * Цвет тинта для позиции: белый (без изменений) вне воронок или в инвентаре,
-     * затемнение — у края воронок. Вызывается движком во время сборки чанка.
+     * Цвет тинта для позиции: белый (без изменений) вне воронок или в инвентаре.
+     * Затемнение — симметричное кольцо вокруг края воронки {radius ± band}: и низ
+     * чаши, и внешний обод вокруг базальта. Вызывается движком во время сборки чанка.
      */
     public static int tintColor(BlockGetter level, BlockPos pos) {
         if (level == null || pos == null) return 0xFFFFFFFF;
@@ -258,7 +259,7 @@ public final class CraterTints {
         int dark = 0;
         for (CraterInfo c : CRATERS) {
             if (!c.dimension.equals(dim)) continue;
-            double br = c.radius;
+            double br = c.radius + c.band;
             double ax = Math.abs(px - c.x);
             if (ax > br) continue;
             double ay = Math.abs(py - c.y);
@@ -269,8 +270,8 @@ public final class CraterTints {
             double dy = py - c.y;
             double dz = pz - c.z;
             double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-            if (dist > c.radius) continue;
-            double delta = c.radius - dist;
+            if (dist > br) continue;
+            double delta = Math.abs(dist - c.radius);
             if (delta > c.band) continue;
             double t = 1.0 - delta / c.band;
             dark = Math.max(dark, (int) Math.round(t * CraterBasaltBlock.MAX_DARK));
