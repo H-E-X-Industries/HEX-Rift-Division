@@ -602,8 +602,20 @@ public class ModBlocks {
     public static final RegistryObject<Block> BASALT_SCORCHED = registerBlock("basalt_scorched",
             () -> new ScorchedBasaltBlock(BlockBehaviour.Properties.of()
                     .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> BASALT_SOFT = registerBlock("basalt_soft",
+            () -> new CraterBasaltBlock(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> BASALT_SOFT_2 = registerBlock("basalt_soft_2",
+            () -> new CraterBasaltBlock(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> BASALT_SOFT_3 = registerBlock("basalt_soft_3",
+            () -> new CraterBasaltBlock(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
     public static final RegistryObject<Block> WASTE_LOG = registerBlock("waste_log",
             () -> new FullOBlock(BlockBehaviour.Properties.copy(Blocks.OAK_WOOD).sound(SoundType.WOOD)));
+
+    public static final RegistryObject<Block> WASTE_GRASS = registerBlock("waste_grass",
+            () -> new FullOBlock(BlockBehaviour.Properties.copy(Blocks.GRASS_BLOCK).sound(SoundType.GRASS)));
 
     public static final RegistryObject<Block> CASTING_DESCENT = registerBlock("casting_descent",
             () -> new CastingDescentBlock(BlockBehaviour.Properties.of()

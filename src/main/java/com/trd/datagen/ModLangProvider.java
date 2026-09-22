@@ -63,6 +63,7 @@ public class ModLangProvider extends LanguageProvider {
         // Death messages
         add("death.attack.crusher", "%1$s became minced meat");
         add("death.attack.barbedWire", "%1$s was shredded by barbed wire");
+        add("death.attack.cremated", "%1$s was cremated alive");
 
         // Creative Tabs
         add("itemGroup.trd.trd_build_tab", "Building Blocks");
@@ -893,6 +894,9 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.MINERAL3.get(), "Deep Sapphire-Bearing Cluster");
         add(ModBlocks.BASALT_ROUGH.get(), "Rough Basalt");
         add(ModBlocks.BASALT_SCORCHED.get(), "Scorched Basalt");
+        add(ModBlocks.BASALT_SOFT.get(), "Soft Basalt");
+        add(ModBlocks.BASALT_SOFT_2.get(), "Soft Basalt 2");
+        add(ModBlocks.BASALT_SOFT_3.get(), "Soft Basalt 3");
 
         // Spawn Eggs
         add(ModItems.DEPTH_WORM_SPAWN_EGG.get(), "Depth Worm Spawn Egg");
@@ -1195,6 +1199,7 @@ public class ModLangProvider extends LanguageProvider {
         // Death messages
         add("death.attack.crusher", "%1$s стал фаршем");
         add("death.attack.barbedWire", "%1$s был изрезан колючей проволокой");
+        add("death.attack.cremated", "%1$s был кремирован заживо");
 
         // ═══ Коксовая печь ═══
         add(ModBlocks.COCCER_OVEN.get(), "Коксовая печь");
@@ -2226,6 +2231,9 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.MINERAL3.get(), "Глубинный сапфироносный кластер");
         add(ModBlocks.BASALT_ROUGH.get(), "Грубый базальт");
         add(ModBlocks.BASALT_SCORCHED.get(), "Запёкшийся базальт");
+        add(ModBlocks.BASALT_SOFT.get(), "Мягкий базальт");
+        add(ModBlocks.BASALT_SOFT_2.get(), "Мягкий базальт 2");
+        add(ModBlocks.BASALT_SOFT_3.get(), "Мягкий базальт 3");
 
         // Яйца призыва
         add(ModItems.DEPTH_WORM_SPAWN_EGG.get(), "Яйцо призыва глубинного червя");

@@ -126,6 +126,9 @@ public class ModBlockStateProvider extends BlockStateProvider {
         cubeAllWithItem(ModBlocks.DIRT_ROUGH);
         cubeAllWithItem(ModBlocks.BASALT_ROUGH);
         scorchedBasaltBlockWithItem(ModBlocks.BASALT_SCORCHED);
+        softBasaltBlockWithItem(ModBlocks.BASALT_SOFT);
+        softBasaltBlockWithItem(ModBlocks.BASALT_SOFT_2);
+        softBasaltBlockWithItem(ModBlocks.BASALT_SOFT_3);
 
         cubeAllWithItem(ModBlocks.CRATE);
         cubeAllWithItem(ModBlocks.CONCRETE_MOSSY);
@@ -148,6 +151,11 @@ public class ModBlockStateProvider extends BlockStateProvider {
          modLoc("block/waste_log_side"),
          modLoc("block/waste_log_top"),
          modLoc("block/waste_log_top"));
+
+        columnBlockWithItem(ModBlocks.WASTE_GRASS,
+                modLoc("block/waste_grass"),
+                modLoc("block/waste_grass_top"),
+                modLoc("block/dirt"));
 
         columnBlockWithItem(ModBlocks.CONCRETE_PORT,
                 modLoc("block/concrete_port"),
@@ -847,6 +855,23 @@ public class ModBlockStateProvider extends BlockStateProvider {
                         .modelFile(models[state.getValue(ScorchedBasaltBlock.LIGHT)])
                         .build());
         simpleBlockItem(block.get(), models[0]);
+    }
+
+    // Генерация мягкого базальта кратера: ОДНА модель-куб с tintindex на всех гранях.
+    // Ступень затемнения (DARKNESS) подбирается цветовым хендлером в коде — никаких
+    // дубликатов текстур по ступеням осветления/затемнения.
+    public void softBasaltBlockWithItem(RegistryObject<Block> block) {
+        String name = block.getId().getPath();
+        ModelFile model = models().getBuilder(name)
+                .texture("all", modLoc("block/" + name))
+                .texture("particle", modLoc("block/" + name))
+                .element()
+                .from(0f, 0f, 0f).to(16f, 16f, 16f)
+                .allFaces((dir, face) -> face.texture("#all").cullface(dir).tintindex(0))
+                .end();
+        getVariantBuilder(block.get())
+                .forAllStates(state -> ConfiguredModel.builder().modelFile(model).build());
+        simpleBlockItem(block.get(), model);
     }
 
     // 4. Метод для прозрачных блоков (стекло, решетки) с поддержкой Cutout
