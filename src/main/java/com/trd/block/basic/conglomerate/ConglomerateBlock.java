@@ -1,0 +1,109 @@
+package com.trd.block.basic.conglomerate;
+
+import com.mojang.serialization.MapCodec;
+import com.trd.api.vein.VeinBiomeResolver;
+import com.trd.api.vein.VeinManager;
+import com.trd.block.basic.ModBlocks;
+import com.trd.block.entity.conglomerate.ConglomerateBlockEntity;
+import com.trd.item.ModItems;
+import com.trd.item.conglomerates.ConglomerateItem;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.PushReaction;
+import net.minecraft.world.phys.HitResult;
+import org.jetbrains.annotations.Nullable;
+
+public class ConglomerateBlock extends BaseEntityBlock {
+    public static final MapCodec<ConglomerateBlock> CODEC = simpleCodec(ConglomerateBlock::new);
+
+    public ConglomerateBlock(Properties properties) {
+        super(properties
+                .strength(-1.0F, 3600000.0F)
+                .pushReaction(PushReaction.BLOCK));
+    }
+
+    @Override
+    protected MapCodec<? extends BaseEntityBlock> codec() {
+        return CODEC;
+    }
+
+    @Nullable
+    @Override
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new ConglomerateBlockEntity(pos, state);
+    }
+
+    @Override
+    public RenderShape getRenderShape(BlockState state) {
+        return RenderShape.MODEL;
+    }
+
+    @Override
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state) {
+        return ItemStack.EMPTY;
+    }
+
+    /**
+     * Добыча литой киркой.
+     * @param tierLevel 0=iron(30%), 1=steel(45%), 2=titanium(60%)
+     */
+    public void mineWithCastPickaxe(ServerLevel level, BlockPos pos, Player player, int tierLevel) {
+        BlockEntity be = level.getBlockEntity(pos);
+        if (!(be instanceof ConglomerateBlockEntity entity)) return;
+
+        VeinManager manager = VeinManager.get(level);
+        VeinManager.VeinData vein = manager.getVein(entity.getVeinId());
+
+        if (vein == null || entity.isDepleted() || entity.getRemainingOu() <= 0) {
+            convertToDepleted(level, pos);
+            return;
+        }
+
+        entity.consumeCharge();
+        manager.consumeVeinUnits(entity.getVeinId(), ConglomerateBlockEntity.OU_PER_CHARGE);
+
+        float chunkChance = switch (tierLevel) {
+            case 0 -> 0.30f;
+            case 1 -> 0.45f;
+            case 2 -> 0.60f;
+            default -> 0.30f;
+        };
+
+        if (level.random.nextFloat() < chunkChance) {
+            Holder<Biome> biome = level.getBiome(pos);
+            ItemStack chunk = ConglomerateItem.createFromVein(
+                    vein.getComposition().getFractions(),
+                    ConglomerateBlockEntity.OU_PER_CHARGE,
+                    vein.getTypeName(),
+                    VeinBiomeResolver.of(biome),
+                    biome.unwrapKey().map(ResourceKey::location).orElse(null),
+                    biome.value().getBaseTemperature()
+            );
+            Block.popResource(level, pos, chunk);
+        } else {
+            Block.popResource(level, pos, new ItemStack(Items.COBBLED_DEEPSLATE));
+        }
+
+        if (entity.isDepleted()) {
+            convertToDepleted(level, pos);
+        }
+    }
+
+    private void convertToDepleted(ServerLevel level, BlockPos pos) {
+        BlockState depletedState = ModBlocks.DEPLETED_CONGLOMERATE.get().defaultBlockState();
+        level.setBlock(pos, depletedState, 3);
+    }
+}

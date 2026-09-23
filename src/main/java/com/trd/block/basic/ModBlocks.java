@@ -21,6 +21,19 @@ public class ModBlocks {
     public static final DeferredBlock<Block> ASBESOTS_ORE = registerBlock("asbestos_ore",
             () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_ORE)));
     
+    public static final DeferredBlock<Block> SEQUOIA_BARK = registerBlock("sequoia_bark",
+            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_PLANKS)));
+    public static final DeferredBlock<Block> SEQUOIA_BARK_MOSSY = registerBlock("sequoia_bark_mossy",
+            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_PLANKS)));
+    public static final DeferredBlock<Block> SEQUOIA_BARK_DARK = registerBlock("sequoia_bark_dark",
+            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_PLANKS)));
+    public static final DeferredBlock<Block> SEQUOIA_BARK_LIGHT = registerBlock("sequoia_bark_light",
+            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_PLANKS)));
+    public static final DeferredBlock<Block> SEQUOIA_HEARTWOOD = registerBlock("sequoia_heartwood",
+            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_PLANKS)));
+    public static final DeferredBlock<Block> SEQUOIA_BIOME_MOSS = registerBlock("sequoia_biome_moss",
+            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.MOSS_BLOCK)));
+            
     public static final DeferredBlock<Block> LIGNITE_ORE = registerBlock("lignite_ore",
             () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.COAL_ORE)));
 
@@ -34,10 +47,34 @@ public class ModBlocks {
             () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.STONE)));
 
     public static final DeferredBlock<Block> LIMESTONE = registerBlock("limestone",
-            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.STONE)));
-
+            () -> new Block(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.STONE)));
     public static final DeferredBlock<Block> SULFUR_CLUSTER = registerBlock("sulfur_cluster",
-            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.STONE)));
+            () -> new Block(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.STONE)));
+
+    // New Ores
+    public static final DeferredBlock<Block> CINNABAR_ORE = registerBlock("cinnabar_ore",
+            () -> new Block(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.STONE).strength(1.5F, 6.0F).requiresCorrectToolForDrops()));
+    public static final DeferredBlock<Block> CINNABAR_ORE_DEEPSLATE = registerBlock("cinnabar_ore_deepslate",
+            () -> new Block(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.DEEPSLATE).strength(1.5F, 6.0F).requiresCorrectToolForDrops()));
+    public static final DeferredBlock<Block> FLUORITE_ORE = registerBlock("fluorite_ore",
+            () -> new Block(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.STONE).strength(1.5F, 6.0F).requiresCorrectToolForDrops()));
+    public static final DeferredBlock<Block> FLUORITE_ORE_DEEPSLATE = registerBlock("fluorite_ore_deepslate",
+            () -> new Block(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.DEEPSLATE).strength(1.5F, 6.0F).requiresCorrectToolForDrops()));
+    public static final DeferredBlock<Block> SEQUESTRUM_ORE = registerBlock("sequestrum_ore",
+            () -> new Block(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.STONE).strength(1.5F, 6.0F).requiresCorrectToolForDrops()));
+    public static final DeferredBlock<Block> SEQUESTRUM_ORE_DEEPSLATE = registerBlock("sequestrum_ore_deepslate",
+            () -> new Block(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.DEEPSLATE).strength(1.5F, 6.0F).requiresCorrectToolForDrops()));
+    public static final DeferredBlock<Block> SULFUR_ORE = registerBlock("sulfur_ore",
+            () -> new Block(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.STONE).strength(1.5F, 6.0F).requiresCorrectToolForDrops()));
+    public static final DeferredBlock<Block> SULFUR_ORE_DEEPSLATE = registerBlock("sulfur_ore_deepslate",
+            () -> new Block(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.DEEPSLATE).strength(1.5F, 6.0F).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<Block> CONGLOMERATE = registerBlock("conglomerate",
+            () -> new com.trd.block.basic.conglomerate.ConglomerateBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.STONE)
+                    .mapColor(net.minecraft.world.level.material.MapColor.STONE).strength(-1.0F, 3600000.0F).noOcclusion().isValidSpawn((state, getter, pos, entityType) -> false)));
+    public static final DeferredBlock<Block> DEPLETED_CONGLOMERATE = registerBlock("depleted_conglomerate",
+            () -> new Block(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.STONE)
+                    .mapColor(net.minecraft.world.level.material.MapColor.STONE).strength(-1.0F, 3600000.0F).isValidSpawn((state, getter, pos, entityType) -> false)));
 
     public static java.util.List<DeferredBlock<Block>> BATTERY_BLOCKS = new java.util.ArrayList<>();
 
@@ -89,6 +126,10 @@ public class ModBlocks {
     public static final DeferredBlock<net.minecraft.world.level.block.Block> FUEL_TANK_SMALL = BLOCKS.register("fuel_tank_small", () -> new com.trd.multiblock.industrial.fueltanks.small.FuelTankSmallBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.of().noOcclusion()));
 
 
+    // Multiblock
+    public static final DeferredBlock<Block> MULTIBLOCK_PART = registerBlock("multiblock_part",
+            () -> new com.trd.multiblock.system.MultiblockPartBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().isViewBlocking((state, getter, pos) -> false)));
+
     private static <T extends Block> DeferredBlock<T> registerBlock(String name, Supplier<T> block) {
         DeferredBlock<T> toReturn = BLOCKS.register(name, block);
         registerBlockItem(name, toReturn);
@@ -105,9 +146,6 @@ public class ModBlocks {
         BATTERY_BLOCKS.add(batteryBlock);
         return batteryBlock;
     }
-
-    public static final DeferredBlock<Block> MULTIBLOCK_PART = registerBlock("multiblock_part",
-            () -> new com.trd.multiblock.system.MultiblockPartBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().isViewBlocking((state, getter, pos) -> false)));
 
     public static void register(net.neoforged.bus.api.IEventBus eventBus) {
         BLOCKS.register(eventBus);

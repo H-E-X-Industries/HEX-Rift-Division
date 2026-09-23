@@ -33,6 +33,12 @@ public class ModCreativeTabs {
                         output.accept(ModItems.DOLOMITE_POWDER.get());
                         output.accept(ModItems.LIMESTONE_CHUNK.get());
                         output.accept(ModItems.LIMESTONE_POWDER.get());
+                        output.accept(ModItems.CINNABAR.get());
+                        output.accept(ModItems.FLUORITE.get());
+                        output.accept(ModItems.CONGLOMERATE_POWDER.get());
+                        output.accept(ModItems.CONGLOMERATE_CHUNK.get());
+                        output.accept(ModItems.FRACTION_CHUNK.get());
+                        output.accept(ModItems.METAL_PIECE.get());
                     })
                     .build());
 
@@ -50,6 +56,16 @@ public class ModCreativeTabs {
                         output.accept(ModBlocks.DOLOMITE.get());
                         output.accept(ModBlocks.LIMESTONE.get());
                         output.accept(ModBlocks.SULFUR_CLUSTER.get());
+                        output.accept(ModBlocks.CINNABAR_ORE.get());
+                        output.accept(ModBlocks.CINNABAR_ORE_DEEPSLATE.get());
+                        output.accept(ModBlocks.FLUORITE_ORE.get());
+                        output.accept(ModBlocks.FLUORITE_ORE_DEEPSLATE.get());
+                        output.accept(ModBlocks.SEQUESTRUM_ORE.get());
+                        output.accept(ModBlocks.SEQUESTRUM_ORE_DEEPSLATE.get());
+                        output.accept(ModBlocks.SULFUR_ORE.get());
+                        output.accept(ModBlocks.SULFUR_ORE_DEEPSLATE.get());
+                        output.accept(ModBlocks.CONGLOMERATE.get());
+                        output.accept(ModBlocks.DEPLETED_CONGLOMERATE.get());
                     })
                     .build());
 

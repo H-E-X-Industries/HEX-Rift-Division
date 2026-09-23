@@ -34,10 +34,8 @@ public class PaintableConduitRenderer<T extends BlockEntity & IPaintableConduit>
             pose.scale(1.004F, 1.004F, 1.004F);
             pose.translate(-0.5, -0.5, -0.5);
             
-            RenderType renderType = net.minecraft.client.renderer.ItemBlockRenderTypes.getRenderType(mimic, false);
-            VertexConsumer mimicVc = buffers.getBuffer(renderType);
-            Minecraft.getInstance().getBlockRenderer().renderBatched(
-                    mimic, be.getBlockPos(), be.getLevel(), pose, mimicVc, false, be.getLevel().getRandom(), net.neoforged.neoforge.client.model.data.ModelData.EMPTY, renderType);
+            Minecraft.getInstance().getBlockRenderer().renderSingleBlock(
+                    mimic, pose, buffers, light, OverlayTexture.NO_OVERLAY, net.neoforged.neoforge.client.model.data.ModelData.EMPTY, null);
             
             pose.popPose();
         }

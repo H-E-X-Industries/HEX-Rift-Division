@@ -59,6 +59,16 @@ public class FuelTankSmallBlockEntity extends FluidBarrelBlockEntity implements 
         return Component.translatable("block.trd.fuel_tank_small");
     }
 
+    @Override
+    public int getTotalMeltingPoint() {
+        return Integer.MAX_VALUE;
+    }
+
+    @Override
+    public int getTotalCorrosionResistance() {
+        return Integer.MAX_VALUE;
+    }
+
     @Nullable
     @Override
     public AbstractContainerMenu createMenu(int id, Inventory inv, Player player) {

@@ -68,6 +68,15 @@ public class ModItems {
     public static final DeferredItem<Item> NEODYMIUM_WIRE = ITEMS.register("neodymium_wire", () -> new Item(new Item.Properties()));
     public static final DeferredItem<Item> SCREWDRIVER = ITEMS.register("screwdriver", () -> new com.trd.item.tools.ScrewdriverItem(new Item.Properties().stacksTo(1)));
 
+    // New items
+    public static final DeferredItem<Item> CINNABAR = ITEMS.register("cinnabar", () -> new Item(new Item.Properties()));
+    public static final DeferredItem<Item> FLUORITE = ITEMS.register("fluorite", () -> new Item(new Item.Properties()));
+    public static final DeferredItem<Item> CONGLOMERATE_POWDER = ITEMS.register("conglomerate_powder", () -> new Item(new Item.Properties()));
+    
+    public static final DeferredItem<Item> CONGLOMERATE_CHUNK = ITEMS.register("conglomerate_chunk", () -> new com.trd.item.conglomerates.ConglomerateItem(new Item.Properties()));
+    public static final DeferredItem<Item> FRACTION_CHUNK = ITEMS.register("fraction_chunk", () -> new com.trd.item.conglomerates.FractionChunkItem(new Item.Properties()));
+    public static final DeferredItem<Item> METAL_PIECE = ITEMS.register("metal_piece", () -> new com.trd.item.conglomerates.MetalPieceItem(new Item.Properties()));
+
     public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> FLUID_IDENTIFIER = ITEMS.register("fluid_identifier", () -> new com.trd.item.industrial.fluids.FluidIdentifierItem(new net.minecraft.world.item.Item.Properties().stacksTo(1)));
     public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> INFINITE_FLUID_BARREL = ITEMS.register("infinite_fluid_barrel", () -> new com.trd.item.tools.InfiniteFluidBarrelItem(new net.minecraft.world.item.Item.Properties().stacksTo(1)));
     public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> WOODEN_FLUID_CONTAINER = ITEMS.register("wooden_fluid_container", () -> new com.trd.item.industrial.fluids.FluidContainerItem(new net.minecraft.world.item.Item.Properties().stacksTo(16), 1000, 100, 1000));
