@@ -63,6 +63,7 @@ public class ModLangProvider extends LanguageProvider {
         // Death messages
         add("death.attack.crusher", "%1$s became minced meat");
         add("death.attack.barbedWire", "%1$s was shredded by barbed wire");
+        add("death.attack.cremated", "%1$s was cremated alive");
 
         // Creative Tabs
         add("itemGroup.trd.trd_build_tab", "Building Blocks");
@@ -762,6 +763,10 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.NECROSIS_TEST4.get(), "Necrosis Test Block 4");
         add(ModBlocks.NECROSIS_PORTAL.get(), "Necrosis Portal");
         add(ModBlocks.WASTE_LOG.get(), "Waste Log");
+        add(ModBlocks.WASTE_GRASS.get(), "Waste Grass");
+        add(ModBlocks.WASTE_PLANKS.get(), "Waste Planks");
+        add(ModBlocks.WASTE_PLANKS_STAIRS.get(), "Waste Planks Stairs");
+        add(ModBlocks.WASTE_PLANKS_SLAB.get(), "Waste Planks Slab");
 
         // Kinetic & Shafts
         add(ModBlocks.HAND_CRANK_BLOCK.get(), "Hand Crank");
@@ -892,6 +897,11 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.MINERAL1.get(), "Sapphire-Bearing Cluster");
         add(ModBlocks.MINERAL3.get(), "Deep Sapphire-Bearing Cluster");
         add(ModBlocks.BASALT_ROUGH.get(), "Rough Basalt");
+        add(ModBlocks.BASALT_SCORCHED.get(), "Scorched Basalt");
+        add(ModBlocks.BASALT_SOFT.get(), "Soft Basalt");
+        add(ModBlocks.BASALT_SOFT_2.get(), "Soft Basalt 2");
+        add(ModBlocks.BASALT_SOFT_3.get(), "Soft Basalt 3");
+        add(ModBlocks.BASALT_SOFT_4.get(), "Soft Basalt 4");
 
         // Spawn Eggs
         add(ModItems.DEPTH_WORM_SPAWN_EGG.get(), "Depth Worm Spawn Egg");
@@ -1194,6 +1204,7 @@ public class ModLangProvider extends LanguageProvider {
         // Death messages
         add("death.attack.crusher", "%1$s стал фаршем");
         add("death.attack.barbedWire", "%1$s был изрезан колючей проволокой");
+        add("death.attack.cremated", "%1$s был кремирован заживо");
 
         // ═══ Коксовая печь ═══
         add(ModBlocks.COCCER_OVEN.get(), "Коксовая печь");
@@ -2068,6 +2079,10 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.NECROSIS_TEST4.get(), "Тестовый блок Некроза 4");
         add(ModBlocks.NECROSIS_PORTAL.get(), "Портал Некроза");
         add(ModBlocks.WASTE_LOG.get(), "Обугленное бревно");
+        add(ModBlocks.WASTE_GRASS.get(), "Выжженная трава");
+        add(ModBlocks.WASTE_PLANKS.get(), "Обугленные доски");
+        add(ModBlocks.WASTE_PLANKS_STAIRS.get(), "Обугленные ступени");
+        add(ModBlocks.WASTE_PLANKS_SLAB.get(), "Обугленная плита");
 
         // Кинетика и валы
         add(ModBlocks.HAND_CRANK_BLOCK.get(), "Ручной привод");
@@ -2224,6 +2239,11 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.MINERAL1.get(), "Сапфироносный кластер");
         add(ModBlocks.MINERAL3.get(), "Глубинный сапфироносный кластер");
         add(ModBlocks.BASALT_ROUGH.get(), "Грубый базальт");
+        add(ModBlocks.BASALT_SCORCHED.get(), "Запёкшийся базальт");
+        add(ModBlocks.BASALT_SOFT.get(), "Мягкий базальт");
+        add(ModBlocks.BASALT_SOFT_2.get(), "Мягкий базальт 2");
+        add(ModBlocks.BASALT_SOFT_3.get(), "Мягкий базальт 3");
+        add(ModBlocks.BASALT_SOFT_4.get(), "Мягкий базальт 4");
 
         // Яйца призыва
         add(ModItems.DEPTH_WORM_SPAWN_EGG.get(), "Яйцо призыва глубинного червя");

@@ -14,6 +14,7 @@ import com.trd.block.basic.deco.LampBlock;
 import com.trd.block.basic.deco.SteelPropsBlock;
 import com.trd.block.basic.deco.WireFenceAltBlock;
 import com.trd.block.basic.deco.WireFenceBlock;
+import com.trd.block.basic.direction.SideOBlock;
 import com.trd.block.basic.industrial.*;
 import com.trd.block.basic.industrial.chemistry.ChemicalPlantPortBlock;
 import com.trd.block.basic.industrial.chemistry.ChemicalPlantReactionChamberBlock;
@@ -62,7 +63,6 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
-import com.trd.block.basic.direction.FullOBlock;
 import com.trd.block.basic.weapons.explosives.DetMinerBlock;
 import com.trd.block.basic.necrosis.NecrosisPortalBlock;
 import com.trd.block.basic.necrosis.hive.DepthWormNestBlock;
@@ -500,6 +500,10 @@ public class ModBlocks {
             () -> new Block(BlockBehaviour.Properties.of()
                     .strength(1.0F, 3.0F).sound(SoundType.WOOD).requiresCorrectToolForDrops()));
 
+    public static final RegistryObject<Block> AVIABOMB_MINE = registerBlock("aviabomb_mine",
+            () -> new SideOBlock(BlockBehaviour.Properties.of()
+                    .strength(2.0F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
+
 
     public static final RegistryObject<Block> PIPE_TEST = registerBlock("pipe_test",
             () -> new Block(BlockBehaviour.Properties.of()
@@ -594,8 +598,34 @@ public class ModBlocks {
     public static final RegistryObject<Block> BASALT_ROUGH = registerBlock("basalt_rough",
             () -> new Block(BlockBehaviour.Properties.of()
                     .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> BASALT_SCORCHED = registerBlock("basalt_scorched",
+            () -> new ScorchedBasaltBlock(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> BASALT_SOFT = registerBlock("basalt_soft",
+            () -> new CraterBasaltBlock(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> BASALT_SOFT_2 = registerBlock("basalt_soft_2",
+            () -> new CraterBasaltBlock(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> BASALT_SOFT_3 = registerBlock("basalt_soft_3",
+            () -> new CraterBasaltBlock(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> BASALT_SOFT_4 = registerBlock("basalt_soft_4",
+            () -> new CraterBasaltBlock(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
     public static final RegistryObject<Block> WASTE_LOG = registerBlock("waste_log",
-            () -> new FullOBlock(BlockBehaviour.Properties.copy(Blocks.OAK_WOOD).sound(SoundType.WOOD)));
+            () -> new RotatedPillarBlock(BlockBehaviour.Properties.copy(Blocks.OAK_WOOD).sound(SoundType.WOOD)));
+
+    public static final RegistryObject<Block> WASTE_GRASS = registerBlock("waste_grass",
+            () -> new WasteGrassBlock(BlockBehaviour.Properties.copy(Blocks.GRASS_BLOCK).sound(SoundType.GRASS)));
+
+    public static final RegistryObject<Block> WASTE_PLANKS = registerBlock("waste_planks",
+            () -> new Block(BlockBehaviour.Properties.copy(Blocks.OAK_PLANKS)));
+    public static final RegistryObject<StairBlock> WASTE_PLANKS_STAIRS = registerBlock("waste_planks_stairs",
+            () -> new StairBlock(WASTE_PLANKS.get().defaultBlockState(),
+                    BlockBehaviour.Properties.copy(WASTE_PLANKS.get())));
+    public static final RegistryObject<SlabBlock> WASTE_PLANKS_SLAB = registerBlock("waste_planks_slab",
+            () -> new SlabBlock(BlockBehaviour.Properties.copy(WASTE_PLANKS.get())));
 
     public static final RegistryObject<Block> CASTING_DESCENT = registerBlock("casting_descent",
             () -> new CastingDescentBlock(BlockBehaviour.Properties.of()

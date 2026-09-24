@@ -250,5 +250,19 @@ public class ModPacketHandler {
                 RedstoneRadioChannelPacket::decode,
                 RedstoneRadioChannelPacket::handle
         );
+
+        INSTANCE.registerMessage(id++,
+                com.trd.network.packet.explosion.SyncCraterPacket.class,
+                com.trd.network.packet.explosion.SyncCraterPacket::encode,
+                com.trd.network.packet.explosion.SyncCraterPacket::decode,
+                com.trd.network.packet.explosion.SyncCraterPacket::handle
+        );
+
+        INSTANCE.registerMessage(id++,
+                com.trd.network.packet.explosion.SyncCraterTintsPacket.class,
+                com.trd.network.packet.explosion.SyncCraterTintsPacket::encode,
+                com.trd.network.packet.explosion.SyncCraterTintsPacket::decode,
+                com.trd.network.packet.explosion.SyncCraterTintsPacket::handle
+        );
     }
 }

@@ -21,7 +21,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -39,9 +38,6 @@ public class GrenadeNucProjectileEntity extends ThrowableItemProjectile {
     private static final int FUSE_SECONDS = 7;
     private static final float MIN_BOUNCE_SPEED = 0.1f;
     private static final float BOUNCE_MULTIPLIER = 0.4f;
-    private static final float DAMAGE_RADIUS = 25.0f;
-    private static final float DAMAGE_AMOUNT = 200.0f;
-    private static final float MAX_DAMAGE_DISTANCE = 25.0f;
     private static final Random RANDOM = new Random();
 
     private boolean exploded = false;
@@ -126,40 +122,12 @@ public class GrenadeNucProjectileEntity extends ThrowableItemProjectile {
 
         this.discard();
 
-        // Водородный рейкаст-взрыв (теперь включает центральный и лучи)
+        // Водородный взрыв: гладкая воронка + урон мобам по выжженному объёму
+        // (сквозь целые стены не пробивается).
         ExplosionHydrogen.explode(serverLevel, new Vec3(x, y, z), this.getOwner());
 
-        // Убираем лишний стандартный взрыв – он уже внутри
-        // triggerNearbyDetonations и dealExplosionDamage оставляем (они кастомные)
         triggerNearbyDetonations(serverLevel, pos, null);
-        dealExplosionDamage(serverLevel, x, y, z);
         playRandomDetonationSound(level(), pos);
-    }
-
-    private void dealExplosionDamage(ServerLevel serverLevel, double x, double y, double z) {
-        List<LivingEntity> entitiesNearby = serverLevel.getEntitiesOfClass(
-                LivingEntity.class,
-                new AABB(x - DAMAGE_RADIUS, y - DAMAGE_RADIUS, z - DAMAGE_RADIUS,
-                        x + DAMAGE_RADIUS, y + DAMAGE_RADIUS, z + DAMAGE_RADIUS)
-        );
-
-        for (LivingEntity entity : entitiesNearby) {
-            double distanceToEntity = Math.sqrt(
-                    Math.pow(entity.getX() - x, 2) +
-                            Math.pow(entity.getY() - y, 2) +
-                            Math.pow(entity.getZ() - z, 2)
-            );
-
-            if (distanceToEntity <= DAMAGE_RADIUS) {
-                float damage = DAMAGE_AMOUNT;
-                if (distanceToEntity > MAX_DAMAGE_DISTANCE) {
-                    float remainingDistance = DAMAGE_RADIUS - MAX_DAMAGE_DISTANCE;
-                    float damageDistance = (float) distanceToEntity - MAX_DAMAGE_DISTANCE;
-                    damage = DAMAGE_AMOUNT * (1.0f - (damageDistance / remainingDistance)) * 0.5f;
-                }
-                entity.hurt(entity.damageSources().explosion(null, null), damage);
-            }
-        }
     }
 
     private void playRandomDetonationSound(Level level, BlockPos pos) {

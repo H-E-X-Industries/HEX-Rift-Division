@@ -205,6 +205,9 @@ public class MainRegistry {
             event.accept(ModBlocks.SEQUOIA_PLANKS.get());
             event.accept(ModBlocks.SEQUOIA_SLAB.get());
             event.accept(ModBlocks.SEQUOIA_STAIRS.get());
+            event.accept(ModBlocks.WASTE_PLANKS.get());
+            event.accept(ModBlocks.WASTE_PLANKS_STAIRS.get());
+            event.accept(ModBlocks.WASTE_PLANKS_SLAB.get());
 
             event.accept(ModBlocks.CONCRETE_LINE.get());
             event.accept(ModBlocks.CONCRETE_NET.get());
@@ -414,7 +417,10 @@ public class MainRegistry {
             event.accept(ModItems.CAST_PICKAXE_STEEL);
 
             event.accept(ModItems.GRENADIER_GOGGLES);
+
             event.accept(ModBlocks.DET_MINER);
+            event.accept(ModBlocks.AVIABOMB_MINE);
+
             event.accept(ModItems.DETONATOR);
             event.accept(ModItems.RANGE_DETONATOR);
             event.accept(ModItems.GRENADE);
@@ -548,7 +554,11 @@ public class MainRegistry {
             event.accept(ModBlocks.SEQUOIA_HEARTWOOD.get());
             event.accept(ModBlocks.SEQUOIA_LEAVES.get());
             event.accept(ModBlocks.SEQUOIA_BIOME_MOSS.get());
-            event.accept(ModBlocks.BASALT_ROUGH.get());
+            event.accept(ModBlocks.BASALT_SOFT.get());
+            event.accept(ModBlocks.BASALT_SOFT_2.get());
+            event.accept(ModBlocks.BASALT_SOFT_3.get());
+            event.accept(ModBlocks.WASTE_LOG.get());
+            event.accept(ModBlocks.WASTE_GRASS.get());
             event.accept(ModItems.DEPTH_WORM_SPAWN_EGG);
             event.accept(ModItems.DEPTH_WORM_BRUTAL_SPAWN_EGG);
             event.accept(ModBlocks.DEPTH_WORM_NEST);

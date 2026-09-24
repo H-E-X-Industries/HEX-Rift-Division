@@ -7,6 +7,7 @@ import com.trd.item.industrial.rotation.GearItem;
 import com.trd.item.industrial.rotation.PulleyItem;
 import com.trd.main.ResourceRegistry;
 import com.trd.block.basic.necrosis.hive.HiveRootsBlock;
+import com.trd.block.basic.ScorchedBasaltBlock;
 import net.minecraft.core.Direction;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
@@ -124,6 +125,14 @@ public class ModBlockStateProvider extends BlockStateProvider {
         cubeAllWithItem(ModBlocks.CONCRETE_NET);
         cubeAllWithItem(ModBlocks.DIRT_ROUGH);
         cubeAllWithItem(ModBlocks.BASALT_ROUGH);
+        scorchedBasaltBlockWithItem(ModBlocks.BASALT_SCORCHED);
+        // Каждый вариант мягкого базальта — своя текстура (центр воронки basalt_soft,
+        // обод — basalt_soft_4, промежуточная зона — микс _2/_3). Ступень DARKNESS
+        // дополнительно затемняется цветовым хендлером.
+        softBasaltBlockWithItem(ModBlocks.BASALT_SOFT);
+        softBasaltBlockWithItem(ModBlocks.BASALT_SOFT_2);
+        softBasaltBlockWithItem(ModBlocks.BASALT_SOFT_3);
+        softBasaltBlockWithItem(ModBlocks.BASALT_SOFT_4);
 
         cubeAllWithItem(ModBlocks.CRATE);
         cubeAllWithItem(ModBlocks.CONCRETE_MOSSY);
@@ -142,10 +151,18 @@ public class ModBlockStateProvider extends BlockStateProvider {
 
 
         //СТАТИЧНИЫЕ БЛОКИ У КОТОРЫХ РАЗНОЕ ДНО/ВЕРХ, ПРИМЕР:
-       columnBlockWithItem(ModBlocks.WASTE_LOG,
+       axisBlock((RotatedPillarBlock) ModBlocks.WASTE_LOG.get(),
          modLoc("block/waste_log_side"),
-         modLoc("block/waste_log_top"),
          modLoc("block/waste_log_top"));
+       simpleBlockItem(ModBlocks.WASTE_LOG.get(), models().getExistingFile(blockTexture(ModBlocks.WASTE_LOG.get())));
+
+        tintedColumnBlockWithItem(ModBlocks.WASTE_GRASS,
+                modLoc("block/waste_grass"),
+                modLoc("block/waste_grass_top"),
+                modLoc("block/dirt"));
+
+        blockWithItem(ModBlocks.WASTE_PLANKS);
+        stairsAndSlabs(ModBlocks.WASTE_PLANKS.get(), ModBlocks.WASTE_PLANKS_STAIRS.get(), ModBlocks.WASTE_PLANKS_SLAB.get());
 
         columnBlockWithItem(ModBlocks.CONCRETE_PORT,
                 modLoc("block/concrete_port"),
@@ -650,6 +667,30 @@ public class ModBlockStateProvider extends BlockStateProvider {
         simpleBlockItem(blockObject.get(), models().getExistingFile(blockTexture(blockObject.get())));
     }
 
+    // Колонна с color-tint'ом на всех гранях: ступень затемнения DARKNESS применяется
+    // цветовым хендлером в коде — как у мягкого базальта кратера (без дубликатов текстур).
+    private void tintedColumnBlockWithItem(RegistryObject<Block> blockObject, ResourceLocation side, ResourceLocation top, ResourceLocation bottom) {
+        String name = blockObject.getId().getPath();
+        ModelFile model = models().getBuilder(name)
+                .texture("side", side)
+                .texture("top", top)
+                .texture("bottom", bottom)
+                .texture("particle", side)
+                .element()
+                .from(0f, 0f, 0f).to(16f, 16f, 16f)
+                .allFaces((dir, face) -> {
+                    switch (dir) {
+                        case UP -> face.texture("#top").cullface(dir).tintindex(0);
+                        case DOWN -> face.texture("#bottom").cullface(dir).tintindex(0);
+                        default -> face.texture("#side").cullface(dir).tintindex(0);
+                    }
+                })
+                .end();
+        getVariantBuilder(blockObject.get())
+                .forAllStates(state -> ConfiguredModel.builder().modelFile(model).build());
+        simpleBlockItem(blockObject.get(), model);
+    }
+
     private <T extends Block> void customObjBlock(RegistryObject<T> blockObject) {
         horizontalBlock(blockObject.get(), models().getExistingFile(modLoc("block/" + blockObject.getId().getPath())));
     }
@@ -830,6 +871,44 @@ public class ModBlockStateProvider extends BlockStateProvider {
     // Использует одну текстуру для всех сторон
     public void cubeAllWithItem(RegistryObject<Block> block) {
         simpleBlockWithItem(block.get(), cubeAll(block.get()));
+    }
+
+    // Генерация базальта кратера: по ступеням LIGHT подставляются разные,
+    // постепенно светлеющие текстуры (+50% к осветлению на самой светлой)
+    public void scorchedBasaltBlockWithItem(RegistryObject<Block> block) {
+        String name = block.getId().getPath();
+        if (!this.existingFileHelper.exists(modLoc("block/" + name + "_0"),
+                net.minecraft.server.packs.PackType.CLIENT_RESOURCES)) {
+            // Текстуры обожжённого базальта пока не добавлены — пропускаем генерацию,
+            // чтобы не срывать весь runData.
+            return;
+        }
+        ModelFile[] models = new ModelFile[ScorchedBasaltBlock.MAX_LIGHT + 1];
+        for (int light = 0; light <= ScorchedBasaltBlock.MAX_LIGHT; light++) {
+            models[light] = models().cubeAll(name + "_" + light, modLoc("block/" + name + "_" + light));
+        }
+        getVariantBuilder(block.get())
+                .forAllStates(state -> ConfiguredModel.builder()
+                        .modelFile(models[state.getValue(ScorchedBasaltBlock.LIGHT)])
+                        .build());
+        simpleBlockItem(block.get(), models[0]);
+    }
+
+    // Генерация мягкого базальта кратера: ОДНА модель-куб с tintindex на всех гранях.
+    // Ступень затемнения (DARKNESS) подбирается цветовым хендлером в коде — никаких
+    // дубликатов текстур по ступеням осветления/затемнения.
+    public void softBasaltBlockWithItem(RegistryObject<Block> block) {
+        String name = block.getId().getPath();
+        ModelFile model = models().getBuilder(name)
+                .texture("all", modLoc("block/" + name))
+                .texture("particle", modLoc("block/" + name))
+                .element()
+                .from(0f, 0f, 0f).to(16f, 16f, 16f)
+                .allFaces((dir, face) -> face.texture("#all").cullface(dir).tintindex(0))
+                .end();
+        getVariantBuilder(block.get())
+                .forAllStates(state -> ConfiguredModel.builder().modelFile(model).build());
+        simpleBlockItem(block.get(), model);
     }
 
     // 4. Метод для прозрачных блоков (стекло, решетки) с поддержкой Cutout
