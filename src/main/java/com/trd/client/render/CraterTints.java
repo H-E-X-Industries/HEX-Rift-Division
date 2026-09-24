@@ -213,17 +213,37 @@ public final class CraterTints {
         if (state.hasProperty(CraterBasaltBlock.DARKNESS)) {
             dark = state.getValue(CraterBasaltBlock.DARKNESS);
         } else {
-            ResourceLocation dim = level instanceof net.minecraft.world.level.Level l
-                    ? l.dimension().location() : currentDimension;
-            if (dim == null) return 0xFFFFFFFF;
-            Long2IntOpenHashMap map = TINT_MAP.get(dim);
-            if (map == null) return 0xFFFFFFFF;
-            dark = map.get(pos.asLong());
+            dark = tintLevel(level, pos);
         }
         if (dark <= 0) return 0xFFFFFFFF;
         float f = 1.0f - MAX_DARKNESS_RATIO * (dark / (float) CraterBasaltBlock.MAX_DARK);
         int c = (int) (255.0f * f);
         return 0xFF000000 | (c << 16) | (c << 8) | c;
+    }
+
+    /**
+     * Ступень затемнения (0..MAX_DARK) позиции в текущем измерении: 0, если записи нет.
+     * Общая точка доступа для {@link #tintColor} и {@link #darknessMultiplier}.
+     */
+    public static int tintLevel(BlockGetter level, BlockPos pos) {
+        if (level == null || pos == null) return 0;
+        ResourceLocation dim = level instanceof net.minecraft.world.level.Level l
+                ? l.dimension().location() : currentDimension;
+        if (dim == null) return 0;
+        Long2IntOpenHashMap map = TINT_MAP.get(dim);
+        return map == null ? 0 : map.get(pos.asLong());
+    }
+
+    /**
+     * Множитель яркости (0..1) для позиции: 1.0 вне базы, иначе ослабление
+     * по ступени. Переиспользуется обработчиками цвета блоков с собственными тинтами
+     * (дёрн, трава, листва), чтобы затемнять их, не теряя биомный цвет.
+     */
+    public static float darknessMultiplier(BlockGetter level, BlockPos pos) {
+        if (level == null || pos == null) return 1.0f;
+        int dark = tintLevel(level, pos);
+        if (dark <= 0) return 1.0f;
+        return 1.0f - MAX_DARKNESS_RATIO * (dark / (float) CraterBasaltBlock.MAX_DARK);
     }
 
     /**
