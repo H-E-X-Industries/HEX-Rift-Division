@@ -901,6 +901,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.BASALT_SOFT.get(), "Soft Basalt");
         add(ModBlocks.BASALT_SOFT_2.get(), "Soft Basalt 2");
         add(ModBlocks.BASALT_SOFT_3.get(), "Soft Basalt 3");
+        add(ModBlocks.BASALT_SOFT_4.get(), "Soft Basalt 4");
 
         // Spawn Eggs
         add(ModItems.DEPTH_WORM_SPAWN_EGG.get(), "Depth Worm Spawn Egg");
@@ -2242,6 +2243,7 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.BASALT_SOFT.get(), "Мягкий базальт");
         add(ModBlocks.BASALT_SOFT_2.get(), "Мягкий базальт 2");
         add(ModBlocks.BASALT_SOFT_3.get(), "Мягкий базальт 3");
+        add(ModBlocks.BASALT_SOFT_4.get(), "Мягкий базальт 4");
 
         // Яйца призыва
         add(ModItems.DEPTH_WORM_SPAWN_EGG.get(), "Яйцо призыва глубинного червя");

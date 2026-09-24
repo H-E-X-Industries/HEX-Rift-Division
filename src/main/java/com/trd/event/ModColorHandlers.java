@@ -1,4 +1,4 @@
-package com.trd.event; // Поменяй на свой пакет
+package com.trd.event;
 
 import com.trd.main.MainRegistry;
 import com.trd.block.basic.CraterBasaltBlock;
@@ -20,21 +20,20 @@ public class ModColorHandlers {
             return level != null && pos != null ? BiomeColors.getAverageFoliageColor(level, pos) : FoliageColor.getDefaultColor();
         }, ModBlocks.SEQUOIA_LEAVES.get());
 
-        // Затемнение твёрдых блоков к эпицентру/краю воронки: чем выше DARKNESS, тем темнее.
-        // Максимум — общий уровень затемнения кратера (50%, см. CraterTints.MAX_DARKNESS_RATIO).
+        // Затемнение кратерных блоков свойством DARKNESS (мягкий базальт всех вариантов +
+        // выжженная земля): ступень хранится прямо в BlockState, поэтому переживает перезаход
+        // и сбрасывается, если блок сломали и поставили заново.
         event.register((state, level, pos, tintIndex) -> {
             int dark = state.getValue(CraterBasaltBlock.DARKNESS);
             float f = 1.0f - com.trd.client.render.CraterTints.MAX_DARKNESS_RATIO
                     * (dark / (float) CraterBasaltBlock.MAX_DARK);
             int c = (int) (255.0f * f);
             return 0xFF000000 | (c << 16) | (c << 8) | c;
-        }, ModBlocks.BASALT_SOFT.get(), ModBlocks.BASALT_SOFT_2.get(), ModBlocks.BASALT_SOFT_3.get(), ModBlocks.WASTE_GRASS.get());
+        }, ModBlocks.BASALT_SOFT.get(), ModBlocks.BASALT_SOFT_2.get(),
+                ModBlocks.BASALT_SOFT_3.get(), ModBlocks.BASALT_SOFT_4.get(), ModBlocks.WASTE_GRASS.get());
 
-        // Затемнение ванильных твёрдых блоков в кольце у края воронки (копии моделей
-        // с тинт-индексом подменяются в CraterTints.onModelBake, позицию знает только клиент).
-        event.register((state, level, pos, tintIndex) ->
-                com.trd.client.render.CraterTints.tintColor(level, pos),
-                com.trd.client.render.CraterTints.TINTED_BLOCKS);
+        // Позиционный тинт ВСЕХ остальных твёрдых блоков регистрируется в
+        // CraterTints.onModelBake после сборки моделей (см. TintableModel).
     }
 
     // Красим предмет в инвентаре

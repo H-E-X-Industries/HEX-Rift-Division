@@ -8,7 +8,6 @@ import com.trd.item.industrial.rotation.PulleyItem;
 import com.trd.main.ResourceRegistry;
 import com.trd.block.basic.necrosis.hive.HiveRootsBlock;
 import com.trd.block.basic.ScorchedBasaltBlock;
-import com.trd.block.basic.CraterBasaltBlock;
 import net.minecraft.core.Direction;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
@@ -127,10 +126,13 @@ public class ModBlockStateProvider extends BlockStateProvider {
         cubeAllWithItem(ModBlocks.DIRT_ROUGH);
         cubeAllWithItem(ModBlocks.BASALT_ROUGH);
         scorchedBasaltBlockWithItem(ModBlocks.BASALT_SCORCHED);
-        // Один мягкий базальт с меняющейся текстурой по darkness; _2/_3 остаются для старых сохранений.
-        softBasaltGradientBlockWithItem(ModBlocks.BASALT_SOFT);
+        // Каждый вариант мягкого базальта — своя текстура (центр воронки basalt_soft,
+        // обод — basalt_soft_4, промежуточная зона — микс _2/_3). Ступень DARKNESS
+        // дополнительно затемняется цветовым хендлером.
+        softBasaltBlockWithItem(ModBlocks.BASALT_SOFT);
         softBasaltBlockWithItem(ModBlocks.BASALT_SOFT_2);
         softBasaltBlockWithItem(ModBlocks.BASALT_SOFT_3);
+        softBasaltBlockWithItem(ModBlocks.BASALT_SOFT_4);
 
         cubeAllWithItem(ModBlocks.CRATE);
         cubeAllWithItem(ModBlocks.CONCRETE_MOSSY);
@@ -875,6 +877,12 @@ public class ModBlockStateProvider extends BlockStateProvider {
     // постепенно светлеющие текстуры (+50% к осветлению на самой светлой)
     public void scorchedBasaltBlockWithItem(RegistryObject<Block> block) {
         String name = block.getId().getPath();
+        if (!this.existingFileHelper.exists(modLoc("block/" + name + "_0"),
+                net.minecraft.server.packs.PackType.CLIENT_RESOURCES)) {
+            // Текстуры обожжённого базальта пока не добавлены — пропускаем генерацию,
+            // чтобы не срывать весь runData.
+            return;
+        }
         ModelFile[] models = new ModelFile[ScorchedBasaltBlock.MAX_LIGHT + 1];
         for (int light = 0; light <= ScorchedBasaltBlock.MAX_LIGHT; light++) {
             models[light] = models().cubeAll(name + "_" + light, modLoc("block/" + name + "_" + light));
@@ -901,31 +909,6 @@ public class ModBlockStateProvider extends BlockStateProvider {
         getVariantBuilder(block.get())
                 .forAllStates(state -> ConfiguredModel.builder().modelFile(model).build());
         simpleBlockItem(block.get(), model);
-    }
-
-    // ОДИН мягкий базальт с меняющейся текстурой: darkness 0-1 → базовая текстура,
-    // 2-3 → _2, 4-5 → _3, 6-7 → _4. Сверху дополнительно затемняется цветовым
-    // хендлером (CraterTints.MAX_DARKNESS_RATIO).
-    public void softBasaltGradientBlockWithItem(RegistryObject<Block> block) {
-        String name = block.getId().getPath();
-        String[] textures = { name, name + "_2", name + "_3", name + "_4" };
-        ModelFile[] models = new ModelFile[textures.length];
-        for (int i = 0; i < textures.length; i++) {
-            ResourceLocation tex = modLoc("block/" + textures[i]);
-            models[i] = models().getBuilder(name + "_tex" + i)
-                    .texture("all", tex)
-                    .texture("particle", tex)
-                    .element()
-                    .from(0f, 0f, 0f).to(16f, 16f, 16f)
-                    .allFaces((dir, face) -> face.texture("#all").cullface(dir).tintindex(0))
-                    .end();
-        }
-        getVariantBuilder(block.get())
-                .forAllStates(state -> ConfiguredModel.builder()
-                        .modelFile(models[Math.min(models.length - 1,
-                                state.getValue(CraterBasaltBlock.DARKNESS) / 2)])
-                        .build());
-        simpleBlockItem(block.get(), models[0]);
     }
 
     // 4. Метод для прозрачных блоков (стекло, решетки) с поддержкой Cutout

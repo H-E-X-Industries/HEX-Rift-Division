@@ -2,9 +2,14 @@ package com.trd.explosion.logic;
 
 import com.trd.block.basic.CraterBasaltBlock;
 import com.trd.block.basic.ModBlocks;
+import com.trd.block.basic.WasteGrassBlock;
+import com.trd.explosion.data.CraterTintData;
+import com.trd.explosion.data.CraterTintSync;
 import com.trd.network.ModPacketHandler;
 import com.trd.network.packet.explosion.SyncCraterPacket;
+import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -40,6 +45,7 @@ import net.minecraftforge.network.PacketDistributor;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.List;
 
@@ -86,10 +92,18 @@ public class ExplosionHydrogen {
     public static float CRATER_NOISE_SCALE = 0.22f;
     public static float CRATER_BUDGET = 70.0f;
     public static int CRATER_EDGE_AIR_RANGE = 5;
-    public static float CRATER_GRADIENT_RADIUS = 24.0f;
     public static float CRATER_SOFT_CORE_RADIUS = 4.0f;
     public static float CRATER_RIM_BAND = 10.0f;
+    /** Доля радиуса воронки, от которой блок считается её границей (запёкшийся обод basalt_soft_4). */
+    public static float CRATER_BORDER_RATIO = 0.75f;
     public static int CRATER_MAX_JOBS = 200_000;
+
+    /** Тинт: записывать только блоки, у которых есть открытая грань (видимая поверхность), а не весь объём. */
+    public static boolean TINT_ONLY_EXPOSED = true;
+    /** Тинт: сколько записей уходит клиенту за один тик (медленное плавное «расползание» волны). */
+    public static int TINT_PER_TICK = 1500;
+    /** Тинт: сколько записей помещается в один сетевой пакет (совпадает с лимитом CraterTintSync). */
+    public static int TINT_PACKET_CHUNK = 1200;
 
     public static float GLASS_DESTROY_PROB_ZONE_1 = 0.8f;
     public static float GLASS_DESTROY_PROB_ZONE_2 = 0.4f;
@@ -114,7 +128,7 @@ public class ExplosionHydrogen {
     private static long tickBudgetNanos = DEFAULT_TICK_BUDGET_NANOS;
     private static long lastDrainNanos = System.nanoTime();
 
-    private enum Phase { SCAN, APPLY, CARVE, CARVE_APPLY, BASALT, FIRE, DAMAGE, FINISH }
+    private enum Phase { SCAN, APPLY, CARVE, CARVE_APPLY, BASALT, FIRE, DAMAGE, TINT, FINISH }
 
     private static final class FloatRef {
         float value;
@@ -161,6 +175,15 @@ public class ExplosionHydrogen {
         final LongArrayList destroy = new LongArrayList();
         final List<EntityTarget> entities = new ArrayList<>();
 
+        /** Позиционный тинт: позиция → ступень затемнения 0..MAX_DARK (линейно от эпицентра к краю 2-й зоны). */
+        final Long2IntOpenHashMap tintMap = new Long2IntOpenHashMap();
+
+        /** Прогрессивная отправка тинта по кольцам удаления (медленное плавное «расползание» волны). */
+        boolean tintPrepared;
+        List<LongArrayList> tintRings = Collections.emptyList();
+        int tintSendRing;
+        int tintSendOff;
+
         int applyLog;
         int applyGrass;
         int applyPlanks;
@@ -179,7 +202,6 @@ public class ExplosionHydrogen {
         final FloatRef rayResist = new FloatRef();
 
         final long seed;
-        final BlockPos gradientAnchor;
         final int crMinX, crMaxX, crMinY, crMaxY, crMinZ, crMaxZ;
         int crX, crY, crZ;
         final LongArrayList carve = new LongArrayList();
@@ -203,7 +225,6 @@ public class ExplosionHydrogen {
             this.fireInnerSq = (double) fireStart * fireStart;
             this.fireOuterSq = (double) fireEnd * fireEnd;
             this.seed = level.getSeed();
-            this.gradientAnchor = findCraterFloor(level, center);
 
             int cx = (int) Math.floor(center.x);
             int cy = (int) Math.floor(center.y);
@@ -273,6 +294,10 @@ public class ExplosionHydrogen {
                     }
                     case DAMAGE -> {
                         if (!damage(deadline)) return false;
+                        phase = Phase.TINT;
+                    }
+                    case TINT -> {
+                        if (!sendTint(deadline)) return false;
                         phase = Phase.FINISH;
                     }
                     case FINISH -> {
@@ -329,6 +354,15 @@ public class ExplosionHydrogen {
             float hardness = s.getDestroySpeed(level, pos);
             if (hardness < 0) return;
 
+            // Позиционный тинт: твёрдые блоки, существовавшие на момент взрыва, попадают в базу,
+            // кроме само-тинтуемых кратерных блоков (мягкий базальт/выжженная земля красятся своим
+            // свойством DARKNESS). Видимые поверхности, а не весь объём (TINT_ONLY_EXPOSED).
+            if (!(s.getBlock() instanceof CraterBasaltBlock) && !(s.getBlock() instanceof WasteGrassBlock)) {
+                if (!TINT_ONLY_EXPOSED || isSurfaceExposed(x, y, z)) {
+                    tintMap.put(pos.asLong(), linearDarkness(dist));
+                }
+            }
+
             if (isGlass(s)) {
                 float prob = dist <= zone1Radius ? GLASS_DESTROY_PROB_ZONE_1 : GLASS_DESTROY_PROB_ZONE_2;
                 if (hash01(seed, pos.asLong()) < prob
@@ -382,7 +416,7 @@ public class ExplosionHydrogen {
                 if (!level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4)) continue;
                 BlockState cur = level.getBlockState(pos);
                 if (!isNaturalSoil(cur)) continue;
-                int dark = rimDarkness(pos);
+                int dark = linearDarkness(pos);
                 level.setBlock(pos, ModBlocks.WASTE_GRASS.get().defaultBlockState()
                         .setValue(CraterBasaltBlock.DARKNESS, dark), 3);
             }
@@ -570,18 +604,6 @@ public class ExplosionHydrogen {
             level.setBlock(pos, Blocks.FIRE.defaultBlockState(), 3);
         }
 
-        /** Затемнение кольца вокруг края воронки для подменённой почвы (waste_grass): максимум на ободе, 0 дальше {@link #CRATER_RIM_BAND}. */
-        private int rimDarkness(BlockPos pos) {
-            double dx = pos.getX() + 0.5 - center.x;
-            double dy = pos.getY() + 0.5 - center.y;
-            double dz = pos.getZ() + 0.5 - center.z;
-            double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-            double delta = Math.abs(dist - CRATER_RADIUS);
-            if (delta > CRATER_RIM_BAND) return 0;
-            double t = 1.0 - delta / CRATER_RIM_BAND;
-            return (int) Math.round(t * CraterBasaltBlock.MAX_DARK);
-        }
-
         // ==================== БАЗАЛЬТОВАЯ ВОРОНКА ====================
 
         private boolean carveScan(long deadline) {
@@ -736,7 +758,7 @@ BlockState s = level.getBlockState(pos);
                 if (job.destroy()) {
                     level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
                 } else {
-                    int dark = Math.max(darknessLevel(pos), rimDarkness(pos));
+                    int dark = linearDarkness(pos);
                     level.setBlock(pos,
                             pickSoftBasalt(pos).defaultBlockState()
                                     .setValue(CraterBasaltBlock.DARKNESS, dark), 3);
@@ -770,18 +792,141 @@ BlockState s = level.getBlockState(pos);
         }
 
         private Block pickSoftBasalt(BlockPos pos) {
-            return ModBlocks.BASALT_SOFT.get();
+            double dx = pos.getX() + 0.5 - center.x;
+            double dz = pos.getZ() + 0.5 - center.z;
+            double h = Math.sqrt(dx * dx + dz * dz);
+            // Центр воронки — базовая текстура basalt_soft.
+            if (h <= CRATER_SOFT_CORE_RADIUS) return ModBlocks.BASALT_SOFT.get();
+            // Запёкшийся обод (границы кратера) — basalt_soft_4.
+            if (h >= CRATER_RADIUS * CRATER_BORDER_RATIO) return ModBlocks.BASALT_SOFT_4.get();
+            // Промежуточная часть — случайный микс basalt_soft_2 / basalt_soft_3.
+            return hash01(seed, pos.asLong()) < 0.5
+                    ? ModBlocks.BASALT_SOFT_2.get()
+                    : ModBlocks.BASALT_SOFT_3.get();
         }
 
-        private int darknessLevel(BlockPos pos) {
-            BlockPos anchor = gradientAnchor;
-            if (anchor == null) anchor = pos;
-            double dx = pos.getX() - anchor.getX();
-            double dy = pos.getY() - anchor.getY();
-            double dz = pos.getZ() - anchor.getZ();
-            double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-            double t = Math.min(1.0, dist / CRATER_GRADIENT_RADIUS);
-            return (int) Math.round((1.0 - t) * CraterBasaltBlock.MAX_DARK);
+        private int linearDarkness(BlockPos pos) {
+            double dx = pos.getX() + 0.5 - center.x;
+            double dy = pos.getY() + 0.5 - center.y;
+            double dz = pos.getZ() + 0.5 - center.z;
+            return linearDarkness(Math.sqrt(dx * dx + dy * dy + dz * dz));
+        }
+
+        private int linearDarkness(double dist) {
+            double t = Math.max(0.0, Math.min(1.0, 1.0 - dist / zone2Radius));
+            return (int) Math.round(t * CraterBasaltBlock.MAX_DARK);
+        }
+
+        /** Блок «виден» снаружи: хотя бы один из 6 соседей — воздух. */
+        private boolean isSurfaceExposed(int x, int y, int z) {
+            BlockPos p = new BlockPos(x, y, z);
+            if (level.getBlockState(p.relative(Direction.EAST)).isAir()) return true;
+            if (level.getBlockState(p.relative(Direction.WEST)).isAir()) return true;
+            if (level.getBlockState(p.relative(Direction.UP)).isAir()) return true;
+            if (level.getBlockState(p.relative(Direction.DOWN)).isAir()) return true;
+            if (level.getBlockState(p.relative(Direction.SOUTH)).isAir()) return true;
+            if (level.getBlockState(p.relative(Direction.NORTH)).isAir()) return true;
+            return false;
+        }
+
+        // ==================== ПОЗИЦИОННЫЙ ТИНТ ====================
+
+        /** Разово: вычищает разрушенные/заменённые позиции, сохраняет запись в SavedData и строит кольца удаления. */
+        private void sendTintInit() {
+            if (tintMap.isEmpty()) return;
+            int maxRing = (int) Math.ceil(zone2Radius);
+            List<LongArrayList> rings = new ArrayList<>(maxRing + 1);
+            for (int i = 0; i <= maxRing; i++) rings.add(new LongArrayList());
+
+            LongIterator it = tintMap.keySet().iterator();
+            while (it.hasNext()) {
+                long lp = it.nextLong();
+                BlockPos pos = BlockPos.of(lp);
+                if (!level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4)) {
+                    it.remove();
+                    continue;
+                }
+                BlockState s = level.getBlockState(pos);
+                if (isInvalidTintTarget(s, pos)) {
+                    it.remove();
+                    continue;
+                }
+                int ring = (int) Math.min(maxRing, Math.floor(distToCenter(pos)));
+                rings.get(ring).add(lp);
+            }
+            tintRings = rings;
+
+            CraterTintData data = CraterTintData.get(level);
+            long[] keys = data.entries().keySet().toLongArray();
+            LongArrayList removals = new LongArrayList();
+            for (long lp : keys) {
+                BlockPos pos = BlockPos.of(lp);
+                if (!withinZoneBBox(pos)) continue;
+                if (!tintMap.containsKey(lp)) {
+                    if (data.remove(lp)) removals.add(lp);
+                }
+            }
+            if (!removals.isEmpty()) CraterTintSync.sendRemoves(level, removals.toLongArray());
+            if (!tintMap.isEmpty()) data.putAll(tintMap);
+        }
+
+        /** Прогрессивная отправка тинта: по тику — следующее кольцо удаления, расширяющееся от эпицентра. */
+        private boolean sendTint(long deadline) {
+            if (!tintPrepared) {
+                sendTintInit();
+                tintPrepared = true;
+            }
+            if (tintRings.isEmpty() || tintSendRing >= tintRings.size()) return true;
+
+            int sent = 0;
+            while (tintSendRing < tintRings.size() && sent < TINT_PER_TICK) {
+                if (System.nanoTime() > deadline) return false;
+                LongArrayList ring = tintRings.get(tintSendRing);
+                if (ring.isEmpty()) {
+                    tintSendRing++;
+                    tintSendOff = 0;
+                    continue;
+                }
+                int from = tintSendOff;
+                int step = Math.min(TINT_PACKET_CHUNK, TINT_PER_TICK - sent);
+                int end = Math.min(ring.size(), from + step);
+                long[] pos = new long[end - from];
+                int[] dark = new int[end - from];
+                for (int i = 0; i < pos.length; i++) {
+                    long lp = ring.getLong(from + i);
+                    pos[i] = lp;
+                    dark[i] = tintMap.get(lp);
+                }
+                CraterTintSync.sendAdds(level, pos, dark);
+                sent += pos.length;
+                tintSendOff = end;
+                if (end >= ring.size()) {
+                    tintSendRing++;
+                    tintSendOff = 0;
+                }
+            }
+            return true;
+        }
+
+        private boolean isInvalidTintTarget(BlockState s, BlockPos pos) {
+            if (s.isAir()) return true;
+            if (!s.getFluidState().isEmpty() || s.getBlock() instanceof LiquidBlock) return true;
+            if (s.getDestroySpeed(level, pos) < 0) return true;
+            if (s.getBlock() instanceof CraterBasaltBlock || s.getBlock() instanceof WasteGrassBlock) return true;
+            return false;
+        }
+
+        private boolean withinZoneBBox(BlockPos pos) {
+            return pos.getX() >= minX && pos.getX() <= maxX
+                    && pos.getY() >= minY && pos.getY() <= maxY
+                    && pos.getZ() >= minZ && pos.getZ() <= maxZ;
+        }
+
+        private double distToCenter(BlockPos pos) {
+            double dx = pos.getX() + 0.5 - center.x;
+            double dy = pos.getY() + 0.5 - center.y;
+            double dz = pos.getZ() + 0.5 - center.z;
+            return Math.sqrt(dx * dx + dy * dy + dz * dz);
         }
     }
 
@@ -920,7 +1065,8 @@ BlockState s = level.getBlockState(pos);
                 || state.is(ModBlocks.BASALT_ROUGH.get())
                 || state.is(ModBlocks.BASALT_SOFT.get())
                 || state.is(ModBlocks.BASALT_SOFT_2.get())
-                || state.is(ModBlocks.BASALT_SOFT_3.get());
+                || state.is(ModBlocks.BASALT_SOFT_3.get())
+                || state.is(ModBlocks.BASALT_SOFT_4.get());
     }
 
     private static double hash01(long seed, long pos) {
@@ -971,19 +1117,6 @@ BlockState s = level.getBlockState(pos);
         h = (h ^ (h >>> 13)) * 1274126177L;
         h = h ^ (h >>> 16);
         return ((h & 0xFFFF) / 65535.0) * 2.0 - 1.0;
-    }
-
-    private static BlockPos findCraterFloor(ServerLevel level, Vec3 center) {
-        int x = (int) Math.floor(center.x);
-        int z = (int) Math.floor(center.z);
-        for (int y = (int) Math.floor(center.y); y >= level.getMinBuildHeight(); y--) {
-            BlockPos p = new BlockPos(x, y, z);
-            BlockState s = level.getBlockState(p);
-            if (s.isAir()) continue;
-            if (s.getFluidState().isSource()) continue;
-            return p;
-        }
-        return new BlockPos(x, (int) Math.floor(center.y), z);
     }
 
     // ==================== УРОН МОБАМ ====================

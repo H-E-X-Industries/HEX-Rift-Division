@@ -7,9 +7,12 @@ import com.google.gson.JsonObject;
 import com.mojang.logging.LogUtils;
 import com.trd.block.basic.CraterBasaltBlock;
 import com.trd.main.MainRegistry;
+import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.color.block.BlockColors;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.block.BlockModelShaper;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.BlockPos;
@@ -19,7 +22,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ModelEvent;
@@ -33,20 +35,25 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * Клиентский реестр кратеров водородной гранаты. Позволяет чисто позиционно затемнять
- * ЛЮБЫЕ твёрдые блоки (в том числе ванильные и из других модов) в кольце у края воронки
- * БЕЗ замены блоков в мире: на мод-событии {@link ModelEvent.ModifyBakingResult} моделям
- * целевых блоков приклеивается тинт-индекс, а {@link #tintColor} в момент сборки чанка
- * вычисляет ступень затемнения по расстоянию до ближайшего кратера (максимум 50%,
- * симметрично вокруг края: и в чаше, и на внешнем ободе вокруг базальта).
- * Мир при этом не меняется: сломал/поставил блок — цвет исходный, лагов нет.
+ * Клиентский тинт воронки водородной гранаты.
+ *
+ * <p>Тинт выдан на сервере позиционно (см. {@code ExplosionHydrogen}): для каждого твёрдого блока,
+ * существовавшего на момент взрыва, сервер хранит ступень затемнения 0..7 (линейно от эпицентра
+ * до края второй зоны поражения) и шлёт клиенту {@code SyncCraterTintsPacket}. Клиент держит карту
+ * «позиция → затемнение» на текущее измерение и окрашивает блоки при сборке чанка цветовым
+ * хендлером. Сломал/поставил блок — сервер удаляет запись и шлёт удаление: тинт пропадает.
+ *
+ * <p>Чтобы красить любые твёрдые блоки (не только ванильные и не только своего мода), на
+ * {@link ModelEvent.ModifyBakingResult} ВСЕ блоки без собственных цветовых тинтов оборачиваются
+ * в {@link TintableModel} (в клиджах проставляется tintIndex), а для них регистрируется один
+ * позиционный {@link BlockColors}-хендлер. Блоки с уже существующим тинтом (трава, листва,
+ * мягкий базальт/выжженная земля с свойством DARKNESS) не трогаются и красятся штатно.
  */
 @Mod.EventBusSubscriber(modid = MainRegistry.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class CraterTints {
@@ -54,93 +61,8 @@ public final class CraterTints {
     /** Максимальная порция темноты: 50% (канал цвета падает до ~127). */
     public static final float MAX_DARKNESS_RATIO = 0.50f;
 
-    /**
-     * Ванильные твёрдые блоки, которые темнеют у края воронки: породы камня и их
-     * полированные/замшелые/треснувшие вариации, земли и почвы, пески/песчаники,
-     * терракоты (включая мезовые), глина, базальт, глубинный сланец, призмарин.
-     */
-    public static final Block[] TINTED_BLOCKS = new Block[]{
-            // Камень и производные
-            Blocks.STONE,
-            Blocks.COBBLESTONE,
-            Blocks.MOSSY_COBBLESTONE,
-            Blocks.STONE_BRICKS,
-            Blocks.MOSSY_STONE_BRICKS,
-            Blocks.CRACKED_STONE_BRICKS,
-            Blocks.CHISELED_STONE_BRICKS,
-            Blocks.SMOOTH_STONE,
-            Blocks.ANDESITE,
-            Blocks.POLISHED_ANDESITE,
-            Blocks.DIORITE,
-            Blocks.POLISHED_DIORITE,
-            Blocks.GRANITE,
-            Blocks.POLISHED_GRANITE,
-            // Глубинный сланец
-            Blocks.DEEPSLATE,
-            Blocks.COBBLED_DEEPSLATE,
-            Blocks.POLISHED_DEEPSLATE,
-            Blocks.DEEPSLATE_BRICKS,
-            Blocks.DEEPSLATE_TILES,
-            Blocks.CRACKED_DEEPSLATE_TILES,
-            // Туф и известняк пещер
-            Blocks.TUFF,
-            Blocks.CALCITE,
-            Blocks.DRIPSTONE_BLOCK,
-            // Базальт
-            Blocks.BASALT,
-            Blocks.POLISHED_BASALT,
-            Blocks.SMOOTH_BASALT,
-            // Земли и почвы
-            Blocks.DIRT,
-            Blocks.COARSE_DIRT,
-            Blocks.ROOTED_DIRT,
-            Blocks.PODZOL,
-            Blocks.MYCELIUM,
-            Blocks.MOSS_BLOCK,
-            Blocks.SNOW_BLOCK,
-            // Грязь (мангровые болота)
-            Blocks.MUD,
-            Blocks.PACKED_MUD,
-            Blocks.MUD_BRICKS,
-            // Пески и песчаники
-            Blocks.SAND,
-            Blocks.RED_SAND,
-            Blocks.SANDSTONE,
-            Blocks.SMOOTH_SANDSTONE,
-            Blocks.CUT_SANDSTONE,
-            Blocks.CHISELED_SANDSTONE,
-            Blocks.RED_SANDSTONE,
-            Blocks.SMOOTH_RED_SANDSTONE,
-            Blocks.CUT_RED_SANDSTONE,
-            Blocks.CHISELED_RED_SANDSTONE,
-            // Глина и обсидиан
-            Blocks.CLAY,
-            Blocks.OBSIDIAN,
-            // Терракоты (включая мезовые)
-            Blocks.TERRACOTTA,
-            Blocks.WHITE_TERRACOTTA,
-            Blocks.ORANGE_TERRACOTTA,
-            Blocks.MAGENTA_TERRACOTTA,
-            Blocks.LIGHT_BLUE_TERRACOTTA,
-            Blocks.YELLOW_TERRACOTTA,
-            Blocks.LIME_TERRACOTTA,
-            Blocks.PINK_TERRACOTTA,
-            Blocks.GRAY_TERRACOTTA,
-            Blocks.LIGHT_GRAY_TERRACOTTA,
-            Blocks.CYAN_TERRACOTTA,
-            Blocks.PURPLE_TERRACOTTA,
-            Blocks.BLUE_TERRACOTTA,
-            Blocks.BROWN_TERRACOTTA,
-            Blocks.GREEN_TERRACOTTA,
-            Blocks.RED_TERRACOTTA,
-            Blocks.BLACK_TERRACOTTA,
-            // Призмарин (океанские памятники)
-            Blocks.PRISMARINE,
-            Blocks.PRISMARINE_BRICKS,
-            Blocks.DARK_PRISMARINE,
-            // Гравий
-            Blocks.GRAVEL
-    };
+    /** Позиционная база затемнения по измерениям: позиция → ступень 0..MAX_DARK. */
+    private static final ConcurrentHashMap<ResourceLocation, Long2IntOpenHashMap> TINT_MAP = new ConcurrentHashMap<>();
 
     public record CraterInfo(ResourceLocation dimension, double x, double y, double z, float radius, float band) {
     }
@@ -151,7 +73,6 @@ public final class CraterTints {
 
     private static volatile ResourceLocation currentDimension = null;
 
-    /** Сколько кратеров клиент держит в памяти: старые вытесняются, чтобы тинт не разросся. */
     private static final int MAX_CRATERS = 512;
 
     private static final Path FILE = FMLPaths.CONFIGDIR.get().resolve("trd_craters.json");
@@ -168,9 +89,6 @@ public final class CraterTints {
         if (CRATERS.size() >= MAX_CRATERS) CRATERS.remove(0);
         CRATERS.add(new CraterInfo(dim, x, y, z, radius, band));
         saveCraters();
-        LOGGER.info("CraterTints: registered crater ({}, {}, {}) dim={} radius={} band={}, total={}",
-                String.format("%.1f", x), String.format("%.1f", y), String.format("%.1f", z),
-                dim, radius, band, CRATERS.size());
     }
 
     private static void saveCraters() {
@@ -213,10 +131,7 @@ public final class CraterTints {
         }
     }
 
-    /**
-     * Пересборка чанков в области кратера: клиентские чанки уже собраны, без этого
-     * перекраска новых кратеров не появится. Одноразовое действие.
-     */
+    /** Пересборка чанков вокруг воронки (одноразовое действие сразу после взрыва). */
     public static void refreshSections(net.minecraft.client.multiplayer.ClientLevel level) {
         LevelRenderer lr = Minecraft.getInstance().levelRenderer;
         ResourceLocation dim = level.dimension().location();
@@ -239,101 +154,169 @@ public final class CraterTints {
         }
     }
 
-    /**
-     * Цвет тинта для позиции: белый (без изменений) вне воронок или в инвентаре.
-     * Затемнение — симметричное кольцо вокруг края воронки {radius ± band}: и низ
-     * чаши, и внешний обод вокруг базальта. Вызывается движком во время сборки чанка.
-     */
-    public static int tintColor(BlockGetter level, BlockPos pos) {
-        if (level == null || pos == null) return 0xFFFFFFFF;
-        ResourceLocation dim;
-        if (level instanceof net.minecraft.world.level.Level l) {
-            dim = l.dimension().location();
-        } else {
-            dim = currentDimension;
+    /** Приём добавлений затемнения от сервера. Помечает затронутые секции на пересборку. */
+    public static void addTints(ResourceLocation dim, long[] adds, int[] dark) {
+        if (adds == null || adds.length == 0) return;
+        Long2IntOpenHashMap map = TINT_MAP.computeIfAbsent(dim, d -> new Long2IntOpenHashMap());
+        for (int i = 0; i < adds.length; i++) {
+            long p = adds[i];
+            if (dark[i] > 0) map.put(p, dark[i]);
+            else map.remove(p);
         }
-        if (dim == null) return 0xFFFFFFFF;
-        double px = pos.getX() + 0.5;
-        double py = pos.getY() + 0.5;
-        double pz = pos.getZ() + 0.5;
-        int dark = 0;
-        for (CraterInfo c : CRATERS) {
-            if (!c.dimension.equals(dim)) continue;
-            double br = c.radius + c.band;
-            double ax = Math.abs(px - c.x);
-            if (ax > br) continue;
-            double ay = Math.abs(py - c.y);
-            if (ay > br) continue;
-            double az = Math.abs(pz - c.z);
-            if (az > br) continue;
-            double dx = px - c.x;
-            double dy = py - c.y;
-            double dz = pz - c.z;
-            double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-            if (dist > br) continue;
-            double delta = Math.abs(dist - c.radius);
-            if (delta > c.band) continue;
-            double t = 1.0 - delta / c.band;
-            dark = Math.max(dark, (int) Math.round(t * CraterBasaltBlock.MAX_DARK));
+        markSectionsDirty(adds);
+    }
+
+    /** Приём удалений затемнения от сервера (блок сломали/поставили). */
+    public static void removeTints(ResourceLocation dim, long[] removes) {
+        if (removes == null || removes.length == 0) return;
+        Long2IntOpenHashMap map = TINT_MAP.get(dim);
+        if (map != null) {
+            for (long p : removes) map.remove(p);
+        }
+        markSectionsDirty(removes);
+    }
+
+    /** Пометить секции, покрывающие диапазон позиций, как «грязные» — пересборка происходит плавно, кадр за кадром. */
+    private static void markSectionsDirty(long[] positions) {
+        Minecraft mc = Minecraft.getInstance();
+        LevelRenderer lr = mc.levelRenderer;
+        if (mc.level == null) return;
+        int minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE;
+        int minY = Integer.MAX_VALUE, maxY = Integer.MIN_VALUE;
+        int minZ = Integer.MAX_VALUE, maxZ = Integer.MIN_VALUE;
+        for (long p : positions) {
+            BlockPos bp = BlockPos.of(p);
+            if (bp.getX() < minX) minX = bp.getX();
+            if (bp.getX() > maxX) maxX = bp.getX();
+            if (bp.getY() < minY) minY = bp.getY();
+            if (bp.getY() > maxY) maxY = bp.getY();
+            if (bp.getZ() < minZ) minZ = bp.getZ();
+            if (bp.getZ() > maxZ) maxZ = bp.getZ();
+        }
+        for (int bx = minX; bx <= maxX; bx += 16) {
+            for (int by = minY; by <= maxY; by += 16) {
+                for (int bz = minZ; bz <= maxZ; bz += 16) {
+                    lr.setSectionDirty(bx, by, bz);
+                }
+            }
+        }
+    }
+
+    /**
+     * Цвет тинта для позиции: белый (без изменений), если запись отсутствует.
+     * Кратерные блоки с собственным свойством DARKNESS красятся им, все остальные —
+     * позиционной базой. Вызывается движком ВО ВРЕМЯ СБОРКИ чанка, не каждый кадр.
+     */
+    public static int tintColor(BlockState state, BlockGetter level, BlockPos pos) {
+        if (level == null || pos == null || state == null) return 0xFFFFFFFF;
+        int dark;
+        if (state.hasProperty(CraterBasaltBlock.DARKNESS)) {
+            dark = state.getValue(CraterBasaltBlock.DARKNESS);
+        } else {
+            ResourceLocation dim = level instanceof net.minecraft.world.level.Level l
+                    ? l.dimension().location() : currentDimension;
+            if (dim == null) return 0xFFFFFFFF;
+            Long2IntOpenHashMap map = TINT_MAP.get(dim);
+            if (map == null) return 0xFFFFFFFF;
+            dark = map.get(pos.asLong());
         }
         if (dark <= 0) return 0xFFFFFFFF;
         float f = 1.0f - MAX_DARKNESS_RATIO * (dark / (float) CraterBasaltBlock.MAX_DARK);
-        int cc = (int) (255.0f * f);
-        return 0xFF000000 | (cc << 16) | (cc << 8) | cc;
+        int c = (int) (255.0f * f);
+        return 0xFF000000 | (c << 16) | (c << 8) | c;
     }
 
     /**
-     * Подменяет baked-модели целевых блоков на их копии с тинт-индексом во всех гранях,
-     * чтобы {@link com.trd.event.ModColorHandlers} мог окрашивать их по позиции.
-     * Сопоставление по точным ключам {@code stateToModelLocation}, с фолбэком по пути
-     * ModelResourceLocation на случай отличий в строке варианта.
+     * Оборачивает baked-модели всех блоков, у которых НЕТ собственных цветовых тинтов,
+     * в {@link TintableModel} (в квадах проставляется tintIndex), и регистрирует единый
+     * позиционный цветовой хендлер. Блоки с существующим тинтом (листва, трава, мягкий
+     * базальт, выжженная земля) не трогаются — они красятся своими штатными хендлерами.
      */
     @SubscribeEvent
     public static void onModelBake(ModelEvent.ModifyBakingResult event) {
-        Set<ResourceLocation> exact = new HashSet<>();
-        Set<String> paths = new HashSet<>();
-        for (Block b : TINTED_BLOCKS) {
-            paths.add(BuiltInRegistries.BLOCK.getKey(b).getPath());
-            for (BlockState st : b.getStateDefinition().getPossibleStates()) {
-                exact.add(BlockModelShaper.stateToModelLocation(st));
+        Map<ResourceLocation, BakedModel> models = event.getModels();
+        RandomSource rand = RandomSource.create();
+        List<Block> tintableBlocks = new ArrayList<>();
+        int wrappedStates = 0;
+        for (Block block : BuiltInRegistries.BLOCK) {
+            if (block.getStateDefinition().getPossibleStates().isEmpty()) continue;
+
+            boolean existsTint = false;
+            for (BlockState st : block.getStateDefinition().getPossibleStates()) {
+                BakedModel m = models.get(BlockModelShaper.stateToModelLocation(st));
+                if (m != null && hasTintQuads(m, st, rand)) {
+                    existsTint = true;
+                    break;
+                }
+            }
+            if (existsTint) continue;
+
+            boolean any = false;
+            for (BlockState st : block.getStateDefinition().getPossibleStates()) {
+                ResourceLocation key = BlockModelShaper.stateToModelLocation(st);
+                BakedModel m = models.get(key);
+                if (m == null || m instanceof TintableModel) continue;
+                models.put(key, new TintableModel(m));
+                any = true;
+            }
+            if (any) {
+                tintableBlocks.add(block);
+                wrappedStates += block.getStateDefinition().getPossibleStates().size();
             }
         }
 
-        Map<ResourceLocation, BakedModel> models = event.getModels();
-        List<ResourceLocation> toWrap = new ArrayList<>();
-        for (ResourceLocation key : models.keySet()) {
-            if (exact.contains(key)) {
-                toWrap.add(key);
-            } else if (key instanceof ModelResourceLocation mrl && paths.contains(mrl.getPath())) {
-                toWrap.add(key);
-            }
+        Minecraft mc = Minecraft.getInstance();
+        if (!tintableBlocks.isEmpty() && mc != null && mc.getBlockColors() != null) {
+            BlockColors colors = mc.getBlockColors();
+            colors.register((state, getter, bp, tintIndex) -> tintColor(state, getter, bp),
+                    tintableBlocks.toArray(new Block[0]));
         }
-        int wrapped = 0;
-        for (ResourceLocation key : toWrap) {
-            models.put(key, new TintableModel(models.get(key)));
-            wrapped++;
-        }
-        LOGGER.info("CraterTints: wrapped {} baked models from {} entry models map", wrapped, models.size());
+        LOGGER.info("CraterTints: tint-wrapped {} block(s), {} state model(s), handler registered for {} block(s)",
+                tintableBlocks.size(), wrappedStates, tintableBlocks.size());
     }
 
-    /** Обёртка модели: те же квады, но с tintIndex=0 во всех гранях. */
+    /** Есть ли у модели хоть одна грань с собственным tintindex (такие блоки не трогаем). */
+    private static boolean hasTintQuads(BakedModel model, BlockState state, RandomSource rand) {
+        for (Direction side : Direction.values()) {
+            for (BakedQuad q : model.getQuads(state, side, rand)) {
+                if (q.getTintIndex() >= 0) return true;
+            }
+        }
+        for (BakedQuad q : model.getQuads(state, null, rand)) {
+            if (q.getTintIndex() >= 0) return true;
+        }
+        return false;
+    }
+
+    /** Обёртка модели: те же квады, но с tintIndex=0 во всех гранях без собственного тинта. */
     private static final class TintableModel implements BakedModel {
 
         private final BakedModel base;
+        private final ConcurrentHashMap<Long, List<BakedQuad>> cache = new ConcurrentHashMap<>();
 
         TintableModel(BakedModel base) {
             this.base = base;
         }
 
         @Override
-        public List<net.minecraft.client.renderer.block.model.BakedQuad> getQuads(
-                BlockState state, Direction side, RandomSource rand) {
-            List<net.minecraft.client.renderer.block.model.BakedQuad> quads = base.getQuads(state, side, rand);
+        public List<BakedQuad> getQuads(BlockState state, Direction side, RandomSource rand) {
+            long key = side == null ? 6L : side.ordinal();
+            if (state != null) {
+                key |= (long) BuiltInRegistries.BLOCK.getId(state.getBlock()) << 8;
+            } else {
+                key |= 0x1FFFFFFFFFFFFFFFL - 1;
+            }
+            return cache.computeIfAbsent(key, k -> transform(state, side, rand));
+        }
+
+        private List<BakedQuad> transform(BlockState state, Direction side, RandomSource rand) {
+            List<BakedQuad> quads = base.getQuads(state, side, rand);
             if (quads.isEmpty()) return quads;
-            List<net.minecraft.client.renderer.block.model.BakedQuad> out = new ArrayList<>(quads.size());
-            for (net.minecraft.client.renderer.block.model.BakedQuad q : quads) {
-                out.add(new net.minecraft.client.renderer.block.model.BakedQuad(
-                        q.getVertices().clone(), 0, q.getDirection(), q.getSprite(),
+            List<BakedQuad> out = new ArrayList<>(quads.size());
+            for (BakedQuad q : quads) {
+                int ti = q.getTintIndex();
+                out.add(new BakedQuad(q.getVertices().clone(),
+                        ti < 0 ? 0 : ti, q.getDirection(), q.getSprite(),
                         q.isShade(), q.hasAmbientOcclusion()));
             }
             return out;
@@ -378,7 +361,7 @@ public final class CraterTints {
     private CraterTints() {
     }
 
-    /** Forge-шина: запоминаем текущее измерение, чтобы не темнить блоки чужих миров. */
+    /** Forge-шина: при загрузке мира сбрасываем позиционную базу и запоминаем измерение. */
     @Mod.EventBusSubscriber(modid = MainRegistry.MOD_ID, value = Dist.CLIENT)
     public static final class Events {
         @SubscribeEvent
@@ -386,6 +369,7 @@ public final class CraterTints {
             if (event.getLevel() instanceof net.minecraft.world.level.Level level && level.isClientSide()) {
                 currentDimension = level.dimension().location();
                 loadCraters();
+                TINT_MAP.clear();
             }
         }
     }

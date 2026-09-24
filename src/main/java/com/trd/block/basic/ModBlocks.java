@@ -610,6 +610,9 @@ public class ModBlocks {
     public static final RegistryObject<Block> BASALT_SOFT_3 = registerBlock("basalt_soft_3",
             () -> new CraterBasaltBlock(BlockBehaviour.Properties.of()
                     .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final RegistryObject<Block> BASALT_SOFT_4 = registerBlock("basalt_soft_4",
+            () -> new CraterBasaltBlock(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
     public static final RegistryObject<Block> WASTE_LOG = registerBlock("waste_log",
             () -> new RotatedPillarBlock(BlockBehaviour.Properties.copy(Blocks.OAK_WOOD).sound(SoundType.WOOD)));
 
