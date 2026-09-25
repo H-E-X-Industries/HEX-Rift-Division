@@ -443,7 +443,7 @@ public class ModLangProvider extends LanguageProvider {
 
         // ═══ HUD: Stator ═══
 
-// English
+       // English
         add("hud.trd.stator.coils_label", "Coils: ");
         add("hud.trd.stator.buffer_label", "Buffer: ");
         add("hud.trd.stator.load_label", "Load: ");
@@ -529,7 +529,7 @@ public class ModLangProvider extends LanguageProvider {
         add("tooltip.trd.fuel_tank.type_not_set", "§aType: §cnot set");
 
         // ═══ Tooltip: Conglomerate ═══
- add("tooltip.trd.conglomerate.empty", "§7Empty chunk");
+        add("tooltip.trd.conglomerate.empty", "§7Empty chunk");
         add("tooltip.trd.conglomerate.requires_analysis", "§cComposition analysis required.");
         add("tooltip.trd.conglomerate.example", "Example result: how a chunk looks after analysis");
         add("tooltip.trd.conglomerate.contains_fractions", "§eContains fractions:");
@@ -732,6 +732,20 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.CONCRETE_OLD.get(), "Old Concrete");
         add(ModBlocks.CONCRETE_OLD_SLAB.get(), "Old Concrete Slab");
         add(ModBlocks.CONCRETE_OLD_STAIRS.get(), "Old Concrete Stairs");
+
+        // Structural and Industrial Concrete
+        add(ModBlocks.CONCRETE_REBAR.get(), "Concrete with Rebar");
+        add(ModBlocks.CONCRETE_CUT.get(), "Cut Concrete");
+        add(ModBlocks.CONCRETE_VENT.get(), "Ventilated Concrete");
+        add(ModBlocks.STEEL_CONSTRUCT_BLOCK.get(), "Steel Construction Block");
+        add(ModBlocks.STEEL_CONSTRUCT_BLOCK_REINFORCED.get(), "Reinforced Steel Construction Block");
+        add(ModBlocks.CONCRETE_CONSTRUCT_BLOCK.get(), "Heavy Concrete Construction Block");
+        add(ModBlocks.CONCRETE_CONSTRUCT_BLOCK_SLAB.get(), "Heavy Concrete Construction Block Slab");
+        add(ModBlocks.CONCRETE_CONSTRUCT_BLOCK_STAIRS.get(), "Heavy Concrete Construction Block Stairs");
+        add(ModBlocks.STEEL_CONSTRUCT_BLOCK_SLAB.get(), "Steel Construction Block Slab");
+        add(ModBlocks.STEEL_CONSTRUCT_BLOCK_STAIRS.get(), "Steel Construction Block Stairs");
+        add(ModBlocks.STEEL_CONSTRUCT_BLOCK_REINFORCED_SLAB.get(), "Reinforced Steel Construction Block Slab");
+        add(ModBlocks.STEEL_CONSTRUCT_BLOCK_REINFORCED_STAIRS.get(), "Reinforced Steel Construction Block Stairs");
 
         // Bricks
         add(ModBlocks.FIREBRICK_BLOCK.get(), "Firebrick Block");
@@ -2035,6 +2049,20 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.CONCRETE_OLD.get(), "Истощённый бетон");
         add(ModBlocks.CONCRETE_OLD_SLAB.get(), "Плита из истощённого бетона");
         add(ModBlocks.CONCRETE_OLD_STAIRS.get(), "Ступени из истощённого бетона");
+
+        // Несущие и промышленные бетонные блоки
+        add(ModBlocks.CONCRETE_REBAR.get(), "Бетон с арматурой");
+        add(ModBlocks.CONCRETE_CUT.get(), "Бетон с вырезом");
+        add(ModBlocks.CONCRETE_VENT.get(), "Бетон с вентиляцией");
+        add(ModBlocks.STEEL_CONSTRUCT_BLOCK.get(), "Стальной строительный блок");
+        add(ModBlocks.STEEL_CONSTRUCT_BLOCK_REINFORCED.get(), "Усиленный стальной строительный блок");
+        add(ModBlocks.CONCRETE_CONSTRUCT_BLOCK.get(), "Тяжёлый бетонный блок");
+        add(ModBlocks.CONCRETE_CONSTRUCT_BLOCK_SLAB.get(), "Плита из тяжёлого бетонного блока");
+        add(ModBlocks.CONCRETE_CONSTRUCT_BLOCK_STAIRS.get(), "Ступени из тяжёлого бетонного блока");
+        add(ModBlocks.STEEL_CONSTRUCT_BLOCK_SLAB.get(), "Плита из стального строительного блока");
+        add(ModBlocks.STEEL_CONSTRUCT_BLOCK_STAIRS.get(), "Ступени из стального строительного блока");
+        add(ModBlocks.STEEL_CONSTRUCT_BLOCK_REINFORCED_SLAB.get(), "Плита из усиленного стального строительного блока");
+        add(ModBlocks.STEEL_CONSTRUCT_BLOCK_REINFORCED_STAIRS.get(), "Ступени из усиленного стального строительного блока");
         add(ModItems.SODA.get(), "Порошок соды");
         add(ModItems.SODA_CRYSTAL.get(), "Кристалл соды");
         add(ModItems.QUICKLIME.get(), "Негашёная известь");
