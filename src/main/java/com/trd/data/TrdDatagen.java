@@ -35,5 +35,7 @@ public class TrdDatagen {
                         .add(NeoForgeRegistries.Keys.BIOME_MODIFIERS, ModBiomeModifiers::bootstrap),
                 Set.of(MainRegistry.MOD_ID)
         ));
+
+        generator.addProvider(event.includeClient(), new ModBlockStateProvider(output, event.getExistingFileHelper()));
     }
 }

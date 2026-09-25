@@ -10,7 +10,8 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredRegister;
-
+import com.trd.api.rotation.ShaftDiameter;
+import com.trd.api.rotation.ShaftMaterial;
 import java.util.function.Supplier;
 
 public class ModBlocks {
@@ -125,6 +126,67 @@ public class ModBlocks {
     public static final DeferredBlock<net.minecraft.world.level.block.Block> FUEL_TANK_BIG = BLOCKS.register("fuel_tank_big", () -> new com.trd.multiblock.industrial.fueltanks.FuelTankBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.of().noOcclusion()));
     public static final DeferredBlock<net.minecraft.world.level.block.Block> FUEL_TANK_SMALL = BLOCKS.register("fuel_tank_small", () -> new com.trd.multiblock.industrial.fueltanks.small.FuelTankSmallBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.of().noOcclusion()));
 
+
+    // Kinetic / Rotation Blocks
+    public static final java.util.List<DeferredBlock<Block>> ALL_SHAFTS = new java.util.ArrayList<>();
+
+    public static final DeferredBlock<Block> BEARING_BLOCK = registerBlock("bearing",
+            () -> new com.trd.block.basic.industrial.rotation.BearingBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)
+                    .noOcclusion().strength(5.0f, 6.0f).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<Block> HAND_CRANK_BLOCK = registerBlock("hand_crank",
+            com.trd.block.basic.industrial.rotation.HandCrankBlock::new);
+
+    public static final DeferredBlock<Block> SHAFT_LIGHT_IRON = registerShaft(ShaftMaterial.IRON, ShaftDiameter.LIGHT);
+    public static final DeferredBlock<Block> SHAFT_MEDIUM_IRON = registerShaft(ShaftMaterial.IRON, ShaftDiameter.MEDIUM);
+    public static final DeferredBlock<Block> SHAFT_HEAVY_IRON = registerShaft(ShaftMaterial.IRON, ShaftDiameter.HEAVY);
+
+    public static final DeferredBlock<Block> SHAFT_LIGHT_DURALUMIN = registerShaft(ShaftMaterial.DURALUMIN, ShaftDiameter.LIGHT);
+    public static final DeferredBlock<Block> SHAFT_MEDIUM_DURALUMIN = registerShaft(ShaftMaterial.DURALUMIN, ShaftDiameter.MEDIUM);
+    public static final DeferredBlock<Block> SHAFT_HEAVY_DURALUMIN = registerShaft(ShaftMaterial.DURALUMIN, ShaftDiameter.HEAVY);
+
+    public static final DeferredBlock<Block> SHAFT_LIGHT_STEEL = registerShaft(ShaftMaterial.STEEL, ShaftDiameter.LIGHT);
+    public static final DeferredBlock<Block> SHAFT_MEDIUM_STEEL = registerShaft(ShaftMaterial.STEEL, ShaftDiameter.MEDIUM);
+    public static final DeferredBlock<Block> SHAFT_HEAVY_STEEL = registerShaft(ShaftMaterial.STEEL, ShaftDiameter.HEAVY);
+
+    public static final DeferredBlock<Block> SHAFT_LIGHT_TITANIUM = registerShaft(ShaftMaterial.TITANIUM, ShaftDiameter.LIGHT);
+    public static final DeferredBlock<Block> SHAFT_MEDIUM_TITANIUM = registerShaft(ShaftMaterial.TITANIUM, ShaftDiameter.MEDIUM);
+    public static final DeferredBlock<Block> SHAFT_HEAVY_TITANIUM = registerShaft(ShaftMaterial.TITANIUM, ShaftDiameter.HEAVY);
+
+    public static final DeferredBlock<Block> SHAFT_LIGHT_TUNGSTEN_CARBIDE = registerShaft(ShaftMaterial.TUNGSTEN_CARBIDE, ShaftDiameter.LIGHT);
+    public static final DeferredBlock<Block> SHAFT_MEDIUM_TUNGSTEN_CARBIDE = registerShaft(ShaftMaterial.TUNGSTEN_CARBIDE, ShaftDiameter.MEDIUM);
+    public static final DeferredBlock<Block> SHAFT_HEAVY_TUNGSTEN_CARBIDE = registerShaft(ShaftMaterial.TUNGSTEN_CARBIDE, ShaftDiameter.HEAVY);
+
+    private static DeferredBlock<Block> registerShaft(ShaftMaterial mat, ShaftDiameter dia) {
+        String name = "shaft_" + dia.name + "_" + mat.name();
+        DeferredBlock<Block> shaft = registerBlock(name, () -> new com.trd.block.basic.industrial.rotation.ShaftBlock(BlockBehaviour.Properties.of().strength(2.0f), mat, dia));
+        ALL_SHAFTS.add(shaft);
+        return shaft;
+    }
+
+    public static DeferredBlock<Block> getShaft(ShaftMaterial mat, ShaftDiameter dia) {
+        if (mat == ShaftMaterial.IRON && dia == ShaftDiameter.LIGHT) return SHAFT_LIGHT_IRON;
+        if (mat == ShaftMaterial.IRON && dia == ShaftDiameter.MEDIUM) return SHAFT_MEDIUM_IRON;
+        if (mat == ShaftMaterial.IRON && dia == ShaftDiameter.HEAVY) return SHAFT_HEAVY_IRON;
+
+        if (mat == ShaftMaterial.DURALUMIN && dia == ShaftDiameter.LIGHT) return SHAFT_LIGHT_DURALUMIN;
+        if (mat == ShaftMaterial.DURALUMIN && dia == ShaftDiameter.MEDIUM) return SHAFT_MEDIUM_DURALUMIN;
+        if (mat == ShaftMaterial.DURALUMIN && dia == ShaftDiameter.HEAVY) return SHAFT_HEAVY_DURALUMIN;
+
+        if (mat == ShaftMaterial.STEEL && dia == ShaftDiameter.LIGHT) return SHAFT_LIGHT_STEEL;
+        if (mat == ShaftMaterial.STEEL && dia == ShaftDiameter.MEDIUM) return SHAFT_MEDIUM_STEEL;
+        if (mat == ShaftMaterial.STEEL && dia == ShaftDiameter.HEAVY) return SHAFT_HEAVY_STEEL;
+
+        if (mat == ShaftMaterial.TITANIUM && dia == ShaftDiameter.LIGHT) return SHAFT_LIGHT_TITANIUM;
+        if (mat == ShaftMaterial.TITANIUM && dia == ShaftDiameter.MEDIUM) return SHAFT_MEDIUM_TITANIUM;
+        if (mat == ShaftMaterial.TITANIUM && dia == ShaftDiameter.HEAVY) return SHAFT_HEAVY_TITANIUM;
+
+        if (mat == ShaftMaterial.TUNGSTEN_CARBIDE && dia == ShaftDiameter.LIGHT) return SHAFT_LIGHT_TUNGSTEN_CARBIDE;
+        if (mat == ShaftMaterial.TUNGSTEN_CARBIDE && dia == ShaftDiameter.MEDIUM) return SHAFT_MEDIUM_TUNGSTEN_CARBIDE;
+        if (mat == ShaftMaterial.TUNGSTEN_CARBIDE && dia == ShaftDiameter.HEAVY) return SHAFT_HEAVY_TUNGSTEN_CARBIDE;
+
+        return SHAFT_LIGHT_IRON;
+    }
 
     // Machines
     public static final DeferredBlock<Block> OPTIC_MICROSCOPE = registerBlock("optic_microscope",

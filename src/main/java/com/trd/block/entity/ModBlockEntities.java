@@ -97,6 +97,24 @@ public class ModBlockEntities {
                     com.trd.block.basic.ModBlocks.OPTIC_MICROSCOPE.get()
             ).build(null));
 
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.industrial.rotation.ShaftBlockEntity>> SHAFT_BE =
+            BLOCK_ENTITIES.register("shaft_be", () -> {
+                net.minecraft.world.level.block.Block[] validBlocks = ModBlocks.ALL_SHAFTS.stream().map(Supplier::get).toArray(net.minecraft.world.level.block.Block[]::new);
+                return BlockEntityType.Builder.of(com.trd.block.entity.industrial.rotation.ShaftBlockEntity::new, validBlocks).build(null);
+            });
+
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.industrial.rotation.BearingBlockEntity>> BEARING_BE =
+            BLOCK_ENTITIES.register("bearing_be", () -> BlockEntityType.Builder.of(
+                    com.trd.block.entity.industrial.rotation.BearingBlockEntity::new,
+                    ModBlocks.BEARING_BLOCK.get()
+            ).build(null));
+
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.industrial.rotation.HandCrankBlockEntity>> HAND_CRANK_BE =
+            BLOCK_ENTITIES.register("hand_crank_be", () -> BlockEntityType.Builder.of(
+                    com.trd.block.entity.industrial.rotation.HandCrankBlockEntity::new,
+                    ModBlocks.HAND_CRANK_BLOCK.get()
+            ).build(null));
+
     public static void register(IEventBus eventBus) {
         BLOCK_ENTITIES.register(eventBus);
     }

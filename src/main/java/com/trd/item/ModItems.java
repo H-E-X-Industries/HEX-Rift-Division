@@ -94,6 +94,10 @@ public class ModItems {
     public static final DeferredItem<Item> CAST_PICKAXE_STEEL = ITEMS.register("cast_pickaxe_steel",
             () -> new com.trd.item.tools.cast_pickaxes.materials.CastPickaxeSteelItem(new Item.Properties().stacksTo(1)));
 
+    // Rotation / Kinetic Items
+    public static final DeferredItem<Item> BELT = ITEMS.register("belt",
+            () -> new com.trd.item.industrial.rotation.BeltItem(new Item.Properties()));
+
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);
     }

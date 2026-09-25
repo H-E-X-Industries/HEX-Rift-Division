@@ -70,5 +70,11 @@ public class ModNetworking {
             com.trd.network.packet.conveyor.UpdateSortirovshikModeC2SPacket.STREAM_CODEC,
             com.trd.network.packet.conveyor.UpdateSortirovshikModeC2SPacket::handle
         );
+
+        registrar.playToServer(
+            com.trd.network.packet.rotation.ScrollHandCrankPacket.TYPE,
+            com.trd.network.packet.rotation.ScrollHandCrankPacket.STREAM_CODEC,
+            com.trd.network.packet.rotation.ScrollHandCrankPacket::handle
+        );
     }
 }

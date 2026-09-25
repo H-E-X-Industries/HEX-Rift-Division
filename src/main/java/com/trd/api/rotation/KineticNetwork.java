@@ -1,0 +1,299 @@
+package com.trd.api.rotation;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.LongTag;
+import net.minecraft.nbt.NumericTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.core.Direction;
+
+import java.util.*;
+
+import static com.trd.main.MainRegistry.LOGGER;
+
+public class KineticNetwork {
+    private final UUID networkId;
+
+    private final Set<BlockPos> members = new HashSet<>();
+    private final Set<BlockPos> generators = new HashSet<>();
+    
+    private double currentSpeed = 0.0;
+    private long totalGeneratedTorque = 0;
+    private long totalConsumedTorque = 0;
+    private double totalInertia = 1.0;
+    private long targetNetworkSpeed = 0;
+    private boolean needsRecalculation = true;
+
+    private boolean isOverloaded = false;
+    private double loadFactor = 0;
+
+    public KineticNetwork() {
+        this.networkId = UUID.randomUUID();
+    }
+
+    public KineticNetwork(UUID id) {
+        this.networkId = id;
+    }
+
+    public UUID getId() {
+        return networkId;
+    }
+
+    public boolean tick(ServerLevel level) {
+        if (members.isEmpty())
+            return false;
+
+        if (this.needsRecalculation) {
+            KineticNetworkManager.get(level).recalculateNetworkSigns(this);
+            this.recalculate(level);
+            this.needsRecalculation = false;
+        }
+
+        long oldSpeedLong = (long) Math.round(this.currentSpeed);
+        double oldSpeed = this.currentSpeed;
+        
+        // OVERLOAD CHECK: если сеть критически перегружена (>= 125%) — принудительно останавливаем
+        if (isOverloaded && loadFactor >= 1.25) {
+            this.targetNetworkSpeed = 0;
+        }
+
+        // 1. РАЗГОН / ТОРМОЖЕНИЕ
+        if (totalGeneratedTorque > 0) {
+            double speedDiff = (double) targetNetworkSpeed - this.currentSpeed;
+            double absSpeed = Math.abs(this.currentSpeed);
+            double absTarget = Math.abs((double) targetNetworkSpeed);
+
+            // Проверяем, разгоняемся ли мы в сторону целевой скорости или замедляемся
+            boolean accelerating = (targetNetworkSpeed != 0 && Math.signum(this.currentSpeed) == Math.signum(targetNetworkSpeed) && absSpeed < absTarget)
+                    || (this.currentSpeed == 0 && targetNetworkSpeed != 0);
+
+            if (accelerating) {
+                // Эффективный разгоняющий момент с учётом потребителей
+                double effectiveTorque = totalGeneratedTorque - totalConsumedTorque;
+                if (loadFactor < 1.25 && effectiveTorque <= 0) {
+                    effectiveTorque = 0.5; // Минимальный момент для выхода на целевую скорость
+                }
+
+                double deltaSpeed = (effectiveTorque * 10.0) / this.totalInertia;
+                if (speedDiff > 0) {
+                    this.currentSpeed = Math.min((double) targetNetworkSpeed, this.currentSpeed + Math.max(0.0001, deltaSpeed));
+                } else if (speedDiff < 0) {
+                    this.currentSpeed = Math.max((double) targetNetworkSpeed, this.currentSpeed - Math.max(0.0001, deltaSpeed));
+                }
+            } else {
+                // Замедление к целевой скорости (при снижении оборотов мотора или перегрузке)
+                double decelTorque = totalConsumedTorque + 15.0 + 0.5 * totalGeneratedTorque;
+                double deltaSpeed = (decelTorque * 10.0) / this.totalInertia;
+                if (speedDiff > 0) {
+                    this.currentSpeed = Math.min((double) targetNetworkSpeed, this.currentSpeed + Math.max(0.0001, deltaSpeed));
+                } else if (speedDiff < 0) {
+                    this.currentSpeed = Math.max((double) targetNetworkSpeed, this.currentSpeed - Math.max(0.0001, deltaSpeed));
+                }
+            }
+        } else {
+            // ТОРМОЖЕНИЕ ПО ИНЕРЦИИ (генераторы выключены)
+            double brakingTorque = totalConsumedTorque + 15.0 + 0.2 * members.size();
+            double deltaSpeed = (brakingTorque * 10.0) / this.totalInertia;
+
+            if (this.currentSpeed > 0) {
+                this.currentSpeed = Math.max(0.0, this.currentSpeed - deltaSpeed);
+            } else if (this.currentSpeed < 0) {
+                this.currentSpeed = Math.min(0.0, this.currentSpeed + deltaSpeed);
+            }
+
+            if (Math.abs(this.currentSpeed) < 0.001) {
+                this.currentSpeed = 0.0;
+            }
+        }
+
+        long newSpeedLong = (long) Math.round(this.currentSpeed);
+        if (oldSpeedLong != newSpeedLong) {
+            updateMembers(level);
+            return true;
+        }
+        return oldSpeed != this.currentSpeed;
+    }
+
+    public void recalculate(ServerLevel level) {
+        this.totalGeneratedTorque = 0;
+        this.totalInertia = 0.0;
+        this.totalConsumedTorque = 0;
+        this.targetNetworkSpeed = 0;
+
+        // 1. Собираем физику со всех участников
+        for (BlockPos pos : members) {
+            if (level.isLoaded(pos) && level.getBlockEntity(pos) instanceof Rotational node) {
+                float scale = node.getNetworkScale();
+                float absScale = Math.abs(scale);
+
+                this.totalInertia += node.getInertiaContribution();
+
+                if (absScale > 0.001f) {
+                    this.totalConsumedTorque += (long) (node.getConsumedTorque() * absScale);
+                }
+                node.setSpeed((long) Math.round(this.currentSpeed));
+                checkNodeFailure(level, pos, node);
+            }
+        }
+
+        // 2. Опрашиваем генераторы
+        long maxAbsSpeed = 0;
+        Map<BlockPos, Long> genSpeeds = new HashMap<>();
+        Map<BlockPos, Long> genTorques = new HashMap<>();
+        
+        for (BlockPos genPos : generators) {
+            if (level.isLoaded(genPos) && level.getBlockEntity(genPos) instanceof Rotational gen) {
+                long genSpeed = gen.getGeneratedSpeed();
+                long genTorque = gen.getTorque();
+
+                BlockState state = level.getBlockState(genPos);
+                if (state.hasProperty(BlockStateProperties.FACING)) {
+                    Direction facing = state.getValue(BlockStateProperties.FACING);
+                    if (facing == Direction.SOUTH || facing == Direction.EAST || facing == Direction.UP) {
+                        genSpeed = -genSpeed;
+                    }
+                }
+                
+                genSpeeds.put(genPos, genSpeed);
+                genTorques.put(genPos, genTorque);
+
+                if (Math.abs(genSpeed) > maxAbsSpeed) {
+                    maxAbsSpeed = Math.abs(genSpeed);
+                    targetNetworkSpeed = genSpeed;
+                }
+            }
+        }
+
+        // 3. Проверяем допуск 20% и суммируем мощность
+        long tolerance = (long) (maxAbsSpeed * 0.20);
+        for (Map.Entry<BlockPos, Long> entry : genSpeeds.entrySet()) {
+            BlockPos pos = entry.getKey();
+            long genSpeed = entry.getValue();
+            
+            if (genSpeed == 0) {
+                continue;
+            }
+
+            // Если направление вращения противоположно сети — ломаем
+            if (targetNetworkSpeed != 0 && Math.signum(genSpeed) != Math.signum(targetNetworkSpeed)) {
+                KineticNetworkManager.get(level).scheduleBreakage(pos);
+                continue;
+            }
+
+            if (Math.abs(genSpeed - targetNetworkSpeed) <= tolerance) {
+                this.totalGeneratedTorque += genTorques.get(pos);
+            }
+        }
+
+        // 4. OVERLOAD CHECK
+        if (totalGeneratedTorque > 0) {
+            this.loadFactor = (double) totalConsumedTorque / totalGeneratedTorque;
+        } else {
+            this.loadFactor = totalConsumedTorque > 0 ? Double.POSITIVE_INFINITY : 0;
+        }
+
+        this.isOverloaded = this.loadFactor > 1.0;
+
+        if (this.isOverloaded) {
+            if (this.loadFactor >= 1.25) {
+                this.targetNetworkSpeed = 0;
+            } else {
+                double multiplier = (1.25 - this.loadFactor) / 0.25;
+                this.targetNetworkSpeed = (long) (this.targetNetworkSpeed * multiplier);
+            }
+        }
+
+        if (this.totalInertia <= 0) this.totalInertia = 0.1;
+
+        // 5. STRUCTURAL INTEGRITY CHECK (Torque limit)
+        for (BlockPos pos : members) {
+            if (level.isLoaded(pos) && level.getBlockEntity(pos) instanceof Rotational node) {
+                if (totalGeneratedTorque > node.getMaxTorque()) {
+                    KineticNetworkManager.get(level).scheduleStructuralFailure(pos);
+                }
+            }
+        }
+    }
+
+    private void checkNodeFailure(ServerLevel level, BlockPos pos, Rotational node) {
+        if (Math.abs(node.getSpeed()) > node.getMaxSpeed()) {
+            KineticNetworkManager.get(level).scheduleStructuralFailure(pos);
+        }
+    }
+
+    private void updateMembers(ServerLevel level) {
+        long speedLong = (long) Math.round(this.currentSpeed);
+        for (BlockPos pos : members) {
+            BlockEntity be = level.getBlockEntity(pos);
+            if (be instanceof Rotational node) {
+                node.setSpeed(speedLong);
+                checkNodeFailure(level, pos, node);
+                
+                if (totalGeneratedTorque > node.getMaxTorque()) {
+                    KineticNetworkManager.get(level).scheduleStructuralFailure(pos);
+                }
+            }
+        }
+    }
+
+    public CompoundTag serializeNBT() {
+        CompoundTag nbt = new CompoundTag();
+        nbt.putUUID("Id", networkId);
+        nbt.putDouble("Speed", currentSpeed);
+        nbt.putBoolean("Overloaded", isOverloaded);
+        ListTag membersTag = new ListTag();
+        for (BlockPos pos : members) {
+            membersTag.add(LongTag.valueOf(pos.asLong()));
+        }
+        nbt.put("Members", membersTag);
+        ListTag generatorsTag = new ListTag();
+        for (BlockPos pos : generators) {
+            generatorsTag.add(LongTag.valueOf(pos.asLong()));
+        }
+        nbt.put("Generators", generatorsTag);
+        return nbt;
+    }
+
+    public static KineticNetwork deserializeNBT(CompoundTag nbt) {
+        KineticNetwork net = new KineticNetwork(nbt.getUUID("Id"));
+        if (nbt.contains("Speed", Tag.TAG_DOUBLE)) {
+            net.currentSpeed = nbt.getDouble("Speed");
+        } else {
+            net.currentSpeed = (double) nbt.getLong("Speed");
+        }
+        net.isOverloaded = nbt.getBoolean("Overloaded");
+        ListTag membersTag = nbt.getList("Members", Tag.TAG_LONG);
+        for (int i = 0; i < membersTag.size(); i++) {
+            long posLong = ((NumericTag) membersTag.get(i)).getAsLong();
+            net.members.add(BlockPos.of(posLong));
+        }
+        ListTag gensTag = nbt.getList("Generators", Tag.TAG_LONG);
+        for (int i = 0; i < gensTag.size(); i++) {
+            long posLong = ((NumericTag) gensTag.get(i)).getAsLong();
+            net.generators.add(BlockPos.of(posLong));
+        }
+        return net;
+    }
+
+    public void addMember(BlockPos pos) { this.members.add(pos); }
+    public void addGenerator(BlockPos pos) { this.generators.add(pos); this.members.add(pos); }
+    public void removeMember(BlockPos pos) { this.members.remove(pos); this.generators.remove(pos); }
+    public void requestRecalculation() { this.needsRecalculation = true; }
+    public Set<BlockPos> getMembers() { return members; }
+    public long getSpeed() { return (long) Math.round(currentSpeed); }
+    public double getExactSpeed() { return currentSpeed; }
+    public Set<BlockPos> getGenerators() { return generators; }
+    public long getTargetSpeed() { return targetNetworkSpeed; }
+    public void setCurrentSpeed(double speed) { this.currentSpeed = speed; }
+    public void setCurrentSpeed(long speed) { this.currentSpeed = (double) speed; }
+    public long getTotalTorque() { return totalGeneratedTorque; }
+    public double getTotalInertia() { return totalInertia; }
+    public boolean isOverloaded() { return isOverloaded; }
+    public long getTotalConsumedTorque() { return totalConsumedTorque; }
+    public double getLoadFactor() { return loadFactor; }
+}

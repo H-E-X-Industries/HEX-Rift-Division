@@ -18,11 +18,13 @@ import com.trd.multiblock.system.roles.IMultiblockPart;
 import java.util.EnumSet;
 import java.util.Set;
 
-public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart {
+public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart, com.trd.api.rotation.Rotational {
 
     private BlockPos controllerPos;
     private PartRole role = PartRole.DEFAULT;
     private Set<Direction> allowedClimbSides = EnumSet.noneOf(Direction.class);
+    private long kineticSpeed = 0;
+    private float kineticNetworkScale = 1.0f;
 
     public MultiblockPartEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.MULTIBLOCK_PART.get(), pos, state);
@@ -45,6 +47,8 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
     public void setPartRole(PartRole role) {
         boolean wasNetworked = isNetworkedRole(this.role);
         boolean isNetworked  = isNetworkedRole(role);
+        boolean wasKinetic = isKineticPort();
+        boolean isKinetic = (role == PartRole.KINETIC_PORT);
 
         this.role = role;
         setChanged();
@@ -59,6 +63,13 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
             } else if (wasNetworked && !isNetworked) {
                 energyManager.removeNode(this.getBlockPos());
             }
+
+            if (!wasKinetic && isKinetic) {
+                com.trd.api.rotation.KineticNetworkManager.get((ServerLevel) this.level).updateNetworkAfterPlace(this.getBlockPos());
+            } else if (wasKinetic && !isKinetic) {
+                com.trd.api.rotation.KineticNetworkManager.get((ServerLevel) this.level).updateNetworkAfterRemove(this.getBlockPos());
+            }
+
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
         }
     }
@@ -89,11 +100,136 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
         return this.role == PartRole.KINETIC_PORT;
     }
 
+    private com.trd.api.rotation.Rotational getControllerRotational() {
+        if (controllerPos == null || level == null) return null;
+        BlockEntity be = level.getBlockEntity(controllerPos);
+        return be instanceof com.trd.api.rotation.Rotational r ? r : null;
+    }
+
+    @Override
+    public long getSpeed() {
+        if (!isKineticPort()) return 0;
+        return this.kineticSpeed;
+    }
+
+    @Override
+    public void setSpeed(long speed) {
+        if (!isKineticPort()) return;
+        this.kineticSpeed = (long) (speed * this.kineticNetworkScale);
+    }
+
+    @Override
+    public long getTorque() {
+        return 0;
+    }
+
+    @Override
+    public long getMaxSpeed() {
+        com.trd.api.rotation.Rotational ctrl = getControllerRotational();
+        return ctrl != null ? ctrl.getMaxSpeed() : 0;
+    }
+
+    @Override
+    public long getMaxTorque() {
+        com.trd.api.rotation.Rotational ctrl = getControllerRotational();
+        return ctrl != null ? ctrl.getMaxTorque() : 0;
+    }
+
+    @Override
+    public double getInertiaContribution() {
+        return isKineticPort() ? 0.5 : 0;
+    }
+
+    @Override
+    public long getMaxTorqueTolerance() {
+        com.trd.api.rotation.Rotational ctrl = getControllerRotational();
+        return ctrl != null ? ctrl.getMaxTorqueTolerance() : 0;
+    }
+
+    @Override
+    public long getConsumedTorque() {
+        return 0;
+    }
+
+    @Override
+    public boolean isSource() {
+        return false;
+    }
+
+    @Override
+    public long getVisualSpeed() {
+        com.trd.api.rotation.Rotational ctrl = getControllerRotational();
+        if (ctrl != null) return ctrl.getVisualSpeed();
+        return getSpeed();
+    }
+
+    @Override
+    public Direction[] getPropagationDirections() {
+        if (!isKineticPort() || controllerPos == null || level == null) return new Direction[0];
+
+        BlockState ctrlState = level.getBlockState(controllerPos);
+        if (!ctrlState.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING))
+            return new Direction[0];
+
+        Direction facing = ctrlState.getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING);
+        BlockPos front = controllerPos.relative(facing);
+        BlockPos back = controllerPos.relative(facing.getOpposite());
+
+        if (worldPosition.equals(front)) return new Direction[]{facing, facing.getOpposite()};
+        if (worldPosition.equals(back)) return new Direction[]{facing.getOpposite(), facing};
+        return new Direction[0];
+    }
+
+    @Override
+    public java.util.List<BlockPos> getPotentialConnections(net.minecraft.world.level.Level level, net.minecraft.core.BlockPos myPos) {
+        java.util.List<BlockPos> list = new java.util.ArrayList<>();
+        if (!isKineticPort()) return list;
+        if (controllerPos != null) list.add(controllerPos);
+        for (Direction dir : getPropagationDirections()) {
+            if (dir != null) list.add(myPos.relative(dir));
+        }
+        return list;
+    }
+
+    @Override
+    public boolean canConnectMechanically(net.minecraft.core.BlockPos myPos, net.minecraft.core.BlockPos neighborPos, com.trd.api.rotation.Rotational neighbor) {
+        if (!isKineticPort()) return false;
+        if (controllerPos != null && neighborPos.equals(controllerPos)) {
+            return true;
+        }
+        for (Direction dir : getPropagationDirections()) {
+            if (myPos.relative(dir).equals(neighborPos)) {
+                return neighbor instanceof com.trd.block.entity.industrial.rotation.KineticNodeBlockEntity;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public float calculateTransmissionRatio(net.minecraft.core.BlockPos myPos, net.minecraft.core.BlockPos neighborPos, com.trd.api.rotation.Rotational neighbor) {
+        return 1.0f;
+    }
+
+    @Override
+    public void setNetworkScale(float scale) {
+        if (isKineticPort()) this.kineticNetworkScale = scale;
+    }
+
+    @Override
+    public float getNetworkScale() {
+        return isKineticPort() ? this.kineticNetworkScale : 1.0f;
+    }
+
     @Override
     public void setRemoved() {
         super.setRemoved();
-        if (this.level != null && !this.level.isClientSide && isNetworkedRole(this.role)) {
-            com.trd.api.energy.EnergyNetworkManager.get((ServerLevel) this.level).removeNode(this.getBlockPos());
+        if (this.level != null && !this.level.isClientSide) {
+            if (isNetworkedRole(this.role)) {
+                com.trd.api.energy.EnergyNetworkManager.get((ServerLevel) this.level).removeNode(this.getBlockPos());
+            }
+            if (isKineticPort()) {
+                com.trd.api.rotation.KineticNetworkManager.get((ServerLevel) this.level).updateNetworkAfterRemove(this.getBlockPos());
+            }
         }
     }
 
@@ -112,6 +248,10 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
             climbMask |= (1 << d.ordinal());
         }
         tag.putByte("ClimbSides", climbMask);
+        if (isKineticPort()) {
+            tag.putLong("KineticSpeed", kineticSpeed);
+            tag.putFloat("KineticNetworkScale", kineticNetworkScale);
+        }
     }
 
     @Override
@@ -124,6 +264,8 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
                 this.role = r; break;
             }
         }
+        if (tag.contains("KineticSpeed")) kineticSpeed = tag.getLong("KineticSpeed");
+        if (tag.contains("KineticNetworkScale")) kineticNetworkScale = tag.getFloat("KineticNetworkScale");
         
         if (tag.contains("ClimbSides")) {
             byte mask = tag.getByte("ClimbSides");

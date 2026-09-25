@@ -182,5 +182,41 @@ public class ModClientSetup {
                 return false;
             }
         });
+
+        VisualizerRegistry.setVisualizer(ModBlockEntities.SHAFT_BE.get(), new BlockEntityVisualizer<com.trd.block.entity.industrial.rotation.ShaftBlockEntity>() {
+            @Override
+            public BlockEntityVisual<? super com.trd.block.entity.industrial.rotation.ShaftBlockEntity> createVisual(VisualizationContext ctx, com.trd.block.entity.industrial.rotation.ShaftBlockEntity be, float partialTick) {
+                return new com.trd.client.render.flywheel.ShaftVisual(ctx, be, partialTick);
+            }
+
+            @Override
+            public boolean skipVanillaRender(com.trd.block.entity.industrial.rotation.ShaftBlockEntity be) {
+                return true;
+            }
+        });
+
+        VisualizerRegistry.setVisualizer(ModBlockEntities.BEARING_BE.get(), new BlockEntityVisualizer<com.trd.block.entity.industrial.rotation.BearingBlockEntity>() {
+            @Override
+            public BlockEntityVisual<? super com.trd.block.entity.industrial.rotation.BearingBlockEntity> createVisual(VisualizationContext ctx, com.trd.block.entity.industrial.rotation.BearingBlockEntity be, float partialTick) {
+                return new com.trd.client.render.flywheel.BearingVisual(ctx, be, partialTick);
+            }
+
+            @Override
+            public boolean skipVanillaRender(com.trd.block.entity.industrial.rotation.BearingBlockEntity be) {
+                return true;
+            }
+        });
+
+        VisualizerRegistry.setVisualizer(ModBlockEntities.HAND_CRANK_BE.get(), new BlockEntityVisualizer<com.trd.block.entity.industrial.rotation.HandCrankBlockEntity>() {
+            @Override
+            public BlockEntityVisual<? super com.trd.block.entity.industrial.rotation.HandCrankBlockEntity> createVisual(VisualizationContext ctx, com.trd.block.entity.industrial.rotation.HandCrankBlockEntity be, float partialTick) {
+                return new com.trd.client.render.flywheel.HandCrankVisual(ctx, be, partialTick);
+            }
+
+            @Override
+            public boolean skipVanillaRender(com.trd.block.entity.industrial.rotation.HandCrankBlockEntity be) {
+                return true;
+            }
+        });
     }
 }

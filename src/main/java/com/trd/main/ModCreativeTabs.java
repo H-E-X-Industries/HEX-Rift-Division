@@ -129,6 +129,12 @@ public class ModCreativeTabs {
                         output.accept(ModItems.CAST_PICKAXE_IRON.get());
                         output.accept(ModItems.CAST_PICKAXE_STEEL.get());
 
+                        // Kinetic System
+                        output.accept(ModBlocks.BEARING_BLOCK.get());
+                        output.accept(ModBlocks.HAND_CRANK_BLOCK.get());
+                        output.accept(ModItems.BELT.get());
+                        ModBlocks.ALL_SHAFTS.forEach(shaft -> output.accept(shaft.get()));
+
                         // Fluid Drops
                         for (net.neoforged.neoforge.registries.DeferredHolder<net.minecraft.world.item.Item, ? extends net.minecraft.world.item.Item> drop : com.trd.api.fluids.ModFluids.getAllFluidDrops().values()) {
                             output.accept(drop.get());
