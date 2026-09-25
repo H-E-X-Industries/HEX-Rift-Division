@@ -485,4 +485,8 @@ public class KineticNetworkManager extends SavedData {
     public KineticNetwork getNetworkFor(BlockPos pos) {
         return blockToNetwork.get(pos);
     }
+
+    public boolean isReady() {
+        return postLoadRebuildTimer < 0;
+    }
 }

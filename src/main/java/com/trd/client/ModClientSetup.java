@@ -25,6 +25,7 @@ public class ModClientSetup {
         event.register(com.trd.menu.ModMenuTypes.CONVEYOR_BUFFER_MENU.get(), com.trd.client.overlay.gui.ConveyorBufferScreen::new);
         event.register(com.trd.menu.ModMenuTypes.SORTIROVSHIK_MENU.get(), com.trd.client.overlay.gui.GUISortirovshik::new);
         event.register(com.trd.menu.ModMenuTypes.OPTIC_MICROSCOPE_MENU.get(), com.trd.client.overlay.gui.GUIOpticMicroscope::new);
+        event.register(com.trd.menu.ModMenuTypes.MOTOR_ELECTRO_MENU.get(), com.trd.client.overlay.gui.GUIMotorElectro::new);
     }
 
     @SubscribeEvent
@@ -215,6 +216,30 @@ public class ModClientSetup {
 
             @Override
             public boolean skipVanillaRender(com.trd.block.entity.industrial.rotation.HandCrankBlockEntity be) {
+                return true;
+            }
+        });
+
+        VisualizerRegistry.setVisualizer(ModBlockEntities.CLUTCH_BE.get(), new BlockEntityVisualizer<com.trd.block.entity.industrial.rotation.ClutchBlockEntity>() {
+            @Override
+            public BlockEntityVisual<? super com.trd.block.entity.industrial.rotation.ClutchBlockEntity> createVisual(VisualizationContext ctx, com.trd.block.entity.industrial.rotation.ClutchBlockEntity be, float partialTick) {
+                return new com.trd.client.render.flywheel.ClutchVisual(ctx, be, partialTick);
+            }
+
+            @Override
+            public boolean skipVanillaRender(com.trd.block.entity.industrial.rotation.ClutchBlockEntity be) {
+                return true;
+            }
+        });
+
+        VisualizerRegistry.setVisualizer(ModBlockEntities.MOTOR_ELECTRO_BE.get(), new BlockEntityVisualizer<com.trd.block.entity.industrial.rotation.MotorElectroBlockEntity>() {
+            @Override
+            public BlockEntityVisual<? super com.trd.block.entity.industrial.rotation.MotorElectroBlockEntity> createVisual(VisualizationContext ctx, com.trd.block.entity.industrial.rotation.MotorElectroBlockEntity be, float partialTick) {
+                return new com.trd.client.render.flywheel.MotorVisual(ctx, be, partialTick);
+            }
+
+            @Override
+            public boolean skipVanillaRender(com.trd.block.entity.industrial.rotation.MotorElectroBlockEntity be) {
                 return true;
             }
         });

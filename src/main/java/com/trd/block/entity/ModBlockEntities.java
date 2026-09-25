@@ -115,6 +115,18 @@ public class ModBlockEntities {
                     ModBlocks.HAND_CRANK_BLOCK.get()
             ).build(null));
 
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.industrial.rotation.ClutchBlockEntity>> CLUTCH_BE =
+            BLOCK_ENTITIES.register("clutch_be", () -> BlockEntityType.Builder.of(
+                    com.trd.block.entity.industrial.rotation.ClutchBlockEntity::new,
+                    ModBlocks.CLUTCH.get()
+            ).build(null));
+
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.industrial.rotation.MotorElectroBlockEntity>> MOTOR_ELECTRO_BE =
+            BLOCK_ENTITIES.register("motor_electro_be", () -> BlockEntityType.Builder.of(
+                    com.trd.block.entity.industrial.rotation.MotorElectroBlockEntity::new,
+                    ModBlocks.MOTOR_ELECTRO.get()
+            ).build(null));
+
     public static void register(IEventBus eventBus) {
         BLOCK_ENTITIES.register(eventBus);
     }

@@ -35,6 +35,15 @@ public record SyncMotorRpmPacket(BlockPos pos, int rpm) implements CustomPacketP
             Player player = ctx.player();
             if (player == null) return;
             if (!(player.level() instanceof ServerLevel level)) return;
+
+            if (level.getBlockEntity(pos) instanceof com.trd.block.entity.industrial.rotation.MotorElectroBlockEntity motor) {
+                motor.setTargetRpm(rpm);
+                motor.setChanged();
+                com.trd.api.rotation.KineticNetwork net = com.trd.api.rotation.KineticNetworkManager.get(level).getNetworkFor(pos);
+                if (net != null) {
+                    net.requestRecalculation();
+                }
+            }
         });
     }
 }

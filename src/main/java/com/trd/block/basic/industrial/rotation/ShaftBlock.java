@@ -291,6 +291,10 @@ public class ShaftBlock extends BaseEntityBlock {
             }
         } else if (stateAgainst.getBlock() instanceof BearingBlock) {
             placementFacing = stateAgainst.getValue(BearingBlock.FACING);
+        } else if (stateAgainst.getBlock() instanceof ClutchBlock) {
+            placementFacing = stateAgainst.getValue(ClutchBlock.FACING);
+        } else if (stateAgainst.getBlock() instanceof MotorElectroBlock) {
+            placementFacing = stateAgainst.getValue(MotorElectroBlock.FACING);
         } else if (stateAgainst.getBlock() instanceof HandCrankBlock) {
             placementFacing = stateAgainst.getValue(HandCrankBlock.FACING).getOpposite();
         } else if (stateAgainst.getBlock() instanceof com.trd.multiblock.system.MultiblockPartBlock) {
@@ -342,12 +346,14 @@ public class ShaftBlock extends BaseEntityBlock {
         super.neighborChanged(state, level, pos, block, fromPos, isMoving);
         if (!level.isClientSide) {
             if (!canBeSupported(level, pos, state.getValue(FACING))) {
+                Direction.Axis axis = state.getValue(FACING).getAxis();
                 level.destroyBlock(pos, true);
+                checkAndBreakUnsupportedShafts(level, pos, axis);
             }
         }
     }
 
-    private boolean canBeSupported(Level level, BlockPos pos, Direction facing) {
+    public boolean canBeSupported(Level level, BlockPos pos, Direction facing) {
         int maxDist = diameter.maxSupportDistance;
         if (hasSupportInRange(level, pos, facing, maxDist)) return true;
         return hasSupportInRange(level, pos, facing.getOpposite(), maxDist);
@@ -376,14 +382,16 @@ public class ShaftBlock extends BaseEntityBlock {
         BlockState state = level.getBlockState(pos);
         Block block = state.getBlock();
         if (block instanceof BearingBlock) {
-            return state.getValue(BearingBlock.FACING).getAxis() == axisDir.getAxis();
+            return state.getValue(BearingBlock.HAS_SHAFT) && state.getValue(BearingBlock.FACING).getAxis() == axisDir.getAxis();
+        }
+        if (block instanceof ClutchBlock) {
+            return state.getValue(ClutchBlock.HAS_SHAFT) && state.getValue(ClutchBlock.FACING).getAxis() == axisDir.getAxis();
+        }
+        if (block instanceof MotorElectroBlock) {
+            return state.getValue(MotorElectroBlock.FACING) == axisDir.getOpposite();
         }
         if (block instanceof HandCrankBlock) {
             return state.getValue(HandCrankBlock.FACING).getAxis() == axisDir.getAxis();
-        }
-        String path = BuiltInRegistries.BLOCK.getKey(block).getPath();
-        if (path.equals("motor_electro") || path.equals("tachometer") || path.equals("clutch") || path.equals("steam_engine")) {
-            return true;
         }
         if (block instanceof com.trd.multiblock.system.MultiblockPartBlock) {
             BlockEntity be = level.getBlockEntity(pos);
@@ -392,7 +400,39 @@ public class ShaftBlock extends BaseEntityBlock {
                 return true;
             }
         }
+        String path = BuiltInRegistries.BLOCK.getKey(block).getPath();
+        if (path.equals("tachometer") || path.equals("steam_engine") || path.equals("water_pump")) {
+            return true;
+        }
         return false;
+    }
+
+    public static void checkAndBreakUnsupportedShafts(Level level, BlockPos originPos, Direction.Axis axis) {
+        if (level.isClientSide) return;
+        for (Direction dir : Direction.values()) {
+            if (dir.getAxis() != axis) continue;
+            checkShaftLineFrom(level, originPos, dir);
+        }
+    }
+
+    private static void checkShaftLineFrom(Level level, BlockPos startPos, Direction dir) {
+        BlockPos.MutableBlockPos current = startPos.mutable();
+        while (true) {
+            current.move(dir);
+            BlockState state = level.getBlockState(current);
+            if (!(state.getBlock() instanceof ShaftBlock shaft)) {
+                break;
+            }
+            if (state.getValue(FACING).getAxis() != dir.getAxis()) {
+                break;
+            }
+            if (!shaft.canBeSupported(level, current, state.getValue(FACING))) {
+                BlockPos toBreak = current.immutable();
+                level.destroyBlock(toBreak, true);
+            } else {
+                break;
+            }
+        }
     }
 
     @Nullable
@@ -445,7 +485,9 @@ public class ShaftBlock extends BaseEntityBlock {
                 }
             }
             if (!level.isClientSide) {
+                Direction.Axis axis = state.getValue(FACING).getAxis();
                 KineticNetworkManager.get((ServerLevel) level).updateNetworkAfterRemove(pos);
+                checkAndBreakUnsupportedShafts(level, pos, axis);
             }
         }
         super.onRemove(state, level, pos, newState, isMoving);

@@ -97,6 +97,20 @@ public class ModItems {
     // Rotation / Kinetic Items
     public static final DeferredItem<Item> BELT = ITEMS.register("belt",
             () -> new com.trd.item.industrial.rotation.BeltItem(new Item.Properties()));
+    public static final DeferredItem<Item> PULLEY = ITEMS.register("pulley",
+            () -> new com.trd.item.industrial.rotation.PulleyItem(new Item.Properties(), 1, 12,
+                    com.trd.api.rotation.ShaftMaterial.IRON,
+                    com.trd.api.rotation.ShaftDiameter.LIGHT,
+                    com.trd.api.rotation.ShaftDiameter.MEDIUM));
+
+    public static final DeferredItem<Item> BEVEL_GEAR = ITEMS.register("bevel_gear",
+            () -> new com.trd.item.industrial.rotation.BevelGearItem(new Item.Properties(), com.trd.api.rotation.ShaftMaterial.STEEL));
+
+    public static final DeferredItem<Item> GEAR1_STEEL = ITEMS.register("gear1_steel",
+            () -> new com.trd.item.industrial.rotation.GearItem(new Item.Properties(), 1, com.trd.api.rotation.ShaftMaterial.STEEL));
+
+    public static final DeferredItem<Item> GEAR2_STEEL = ITEMS.register("gear2_steel",
+            () -> new com.trd.item.industrial.rotation.GearItem(new Item.Properties(), 2, com.trd.api.rotation.ShaftMaterial.STEEL));
 
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);

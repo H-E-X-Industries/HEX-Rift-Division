@@ -116,9 +116,12 @@ public abstract class KineticNodeBlockEntity extends BlockEntity implements Rota
     public void onLoad() {
         super.onLoad();
         if (level != null && !level.isClientSide) {
-            KineticNetwork net = KineticNetworkManager
-                    .get((ServerLevel) level)
-                    .getNetworkFor(worldPosition);
+            KineticNetworkManager manager = KineticNetworkManager.get((ServerLevel) level);
+            KineticNetwork net = manager.getNetworkFor(worldPosition);
+            if (net == null && manager.isReady()) {
+                manager.updateNetworkAfterPlace(worldPosition);
+                net = manager.getNetworkFor(worldPosition);
+            }
             if (net != null) {
                 this.speed = (long) (net.getSpeed() * this.networkScale);
                 this.lastSyncedSpeed = this.speed;

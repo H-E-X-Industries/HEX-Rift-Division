@@ -412,6 +412,10 @@ public class ShaftBlockEntity extends KineticNodeBlockEntity {
             }
 
             if (isBeltConnection) {
+                if (this.getAttachedPulley().getItem() instanceof com.trd.item.industrial.rotation.PulleyItem p1 &&
+                        neighborShaft.getAttachedPulley().getItem() instanceof com.trd.item.industrial.rotation.PulleyItem p2) {
+                    return (float) p1.getDiameterPixels() / p2.getDiameterPixels();
+                }
                 int p1 = this.getBlockState().hasProperty(ShaftBlock.PULLEY_SIZE) ? this.getBlockState().getValue(ShaftBlock.PULLEY_SIZE) : 1;
                 int p2 = neighborShaft.getBlockState().hasProperty(ShaftBlock.PULLEY_SIZE) ? neighborShaft.getBlockState().getValue(ShaftBlock.PULLEY_SIZE) : 1;
                 if (p2 > 0) {
@@ -608,6 +612,16 @@ public class ShaftBlockEntity extends KineticNodeBlockEntity {
                     && bearing.getBlockState().getValue(BearingBlock.FACING).getAxis() == myAxis;
             return isCollinear && axisMatch && bearing.hasShaft() && bearing.getShaftDiameter() == thisDiameter;
         }
+        if (neighbor instanceof ClutchBlockEntity clutch) {
+            boolean axisMatch = clutch.getBlockState().hasProperty(com.trd.block.basic.industrial.rotation.ClutchBlock.FACING)
+                    && clutch.getBlockState().getValue(com.trd.block.basic.industrial.rotation.ClutchBlock.FACING).getAxis() == myAxis;
+            return isCollinear && axisMatch && clutch.hasShaft() && clutch.getShaftDiameter() == thisDiameter;
+        }
+        if (neighbor instanceof MotorElectroBlockEntity motor) {
+            boolean axisMatch = motor.getBlockState().hasProperty(com.trd.block.basic.industrial.rotation.MotorElectroBlock.FACING)
+                    && motor.getBlockState().getValue(com.trd.block.basic.industrial.rotation.MotorElectroBlock.FACING).getAxis() == myAxis;
+            return isCollinear && axisMatch && thisDiameter == ShaftDiameter.LIGHT;
+        }
         if (neighbor instanceof HandCrankBlockEntity) {
             return isCollinear && thisDiameter == ShaftDiameter.LIGHT;
         }
@@ -656,6 +670,20 @@ public class ShaftBlockEntity extends KineticNodeBlockEntity {
         this.attachedPulley = tag.contains("AttachedPulley") ? ItemStack.parseOptional(provider, tag.getCompound("AttachedPulley")) : ItemStack.EMPTY;
         this.attachedFlywheel = tag.contains("AttachedFlywheel") ? ItemStack.parseOptional(provider, tag.getCompound("AttachedFlywheel")) : ItemStack.EMPTY;
         this.connectedPulley = tag.contains("ConnectedPulley") ? NbtUtils.readBlockPos(tag, "ConnectedPulley").orElse(null) : null;
+
+        if (this.attachedBevelStart.isEmpty() && getBlockState().hasProperty(ShaftBlock.HAS_BEVEL_START) && getBlockState().getValue(ShaftBlock.HAS_BEVEL_START)) {
+            this.attachedBevelStart = new ItemStack(com.trd.item.ModItems.BEVEL_GEAR.get());
+        }
+        if (this.attachedBevelEnd.isEmpty() && getBlockState().hasProperty(ShaftBlock.HAS_BEVEL_END) && getBlockState().getValue(ShaftBlock.HAS_BEVEL_END)) {
+            this.attachedBevelEnd = new ItemStack(com.trd.item.ModItems.BEVEL_GEAR.get());
+        }
+        if (this.attachedGear.isEmpty() && getBlockState().hasProperty(ShaftBlock.GEAR_SIZE) && getBlockState().getValue(ShaftBlock.GEAR_SIZE) > 0) {
+            int gSize = getBlockState().getValue(ShaftBlock.GEAR_SIZE);
+            this.attachedGear = new ItemStack(gSize == 2 ? com.trd.item.ModItems.GEAR2_STEEL.get() : com.trd.item.ModItems.GEAR1_STEEL.get());
+        }
+        if (this.attachedPulley.isEmpty() && getBlockState().hasProperty(ShaftBlock.PULLEY_SIZE) && getBlockState().getValue(ShaftBlock.PULLEY_SIZE) > 0) {
+            this.attachedPulley = new ItemStack(com.trd.item.ModItems.PULLEY.get());
+        }
     }
 
     public AABB getRenderBoundingBox() {

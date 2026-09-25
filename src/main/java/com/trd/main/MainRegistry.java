@@ -22,6 +22,7 @@ public class MainRegistry {
         com.trd.api.energy.ModRecipes.register(modEventBus);
         com.trd.api.fluids.ModFluids.register(modEventBus);
         com.trd.menu.ModMenuTypes.register(modEventBus);
+        com.trd.sound.ModSounds.register(modEventBus);
         com.trd.worldgen.feature.ModFeatures.FEATURES.register(modEventBus);
         
         modEventBus.addListener(this::commonSetup);

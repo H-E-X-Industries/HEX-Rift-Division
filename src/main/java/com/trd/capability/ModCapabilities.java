@@ -54,6 +54,11 @@ public class ModCapabilities {
                 com.trd.block.entity.ModBlockEntities.CONVERTER_BE.get(),
                 (be, side) -> be.getEnergyReceiver(side)
         );
+        event.registerBlockEntity(
+                ENERGY_RECEIVER,
+                com.trd.block.entity.ModBlockEntities.MOTOR_ELECTRO_BE.get(),
+                (be, side) -> be.getEnergyReceiver(side)
+        );
 
         // IEnergyConnector
         event.registerBlockEntity(
@@ -84,6 +89,11 @@ public class ModCapabilities {
         event.registerBlockEntity(
                 ENERGY_CONNECTOR,
                 com.trd.block.entity.ModBlockEntities.SWITCH_BE.get(),
+                (be, side) -> be.getEnergyConnector(side)
+        );
+        event.registerBlockEntity(
+                ENERGY_CONNECTOR,
+                com.trd.block.entity.ModBlockEntities.MOTOR_ELECTRO_BE.get(),
                 (be, side) -> be.getEnergyConnector(side)
         );
 

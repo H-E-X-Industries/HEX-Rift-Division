@@ -3,11 +3,15 @@ package com.trd.block.basic.industrial.rotation;
 import com.mojang.serialization.MapCodec;
 import com.trd.api.rotation.KineticNetworkManager;
 import com.trd.api.rotation.ShaftDiameter;
+import com.trd.api.rotation.ShaftMaterial;
 import com.trd.block.basic.ModBlocks;
-import com.trd.block.entity.industrial.rotation.BearingBlockEntity;
+import com.trd.block.entity.ModBlockEntities;
+import com.trd.block.entity.industrial.rotation.ClutchBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -21,6 +25,8 @@ import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -29,17 +35,19 @@ import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
-public class BearingBlock extends BaseEntityBlock {
-    public static final MapCodec<BearingBlock> CODEC = simpleCodec(BearingBlock::new);
+public class ClutchBlock extends BaseEntityBlock {
+    public static final MapCodec<ClutchBlock> CODEC = simpleCodec(ClutchBlock::new);
 
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
     public static final BooleanProperty HAS_SHAFT = BooleanProperty.create("has_shaft");
+    public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
 
-    public BearingBlock(Properties properties) {
+    public ClutchBlock(Properties properties) {
         super(properties);
         this.registerDefaultState(this.stateDefinition.any()
                 .setValue(FACING, Direction.NORTH)
-                .setValue(HAS_SHAFT, false));
+                .setValue(HAS_SHAFT, false)
+                .setValue(POWERED, false));
     }
 
     @Override
@@ -49,30 +57,50 @@ public class BearingBlock extends BaseEntityBlock {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, HAS_SHAFT);
+        builder.add(FACING, HAS_SHAFT, POWERED);
     }
 
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return this.defaultBlockState().setValue(FACING, context.getNearestLookingDirection().getOpposite());
+        return this.defaultBlockState()
+                .setValue(FACING, context.getNearestLookingDirection().getOpposite())
+                .setValue(POWERED, context.getLevel().hasNeighborSignal(context.getClickedPos()));
+    }
+
+    @Override
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        if (!level.isClientSide) {
+            boolean isPowered = level.hasNeighborSignal(pos);
+            if (isPowered != state.getValue(POWERED)) {
+                KineticNetworkManager manager = KineticNetworkManager.get((ServerLevel) level);
+                manager.updateNetworkAfterRemove(pos);
+
+                level.setBlock(pos, state.setValue(POWERED, isPowered), 3);
+
+                manager.updateNetworkAfterPlace(pos);
+            }
+        }
     }
 
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        BlockEntity be = level.getBlockEntity(pos);
-        if (!(be instanceof BearingBlockEntity bearing)) return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        if (!(level.getBlockEntity(pos) instanceof ClutchBlockEntity clutch)) {
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        }
 
-        if (!bearing.hasShaft() && stack.getItem() instanceof BlockItem blockItem) {
+        // 1. Вставка вала
+        if (!clutch.hasShaft() && stack.getItem() instanceof BlockItem blockItem) {
             if (blockItem.getBlock() instanceof ShaftBlock shaftBlock) {
                 if (shaftBlock.getDiameter() == ShaftDiameter.HEAVY) return ItemInteractionResult.FAIL;
 
                 if (!level.isClientSide) {
                     KineticNetworkManager manager = KineticNetworkManager.get((ServerLevel) level);
 
-                    bearing.insertShaft(shaftBlock.getMaterial(), shaftBlock.getDiameter());
+                    clutch.insertShaft(shaftBlock.getMaterial(), shaftBlock.getDiameter());
                     level.setBlock(pos, state.setValue(HAS_SHAFT, true), 3);
                     if (!player.isCreative()) stack.shrink(1);
+                    level.playSound(null, pos, SoundEvents.METAL_PLACE, SoundSource.BLOCKS, 1.0F, 1.0F);
 
                     manager.updateNetworkAfterRemove(pos);
                     manager.updateNetworkAfterPlace(pos);
@@ -86,25 +114,27 @@ public class BearingBlock extends BaseEntityBlock {
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        BlockEntity be = level.getBlockEntity(pos);
-        if (!(be instanceof BearingBlockEntity bearing)) return InteractionResult.PASS;
+        if (!(level.getBlockEntity(pos) instanceof ClutchBlockEntity clutch)) {
+            return InteractionResult.PASS;
+        }
 
-        if (bearing.hasShaft() && player.isShiftKeyDown()) {
+        // 2. Извлечение вала через Shift + ПКМ пустой рукой
+        if (clutch.hasShaft() && player.isShiftKeyDown()) {
             if (!level.isClientSide) {
                 KineticNetworkManager manager = KineticNetworkManager.get((ServerLevel) level);
 
-                if (bearing.getShaftMaterial() != null && bearing.getShaftDiameter() != null) {
-                    Block shaftBlock = ModBlocks.getShaft(bearing.getShaftMaterial(), bearing.getShaftDiameter()).get();
-                    Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, new ItemStack(shaftBlock));
-                }
+                ShaftMaterial mat = clutch.getShaftMaterial() != null ? clutch.getShaftMaterial() : ShaftMaterial.IRON;
+                ShaftDiameter dia = clutch.getShaftDiameter() != null ? clutch.getShaftDiameter() : ShaftDiameter.LIGHT;
 
-                bearing.removeShaft();
+                Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
+                        new ItemStack(ModBlocks.getShaft(mat, dia).get()));
+
+                clutch.removeShaft();
                 level.setBlock(pos, state.setValue(HAS_SHAFT, false), 3);
 
                 manager.updateNetworkAfterRemove(pos);
                 manager.updateNetworkAfterPlace(pos);
 
-                // Проверяем пролёт валов при извлечении вала из подшипника
                 Direction.Axis axis = state.getValue(FACING).getAxis();
                 ShaftBlock.checkAndBreakUnsupportedShafts(level, pos, axis);
             }
@@ -126,16 +156,15 @@ public class BearingBlock extends BaseEntityBlock {
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         if (!level.isClientSide && state.getBlock() != newState.getBlock()) {
             BlockEntity be = level.getBlockEntity(pos);
-            if (be instanceof BearingBlockEntity bearing && bearing.hasShaft()) {
-                if (bearing.getShaftMaterial() != null && bearing.getShaftDiameter() != null) {
-                    Block shaftBlock = ModBlocks.getShaft(bearing.getShaftMaterial(), bearing.getShaftDiameter()).get();
-                    Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, new ItemStack(shaftBlock));
-                }
+            if (be instanceof ClutchBlockEntity clutch && clutch.hasShaft()) {
+                ShaftMaterial mat = clutch.getShaftMaterial() != null ? clutch.getShaftMaterial() : ShaftMaterial.IRON;
+                ShaftDiameter dia = clutch.getShaftDiameter() != null ? clutch.getShaftDiameter() : ShaftDiameter.LIGHT;
+                Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
+                        new ItemStack(ModBlocks.getShaft(mat, dia).get()));
             }
             super.onRemove(state, level, pos, newState, isMoving);
             KineticNetworkManager.get((ServerLevel) level).updateNetworkAfterRemove(pos);
 
-            // Проверяем пролёт валов по оси подшипника при его сносе
             Direction.Axis axis = state.getValue(FACING).getAxis();
             ShaftBlock.checkAndBreakUnsupportedShafts(level, pos, axis);
             return;
@@ -145,12 +174,19 @@ public class BearingBlock extends BaseEntityBlock {
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.MODEL;
+        return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new BearingBlockEntity(pos, state);
+        return new ClutchBlockEntity(pos, state);
+    }
+
+    @Nullable
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
+        if (level.isClientSide) return null;
+        return createTickerHelper(type, ModBlockEntities.CLUTCH_BE.get(), ClutchBlockEntity::serverTick);
     }
 }

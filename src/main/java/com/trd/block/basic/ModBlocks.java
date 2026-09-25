@@ -134,6 +134,14 @@ public class ModBlocks {
             () -> new com.trd.block.basic.industrial.rotation.BearingBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)
                     .noOcclusion().strength(5.0f, 6.0f).requiresCorrectToolForDrops()));
 
+    public static final DeferredBlock<Block> CLUTCH = registerBlock("clutch",
+            () -> new com.trd.block.basic.industrial.rotation.ClutchBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)
+                    .noOcclusion().strength(5.0f, 6.0f).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<Block> MOTOR_ELECTRO = registerBlock("motor_electro",
+            () -> new com.trd.block.basic.industrial.rotation.MotorElectroBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)
+                    .noOcclusion().strength(5.0f, 6.0f).requiresCorrectToolForDrops()));
+
     public static final DeferredBlock<Block> HAND_CRANK_BLOCK = registerBlock("hand_crank",
             com.trd.block.basic.industrial.rotation.HandCrankBlock::new);
 

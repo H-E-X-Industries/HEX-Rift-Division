@@ -132,7 +132,13 @@ public class ModCreativeTabs {
                         // Kinetic System
                         output.accept(ModBlocks.BEARING_BLOCK.get());
                         output.accept(ModBlocks.HAND_CRANK_BLOCK.get());
+                        output.accept(ModBlocks.CLUTCH.get());
+                        output.accept(ModBlocks.MOTOR_ELECTRO.get());
                         output.accept(ModItems.BELT.get());
+                        output.accept(ModItems.PULLEY.get());
+                        output.accept(ModItems.BEVEL_GEAR.get());
+                        output.accept(ModItems.GEAR1_STEEL.get());
+                        output.accept(ModItems.GEAR2_STEEL.get());
                         ModBlocks.ALL_SHAFTS.forEach(shaft -> output.accept(shaft.get()));
 
                         // Fluid Drops
