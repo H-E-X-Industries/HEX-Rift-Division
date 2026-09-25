@@ -22,6 +22,7 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
@@ -156,13 +157,7 @@ public final class CraterTints {
             int maxY = Math.min(level.getMaxBuildHeight() - 1, (int) Math.floor(c.y()) + r);
             int minZ = (int) Math.floor(c.z()) - r;
             int maxZ = (int) Math.floor(c.z()) + r;
-            for (int bx = minX; bx <= maxX; bx += 16) {
-                for (int by = minY; by <= maxY; by += 16) {
-                    for (int bz = minZ; bz <= maxZ; bz += 16) {
-                        lr.setSectionDirty(bx, by, bz);
-                    }
-                }
-            }
+            markSectionsDirty(minX, minY, minZ, maxX, maxY, maxZ);
         }
     }
 
@@ -188,27 +183,51 @@ public final class CraterTints {
         markSectionsDirty(removes);
     }
 
-    /** Пометить секции, покрывающие диапазон позиций, как «грязные» — пересборка происходит плавно, кадр за кадром. */
+    /** Пометить секции, покрывающие указанные позиции, как «грязные» — пересборка происходит плавно, кадр за кадром. */
     private static void markSectionsDirty(long[] positions) {
-        Minecraft mc = Minecraft.getInstance();
-        LevelRenderer lr = mc.levelRenderer;
-        if (mc.level == null) return;
         int minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE;
         int minY = Integer.MAX_VALUE, maxY = Integer.MIN_VALUE;
         int minZ = Integer.MAX_VALUE, maxZ = Integer.MIN_VALUE;
         for (long p : positions) {
-            BlockPos bp = BlockPos.of(p);
-            if (bp.getX() < minX) minX = bp.getX();
-            if (bp.getX() > maxX) maxX = bp.getX();
-            if (bp.getY() < minY) minY = bp.getY();
-            if (bp.getY() > maxY) maxY = bp.getY();
-            if (bp.getZ() < minZ) minZ = bp.getZ();
-            if (bp.getZ() > maxZ) maxZ = bp.getZ();
+            int x = BlockPos.getX(p);
+            int y = BlockPos.getY(p);
+            int z = BlockPos.getZ(p);
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+            if (z < minZ) minZ = z;
+            if (z > maxZ) maxZ = z;
         }
-        for (int bx = minX; bx <= maxX; bx += 16) {
-            for (int by = minY; by <= maxY; by += 16) {
-                for (int bz = minZ; bz <= maxZ; bz += 16) {
-                    lr.setSectionDirty(bx, by, bz);
+        markSectionsDirty(minX, minY, minZ, maxX, maxY, maxZ);
+    }
+
+    /**
+     * Пометить грязными все секции, перекрывающие прямоугольник блоков
+     * {@code (minX..maxX, minY..maxY, minZ..maxZ)}.
+     *
+     * <p><b>Важно:</b> {@code LevelRenderer.setSectionDirty(int, int, int)} в 1.20.1 принимает
+     * <b>координаты секции</b>, а не блока — внутри идёт
+     * {@code Math.floorMod(y - level.getMinSection(), chunkGridSize)}. Публичного оверлоада с
+     * конвертацией нет, её делают только внутренние вызовы {@code setBlocksDirty}. Поэтому блочные
+     * координаты конвертируются явно через {@link SectionPos#blockToSectionCoord(int)}; иначе
+     * помечаются секции в 16 раз дальше по оси и пересборка не затрагивает саму воронку —
+     * тинт не появляется до перезахода в мир.
+     */
+    private static void markSectionsDirty(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) return;
+        LevelRenderer lr = mc.levelRenderer;
+        int sx0 = SectionPos.blockToSectionCoord(minX);
+        int sx1 = SectionPos.blockToSectionCoord(maxX);
+        int sy0 = SectionPos.blockToSectionCoord(minY);
+        int sy1 = SectionPos.blockToSectionCoord(maxY);
+        int sz0 = SectionPos.blockToSectionCoord(minZ);
+        int sz1 = SectionPos.blockToSectionCoord(maxZ);
+        for (int sx = sx0; sx <= sx1; ++sx) {
+            for (int sy = sy0; sy <= sy1; ++sy) {
+                for (int sz = sz0; sz <= sz1; ++sz) {
+                    lr.setSectionDirty(sx, sy, sz);
                 }
             }
         }
