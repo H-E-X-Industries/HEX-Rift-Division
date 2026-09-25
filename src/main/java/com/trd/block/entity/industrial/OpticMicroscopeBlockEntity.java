@@ -65,8 +65,7 @@ public class OpticMicroscopeBlockEntity extends BlockEntity {
             return switch (slot) {
                 case INPUT_SLOT -> stack.is(ModItems.CONGLOMERATE_CHUNK.get());
                 case OUTPUT_SLOT -> false;
-                case PIPETTE_IN_SLOT -> stack.is(ModItems.PIPETTE.get())
-                        || stack.is(ModItems.PIPETTE_IDUSTRIAL.get());
+                case PIPETTE_IN_SLOT -> stack.is(ModItems.PIPETTE.get());
                 case PIPETTE_OUT_SLOT -> false;
                 default -> false;
             };

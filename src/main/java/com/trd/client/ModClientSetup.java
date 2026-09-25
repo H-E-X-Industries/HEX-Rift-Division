@@ -24,6 +24,7 @@ public class ModClientSetup {
         event.register(com.trd.menu.ModMenuTypes.FUEL_TANK_MENU.get(), com.trd.client.overlay.gui.GUIFuelTank::new);
         event.register(com.trd.menu.ModMenuTypes.CONVEYOR_BUFFER_MENU.get(), com.trd.client.overlay.gui.ConveyorBufferScreen::new);
         event.register(com.trd.menu.ModMenuTypes.SORTIROVSHIK_MENU.get(), com.trd.client.overlay.gui.GUISortirovshik::new);
+        event.register(com.trd.menu.ModMenuTypes.OPTIC_MICROSCOPE_MENU.get(), com.trd.client.overlay.gui.GUIOpticMicroscope::new);
     }
 
     @SubscribeEvent
@@ -72,7 +73,7 @@ public class ModClientSetup {
                 }
             }
             return -1;
-        }, com.trd.item.ModItems.WOODEN_FLUID_CONTAINER.get(), com.trd.item.ModItems.IRON_FLUID_CONTAINER.get());
+        }, com.trd.item.ModItems.PIPETTE.get(), com.trd.item.ModItems.FLUID_TANK_IRON.get());
 
         for (net.neoforged.neoforge.registries.DeferredHolder<net.minecraft.world.item.Item, ? extends net.minecraft.world.item.Item> dropObj : com.trd.api.fluids.ModFluids.getAllFluidDrops().values()) {
             event.register((stack, tintIndex) -> {
@@ -136,6 +137,15 @@ public class ModClientSetup {
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
         ModModels.init();
+
+        net.minecraft.client.renderer.item.ItemProperties.register(com.trd.item.ModItems.PIPETTE.get(),
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(com.trd.main.MainRegistry.MOD_ID, "filled"),
+                (pStack, pLevel, pEntity, pSeed) ->
+                        com.trd.item.industrial.fluids.FluidContainerItem.isFilled(pStack) ? 1.0f : 0.0f);
+        net.minecraft.client.renderer.item.ItemProperties.register(com.trd.item.ModItems.FLUID_TANK_IRON.get(),
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(com.trd.main.MainRegistry.MOD_ID, "filled"),
+                (pStack, pLevel, pEntity, pSeed) ->
+                        com.trd.item.industrial.fluids.FluidContainerItem.isFilled(pStack) ? 1.0f : 0.0f);
 
         VisualizerRegistry.setVisualizer(ModBlockEntities.MILLSTONE.get(), new BlockEntityVisualizer<com.trd.block.entity.industrial.rotation.MillstoneBlockEntity>() {
             @Override

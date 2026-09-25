@@ -126,6 +126,11 @@ public class ModBlocks {
     public static final DeferredBlock<net.minecraft.world.level.block.Block> FUEL_TANK_SMALL = BLOCKS.register("fuel_tank_small", () -> new com.trd.multiblock.industrial.fueltanks.small.FuelTankSmallBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.of().noOcclusion()));
 
 
+    // Machines
+    public static final DeferredBlock<Block> OPTIC_MICROSCOPE = registerBlock("optic_microscope",
+            () -> new com.trd.block.basic.industrial.OpticMicroscopeBlock(
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion()));
+
     // Multiblock
     public static final DeferredBlock<Block> MULTIBLOCK_PART = registerBlock("multiblock_part",
             () -> new com.trd.multiblock.system.MultiblockPartBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().isViewBlocking((state, getter, pos) -> false)));

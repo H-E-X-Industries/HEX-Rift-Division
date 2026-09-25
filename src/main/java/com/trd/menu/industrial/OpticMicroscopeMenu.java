@@ -43,7 +43,7 @@ public class OpticMicroscopeMenu extends AbstractContainerMenu {
         this.addSlot(new SlotItemHandler(be.getItemHandler(), 2, 70, 52) {
             @Override
             public boolean mayPlace(ItemStack stack) {
-                return stack.is(ModItems.PIPETTE.get()) || stack.is(ModItems.PIPETTE_IDUSTRIAL.get());
+                return stack.is(ModItems.PIPETTE.get());
             }
         });
         // 3 — выход пипетки (52, 52)
@@ -106,7 +106,7 @@ public class OpticMicroscopeMenu extends AbstractContainerMenu {
             if (!moveItemStackTo(stack, 4, 40, true)) return ItemStack.EMPTY;
         } else {
             // Из инвентаря в машину
-            if (stack.is(ModItems.PIPETTE.get()) || stack.is(ModItems.PIPETTE_IDUSTRIAL.get())) {
+            if (stack.is(ModItems.PIPETTE.get())) {
                 if (!moveItemStackTo(stack, 2, 3, false)) return ItemStack.EMPTY;
             } else if (stack.is(ModItems.CONGLOMERATE_CHUNK.get())) {
                 if (!moveItemStackTo(stack, 0, 1, false)) return ItemStack.EMPTY;

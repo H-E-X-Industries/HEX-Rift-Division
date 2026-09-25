@@ -186,5 +186,14 @@ public class ModCapabilities {
             com.trd.block.entity.ModBlockEntities.FLUID_BARREL_BE.get(),
             (be, side) -> be.networkFluidHandler
     );
+
+    // Item Fluid Capabilities
+    net.neoforged.neoforge.capabilities.ICapabilityProvider<net.minecraft.world.item.ItemStack, Void, net.neoforged.neoforge.fluids.capability.IFluidHandlerItem> fluidContainerProvider =
+        (stack, ctx) -> new com.trd.item.industrial.fluids.FluidContainerItem.FluidHandler(stack, (com.trd.item.industrial.fluids.FluidContainerItem) stack.getItem());
+
+    event.registerItem(net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.ITEM, fluidContainerProvider,
+        com.trd.item.ModItems.PIPETTE.get(),
+        com.trd.item.ModItems.FLUID_TANK_IRON.get()
+    );
 }
 }

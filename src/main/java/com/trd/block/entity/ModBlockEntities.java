@@ -91,6 +91,12 @@ public class ModBlockEntities {
     public static final java.util.function.Supplier<BlockEntityType<MillstoneBlockEntity>> MILLSTONE = BLOCK_ENTITIES.register("millstone",
             () -> BlockEntityType.Builder.of(MillstoneBlockEntity::new, ModBlocks.MILLSTONE.get()).build(null));
 
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.industrial.OpticMicroscopeBlockEntity>> OPTIC_MICROSCOPE_BE =
+            BLOCK_ENTITIES.register("optic_microscope_be", () -> BlockEntityType.Builder.of(
+                    com.trd.block.entity.industrial.OpticMicroscopeBlockEntity::new,
+                    com.trd.block.basic.ModBlocks.OPTIC_MICROSCOPE.get()
+            ).build(null));
+
     public static void register(IEventBus eventBus) {
         BLOCK_ENTITIES.register(eventBus);
     }

@@ -1,0 +1,14 @@
+{
+    "parent": "minecraft:item/generated",
+    "textures": {
+        "layer0": "trd:item/fluid_tank_iron"
+    },
+    "overrides": [
+        {
+            "predicate": {
+                "trd:filled": 1.0
+            },
+            "model": "trd:item/fluid_tank_iron_filled"
+        }
+    ]
+}

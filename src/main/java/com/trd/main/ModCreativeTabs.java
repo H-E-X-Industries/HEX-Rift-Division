@@ -19,7 +19,7 @@ public class ModCreativeTabs {
                     .title(Component.translatable("itemGroup." + MainRegistry.MOD_ID + ".trd_recourses_tab"))
                     .icon(() -> new ItemStack(ModItems.STEEL_PLATE.get()))
                     .displayItems((parameters, output) -> {
-                        // Предметы (Ресурсы)
+                        // РџСЂРµРґРјРµС‚С‹ (Р РµСЃСѓСЂСЃС‹)
                         output.accept(ModItems.IRON_PLATE.get());
                         output.accept(ModItems.ALUMINUM_PLATE.get());
                         output.accept(ModItems.STEEL_PLATE.get());
@@ -48,7 +48,7 @@ public class ModCreativeTabs {
                     .icon(() -> new ItemStack(ModBlocks.LIGNITE_ORE.get()))
                     .withTabsBefore(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "trd_recourses_tab"))
                     .displayItems((parameters, output) -> {
-                        // Блоки (Природа / Руды)
+                        // Р‘Р»РѕРєРё (РџСЂРёСЂРѕРґР° / Р СѓРґС‹)
                         output.accept(ModBlocks.ASBESOTS_ORE.get());
                         output.accept(ModBlocks.LIGNITE_ORE.get());
                         output.accept(ModBlocks.SALT_ORE.get());
@@ -102,8 +102,8 @@ public class ModCreativeTabs {
                         // Fluid System
                         output.accept(ModItems.FLUID_IDENTIFIER.get());
                         output.accept(ModItems.INFINITE_FLUID_BARREL.get());
-                        output.accept(ModItems.WOODEN_FLUID_CONTAINER.get());
-                        output.accept(ModItems.IRON_FLUID_CONTAINER.get());
+                        output.accept(ModItems.PIPETTE.get());
+                        output.accept(ModItems.FLUID_TANK_IRON.get());
                         output.accept(ModBlocks.CORRUPTED_BARREL.get());
                         output.accept(ModBlocks.LEAKING_BARREL.get());
                         output.accept(ModBlocks.IRON_BARREL.get());
@@ -120,6 +120,19 @@ public class ModCreativeTabs {
                         output.accept(ModBlocks.PAINTABLE_PIPE.get());
                         output.accept(ModBlocks.FUEL_TANK_BIG.get());
                         output.accept(ModBlocks.FUEL_TANK_SMALL.get());
+
+                        // Optic Microscope
+                        output.accept(ModBlocks.OPTIC_MICROSCOPE.get());
+                        output.accept(ModItems.HARD_ROCK.get());
+
+                        // Cast Pickaxes
+                        output.accept(ModItems.CAST_PICKAXE_IRON.get());
+                        output.accept(ModItems.CAST_PICKAXE_STEEL.get());
+
+                        // Fluid Drops
+                        for (net.neoforged.neoforge.registries.DeferredHolder<net.minecraft.world.item.Item, ? extends net.minecraft.world.item.Item> drop : com.trd.api.fluids.ModFluids.getAllFluidDrops().values()) {
+                            output.accept(drop.get());
+                        }
                     })
                     .build());
 
@@ -127,3 +140,4 @@ public class ModCreativeTabs {
         CREATIVE_MODE_TABS.register(eventBus);
     }
 }
+

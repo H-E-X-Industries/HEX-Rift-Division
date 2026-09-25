@@ -77,7 +77,7 @@ public class ConglomerateBlock extends BaseEntityBlock {
 
         float chunkChance = switch (tierLevel) {
             case 0 -> 0.30f;
-            case 1 -> 0.45f;
+            case 1 -> 0.50f;
             case 2 -> 0.60f;
             default -> 0.30f;
         };
@@ -94,7 +94,7 @@ public class ConglomerateBlock extends BaseEntityBlock {
             );
             Block.popResource(level, pos, chunk);
         } else {
-            Block.popResource(level, pos, new ItemStack(Items.COBBLED_DEEPSLATE));
+            Block.popResource(level, pos, new ItemStack(ModItems.HARD_ROCK.get()));
         }
 
         if (entity.isDepleted()) {

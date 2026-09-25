@@ -56,6 +56,19 @@ public class OpticMicroscopeBlock extends BaseEntityBlock {
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                               Player player, InteractionHand hand, BlockHitResult hit) {
         if (level.isClientSide) return ItemInteractionResult.SUCCESS;
+        openMenu(level, pos, player);
+        return ItemInteractionResult.CONSUME;
+    }
+
+    @Override
+    protected net.minecraft.world.InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos,
+                                                                   Player player, BlockHitResult hit) {
+        if (level.isClientSide) return net.minecraft.world.InteractionResult.SUCCESS;
+        openMenu(level, pos, player);
+        return net.minecraft.world.InteractionResult.CONSUME;
+    }
+
+    private void openMenu(Level level, BlockPos pos, Player player) {
         if (level.getBlockEntity(pos) instanceof OpticMicroscopeBlockEntity be) {
             ((ServerPlayer) player).openMenu(new MenuProvider() {
                 @Override
@@ -69,7 +82,6 @@ public class OpticMicroscopeBlock extends BaseEntityBlock {
                 }
             }, buf -> buf.writeBlockPos(pos));
         }
-        return ItemInteractionResult.CONSUME;
     }
 
     @Override

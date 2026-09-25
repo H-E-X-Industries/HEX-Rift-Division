@@ -3,7 +3,6 @@ package com.trd.item.tools.cast_pickaxes;
 
 import com.trd.block.basic.conglomerate.ConglomerateBlock;
 import com.trd.client.gecko.item.tools.CastPickaxeItemRenderer;
-import com.trd.datagen.stats.ModBlockLootTableProvider;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.core.BlockPos;
@@ -21,6 +20,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -36,9 +36,8 @@ import net.minecraft.world.phys.*;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import software.bernie.geckolib.animatable.GeoItem;
 import software.bernie.geckolib.animatable.SingletonGeoAnimatable;
-import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.core.animation.*;
-import software.bernie.geckolib.core.object.PlayState;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.*;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import javax.annotation.Nullable;
@@ -301,9 +300,6 @@ public class CastPickaxeItem extends PickaxeItem implements GeoItem {
         if (canHarvest && hardness <= maxHardness) {
             level.destroyBlock(pos, true, player);
 
-            // Спавним опыт для руд
-            ModBlockLootTableProvider.spawnOreExperience((ServerLevel) level, pos, state);
-
             int damage = fullCharge ? 2 : 1;
             stack.hurtAndBreak(damage, player, EquipmentSlot.MAINHAND);
             if (fullCharge) player.causeFoodExhaustion(0.2f);
@@ -333,7 +329,7 @@ public class CastPickaxeItem extends PickaxeItem implements GeoItem {
         float volume = 0.4f + chargePercent * 0.8f;
         float pitch = 1.2f - chargePercent * 0.4f;
         level.playSound(null, pos,
-                com.trd.sound.ModSounds.PICKAXE_HIT.get(),
+                SoundEvents.STONE_HIT,
                 SoundSource.PLAYERS, volume, pitch);
     }
 
@@ -384,13 +380,11 @@ public class CastPickaxeItem extends PickaxeItem implements GeoItem {
         List<ItemStack> allDrops = new ArrayList<>();
 
         allDrops.addAll(Block.getDrops(centerState, serverLevel, center, null, player, stack));
-        ModBlockLootTableProvider.spawnOreExperience(serverLevel, center, centerState);
         level.destroyBlock(center, false);
 
         for (BlockPos pos : toBreak) {
             BlockState state = level.getBlockState(pos);
             allDrops.addAll(Block.getDrops(state, serverLevel, pos, null, player, stack));
-            ModBlockLootTableProvider.spawnOreExperience(serverLevel, pos, state);
             level.destroyBlock(pos, false);
         }
 
@@ -446,8 +440,7 @@ public class CastPickaxeItem extends PickaxeItem implements GeoItem {
 
             if (canHarvest && hardness <= maxHardness) {
                 allDrops.addAll(Block.getDrops(state, serverLevel, pos, null, player, stack));
-                ModBlockLootTableProvider.spawnOreExperience(serverLevel, pos, state);
-                level.destroyBlock(pos, false);
+                    level.destroyBlock(pos, false);
                 blocksBroken++;
             } else {
                 break;
@@ -504,20 +497,14 @@ public class CastPickaxeItem extends PickaxeItem implements GeoItem {
             float volume = 0.2F + (chargePercent * 0.6F);
             float pitch = 1.6F - (chargePercent * 0.4F);
             level.playSound(null, target.getX(), target.getY() + target.getBbHeight() * 0.5, target.getZ(),
-                    com.trd.sound.ModSounds.BULLET_IMPACT.get(), SoundSource.PLAYERS, volume, pitch);
+                    SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS, volume, pitch);
 
             return true;
         }
         return false;
     }
 
-    @Override
-    public boolean onBlockStartBreak(ItemStack itemstack, BlockPos pos, Player player) {
-        if (player.isUsingItem() || player.getCooldowns().isOnCooldown(this)) {
-            return true;
-        }
-        return super.onBlockStartBreak(itemstack, pos, player);
-    }
+
 
     @Override
     public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
@@ -533,11 +520,11 @@ public class CastPickaxeItem extends PickaxeItem implements GeoItem {
                 .add(Attributes.ATTACK_DAMAGE,
                         new AttributeModifier(ATTACK_DAMAGE_ID, stats.getTier().getAttackDamageBonus() + 1.0f,
                                 AttributeModifier.Operation.ADD_VALUE),
-                        EquipmentSlot.MAINHAND)
+                        EquipmentSlotGroup.MAINHAND)
                 .add(Attributes.ATTACK_SPEED,
                         new AttributeModifier(ATTACK_SPEED_ID, -2.8f,
                                 AttributeModifier.Operation.ADD_VALUE),
-                        EquipmentSlot.MAINHAND)
+                        EquipmentSlotGroup.MAINHAND)
                 .build();
     }
 

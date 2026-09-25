@@ -32,6 +32,9 @@ public class ModMenuTypes {
     public static final java.util.function.Supplier<MenuType<com.trd.menu.industrial.SortirovshikMenu>> SORTIROVSHIK_MENU =
             MENUS.register("sortirovshik_menu", () -> net.neoforged.neoforge.common.extensions.IMenuTypeExtension.create(com.trd.menu.industrial.SortirovshikMenu::new));
 
+    public static final java.util.function.Supplier<MenuType<com.trd.menu.industrial.OpticMicroscopeMenu>> OPTIC_MICROSCOPE_MENU =
+            MENUS.register("optic_microscope_menu", () -> IMenuTypeExtension.create(com.trd.menu.industrial.OpticMicroscopeMenu::new));
+
     public static void register(IEventBus eventBus) {
         MENUS.register(eventBus);
     }

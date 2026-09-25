@@ -77,10 +77,22 @@ public class ModItems {
     public static final DeferredItem<Item> FRACTION_CHUNK = ITEMS.register("fraction_chunk", () -> new com.trd.item.conglomerates.FractionChunkItem(new Item.Properties()));
     public static final DeferredItem<Item> METAL_PIECE = ITEMS.register("metal_piece", () -> new com.trd.item.conglomerates.MetalPieceItem(new Item.Properties()));
 
+    // Fluid Containers
+    public static final DeferredItem<Item> PIPETTE = ITEMS.register("pipette",
+            () -> new com.trd.item.industrial.fluids.FluidContainerItem(new Item.Properties().stacksTo(1), 50, 80, 100));
+
+    public static final DeferredItem<Item> HARD_ROCK = ITEMS.register("hard_rock",
+            () -> new Item(new Item.Properties()));
+
     public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> FLUID_IDENTIFIER = ITEMS.register("fluid_identifier", () -> new com.trd.item.industrial.fluids.FluidIdentifierItem(new net.minecraft.world.item.Item.Properties().stacksTo(1)));
     public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> INFINITE_FLUID_BARREL = ITEMS.register("infinite_fluid_barrel", () -> new com.trd.item.tools.InfiniteFluidBarrelItem(new net.minecraft.world.item.Item.Properties().stacksTo(1)));
-    public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> WOODEN_FLUID_CONTAINER = ITEMS.register("wooden_fluid_container", () -> new com.trd.item.industrial.fluids.FluidContainerItem(new net.minecraft.world.item.Item.Properties().stacksTo(16), 1000, 100, 1000));
-    public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> IRON_FLUID_CONTAINER = ITEMS.register("iron_fluid_container", () -> new com.trd.item.industrial.fluids.FluidContainerItem(new net.minecraft.world.item.Item.Properties().stacksTo(16), 4000, 1000, 2000));
+    public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> FLUID_TANK_IRON = ITEMS.register("fluid_tank_iron", () -> new com.trd.item.industrial.fluids.FluidContainerItem(new net.minecraft.world.item.Item.Properties().stacksTo(16), 1000, 80, 1050));
+
+    // Cast Pickaxes
+    public static final DeferredItem<Item> CAST_PICKAXE_IRON = ITEMS.register("cast_pickaxe_iron",
+            () -> new com.trd.item.tools.cast_pickaxes.materials.CastPickaxeIronItem(new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> CAST_PICKAXE_STEEL = ITEMS.register("cast_pickaxe_steel",
+            () -> new com.trd.item.tools.cast_pickaxes.materials.CastPickaxeSteelItem(new Item.Properties().stacksTo(1)));
 
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);
