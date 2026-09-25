@@ -8,6 +8,7 @@ import com.trd.explosion.data.CraterTintSync;
 import com.trd.network.ModPacketHandler;
 import com.trd.network.packet.explosion.SyncCraterPacket;
 import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
@@ -130,11 +131,6 @@ public class ExplosionHydrogen {
 
     private enum Phase { SCAN, APPLY, CARVE, CARVE_APPLY, BASALT, FIRE, DAMAGE, TINT, FINISH }
 
-    private static final class FloatRef {
-        float value;
-        boolean blocked;
-    }
-
     private record BasaltJob(BlockPos pos, boolean destroy) {}
 
     private record Flood(BlockPos pos, int depth) {}
@@ -199,7 +195,17 @@ public class ExplosionHydrogen {
         final int fireMinX, fireMaxX, fireMinY, fireMaxY, fireMinZ, fireMaxZ;
         int fireX, fireY, fireZ;
 
-        final FloatRef rayResist = new FloatRef();
+        /** Кеш DDA-лучей по целевой ячейке: сопротивление и достижимость карвинга считаются в одном проходе. */
+        final Long2LongOpenHashMap rayCache = new Long2LongOpenHashMap();
+
+        /** Биты результата queryRay: заблокирован ли урон (есть блок с взрывоустойчивостью выше порога). */
+        private static final long RAY_BLOCKED = 1L;
+        /** Биты результата queryRay: достал ли карвинг-бюджет до целевой ячейки. */
+        private static final long RAY_REACHES = 2L;
+        /** Сдвиг битов Float.floatToIntBits(суммарное сопротивление взрыву) в закешированном long. */
+        private static final int RAY_RESIST_SHIFT = 2;
+        /** Ограничение числа шагов DDA (покрывает прежние 512 и 1024: радиусы ≤ ~46 блоков). */
+        private static final int MAX_RAY_STEPS = 1024;
 
         final long seed;
         final int crMinX, crMaxX, crMinY, crMaxY, crMinZ, crMaxZ;
@@ -274,6 +280,7 @@ public class ExplosionHydrogen {
                     }
                     case APPLY -> {
                         if (!apply(deadline)) return false;
+                        rayCache.clear();
                         phase = Phase.CARVE;
                     }
                     case CARVE -> {
@@ -286,10 +293,12 @@ public class ExplosionHydrogen {
                     }
                     case BASALT -> {
                         if (!basaltPhase(deadline)) return false;
+                        rayCache.clear();
                         phase = Phase.FIRE;
                     }
                     case FIRE -> {
                         if (!fireScan(deadline)) return false;
+                        rayCache.clear();
                         phase = Phase.DAMAGE;
                     }
                     case DAMAGE -> {
@@ -392,8 +401,7 @@ public class ExplosionHydrogen {
         }
 
         private boolean rayBlocked(double tx, double ty, double tz) {
-            ray(tx, ty, tz);
-            return rayResist.blocked;
+            return (queryRay(tx, ty, tz) & RAY_BLOCKED) != 0;
         }
 
         private boolean apply(long deadline) {
@@ -473,9 +481,8 @@ public class ExplosionHydrogen {
                 if (!e.isAlive()) continue;
 
                 Vec3 c = e.getBoundingBox().getCenter();
-                ray(c.x, c.y, c.z);
+                double steps = rayResist(c.x, c.y, c.z) / RESIST_PER_STEP;
 
-                double steps = rayResist.value / RESIST_PER_STEP;
                 float mult = Math.max(0.0f, 1.0f - (float) (STEP_DAMAGE_DROP * Math.floor(steps)));
                 float dmg = t.baseDamage * mult;
                 if (dmg > 0) e.hurt(damageSource, dmg);
@@ -484,22 +491,41 @@ public class ExplosionHydrogen {
             return true;
         }
 
-        /** 3D-DDA от эпицентра до точки: стартовая и целевая ячейки не учитываются. */
-        private void ray(double tx, double ty, double tz) {
+        /** Суммарное сопротивление взрыву по лучу (для урона): стартовая и целевая ячейки не учитываются. */
+        private float rayResist(double tx, double ty, double tz) {
+            return Float.intBitsToFloat((int) (queryRay(tx, ty, tz) >>> RAY_RESIST_SHIFT));
+        }
+
+        /**
+         * Единый 3D-DDA от эпицентра до целевой ячейки. За один проход считает обе метрики:
+         * <ul>
+         *     <li>{@link #RAY_BLOCKED} + суммарное сопротивление — для разрушения/урона, старт и цель исключены;</li>
+         *     <li>{@link #RAY_REACHES} — достижимость карвинга-воронки по бюджету пути, старт и цель включены;</li>
+         * </ul>
+         * Результат кешируется по целевой ячейке (в рамках одного State). Кеш аннулируется после фаз,
+         * меняющих мир ({@code APPLY}/{@code CARVE_APPLY}/{@code BASALT}/{@code FIRE}), поэтому лучи в разных
+         * фазах всегда считаются по актуальному рельефу — семантика идентична прежним ray/rayBlocked/rayReaches.
+         */
+        private long queryRay(double tx, double ty, double tz) {
+            int ex = (int) Math.floor(tx);
+            int ey = (int) Math.floor(ty);
+            int ez = (int) Math.floor(tz);
+
+            long target = BlockPos.asLong(ex, ey, ez);
+            long cached = rayCache.get(target);
+            if (cached != 0L || rayCache.containsKey(target)) return cached;
+
             double cx = center.x;
             double cy = center.y;
             double cz = center.z;
-            double dx = tx - cx;
-            double dy = ty - cy;
-            double dz = tz - cz;
 
             int px = (int) Math.floor(cx);
             int py = (int) Math.floor(cy);
             int pz = (int) Math.floor(cz);
-            int startX = px, startY = py, startZ = pz;
-            int ex = (int) Math.floor(tx);
-            int ey = (int) Math.floor(ty);
-            int ez = (int) Math.floor(tz);
+
+            double dx = tx - cx;
+            double dy = ty - cy;
+            double dz = tz - cz;
 
             int stepX = (int) Math.signum(dx);
             int stepY = (int) Math.signum(dy);
@@ -517,21 +543,44 @@ public class ExplosionHydrogen {
                     : (stepZ > 0 ? (pz + 1 - cz) : (cz - pz)) * tDeltaZ;
 
             boolean blocked = false;
+            boolean reaches = true;
             float resist = 0.0f;
+            float spent = 0.0f;
+            boolean first = true;
 
-            for (int guard = 0; guard < 512; guard++) {
-                if (px == ex && py == ey && pz == ez) break;
-                if (px != startX || py != startY || pz != startZ) {
-                    if (level.hasChunk(px >> 4, pz >> 4)) {
-                        BlockState s = level.getBlockState(new BlockPos(px, py, pz));
-                        if (!s.isAir() && s.getFluidState().isEmpty()
-                                && !(s.getBlock() instanceof LiquidBlock)) {
-                            float r = s.getBlock().getExplosionResistance();
-                            resist += r;
-                            if (r > ARMOR_BLOCK_RESISTANCE) blocked = true;
+            for (int guard = 0; guard < MAX_RAY_STEPS; guard++) {
+                boolean isTarget = px == ex && py == ey && pz == ez;
+
+                if (reaches && !level.hasChunk(px >> 4, pz >> 4)) reaches = false;
+
+                boolean wantResist = !first && !isTarget;
+                if ((reaches || wantResist) && level.hasChunk(px >> 4, pz >> 4)) {
+                    BlockPos pos = new BlockPos(px, py, pz);
+                    BlockState s = level.getBlockState(pos);
+                    if (reaches) {
+                        if (isBarrier(level, s, pos)) {
+                            reaches = false;
+                        } else {
+                            float cost = blockCost(s, level, pos);
+                            if (!Float.isFinite(cost)) {
+                                reaches = false;
+                            } else {
+                                spent += cost;
+                                if (spent > CRATER_BUDGET) reaches = false;
+                            }
                         }
                     }
+                    if (wantResist && !s.isAir() && s.getFluidState().isEmpty()
+                            && !(s.getBlock() instanceof LiquidBlock)) {
+                        float r = s.getBlock().getExplosionResistance();
+                        resist += r;
+                        if (r > ARMOR_BLOCK_RESISTANCE) blocked = true;
+                    }
                 }
+
+                if (isTarget) break;
+                first = false;
+
                 if (tMaxX < tMaxY) {
                     if (tMaxX < tMaxZ) {
                         px += stepX;
@@ -549,8 +598,11 @@ public class ExplosionHydrogen {
                 }
             }
 
-            rayResist.blocked = blocked;
-            rayResist.value = resist;
+            long packed = (blocked ? RAY_BLOCKED : 0L)
+                    | (reaches ? RAY_REACHES : 0L)
+                    | ((long) Float.floatToIntBits(resist) & 0xFFFFFFFFL) << RAY_RESIST_SHIFT;
+            rayCache.put(target, packed);
+            return packed;
         }
 
         // ==================== ОГОНЬ ====================
@@ -644,62 +696,7 @@ public class ExplosionHydrogen {
         }
 
         private boolean rayReaches(int tx, int ty, int tz) {
-            double cx = center.x;
-            double cy = center.y;
-            double cz = center.z;
-
-            int px = (int) Math.floor(cx);
-            int py = (int) Math.floor(cy);
-            int pz = (int) Math.floor(cz);
-
-            double dx = (tx + 0.5) - cx;
-            double dy = (ty + 0.5) - cy;
-            double dz = (tz + 0.5) - cz;
-
-            int stepX = (int) Math.signum(dx);
-            int stepY = (int) Math.signum(dy);
-            int stepZ = (int) Math.signum(dz);
-
-            double tDeltaX = dx == 0 ? Double.POSITIVE_INFINITY : Math.abs(1.0 / dx);
-            double tDeltaY = dy == 0 ? Double.POSITIVE_INFINITY : Math.abs(1.0 / dy);
-            double tDeltaZ = dz == 0 ? Double.POSITIVE_INFINITY : Math.abs(1.0 / dz);
-
-            double tMaxX = dx == 0 ? Double.POSITIVE_INFINITY : (dx > 0 ? (px + 1 - cx) : (cx - px)) * tDeltaX;
-            double tMaxY = dy == 0 ? Double.POSITIVE_INFINITY : (dy > 0 ? (py + 1 - cy) : (cy - py)) * tDeltaY;
-            double tMaxZ = dz == 0 ? Double.POSITIVE_INFINITY : (dz > 0 ? (pz + 1 - cz) : (cz - pz)) * tDeltaZ;
-
-            float spent = 0.0f;
-
-            for (int guard = 0; guard < 1024; guard++) {
-                if (!level.hasChunk(px >> 4, pz >> 4)) return false;
-                BlockPos pos = new BlockPos(px, py, pz);
-                BlockState s = level.getBlockState(pos);
-                if (isBarrier(level, s, pos)) return false;
-
-                float cost = blockCost(s, level, pos);
-                if (!Float.isFinite(cost)) return false;
-                spent += cost;
-                if (spent > CRATER_BUDGET) return false;
-
-                if (px == tx && py == ty && pz == tz) return true;
-
-                if (tMaxX < tMaxY) {
-                    if (tMaxX < tMaxZ) {
-                        px += stepX;
-                        tMaxX += tDeltaX;
-                    } else {
-                        pz += stepZ;
-                        tMaxZ += tDeltaZ;
-                    }
-                } else if (tMaxY < tMaxZ) {
-                    py += stepY;
-                    tMaxY += tDeltaY;
-                } else {
-                    pz += stepZ;
-                    tMaxZ += tDeltaZ;
-                }
-            }
-            return false;
+            return (queryRay(tx + 0.5d, ty + 0.5d, tz + 0.5d) & RAY_REACHES) != 0;
         }
 
         private boolean carveApply(long deadline) {
@@ -817,16 +814,29 @@ BlockState s = level.getBlockState(pos);
             return (int) Math.round(t * CraterBasaltBlock.MAX_DARK);
         }
 
-        /** Блок «виден» снаружи: хотя бы один из 6 соседей — воздух. */
+        /**
+         * Блок «виден» снаружи: хотя бы один из 6 соседей не закрывает его грань целиком.
+         * Сосед считается «открывающим», если это воздух или блок без полной коллизии
+         * (цветы, трава, снег, факелы и т.п.). Растения в зоне взрыва сносятся ударной волной,
+         * поэтому блок под ними всё равно должен получить затемнение — иначе на месте цветов/
+         * высокой травы остаются непрокрашенные «прогалины» (рваная кромка тинта).
+         */
         private boolean isSurfaceExposed(int x, int y, int z) {
-            BlockPos p = new BlockPos(x, y, z);
-            if (level.getBlockState(p.relative(Direction.EAST)).isAir()) return true;
-            if (level.getBlockState(p.relative(Direction.WEST)).isAir()) return true;
-            if (level.getBlockState(p.relative(Direction.UP)).isAir()) return true;
-            if (level.getBlockState(p.relative(Direction.DOWN)).isAir()) return true;
-            if (level.getBlockState(p.relative(Direction.SOUTH)).isAir()) return true;
-            if (level.getBlockState(p.relative(Direction.NORTH)).isAir()) return true;
-            return false;
+            return exposesFace(x - 1, y, z)
+                    || exposesFace(x + 1, y, z)
+                    || exposesFace(x, y + 1, z)
+                    || exposesFace(x, y - 1, z)
+                    || exposesFace(x, y, z - 1)
+                    || exposesFace(x, y, z + 1);
+        }
+
+        /** Сосед «показывает» грань блока: воздух или не-полный по коллизии блок. */
+        private boolean exposesFace(int nx, int ny, int nz) {
+            if (!level.hasChunk(nx >> 4, nz >> 4)) return false;
+            BlockPos np = new BlockPos(nx, ny, nz);
+            BlockState n = level.getBlockState(np);
+            if (n.isAir()) return true;
+            return !n.isCollisionShapeFullBlock(level, np);
         }
 
         // ==================== ПОЗИЦИОННЫЙ ТИНТ ====================

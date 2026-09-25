@@ -237,7 +237,7 @@ public class ModBlocks {
     //ТУРЕЛИ
     public static final RegistryObject<Block> TURRET_LIGHT_PLACER = BLOCKS.register("turret_light_placer",
             () -> new TurretLightPlacerBlock(BlockBehaviour.Properties.copy(Blocks.STONE)
-                    .strength(5.0f, 4.0f).noOcclusion().requiresCorrectToolForDrops()));
+                    .strength(5.0f, 30.0f).noOcclusion().requiresCorrectToolForDrops()));
 
     //БЛОКИ УЛЬЯ
     public static final RegistryObject<Block> DEPTH_WORM_NEST = registerBlock("depth_worm_nest",
@@ -366,7 +366,7 @@ public class ModBlocks {
 
     public static final RegistryObject<Block> CONCRETE_NET = registerBlock("concrete_net",
             () -> new Block(BlockBehaviour.Properties.of()
-                    .strength(4.0F, 38.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+                    .strength(5.5F, 45.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
 
 
 // ═══════════════════════════════════════════════════════
@@ -570,13 +570,13 @@ public class ModBlocks {
                     .strength(3.0F, 10.0F).sound(SoundType.METAL).requiresCorrectToolForDrops().noOcclusion()));
     public static final RegistryObject<Block> CONCRETE_RED = registerBlock("concrete_red",
             () -> new Block(BlockBehaviour.Properties.of()
-                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+                    .strength(4.0F, 18.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
     public static final RegistryObject<Block> CONCRETE_BLUE = registerBlock("concrete_blue",
             () -> new Block(BlockBehaviour.Properties.of()
-                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+                    .strength(4.0F, 18.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
     public static final RegistryObject<Block> CONCRETE_GREEN = registerBlock("concrete_green",
             () -> new Block(BlockBehaviour.Properties.of()
-                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+                    .strength(4.0F, 18.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
     public static final RegistryObject<Block> NECROSIS_TEST = registerBlock("necrosis_test",
             () -> new Block(BlockBehaviour.Properties.of()
                     .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
@@ -616,6 +616,36 @@ public class ModBlocks {
     public static final RegistryObject<Block> WASTE_LOG = registerBlock("waste_log",
             () -> new RotatedPillarBlock(BlockBehaviour.Properties.copy(Blocks.OAK_WOOD).sound(SoundType.WOOD)));
 
+    public static final RegistryObject<Block> CONCRETE_REBAR = registerBlock("concrete_rebar",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(10.0F, 30.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> CONCRETE_VENT = registerBlock("concrete_vent",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.0F, 18.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> CONCRETE_CUT = registerBlock("concrete_cut",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.0F, 18.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> CONCRETE_RAIL = registerBlock("concrete_rail",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.0F, 18.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+
+    public static final RegistryObject<Block> STEEL_CONSTRUCT_BLOCK = registerBlock("steel_construct_block",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(10.0F, 30.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> STEEL_CONSTRUCT_BLOCK_REINFORCED = registerBlock("steel_construct_block_reinforced",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(30.0F, 190.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final RegistryObject<Block> CONCRETE_CONSTRUCT_BLOCK = registerBlock("concrete_construct_block",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(15.0F, 90.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+
+
     public static final RegistryObject<Block> WASTE_GRASS = registerBlock("waste_grass",
             () -> new WasteGrassBlock(BlockBehaviour.Properties.copy(Blocks.GRASS_BLOCK).sound(SoundType.GRASS)));
 
@@ -643,6 +673,20 @@ public class ModBlocks {
     public static final RegistryObject<StairBlock> CONCRETE_TILE_ALT_STAIRS = registerBlock("concrete_tile_alt_stairs",
             () -> new StairBlock(CONCRETE_TILE_ALT.get().defaultBlockState(),
                     BlockBehaviour.Properties.copy(CONCRETE_TILE_ALT.get())));
+
+    public static final RegistryObject<StairBlock> STEEL_CONSTRUCT_BLOCK_REINFORCED_STAIRS = registerBlock("steel_construct_block_reinforced_stairs",
+            () -> new StairBlock(STEEL_CONSTRUCT_BLOCK_REINFORCED.get().defaultBlockState(),
+                    BlockBehaviour.Properties.copy(STEEL_CONSTRUCT_BLOCK_REINFORCED.get())));
+
+    public static final RegistryObject<StairBlock> STEEL_CONSTRUCT_BLOCK_STAIRS = registerBlock("steel_construct_block_stairs",
+            () -> new StairBlock(STEEL_CONSTRUCT_BLOCK.get().defaultBlockState(),
+                    BlockBehaviour.Properties.copy(STEEL_CONSTRUCT_BLOCK.get())));
+
+    public static final RegistryObject<StairBlock> CONCRETE_CONSTRUCT_BLOCK_STAIRS = registerBlock("concrete_construct_block_stairs",
+            () -> new StairBlock(CONCRETE_CONSTRUCT_BLOCK.get().defaultBlockState(),
+                    BlockBehaviour.Properties.copy(CONCRETE_CONSTRUCT_BLOCK.get())));
+
+
     public static final RegistryObject<StairBlock> CONCRETE_MOSSY_STAIRS = registerBlock("concrete_mossy_stairs",
             () -> new StairBlock(CONCRETE_MOSSY.get().defaultBlockState(),
                     BlockBehaviour.Properties.copy(CONCRETE_MOSSY.get())));
@@ -691,6 +735,16 @@ public class ModBlocks {
 
     public static final RegistryObject<SlabBlock> CONCRETE_MOSSY_SLAB = registerBlock("concrete_mossy_slab",
             () -> new SlabBlock(BlockBehaviour.Properties.copy(CONCRETE_MOSSY.get())));
+
+    public static final RegistryObject<SlabBlock> CONCRETE_CONSTRUCT_BLOCK_SLAB = registerBlock("concrete_construct_block_slab",
+            () -> new SlabBlock(BlockBehaviour.Properties.copy(CONCRETE_CONSTRUCT_BLOCK.get())));
+
+    public static final RegistryObject<SlabBlock> STEEL_CONSTRUCT_BLOCK_SLAB = registerBlock("steel_construct_block_slab",
+            () -> new SlabBlock(BlockBehaviour.Properties.copy(STEEL_CONSTRUCT_BLOCK.get())));
+
+    public static final RegistryObject<SlabBlock> STEEL_CONSTRUCT_BLOCK_REINFORCED_SLAB = registerBlock("steel_construct_block_reinforced_slab",
+            () -> new SlabBlock(BlockBehaviour.Properties.copy(STEEL_CONSTRUCT_BLOCK_REINFORCED.get())));
+
     public static final RegistryObject<SlabBlock> CONCRETE_OLD_SLAB = registerBlock("concrete_old_slab",
             () -> new SlabBlock(BlockBehaviour.Properties.copy(CONCRETE_OLD.get())));
     public static final RegistryObject<SlabBlock> CONCRETE_STRIPPED_SLAB = registerBlock("concrete_stripped_slab",
@@ -823,8 +877,23 @@ public class ModBlocks {
 
     private static RegistryObject<Block> registerShaft(ShaftMaterial mat, ShaftDiameter dia) {
         String name = "shaft_" + dia.name + "_" + mat.name();
-        // ТЕПЕРЬ ИСПОЛЬЗУЕМ registerBlock, чтобы создались и блок, и предмет!
-        return registerBlock(name, () -> new ShaftBlock(BlockBehaviour.Properties.of().strength(2.0f), mat, dia));
+        return registerBlock(name, () -> new ShaftBlock(shaftProperties(mat), mat, dia));
+    }
+
+    private static BlockBehaviour.Properties shaftProperties(ShaftMaterial mat) {
+        if (mat == ShaftMaterial.IRON) {
+            return BlockBehaviour.Properties.of().strength(3.0f, 6.0f);
+        }
+        if (mat == ShaftMaterial.DURALUMIN) {
+            return BlockBehaviour.Properties.of().strength(4.0f, 8.0f);
+        }
+        if (mat == ShaftMaterial.STEEL) {
+            return BlockBehaviour.Properties.of().strength(6.0f, 15.0f);
+        }
+        if (mat == ShaftMaterial.TITANIUM) {
+            return BlockBehaviour.Properties.of().strength(7.0f, 30.0f);
+        }
+        return BlockBehaviour.Properties.of().strength(9.0f, 60.0f);
     }
 
     public static RegistryObject<Block> getShaft(ShaftMaterial mat, ShaftDiameter dia) {
@@ -856,7 +925,7 @@ public class ModBlocks {
 
     public static final RegistryObject<Block> MISSILE_LIGHT = registerBlock("missile_light",
             () -> new Block(BlockBehaviour.Properties.copy(Blocks.STONE)
-                    .strength(5.0f, 6.0f).noOcclusion().requiresCorrectToolForDrops()));
+                    .strength(5.0f, 30.0f).noOcclusion().requiresCorrectToolForDrops()));
 
     public static final RegistryObject<Block> BEAM_COLLISION = BLOCKS.register("beam_collision",
             () -> new BeamCollisionBlock(BlockBehaviour.Properties.of()
@@ -981,7 +1050,7 @@ public class ModBlocks {
 
     public static final RegistryObject<Block> TROMBONE = BLOCKS.register("trombone",
             () -> new MissileTurretBlock(BlockBehaviour.Properties.copy(Blocks.STONE)
-                    .strength(5.0f, 6.0f).noOcclusion().requiresCorrectToolForDrops()));
+                    .strength(5.0f, 30.0f).noOcclusion().requiresCorrectToolForDrops()));
 
 
     static {
@@ -1032,6 +1101,15 @@ public class ModBlocks {
         ExplosionTooltipRegistry.register(CONCRETE_REINFORCED_HEAVY_STAIRS);
         ExplosionTooltipRegistry.register(CONCRETE_REINFORCED_HEAVY_SLAB);
 
+        ExplosionTooltipRegistry.register(CONCRETE_CONSTRUCT_BLOCK_SLAB);
+        ExplosionTooltipRegistry.register(CONCRETE_CONSTRUCT_BLOCK_STAIRS);
+
+        ExplosionTooltipRegistry.register(STEEL_CONSTRUCT_BLOCK_SLAB);
+        ExplosionTooltipRegistry.register(STEEL_CONSTRUCT_BLOCK_STAIRS);
+
+        ExplosionTooltipRegistry.register(STEEL_CONSTRUCT_BLOCK_REINFORCED_SLAB);
+        ExplosionTooltipRegistry.register(STEEL_CONSTRUCT_BLOCK_REINFORCED_STAIRS);
+
         ExplosionTooltipRegistry.register(CONCRETE_NET);
 
         // ═══════════════════════════════════════════════════════
@@ -1053,6 +1131,14 @@ public class ModBlocks {
 
         ExplosionTooltipRegistry.register(CONCRETE_PORT);
         ExplosionTooltipRegistry.register(CONCRETE_LINE);
+
+        ExplosionTooltipRegistry.register(CONCRETE_RAIL);
+        ExplosionTooltipRegistry.register(CONCRETE_CUT);
+        ExplosionTooltipRegistry.register(CONCRETE_REBAR);
+        ExplosionTooltipRegistry.register(CONCRETE_VENT);
+        ExplosionTooltipRegistry.register(CONCRETE_CONSTRUCT_BLOCK);
+        ExplosionTooltipRegistry.register(STEEL_CONSTRUCT_BLOCK);
+        ExplosionTooltipRegistry.register(STEEL_CONSTRUCT_BLOCK_REINFORCED);
     }
 
     // Вспомогательный метод регистрации без предмета

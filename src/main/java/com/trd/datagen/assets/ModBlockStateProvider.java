@@ -133,7 +133,10 @@ public class ModBlockStateProvider extends BlockStateProvider {
         softBasaltBlockWithItem(ModBlocks.BASALT_SOFT_2);
         softBasaltBlockWithItem(ModBlocks.BASALT_SOFT_3);
         softBasaltBlockWithItem(ModBlocks.BASALT_SOFT_4);
-
+        cubeAllWithItem(ModBlocks.CONCRETE_CONSTRUCT_BLOCK);
+        cubeAllWithItem(ModBlocks.STEEL_CONSTRUCT_BLOCK);
+        cubeAllWithItem(ModBlocks.STEEL_CONSTRUCT_BLOCK_REINFORCED);
+        cubeAllWithItem(ModBlocks.CONCRETE_REBAR);
         cubeAllWithItem(ModBlocks.CRATE);
         cubeAllWithItem(ModBlocks.CONCRETE_MOSSY);
         cubeAllWithItem(ModBlocks.CONCRETE_OLD);
@@ -171,6 +174,21 @@ public class ModBlockStateProvider extends BlockStateProvider {
 
         columnBlockWithItem(ModBlocks.CONCRETE_LINE,
                 modLoc("block/concrete_line"),
+                modLoc("block/concrete"),
+                modLoc("block/concrete"));
+
+        columnBlockWithItem(ModBlocks.CONCRETE_VENT,
+                modLoc("block/concrete_vent"),
+                modLoc("block/concrete"),
+                modLoc("block/concrete"));
+
+        columnBlockWithItem(ModBlocks.CONCRETE_CUT,
+                modLoc("block/concrete_cut"),
+                modLoc("block/concrete"),
+                modLoc("block/concrete"));
+
+        columnBlockWithItem(ModBlocks.CONCRETE_RAIL,
+                modLoc("block/concrete_rail"),
                 modLoc("block/concrete"),
                 modLoc("block/concrete"));
 
@@ -293,6 +311,9 @@ public class ModBlockStateProvider extends BlockStateProvider {
         generatePulleyBlockModels();
         generateFlywheelBlockModels();
 
+        stairsAndSlabs(ModBlocks.CONCRETE_CONSTRUCT_BLOCK.get(), ModBlocks.CONCRETE_CONSTRUCT_BLOCK_STAIRS.get(), ModBlocks.CONCRETE_CONSTRUCT_BLOCK_SLAB.get());
+        stairsAndSlabs(ModBlocks.STEEL_CONSTRUCT_BLOCK.get(), ModBlocks.STEEL_CONSTRUCT_BLOCK_STAIRS.get(), ModBlocks.STEEL_CONSTRUCT_BLOCK_SLAB.get());
+        stairsAndSlabs(ModBlocks.STEEL_CONSTRUCT_BLOCK_REINFORCED.get(), ModBlocks.STEEL_CONSTRUCT_BLOCK_REINFORCED_STAIRS.get(), ModBlocks.STEEL_CONSTRUCT_BLOCK_REINFORCED_SLAB.get());
         stairsAndSlabs(ModBlocks.CONCRETE_MOSSY.get(), ModBlocks.CONCRETE_MOSSY_STAIRS.get(), ModBlocks.CONCRETE_MOSSY_SLAB.get());
         stairsAndSlabs(ModBlocks.CONCRETE_OLD.get(), ModBlocks.CONCRETE_OLD_STAIRS.get(), ModBlocks.CONCRETE_OLD_SLAB.get());
         stairsAndSlabs(ModBlocks.CONCRETE_TILE_ALT.get(), ModBlocks.CONCRETE_TILE_ALT_STAIRS.get(), ModBlocks.CONCRETE_TILE_ALT_SLAB.get());

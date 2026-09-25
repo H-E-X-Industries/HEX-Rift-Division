@@ -202,6 +202,15 @@ public class MainRegistry {
             event.accept(ModBlocks.REINFORCEDBRICK_BLOCK.get());
             event.accept(ModBlocks.REINFORCEDBRICK_SLAB.get());
             event.accept(ModBlocks.REINFORCEDBRICK_STAIRS.get());
+            event.accept(ModBlocks.CONCRETE_CONSTRUCT_BLOCK.get());
+            event.accept(ModBlocks.CONCRETE_CONSTRUCT_BLOCK_SLAB.get());
+            event.accept(ModBlocks.CONCRETE_CONSTRUCT_BLOCK_STAIRS.get());
+            event.accept(ModBlocks.STEEL_CONSTRUCT_BLOCK.get());
+            event.accept(ModBlocks.STEEL_CONSTRUCT_BLOCK_SLAB.get());
+            event.accept(ModBlocks.STEEL_CONSTRUCT_BLOCK_STAIRS.get());
+            event.accept(ModBlocks.STEEL_CONSTRUCT_BLOCK_REINFORCED.get());
+            event.accept(ModBlocks.STEEL_CONSTRUCT_BLOCK_REINFORCED_SLAB.get());
+            event.accept(ModBlocks.STEEL_CONSTRUCT_BLOCK_REINFORCED_STAIRS.get());
             event.accept(ModBlocks.SEQUOIA_PLANKS.get());
             event.accept(ModBlocks.SEQUOIA_SLAB.get());
             event.accept(ModBlocks.SEQUOIA_STAIRS.get());
@@ -210,11 +219,16 @@ public class MainRegistry {
             event.accept(ModBlocks.WASTE_PLANKS_SLAB.get());
 
             event.accept(ModBlocks.CONCRETE_LINE.get());
+            event.accept(ModBlocks.CONCRETE_CUT.get());
+            event.accept(ModBlocks.CONCRETE_RAIL.get());
             event.accept(ModBlocks.CONCRETE_NET.get());
+            event.accept(ModBlocks.CONCRETE_REBAR.get());
+            event.accept(ModBlocks.CONCRETE_VENT.get());
             event.accept(ModBlocks.ARMORED_GLASS.get());
 
             event.accept(ModBlocks.MORY_BLOCK);
             event.accept(ModBlocks.ANTON_CHIGUR);
+
             event.accept(ModBlocks.MINERAL_BLOCK2.get());
             event.accept(ModBlocks.MINERAL_TILE.get());
             event.accept(ModBlocks.DOLOMITE_TILE.get());
