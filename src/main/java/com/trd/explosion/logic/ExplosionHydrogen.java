@@ -69,10 +69,11 @@ import java.util.List;
  * разрушения. Укреплённая сталь и армированный бетон мода пробиваются насквозь лишь
  * тонким слоем, обсидиан — см. {@link #OBSIDIAN_PENETRATION_MULT}.
  *
- * <p>Возможность разрушить/заменить блок или нанести полный урон мобу проверяется лучом
- * от эпицентра до цели: блок с сопротивлением взрыву больше {@link #ARMOR_BLOCK_RESISTANCE}
- * до цели гасит эффект. Для урона каждые {@link #RESIST_PER_STEP} суммарного сопротивления
- * пройденных блоков стоят {@link #STEP_DAMAGE_DROP} урона.
+ * <p>Возможность разрушить/заменить блок, поджечь его или нанести урон мобу проверяется
+ * лучом от эпицентра до цели: блок с сопротивлением взрыву больше {@link #ARMOR_BLOCK_RESISTANCE}
+ * до цели полностью гасит эффект — и урон, и поджог. Для урона каждые {@link #RESIST_PER_STEP}
+ * суммарного сопротивления пройденных блоков стоят {@link #STEP_DAMAGE_DROP} урона; поджог
+ * гаснет вместе с уроном, когда сопротивление съедает эффект полностью.
  *
  * <p>Вся работа размазана по тикам с адаптивным бюджетом времени (работа на быстрых машинах
  * растёт, на отстающих — ужимается), невыгруженные чанки не подгружаются принудительно.
@@ -98,16 +99,9 @@ public class ExplosionHydrogen {
     public static float CRATER_DOWN_SQUASH = 0.33f;
     public static float CRATER_JITTER = 0.9f;
     public static float CRATER_NOISE_SCALE = 0.22f;
-    public static float CRATER_BUDGET = 140.0f;
-    /**
-     * Множитель перевода взрывоустойчивости блока в стоимость пробития луча воронки.
-     * Стоимость ячейки = {@code max(1, getExplosionResistance() * RAY_RESIST_COST_SCALE)}:
-     * воздух/земля ~1, камень 6 -> 3, бетон мода 18 -> 9, сталь 30 -> 15,
-     * армированный бетон 90 -> 45, укреплённая сталь 190 -> 95.
-     * Подобрано так, чтобы пробитие сквозь природный рельеф и радиус воронки
-     * остались прежними, а строительные блоки мода стали заметно устойчивее.
-     */
-    public static float RAY_RESIST_COST_SCALE = 0.5f;
+    public static float CRATER_BUDGET = 150.0f;
+
+    public static float RAY_RESIST_COST_SCALE = 1f;
     /**
      * Множитель пробития для обсидиана (и плачущего обсидиана): взрывоустойчивость 1200
      * делала его непроходимым для луча (1200*0.5 = 600 при бюджете 140), хотя блок
@@ -423,8 +417,12 @@ public class ExplosionHydrogen {
             // Позиционный тинт: твёрдые блоки, существовавшие на момент взрыва, попадают в базу,
             // кроме само-тинтуемых кратерных блоков (мягкий базальт/выжженная земля красятся своим
             // свойством DARKNESS). Видимые поверхности, а не весь объём (TINT_ONLY_EXPOSED).
+            // Проверка rayBlocked обязательна: блоки, до которых волна не дошла (защищённые
+            // броней между эпицентром и целью), не должны коптеть — иначе тинт рисует то,
+            // что взрыв физически не тронул.
             if (!(s.getBlock() instanceof CraterBasaltBlock) && !(s.getBlock() instanceof WasteGrassBlock)) {
-                if (!TINT_ONLY_EXPOSED || isSurfaceExposed(x, y, z)) {
+                if ((!TINT_ONLY_EXPOSED || isSurfaceExposed(x, y, z))
+                        && !rayBlocked(x + 0.5, y + 0.5, z + 0.5)) {
                     tintMap.put(pos.asLong(), linearDarkness(dist));
                 }
             }
@@ -538,19 +536,27 @@ public class ExplosionHydrogen {
                 if (!e.isAlive()) continue;
 
                 Vec3 c = e.getBoundingBox().getCenter();
-                double steps = rayResist(c.x, c.y, c.z) / RESIST_PER_STEP;
+                long packed = queryRay(c.x, c.y, c.z);
+                // Луч полностью закрыт бронёй (RAY_BLOCKED) — волна до моба не доходит:
+                // ни урона, ни поджога. Раньше поджог вешали безусловно, и закрытый моб
+                // всё равно загорался.
+                if ((packed & RAY_BLOCKED) != 0) continue;
+
+                double steps = rayResist(packed) / RESIST_PER_STEP;
 
                 float mult = Math.max(0.0f, 1.0f - (float) (STEP_DAMAGE_DROP * Math.floor(steps)));
                 float dmg = t.baseDamage * mult;
                 if (dmg > 0) e.hurt(damageSource, dmg);
-                if (t.baseFire > 0) e.setSecondsOnFire(t.baseFire);
+                // Поджог гаснет вместе с уроном: если сопротивление съело весь эффект
+                // (mult == 0), огонь до моба не доходит.
+                if (t.baseFire > 0 && mult > 0.0f) e.setSecondsOnFire(t.baseFire);
             }
             return true;
         }
 
         /** Суммарное сопротивление взрыву по лучу (для урона): стартовая и целевая ячейки не учитываются. */
-        private float rayResist(double tx, double ty, double tz) {
-            return Float.intBitsToFloat((int) (queryRay(tx, ty, tz) >>> RAY_RESIST_SHIFT));
+        private float rayResist(long packed) {
+            return Float.intBitsToFloat((int) (packed >>> RAY_RESIST_SHIFT));
         }
 
         /**
@@ -986,6 +992,7 @@ BlockState s = level.getBlockState(pos);
 
         private boolean isInvalidTintTarget(BlockState s, BlockPos pos) {
             if (s.isAir()) return true;
+            if (s.is(Blocks.FIRE)) return true;
             if (!s.getFluidState().isEmpty() || s.getBlock() instanceof LiquidBlock) return true;
             if (s.getDestroySpeed(level, pos) < 0) return true;
             if (s.getBlock() instanceof CraterBasaltBlock || s.getBlock() instanceof WasteGrassBlock) return true;
