@@ -1,6 +1,7 @@
 package com.trd.entity.weapons.grenades;
 
 import com.trd.block.basic.weapons.explosives.IDetonatable;
+import com.trd.fx.particle.ExplosionParticleUtils;
 import com.trd.item.ModItems;
 import com.trd.sound.ModSounds;
 
@@ -125,6 +126,8 @@ public class GrenadeNucProjectileEntity extends ThrowableItemProjectile {
         // Водородный взрыв: гладкая воронка + урон мобам по выжженному объёму
         // (сквозь целые стены не пробивается).
         ExplosionHydrogen.explode(serverLevel, new Vec3(x, y, z), this.getOwner());
+
+        ExplosionParticleUtils.spawnAirBombExplosion(serverLevel, x, y, z);
 
         triggerNearbyDetonations(serverLevel, pos, null);
         playRandomDetonationSound(level(), pos);
