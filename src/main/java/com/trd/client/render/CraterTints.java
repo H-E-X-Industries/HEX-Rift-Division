@@ -302,6 +302,13 @@ public final class CraterTints {
             }
             if (existsTint) continue;
 
+            // Блоки без tint-квадов, но со штатным BlockColors-хендлером красятся извне:
+            // вода, пузырьковый столб, котелок с водой (у них в модели нет граней с
+            // tintindex, а цвет даёт BiomeColors.getAverageWaterColor). Перебивать их
+            // нельзя — иначе блоки теряют биомный цвет. Ванильный хендлер при level==null
+            // возвращает не -1, поэтому он обнаруживается вызовом getColor.
+            if (hasExistingColorHandler(block)) continue;
+
             boolean any = false;
             for (BlockState st : block.getStateDefinition().getPossibleStates()) {
                 ResourceLocation key = BlockModelShaper.stateToModelLocation(st);
@@ -331,6 +338,17 @@ public final class CraterTints {
         }
         LOGGER.info("CraterTints: tint-wrapped {} block(s), {} state model(s), handler registered for {} block(s)",
                 tintableBlocks.size(), wrappedStates, tintableBlocks.size());
+    }
+
+    /** Есть ли уже зарегистрированный цвета для блока (штатный BlockColors-хендлер). */
+    private static boolean hasExistingColorHandler(Block block) {
+        BlockColors colors = Minecraft.getInstance().getBlockColors();
+        if (colors == null) return false;
+        try {
+            return colors.getColor(block.defaultBlockState(), null, null, 0) != -1;
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 
     /** Есть ли у модели хоть одна грань с собственным tintindex (такие блоки не трогаем). */

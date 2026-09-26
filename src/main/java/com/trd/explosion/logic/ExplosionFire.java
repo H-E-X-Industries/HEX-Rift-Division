@@ -664,6 +664,7 @@ public class ExplosionFire {
 
         private boolean isInvalidTintTarget(BlockState s, BlockPos pos) {
             if (s.isAir()) return true;
+            if (s.is(Blocks.FIRE)) return true;
             if (!s.getFluidState().isEmpty() || s.getBlock() instanceof LiquidBlock) return true;
             if (s.getDestroySpeed(level, pos) < 0) return true;
             if (s.getBlock() instanceof CraterBasaltBlock || s.getBlock() instanceof WasteGrassBlock) return true;

@@ -63,10 +63,17 @@ import java.util.List;
  * в мягкий базальт градиентом. Радиус ядра вложен в первую зону, поэтому на практике
  * центр — это кратер, периферия — выжженные остатки, внешняя часть — ударная волна.
  *
- * <p>Возможность разрушить/заменить блок или нанести полный урон мобу проверяется лучом
- * от эпицентра до цели: блок с сопротивлением взрыву больше {@link #ARMOR_BLOCK_RESISTANCE}
- * до цели гасит эффект. Для урона каждые {@link #RESIST_PER_STEP} суммарного сопротивления
- * пройденных блоков стоят {@link #STEP_DAMAGE_DROP} урона.
+ * <p>Возможность выжечь объём воронки проверяется лучом от эпицентра: бюджет
+ * {@link #CRATER_BUDGET} расходуется по мере прохождения ячеек, а стоимость ячейки
+ * считается от взрывоустойчивости блока ({@link #RAY_RESIST_COST_SCALE}), а не от прочности
+ * разрушения. Укреплённая сталь и армированный бетон мода пробиваются насквозь лишь
+ * тонким слоем, обсидиан — см. {@link #OBSIDIAN_PENETRATION_MULT}.
+ *
+ * <p>Возможность разрушить/заменить блок, поджечь его или нанести урон мобу проверяется
+ * лучом от эпицентра до цели: блок с сопротивлением взрыву больше {@link #ARMOR_BLOCK_RESISTANCE}
+ * до цели полностью гасит эффект — и урон, и поджог. Для урона каждые {@link #RESIST_PER_STEP}
+ * суммарного сопротивления пройденных блоков стоят {@link #STEP_DAMAGE_DROP} урона; поджог
+ * гаснет вместе с уроном, когда сопротивление съедает эффект полностью.
  *
  * <p>Вся работа размазана по тикам с адаптивным бюджетом времени (работа на быстрых машинах
  * растёт, на отстающих — ужимается), невыгруженные чанки не подгружаются принудительно.
@@ -92,7 +99,16 @@ public class ExplosionHydrogen {
     public static float CRATER_DOWN_SQUASH = 0.33f;
     public static float CRATER_JITTER = 0.9f;
     public static float CRATER_NOISE_SCALE = 0.22f;
-    public static float CRATER_BUDGET = 70.0f;
+    public static float CRATER_BUDGET = 140.0f;
+
+    public static float RAY_RESIST_COST_SCALE = 1f;
+    /**
+     * Множитель пробития для обсидиана (и плачущего обсидиана): взрывоустойчивость 1200
+     * делала его непроходимым для луча (1200*0.5 = 600 при бюджете 140), хотя блок
+     * слишком легко добывается и не должен быть полноценной защитой.
+     * Итог: 1200 * 0.5 * 0.025 = 15, как у стали мода — ~9 блоков насквозь.
+     */
+    public static float OBSIDIAN_PENETRATION_MULT = 0.025f;
     public static int CRATER_EDGE_AIR_RANGE = 5;
     public static float CRATER_SOFT_CORE_RADIUS = 4.0f;
     public static float CRATER_RIM_BAND = 10.0f;
@@ -115,6 +131,13 @@ public class ExplosionHydrogen {
     public static float FIRE_NOISE_CENTER = 0.0f;
     public static float FIRE_NOISE_EDGE = 1.0f;
     public static float FIRE_THRESHOLD = 0.5f;
+    /**
+     * Минимальный остаток пробития луча, при котором он ещё может поджечь блок.
+     * То есть поджог проходит, только если луч сохранил больше {@code FIRE_PENETRATION_MIN}
+     * от {@link #CRATER_BUDGET}; израсходованное на сопротивление пройденных блоков
+     * сопоставляется с {@code CRATER_BUDGET * (1 - FIRE_PENETRATION_MIN)}.
+     */
+    public static float FIRE_PENETRATION_MIN = 0.10f;
 
     public static long DEFAULT_TICK_BUDGET_NANOS = 3_000_000L;
     public static long MIN_TICK_BUDGET_NANOS = 400_000L;
@@ -206,6 +229,8 @@ public class ExplosionHydrogen {
         private static final long RAY_REACHES = 2L;
         /** Сдвиг битов Float.floatToIntBits(суммарное сопротивление взрыву) в закешированном long. */
         private static final int RAY_RESIST_SHIFT = 2;
+        /** Старшие 32 бита long отданы под израсходованную часть пробития (RAY_RESIST_SHIFT + 30 = 32). */
+        private static final int RAY_SPENT_SHIFT = 32;
         /** Ограничение числа шагов DDA (покрывает прежние 512 и 1024: радиусы ≤ ~46 блоков). */
         private static final int MAX_RAY_STEPS = 1024;
 
@@ -401,8 +426,12 @@ public class ExplosionHydrogen {
             // Позиционный тинт: твёрдые блоки, существовавшие на момент взрыва, попадают в базу,
             // кроме само-тинтуемых кратерных блоков (мягкий базальт/выжженная земля красятся своим
             // свойством DARKNESS). Видимые поверхности, а не весь объём (TINT_ONLY_EXPOSED).
+            // Проверка rayBlocked обязательна: блоки, до которых волна не дошла (защищённые
+            // броней между эпицентром и целью), не должны коптеть — иначе тинт рисует то,
+            // что взрыв физически не тронул.
             if (!(s.getBlock() instanceof CraterBasaltBlock) && !(s.getBlock() instanceof WasteGrassBlock)) {
-                if (!TINT_ONLY_EXPOSED || isSurfaceExposed(x, y, z)) {
+                if ((!TINT_ONLY_EXPOSED || isSurfaceExposed(x, y, z))
+                        && !rayBlocked(x + 0.5, y + 0.5, z + 0.5)) {
                     tintMap.put(pos.asLong(), linearDarkness(dist));
                 }
             }
@@ -516,19 +545,32 @@ public class ExplosionHydrogen {
                 if (!e.isAlive()) continue;
 
                 Vec3 c = e.getBoundingBox().getCenter();
-                double steps = rayResist(c.x, c.y, c.z) / RESIST_PER_STEP;
+                long packed = queryRay(c.x, c.y, c.z);
+                // Луч полностью закрыт бронёй (RAY_BLOCKED) — волна до моба не доходит:
+                // ни урона, ни поджога. Раньше поджог вешали безусловно, и закрытый моб
+                // всё равно загорался.
+                if ((packed & RAY_BLOCKED) != 0) continue;
+
+                double steps = rayResist(packed) / RESIST_PER_STEP;
 
                 float mult = Math.max(0.0f, 1.0f - (float) (STEP_DAMAGE_DROP * Math.floor(steps)));
                 float dmg = t.baseDamage * mult;
                 if (dmg > 0) e.hurt(damageSource, dmg);
-                if (t.baseFire > 0) e.setSecondsOnFire(t.baseFire);
+                // Поджог гаснет вместе с уроном: если сопротивление съело весь эффект
+                // (mult == 0), огонь до моба не доходит.
+                if (t.baseFire > 0 && mult > 0.0f) e.setSecondsOnFire(t.baseFire);
             }
             return true;
         }
 
         /** Суммарное сопротивление взрыву по лучу (для урона): стартовая и целевая ячейки не учитываются. */
-        private float rayResist(double tx, double ty, double tz) {
-            return Float.intBitsToFloat((int) (queryRay(tx, ty, tz) >>> RAY_RESIST_SHIFT));
+        private float rayResist(long packed) {
+            return Float.intBitsToFloat((int) (packed >>> RAY_RESIST_SHIFT));
+        }
+
+        /** Потраченная часть пробития луча: сколько бюджета съело сопротивление пройденных блоков. */
+        private float raySpent(long packed) {
+            return Float.intBitsToFloat((int) (packed >>> RAY_SPENT_SHIFT));
         }
 
         /**
@@ -536,6 +578,8 @@ public class ExplosionHydrogen {
          * <ul>
          *     <li>{@link #RAY_BLOCKED} + суммарное сопротивление — для разрушения/урона, старт и цель исключены;</li>
          *     <li>{@link #RAY_REACHES} — достижимость карвинга-воронки по бюджету пути, старт и цель включены;</li>
+         *     <li>израсходованный бюджет (старшие 32 бита) — сколько пробития съело сопротивление,
+         *     чтобы решать, дошёл ли луч с запасом прочности, см. {@link #FIRE_PENETRATION_MIN};</li>
          * </ul>
          * Результат кешируется по целевой ячейке (в рамках одного State). Кеш аннулируется после фаз,
          * меняющих мир ({@code APPLY}/{@code CARVE_APPLY}/{@code BASALT}/{@code FIRE}), поэтому лучи в разных
@@ -635,7 +679,8 @@ public class ExplosionHydrogen {
 
             long packed = (blocked ? RAY_BLOCKED : 0L)
                     | (reaches ? RAY_REACHES : 0L)
-                    | ((long) Float.floatToIntBits(resist) & 0xFFFFFFFFL) << RAY_RESIST_SHIFT;
+                    | ((long) Float.floatToIntBits(resist) & 0xFFFFFFFFL) << RAY_RESIST_SHIFT
+                    | (((long) Float.floatToIntBits(spent)) & 0xFFFFFFFFL) << RAY_SPENT_SHIFT;
             rayCache.put(target, packed);
             return packed;
         }
@@ -686,7 +731,12 @@ public class ExplosionHydrogen {
             double noise = FIRE_NOISE_CENTER + (FIRE_NOISE_EDGE - FIRE_NOISE_CENTER) * t;
             double p = base + (hash01(seed, pos.asLong()) - 0.5) * 2.0 * noise;
             if (p < FIRE_THRESHOLD) return;
-            if (rayBlocked(x + 0.5, y + 0.5, z + 0.5)) return;
+
+            long packed = queryRay(x + 0.5, y + 0.5, z + 0.5);
+            // Луч упирается в броню (которая гасит и урон, и поджог)...
+            if ((packed & RAY_BLOCKED) != 0) return;
+            // ...или сопротивление пройденных блоков съело почти всё пробитие.
+            if (raySpent(packed) >= CRATER_BUDGET * (1.0f - FIRE_PENETRATION_MIN)) return;
 
             level.setBlock(pos, Blocks.FIRE.defaultBlockState(), 3);
         }
@@ -964,6 +1014,7 @@ BlockState s = level.getBlockState(pos);
 
         private boolean isInvalidTintTarget(BlockState s, BlockPos pos) {
             if (s.isAir()) return true;
+            if (s.is(Blocks.FIRE)) return true;
             if (!s.getFluidState().isEmpty() || s.getBlock() instanceof LiquidBlock) return true;
             if (s.getDestroySpeed(level, pos) < 0) return true;
             if (s.getBlock() instanceof CraterBasaltBlock || s.getBlock() instanceof WasteGrassBlock) return true;
@@ -1105,9 +1156,19 @@ BlockState s = level.getBlockState(pos);
     private static float blockCost(BlockState state, ServerLevel level, BlockPos pos) {
         if (state.isAir()) return 1.0f;
         if (state.getFluidState().isSource() || state.getBlock() instanceof LiquidBlock) return 0.6f;
-        float hardness = state.getDestroySpeed(level, pos);
-        if (hardness < 0) return Float.POSITIVE_INFINITY;
-        return Math.max(1.0f, hardness);
+        if (state.getDestroySpeed(level, pos) < 0) return Float.POSITIVE_INFINITY;
+        return Math.max(1.0f, rayPenetrationCost(state.getBlock()));
+    }
+
+    /**
+     * Стоимость пробития блока для луча воронки — по взрывоустойчивости, а не по прочности
+     * разрушения. {@link #OBSIDIAN_PENETRATION_MULT} применяется к обсидиану.
+     */
+    private static float rayPenetrationCost(Block block) {
+        float mult = (block == Blocks.OBSIDIAN || block == Blocks.CRYING_OBSIDIAN)
+                ? OBSIDIAN_PENETRATION_MULT
+                : 1.0f;
+        return block.getExplosionResistance() * RAY_RESIST_COST_SCALE * mult;
     }
 
     private static boolean isBarrier(ServerLevel level, BlockState state, BlockPos pos) {
