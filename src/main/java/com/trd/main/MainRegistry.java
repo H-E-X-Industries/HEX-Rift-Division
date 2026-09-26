@@ -99,6 +99,7 @@ public class MainRegistry {
         ModFoliagePlacerTypes.register(modEventBus);
         ModFluids.register(modEventBus);
         ModFeatures.FEATURES.register(modEventBus);
+        com.trd.fx.particle.ModExplosionParticles.PARTICLE_TYPES.register(modEventBus);
         MinecraftForge.EVENT_BUS.addListener(this::onFuelBurnTime);
         MinecraftForge.EVENT_BUS.register(new HiveEventHandler());
         MinecraftForge.EVENT_BUS.register(RadioNetworkManager.class);

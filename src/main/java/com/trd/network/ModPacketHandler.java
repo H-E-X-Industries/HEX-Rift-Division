@@ -264,5 +264,12 @@ public class ModPacketHandler {
                 com.trd.network.packet.explosion.SyncCraterTintsPacket::decode,
                 com.trd.network.packet.explosion.SyncCraterTintsPacket::handle
         );
+
+        INSTANCE.registerMessage(id++,
+                com.trd.network.packet.explosion.SpawnExplosionParticlesPacket.class,
+                com.trd.network.packet.explosion.SpawnExplosionParticlesPacket::encode,
+                com.trd.network.packet.explosion.SpawnExplosionParticlesPacket::decode,
+                com.trd.network.packet.explosion.SpawnExplosionParticlesPacket::handle
+        );
     }
 }
