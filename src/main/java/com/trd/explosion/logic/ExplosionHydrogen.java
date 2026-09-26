@@ -99,7 +99,7 @@ public class ExplosionHydrogen {
     public static float CRATER_DOWN_SQUASH = 0.33f;
     public static float CRATER_JITTER = 0.9f;
     public static float CRATER_NOISE_SCALE = 0.22f;
-    public static float CRATER_BUDGET = 150.0f;
+    public static float CRATER_BUDGET = 140.0f;
 
     public static float RAY_RESIST_COST_SCALE = 1f;
     /**
@@ -131,6 +131,13 @@ public class ExplosionHydrogen {
     public static float FIRE_NOISE_CENTER = 0.0f;
     public static float FIRE_NOISE_EDGE = 1.0f;
     public static float FIRE_THRESHOLD = 0.5f;
+    /**
+     * Минимальный остаток пробития луча, при котором он ещё может поджечь блок.
+     * То есть поджог проходит, только если луч сохранил больше {@code FIRE_PENETRATION_MIN}
+     * от {@link #CRATER_BUDGET}; израсходованное на сопротивление пройденных блоков
+     * сопоставляется с {@code CRATER_BUDGET * (1 - FIRE_PENETRATION_MIN)}.
+     */
+    public static float FIRE_PENETRATION_MIN = 0.10f;
 
     public static long DEFAULT_TICK_BUDGET_NANOS = 3_000_000L;
     public static long MIN_TICK_BUDGET_NANOS = 400_000L;
@@ -222,6 +229,8 @@ public class ExplosionHydrogen {
         private static final long RAY_REACHES = 2L;
         /** Сдвиг битов Float.floatToIntBits(суммарное сопротивление взрыву) в закешированном long. */
         private static final int RAY_RESIST_SHIFT = 2;
+        /** Старшие 32 бита long отданы под израсходованную часть пробития (RAY_RESIST_SHIFT + 30 = 32). */
+        private static final int RAY_SPENT_SHIFT = 32;
         /** Ограничение числа шагов DDA (покрывает прежние 512 и 1024: радиусы ≤ ~46 блоков). */
         private static final int MAX_RAY_STEPS = 1024;
 
@@ -559,11 +568,18 @@ public class ExplosionHydrogen {
             return Float.intBitsToFloat((int) (packed >>> RAY_RESIST_SHIFT));
         }
 
+        /** Потраченная часть пробития луча: сколько бюджета съело сопротивление пройденных блоков. */
+        private float raySpent(long packed) {
+            return Float.intBitsToFloat((int) (packed >>> RAY_SPENT_SHIFT));
+        }
+
         /**
          * Единый 3D-DDA от эпицентра до целевой ячейки. За один проход считает обе метрики:
          * <ul>
          *     <li>{@link #RAY_BLOCKED} + суммарное сопротивление — для разрушения/урона, старт и цель исключены;</li>
          *     <li>{@link #RAY_REACHES} — достижимость карвинга-воронки по бюджету пути, старт и цель включены;</li>
+         *     <li>израсходованный бюджет (старшие 32 бита) — сколько пробития съело сопротивление,
+         *     чтобы решать, дошёл ли луч с запасом прочности, см. {@link #FIRE_PENETRATION_MIN};</li>
          * </ul>
          * Результат кешируется по целевой ячейке (в рамках одного State). Кеш аннулируется после фаз,
          * меняющих мир ({@code APPLY}/{@code CARVE_APPLY}/{@code BASALT}/{@code FIRE}), поэтому лучи в разных
@@ -663,7 +679,8 @@ public class ExplosionHydrogen {
 
             long packed = (blocked ? RAY_BLOCKED : 0L)
                     | (reaches ? RAY_REACHES : 0L)
-                    | ((long) Float.floatToIntBits(resist) & 0xFFFFFFFFL) << RAY_RESIST_SHIFT;
+                    | ((long) Float.floatToIntBits(resist) & 0xFFFFFFFFL) << RAY_RESIST_SHIFT
+                    | (((long) Float.floatToIntBits(spent)) & 0xFFFFFFFFL) << RAY_SPENT_SHIFT;
             rayCache.put(target, packed);
             return packed;
         }
@@ -714,7 +731,12 @@ public class ExplosionHydrogen {
             double noise = FIRE_NOISE_CENTER + (FIRE_NOISE_EDGE - FIRE_NOISE_CENTER) * t;
             double p = base + (hash01(seed, pos.asLong()) - 0.5) * 2.0 * noise;
             if (p < FIRE_THRESHOLD) return;
-            if (rayBlocked(x + 0.5, y + 0.5, z + 0.5)) return;
+
+            long packed = queryRay(x + 0.5, y + 0.5, z + 0.5);
+            // Луч упирается в броню (которая гасит и урон, и поджог)...
+            if ((packed & RAY_BLOCKED) != 0) return;
+            // ...или сопротивление пройденных блоков съело почти всё пробитие.
+            if (raySpent(packed) >= CRATER_BUDGET * (1.0f - FIRE_PENETRATION_MIN)) return;
 
             level.setBlock(pos, Blocks.FIRE.defaultBlockState(), 3);
         }

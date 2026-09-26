@@ -303,27 +303,27 @@ public class ModBlocks {
 
     public static final RegistryObject<Block> CONCRETE = registerBlock("concrete",
             () -> new Block(BlockBehaviour.Properties.of()
-                    .strength(4.0F, 18.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+                    .strength(4.0F, 54.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
 
     public static final RegistryObject<Block> CONCRETE_LINE = registerBlock("concrete_line",
             () -> new Block(BlockBehaviour.Properties.of()
-                    .strength(4.0F, 18.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+                    .strength(4.0F, 54.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
 
     public static final RegistryObject<Block> CONCRETE_PORT = registerBlock("concrete_port",
             () -> new Block(BlockBehaviour.Properties.of()
-                    .strength(4.0F, 18.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+                    .strength(4.0F, 54.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
 
     public static final RegistryObject<Block> CONCRETE_MOSSY = registerBlock("concrete_mossy",
             () -> new Block(BlockBehaviour.Properties.of()
-                    .strength(4.0F, 18.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+                    .strength(4.0F, 54.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
 
     public static final RegistryObject<Block> CONCRETE_OLD = registerBlock("concrete_old",
             () -> new Block(BlockBehaviour.Properties.of()
-                    .strength(3.5F, 10.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+                    .strength(3.5F, 30.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
 
     public static final RegistryObject<Block> ARMORED_GLASS = registerBlock("armored_glass",
             () -> new GlassBlock(BlockBehaviour.Properties.of()
-                    .strength(3.0F, 12.0F)
+                    .strength(3.0F, 24.0F)
                     .sound(SoundType.STONE)
                     .requiresCorrectToolForDrops()
                     .noOcclusion()
@@ -334,39 +334,39 @@ public class ModBlocks {
 
     public static final RegistryObject<Block> CONCRETE_HAZARD_NEW = registerBlock("concrete_hazard_new",
             () -> new Block(BlockBehaviour.Properties.of()
-                    .strength(4.0F, 18.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+                    .strength(4.0F, 54.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
 
     public static final RegistryObject<Block> CONCRETE_HAZARD_OLD = registerBlock("concrete_hazard_old",
             () -> new Block(BlockBehaviour.Properties.of()
-                    .strength(4.0F, 18.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+                    .strength(4.0F, 54.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
 
     public static final RegistryObject<Block> CONCRETE_TILE = registerBlock("concrete_tile",
             () -> new Block(BlockBehaviour.Properties.of()
-                    .strength(4.5F, 20.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+                    .strength(4.5F, 60.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
 
     public static final RegistryObject<Block> CONCRETE_TILE_ALT = registerBlock("concrete_tile_alt",
             () -> new Block(BlockBehaviour.Properties.of()
-                    .strength(4.5F, 20.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+                    .strength(4.5F, 60.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
 
     public static final RegistryObject<Block> CONCRETE_TILE_ALT_BLUE = registerBlock("concrete_tile_alt_blue",
             () -> new Block(BlockBehaviour.Properties.of()
-                    .strength(4.5F, 20.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+                    .strength(4.5F, 60.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
 
     public static final RegistryObject<Block> CONCRETE_STRIPPED = registerBlock("concrete_stripped",
             () -> new Block(BlockBehaviour.Properties.of()
-                    .strength(4.0F, 16.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+                    .strength(4.0F, 48.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
 
     public static final RegistryObject<Block> CONCRETE_REINFORCED = registerBlock("concrete_reinforced",
             () -> new Block(BlockBehaviour.Properties.of()
-                    .strength(4.0F, 16.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+                    .strength(4.0F, 48.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
 
     public static final RegistryObject<Block> CONCRETE_REINFORCED_HEAVY = registerBlock("concrete_reinforced_heavy",
             () -> new Block(BlockBehaviour.Properties.of()
-                    .strength(4.0F, 16.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+                    .strength(4.0F, 48.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
 
     public static final RegistryObject<Block> CONCRETE_NET = registerBlock("concrete_net",
             () -> new Block(BlockBehaviour.Properties.of()
-                    .strength(5.5F, 45.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+                    .strength(5.5F, 135.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
 
 
 // ═══════════════════════════════════════════════════════
@@ -375,11 +375,11 @@ public class ModBlocks {
 
     public static final RegistryObject<Block> FIREBRICK_BLOCK = registerBlock("firebrick_block",
             () -> new Block(BlockBehaviour.Properties.of()
-                    .strength(3.0F, 12.0F).sound(SoundType.NETHER_BRICKS).requiresCorrectToolForDrops()));
+                    .strength(3.0F, 24.0F).sound(SoundType.NETHER_BRICKS).requiresCorrectToolForDrops()));
 
     public static final RegistryObject<Block> REINFORCEDBRICK_BLOCK = registerBlock("reinforcedbrick_block",
             () -> new Block(BlockBehaviour.Properties.of()
-                    .strength(5.0F, 20.0F).sound(SoundType.NETHER_BRICKS).requiresCorrectToolForDrops()));
+                    .strength(5.0F, 40.0F).sound(SoundType.NETHER_BRICKS).requiresCorrectToolForDrops()));
 
 
 // ═══════════════════════════════════════════════════════
@@ -478,7 +478,7 @@ public class ModBlocks {
 
     public static final RegistryObject<Block> ROUND_LAMP = registerBlock("round_lamp",
             () -> new LampBlock(BlockBehaviour.Properties.of()
-                    .strength(6F, 30F)
+                    .strength(6F, 60F)
                     .sound(SoundType.STONE)
                     .requiresCorrectToolForDrops()
                     .noOcclusion()
@@ -625,32 +625,32 @@ public class ModBlocks {
 
     public static final RegistryObject<Block> CONCRETE_REBAR = registerBlock("concrete_rebar",
             () -> new Block(BlockBehaviour.Properties.of()
-                    .strength(10.0F, 30.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+                    .strength(10.0F, 90.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
 
     public static final RegistryObject<Block> CONCRETE_VENT = registerBlock("concrete_vent",
             () -> new Block(BlockBehaviour.Properties.of()
-                    .strength(4.0F, 18.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+                    .strength(4.0F, 54.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
 
     public static final RegistryObject<Block> CONCRETE_CUT = registerBlock("concrete_cut",
             () -> new Block(BlockBehaviour.Properties.of()
-                    .strength(4.0F, 18.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+                    .strength(4.0F, 54.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
 
     public static final RegistryObject<Block> CONCRETE_RAIL = registerBlock("concrete_rail",
             () -> new Block(BlockBehaviour.Properties.of()
-                    .strength(4.0F, 18.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+                    .strength(4.0F, 54.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
 
 
     public static final RegistryObject<Block> STEEL_CONSTRUCT_BLOCK = registerBlock("steel_construct_block",
             () -> new Block(BlockBehaviour.Properties.of()
-                    .strength(10.0F, 30.0F).sound(SoundType.METAL).requiresCorrectToolForDrops()));
+                    .strength(10.0F, 60.0F).sound(SoundType.METAL).requiresCorrectToolForDrops()));
 
     public static final RegistryObject<Block> STEEL_CONSTRUCT_BLOCK_REINFORCED = registerBlock("steel_construct_block_reinforced",
             () -> new Block(BlockBehaviour.Properties.of()
-                    .strength(30.0F, 190.0F).sound(SoundType.METAL).requiresCorrectToolForDrops()));
+                    .strength(30.0F, 380.0F).sound(SoundType.METAL).requiresCorrectToolForDrops()));
 
     public static final RegistryObject<Block> CONCRETE_CONSTRUCT_BLOCK = registerBlock("concrete_construct_block",
             () -> new Block(BlockBehaviour.Properties.of()
-                    .strength(15.0F, 90.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+                    .strength(15.0F, 270.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
 
 
     public static final RegistryObject<Block> WASTE_GRASS = registerBlock("waste_grass",
@@ -796,7 +796,7 @@ public class ModBlocks {
 
     public static final RegistryObject<Block> STEEL_DOOR = registerBlock("steel_door",
             () -> new DoorBlock(
-                    BlockBehaviour.Properties.of().strength(15.0F, 80.0F).sound(SoundType.METAL).noOcclusion(),
+                    BlockBehaviour.Properties.of().strength(15.0F, 160.0F).sound(SoundType.METAL).noOcclusion(),
                     BlockSetType.STONE));
 
     // ЛЮКИ
