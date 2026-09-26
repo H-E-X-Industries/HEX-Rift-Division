@@ -61,6 +61,9 @@ public class BearingBlockEntity extends KineticNodeBlockEntity {
         if (neighbor instanceof BearingBlockEntity otherBearing) {
             return otherBearing.hasShaft() && otherBearing.getShaftDiameter() == this.getShaftDiameter();
         }
+        if (neighbor instanceof TachometerBlockEntity otherTach) {
+            return otherTach.hasShaft() && otherTach.getShaftDiameter() == this.getShaftDiameter();
+        }
         return true;
     }
 

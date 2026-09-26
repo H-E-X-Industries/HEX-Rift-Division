@@ -127,6 +127,12 @@ public class ModBlockEntities {
                     ModBlocks.MOTOR_ELECTRO.get()
             ).build(null));
 
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.industrial.rotation.TachometerBlockEntity>> TACHOMETER_BE =
+            BLOCK_ENTITIES.register("tachometer_be", () -> BlockEntityType.Builder.of(
+                    com.trd.block.entity.industrial.rotation.TachometerBlockEntity::new,
+                    ModBlocks.TACHOMETER.get()
+            ).build(null));
+
     public static void register(IEventBus eventBus) {
         BLOCK_ENTITIES.register(eventBus);
     }

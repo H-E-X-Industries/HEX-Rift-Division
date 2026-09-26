@@ -285,6 +285,8 @@ public class MotorElectroBlockEntity extends KineticNodeBlockEntity implements I
             return clutch.hasShaft() && clutch.getShaftDiameter() == ShaftDiameter.LIGHT;
         } else if (neighbor instanceof BearingBlockEntity bearing) {
             return bearing.hasShaft() && bearing.getShaftDiameter() == ShaftDiameter.LIGHT;
+        } else if (neighbor instanceof TachometerBlockEntity tach) {
+            return tach.hasShaft() && tach.getShaftDiameter() == ShaftDiameter.LIGHT;
         }
         return true;
     }

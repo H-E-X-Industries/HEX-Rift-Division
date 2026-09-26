@@ -134,6 +134,7 @@ public class ModCreativeTabs {
                         output.accept(ModBlocks.HAND_CRANK_BLOCK.get());
                         output.accept(ModBlocks.CLUTCH.get());
                         output.accept(ModBlocks.MOTOR_ELECTRO.get());
+                        output.accept(ModBlocks.TACHOMETER.get());
                         output.accept(ModItems.BELT.get());
                         output.accept(ModItems.PULLEY.get());
                         output.accept(ModItems.BEVEL_GEAR.get());

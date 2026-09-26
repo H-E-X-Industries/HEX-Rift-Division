@@ -243,5 +243,17 @@ public class ModClientSetup {
                 return true;
             }
         });
+
+        VisualizerRegistry.setVisualizer(ModBlockEntities.TACHOMETER_BE.get(), new BlockEntityVisualizer<com.trd.block.entity.industrial.rotation.TachometerBlockEntity>() {
+            @Override
+            public BlockEntityVisual<? super com.trd.block.entity.industrial.rotation.TachometerBlockEntity> createVisual(VisualizationContext ctx, com.trd.block.entity.industrial.rotation.TachometerBlockEntity be, float partialTick) {
+                return new com.trd.client.render.flywheel.TachometerVisual(ctx, be, partialTick);
+            }
+
+            @Override
+            public boolean skipVanillaRender(com.trd.block.entity.industrial.rotation.TachometerBlockEntity be) {
+                return true;
+            }
+        });
     }
 }

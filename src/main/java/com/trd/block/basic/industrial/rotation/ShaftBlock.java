@@ -297,6 +297,8 @@ public class ShaftBlock extends BaseEntityBlock {
             placementFacing = stateAgainst.getValue(MotorElectroBlock.FACING);
         } else if (stateAgainst.getBlock() instanceof HandCrankBlock) {
             placementFacing = stateAgainst.getValue(HandCrankBlock.FACING).getOpposite();
+        } else if (stateAgainst.getBlock() instanceof TachometerBlock) {
+            placementFacing = stateAgainst.getValue(TachometerBlock.FACING);
         } else if (stateAgainst.getBlock() instanceof com.trd.multiblock.system.MultiblockPartBlock) {
             BlockEntity be = level.getBlockEntity(posAgainst);
             if (be instanceof com.trd.multiblock.system.roles.IMultiblockPart part
@@ -393,6 +395,9 @@ public class ShaftBlock extends BaseEntityBlock {
         if (block instanceof HandCrankBlock) {
             return state.getValue(HandCrankBlock.FACING).getAxis() == axisDir.getAxis();
         }
+        if (block instanceof TachometerBlock) {
+            return state.getValue(TachometerBlock.HAS_SHAFT) && state.getValue(TachometerBlock.FACING).getAxis() == axisDir.getAxis();
+        }
         if (block instanceof com.trd.multiblock.system.MultiblockPartBlock) {
             BlockEntity be = level.getBlockEntity(pos);
             if (be instanceof com.trd.multiblock.system.roles.IMultiblockPart part
@@ -401,7 +406,7 @@ public class ShaftBlock extends BaseEntityBlock {
             }
         }
         String path = BuiltInRegistries.BLOCK.getKey(block).getPath();
-        if (path.equals("tachometer") || path.equals("steam_engine") || path.equals("water_pump")) {
+        if (path.equals("steam_engine") || path.equals("water_pump")) {
             return true;
         }
         return false;

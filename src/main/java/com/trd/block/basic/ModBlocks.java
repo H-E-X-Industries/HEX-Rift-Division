@@ -142,6 +142,10 @@ public class ModBlocks {
             () -> new com.trd.block.basic.industrial.rotation.MotorElectroBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)
                     .noOcclusion().strength(5.0f, 6.0f).requiresCorrectToolForDrops()));
 
+    public static final DeferredBlock<Block> TACHOMETER = registerBlock("tachometer",
+            () -> new com.trd.block.basic.industrial.rotation.TachometerBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)
+                    .noOcclusion().strength(5.0f, 6.0f).requiresCorrectToolForDrops()));
+
     public static final DeferredBlock<Block> HAND_CRANK_BLOCK = registerBlock("hand_crank",
             com.trd.block.basic.industrial.rotation.HandCrankBlock::new);
 
