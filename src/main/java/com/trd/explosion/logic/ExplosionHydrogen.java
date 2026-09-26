@@ -40,6 +40,7 @@ import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.PacketDistributor;
@@ -129,7 +130,7 @@ public class ExplosionHydrogen {
     private static long tickBudgetNanos = DEFAULT_TICK_BUDGET_NANOS;
     private static long lastDrainNanos = System.nanoTime();
 
-    private enum Phase { SCAN, APPLY, CARVE, CARVE_APPLY, BASALT, FIRE, DAMAGE, TINT, FINISH }
+    private enum Phase { PRELOAD, SCAN, APPLY, CARVE, CARVE_APPLY, BASALT, FIRE, DAMAGE, TINT, FINISH }
 
     private record BasaltJob(BlockPos pos, boolean destroy) {}
 
@@ -160,6 +161,7 @@ public class ExplosionHydrogen {
 
         final int minX, maxX, minY, maxY, minZ, maxZ;
         int scanX, scanY, scanZ;
+        int plX, plZ;
 
         Phase phase = Phase.SCAN;
 
@@ -246,6 +248,8 @@ public class ExplosionHydrogen {
             scanX = minX;
             scanY = minY;
             scanZ = minZ;
+            plX = minX >> 4;
+            plZ = minZ >> 4;
             int fR = (int) Math.ceil(fireEnd);
             fireMinX = cx - fR;
             fireMaxX = cx + fR;
@@ -274,6 +278,10 @@ public class ExplosionHydrogen {
         boolean work(long deadline) {
             while (true) {
                 switch (phase) {
+                    case PRELOAD -> {
+                        if (!preload(deadline)) return false;
+                        phase = Phase.SCAN;
+                    }
                     case SCAN -> {
                         if (!scan(deadline)) return false;
                         phase = Phase.APPLY;
@@ -317,6 +325,34 @@ public class ExplosionHydrogen {
             }
         }
 
+        /**
+         * Предзагрузка чанков, пересекающих зону поражения.
+         *
+         * <p>Раньше {@code processCell} начинал с {@code if (!level.hasChunk(...)) return;}, и в
+         * незагруженных чанках блок пропускался целиком — включая запись тинта. При радиусе зоны
+         * {@link #ZONE_2_RADIUS} = 40 воронка почти всегда захватывает чанки, которых сервер не
+         * держит загруженными, и на месте целых чанков тинт просто не появлялся (и уже не
+         * появлялся никогда: в {@code CraterTintData} такие позиции тоже не попадали).
+         * Зона грузится заранее бюджетными шагами, поэтому stall размазывается по тикам, как и
+         * остальные фазы.
+         */
+        private boolean preload(long deadline) {
+            int cx0 = minX >> 4, cz0 = minZ >> 4;
+            int cx1 = maxX >> 4, cz1 = maxZ >> 4;
+            while (plX <= cx1) {
+                while (plZ <= cz1) {
+                    if (System.nanoTime() > deadline) return false;
+                    int cx = plX, cz = plZ++;
+                    if (!level.hasChunk(cx, cz)) {
+                        level.getChunk(cx, cz, ChunkStatus.FULL, true);
+                    }
+                }
+                plX++;
+                plZ = cz0;
+            }
+            return true;
+        }
+
         private boolean scan(long deadline) {
             int x = scanX, y = scanY, z = scanZ;
             for (; x <= maxX; x++) {
@@ -343,7 +379,6 @@ public class ExplosionHydrogen {
             double dz = z + 0.5 - center.z;
             double d2 = dx * dx + dy * dy + dz * dz;
             if (d2 > zone2Sq) return;
-            if (!level.hasChunk(x >> 4, z >> 4)) return;
 
             BlockPos pos = new BlockPos(x, y, z);
             BlockState s = level.getBlockState(pos);
@@ -756,9 +791,9 @@ BlockState s = level.getBlockState(pos);
                     level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
                 } else {
                     int dark = linearDarkness(pos);
-                    level.setBlock(pos,
-                            pickSoftBasalt(pos).defaultBlockState()
-                                    .setValue(CraterBasaltBlock.DARKNESS, dark), 3);
+                    level.setBlock(pos, ModBlocks.BASALT_SOFT.get().defaultBlockState()
+                                    .setValue(CraterBasaltBlock.DARKNESS, dark)
+                                    .setValue(CraterBasaltBlock.VARIANT, pickSoftBasaltVariant(pos)), 3);
                 }
             }
             return true;
@@ -788,18 +823,21 @@ BlockState s = level.getBlockState(pos);
             basaltJobs.addLast(new BasaltJob(pos, weak));
         }
 
-        private Block pickSoftBasalt(BlockPos pos) {
+        /**
+         * Вариант текстуры мягкого базальта — это один блок {@code basalt_soft} со свойством
+         * {@link CraterBasaltBlock#VARIANT}: 0 = basalt_soft, 1 = basalt_soft_2,
+         * 2 = basalt_soft_3, 3 = basalt_soft_4. Паттерн воронки сохранён как был.
+         */
+        private int pickSoftBasaltVariant(BlockPos pos) {
             double dx = pos.getX() + 0.5 - center.x;
             double dz = pos.getZ() + 0.5 - center.z;
             double h = Math.sqrt(dx * dx + dz * dz);
             // Центр воронки — базовая текстура basalt_soft.
-            if (h <= CRATER_SOFT_CORE_RADIUS) return ModBlocks.BASALT_SOFT.get();
+            if (h <= CRATER_SOFT_CORE_RADIUS) return 0;
             // Запёкшийся обод (границы кратера) — basalt_soft_4.
-            if (h >= CRATER_RADIUS * CRATER_BORDER_RATIO) return ModBlocks.BASALT_SOFT_4.get();
+            if (h >= CRATER_RADIUS * CRATER_BORDER_RATIO) return 3;
             // Промежуточная часть — случайный микс basalt_soft_2 / basalt_soft_3.
-            return hash01(seed, pos.asLong()) < 0.5
-                    ? ModBlocks.BASALT_SOFT_2.get()
-                    : ModBlocks.BASALT_SOFT_3.get();
+            return hash01(seed, pos.asLong()) < 0.5 ? 1 : 2;
         }
 
         private int linearDarkness(BlockPos pos) {
@@ -889,7 +927,13 @@ BlockState s = level.getBlockState(pos);
             if (tintRings.isEmpty() || tintSendRing >= tintRings.size()) return true;
 
             int sent = 0;
-            while (tintSendRing < tintRings.size() && sent < TINT_PER_TICK) {
+            // ВНИМАНИЕ: бюджет тика не должен завершать фазу. Раньше цикл выходил по
+            // `sent < TINT_PER_TICK`, после чего возвращал true — и кольца, не поместившиеся в один
+            // тик, терялись безвозвратно: тинт у воронки успевал уйти сразу, а от края воронки до
+            // конца второй зоны появлялся только после перезахода (сервер отдавал полную базу при
+            // логине). Теперь выход означает «продолжить в следующем тике», а не «готово».
+            while (tintSendRing < tintRings.size()) {
+                if (sent >= TINT_PER_TICK) return false;
                 if (System.nanoTime() > deadline) return false;
                 LongArrayList ring = tintRings.get(tintSendRing);
                 if (ring.isEmpty()) {

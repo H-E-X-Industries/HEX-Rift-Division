@@ -71,8 +71,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @Mod.EventBusSubscriber(modid = MainRegistry.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class CraterTints {
 
-    /** Максимальная порция темноты: 50% (канал цвета падает до ~127). */
-    public static final float MAX_DARKNESS_RATIO = 0.50f;
+    /** Максимальная порция темноты: 75% (канал цвета падает до ~63). */
+    public static final float MAX_DARKNESS_RATIO = 0.75f;
 
     /** Позиционная база затемнения по измерениям: позиция → ступень 0..MAX_DARK. */
     private static final ConcurrentHashMap<ResourceLocation, Long2IntOpenHashMap> TINT_MAP = new ConcurrentHashMap<>();

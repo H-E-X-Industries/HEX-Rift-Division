@@ -27,6 +27,7 @@ import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -118,7 +119,7 @@ public class ExplosionFire {
     private static long tickBudgetNanos = DEFAULT_TICK_BUDGET_NANOS;
     private static long lastDrainNanos = System.nanoTime();
 
-    private enum Phase { SCAN, DAMAGE, APPLY, TINT, FINISH }
+    private enum Phase { PRELOAD, SCAN, DAMAGE, APPLY, TINT, FINISH }
 
     private static final class EntityTarget {
         final LivingEntity entity;
@@ -144,6 +145,7 @@ public class ExplosionFire {
 
         final int minX, maxX, minY, maxY, minZ, maxZ;
         int scanX, scanY, scanZ;
+        int plX, plZ;
 
         final int tMinX, tMaxX, tMinY, tMaxY, tMinZ, tMaxZ;
         final double tintSq;
@@ -206,6 +208,8 @@ public class ExplosionFire {
             scanX = minX;
             scanY = minY;
             scanZ = minZ;
+            plX = minX >> 4;
+            plZ = minZ >> 4;
 
             // Отдельный бокс тинта: общий с зоной волны стёр бы копоть водородного взрыва рядом.
             int tr = (int) Math.ceil(TINT_RADIUS);
@@ -221,6 +225,10 @@ public class ExplosionFire {
         boolean work(long deadline) {
             while (true) {
                 switch (phase) {
+                    case PRELOAD -> {
+                        if (!preload(deadline)) return false;
+                        phase = Phase.SCAN;
+                    }
                     case SCAN -> {
                         if (!scan(deadline)) return false;
                         phase = Phase.DAMAGE;
@@ -243,6 +251,29 @@ public class ExplosionFire {
                     }
                 }
             }
+        }
+
+        /**
+         * Предзагрузка чанков, пересекающих зону волны. Без неё {@code processCell} пропускал
+         * ячейки незагруженных чанков целиком, вместе с записью тинта, — в месте взрыва оставалась
+         * дыра размером в чанк, которая уже не заполнялась (в {@code CraterTintData} эти позиции
+         * тоже не сохранялись). Загрузка идёт бюджетными шагами и размазывается по тикам.
+         */
+        private boolean preload(long deadline) {
+            int cx0 = minX >> 4, cz0 = minZ >> 4;
+            int cx1 = maxX >> 4, cz1 = maxZ >> 4;
+            while (plX <= cx1) {
+                while (plZ <= cz1) {
+                    if (System.nanoTime() > deadline) return false;
+                    int cx = plX, cz = plZ++;
+                    if (!level.hasChunk(cx, cz)) {
+                        level.getChunk(cx, cz, ChunkStatus.FULL, true);
+                    }
+                }
+                plX++;
+                plZ = cz0;
+            }
+            return true;
         }
 
         private boolean scan(long deadline) {
@@ -271,7 +302,6 @@ public class ExplosionFire {
             double dz = z + 0.5 - center.z;
             double d2 = dx * dx + dy * dy + dz * dz;
             if (d2 > waveSq) return;
-            if (!level.hasChunk(x >> 4, z >> 4)) return;
 
             BlockPos pos = new BlockPos(x, y, z);
             BlockState s = level.getBlockState(pos);
@@ -596,7 +626,14 @@ public class ExplosionFire {
             if (tintRings.isEmpty() || tintSendRing >= tintRings.size()) return true;
 
             int sent = 0;
-            while (tintSendRing < tintRings.size() && sent < TINT_PER_TICK) {
+            // ВНИМАНИЕ: бюджет тика не должен завершать фазу. Раньше цикл выходил по
+            // `sent < TINT_PER_TICK`, после чего возвращал true — и кольца, не поместившиеся в
+            // один тик, терялись безвозвратно: тинт у воронки успевал уйти сразу, а от края до
+            // конца зоны появлялся только после перезахода (сервер отдавал полную базу при логине).
+            // Теперь выход из цикла возможен только по дедлайну/бюджету, и это означает «продолжить
+            // в следующем тике», а не «готово».
+            while (tintSendRing < tintRings.size()) {
+                if (sent >= TINT_PER_TICK) return false;
                 if (System.nanoTime() > deadline) return false;
                 LongArrayList ring = tintRings.get(tintSendRing);
                 if (ring.isEmpty()) {

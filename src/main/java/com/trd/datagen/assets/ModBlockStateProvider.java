@@ -8,6 +8,7 @@ import com.trd.item.industrial.rotation.PulleyItem;
 import com.trd.main.ResourceRegistry;
 import com.trd.block.basic.necrosis.hive.HiveRootsBlock;
 import com.trd.block.basic.ScorchedBasaltBlock;
+import com.trd.block.basic.CraterBasaltBlock;
 import net.minecraft.core.Direction;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
@@ -126,10 +127,12 @@ public class ModBlockStateProvider extends BlockStateProvider {
         cubeAllWithItem(ModBlocks.DIRT_ROUGH);
         cubeAllWithItem(ModBlocks.BASALT_ROUGH);
         scorchedBasaltBlockWithItem(ModBlocks.BASALT_SCORCHED);
-        // Каждый вариант мягкого базальта — своя текстура (центр воронки basalt_soft,
-        // обод — basalt_soft_4, промежуточная зона — микс _2/_3). Ступень DARKNESS
-        // дополнительно затемняется цветовым хендлером.
-        softBasaltBlockWithItem(ModBlocks.BASALT_SOFT);
+        // Мягкий базальт — один блок с четырьмя текстурами (variant 0..3):
+        // центр воронки basalt_soft, обод basalt_soft_4, промежуточная зона — микс _2/_3.
+        // Ступень DARKNESS дополнительно затемняется цветовым хендлером.
+        softBasaltVariantsBlockWithItem(ModBlocks.BASALT_SOFT);
+        // basalt_soft_2/3/4 — бывшие отдельные блоки. Оставлены в реестре ради старых миров,
+        // из креатива убраны, в новых воронках не выдаются.
         softBasaltBlockWithItem(ModBlocks.BASALT_SOFT_2);
         softBasaltBlockWithItem(ModBlocks.BASALT_SOFT_3);
         softBasaltBlockWithItem(ModBlocks.BASALT_SOFT_4);
@@ -692,7 +695,7 @@ public class ModBlockStateProvider extends BlockStateProvider {
     // цветовым хендлером в коде — как у мягкого базальта кратера (без дубликатов текстур).
     private void tintedColumnBlockWithItem(RegistryObject<Block> blockObject, ResourceLocation side, ResourceLocation top, ResourceLocation bottom) {
         String name = blockObject.getId().getPath();
-        ModelFile model = models().getBuilder(name)
+        ModelFile model = models().withExistingParent(name, VANILLA_BLOCK_PARENT)
                 .texture("side", side)
                 .texture("top", top)
                 .texture("bottom", bottom)
@@ -709,6 +712,7 @@ public class ModBlockStateProvider extends BlockStateProvider {
                 .end();
         getVariantBuilder(blockObject.get())
                 .forAllStates(state -> ConfiguredModel.builder().modelFile(model).build());
+        // 3D-предмет: наследуем block-модель, у которой есть ванильные GUI-трансформации.
         simpleBlockItem(blockObject.get(), model);
     }
 
@@ -918,9 +922,15 @@ public class ModBlockStateProvider extends BlockStateProvider {
     // Генерация мягкого базальта кратера: ОДНА модель-куб с tintindex на всех гранях.
     // Ступень затемнения (DARKNESS) подбирается цветовым хендлером в коде — никаких
     // дубликатов текстур по ступеням осветления/затемнения.
+    //
+    // Кастомная element-модель без родителя не имеет секции "display", поэтому Forge
+    // отдаёт для неё ItemTransforms.NONE и в GUI куб рисуется в сырых координатах
+    // 0..16 — огромный и без поворота. Родитель minecraft:block/block как раз содержит
+    // "display" с ванильными трансформациями (rotation 30/225/0, scale 0.625) и
+    // "gui_light": "side", поэтому предмет выглядит как у обычного блока (камень, брёвна).
     public void softBasaltBlockWithItem(RegistryObject<Block> block) {
         String name = block.getId().getPath();
-        ModelFile model = models().getBuilder(name)
+        ModelFile model = models().withExistingParent(name, VANILLA_BLOCK_PARENT)
                 .texture("all", modLoc("block/" + name))
                 .texture("particle", modLoc("block/" + name))
                 .element()
@@ -931,6 +941,42 @@ public class ModBlockStateProvider extends BlockStateProvider {
                 .forAllStates(state -> ConfiguredModel.builder().modelFile(model).build());
         simpleBlockItem(block.get(), model);
     }
+
+    /**
+     * Сводный мягкий базальт: ОДИН блок с четырьмя текстурами, выбор — свойством
+     * {@link CraterBasaltBlock#VARIANT}. Модели называются {@code basalt_soft_v0..v3}
+     * (не {@code basalt_soft_0..3}), иначе они столкнулись бы с моделями старых
+     * блоков {@code basalt_soft_2/3/4}, которые остались в реестре ради совместимости миров.
+     */
+    public void softBasaltVariantsBlockWithItem(RegistryObject<Block> block) {
+        String name = block.getId().getPath();
+        String[] textures = {
+                "basalt_soft", "basalt_soft_2", "basalt_soft_3", "basalt_soft_4"
+        };
+        ModelFile[] models = new ModelFile[CraterBasaltBlock.VARIANT_COUNT];
+        for (int v = 0; v < CraterBasaltBlock.VARIANT_COUNT; v++) {
+            models[v] = models().withExistingParent(name + "_v" + v, VANILLA_BLOCK_PARENT)
+                    .texture("all", modLoc("block/" + textures[v]))
+                    .texture("particle", modLoc("block/" + textures[v]))
+                    .element()
+                    .from(0f, 0f, 0f).to(16f, 16f, 16f)
+                    .allFaces((dir, face) -> face.texture("#all").cullface(dir).tintindex(0))
+                    .end();
+        }
+        getVariantBuilder(block.get())
+                .forAllStates(state -> ConfiguredModel.builder()
+                        .modelFile(models[state.getValue(CraterBasaltBlock.VARIANT)])
+                        .build());
+        // Предмет — 3D-куб (как ванильный камень): наследуем block-модель варианта 0.
+        itemModels().getBuilder(name).parent(models[0]);
+    }
+
+    /**
+     * Родитель для кастомных element-моделей: даёт ванильные GUI-трансформации
+     * (rotation 30/225/0, scale 0.625) и {@code gui_light: side}, без которых предмет
+     * рендерится в сырых координатах 0..16.
+     */
+    private static final String VANILLA_BLOCK_PARENT = "minecraft:block/block";
 
     // 4. Метод для прозрачных блоков (стекло, решетки) с поддержкой Cutout
     public void cutoutBlockWithItem(RegistryObject<Block> block) {

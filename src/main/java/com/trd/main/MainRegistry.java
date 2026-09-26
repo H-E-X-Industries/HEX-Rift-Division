@@ -569,8 +569,8 @@ public class MainRegistry {
             event.accept(ModBlocks.SEQUOIA_LEAVES.get());
             event.accept(ModBlocks.SEQUOIA_BIOME_MOSS.get());
             event.accept(ModBlocks.BASALT_SOFT.get());
-            event.accept(ModBlocks.BASALT_SOFT_2.get());
-            event.accept(ModBlocks.BASALT_SOFT_3.get());
+            // BASALT_SOFT_2/3/4 остались в реестре ради старых миров, но в креативе их нет:
+            // все четыре текстуры теперь у одного блока через свойство variant.
             event.accept(ModBlocks.WASTE_LOG.get());
             event.accept(ModBlocks.WASTE_GRASS.get());
             event.accept(ModItems.DEPTH_WORM_SPAWN_EGG);
