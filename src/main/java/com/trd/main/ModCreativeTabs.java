@@ -120,6 +120,9 @@ public class ModCreativeTabs {
                         output.accept(ModBlocks.PAINTABLE_PIPE.get());
                         output.accept(ModBlocks.FUEL_TANK_BIG.get());
                         output.accept(ModBlocks.FUEL_TANK_SMALL.get());
+                        output.accept(ModBlocks.HEATER.get());
+                        output.accept(ModBlocks.BOILER.get());
+                        output.accept(ModBlocks.STEAM_ENGINE.get());
 
                         // Optic Microscope
                         output.accept(ModBlocks.OPTIC_MICROSCOPE.get());

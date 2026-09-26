@@ -235,4 +235,56 @@ public class LowPressureSteamCondenserBlockEntity extends FluidNodeBlockEntity {
     public FluidTank getSteamTank() { return steamTank; }
     public FluidTank getWaterTank() { return waterTank; }
     public float getCoolingMultiplier() { return coolingMultiplier; }
+
+    private final IFluidHandler combinedFluidHandler = new IFluidHandler() {
+        @Override
+        public int getTanks() { return 2; }
+
+        @Override
+        public @NotNull FluidStack getFluidInTank(int tank) {
+            return tank == 0 ? steamTank.getFluid() : waterTank.getFluid();
+        }
+
+        @Override
+        public int getTankCapacity(int tank) { return TANK_CAPACITY; }
+
+        @Override
+        public boolean isFluidValid(int tank, @NotNull FluidStack stack) {
+            return tank == 0 ? steamTank.isFluidValid(stack) : waterTank.isFluidValid(stack);
+        }
+
+        @Override
+        public int fill(FluidStack resource, FluidAction action) {
+            if (!steamTank.isFluidValid(resource)) return 0;
+            return steamTank.fill(resource, action);
+        }
+
+        @Override
+        public @NotNull FluidStack drain(FluidStack resource, FluidAction action) {
+            if (resource.getFluid() != Fluids.WATER) return FluidStack.EMPTY;
+            return waterTank.drain(resource, action);
+        }
+
+        @Override
+        public @NotNull FluidStack drain(int maxDrain, FluidAction action) {
+            return waterTank.drain(maxDrain, action);
+        }
+    };
+
+    public @Nullable IFluidHandler getFluidHandler(@Nullable Direction side) {
+        if (side == null) {
+            return combinedFluidHandler;
+        }
+        BlockState state = getBlockState();
+        if (!state.hasProperty(LowPressureSteamCondenserBlock.FACING)) {
+            return combinedFluidHandler;
+        }
+        Direction facing = state.getValue(LowPressureSteamCondenserBlock.FACING);
+        Direction left = facing.getClockWise();
+        Direction right = facing.getCounterClockWise();
+        if (side == left || side == right) {
+            return combinedFluidHandler;
+        }
+        return null;
+    }
 }

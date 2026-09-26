@@ -112,6 +112,15 @@ public class ModItems {
     public static final DeferredItem<Item> GEAR2_STEEL = ITEMS.register("gear2_steel",
             () -> new com.trd.item.industrial.rotation.GearItem(new Item.Properties(), 2, com.trd.api.rotation.ShaftMaterial.STEEL));
 
+    public static final DeferredItem<Item> FUEL_ASH = ITEMS.register("fuel_ash",
+            () -> new Item(new Item.Properties()));
+    public static final DeferredItem<Item> WOODEN_HANDLE = ITEMS.register("wooden_handle",
+            () -> new Item(new Item.Properties()));
+    public static final DeferredItem<Item> ROPE = ITEMS.register("rope",
+            () -> new Item(new Item.Properties()));
+    public static final DeferredItem<Item> LIGNITE = ITEMS.register("lignite",
+            () -> new Item(new Item.Properties()));
+
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);
     }

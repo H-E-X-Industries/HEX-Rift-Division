@@ -1,24 +1,26 @@
 package com.trd.block.entity.industrial.fluids;
 
-import net.minecraft.world.level.block.entity.BlockEntity;
+import com.trd.block.basic.industrial.fluids.WaterPumpBlock;
+import com.trd.block.entity.ModBlockEntities;
+import com.trd.block.entity.industrial.rotation.KineticNodeBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.trd.block.entity.ModBlockEntities;
 
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
 
-public class WaterPumpBlockEntity extends BlockEntity {
+public class WaterPumpBlockEntity extends KineticNodeBlockEntity {
     private final FluidTank waterTank = new FluidTank(4000) {
         @Override
         public boolean isFluidValid(FluidStack stack) {
@@ -27,32 +29,23 @@ public class WaterPumpBlockEntity extends BlockEntity {
 
         @Override
         public int fill(FluidStack resource, FluidAction action) {
-            // Разрешаем заполнение только изнутри механизма
             if (action == FluidAction.EXECUTE && isInternalCall) {
                 return super.fill(resource, action);
             }
-            return 0; // Снаружи нельзя заливать жидкость в помпу
+            return 0; // External filling is disallowed
         }
     };
-    
-    private final IFluidHandler fluidHandler = waterTank;
-    
+
     private int cachedWaterVolume = 0;
     private int handCrankTicks = 0;
-    private int lastPumpedVolume = 0; // Для HUD
+    private int lastPumpedVolume = 0; // For HUD
     private boolean isInternalCall = false;
-    private float speed = 0f;
 
     public WaterPumpBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.WATER_PUMP_BE.get(), pos, state);
     }
 
-    public float getSpeed() {
-        return speed;
-    }
-
-    public static void tick(net.minecraft.world.level.Level level, BlockPos pos, BlockState state, WaterPumpBlockEntity pEntity) {
-        // --- Client-side Visuals ---
+    public static void tick(Level level, BlockPos pos, BlockState state, WaterPumpBlockEntity pEntity) {
         if (level.isClientSide) {
             float speedC = Math.abs(pEntity.getSpeed());
             if (speedC > 0) {
@@ -70,25 +63,23 @@ public class WaterPumpBlockEntity extends BlockEntity {
             return;
         }
 
-        // --- Server-side Logic ---
-        // Десинхронизированный таймер (раз в 600 тиков / 30 сек)
+        // Server-side
         if ((level.getGameTime() + pos.getX() + pos.getZ()) % 600 == 0) {
             pEntity.scanWaterVolume();
         }
 
         float speed = Math.abs(pEntity.getSpeed());
-        
-        // Логика ручного привода
+
         if (speed == 0 && pEntity.handCrankTicks > 0) {
-            speed = 32.0f; // Условная скорость от ручки
+            speed = 32.0f;
             pEntity.handCrankTicks--;
         }
 
         if (speed > 0) {
             float vBase = speed * 0.4f;
             float eff = pEntity.cachedWaterVolume < 20 ? 0.0f : (pEntity.cachedWaterVolume / 1000.0f);
-            eff = Math.min(eff, 1.0f); // Ограничиваем эффективность до 100%
-            
+            eff = Math.min(eff, 1.0f);
+
             int v = 0;
             if (vBase * eff > 0) {
                 v = Math.min((int) Math.ceil(vBase * eff), 300);
@@ -107,21 +98,21 @@ public class WaterPumpBlockEntity extends BlockEntity {
 
     private void scanWaterVolume() {
         if (level == null) return;
-        BlockPos startPos = this.getBlockPos().below(1);
+        BlockPos startPos = this.worldPosition.below(1);
         Queue<BlockPos> queue = new LinkedList<>();
         Set<BlockPos> visited = new HashSet<>();
-        
+
         queue.add(startPos);
         visited.add(startPos);
-        
+
         int volume = 0;
-        
+
         while (!queue.isEmpty() && volume < 1000) {
             BlockPos current = queue.poll();
-            
+
             if (level.getFluidState(current).is(Fluids.WATER) || level.getFluidState(current).is(Fluids.FLOWING_WATER)) {
                 volume++;
-                
+
                 for (Direction dir : Direction.values()) {
                     BlockPos neighbor = current.relative(dir);
                     if (!visited.contains(neighbor)) {
@@ -131,15 +122,13 @@ public class WaterPumpBlockEntity extends BlockEntity {
                 }
             }
         }
-        
+
         int oldVolume = this.cachedWaterVolume;
         this.cachedWaterVolume = volume;
-        
+
         if (oldVolume != this.cachedWaterVolume) {
             this.setChanged();
-            if (!level.isClientSide()) {
-                level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 3);
-            }
+            this.syncToClient();
         }
     }
 
@@ -155,32 +144,51 @@ public class WaterPumpBlockEntity extends BlockEntity {
         return cachedWaterVolume;
     }
 
+    public @Nullable IFluidHandler getFluidHandler(@Nullable Direction side) {
+        BlockState state = getBlockState();
+        if (state.hasProperty(WaterPumpBlock.FACING)) {
+            Direction facing = state.getValue(WaterPumpBlock.FACING);
+            Direction rightSide = facing.getCounterClockWise();
+            if (side == null || side == rightSide) {
+                return waterTank;
+            }
+        }
+        return null;
+    }
+
     // --- Kinetic API ---
 
+    @Override
     public long getMaxTorqueTolerance() {
         return Long.MAX_VALUE;
     }
 
+    @Override
     public long getMaxTorque() {
         return Long.MAX_VALUE;
     }
 
+    @Override
     public double getInertiaContribution() {
         return 10.0;
     }
 
+    @Override
     public long getMaxSpeed() {
         return 1000L;
     }
 
+    @Override
     public long getTorque() {
         return 0L;
     }
 
+    @Override
     public boolean isSource() {
         return false;
     }
 
+    @Override
     public long getConsumedTorque() {
         if (lastPumpedVolume > 0 && waterTank.getSpace() > 0) {
             return (long) (1 + (lastPumpedVolume * 0.05));
@@ -188,46 +196,43 @@ public class WaterPumpBlockEntity extends BlockEntity {
         return 1L;
     }
 
+    @Override
     public long getVisualSpeed() {
         BlockState state = getBlockState();
-        if (!state.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING)) return (long)this.speed;
-        Direction facing = state.getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING);
+        if (!state.hasProperty(WaterPumpBlock.FACING)) return this.speed;
+        Direction facing = state.getValue(WaterPumpBlock.FACING);
         if (facing == Direction.SOUTH || facing == Direction.EAST || facing == Direction.UP) {
-            return (long)-this.speed;
+            return -this.speed;
         }
-        return (long)this.speed;
+        return this.speed;
     }
 
+    @Override
     public Direction[] getPropagationDirections() {
         BlockState state = getBlockState();
-        if (state.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING)) {
-            Direction facing = state.getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING);
+        if (state.hasProperty(WaterPumpBlock.FACING)) {
+            Direction facing = state.getValue(WaterPumpBlock.FACING);
             return new Direction[] { facing, facing.getOpposite() };
         }
         return new Direction[0];
     }
 
-    public java.util.List<BlockPos> getPotentialConnections(net.minecraft.world.level.Level level, BlockPos myPos) {
+    @Override
+    public java.util.List<BlockPos> getPotentialConnections(Level lvl, BlockPos myPos) {
         java.util.List<BlockPos> list = new java.util.ArrayList<>();
         BlockState state = getBlockState();
-        if (state.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING)) {
-            Direction facing = state.getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING);
+        if (state.hasProperty(WaterPumpBlock.FACING)) {
+            Direction facing = state.getValue(WaterPumpBlock.FACING);
             list.add(myPos.relative(facing));
             list.add(myPos.relative(facing.getOpposite()));
         }
         return list;
     }
 
-    // --- Capabilities ---
-
-    
-
-    
-
     // --- NBT ---
 
     @Override
-    protected void saveAdditional(CompoundTag tag, net.minecraft.core.HolderLookup.Provider provider) {
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider provider) {
         super.saveAdditional(tag, provider);
         tag.putInt("WaterVolume", cachedWaterVolume);
         tag.putInt("HandCrankTicks", handCrankTicks);
@@ -236,7 +241,7 @@ public class WaterPumpBlockEntity extends BlockEntity {
     }
 
     @Override
-    protected void loadAdditional(CompoundTag tag, net.minecraft.core.HolderLookup.Provider provider) {
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider provider) {
         super.loadAdditional(tag, provider);
         this.cachedWaterVolume = tag.getInt("WaterVolume");
         this.handCrankTicks = tag.getInt("HandCrankTicks");

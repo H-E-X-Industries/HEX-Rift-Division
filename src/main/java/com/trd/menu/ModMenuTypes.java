@@ -38,6 +38,9 @@ public class ModMenuTypes {
     public static final java.util.function.Supplier<MenuType<com.trd.menu.rotation.MotorElectroMenu>> MOTOR_ELECTRO_MENU =
             MENUS.register("motor_electro_menu", () -> IMenuTypeExtension.create(com.trd.menu.rotation.MotorElectroMenu::new));
 
+    public static final java.util.function.Supplier<MenuType<com.trd.menu.industrial.HeaterMenu>> HEATER_MENU =
+            MENUS.register("heater_menu", () -> IMenuTypeExtension.create(com.trd.menu.industrial.HeaterMenu::create));
+
     public static void register(IEventBus eventBus) {
         MENUS.register(eventBus);
     }

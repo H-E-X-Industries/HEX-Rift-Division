@@ -26,6 +26,7 @@ public class ModClientSetup {
         event.register(com.trd.menu.ModMenuTypes.SORTIROVSHIK_MENU.get(), com.trd.client.overlay.gui.GUISortirovshik::new);
         event.register(com.trd.menu.ModMenuTypes.OPTIC_MICROSCOPE_MENU.get(), com.trd.client.overlay.gui.GUIOpticMicroscope::new);
         event.register(com.trd.menu.ModMenuTypes.MOTOR_ELECTRO_MENU.get(), com.trd.client.overlay.gui.GUIMotorElectro::new);
+        event.register(com.trd.menu.ModMenuTypes.HEATER_MENU.get(), com.trd.client.overlay.gui.GUIHeater::new);
     }
 
     @SubscribeEvent
@@ -255,5 +256,42 @@ public class ModClientSetup {
                 return true;
             }
         });
+
+        VisualizerRegistry.setVisualizer(ModBlockEntities.WATER_PUMP_BE.get(), new BlockEntityVisualizer<com.trd.block.entity.industrial.fluids.WaterPumpBlockEntity>() {
+            @Override
+            public BlockEntityVisual<? super com.trd.block.entity.industrial.fluids.WaterPumpBlockEntity> createVisual(VisualizationContext ctx, com.trd.block.entity.industrial.fluids.WaterPumpBlockEntity be, float partialTick) {
+                return new com.trd.client.render.flywheel.WaterPumpVisual(ctx, be, partialTick);
+            }
+
+            @Override
+            public boolean skipVanillaRender(com.trd.block.entity.industrial.fluids.WaterPumpBlockEntity be) {
+                return true;
+            }
+        });
+
+        VisualizerRegistry.setVisualizer(ModBlockEntities.BOILER_BE.get(), new BlockEntityVisualizer<com.trd.multiblock.industrial.boiler.BoilerBlockEntity>() {
+            @Override
+            public BlockEntityVisual<? super com.trd.multiblock.industrial.boiler.BoilerBlockEntity> createVisual(VisualizationContext ctx, com.trd.multiblock.industrial.boiler.BoilerBlockEntity be, float partialTick) {
+                return new com.trd.client.render.flywheel.BoilerVisual(ctx, be, partialTick);
+            }
+
+            @Override
+            public boolean skipVanillaRender(com.trd.multiblock.industrial.boiler.BoilerBlockEntity be) {
+                return true;
+            }
+        });
+
+        VisualizerRegistry.setVisualizer(ModBlockEntities.STEAM_ENGINE_BE.get(), new BlockEntityVisualizer<com.trd.multiblock.industrial.steam_engine.SteamEngineBlockEntity>() {
+            @Override
+            public BlockEntityVisual<? super com.trd.multiblock.industrial.steam_engine.SteamEngineBlockEntity> createVisual(VisualizationContext ctx, com.trd.multiblock.industrial.steam_engine.SteamEngineBlockEntity be, float partialTick) {
+                return new com.trd.client.render.flywheel.SteamEngineVisual(ctx, be, partialTick);
+            }
+
+            @Override
+            public boolean skipVanillaRender(com.trd.multiblock.industrial.steam_engine.SteamEngineBlockEntity be) {
+                return true;
+            }
+        });
     }
 }
+

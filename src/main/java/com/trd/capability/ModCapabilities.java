@@ -120,6 +120,11 @@ public class ModCapabilities {
                 com.trd.block.entity.ModBlockEntities.ELECTRIC_FURNACE_BE.get(),
                 (be, side) -> be.getItemHandler(side)
         );
+        event.registerBlockEntity(
+                net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
+                com.trd.block.entity.ModBlockEntities.HEATER_BE.get(),
+                (be, side) -> be.getItemHandler(side)
+        );
     // Item Capabilities
     event.registerItem(ENERGY_PROVIDER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 5000, 100, 100), com.trd.item.ModItems.BATTERY.get());
     event.registerItem(ENERGY_RECEIVER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 5000, 100, 100), com.trd.item.ModItems.BATTERY.get());
@@ -168,8 +173,8 @@ public class ModCapabilities {
                         role == com.trd.multiblock.system.PartRole.FLUID_LADDER) {
                         
                         net.minecraft.world.level.block.entity.BlockEntity core = be.getLevel().getBlockEntity(be.getControllerPos());
-                        if (core instanceof com.trd.multiblock.industrial.fueltanks.small.FuelTankSmallBlockEntity smallTank) {
-                            return smallTank.getCapabilityForPart(side, role);
+                        if (core instanceof com.trd.multiblock.system.IMultiblockFluidHandler handler) {
+                            return handler.getCapabilityForPart(side, role);
                         } else if (core instanceof com.trd.multiblock.system.IFluidTankProvider provider) {
                             return provider.getFluidHandlerCapability();
                         }
@@ -195,6 +200,18 @@ public class ModCapabilities {
             net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
             com.trd.block.entity.ModBlockEntities.FLUID_BARREL_BE.get(),
             (be, side) -> be.networkFluidHandler
+    );
+
+    event.registerBlockEntity(
+            net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
+            com.trd.block.entity.ModBlockEntities.LOW_PRESSURE_STEAM_CONDENSER_BE.get(),
+            (be, side) -> be.getFluidHandler(side)
+    );
+
+    event.registerBlockEntity(
+            net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
+            com.trd.block.entity.ModBlockEntities.WATER_PUMP_BE.get(),
+            (be, side) -> be.getFluidHandler(side)
     );
 
     // Item Fluid Capabilities

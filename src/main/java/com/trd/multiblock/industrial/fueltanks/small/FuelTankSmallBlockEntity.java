@@ -19,7 +19,7 @@ import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
-public class FuelTankSmallBlockEntity extends FluidBarrelBlockEntity implements IFluidTankProvider {
+public class FuelTankSmallBlockEntity extends FluidBarrelBlockEntity implements IFluidTankProvider, com.trd.multiblock.system.IMultiblockFluidHandler {
 
     public static final int CAPACITY = 288_000;
     public static final int FUEL_TANK_MAX_TRANSFER_RATE = Integer.MAX_VALUE;
