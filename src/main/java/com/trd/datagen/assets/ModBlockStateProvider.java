@@ -695,7 +695,7 @@ public class ModBlockStateProvider extends BlockStateProvider {
     // цветовым хендлером в коде — как у мягкого базальта кратера (без дубликатов текстур).
     private void tintedColumnBlockWithItem(RegistryObject<Block> blockObject, ResourceLocation side, ResourceLocation top, ResourceLocation bottom) {
         String name = blockObject.getId().getPath();
-        ModelFile model = models().getBuilder(name)
+        ModelFile model = models().withExistingParent(name, VANILLA_BLOCK_PARENT)
                 .texture("side", side)
                 .texture("top", top)
                 .texture("bottom", bottom)
@@ -712,8 +712,8 @@ public class ModBlockStateProvider extends BlockStateProvider {
                 .end();
         getVariantBuilder(blockObject.get())
                 .forAllStates(state -> ConfiguredModel.builder().modelFile(model).build());
-        // Плоский предмет: у кастомной element-модели ItemTransforms.NONE (см. softBasaltBlockWithItem).
-        flatBlockItem(blockObject.getId().getPath(), side);
+        // 3D-предмет: наследуем block-модель, у которой есть ванильные GUI-трансформации.
+        simpleBlockItem(blockObject.get(), model);
     }
 
     private <T extends Block> void customObjBlock(RegistryObject<T> blockObject) {
@@ -923,13 +923,14 @@ public class ModBlockStateProvider extends BlockStateProvider {
     // Ступень затемнения (DARKNESS) подбирается цветовым хендлером в коде — никаких
     // дубликатов текстур по ступеням осветления/затемнения.
     //
-    // Предмет делаем плоским item/generated, а НЕ наследником блочной модели: кастомные
-    // element-модели грузятся Forge'овским CustomLoader, у них ItemTransforms.NONE, поэтому
-    // в GUI куб рисуется в сырых координатах 0..16 — огромный и без поворота. У обычных
-    // блоков модель cube_all, а значит ванильный BlockModel с ItemTransforms.DEFAULT.
+    // Кастомная element-модель без родителя не имеет секции "display", поэтому Forge
+    // отдаёт для неё ItemTransforms.NONE и в GUI куб рисуется в сырых координатах
+    // 0..16 — огромный и без поворота. Родитель minecraft:block/block как раз содержит
+    // "display" с ванильными трансформациями (rotation 30/225/0, scale 0.625) и
+    // "gui_light": "side", поэтому предмет выглядит как у обычного блока (камень, брёвна).
     public void softBasaltBlockWithItem(RegistryObject<Block> block) {
         String name = block.getId().getPath();
-        ModelFile model = models().getBuilder(name)
+        ModelFile model = models().withExistingParent(name, VANILLA_BLOCK_PARENT)
                 .texture("all", modLoc("block/" + name))
                 .texture("particle", modLoc("block/" + name))
                 .element()
@@ -938,7 +939,7 @@ public class ModBlockStateProvider extends BlockStateProvider {
                 .end();
         getVariantBuilder(block.get())
                 .forAllStates(state -> ConfiguredModel.builder().modelFile(model).build());
-        flatBlockItem(name, modLoc("block/" + name));
+        simpleBlockItem(block.get(), model);
     }
 
     /**
@@ -954,7 +955,7 @@ public class ModBlockStateProvider extends BlockStateProvider {
         };
         ModelFile[] models = new ModelFile[CraterBasaltBlock.VARIANT_COUNT];
         for (int v = 0; v < CraterBasaltBlock.VARIANT_COUNT; v++) {
-            models[v] = models().getBuilder(name + "_v" + v)
+            models[v] = models().withExistingParent(name + "_v" + v, VANILLA_BLOCK_PARENT)
                     .texture("all", modLoc("block/" + textures[v]))
                     .texture("particle", modLoc("block/" + textures[v]))
                     .element()
@@ -966,22 +967,16 @@ public class ModBlockStateProvider extends BlockStateProvider {
                 .forAllStates(state -> ConfiguredModel.builder()
                         .modelFile(models[state.getValue(CraterBasaltBlock.VARIANT)])
                         .build());
-        flatBlockItem(name, modLoc("block/basalt_soft"));
+        // Предмет — 3D-куб (как ванильный камень): наследуем block-модель варианта 0.
+        itemModels().getBuilder(name).parent(models[0]);
     }
 
     /**
-     * Плоская 2D-модель предмета по текстуре блока. Нужна для блоков с кастомной
-     * element-моделью (tintindex), у которых нет GUI-трансформаций — иначе предмет
-     * выглядит гигантским неповёрнутым кубом.
-     *
-     * <p>Писать обязательно через {@code itemModels()}, а не {@code models()}: у Forge
-     * {@link BlockStateProvider} это два отдельных провайдера, {@code models()} всегда
-     * пишет в {@code models/block} и перезаписал бы block-модель блока.
+     * Родитель для кастомных element-моделей: даёт ванильные GUI-трансформации
+     * (rotation 30/225/0, scale 0.625) и {@code gui_light: side}, без которых предмет
+     * рендерится в сырых координатах 0..16.
      */
-    private void flatBlockItem(String name, ResourceLocation texture) {
-        itemModels().withExistingParent(name, new ResourceLocation("item/generated"))
-                .texture("layer0", texture);
-    }
+    private static final String VANILLA_BLOCK_PARENT = "minecraft:block/block";
 
     // 4. Метод для прозрачных блоков (стекло, решетки) с поддержкой Cutout
     public void cutoutBlockWithItem(RegistryObject<Block> block) {
