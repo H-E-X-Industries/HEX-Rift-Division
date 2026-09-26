@@ -1,0 +1,12 @@
+{
+    "type":  "trd:melting",
+    "ingredient":  {
+                       "item":  "minecraft:golden_helmet"
+                   },
+    "input_count":  1,
+    "metal":  "trd:gold",
+    "units":  18,
+    "min_temp":  1064,
+    "heat_consumption":  0.6,
+    "smelt_time":  100
+}

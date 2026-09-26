@@ -43,6 +43,23 @@ public abstract class KineticNodeBlockEntity extends BlockEntity implements Rota
      */
     protected float networkScale = 1.0f;
 
+    /** UUID кинетической сети, к которой принадлежит данный узел */
+    @org.jetbrains.annotations.Nullable
+    protected java.util.UUID networkId = null;
+
+    @org.jetbrains.annotations.Nullable
+    public java.util.UUID getNetworkId() {
+        return networkId;
+    }
+
+    public void setNetworkId(@org.jetbrains.annotations.Nullable java.util.UUID networkId) {
+        if (!java.util.Objects.equals(this.networkId, networkId)) {
+            this.networkId = networkId;
+            setChanged();
+            syncToClient();
+        }
+    }
+
     // ===================== КОНСТРУКТОР =====================
 
     protected KineticNodeBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
@@ -91,7 +108,7 @@ public abstract class KineticNodeBlockEntity extends BlockEntity implements Rota
     /** Рассылает обновление блока клиентам чанка. */
     protected void syncToClient() {
         if (level != null && !level.isClientSide) {
-            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 3);
+            level.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 2);
         }
     }
 
@@ -99,7 +116,11 @@ public abstract class KineticNodeBlockEntity extends BlockEntity implements Rota
 
     @Override
     public void setNetworkScale(float scale) {
-        this.networkScale = scale;
+        if (Math.abs(this.networkScale - scale) > 0.001f) {
+            this.networkScale = scale;
+            setChanged();
+            syncToClient();
+        }
     }
 
     @Override
@@ -123,6 +144,7 @@ public abstract class KineticNodeBlockEntity extends BlockEntity implements Rota
                 net = manager.getNetworkFor(worldPosition);
             }
             if (net != null) {
+                this.networkId = net.getId();
                 this.speed = (long) (net.getSpeed() * this.networkScale);
                 this.lastSyncedSpeed = this.speed;
             }
@@ -137,6 +159,9 @@ public abstract class KineticNodeBlockEntity extends BlockEntity implements Rota
         tag.putLong("Speed", this.speed);
         tag.putLong("LastSyncedSpeed", this.lastSyncedSpeed);
         tag.putFloat("NetworkScale", this.networkScale);
+        if (this.networkId != null) {
+            tag.putUUID("NetworkId", this.networkId);
+        }
     }
 
     @Override
@@ -145,6 +170,11 @@ public abstract class KineticNodeBlockEntity extends BlockEntity implements Rota
         this.speed = tag.getLong("Speed");
         this.lastSyncedSpeed = tag.getLong("LastSyncedSpeed");
         this.networkScale = tag.contains("NetworkScale") ? tag.getFloat("NetworkScale") : 1.0f;
+        if (tag.hasUUID("NetworkId")) {
+            this.networkId = tag.getUUID("NetworkId");
+        } else {
+            this.networkId = null;
+        }
     }
 
     // ===================== СИНХРОНИЗАЦИЯ КЛИЕНТ ↔ СЕРВЕР =====================

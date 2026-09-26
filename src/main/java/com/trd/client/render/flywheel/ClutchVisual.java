@@ -3,8 +3,17 @@ package com.trd.client.render.flywheel;
 import com.trd.api.rotation.Rotational;
 import com.trd.api.rotation.ShaftDiameter;
 import com.trd.api.rotation.ShaftMaterial;
+import com.trd.block.basic.industrial.rotation.BearingBlock;
 import com.trd.block.basic.industrial.rotation.ClutchBlock;
+import com.trd.block.basic.industrial.rotation.MotorElectroBlock;
+import com.trd.block.basic.industrial.rotation.ShaftBlock;
+import com.trd.block.basic.industrial.rotation.TachometerBlock;
+import com.trd.block.entity.industrial.rotation.BearingBlockEntity;
 import com.trd.block.entity.industrial.rotation.ClutchBlockEntity;
+import com.trd.block.entity.industrial.rotation.KineticNodeBlockEntity;
+import com.trd.block.entity.industrial.rotation.MotorElectroBlockEntity;
+import com.trd.block.entity.industrial.rotation.ShaftBlockEntity;
+import com.trd.block.entity.industrial.rotation.TachometerBlockEntity;
 import dev.engine_room.flywheel.api.instance.Instance;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
 import dev.engine_room.flywheel.lib.instance.InstanceTypes;
@@ -13,9 +22,11 @@ import dev.engine_room.flywheel.lib.model.Models;
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
 import dev.engine_room.flywheel.lib.visual.AbstractBlockEntityVisual;
 import dev.engine_room.flywheel.lib.visual.SimpleDynamicVisual;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
@@ -141,34 +152,71 @@ public class ClutchVisual extends AbstractBlockEntityVisual<ClutchBlockEntity> i
 
         boolean powered = blockEntity.getBlockState().getValue(ClutchBlock.POWERED);
 
-        float targetSpeedFront = 0;
-        float targetSpeedBack = 0;
-
         if (powered) {
-            targetSpeedFront = blockEntity.getVisualSpeed();
-            targetSpeedBack = targetSpeedFront;
+            float angle = com.trd.client.rotation.ClientKineticAngleTracker.getAngle(blockEntity, facing, partialTick);
+            currentAngleFront = angle;
+            currentAngleBack = angle;
+            float currentSpeed = blockEntity.getSpeed();
+            this.smoothedSpeedFront = currentSpeed;
+            this.smoothedSpeedBack = currentSpeed;
         } else {
-            boolean invert = (facing == Direction.SOUTH || facing == Direction.EAST || facing == Direction.UP);
-            BlockEntity beFront = level.getBlockEntity(pos.relative(facing.getOpposite()));
-            BlockEntity beBack = level.getBlockEntity(pos.relative(facing));
+            BlockPos posFront = pos.relative(facing.getOpposite());
+            BlockPos posBack = pos.relative(facing);
 
-            if (beFront instanceof Rotational rotFront) {
-                targetSpeedFront = invert ? -rotFront.getSpeed() : rotFront.getSpeed();
+            BlockEntity beFront = level.getBlockEntity(posFront);
+            BlockEntity beBack = level.getBlockEntity(posBack);
+
+            if (isHalfShaftConnected(posFront, beFront) && beFront instanceof KineticNodeBlockEntity rotFront) {
+                currentAngleFront = com.trd.client.rotation.ClientKineticAngleTracker.getAngle(rotFront, facing, partialTick);
+                this.smoothedSpeedFront = rotFront.getSpeed();
+            } else {
+                currentAngleFront = updateAngle(0, deltaSeconds, timeInSeconds, currentAngleFront, true);
             }
-            if (beBack instanceof Rotational rotBack) {
-                targetSpeedBack = invert ? -rotBack.getSpeed() : rotBack.getSpeed();
+
+            if (isHalfShaftConnected(posBack, beBack) && beBack instanceof KineticNodeBlockEntity rotBack) {
+                currentAngleBack = com.trd.client.rotation.ClientKineticAngleTracker.getAngle(rotBack, facing, partialTick);
+                this.smoothedSpeedBack = rotBack.getSpeed();
+            } else {
+                currentAngleBack = updateAngle(0, deltaSeconds, timeInSeconds, currentAngleBack, false);
             }
         }
 
-        float maxRenderSpeed = 300f;
-        if (Math.abs(targetSpeedFront) > maxRenderSpeed) targetSpeedFront = Math.signum(targetSpeedFront) * maxRenderSpeed;
-        if (Math.abs(targetSpeedBack) > maxRenderSpeed) targetSpeedBack = Math.signum(targetSpeedBack) * maxRenderSpeed;
-
-        currentAngleFront = updateAngle(targetSpeedFront, deltaSeconds, timeInSeconds, currentAngleFront, true);
-        currentAngleBack = updateAngle(targetSpeedBack, deltaSeconds, timeInSeconds, currentAngleBack, false);
-
         applyShaftTransform(this.shaftFront, currentAngleFront, true);
         applyShaftTransform(this.shaftBack, currentAngleBack, false);
+    }
+
+    private boolean isHalfShaftConnected(BlockPos neighborPos, BlockEntity be) {
+        if (be == null || be.isRemoved()) return false;
+        if (!blockEntity.hasShaft()) return false;
+        if (level == null || !level.isLoaded(neighborPos)) return false;
+
+        BlockState neighborState = level.getBlockState(neighborPos);
+        if (neighborState.isAir()) return false;
+
+        if (!(be instanceof Rotational neighborNode)) return false;
+
+        Direction.Axis myAxis = facing.getAxis();
+        ShaftDiameter myDia = blockEntity.getShaftDiameter();
+
+        if (neighborNode instanceof ShaftBlockEntity shaftBE) {
+            if (shaftBE.getBlockState().getBlock() instanceof ShaftBlock shaftBlock) {
+                return shaftBlock.getDiameter() == myDia &&
+                        shaftBE.getBlockState().getValue(ShaftBlock.FACING).getAxis() == myAxis;
+            }
+        } else if (neighborNode instanceof BearingBlockEntity bearing) {
+            return bearing.hasShaft() && bearing.getShaftDiameter() == myDia &&
+                    bearing.getBlockState().getValue(BearingBlock.FACING).getAxis() == myAxis;
+        } else if (neighborNode instanceof ClutchBlockEntity otherClutch) {
+            return otherClutch.hasShaft() && otherClutch.getShaftDiameter() == myDia &&
+                    otherClutch.getBlockState().getValue(ClutchBlock.FACING).getAxis() == myAxis;
+        } else if (neighborNode instanceof TachometerBlockEntity tach) {
+            return tach.hasShaft() && tach.getShaftDiameter() == myDia &&
+                    tach.getBlockState().getValue(TachometerBlock.FACING).getAxis() == myAxis;
+        } else if (neighborNode instanceof MotorElectroBlockEntity motor) {
+            return myDia == ShaftDiameter.LIGHT &&
+                    motor.getBlockState().getValue(MotorElectroBlock.FACING).getAxis() == myAxis;
+        }
+        return false;
     }
 
     private float updateAngle(float targetSpeed, float deltaSeconds, float timeInSeconds, float currentAngle, boolean isFront) {

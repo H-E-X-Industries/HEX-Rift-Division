@@ -30,6 +30,17 @@ public class ModItems {
             
     public static final DeferredItem<Item> INDUSTRIAL_COPPER_PLATE = ITEMS.register("industrial_copper_plate",
             () -> new Item(new Item.Properties()));
+
+    public static final DeferredItem<Item> TUNGSTEN_PLATE = ITEMS.register("tungsten_plate",
+            () -> new Item(new Item.Properties()));
+    public static final DeferredItem<Item> LEAD_PLATE = ITEMS.register("lead_plate",
+            () -> new Item(new Item.Properties()));
+    public static final DeferredItem<Item> GOLD_PLATE = ITEMS.register("gold_plate",
+            () -> new Item(new Item.Properties()));
+    public static final DeferredItem<Item> TITANIUM_PLATE = ITEMS.register("titanium_plate",
+            () -> new Item(new Item.Properties()));
+    public static final DeferredItem<Item> ALUMINA = ITEMS.register("alumina",
+            () -> new Item(new Item.Properties()));
             
     public static final DeferredItem<Item> SEQUESTRUM = ITEMS.register("sequestrum",
             () -> new Item(new Item.Properties()));
@@ -53,6 +64,15 @@ public class ModItems {
     public static final DeferredItem<Item> LIMESTONE_CHUNK = ITEMS.register("limestone_chunk",
             () -> new Item(new Item.Properties()));
     public static final DeferredItem<Item> LIMESTONE_POWDER = ITEMS.register("limestone_powder",
+            () -> new Item(new Item.Properties()));
+
+    public static final DeferredItem<Item> ASBESTOS = ITEMS.register("asbestos",
+            () -> new Item(new Item.Properties()));
+    public static final DeferredItem<Item> TRASH = ITEMS.register("trash",
+            () -> new Item(new Item.Properties()));
+    public static final DeferredItem<Item> BLACK_ASH = ITEMS.register("black_ash",
+            () -> new Item(new Item.Properties()));
+    public static final DeferredItem<Item> SODA_CRYSTAL = ITEMS.register("soda_crystal",
             () -> new Item(new Item.Properties()));
 
     public static final DeferredItem<Item> CREATIVE_BATTERY = ITEMS.register("battery_creative", () -> new com.trd.item.industrial.energy.ItemCreativeBattery(new Item.Properties()));
@@ -87,6 +107,43 @@ public class ModItems {
     public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> FLUID_IDENTIFIER = ITEMS.register("fluid_identifier", () -> new com.trd.item.industrial.fluids.FluidIdentifierItem(new net.minecraft.world.item.Item.Properties().stacksTo(1)));
     public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> INFINITE_FLUID_BARREL = ITEMS.register("infinite_fluid_barrel", () -> new com.trd.item.tools.InfiniteFluidBarrelItem(new net.minecraft.world.item.Item.Properties().stacksTo(1)));
     public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> FLUID_TANK_IRON = ITEMS.register("fluid_tank_iron", () -> new com.trd.item.industrial.fluids.FluidContainerItem(new net.minecraft.world.item.Item.Properties().stacksTo(16), 1000, 80, 1050));
+    // Metallurgy & Casting
+    public static final DeferredItem<Item> SLAG = ITEMS.register("slag",
+            () -> new com.trd.event.SlagItem(new Item.Properties()));
+    public static final DeferredItem<Item> POKER = ITEMS.register("poker",
+            () -> new com.trd.item.tools.PokerItem(new Item.Properties().durability(250)));
+    public static final DeferredItem<Item> LIQUID_METAL = ITEMS.register("liquid_metal",
+            () -> new com.trd.event.LiquidMetalItem(new Item.Properties()));
+
+    public static final DeferredItem<Item> CAST_PICKAXE_IRON_BASE = ITEMS.register("cast_pickaxe_iron_base",
+            () -> new Item(new Item.Properties()));
+    public static final DeferredItem<Item> CAST_PICKAXE_STEEL_BASE = ITEMS.register("cast_pickaxe_steel_base",
+            () -> new Item(new Item.Properties()));
+
+    public static final DeferredItem<Item> MOLD_INGOT = ITEMS.register("mold_ingot",
+            () -> new Item(new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> MOLD_PLATE = ITEMS.register("mold_plate",
+            () -> new Item(new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> MOLD_PICKAXE = ITEMS.register("mold_pickaxe",
+            () -> new Item(new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> MOLD_EMPTY = ITEMS.register("mold_empty",
+            () -> new Item(new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> MOLD_NUGGET = ITEMS.register("mold_nugget",
+            () -> new Item(new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> MOLD_BLOCK = ITEMS.register("mold_block",
+            () -> new Item(new Item.Properties().stacksTo(1)));
+
+    public static final DeferredItem<Item> SMELTER_ITEM = ITEMS.register("smelter",
+            () -> new com.trd.multiblock.system.MultiblockBlockItem(ModBlocks.SMELTER.get(), new Item.Properties()));
+    public static final DeferredItem<Item> CC_MACHINE_ITEM = ITEMS.register("cc_machine",
+            () -> new com.trd.multiblock.system.MultiblockBlockItem(ModBlocks.CC_MACHINE.get(), new Item.Properties()));
+    public static final DeferredItem<Item> DROBITEL_ITEM = ITEMS.register("drobitel",
+            () -> new com.trd.multiblock.system.MultiblockBlockItem(ModBlocks.DROBITEL.get(), new Item.Properties()));
+    public static final DeferredItem<Item> VISHELASHIVATEL_ITEM = ITEMS.register("vishelashivatel",
+            () -> new com.trd.multiblock.system.MultiblockBlockItem(ModBlocks.VISHELASHIVATEL.get(), new Item.Properties()));
+
+    public static final DeferredItem<Item> BLADE = ITEMS.register("blade",
+            () -> new com.trd.item.tools.BladeItem(new Item.Properties().stacksTo(1)));
 
     // Cast Pickaxes
     public static final DeferredItem<Item> CAST_PICKAXE_IRON = ITEMS.register("cast_pickaxe_iron",
@@ -111,6 +168,20 @@ public class ModItems {
 
     public static final DeferredItem<Item> GEAR2_STEEL = ITEMS.register("gear2_steel",
             () -> new com.trd.item.industrial.rotation.GearItem(new Item.Properties(), 2, com.trd.api.rotation.ShaftMaterial.STEEL));
+
+    public static final DeferredItem<Item> COPPER_COIL = ITEMS.register("copper_coil",
+            () -> new com.trd.item.industrial.energy.StatorCoilItem(new Item.Properties().stacksTo(64), "copper", 1, 500, 20, 3.0f));
+
+    public static final DeferredItem<Item> FLYWHEEL_LIGHT = ITEMS.register("flywheel_light",
+            () -> new com.trd.item.industrial.rotation.FlywheelItem(new Item.Properties(),
+                    com.trd.api.rotation.ShaftDiameter.LIGHT,
+                    com.trd.api.rotation.ShaftDiameter.MEDIUM));
+
+    public static final DeferredItem<Item> COPPER_ROTOR = ITEMS.register("copper_rotor",
+            () -> new com.trd.item.industrial.rotation.RotorItem(new Item.Properties()));
+
+    public static final DeferredItem<Item> STATOR_ITEM = ITEMS.register("stator",
+            () -> new com.trd.item.industrial.rotation.StatorMultiblockItem(ModBlocks.STATOR_BLOCK.get(), new Item.Properties()));
 
     public static final DeferredItem<Item> FUEL_ASH = ITEMS.register("fuel_ash",
             () -> new Item(new Item.Properties()));

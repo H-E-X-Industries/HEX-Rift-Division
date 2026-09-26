@@ -348,6 +348,11 @@ public class MultiblockStructureHelper {
             }
         }
 
+        for (BlockPos placedPos : allPlacedPositions) {
+            level.getBlockState(placedPos).updateNeighbourShapes(level, placedPos, 3);
+            level.updateNeighborsAt(placedPos, level.getBlockState(placedPos).getBlock());
+        }
+
         LOGGER.info("Multiblock placed at {} with {} parts (Axis {}).", controllerPos, allPlacedPositions.size(), axis);
         updateFrameForController(level, controllerPos);
     }
@@ -398,6 +403,11 @@ public class MultiblockStructureHelper {
             }
         }
 
+        for (BlockPos placedPos : allPlacedPositions) {
+            level.getBlockState(placedPos).updateNeighbourShapes(level, placedPos, 3);
+            level.updateNeighborsAt(placedPos, level.getBlockState(placedPos).getBlock());
+        }
+
         LOGGER.info("Multiblock placed at {} with {} parts.", controllerPos, allPlacedPositions.size());
         updateFrameForController(level, controllerPos);
     }
@@ -433,6 +443,11 @@ public class MultiblockStructureHelper {
                 PartRole role = resolvePartRole(gridPos, controller);
                 partBe.setPartRole(role);
             }
+        }
+
+        for (BlockPos placedPos : allPlacedPositions) {
+            level.getBlockState(placedPos).updateNeighbourShapes(level, placedPos, 3);
+            level.updateNeighborsAt(placedPos, level.getBlockState(placedPos).getBlock());
         }
 
         LOGGER.info("Stator Multiblock placed at {} with {} parts (Facing {}, Axis {}).", controllerPos, allPlacedPositions.size(), facing, axis);

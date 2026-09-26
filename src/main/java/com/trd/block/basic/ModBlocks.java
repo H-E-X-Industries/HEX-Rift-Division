@@ -121,13 +121,14 @@ public class ModBlocks {
     // Other Fluid Blocks
     public static final DeferredBlock<net.minecraft.world.level.block.Block> WATER_PUMP = registerBlock("water_pump", () -> new com.trd.block.basic.industrial.fluids.WaterPumpBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK).noOcclusion()));
     public static final DeferredBlock<net.minecraft.world.level.block.Block> VALVE = registerBlock("valve", () -> new com.trd.block.basic.industrial.fluids.ValveBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
-    public static final DeferredBlock<net.minecraft.world.level.block.Block> LOW_PRESSURE_STEAM_CONDENSER = registerBlock("low_pressure_steam_condenser", () -> new com.trd.block.basic.industrial.fluids.LowPressureSteamCondenserBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> LOW_PRESSURE_STEAM_CONDENSER = registerBlock("low_pressure_steam_condenser", () -> new com.trd.block.basic.industrial.fluids.LowPressureSteamCondenserBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK).strength(0.5F, 6.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
     public static final DeferredBlock<net.minecraft.world.level.block.Block> PAINTABLE_PIPE = registerBlock("paintable_pipe", () -> new com.trd.block.basic.industrial.fluids.PaintablePipeBlock(com.trd.api.fluids.system.PipeTier.BRONZE, net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK).noOcclusion()));
 
     // Power Plant & Multiblocks
     public static final DeferredBlock<net.minecraft.world.level.block.Block> HEATER = registerBlock("heater", () -> new com.trd.multiblock.industrial.heaters.HeaterBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK).noOcclusion()));
     public static final DeferredBlock<net.minecraft.world.level.block.Block> BOILER = registerBlock("boiler", () -> new com.trd.multiblock.industrial.boiler.BoilerBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK).noOcclusion()));
     public static final DeferredBlock<net.minecraft.world.level.block.Block> STEAM_ENGINE = registerBlock("steam_engine", () -> new com.trd.multiblock.industrial.steam_engine.SteamEngineBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK).noOcclusion()));
+    public static final DeferredBlock<Block> STATOR_BLOCK = BLOCKS.register("stator", () -> new com.trd.block.basic.industrial.rotation.StatorBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().strength(5.0f, 6.0f).requiresCorrectToolForDrops()));
 
     // Fuel Tanks
     public static final DeferredBlock<net.minecraft.world.level.block.Block> FUEL_TANK_BIG = BLOCKS.register("fuel_tank_big", () -> new com.trd.multiblock.industrial.fueltanks.FuelTankBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.of().noOcclusion()));
@@ -215,6 +216,41 @@ public class ModBlocks {
     // Multiblock
     public static final DeferredBlock<Block> MULTIBLOCK_PART = registerBlock("multiblock_part",
             () -> new com.trd.multiblock.system.MultiblockPartBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().isViewBlocking((state, getter, pos) -> false)));
+
+    // Metallurgy & Casting
+    public static final DeferredBlock<Block> SMELTER = BLOCKS.register("smelter",
+            () -> new com.trd.multiblock.industrial.smelter.SmelterBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().strength(3.0f, 10.0f)));
+
+    public static final DeferredBlock<Block> CC_MACHINE = BLOCKS.register("cc_machine",
+            () -> new com.trd.multiblock.industrial.ccmachine.CCMachineBlock(BlockBehaviour.Properties.of()
+                    .strength(1.5F, 6.0F).sound(net.minecraft.world.level.block.SoundType.NETHER_BRICKS).requiresCorrectToolForDrops().noOcclusion()));
+
+    public static final DeferredBlock<Block> CASTING_POT = registerBlock("casting_pot",
+            () -> new com.trd.block.basic.industrial.casting.CastingPotBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion()));
+
+    public static final DeferredBlock<Block> CASTING_DESCENT = registerBlock("casting_descent",
+            () -> new com.trd.block.basic.industrial.casting.CastingDescentBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion()));
+
+    public static final DeferredBlock<Block> DROBITEL = BLOCKS.register("drobitel",
+            () -> new com.trd.multiblock.industrial.drobitel.DrobitelBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().strength(3.0f, 10.0f)));
+
+    public static final DeferredBlock<Block> CENTRIFUGE_MOTOR = registerBlock("centrifuge_motor",
+            () -> new com.trd.multiblock.industrial.centrifuge.CentrifugeMotorBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().strength(3.0f, 10.0f)));
+
+    public static final DeferredBlock<Block> CENTRIFUGE_CONUS = registerBlock("centrifuge_conus",
+            () -> new com.trd.multiblock.industrial.centrifuge.conus.CentrifugeConusBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().strength(3.0f, 10.0f)));
+
+    public static final DeferredBlock<Block> CENTRIFUGE_CYLINDER = registerBlock("centrifuge_cylinder",
+            () -> new com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().strength(3.0f, 10.0f)));
+
+    public static final DeferredBlock<Block> VISHELASHIVATEL = BLOCKS.register("vishelashivatel",
+            () -> new com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().strength(3.0f, 10.0f)));
+
+    public static final DeferredBlock<Block> MORY_BLOCK = registerBlock("mory_block",
+            () -> new Block(BlockBehaviour.Properties.of().strength(2.0F, 6.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<Block> ANTON_CHIGUR = registerBlock("anton_chigur",
+            () -> new Block(BlockBehaviour.Properties.of().strength(1.0F, 3.0F).sound(net.minecraft.world.level.block.SoundType.WOOD).requiresCorrectToolForDrops()));
 
     private static <T extends Block> DeferredBlock<T> registerBlock(String name, Supplier<T> block) {
         DeferredBlock<T> toReturn = BLOCKS.register(name, block);

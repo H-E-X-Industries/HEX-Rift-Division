@@ -111,6 +111,28 @@ public class FluidBarrelBlock extends BaseEntityBlock {
         return getShape(state, level, pos, context);
     }
 
+    public static final java.util.Map<Direction, BooleanProperty> PROPERTY_BY_DIRECTION = java.util.Map.of(
+            Direction.NORTH, NORTH,
+            Direction.SOUTH, SOUTH,
+            Direction.EAST, EAST,
+            Direction.WEST, WEST
+    );
+
+    public static boolean canConnect(LevelAccessor level, BlockPos myPos, BlockPos neighborPos, Direction dir) {
+        BlockState neighborState = level.getBlockState(neighborPos);
+        if (neighborState.getBlock() instanceof FluidPipeBlock) {
+            return true;
+        }
+        if (neighborState.getBlock() instanceof FluidBarrelBlock) {
+            return true;
+        }
+        if (level instanceof Level realLevel) {
+            BlockEntity neighborBE = realLevel.getBlockEntity(neighborPos);
+            return realLevel.getCapability(net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK, neighborPos, neighborState, neighborBE, dir.getOpposite()) != null;
+        }
+        return false;
+    }
+
     public static boolean canConnectToPipe(BlockGetter level, BlockPos neighborPos) {
         return level.getBlockState(neighborPos).getBlock() instanceof FluidPipeBlock;
     }
@@ -121,16 +143,16 @@ public class FluidBarrelBlock extends BaseEntityBlock {
         Level level = context.getLevel();
         BlockPos pos = context.getClickedPos();
         return this.defaultBlockState()
-                .setValue(NORTH, canConnectToPipe(level, pos.north()))
-                .setValue(SOUTH, canConnectToPipe(level, pos.south()))
-                .setValue(EAST, canConnectToPipe(level, pos.east()))
-                .setValue(WEST, canConnectToPipe(level, pos.west()));
+                .setValue(NORTH, canConnect(level, pos, pos.north(), Direction.NORTH))
+                .setValue(SOUTH, canConnect(level, pos, pos.south(), Direction.SOUTH))
+                .setValue(EAST, canConnect(level, pos, pos.east(), Direction.EAST))
+                .setValue(WEST, canConnect(level, pos, pos.west(), Direction.WEST));
     }
 
     @Override
     public BlockState updateShape(BlockState state, Direction dir, BlockState neighborState, LevelAccessor level, BlockPos currentPos, BlockPos neighborPos) {
         if (dir.getAxis().isHorizontal()) {
-            boolean connected = neighborState.getBlock() instanceof FluidPipeBlock;
+            boolean connected = canConnect(level, currentPos, neighborPos, dir);
             return switch (dir) {
                 case NORTH -> state.setValue(NORTH, connected);
                 case SOUTH -> state.setValue(SOUTH, connected);

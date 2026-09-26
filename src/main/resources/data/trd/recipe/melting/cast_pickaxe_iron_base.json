@@ -1,0 +1,12 @@
+{
+    "type":  "trd:melting",
+    "ingredient":  {
+                       "item":  "trd:cast_pickaxe_iron_base"
+                   },
+    "input_count":  1,
+    "metal":  "trd:iron",
+    "units":  45,
+    "min_temp":  958,
+    "heat_consumption":  0.8,
+    "smelt_time":  180
+}

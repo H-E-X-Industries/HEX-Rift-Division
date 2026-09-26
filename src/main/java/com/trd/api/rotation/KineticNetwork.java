@@ -128,6 +128,9 @@ public class KineticNetwork {
         // 1. Собираем физику со всех участников
         for (BlockPos pos : members) {
             if (level.isLoaded(pos) && level.getBlockEntity(pos) instanceof Rotational node) {
+                if (node instanceof com.trd.block.entity.industrial.rotation.KineticNodeBlockEntity kineticNode) {
+                    kineticNode.setNetworkId(this.networkId);
+                }
                 float scale = node.getNetworkScale();
                 float absScale = Math.abs(scale);
 
@@ -213,7 +216,7 @@ public class KineticNetwork {
         // 5. STRUCTURAL INTEGRITY CHECK (Torque limit)
         for (BlockPos pos : members) {
             if (level.isLoaded(pos) && level.getBlockEntity(pos) instanceof Rotational node) {
-                if (totalGeneratedTorque > node.getMaxTorque()) {
+                if (totalGeneratedTorque > 0 && node.getMaxTorque() > 0 && totalGeneratedTorque > node.getMaxTorque()) {
                     KineticNetworkManager.get(level).scheduleStructuralFailure(pos);
                 }
             }
@@ -221,7 +224,7 @@ public class KineticNetwork {
     }
 
     private void checkNodeFailure(ServerLevel level, BlockPos pos, Rotational node) {
-        if (Math.abs(node.getSpeed()) > node.getMaxSpeed()) {
+        if (node.getMaxSpeed() > 0 && Math.abs(node.getSpeed()) > node.getMaxSpeed()) {
             KineticNetworkManager.get(level).scheduleStructuralFailure(pos);
         }
     }
@@ -231,10 +234,13 @@ public class KineticNetwork {
         for (BlockPos pos : members) {
             BlockEntity be = level.getBlockEntity(pos);
             if (be instanceof Rotational node) {
+                if (be instanceof com.trd.block.entity.industrial.rotation.KineticNodeBlockEntity kineticNode) {
+                    kineticNode.setNetworkId(this.networkId);
+                }
                 node.setSpeed(speedLong);
                 checkNodeFailure(level, pos, node);
                 
-                if (totalGeneratedTorque > node.getMaxTorque()) {
+                if (totalGeneratedTorque > 0 && node.getMaxTorque() > 0 && totalGeneratedTorque > node.getMaxTorque()) {
                     KineticNetworkManager.get(level).scheduleStructuralFailure(pos);
                 }
             }

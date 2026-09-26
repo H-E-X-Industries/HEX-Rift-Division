@@ -69,14 +69,14 @@ public class TachometerOverlay {
             String speedText = Component.translatable("hud.trd.tachometer.speed", Math.abs(tachometer.getNetworkSpeed())).getString();
             String torqueText = Component.translatable("hud.trd.tachometer.torque", tachometer.getNetworkConsumedTorque(), tachometer.getNetworkTorque()).getString();
 
-            String inertiaFormat = Component.translatable("hud.trd.tachometer.inertia").getString();
-            String inertiaText = formatParam(inertiaFormat, tachometer.getNetworkInertia());
+            String formattedInertia = String.format(Locale.ROOT, "%.1f", tachometer.getNetworkInertia());
+            String inertiaText = Component.translatable("hud.trd.tachometer.inertia", formattedInertia).getString();
 
             // Расчет стресса (нагрузки)
             double load = tachometer.getNetworkLoad();
             double stressValue = Math.max(0, (load - 1.0) / 0.25);
-            String stressFormat = Component.translatable("hud.trd.tachometer.stress").getString();
-            String stressText = formatParam(stressFormat, stressValue * 100.0);
+            String formattedStress = String.format(Locale.ROOT, "%.1f", stressValue * 100.0);
+            String stressText = Component.translatable("hud.trd.tachometer.stress", formattedStress).getString();
 
             int stressColor = valueColor;
             if (load >= 1.25) {
@@ -113,18 +113,6 @@ public class TachometerOverlay {
 
             guiGraphics.drawString(font, inertiaText, centerX, centerY + lineHeight * 3, valueColor, true);
             guiGraphics.drawString(font, stressText, centerX, centerY + lineHeight * 4, stressColor, true);
-        }
-    }
-
-    private static String formatParam(String pattern, double value) {
-        try {
-            return String.format(Locale.ROOT, pattern, value);
-        } catch (Exception e) {
-            try {
-                return String.format(Locale.ROOT, pattern, String.format(Locale.ROOT, "%.2f", value));
-            } catch (Exception e2) {
-                return pattern + " " + String.format(Locale.ROOT, "%.2f", value);
-            }
         }
     }
 }

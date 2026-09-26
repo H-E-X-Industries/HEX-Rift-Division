@@ -193,6 +193,7 @@ public class MotorElectroBlockEntity extends KineticNodeBlockEntity implements I
             startSoundCooldown--;
         }
 
+        boolean prevEnergy = hasEnergy;
         if (energyStored >= consumption) {
             energyStored -= consumption;
             powerDeficitTicks = 0;
@@ -219,8 +220,11 @@ public class MotorElectroBlockEntity extends KineticNodeBlockEntity implements I
             }
         }
 
-        serverLevel.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 3);
-        setChanged();
+        if (prevEnergy != hasEnergy || Math.abs(speed - lastSyncedSpeed) > 0.01f || serverLevel.getGameTime() % 20 == 0) {
+            this.lastSyncedSpeed = speed;
+            serverLevel.sendBlockUpdated(getBlockPos(), getBlockState(), getBlockState(), 2);
+            setChanged();
+        }
     }
 
     private void requestKineticRecalculation() {

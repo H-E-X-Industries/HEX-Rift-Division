@@ -19,14 +19,31 @@ public class ModCreativeTabs {
                     .title(Component.translatable("itemGroup." + MainRegistry.MOD_ID + ".trd_recourses_tab"))
                     .icon(() -> new ItemStack(ModItems.STEEL_PLATE.get()))
                     .displayItems((parameters, output) -> {
-                        // РџСЂРµРґРјРµС‚С‹ (Р РµСЃСѓСЂСЃС‹)
+                        // Plates
                         output.accept(ModItems.IRON_PLATE.get());
                         output.accept(ModItems.ALUMINUM_PLATE.get());
                         output.accept(ModItems.STEEL_PLATE.get());
                         output.accept(ModItems.INDUSTRIAL_COPPER_PLATE.get());
+                        output.accept(ModItems.TUNGSTEN_PLATE.get());
+                        output.accept(ModItems.LEAD_PLATE.get());
+                        output.accept(ModItems.GOLD_PLATE.get());
+                        output.accept(ModItems.TITANIUM_PLATE.get());
+
+                        // Protectors
+                        output.accept(ModItems.PROTECTOR_STEEL.get());
+                        output.accept(ModItems.PROTECTOR_LEAD.get());
+                        output.accept(ModItems.PROTECTOR_TUNGSTEN.get());
+
+                        // Minerals & Resources
                         output.accept(ModItems.SEQUESTRUM.get());
                         output.accept(ModItems.SALT.get());
                         output.accept(ModItems.SULFUR.get());
+                        output.accept(ModItems.LIGNITE.get());
+                        output.accept(ModItems.FUEL_ASH.get());
+                        output.accept(ModItems.ASBESTOS.get());
+                        output.accept(ModItems.TRASH.get());
+                        output.accept(ModItems.BLACK_ASH.get());
+                        output.accept(ModItems.SODA_CRYSTAL.get());
                         output.accept(ModItems.BAUXITE_CHUNK.get());
                         output.accept(ModItems.BAUXITE_POWDER.get());
                         output.accept(ModItems.DOLOMITE_CHUNK.get());
@@ -39,6 +56,27 @@ public class ModCreativeTabs {
                         output.accept(ModItems.CONGLOMERATE_CHUNK.get());
                         output.accept(ModItems.FRACTION_CHUNK.get());
                         output.accept(ModItems.METAL_PIECE.get());
+                        output.accept(ModItems.HARD_ROCK.get());
+
+                        // Basic Components
+                        output.accept(ModItems.WOODEN_HANDLE.get());
+                        output.accept(ModItems.ROPE.get());
+                        output.accept(ModItems.WIRE_CARRIAGE.get());
+                        output.accept(ModItems.INDUSTRIAL_COPPER_WIRE.get());
+                        output.accept(ModItems.GOLD_WIRE.get());
+                        output.accept(ModItems.NEODYMIUM_WIRE.get());
+
+                        // Metallurgy Raw Materials
+                        output.accept(ModItems.ALUMINA.get());
+                        output.accept(ModItems.SLAG.get());
+                        output.accept(ModItems.LIQUID_METAL.get());
+
+                        // Resource Registry (Metals: Ingots, Nuggets, Blocks)
+                        for (ResourceRegistry.ResourceEntry entry : ResourceRegistry.getAll()) {
+                            if (entry.mainUnit != null) output.accept(entry.mainUnit.get());
+                            if (entry.hasSmallUnit()) output.accept(entry.smallUnit.get());
+                            if (entry.hasBlock()) output.accept(entry.block.get());
+                        }
                     })
                     .build());
 
@@ -89,6 +127,9 @@ public class ModCreativeTabs {
                         output.accept(ModItems.INDUSTRIAL_COPPER_WIRE.get());
                         output.accept(ModItems.ENERGY_CELL.get());
                         output.accept(ModItems.BATTERY.get());
+                        output.accept(ModItems.BATTERY_ADVANCED.get());
+                        output.accept(ModItems.BATTERY_LITHIUM.get());
+                        output.accept(ModItems.BATTERY_TRIXITE.get());
                         output.accept(ModItems.CREATIVE_BATTERY.get());
                         output.accept(ModItems.SCREWDRIVER.get());
                         
@@ -124,13 +165,35 @@ public class ModCreativeTabs {
                         output.accept(ModBlocks.BOILER.get());
                         output.accept(ModBlocks.STEAM_ENGINE.get());
 
-                        // Optic Microscope
-                        output.accept(ModBlocks.OPTIC_MICROSCOPE.get());
-                        output.accept(ModItems.HARD_ROCK.get());
-
-                        // Cast Pickaxes
+                        // Metallurgy & Continuous Casting
+                        output.accept(ModItems.SMELTER_ITEM.get());
+                        output.accept(ModItems.CC_MACHINE_ITEM.get());
+                        output.accept(ModBlocks.CASTING_POT.get());
+                        output.accept(ModBlocks.CASTING_DESCENT.get());
+                        output.accept(ModItems.POKER.get());
+                        output.accept(ModItems.MOLD_EMPTY.get());
+                        output.accept(ModItems.MOLD_INGOT.get());
+                        output.accept(ModItems.MOLD_NUGGET.get());
+                        output.accept(ModItems.MOLD_BLOCK.get());
+                        output.accept(ModItems.MOLD_PLATE.get());
+                        output.accept(ModItems.MOLD_PICKAXE.get());
+                        output.accept(ModItems.CAST_PICKAXE_IRON_BASE.get());
+                        output.accept(ModItems.CAST_PICKAXE_STEEL_BASE.get());
                         output.accept(ModItems.CAST_PICKAXE_IRON.get());
                         output.accept(ModItems.CAST_PICKAXE_STEEL.get());
+
+                        // Industrial Machines
+                        output.accept(ModItems.DROBITEL_ITEM.get());
+                        output.accept(ModItems.BLADE.get());
+                        output.accept(ModBlocks.CENTRIFUGE_MOTOR.get());
+                        output.accept(ModBlocks.CENTRIFUGE_CONUS.get());
+                        output.accept(ModBlocks.CENTRIFUGE_CYLINDER.get());
+                        output.accept(ModItems.VISHELASHIVATEL_ITEM.get());
+                        output.accept(ModBlocks.MORY_BLOCK.get());
+                        output.accept(ModBlocks.ANTON_CHIGUR.get());
+
+                        // Optic Microscope
+                        output.accept(ModBlocks.OPTIC_MICROSCOPE.get());
 
                         // Kinetic System
                         output.accept(ModBlocks.BEARING_BLOCK.get());
@@ -143,6 +206,10 @@ public class ModCreativeTabs {
                         output.accept(ModItems.BEVEL_GEAR.get());
                         output.accept(ModItems.GEAR1_STEEL.get());
                         output.accept(ModItems.GEAR2_STEEL.get());
+                        output.accept(ModItems.FLYWHEEL_LIGHT.get());
+                        output.accept(ModItems.COPPER_ROTOR.get());
+                        output.accept(ModItems.STATOR_ITEM.get());
+                        output.accept(ModItems.COPPER_COIL.get());
                         ModBlocks.ALL_SHAFTS.forEach(shaft -> output.accept(shaft.get()));
 
                         // Fluid Drops

@@ -33,6 +33,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import com.trd.multiblock.system.roles.IMultiblockPart;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
@@ -191,6 +193,106 @@ public class FluidBarrelBlockEntity extends FluidNodeBlockEntity implements Menu
         be.processBuckets();
         be.processLeaking();
         be.checkDamage();
+        be.transferDirect();
+    }
+
+    protected void transferDirect() {
+        if (level == null || level.isClientSide) return;
+        if (mode == 3) return; // Disabled
+
+        BlockState state = getBlockState();
+
+        for (Direction dir : Direction.Plane.HORIZONTAL) {
+            BooleanProperty prop = switch (dir) {
+                case NORTH -> FluidBarrelBlock.NORTH;
+                case SOUTH -> FluidBarrelBlock.SOUTH;
+                case EAST -> FluidBarrelBlock.EAST;
+                case WEST -> FluidBarrelBlock.WEST;
+                default -> null;
+            };
+            if (prop == null || !state.hasProperty(prop) || !state.getValue(prop)) {
+                continue;
+            }
+
+            BlockPos neighborPos = worldPosition.relative(dir);
+            BlockState neighborState = level.getBlockState(neighborPos);
+            if (neighborState.getBlock() instanceof com.trd.block.basic.industrial.fluids.FluidPipeBlock) {
+                continue; // Pipes are handled by FluidNetwork
+            }
+
+            BlockEntity neighborBE = level.getBlockEntity(neighborPos);
+            IFluidHandler neighborHandler = level.getCapability(
+                    net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
+                    neighborPos, neighborState, neighborBE, dir.getOpposite()
+            );
+            if (neighborHandler == null) continue;
+
+            ITankWithMode neighborTank = null;
+            if (neighborBE instanceof ITankWithMode direct) {
+                neighborTank = direct;
+            } else if (neighborBE instanceof IMultiblockPart part && part.getControllerPos() != null) {
+                BlockEntity ctrl = level.getBlockEntity(part.getControllerPos());
+                if (ctrl instanceof ITankWithMode ctrlTank) neighborTank = ctrlTank;
+            }
+
+            int maxRate = getMaxTransferRate();
+
+            if (neighborTank != null) {
+                int nMode = neighborTank.getMode();
+                if (nMode == 3) continue; // Neighbor disabled
+
+                if (this.mode == 2) { // OUTPUT
+                    if (nMode == 0 || nMode == 1) {
+                        FluidUtil.tryFluidTransfer(neighborHandler, this.networkFluidHandler, maxRate, true);
+                    }
+                } else if (this.mode == 1) { // INPUT
+                    if (nMode == 0 || nMode == 2) {
+                        FluidUtil.tryFluidTransfer(this.networkFluidHandler, neighborHandler, maxRate, true);
+                    }
+                } else if (this.mode == 0) { // BOTH
+                    if (nMode == 1) {
+                        FluidUtil.tryFluidTransfer(neighborHandler, this.networkFluidHandler, maxRate, true);
+                    } else if (nMode == 2) {
+                        FluidUtil.tryFluidTransfer(this.networkFluidHandler, neighborHandler, maxRate, true);
+                    } else if (nMode == 0) {
+                        // Balance between two buffer tanks
+                        int myAmount = this.fluidTank.getFluidAmount();
+                        FluidStack myFluid = this.fluidTank.getFluid();
+                        if (myAmount > 0) {
+                            int neighborAmount = 0;
+                            for (int i = 0; i < neighborHandler.getTanks(); i++) {
+                                FluidStack inTank = neighborHandler.getFluidInTank(i);
+                                if (inTank.is(myFluid.getFluid())) {
+                                    neighborAmount += inTank.getAmount();
+                                }
+                            }
+                            if (myAmount > neighborAmount + 1) {
+                                int toTransfer = Math.min(maxRate, (myAmount - neighborAmount) / 2);
+                                if (toTransfer > 0) {
+                                    FluidUtil.tryFluidTransfer(neighborHandler, this.networkFluidHandler, toTransfer, true);
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                // Neighbor is a mechanism (pump, boiler, condenser, smelter, CC machine, etc.)
+                if (this.mode == 2) { // OUTPUT
+                    FluidUtil.tryFluidTransfer(neighborHandler, this.networkFluidHandler, maxRate, true);
+                } else if (this.mode == 1) { // INPUT
+                    FluidUtil.tryFluidTransfer(this.networkFluidHandler, neighborHandler, maxRate, true);
+                } else if (this.mode == 0) { // BOTH
+                    if (!this.fluidTank.isEmpty()) {
+                        FluidStack transferred = FluidUtil.tryFluidTransfer(neighborHandler, this.networkFluidHandler, maxRate, true);
+                        if (transferred.isEmpty() && this.fluidTank.getSpace() > 0) {
+                            FluidUtil.tryFluidTransfer(this.networkFluidHandler, neighborHandler, maxRate, true);
+                        }
+                    } else {
+                        FluidUtil.tryFluidTransfer(this.networkFluidHandler, neighborHandler, maxRate, true);
+                    }
+                }
+            }
+        }
     }
 
     protected void updateIdentifierFilter() {

@@ -12,6 +12,9 @@ public class MainRegistry {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public MainRegistry(IEventBus modEventBus) {
+        // Инициализация динамических ресурсов металлургии (до регистрации блоков и предметов)
+        com.trd.main.ResourceRegistry.init();
+
         // Регистрация базовых компонентов
         com.trd.block.basic.ModBlocks.register(modEventBus);
         com.trd.block.entity.ModBlockEntities.register(modEventBus);
@@ -29,6 +32,13 @@ public class MainRegistry {
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
+        event.enqueueWork(() -> {
+            com.trd.api.metallurgy.ModMetallurgy.init();
+            com.trd.multiblock.industrial.drobitel.DrobitelRecipes.register();
+            com.trd.multiblock.industrial.centrifuge.conus.CentrifugeRecipes.init();
+            com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderRecipes.init();
+            com.trd.multiblock.industrial.vishelashivatel.VishelashivatelRecipes.init();
+        });
         LOGGER.info("HEX Rift Division Setup Complete!");
     }
 }

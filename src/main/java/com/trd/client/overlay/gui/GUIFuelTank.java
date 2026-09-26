@@ -19,6 +19,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.network.PacketDistributor;
+import com.trd.network.packet.fluids.UpdateBarrelModeC2SPacket;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -171,7 +173,8 @@ public class GUIFuelTank extends AbstractContainerScreen<FuelTankMenu> {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == 0 && isMouseOver(mouseX, mouseY, MODE_X, MODE_Y, MODE_SIZE, MODE_SIZE)) {
             playSound();
-            // TODO: UpdateBarrelModeC2SPacket
+            this.menu.setData(0, (this.menu.getMode() + 1) % 4);
+            PacketDistributor.sendToServer(new UpdateBarrelModeC2SPacket(menu.blockEntity.getBlockPos()));
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);

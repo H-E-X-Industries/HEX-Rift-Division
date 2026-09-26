@@ -1,0 +1,12 @@
+{
+    "type":  "trd:melting",
+    "ingredient":  {
+                       "item":  "minecraft:iron_leggings"
+                   },
+    "input_count":  1,
+    "metal":  "trd:iron",
+    "units":  63,
+    "min_temp":  958,
+    "heat_consumption":  0.9,
+    "smelt_time":  160
+}

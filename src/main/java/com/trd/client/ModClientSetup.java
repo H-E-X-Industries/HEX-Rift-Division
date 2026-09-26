@@ -27,6 +27,12 @@ public class ModClientSetup {
         event.register(com.trd.menu.ModMenuTypes.OPTIC_MICROSCOPE_MENU.get(), com.trd.client.overlay.gui.GUIOpticMicroscope::new);
         event.register(com.trd.menu.ModMenuTypes.MOTOR_ELECTRO_MENU.get(), com.trd.client.overlay.gui.GUIMotorElectro::new);
         event.register(com.trd.menu.ModMenuTypes.HEATER_MENU.get(), com.trd.client.overlay.gui.GUIHeater::new);
+        event.register(com.trd.menu.ModMenuTypes.SMELTER_MENU.get(), com.trd.client.overlay.gui.GUISmelter::new);
+        event.register(com.trd.menu.ModMenuTypes.CC_MACHINE_MENU.get(), com.trd.client.overlay.gui.GUICCMachine::new);
+        event.register(com.trd.menu.ModMenuTypes.DROBITEL_MENU.get(), com.trd.client.overlay.gui.DrobitelScreen::new);
+        event.register(com.trd.menu.ModMenuTypes.CENTRIFUGE_MENU.get(), com.trd.client.overlay.gui.CentrifugeScreen::new);
+        event.register(com.trd.menu.ModMenuTypes.CENTRIFUGE_CYLINDER_MENU.get(), com.trd.client.overlay.gui.CentrifugeCylinderScreen::new);
+        event.register(com.trd.menu.ModMenuTypes.VISHELASHIVATEL_MENU.get(), com.trd.client.overlay.gui.VishelashivatelScreen::new);
     }
 
     @SubscribeEvent
@@ -37,6 +43,11 @@ public class ModClientSetup {
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.PAINTABLE_PIPE_BE.get(), com.trd.client.render.ber.PaintableConduitRenderer::new);
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.PAINTABLE_WIRE_BE.get(), com.trd.client.render.ber.PaintableConduitRenderer::new);
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.CONVEYOR_BE.get(), com.trd.client.render.ber.ConveyorRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.CASTING_POT.get(), com.trd.client.renderer.CastingPotRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.CASTING_DESCENT.get(), com.trd.client.renderer.CastingDescentRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.CC_MACHINE_BE.get(), com.trd.client.renderer.CCMachineRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.CENTRIFUGE_CYLINDER_BE.get(), com.trd.client.render.ber.CentrifugeCylinderRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.VISHELASHIVATEL_BE.get(), com.trd.client.render.ber.VishelachivatelRenderer::new);
         // event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.FUEL_TANK_SMALL_BE.get(), com.trd.client.render.ber.FuelTankRenderer::new);
     }
 
@@ -93,6 +104,219 @@ public class ModClientSetup {
         event.register((stack, tintIndex) -> tintIndex == 0 ? 0xFF717070 : -1, com.trd.api.fluids.ModFluids.FLUID_DROP_NONE.get());
         event.register((stack, tintIndex) -> tintIndex == 0 ? 0xFFE64306 : -1, com.trd.api.fluids.ModFluids.FLUID_DROP_LAVA.get());
         event.register((stack, tintIndex) -> tintIndex == 0 ? 0xFF4487FF : -1, com.trd.api.fluids.ModFluids.FLUID_DROP_WATER.get());
+
+        // === Metallurgy Heat Gradients ===
+        com.trd.api.metallurgy.system.ItemHeatColorRegistry.registerMixed(
+                com.trd.api.metallurgy.system.ItemHeatColorRegistry.HeatGradient.RED_TO_WHITE,
+                net.minecraft.world.item.Items.NETHERITE_INGOT,
+                net.minecraft.world.item.Items.NETHERITE_BLOCK,
+                net.minecraft.world.item.Items.NETHERITE_PICKAXE,
+                net.minecraft.world.item.Items.NETHERITE_AXE,
+                net.minecraft.world.item.Items.NETHERITE_SHOVEL,
+                net.minecraft.world.item.Items.NETHERITE_HOE,
+                net.minecraft.world.item.Items.NETHERITE_SWORD,
+                net.minecraft.world.item.Items.NETHERITE_HELMET,
+                net.minecraft.world.item.Items.NETHERITE_CHESTPLATE,
+                net.minecraft.world.item.Items.NETHERITE_LEGGINGS,
+                net.minecraft.world.item.Items.NETHERITE_BOOTS
+        );
+
+        com.trd.api.metallurgy.system.ItemHeatColorRegistry.registerMixed(
+                com.trd.api.metallurgy.system.ItemHeatColorRegistry.HeatGradient.ORANGE_TO_WHITE,
+                net.minecraft.world.item.Items.COPPER_INGOT,
+                net.minecraft.world.item.Items.COPPER_BLOCK,
+                net.minecraft.world.item.Items.RAW_COPPER,
+                net.minecraft.world.item.Items.RAW_COPPER_BLOCK,
+                net.minecraft.world.item.Items.COPPER_ORE,
+                net.minecraft.world.item.Items.DEEPSLATE_COPPER_ORE,
+                net.minecraft.world.item.Items.LIGHTNING_ROD,
+                net.minecraft.world.item.Items.IRON_INGOT,
+                net.minecraft.world.item.Items.IRON_NUGGET,
+                net.minecraft.world.item.Items.IRON_BLOCK,
+                net.minecraft.world.item.Items.RAW_IRON,
+                net.minecraft.world.item.Items.RAW_IRON_BLOCK,
+                net.minecraft.world.item.Items.IRON_ORE,
+                net.minecraft.world.item.Items.DEEPSLATE_IRON_ORE,
+                net.minecraft.world.item.Items.IRON_PICKAXE,
+                net.minecraft.world.item.Items.IRON_AXE,
+                net.minecraft.world.item.Items.IRON_SHOVEL,
+                net.minecraft.world.item.Items.IRON_HOE,
+                net.minecraft.world.item.Items.IRON_SWORD,
+                net.minecraft.world.item.Items.IRON_HELMET,
+                net.minecraft.world.item.Items.IRON_CHESTPLATE,
+                net.minecraft.world.item.Items.IRON_LEGGINGS,
+                net.minecraft.world.item.Items.IRON_BOOTS,
+                net.minecraft.world.item.Items.GOLD_INGOT,
+                net.minecraft.world.item.Items.GOLD_NUGGET,
+                net.minecraft.world.item.Items.GOLD_BLOCK,
+                net.minecraft.world.item.Items.RAW_GOLD,
+                net.minecraft.world.item.Items.RAW_GOLD_BLOCK,
+                net.minecraft.world.item.Items.GOLD_ORE,
+                net.minecraft.world.item.Items.DEEPSLATE_GOLD_ORE,
+                net.minecraft.world.item.Items.GOLDEN_PICKAXE,
+                net.minecraft.world.item.Items.GOLDEN_AXE,
+                net.minecraft.world.item.Items.GOLDEN_SHOVEL,
+                net.minecraft.world.item.Items.GOLDEN_HOE,
+                net.minecraft.world.item.Items.GOLDEN_SWORD,
+                net.minecraft.world.item.Items.GOLDEN_HELMET,
+                net.minecraft.world.item.Items.GOLDEN_CHESTPLATE,
+                net.minecraft.world.item.Items.GOLDEN_LEGGINGS,
+                net.minecraft.world.item.Items.GOLDEN_BOOTS,
+                com.trd.item.ModItems.CAST_PICKAXE_STEEL_BASE.get(),
+                com.trd.item.ModItems.CAST_PICKAXE_IRON_BASE.get(),
+                com.trd.item.ModItems.STEEL_PLATE.get(),
+                com.trd.item.ModItems.TUNGSTEN_PLATE.get(),
+                com.trd.item.ModItems.ALUMINUM_PLATE.get(),
+                com.trd.item.ModItems.TITANIUM_PLATE.get(),
+                com.trd.item.ModItems.INDUSTRIAL_COPPER_PLATE.get(),
+                com.trd.item.ModItems.GOLD_PLATE.get(),
+                com.trd.item.ModItems.LEAD_PLATE.get(),
+                com.trd.item.ModItems.IRON_PLATE.get(),
+                com.trd.item.ModItems.ALUMINA.get(),
+                com.trd.main.ResourceRegistry.getMainUnit("steel"),
+                com.trd.main.ResourceRegistry.getSmallUnit("steel"),
+                com.trd.main.ResourceRegistry.getBlock("steel"),
+                com.trd.main.ResourceRegistry.getMainUnit("aluminum"),
+                com.trd.main.ResourceRegistry.getSmallUnit("aluminum"),
+                com.trd.main.ResourceRegistry.getBlock("aluminum"),
+                com.trd.main.ResourceRegistry.getMainUnit("bronze"),
+                com.trd.main.ResourceRegistry.getSmallUnit("bronze"),
+                com.trd.main.ResourceRegistry.getBlock("bronze"),
+                com.trd.main.ResourceRegistry.getMainUnit("tin"),
+                com.trd.main.ResourceRegistry.getSmallUnit("tin"),
+                com.trd.main.ResourceRegistry.getBlock("tin"),
+                com.trd.main.ResourceRegistry.getMainUnit("titanium"),
+                com.trd.main.ResourceRegistry.getSmallUnit("titanium"),
+                com.trd.main.ResourceRegistry.getBlock("titanium"),
+                com.trd.main.ResourceRegistry.getBlock("industrial_copper"),
+                com.trd.main.ResourceRegistry.getMainUnit("industrial_copper"),
+                com.trd.main.ResourceRegistry.getSmallUnit("industrial_copper"),
+                com.trd.main.ResourceRegistry.getMainUnit("lead"),
+                com.trd.main.ResourceRegistry.getSmallUnit("lead"),
+                com.trd.main.ResourceRegistry.getBlock("lead"),
+                com.trd.main.ResourceRegistry.getMainUnit("tungsten"),
+                com.trd.main.ResourceRegistry.getSmallUnit("tungsten"),
+                com.trd.main.ResourceRegistry.getBlock("tungsten"),
+                com.trd.main.ResourceRegistry.getMainUnit("beryllium"),
+                com.trd.main.ResourceRegistry.getSmallUnit("beryllium"),
+                com.trd.main.ResourceRegistry.getBlock("beryllium"),
+                com.trd.main.ResourceRegistry.getMainUnit("zinc"),
+                com.trd.main.ResourceRegistry.getSmallUnit("zinc"),
+                com.trd.main.ResourceRegistry.getBlock("zinc")
+        );
+
+        com.trd.api.metallurgy.system.ItemHeatColorRegistry.registerMixed(
+                com.trd.api.metallurgy.system.ItemHeatColorRegistry.HeatGradient.BLUE_TO_WHITE,
+                com.trd.main.ResourceRegistry.getMainUnit("neodymium"),
+                com.trd.main.ResourceRegistry.getSmallUnit("neodymium"),
+                com.trd.main.ResourceRegistry.getBlock("neodymium")
+        );
+
+        // Heat item color registration
+        registerItemHeatColor(event,
+                net.minecraft.world.item.Items.IRON_INGOT, net.minecraft.world.item.Items.IRON_NUGGET,
+                net.minecraft.world.item.Items.IRON_BLOCK,
+                net.minecraft.world.item.Items.RAW_IRON, net.minecraft.world.item.Items.RAW_IRON_BLOCK,
+                net.minecraft.world.item.Items.IRON_ORE, net.minecraft.world.item.Items.DEEPSLATE_IRON_ORE,
+                net.minecraft.world.item.Items.IRON_PICKAXE, net.minecraft.world.item.Items.IRON_AXE,
+                net.minecraft.world.item.Items.IRON_SHOVEL, net.minecraft.world.item.Items.IRON_HOE, net.minecraft.world.item.Items.IRON_SWORD,
+                net.minecraft.world.item.Items.IRON_HELMET, net.minecraft.world.item.Items.IRON_CHESTPLATE,
+                net.minecraft.world.item.Items.IRON_LEGGINGS, net.minecraft.world.item.Items.IRON_BOOTS,
+                com.trd.main.ResourceRegistry.getMainUnit("steel"),
+                com.trd.main.ResourceRegistry.getSmallUnit("steel"),
+                com.trd.item.ModItems.CAST_PICKAXE_STEEL_BASE.get(),
+                com.trd.item.ModItems.CAST_PICKAXE_IRON_BASE.get(),
+                com.trd.main.ResourceRegistry.getBlock("steel"),
+                net.minecraft.world.item.Items.GOLD_INGOT, net.minecraft.world.item.Items.GOLD_NUGGET,
+                net.minecraft.world.item.Items.GOLD_BLOCK,
+                net.minecraft.world.item.Items.RAW_GOLD, net.minecraft.world.item.Items.RAW_GOLD_BLOCK,
+                net.minecraft.world.item.Items.GOLD_ORE, net.minecraft.world.item.Items.DEEPSLATE_GOLD_ORE,
+                net.minecraft.world.item.Items.GOLDEN_PICKAXE, net.minecraft.world.item.Items.GOLDEN_AXE,
+                net.minecraft.world.item.Items.GOLDEN_SHOVEL, net.minecraft.world.item.Items.GOLDEN_HOE, net.minecraft.world.item.Items.GOLDEN_SWORD,
+                net.minecraft.world.item.Items.GOLDEN_HELMET, net.minecraft.world.item.Items.GOLDEN_CHESTPLATE,
+                net.minecraft.world.item.Items.GOLDEN_LEGGINGS, net.minecraft.world.item.Items.GOLDEN_BOOTS,
+                net.minecraft.world.item.Items.COPPER_INGOT,
+                net.minecraft.world.item.Items.COPPER_BLOCK,
+                net.minecraft.world.item.Items.RAW_COPPER, net.minecraft.world.item.Items.RAW_COPPER_BLOCK,
+                net.minecraft.world.item.Items.COPPER_ORE, net.minecraft.world.item.Items.DEEPSLATE_COPPER_ORE,
+                net.minecraft.world.item.Items.LIGHTNING_ROD,
+                net.minecraft.world.item.Items.NETHERITE_INGOT,
+                com.trd.item.ModItems.ALUMINA.get(),
+                net.minecraft.world.item.Items.NETHERITE_BLOCK,
+                net.minecraft.world.item.Items.NETHERITE_PICKAXE, net.minecraft.world.item.Items.NETHERITE_AXE,
+                net.minecraft.world.item.Items.NETHERITE_SHOVEL, net.minecraft.world.item.Items.NETHERITE_HOE, net.minecraft.world.item.Items.NETHERITE_SWORD,
+                com.trd.main.ResourceRegistry.getMainUnit("aluminum"),
+                com.trd.main.ResourceRegistry.getSmallUnit("aluminum"),
+                com.trd.main.ResourceRegistry.getBlock("aluminum"),
+                com.trd.main.ResourceRegistry.getMainUnit("bronze"),
+                com.trd.main.ResourceRegistry.getSmallUnit("bronze"),
+                com.trd.main.ResourceRegistry.getBlock("bronze"),
+                com.trd.main.ResourceRegistry.getMainUnit("tin"),
+                com.trd.main.ResourceRegistry.getSmallUnit("tin"),
+                com.trd.main.ResourceRegistry.getBlock("tin"),
+                com.trd.main.ResourceRegistry.getMainUnit("zinc"),
+                com.trd.main.ResourceRegistry.getSmallUnit("zinc"),
+                com.trd.main.ResourceRegistry.getBlock("zinc"),
+                com.trd.main.ResourceRegistry.getMainUnit("titanium"),
+                com.trd.main.ResourceRegistry.getSmallUnit("titanium"),
+                com.trd.main.ResourceRegistry.getBlock("titanium"),
+                com.trd.main.ResourceRegistry.getMainUnit("industrial_copper"),
+                com.trd.main.ResourceRegistry.getSmallUnit("industrial_copper"),
+                com.trd.main.ResourceRegistry.getBlock("industrial_copper"),
+                com.trd.main.ResourceRegistry.getMainUnit("lead"),
+                com.trd.main.ResourceRegistry.getSmallUnit("lead"),
+                com.trd.main.ResourceRegistry.getBlock("lead"),
+                com.trd.main.ResourceRegistry.getMainUnit("beryllium"),
+                com.trd.main.ResourceRegistry.getSmallUnit("beryllium"),
+                com.trd.main.ResourceRegistry.getBlock("beryllium"),
+                com.trd.main.ResourceRegistry.getMainUnit("tungsten"),
+                com.trd.main.ResourceRegistry.getSmallUnit("tungsten"),
+                com.trd.main.ResourceRegistry.getBlock("tungsten"),
+                com.trd.main.ResourceRegistry.getMainUnit("neodymium"),
+                com.trd.main.ResourceRegistry.getSmallUnit("neodymium"),
+                com.trd.main.ResourceRegistry.getBlock("neodymium"),
+                com.trd.item.ModItems.STEEL_PLATE.get(),
+                com.trd.item.ModItems.TUNGSTEN_PLATE.get(),
+                com.trd.item.ModItems.ALUMINUM_PLATE.get(),
+                com.trd.item.ModItems.TITANIUM_PLATE.get(),
+                com.trd.item.ModItems.INDUSTRIAL_COPPER_PLATE.get(),
+                com.trd.item.ModItems.GOLD_PLATE.get(),
+                com.trd.item.ModItems.LEAD_PLATE.get(),
+                com.trd.item.ModItems.IRON_PLATE.get()
+        );
+
+        // Slag handler
+        event.register((stack, tintIndex) -> com.trd.api.metallurgy.system.ItemHeatColorRegistry.getSlagHeatColor(stack, tintIndex),
+                com.trd.item.ModItems.SLAG.get()
+        );
+
+        // Liquid metal handler
+        event.register((stack, tintIndex) -> {
+            if (tintIndex == 0) {
+                net.minecraft.world.item.component.CustomData customData = stack.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
+                if (customData != null && customData.contains("MetalColor")) {
+                    return customData.copyTag().getInt("MetalColor");
+                }
+            }
+            return 0xFFFFFF;
+        }, com.trd.item.ModItems.LIQUID_METAL.get());
+    }
+
+    private static void registerItemHeatColor(net.neoforged.neoforge.client.event.RegisterColorHandlersEvent.Item event, Object... items) {
+        java.util.List<net.minecraft.world.level.ItemLike> valid = new java.util.ArrayList<>();
+        for (Object obj : items) {
+            if (obj instanceof net.minecraft.world.level.ItemLike itemLike) {
+                valid.add(itemLike);
+            } else if (obj instanceof java.util.function.Supplier<?> sup) {
+                Object val = sup.get();
+                if (val instanceof net.minecraft.world.level.ItemLike itemLike) {
+                    valid.add(itemLike);
+                }
+            }
+        }
+        if (!valid.isEmpty()) {
+            event.register((stack, tintIndex) -> com.trd.api.metallurgy.system.ItemHeatColorRegistry.getHeatColor(stack, tintIndex), valid.toArray(new net.minecraft.world.level.ItemLike[0]));
+        }
     }
 
     @SubscribeEvent
@@ -290,6 +514,54 @@ public class ModClientSetup {
             @Override
             public boolean skipVanillaRender(com.trd.multiblock.industrial.steam_engine.SteamEngineBlockEntity be) {
                 return true;
+            }
+        });
+
+        VisualizerRegistry.setVisualizer(ModBlockEntities.STATOR_BE.get(), new BlockEntityVisualizer<com.trd.block.entity.industrial.rotation.StatorBlockEntity>() {
+            @Override
+            public BlockEntityVisual<? super com.trd.block.entity.industrial.rotation.StatorBlockEntity> createVisual(VisualizationContext ctx, com.trd.block.entity.industrial.rotation.StatorBlockEntity be, float partialTick) {
+                return new com.trd.client.render.flywheel.StatorVisual(ctx, be, partialTick);
+            }
+
+            @Override
+            public boolean skipVanillaRender(com.trd.block.entity.industrial.rotation.StatorBlockEntity be) {
+                return true;
+            }
+        });
+
+        VisualizerRegistry.setVisualizer(ModBlockEntities.DROBITEL_BE.get(), new BlockEntityVisualizer<com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity>() {
+            @Override
+            public BlockEntityVisual<? super com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity> createVisual(VisualizationContext ctx, com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity be, float partialTick) {
+                return new com.trd.client.render.flywheel.DrobitelVisual(ctx, be, partialTick);
+            }
+
+            @Override
+            public boolean skipVanillaRender(com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity be) {
+                return false;
+            }
+        });
+
+        VisualizerRegistry.setVisualizer(ModBlockEntities.CENTRIFUGE_CYLINDER_BE.get(), new BlockEntityVisualizer<com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderBlockEntity>() {
+            @Override
+            public BlockEntityVisual<? super com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderBlockEntity> createVisual(VisualizationContext ctx, com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderBlockEntity be, float partialTick) {
+                return new com.trd.client.render.flywheel.CentrifugeCylinderVisual(ctx, be, partialTick);
+            }
+
+            @Override
+            public boolean skipVanillaRender(com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderBlockEntity be) {
+                return false;
+            }
+        });
+
+        VisualizerRegistry.setVisualizer(ModBlockEntities.VISHELASHIVATEL_BE.get(), new BlockEntityVisualizer<com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlockEntity>() {
+            @Override
+            public BlockEntityVisual<? super com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlockEntity> createVisual(VisualizationContext ctx, com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlockEntity be, float partialTick) {
+                return new com.trd.client.render.flywheel.VishelashivatelVisual(ctx, be, partialTick);
+            }
+
+            @Override
+            public boolean skipVanillaRender(com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlockEntity be) {
+                return false;
             }
         });
     }

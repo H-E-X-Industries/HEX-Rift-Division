@@ -1,0 +1,12 @@
+{
+    "type":  "trd:melting",
+    "ingredient":  {
+                       "item":  "trd:neodymium_nugget"
+                   },
+    "input_count":  1,
+    "metal":  "trd:neodymium",
+    "units":  1,
+    "min_temp":  1016,
+    "heat_consumption":  1,
+    "smelt_time":  20
+}

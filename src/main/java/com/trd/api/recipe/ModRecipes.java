@@ -26,6 +26,20 @@ public class ModRecipes {
     public static final Supplier<RecipeSerializer<MillstoneRecipe>> MILLSTONE_SERIALIZER =
             RECIPE_SERIALIZERS.register("grinding", MillstoneRecipe.Serializer::new);
 
+    public static final Supplier<RecipeType<com.trd.api.metallurgy.system.recipe.SmeltRecipe>> SMELTER_MELTING_TYPE =
+            RECIPE_TYPES.register("smelter_melting", () -> new RecipeType<com.trd.api.metallurgy.system.recipe.SmeltRecipe>() {
+                @Override
+                public String toString() {
+                    return "smelter_melting";
+                }
+            });
+
+    public static final Supplier<RecipeSerializer<com.trd.api.metallurgy.system.recipe.SmeltRecipe>> SMELTER_MELTING_SERIALIZER =
+            RECIPE_SERIALIZERS.register("smelter_melting", com.trd.api.metallurgy.system.recipe.SmeltRecipe.Serializer::new);
+
+    public static final Supplier<RecipeSerializer<com.trd.api.metallurgy.system.recipe.SmeltRecipe>> MELTING_SERIALIZER =
+            RECIPE_SERIALIZERS.register("melting", com.trd.api.metallurgy.system.recipe.SmeltRecipe.Serializer::new);
+
     public static void register(IEventBus eventBus) {
         RECIPE_TYPES.register(eventBus);
         RECIPE_SERIALIZERS.register(eventBus);

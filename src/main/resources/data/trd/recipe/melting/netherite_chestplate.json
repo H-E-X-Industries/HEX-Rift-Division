@@ -1,0 +1,12 @@
+{
+    "type":  "trd:melting",
+    "ingredient":  {
+                       "item":  "minecraft:netherite_chestplate"
+                   },
+    "input_count":  1,
+    "metal":  "trd:netherite",
+    "units":  72,
+    "min_temp":  1200,
+    "heat_consumption":  2,
+    "smelt_time":  260
+}

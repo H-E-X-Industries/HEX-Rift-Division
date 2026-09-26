@@ -1,0 +1,12 @@
+{
+    "type":  "trd:melting",
+    "ingredient":  {
+                       "item":  "trd:titanium_block"
+                   },
+    "input_count":  1,
+    "metal":  "trd:titanium",
+    "units":  81,
+    "min_temp":  1570,
+    "heat_consumption":  1.5,
+    "smelt_time":  180
+}

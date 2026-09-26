@@ -1,0 +1,12 @@
+{
+    "type":  "trd:melting",
+    "ingredient":  {
+                       "item":  "trd:lead_block"
+                   },
+    "input_count":  1,
+    "metal":  "trd:lead",
+    "units":  81,
+    "min_temp":  327,
+    "heat_consumption":  0.3,
+    "smelt_time":  180
+}

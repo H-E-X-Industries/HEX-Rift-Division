@@ -41,6 +41,24 @@ public class ModMenuTypes {
     public static final java.util.function.Supplier<MenuType<com.trd.menu.industrial.HeaterMenu>> HEATER_MENU =
             MENUS.register("heater_menu", () -> IMenuTypeExtension.create(com.trd.menu.industrial.HeaterMenu::create));
 
+    public static final java.util.function.Supplier<MenuType<com.trd.menu.industrial.SmelterMenu>> SMELTER_MENU =
+            MENUS.register("smelter_menu", () -> IMenuTypeExtension.create(com.trd.menu.industrial.SmelterMenu::create));
+
+    public static final java.util.function.Supplier<MenuType<com.trd.menu.industrial.CCMachineMenu>> CC_MACHINE_MENU =
+            MENUS.register("cc_machine_menu", () -> IMenuTypeExtension.create(com.trd.menu.industrial.CCMachineMenu::create));
+
+    public static final java.util.function.Supplier<MenuType<com.trd.menu.industrial.DrobitelMenu>> DROBITEL_MENU =
+            MENUS.register("drobitel_menu", () -> IMenuTypeExtension.create(com.trd.menu.industrial.DrobitelMenu::create));
+
+    public static final java.util.function.Supplier<MenuType<com.trd.menu.industrial.CentrifugeMenu>> CENTRIFUGE_MENU =
+            MENUS.register("centrifuge_menu", () -> IMenuTypeExtension.create(com.trd.menu.industrial.CentrifugeMenu::create));
+
+    public static final java.util.function.Supplier<MenuType<com.trd.menu.industrial.CentrifugeCylinderMenu>> CENTRIFUGE_CYLINDER_MENU =
+            MENUS.register("centrifuge_cylinder_menu", () -> IMenuTypeExtension.create(com.trd.menu.industrial.CentrifugeCylinderMenu::create));
+
+    public static final java.util.function.Supplier<MenuType<com.trd.menu.industrial.VishelashivatelMenu>> VISHELASHIVATEL_MENU =
+            MENUS.register("vishelashivatel_menu", () -> IMenuTypeExtension.create(com.trd.menu.industrial.VishelashivatelMenu::create));
+
     public static void register(IEventBus eventBus) {
         MENUS.register(eventBus);
     }

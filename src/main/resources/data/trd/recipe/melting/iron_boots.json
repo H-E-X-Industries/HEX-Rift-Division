@@ -1,0 +1,12 @@
+{
+    "type":  "trd:melting",
+    "ingredient":  {
+                       "item":  "minecraft:iron_boots"
+                   },
+    "input_count":  1,
+    "metal":  "trd:iron",
+    "units":  36,
+    "min_temp":  958,
+    "heat_consumption":  0.7,
+    "smelt_time":  100
+}

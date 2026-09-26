@@ -1,0 +1,12 @@
+{
+    "type":  "trd:melting",
+    "ingredient":  {
+                       "item":  "minecraft:netherite_pickaxe"
+                   },
+    "input_count":  1,
+    "metal":  "trd:netherite",
+    "units":  27,
+    "min_temp":  1200,
+    "heat_consumption":  1.8,
+    "smelt_time":  200
+}

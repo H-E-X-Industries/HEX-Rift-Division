@@ -45,8 +45,8 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
 
     @Override
     public void setPartRole(PartRole role) {
-        boolean wasNetworked = isNetworkedRole(this.role);
-        boolean isNetworked  = isNetworkedRole(role);
+        boolean wasEnergy = (this.role == PartRole.ENERGY_CONNECTOR || this.role == PartRole.UNIVERSAL_CONNECTOR);
+        boolean isEnergy  = (role == PartRole.ENERGY_CONNECTOR || role == PartRole.UNIVERSAL_CONNECTOR);
         boolean wasKinetic = isKineticPort();
         boolean isKinetic = (role == PartRole.KINETIC_PORT);
 
@@ -56,11 +56,9 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
         if (this.level != null && !this.level.isClientSide) {
             com.trd.api.energy.EnergyNetworkManager energyManager = com.trd.api.energy.EnergyNetworkManager.get((ServerLevel) this.level);
             
-            if (!wasNetworked && isNetworked) {
-                if (role == PartRole.ENERGY_CONNECTOR || role == PartRole.UNIVERSAL_CONNECTOR) {
-                    if (!energyManager.hasNode(this.getBlockPos())) energyManager.addNode(this.getBlockPos());
-                }
-            } else if (wasNetworked && !isNetworked) {
+            if (!wasEnergy && isEnergy) {
+                energyManager.ensureNodeConnected(this.getBlockPos());
+            } else if (wasEnergy && !isEnergy) {
                 energyManager.removeNode(this.getBlockPos());
             }
 
@@ -70,7 +68,7 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
                 com.trd.api.rotation.KineticNetworkManager.get((ServerLevel) this.level).updateNetworkAfterRemove(this.getBlockPos());
             }
 
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 2);
         }
     }
 
@@ -87,11 +85,9 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
     public void onLoad() {
         super.onLoad();
         if (this.level != null && !this.level.isClientSide) {
-            if (isNetworkedRole(this.role)) {
-                if (role == PartRole.ENERGY_CONNECTOR || role == PartRole.UNIVERSAL_CONNECTOR) {
-                    com.trd.api.energy.EnergyNetworkManager energyManager = com.trd.api.energy.EnergyNetworkManager.get((net.minecraft.server.level.ServerLevel) this.level);
-                    if (!energyManager.hasNode(this.getBlockPos())) energyManager.addNode(this.getBlockPos());
-                }
+            if (role == PartRole.ENERGY_CONNECTOR || role == PartRole.UNIVERSAL_CONNECTOR) {
+                com.trd.api.energy.EnergyNetworkManager energyManager = com.trd.api.energy.EnergyNetworkManager.get((net.minecraft.server.level.ServerLevel) this.level);
+                energyManager.ensureNodeConnected(this.getBlockPos());
             }
         }
     }
@@ -220,22 +216,7 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
         return isKineticPort() ? this.kineticNetworkScale : 1.0f;
     }
 
-    @Override
-    public void setRemoved() {
-        super.setRemoved();
-        if (this.level != null && !this.level.isClientSide) {
-            if (isNetworkedRole(this.role)) {
-                com.trd.api.energy.EnergyNetworkManager.get((ServerLevel) this.level).removeNode(this.getBlockPos());
-            }
-            if (isKineticPort()) {
-                com.trd.api.rotation.KineticNetworkManager.get((ServerLevel) this.level).updateNetworkAfterRemove(this.getBlockPos());
-            }
-        }
-    }
 
-    private static boolean isNetworkedRole(PartRole role) {
-        return role == PartRole.FLUID_CONNECTOR || role == PartRole.UNIVERSAL_CONNECTOR || role == PartRole.ENERGY_CONNECTOR || role == PartRole.FLUID_INPUT || role == PartRole.FLUID_OUTPUT || role == PartRole.FLUID_LADDER;
-    }
 
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {

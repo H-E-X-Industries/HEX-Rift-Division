@@ -1,0 +1,12 @@
+{
+    "type":  "trd:melting",
+    "ingredient":  {
+                       "item":  "trd:zinc_nugget"
+                   },
+    "input_count":  1,
+    "metal":  "trd:zinc",
+    "units":  1,
+    "min_temp":  419,
+    "heat_consumption":  0.6,
+    "smelt_time":  20
+}

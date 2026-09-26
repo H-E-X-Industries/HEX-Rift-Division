@@ -38,21 +38,9 @@ public class FluidPipeBlockEntity extends BlockEntity {
     @Override
     public void onLoad() {
         super.onLoad();
-        // Добавляем трубу в сеть только один раз при прогрузке чанка
         if (this.level != null && !this.level.isClientSide) {
             FluidNetworkManager manager = FluidNetworkManager.get((ServerLevel) this.level);
-            if (!manager.hasNode(this.getBlockPos())) {
-                manager.addNode(this.getBlockPos());
-            }
-        }
-    }
-
-    @Override
-    public void setRemoved() {
-        super.setRemoved();
-        // Удаляем трубу из сети при разрушении блока или выгрузке чанка
-        if (this.level != null && !this.level.isClientSide) {
-            FluidNetworkManager.get((ServerLevel) this.level).removeNode(this.getBlockPos());
+            manager.ensureNodeConnected(this.getBlockPos());
         }
     }
 

@@ -1,0 +1,12 @@
+{
+    "type":  "trd:melting",
+    "ingredient":  {
+                       "item":  "minecraft:netherite_leggings"
+                   },
+    "input_count":  1,
+    "metal":  "trd:netherite",
+    "units":  63,
+    "min_temp":  1200,
+    "heat_consumption":  1.9,
+    "smelt_time":  240
+}

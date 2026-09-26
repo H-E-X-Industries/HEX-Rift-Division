@@ -26,7 +26,7 @@ public class ClutchBlockEntity extends KineticNodeBlockEntity {
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, ClutchBlockEntity be) {
-        if (!be.hasShaft()) {
+        if (!be.hasShaft() || (state.hasProperty(ClutchBlock.POWERED) && !state.getValue(ClutchBlock.POWERED))) {
             if (be.speed != 0) {
                 be.speed = 0;
                 be.syncToClient();

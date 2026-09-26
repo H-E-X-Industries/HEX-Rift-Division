@@ -132,47 +132,8 @@ public class BearingVisual extends AbstractBlockEntityVisual<BearingBlockEntity>
             }
         }
 
-        // --- МАТЕМАТИКА ВРАЩЕНИЯ ---
         float partialTick = ctx.partialTick();
-        float timeInSeconds = (level.getGameTime() + partialTick) / 20.0f;
-
-        if (this.lastFrameTime < 0) this.lastFrameTime = timeInSeconds;
-        float deltaSeconds = timeInSeconds - this.lastFrameTime;
-        if (deltaSeconds > 0.25f || deltaSeconds <= 0f) deltaSeconds = 0.016f;
-        this.lastFrameTime = timeInSeconds;
-
-        float physicalTargetSpeed = blockEntity.getVisualSpeed();
-
-        float maxRenderSpeed = 300f; 
-        float targetSpeed = physicalTargetSpeed;
-        if (Math.abs(targetSpeed) > maxRenderSpeed) {
-            targetSpeed = Math.signum(targetSpeed) * maxRenderSpeed;
-        }
-
-        float speedDiff = targetSpeed - this.smoothedSpeed;
-        if (Math.abs(speedDiff) > 0.01f) {
-            this.smoothedSpeed += speedDiff * 5.0f * deltaSeconds;
-        } else {
-            this.smoothedSpeed = targetSpeed;
-        }
-
-        this.currentAngle += this.smoothedSpeed * ((float) Math.PI / 30.0f) * deltaSeconds;
-        float twoPi = (float) (2 * Math.PI);
-        this.currentAngle = this.currentAngle % twoPi;
-        if (this.currentAngle < 0) this.currentAngle += twoPi;
-
-        if (targetSpeed == 0 && Math.abs(this.smoothedSpeed) < 5.0f) {
-            float PI_OVER_4 = (float) (Math.PI / 4.0);
-            float targetSnap = Math.round(this.currentAngle / PI_OVER_4) * PI_OVER_4;
-            float snapDiff = targetSnap - this.currentAngle;
-            
-            if (Math.abs(snapDiff) > 0.001f) {
-                float pull = 6.0f * (1.0f - (Math.abs(this.smoothedSpeed) / 5.0f));
-                this.currentAngle += snapDiff * pull * deltaSeconds;
-            } else {
-                this.currentAngle = targetSnap;
-            }
-        }
+        float currentAngle = com.trd.client.rotation.ClientKineticAngleTracker.getAngle(blockEntity, facing, partialTick);
 
         applyRotation(this.innerRing, currentAngle);
         if (this.shaft != null) {

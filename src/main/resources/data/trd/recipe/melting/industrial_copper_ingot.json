@@ -1,0 +1,12 @@
+{
+    "type":  "trd:melting",
+    "ingredient":  {
+                       "item":  "trd:industrial_copper_ingot"
+                   },
+    "input_count":  1,
+    "metal":  "trd:industrial_copper",
+    "units":  9,
+    "min_temp":  1084,
+    "heat_consumption":  0.8,
+    "smelt_time":  60
+}

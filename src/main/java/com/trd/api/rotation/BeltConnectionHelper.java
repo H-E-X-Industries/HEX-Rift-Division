@@ -59,6 +59,35 @@ public class BeltConnectionHelper {
         }
     }
 
+    public static boolean isPulleyOccupied(Level level, BlockPos pos) {
+        if (!level.isLoaded(pos)) return false;
+        BlockEntity be = level.getBlockEntity(pos);
+        if (be instanceof ShaftBlockEntity shaft && shaft.hasPulley()) {
+            if (shaft.getConnectedPulley() != null) return true;
+            int radius = 16;
+            for (int dx = -radius; dx <= radius; dx++) {
+                for (int dy = -radius; dy <= radius; dy++) {
+                    for (int dz = -radius; dz <= radius; dz++) {
+                        if (Math.abs(dx) + Math.abs(dy) + Math.abs(dz) <= radius) {
+                            if (dx == 0 && dy == 0 && dz == 0) continue;
+                            BlockPos scanPos = pos.offset(dx, dy, dz);
+                            if (level.isLoaded(scanPos)) {
+                                BlockEntity scanBe = level.getBlockEntity(scanPos);
+                                if (scanBe instanceof ShaftBlockEntity otherShaft && otherShaft.hasPulley()) {
+                                    BlockPos target = otherShaft.getConnectedPulley();
+                                    if (target != null && target.equals(pos)) {
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     public static double distanceBetweenSegments(Vec3 p1, Vec3 p2, Vec3 p3, Vec3 p4) {
         Vec3 u = p2.subtract(p1);
         Vec3 v = p4.subtract(p3);

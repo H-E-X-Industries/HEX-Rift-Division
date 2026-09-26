@@ -1,0 +1,12 @@
+{
+    "type":  "trd:melting",
+    "ingredient":  {
+                       "item":  "minecraft:lightning_rod"
+                   },
+    "input_count":  1,
+    "metal":  "trd:copper",
+    "units":  27,
+    "min_temp":  958,
+    "heat_consumption":  1,
+    "smelt_time":  50
+}

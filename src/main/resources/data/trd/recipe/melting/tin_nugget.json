@@ -1,0 +1,12 @@
+{
+    "type":  "trd:melting",
+    "ingredient":  {
+                       "item":  "trd:tin_nugget"
+                   },
+    "input_count":  1,
+    "metal":  "trd:tin",
+    "units":  1,
+    "min_temp":  232,
+    "heat_consumption":  0.2,
+    "smelt_time":  20
+}

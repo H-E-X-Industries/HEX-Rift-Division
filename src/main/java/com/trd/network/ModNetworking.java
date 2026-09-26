@@ -53,6 +53,12 @@ public class ModNetworking {
             com.trd.network.packet.fluids.ClearFluidHistoryPacket::handle
         );
 
+        registrar.playToServer(
+            com.trd.network.packet.fluids.UpdateBarrelModeC2SPacket.TYPE,
+            com.trd.network.packet.fluids.UpdateBarrelModeC2SPacket.STREAM_CODEC,
+            com.trd.network.packet.fluids.UpdateBarrelModeC2SPacket::handle
+        );
+
         registrar.playToClient(
             com.trd.network.packet.conveyor.SyncConveyorNetworkPacket.TYPE,
             com.trd.network.packet.conveyor.SyncConveyorNetworkPacket.STREAM_CODEC,

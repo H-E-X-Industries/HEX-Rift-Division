@@ -50,7 +50,7 @@ public class BeltItem extends Item {
             CompoundTag tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
 
             if (!tag.contains("SelectedPulley")) {
-                if (beB.getConnectedPulley() != null) {
+                if (BeltConnectionHelper.isPulleyOccupied(level, posB)) {
                     if (player != null) player.displayClientMessage(Component.translatable("message.trd.belt.already_connected"), true);
                     return InteractionResult.FAIL;
                 }
@@ -103,7 +103,7 @@ public class BeltItem extends Item {
                 return InteractionResult.FAIL;
             }
 
-            if (beB.getConnectedPulley() != null || beA.getConnectedPulley() != null) {
+            if (BeltConnectionHelper.isPulleyOccupied(level, posB) || BeltConnectionHelper.isPulleyOccupied(level, posA)) {
                 if (player != null) player.displayClientMessage(Component.translatable("message.trd.belt.pulley_occupied"), true);
                 tag.remove("SelectedPulley");
                 CustomData.set(DataComponents.CUSTOM_DATA, stack, tag);
@@ -123,6 +123,7 @@ public class BeltItem extends Item {
                 KineticNetworkManager manager = KineticNetworkManager.get((ServerLevel) level);
                 manager.updateNetworkAfterRemove(posA);
                 manager.updateNetworkAfterPlace(posA);
+                manager.updateNetworkAfterPlace(posB);
             }
 
             return result;

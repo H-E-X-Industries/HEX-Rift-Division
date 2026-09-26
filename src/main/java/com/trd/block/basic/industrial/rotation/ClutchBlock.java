@@ -76,7 +76,7 @@ public class ClutchBlock extends BaseEntityBlock {
                 KineticNetworkManager manager = KineticNetworkManager.get((ServerLevel) level);
                 manager.updateNetworkAfterRemove(pos);
 
-                level.setBlock(pos, state.setValue(POWERED, isPowered), 3);
+                level.setBlock(pos, state.setValue(POWERED, isPowered), 2);
 
                 manager.updateNetworkAfterPlace(pos);
             }

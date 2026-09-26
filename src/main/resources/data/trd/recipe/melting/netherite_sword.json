@@ -1,0 +1,12 @@
+{
+    "type":  "trd:melting",
+    "ingredient":  {
+                       "item":  "minecraft:netherite_sword"
+                   },
+    "input_count":  1,
+    "metal":  "trd:netherite",
+    "units":  18,
+    "min_temp":  1200,
+    "heat_consumption":  1.6,
+    "smelt_time":  150
+}

@@ -121,8 +121,15 @@ public class MultiblockPartBlock extends BaseEntityBlock implements net.minecraf
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         if (!state.is(newState.getBlock()) && !level.isClientSide) {
+            BlockEntity be = level.getBlockEntity(pos);
+            if (be instanceof IMultiblockPart part) {
+                if (part.getPartRole() == PartRole.KINETIC_PORT) {
+                    com.trd.api.rotation.KineticNetworkManager.get((net.minecraft.server.level.ServerLevel) level).updateNetworkAfterRemove(pos);
+                } else if (part.getPartRole() == PartRole.ENERGY_CONNECTOR || part.getPartRole() == PartRole.UNIVERSAL_CONNECTOR) {
+                    com.trd.api.energy.EnergyNetworkManager.get((net.minecraft.server.level.ServerLevel) level).removeNode(pos);
+                }
+            }
             if (!MultiblockStructureHelper.isDestroying()) {
-                BlockEntity be = level.getBlockEntity(pos);
                 if (be instanceof IMultiblockPart part && part.getControllerPos() != null) {
                     BlockPos ctrlPos = part.getControllerPos();
                     BlockState ctrlState = level.getBlockState(ctrlPos);
@@ -140,7 +147,12 @@ public class MultiblockPartBlock extends BaseEntityBlock implements net.minecraf
                         net.minecraft.core.Direction facing = ctrlState.hasProperty(HorizontalDirectionalBlock.FACING)
                                 ? ctrlState.getValue(HorizontalDirectionalBlock.FACING) : net.minecraft.core.Direction.NORTH;
                         
-                        controller.getStructureHelper().destroyStructure(level, ctrlPos, facing);
+                        if (ctrlState.hasProperty(com.trd.block.basic.industrial.rotation.StatorBlock.AXIS)) {
+                            net.minecraft.core.Direction.Axis axis = ctrlState.getValue(com.trd.block.basic.industrial.rotation.StatorBlock.AXIS);
+                            controller.getStructureHelper().destroyStructureStator(level, ctrlPos, facing, axis);
+                        } else {
+                            controller.getStructureHelper().destroyStructure(level, ctrlPos, facing);
+                        }
                         level.removeBlock(ctrlPos, false);
                     }
                 }
@@ -175,7 +187,12 @@ public class MultiblockPartBlock extends BaseEntityBlock implements net.minecraf
 
                     net.minecraft.core.Direction facing = ctrlState.hasProperty(HorizontalDirectionalBlock.FACING)
                             ? ctrlState.getValue(HorizontalDirectionalBlock.FACING) : net.minecraft.core.Direction.NORTH;
-                    controller.getStructureHelper().destroyStructure(level, ctrlPos, facing);
+                    if (ctrlState.hasProperty(com.trd.block.basic.industrial.rotation.StatorBlock.AXIS)) {
+                        net.minecraft.core.Direction.Axis axis = ctrlState.getValue(com.trd.block.basic.industrial.rotation.StatorBlock.AXIS);
+                        controller.getStructureHelper().destroyStructureStator(level, ctrlPos, facing, axis);
+                    } else {
+                        controller.getStructureHelper().destroyStructure(level, ctrlPos, facing);
+                    }
                     level.removeBlock(ctrlPos, false);
                 }
             }

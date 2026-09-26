@@ -1,0 +1,12 @@
+{
+    "type":  "trd:melting",
+    "ingredient":  {
+                       "item":  "minecraft:netherite_helmet"
+                   },
+    "input_count":  1,
+    "metal":  "trd:netherite",
+    "units":  45,
+    "min_temp":  1200,
+    "heat_consumption":  1.7,
+    "smelt_time":  220
+}

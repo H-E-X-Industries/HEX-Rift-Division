@@ -27,6 +27,9 @@ public class KineticNetworkManager extends SavedData {
     private final Set<BlockPos> pendingStructuralFailures = new HashSet<>();
     private final ServerLevel level;
 
+    private boolean isUpdating = false;
+    private final java.util.ArrayDeque<Runnable> pendingUpdates = new java.util.ArrayDeque<>();
+
     /**
      * После загрузки мира из NBT ждём этот таймер тиков перед первым пересчётом сети.
      * За это время все BlockEntity успевают инициализироваться (onLoad + tick).
@@ -80,6 +83,28 @@ public class KineticNetworkManager extends SavedData {
     }
 
     public void updateNetworkAfterPlace(BlockPos pos) {
+        if (level.getServer() != null && !level.getServer().isRunning()) return;
+        if (isUpdating) {
+            pendingUpdates.add(() -> updateNetworkAfterPlaceInternal(pos));
+            return;
+        }
+        isUpdating = true;
+        try {
+            updateNetworkAfterPlaceInternal(pos);
+            int maxPending = 1000;
+            while (!pendingUpdates.isEmpty() && maxPending-- > 0) {
+                pendingUpdates.poll().run();
+            }
+            if (maxPending <= 0) {
+                LOGGER.warn("[Kinetic] Aborted pendingUpdates loop in place due to potential cycle!");
+                pendingUpdates.clear();
+            }
+        } finally {
+            isUpdating = false;
+        }
+    }
+
+    private void updateNetworkAfterPlaceInternal(BlockPos pos) {
         LOGGER.debug("[Kinetic] Block placed at {}", pos.toShortString());
 
         BlockEntity be = level.getBlockEntity(pos);
@@ -169,6 +194,28 @@ public class KineticNetworkManager extends SavedData {
     }
 
     public void updateNetworkAfterRemove(BlockPos pos) {
+        if (level.getServer() != null && !level.getServer().isRunning()) return;
+        if (isUpdating) {
+            pendingUpdates.add(() -> updateNetworkAfterRemoveInternal(pos));
+            return;
+        }
+        isUpdating = true;
+        try {
+            updateNetworkAfterRemoveInternal(pos);
+            int maxPending = 1000;
+            while (!pendingUpdates.isEmpty() && maxPending-- > 0) {
+                pendingUpdates.poll().run();
+            }
+            if (maxPending <= 0) {
+                LOGGER.warn("[Kinetic] Aborted pendingUpdates loop in remove due to potential cycle!");
+                pendingUpdates.clear();
+            }
+        } finally {
+            isUpdating = false;
+        }
+    }
+
+    private void updateNetworkAfterRemoveInternal(BlockPos pos) {
         KineticNetwork oldNet = blockToNetwork.remove(pos);
         if (oldNet == null) return;
 
@@ -185,9 +232,23 @@ public class KineticNetworkManager extends SavedData {
 
         LOGGER.debug("[Kinetic] Network {} dissolved. Rebuilding {} blocks...", oldNet.getId().toString().substring(0, 8), membersToRebuild.size());
 
+        // Если в исходной сети были генераторы — подсеть с генератором сохраняет ID исходной сети!
+        // Это предотвращает сброс фазы вращения и рассинхрон валов на ведущей оси при размыкании сцепления.
+        BlockPos primaryGenPos = null;
+        for (BlockPos genPos : oldNet.getGenerators()) {
+            if (!genPos.equals(pos) && membersToRebuild.contains(genPos)) {
+                primaryGenPos = genPos;
+                break;
+            }
+        }
+
+        if (primaryGenPos != null && !blockToNetwork.containsKey(primaryGenPos)) {
+            createNewNetworkFrom(primaryGenPos, pos, oldNet.getId());
+        }
+
         for (BlockPos startPos : membersToRebuild) {
             if (!blockToNetwork.containsKey(startPos)) {
-                createNewNetworkFrom(startPos, pos);
+                createNewNetworkFrom(startPos, pos, null);
             }
         }
 
@@ -195,7 +256,11 @@ public class KineticNetworkManager extends SavedData {
     }
 
     private KineticNetwork createNewNetworkFrom(BlockPos start, BlockPos ignorePos) {
-        KineticNetwork newNet = new KineticNetwork();
+        return createNewNetworkFrom(start, ignorePos, null);
+    }
+
+    private KineticNetwork createNewNetworkFrom(BlockPos start, BlockPos ignorePos, @org.jetbrains.annotations.Nullable java.util.UUID preferredId) {
+        KineticNetwork newNet = preferredId != null ? new KineticNetwork(preferredId) : new KineticNetwork();
 
         if (level.getBlockEntity(start) instanceof Rotational startNode) {
             float scale = startNode.getNetworkScale();
@@ -287,7 +352,9 @@ public class KineticNetworkManager extends SavedData {
 
         float rootScale = 1.0f;
         if (level.isLoaded(root) && level.getBlockEntity(root) instanceof Rotational rootNode) {
-            if (Math.abs(rootNode.getNetworkScale()) > 0.1f) {
+            if (net.getGenerators().contains(root)) {
+                rootScale = 1.0f;
+            } else if (Math.abs(rootNode.getNetworkScale()) > 0.1f) {
                 rootScale = Math.signum(rootNode.getNetworkScale());
             }
             rootNode.setNetworkScale(rootScale);
@@ -354,7 +421,16 @@ public class KineticNetworkManager extends SavedData {
 
         double newSpeed = totalCombinedInertia > 0 ? (totalAngularMomentum / totalCombinedInertia) : 0.0;
 
-        KineticNetwork mainNet = networks.iterator().next();
+        KineticNetwork mainNet = null;
+        for (KineticNetwork net : networks) {
+            if (!net.getGenerators().isEmpty()) {
+                mainNet = net;
+                break;
+            }
+        }
+        if (mainNet == null) {
+            mainNet = networks.iterator().next();
+        }
         networks.remove(mainNet);
 
         for (KineticNetwork otherNet : networks) {
@@ -375,6 +451,17 @@ public class KineticNetworkManager extends SavedData {
         if (!valid) {
             return false;
         }
+
+        // Если главная сеть имела генераторы, пассивная сеть не должна разворачивать направление вращения мотора
+        if (!mainNet.getGenerators().isEmpty()) {
+            double oldSpeed = mainNet.getExactSpeed();
+            if (Math.abs(oldSpeed) > 0.001) {
+                if (Math.signum(newSpeed) != Math.signum(oldSpeed)) {
+                    newSpeed = 0.0;
+                }
+            }
+        }
+
         mainNet.setCurrentSpeed(newSpeed);
         mainNet.recalculate(level);
         return true;
@@ -387,6 +474,9 @@ public class KineticNetworkManager extends SavedData {
         BlockEntity be = level.getBlockEntity(pos);
         if (be instanceof Rotational rot && rot.isSource()) {
             net.addGenerator(pos);
+        }
+        if (be instanceof com.trd.block.entity.industrial.rotation.KineticNodeBlockEntity kineticNode) {
+            kineticNode.setNetworkId(net.getId());
         }
     }
 
@@ -448,7 +538,7 @@ public class KineticNetworkManager extends SavedData {
         processPendingBreakages();
 
         boolean anyChanged = false;
-        for (KineticNetwork net : networks) {
+        for (KineticNetwork net : new java.util.ArrayList<>(networks)) {
             if (net.tick(this.level)) {
                 anyChanged = true;
             }

@@ -37,6 +37,24 @@ public class ModCapabilities {
                 com.trd.block.entity.ModBlockEntities.CONVERTER_BE.get(),
                 (be, side) -> be.getEnergyProvider(side)
         );
+        event.registerBlockEntity(
+                ENERGY_PROVIDER,
+                com.trd.block.entity.ModBlockEntities.STATOR_BE.get(),
+                (be, side) -> be.getEnergyProvider(side)
+        );
+        event.registerBlockEntity(
+                ENERGY_PROVIDER,
+                com.trd.block.entity.ModBlockEntities.MULTIBLOCK_PART.get(),
+                (be, side) -> {
+                    if (be.getControllerPos() != null && be.getLevel() != null) {
+                        com.trd.multiblock.system.PartRole role = be.getPartRole();
+                        if (role == com.trd.multiblock.system.PartRole.ENERGY_CONNECTOR || role == com.trd.multiblock.system.PartRole.UNIVERSAL_CONNECTOR) {
+                            return be.getLevel().getCapability(ENERGY_PROVIDER, be.getControllerPos(), side);
+                        }
+                    }
+                    return null;
+                }
+        );
 
         // IEnergyReceiver
         event.registerBlockEntity(
@@ -58,6 +76,55 @@ public class ModCapabilities {
                 ENERGY_RECEIVER,
                 com.trd.block.entity.ModBlockEntities.MOTOR_ELECTRO_BE.get(),
                 (be, side) -> be.getEnergyReceiver(side)
+        );
+        event.registerBlockEntity(
+                ENERGY_RECEIVER,
+                com.trd.block.entity.ModBlockEntities.CENTRIFUGE_MOTOR_BE.get(),
+                (be, side) -> be.getEnergyReceiver(side)
+        );
+        event.registerBlockEntity(
+                ENERGY_RECEIVER,
+                com.trd.block.entity.ModBlockEntities.CENTRIFUGE_CONUS_BE.get(),
+                (be, side) -> {
+                    if (be.getLevel() != null) {
+                        net.minecraft.world.level.block.entity.BlockEntity motor = be.getLevel().getBlockEntity(be.getBlockPos().below());
+                        if (motor instanceof com.trd.multiblock.industrial.centrifuge.CentrifugeMotorBlockEntity m) {
+                            return m.getEnergyReceiver(side);
+                        }
+                    }
+                    return null;
+                }
+        );
+        event.registerBlockEntity(
+                ENERGY_RECEIVER,
+                com.trd.block.entity.ModBlockEntities.CENTRIFUGE_CYLINDER_BE.get(),
+                (be, side) -> {
+                    if (be.getLevel() != null) {
+                        net.minecraft.world.level.block.entity.BlockEntity motor = be.getLevel().getBlockEntity(be.getBlockPos().below());
+                        if (motor instanceof com.trd.multiblock.industrial.centrifuge.CentrifugeMotorBlockEntity m) {
+                            return m.getEnergyReceiver(side);
+                        }
+                    }
+                    return null;
+                }
+        );
+        event.registerBlockEntity(
+                ENERGY_RECEIVER,
+                com.trd.block.entity.ModBlockEntities.MULTIBLOCK_PART.get(),
+                (be, side) -> {
+                    if (be.getControllerPos() != null && be.getLevel() != null) {
+                        com.trd.multiblock.system.PartRole role = be.getPartRole();
+                        if (role == com.trd.multiblock.system.PartRole.ENERGY_CONNECTOR || role == com.trd.multiblock.system.PartRole.UNIVERSAL_CONNECTOR || role == com.trd.multiblock.system.PartRole.DEFAULT) {
+                            com.trd.api.energy.IEnergyReceiver rec = be.getLevel().getCapability(ENERGY_RECEIVER, be.getControllerPos(), side);
+                            if (rec != null) return rec;
+                            net.minecraft.world.level.block.entity.BlockEntity motor = be.getLevel().getBlockEntity(be.getControllerPos().below());
+                            if (motor instanceof com.trd.multiblock.industrial.centrifuge.CentrifugeMotorBlockEntity m) {
+                                return m.getEnergyReceiver(side);
+                            }
+                        }
+                    }
+                    return null;
+                }
         );
 
         // IEnergyConnector
@@ -96,6 +163,60 @@ public class ModCapabilities {
                 com.trd.block.entity.ModBlockEntities.MOTOR_ELECTRO_BE.get(),
                 (be, side) -> be.getEnergyConnector(side)
         );
+        event.registerBlockEntity(
+                ENERGY_CONNECTOR,
+                com.trd.block.entity.ModBlockEntities.STATOR_BE.get(),
+                (be, side) -> be.getEnergyConnector(side)
+        );
+        event.registerBlockEntity(
+                ENERGY_CONNECTOR,
+                com.trd.block.entity.ModBlockEntities.CENTRIFUGE_MOTOR_BE.get(),
+                (be, side) -> be.getEnergyConnector(side)
+        );
+        event.registerBlockEntity(
+                ENERGY_CONNECTOR,
+                com.trd.block.entity.ModBlockEntities.CENTRIFUGE_CONUS_BE.get(),
+                (be, side) -> {
+                    if (be.getLevel() != null) {
+                        net.minecraft.world.level.block.entity.BlockEntity motor = be.getLevel().getBlockEntity(be.getBlockPos().below());
+                        if (motor instanceof com.trd.multiblock.industrial.centrifuge.CentrifugeMotorBlockEntity m) {
+                            return m.getEnergyConnector(side);
+                        }
+                    }
+                    return null;
+                }
+        );
+        event.registerBlockEntity(
+                ENERGY_CONNECTOR,
+                com.trd.block.entity.ModBlockEntities.CENTRIFUGE_CYLINDER_BE.get(),
+                (be, side) -> {
+                    if (be.getLevel() != null) {
+                        net.minecraft.world.level.block.entity.BlockEntity motor = be.getLevel().getBlockEntity(be.getBlockPos().below());
+                        if (motor instanceof com.trd.multiblock.industrial.centrifuge.CentrifugeMotorBlockEntity m) {
+                            return m.getEnergyConnector(side);
+                        }
+                    }
+                    return null;
+                }
+        );
+        event.registerBlockEntity(
+                ENERGY_CONNECTOR,
+                com.trd.block.entity.ModBlockEntities.MULTIBLOCK_PART.get(),
+                (be, side) -> {
+                    if (be.getControllerPos() != null && be.getLevel() != null) {
+                        com.trd.multiblock.system.PartRole role = be.getPartRole();
+                        if (role == com.trd.multiblock.system.PartRole.ENERGY_CONNECTOR || role == com.trd.multiblock.system.PartRole.UNIVERSAL_CONNECTOR || role == com.trd.multiblock.system.PartRole.DEFAULT) {
+                            com.trd.api.energy.IEnergyConnector conn = be.getLevel().getCapability(ENERGY_CONNECTOR, be.getControllerPos(), side);
+                            if (conn != null) return conn;
+                            net.minecraft.world.level.block.entity.BlockEntity motor = be.getLevel().getBlockEntity(be.getControllerPos().below());
+                            if (motor instanceof com.trd.multiblock.industrial.centrifuge.CentrifugeMotorBlockEntity m) {
+                                return m.getEnergyConnector(side);
+                            }
+                        }
+                    }
+                    return null;
+                }
+        );
 
         // Forge Energy Block Capability
         event.registerBlockEntity(
@@ -124,6 +245,73 @@ public class ModCapabilities {
                 net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
                 com.trd.block.entity.ModBlockEntities.HEATER_BE.get(),
                 (be, side) -> be.getItemHandler(side)
+        );
+        event.registerBlockEntity(
+                net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
+                com.trd.block.entity.ModBlockEntities.STATOR_BE.get(),
+                (be, side) -> be.getCoilsInventory()
+        );
+        event.registerBlockEntity(
+                net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
+                com.trd.block.entity.ModBlockEntities.SMELTER_BE.get(),
+                (be, side) -> be.getItemHandler(side)
+        );
+        event.registerBlockEntity(
+                net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
+                com.trd.block.entity.ModBlockEntities.CC_MACHINE_BE.get(),
+                (be, side) -> be.getAutomationItemHandler()
+        );
+        event.registerBlockEntity(
+                net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
+                com.trd.block.entity.ModBlockEntities.CASTING_POT.get(),
+                (be, side) -> be.getItemHandler()
+        );
+        event.registerBlockEntity(
+                net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
+                com.trd.block.entity.ModBlockEntities.CENTRIFUGE_MOTOR_BE.get(),
+                (be, side) -> be.getItemHandler(side)
+        );
+        event.registerBlockEntity(
+                net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
+                com.trd.block.entity.ModBlockEntities.DROBITEL_BE.get(),
+                (be, side) -> side == null ? be.getInventory() : null
+        );
+        event.registerBlockEntity(
+                net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
+                com.trd.block.entity.ModBlockEntities.VISHELASHIVATEL_BE.get(),
+                (be, side) -> side == null ? be.getSelfHandler() : null
+        );
+        event.registerBlockEntity(
+                net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
+                com.trd.block.entity.ModBlockEntities.MULTIBLOCK_PART.get(),
+                (be, side) -> {
+                    if (be.getControllerPos() != null && be.getLevel() != null) {
+                        net.minecraft.world.level.block.entity.BlockEntity core = be.getLevel().getBlockEntity(be.getControllerPos());
+                        if (core instanceof com.trd.multiblock.industrial.smelter.SmelterBlockEntity smelter) {
+                            return smelter.getItemHandler(side);
+                        }
+                        if (core instanceof com.trd.multiblock.industrial.ccmachine.CCMachineBlockEntity ccm) {
+                            if (be.getPartRole() == com.trd.multiblock.system.PartRole.UNIVERSAL_CONNECTOR) {
+                                return ccm.getAutomationItemHandler();
+                            }
+                        }
+                        if (core instanceof com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity drobitel) {
+                            if (be.getPartRole() == com.trd.multiblock.system.PartRole.CARGO_PORT) {
+                                net.minecraft.core.Direction facing = drobitel.getBlockState().getValue(com.trd.multiblock.industrial.drobitel.DrobitelBlock.FACING);
+                                if (side != null && side.getAxis() == facing.getAxis()) {
+                                    return drobitel.getCargoPortCapability();
+                                }
+                                return null;
+                            }
+                        }
+                        if (core instanceof com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlockEntity leacher) {
+                            if (be.getPartRole() == com.trd.multiblock.system.PartRole.FLUID_INPUT) {
+                                return leacher.getItemPortCapability();
+                            }
+                        }
+                    }
+                    return null;
+                }
         );
     // Item Capabilities
     event.registerItem(ENERGY_PROVIDER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 5000, 100, 100), com.trd.item.ModItems.BATTERY.get());
@@ -173,7 +361,9 @@ public class ModCapabilities {
                         role == com.trd.multiblock.system.PartRole.FLUID_LADDER) {
                         
                         net.minecraft.world.level.block.entity.BlockEntity core = be.getLevel().getBlockEntity(be.getControllerPos());
-                        if (core instanceof com.trd.multiblock.system.IMultiblockFluidHandler handler) {
+                        if (core instanceof com.trd.multiblock.industrial.ccmachine.CCMachineBlockEntity ccm) {
+                            return ccm.getPortFluidHandler(be.getBlockPos(), side);
+                        } else if (core instanceof com.trd.multiblock.system.IMultiblockFluidHandler handler) {
                             return handler.getCapabilityForPart(side, role);
                         } else if (core instanceof com.trd.multiblock.system.IFluidTankProvider provider) {
                             return provider.getFluidHandlerCapability();
@@ -182,6 +372,12 @@ public class ModCapabilities {
                 }
                 return null;
             }
+    );
+
+    event.registerBlockEntity(
+            net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
+            com.trd.block.entity.ModBlockEntities.CC_MACHINE_BE.get(),
+            (be, side) -> be.getFluidHandler()
     );
 
     event.registerBlockEntity(
@@ -211,6 +407,12 @@ public class ModCapabilities {
     event.registerBlockEntity(
             net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
             com.trd.block.entity.ModBlockEntities.WATER_PUMP_BE.get(),
+            (be, side) -> be.getFluidHandler(side)
+    );
+
+    event.registerBlockEntity(
+            net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
+            com.trd.block.entity.ModBlockEntities.CENTRIFUGE_MOTOR_BE.get(),
             (be, side) -> be.getFluidHandler(side)
     );
 

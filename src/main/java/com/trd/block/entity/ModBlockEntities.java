@@ -37,6 +37,7 @@ public class ModBlockEntities {
     public static final java.util.function.Supplier<BlockEntityType<com.trd.multiblock.industrial.heaters.HeaterBlockEntity>> HEATER_BE = BLOCK_ENTITIES.register("heater_be", () -> BlockEntityType.Builder.of(com.trd.multiblock.industrial.heaters.HeaterBlockEntity::new, ModBlocks.HEATER.get()).build(null));
     public static final java.util.function.Supplier<BlockEntityType<com.trd.multiblock.industrial.boiler.BoilerBlockEntity>> BOILER_BE = BLOCK_ENTITIES.register("boiler_be", () -> BlockEntityType.Builder.of(com.trd.multiblock.industrial.boiler.BoilerBlockEntity::new, ModBlocks.BOILER.get()).build(null));
     public static final java.util.function.Supplier<BlockEntityType<com.trd.multiblock.industrial.steam_engine.SteamEngineBlockEntity>> STEAM_ENGINE_BE = BLOCK_ENTITIES.register("steam_engine_be", () -> BlockEntityType.Builder.of(com.trd.multiblock.industrial.steam_engine.SteamEngineBlockEntity::new, ModBlocks.STEAM_ENGINE.get()).build(null));
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.industrial.rotation.StatorBlockEntity>> STATOR_BE = BLOCK_ENTITIES.register("stator_be", () -> BlockEntityType.Builder.of(com.trd.block.entity.industrial.rotation.StatorBlockEntity::new, ModBlocks.STATOR_BLOCK.get()).build(null));
     public static final java.util.function.Supplier<net.minecraft.world.level.block.entity.BlockEntityType<com.trd.block.entity.industrial.fluids.PaintablePipeBlockEntity>> PAINTABLE_PIPE_BE = BLOCK_ENTITIES.register("paintable_pipe_be", () -> net.minecraft.world.level.block.entity.BlockEntityType.Builder.of(com.trd.block.entity.industrial.fluids.PaintablePipeBlockEntity::new, com.trd.block.basic.ModBlocks.PAINTABLE_PIPE.get()).build(null));
     public static final java.util.function.Supplier<net.minecraft.world.level.block.entity.BlockEntityType<com.trd.block.entity.industrial.fluids.FluidPipeBlockEntity>> FLUID_PIPE_BE = BLOCK_ENTITIES.register("fluid_pipe_be", () -> net.minecraft.world.level.block.entity.BlockEntityType.Builder.of(
                     com.trd.block.entity.industrial.fluids.FluidPipeBlockEntity::new,
@@ -134,6 +135,61 @@ public class ModBlockEntities {
             BLOCK_ENTITIES.register("tachometer_be", () -> BlockEntityType.Builder.of(
                     com.trd.block.entity.industrial.rotation.TachometerBlockEntity::new,
                     ModBlocks.TACHOMETER.get()
+            ).build(null));
+
+    // Metallurgy & Casting
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.multiblock.industrial.smelter.SmelterBlockEntity>> SMELTER_BE =
+            BLOCK_ENTITIES.register("smelter_be", () -> BlockEntityType.Builder.of(
+                    com.trd.multiblock.industrial.smelter.SmelterBlockEntity::new,
+                    ModBlocks.SMELTER.get()
+            ).build(null));
+
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.multiblock.industrial.ccmachine.CCMachineBlockEntity>> CC_MACHINE_BE =
+            BLOCK_ENTITIES.register("cc_machine_be", () -> BlockEntityType.Builder.of(
+                    com.trd.multiblock.industrial.ccmachine.CCMachineBlockEntity::new,
+                    ModBlocks.CC_MACHINE.get()
+            ).build(null));
+
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.industrial.casting.CastingPotBlockEntity>> CASTING_POT =
+            BLOCK_ENTITIES.register("casting_pot", () -> BlockEntityType.Builder.of(
+                    com.trd.block.entity.industrial.casting.CastingPotBlockEntity::new,
+                    ModBlocks.CASTING_POT.get()
+            ).build(null));
+
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.industrial.casting.CastingDescentBlockEntity>> CASTING_DESCENT =
+            BLOCK_ENTITIES.register("casting_descent", () -> BlockEntityType.Builder.of(
+                    com.trd.block.entity.industrial.casting.CastingDescentBlockEntity::new,
+                    ModBlocks.CASTING_DESCENT.get()
+            ).build(null));
+
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity>> DROBITEL_BE =
+            BLOCK_ENTITIES.register("drobitel_be", () -> BlockEntityType.Builder.of(
+                    com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity::new,
+                    ModBlocks.DROBITEL.get()
+            ).build(null));
+
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.multiblock.industrial.centrifuge.CentrifugeMotorBlockEntity>> CENTRIFUGE_MOTOR_BE =
+            BLOCK_ENTITIES.register("centrifuge_motor_be", () -> BlockEntityType.Builder.of(
+                    com.trd.multiblock.industrial.centrifuge.CentrifugeMotorBlockEntity::new,
+                    ModBlocks.CENTRIFUGE_MOTOR.get()
+            ).build(null));
+
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.multiblock.industrial.centrifuge.conus.CentrifugeConusBlockEntity>> CENTRIFUGE_CONUS_BE =
+            BLOCK_ENTITIES.register("centrifuge_conus_be", () -> BlockEntityType.Builder.of(
+                    com.trd.multiblock.industrial.centrifuge.conus.CentrifugeConusBlockEntity::new,
+                    ModBlocks.CENTRIFUGE_CONUS.get()
+            ).build(null));
+
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderBlockEntity>> CENTRIFUGE_CYLINDER_BE =
+            BLOCK_ENTITIES.register("centrifuge_cylinder_be", () -> BlockEntityType.Builder.of(
+                    com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderBlockEntity::new,
+                    ModBlocks.CENTRIFUGE_CYLINDER.get()
+            ).build(null));
+
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlockEntity>> VISHELASHIVATEL_BE =
+            BLOCK_ENTITIES.register("vishelashivatel_be", () -> BlockEntityType.Builder.of(
+                    com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlockEntity::new,
+                    ModBlocks.VISHELASHIVATEL.get()
             ).build(null));
 
     public static void register(IEventBus eventBus) {
