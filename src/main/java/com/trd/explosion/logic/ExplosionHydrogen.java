@@ -63,6 +63,12 @@ import java.util.List;
  * в мягкий базальт градиентом. Радиус ядра вложен в первую зону, поэтому на практике
  * центр — это кратер, периферия — выжженные остатки, внешняя часть — ударная волна.
  *
+ * <p>Возможность выжечь объём воронки проверяется лучом от эпицентра: бюджет
+ * {@link #CRATER_BUDGET} расходуется по мере прохождения ячеек, а стоимость ячейки
+ * считается от взрывоустойчивости блока ({@link #RAY_RESIST_COST_SCALE}), а не от прочности
+ * разрушения. Укреплённая сталь и армированный бетон мода пробиваются насквозь лишь
+ * тонким слоем, обсидиан — см. {@link #OBSIDIAN_PENETRATION_MULT}.
+ *
  * <p>Возможность разрушить/заменить блок или нанести полный урон мобу проверяется лучом
  * от эпицентра до цели: блок с сопротивлением взрыву больше {@link #ARMOR_BLOCK_RESISTANCE}
  * до цели гасит эффект. Для урона каждые {@link #RESIST_PER_STEP} суммарного сопротивления
@@ -92,7 +98,23 @@ public class ExplosionHydrogen {
     public static float CRATER_DOWN_SQUASH = 0.33f;
     public static float CRATER_JITTER = 0.9f;
     public static float CRATER_NOISE_SCALE = 0.22f;
-    public static float CRATER_BUDGET = 70.0f;
+    public static float CRATER_BUDGET = 140.0f;
+    /**
+     * Множитель перевода взрывоустойчивости блока в стоимость пробития луча воронки.
+     * Стоимость ячейки = {@code max(1, getExplosionResistance() * RAY_RESIST_COST_SCALE)}:
+     * воздух/земля ~1, камень 6 -> 3, бетон мода 18 -> 9, сталь 30 -> 15,
+     * армированный бетон 90 -> 45, укреплённая сталь 190 -> 95.
+     * Подобрано так, чтобы пробитие сквозь природный рельеф и радиус воронки
+     * остались прежними, а строительные блоки мода стали заметно устойчивее.
+     */
+    public static float RAY_RESIST_COST_SCALE = 0.5f;
+    /**
+     * Множитель пробития для обсидиана (и плачущего обсидиана): взрывоустойчивость 1200
+     * делала его непроходимым для луча (1200*0.5 = 600 при бюджете 140), хотя блок
+     * слишком легко добывается и не должен быть полноценной защитой.
+     * Итог: 1200 * 0.5 * 0.025 = 15, как у стали мода — ~9 блоков насквозь.
+     */
+    public static float OBSIDIAN_PENETRATION_MULT = 0.025f;
     public static int CRATER_EDGE_AIR_RANGE = 5;
     public static float CRATER_SOFT_CORE_RADIUS = 4.0f;
     public static float CRATER_RIM_BAND = 10.0f;
@@ -1105,9 +1127,19 @@ BlockState s = level.getBlockState(pos);
     private static float blockCost(BlockState state, ServerLevel level, BlockPos pos) {
         if (state.isAir()) return 1.0f;
         if (state.getFluidState().isSource() || state.getBlock() instanceof LiquidBlock) return 0.6f;
-        float hardness = state.getDestroySpeed(level, pos);
-        if (hardness < 0) return Float.POSITIVE_INFINITY;
-        return Math.max(1.0f, hardness);
+        if (state.getDestroySpeed(level, pos) < 0) return Float.POSITIVE_INFINITY;
+        return Math.max(1.0f, rayPenetrationCost(state.getBlock()));
+    }
+
+    /**
+     * Стоимость пробития блока для луча воронки — по взрывоустойчивости, а не по прочности
+     * разрушения. {@link #OBSIDIAN_PENETRATION_MULT} применяется к обсидиану.
+     */
+    private static float rayPenetrationCost(Block block) {
+        float mult = (block == Blocks.OBSIDIAN || block == Blocks.CRYING_OBSIDIAN)
+                ? OBSIDIAN_PENETRATION_MULT
+                : 1.0f;
+        return block.getExplosionResistance() * RAY_RESIST_COST_SCALE * mult;
     }
 
     private static boolean isBarrier(ServerLevel level, BlockState state, BlockPos pos) {

@@ -594,24 +594,31 @@ public class ModBlocks {
                     .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
     public static final RegistryObject<Block> DIRT_ROUGH = registerBlock("dirt_rough",
             () -> new Block(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.DIRT)
                     .strength(0.5F, 6.0F).sound(SoundType.ROOTED_DIRT).requiresCorrectToolForDrops()));
     public static final RegistryObject<Block> BASALT_ROUGH = registerBlock("basalt_rough",
             () -> new Block(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.DEEPSLATE)
                     .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
     public static final RegistryObject<Block> BASALT_SCORCHED = registerBlock("basalt_scorched",
             () -> new ScorchedBasaltBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.COLOR_BLACK)
                     .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
     public static final RegistryObject<Block> BASALT_SOFT = registerBlock("basalt_soft",
             () -> new CraterBasaltBlock(BlockBehaviour.Properties.of()
-                    .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+                    .mapColor(MapColor.DEEPSLATE)
+                    .strength(0.5F, 6.0F).sound(SoundType.NETHERRACK).requiresCorrectToolForDrops()));
     public static final RegistryObject<Block> BASALT_SOFT_2 = registerBlock("basalt_soft_2",
             () -> new CraterBasaltBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.DEEPSLATE)
                     .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
     public static final RegistryObject<Block> BASALT_SOFT_3 = registerBlock("basalt_soft_3",
             () -> new CraterBasaltBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.DEEPSLATE)
                     .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
     public static final RegistryObject<Block> BASALT_SOFT_4 = registerBlock("basalt_soft_4",
             () -> new CraterBasaltBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.DEEPSLATE)
                     .strength(0.5F, 6.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
     public static final RegistryObject<Block> WASTE_LOG = registerBlock("waste_log",
             () -> new RotatedPillarBlock(BlockBehaviour.Properties.copy(Blocks.OAK_WOOD).sound(SoundType.WOOD)));
@@ -635,11 +642,11 @@ public class ModBlocks {
 
     public static final RegistryObject<Block> STEEL_CONSTRUCT_BLOCK = registerBlock("steel_construct_block",
             () -> new Block(BlockBehaviour.Properties.of()
-                    .strength(10.0F, 30.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+                    .strength(10.0F, 30.0F).sound(SoundType.METAL).requiresCorrectToolForDrops()));
 
     public static final RegistryObject<Block> STEEL_CONSTRUCT_BLOCK_REINFORCED = registerBlock("steel_construct_block_reinforced",
             () -> new Block(BlockBehaviour.Properties.of()
-                    .strength(30.0F, 190.0F).sound(SoundType.STONE).requiresCorrectToolForDrops()));
+                    .strength(30.0F, 190.0F).sound(SoundType.METAL).requiresCorrectToolForDrops()));
 
     public static final RegistryObject<Block> CONCRETE_CONSTRUCT_BLOCK = registerBlock("concrete_construct_block",
             () -> new Block(BlockBehaviour.Properties.of()
