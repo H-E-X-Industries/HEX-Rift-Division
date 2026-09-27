@@ -4,6 +4,7 @@ import com.trd.main.MainRegistry;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.world.level.block.Block;
 import net.minecraftforge.common.data.BlockTagsProvider;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import com.trd.block.basic.ModBlocks;
@@ -18,19 +19,14 @@ public class ModBlockTagProvider extends BlockTagsProvider {
 
     @Override
     protected void addTags(HolderLookup.Provider provider) {
-        // --- ДЕФОЛТ: Все блоки мода ломаются железной киркой ---
         var pickaxeTag = tag(BlockTags.MINEABLE_WITH_PICKAXE);
         var ironTag = tag(BlockTags.NEEDS_IRON_TOOL);
         var stoneTag = tag(BlockTags.NEEDS_STONE_TOOL);
-
-        ModBlocks.BLOCKS.getEntries().forEach(block -> {
-            // Если ты НЕ добавил блок в исключения ниже, он попадает сюда
-            pickaxeTag.add(block.get());
-            ironTag.add(block.get());
-        });
+        var axeTag = tag(BlockTags.MINEABLE_WITH_AXE);
+        var shovelTag = tag(BlockTags.MINEABLE_WITH_SHOVEL);
 
         // --- ЖИЛЫ И РУДЫ НЕМЕТАЛЛОВ (ломаются каменной киркой) ---
-        Set<net.minecraft.world.level.block.Block> stoneToolBlocks = Set.of(
+        Set<Block> stoneToolBlocks = Set.of(
                 ModBlocks.BAUXITE.get(),
                 ModBlocks.DOLOMITE.get(),
                 ModBlocks.LIMESTONE.get(),
@@ -51,14 +47,38 @@ public class ModBlockTagProvider extends BlockTagsProvider {
                 ModBlocks.SALT_ORE.get()
         );
 
-        stoneToolBlocks.forEach(block -> {
-            ironTag.remove(block);
-            stoneTag.add(block);
-        });
+        // --- ИСКЛЮЧЕНИЯ (топор / лопата) ---
+        // Обугленное дерево — не камень: ломается топором, обугленная земля — лопатой.
+        Set<Block> axeBlocks = Set.of(
+                ModBlocks.WASTE_LOG.get(),
+                ModBlocks.WASTE_PLANKS.get(),
+                ModBlocks.WASTE_PLANKS_STAIRS.get(),
+                ModBlocks.WASTE_PLANKS_SLAB.get(),
+                ModBlocks.WASTE_FENCE.get(),
+                ModBlocks.WASTE_FENCE_GATE.get(),
+                ModBlocks.WASTE_PRESSURE_PLATE.get()
+        );
 
-        // --- ИСКЛЮЧЕНИЯ (Например, топор или лопата) ---
-        // tag(BlockTags.MINEABLE_WITH_AXE).add(ModBlocks.WASTE_LOG.get());
-        // tag(BlockTags.MINEABLE_WITH_SHOVEL).add(ModBlocks.WASTE_DIRT.get());
+        Set<Block> shovelBlocks = Set.of(
+                ModBlocks.WASTE_GRASS.get()
+        );
+
+        // --- ДЕФОЛТ: всё, что не попало в исключения, ломается железной киркой ---
+        // Исключения проверяются именно здесь, а не через TagBuilder.remove(): в 1.20.1
+        // remove() лишь пишет запись в removeEntries, а формат тега {replace, values} её
+        // не умеет хранить — блок остался бы и в кирке, и в needs_iron_tool.
+        ModBlocks.BLOCKS.getEntries().forEach(block -> {
+            if (axeBlocks.contains(block.get())) {
+                axeTag.add(block.get());
+            } else if (shovelBlocks.contains(block.get())) {
+                shovelTag.add(block.get());
+            } else if (stoneToolBlocks.contains(block.get())) {
+                stoneTag.add(block.get());
+            } else {
+                pickaxeTag.add(block.get());
+                ironTag.add(block.get());
+            }
+        });
 
         this.tag(BlockTags.LOGS)
                 .add(ModBlocks.SEQUOIA_HEARTWOOD.get())
@@ -84,7 +104,11 @@ public class ModBlockTagProvider extends BlockTagsProvider {
         // --- ПРОВОЛОЧНЫЙ ЗАБОР ---
         // Забор соединяется со всеми заборами (vanilla + свои)
         this.tag(BlockTags.FENCES)
-                .add(ModBlocks.WIRE_FENCE.get());
+                .add(ModBlocks.WIRE_FENCE.get())
+                .add(ModBlocks.WASTE_FENCE.get());
+
+        this.tag(BlockTags.FENCE_GATES)
+                .add(ModBlocks.WASTE_FENCE_GATE.get());
 
         // К каким блокам проводной забор «пускает» сетку (помимо самих заборов)
         net.minecraft.tags.TagKey<net.minecraft.world.level.block.Block> wireFenceConnections =

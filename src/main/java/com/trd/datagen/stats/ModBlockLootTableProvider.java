@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
 
 public class ModBlockLootTableProvider extends BlockLootSubProvider {
     private final Set<Block> exceptions = new HashSet<>();
@@ -68,6 +69,15 @@ public class ModBlockLootTableProvider extends BlockLootSubProvider {
         registerOreWithMultipleDrops(ModBlocks.LIMESTONE, ModItems.LIMESTONE_CHUNK);
         registerOreWithMultipleDrops(ModBlocks.DOLOMITE, ModItems.DOLOMITE_CHUNK);
         registerOreWithMultipleDrops(ModBlocks.SULFUR_CLUSTER, ModItems.SULFUR);
+
+        // Обугленное бревно рассыпается в древесный уголь 1-3 шт (без Silk Touch — уголь,
+        // с Silk Touch — уголь + само бревно, чтобы можно было собрать обугленный набор).
+        this.add(ModBlocks.WASTE_LOG.get(), createSilkTouchDispatchTable(ModBlocks.WASTE_LOG.get(),
+                this.applyExplosionDecay(ModBlocks.WASTE_LOG.get(),
+                        LootItem.lootTableItem(Items.CHARCOAL)
+                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 3.0F)))
+                                .apply(ApplyBonusCount.addOreBonusCount(Enchantments.BLOCK_FORTUNE)))));
+        exceptions.add(ModBlocks.WASTE_LOG.get());
 
 
         // --- ДЕФОЛТ ДЛЯ ВСЕХ ОСТАЛЬНЫХ БЛОКОВ ---

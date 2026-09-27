@@ -170,6 +170,18 @@ public class ModBlockStateProvider extends BlockStateProvider {
         blockWithItem(ModBlocks.WASTE_PLANKS);
         stairsAndSlabs(ModBlocks.WASTE_PLANKS.get(), ModBlocks.WASTE_PLANKS_STAIRS.get(), ModBlocks.WASTE_PLANKS_SLAB.get());
 
+        fenceBlock(ModBlocks.WASTE_FENCE.get(), modLoc("block/waste_planks"));
+        simpleBlockItem(ModBlocks.WASTE_FENCE.get(),
+                models().fenceInventory("waste_fence_inventory", modLoc("block/waste_planks")));
+
+        fenceGateBlock(ModBlocks.WASTE_FENCE_GATE.get(), modLoc("block/waste_planks"));
+        simpleBlockItem(ModBlocks.WASTE_FENCE_GATE.get(),
+                models().getExistingFile(modLoc("block/waste_fence_gate")));
+
+        pressurePlateBlock(ModBlocks.WASTE_PRESSURE_PLATE.get(), modLoc("block/waste_planks"));
+        simpleBlockItem(ModBlocks.WASTE_PRESSURE_PLATE.get(),
+                models().getExistingFile(modLoc("block/waste_pressure_plate")));
+
         columnBlockWithItem(ModBlocks.CONCRETE_PORT,
                 modLoc("block/concrete_port"),
                 modLoc("block/concrete"),
