@@ -781,6 +781,9 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.WASTE_PLANKS.get(), "Waste Planks");
         add(ModBlocks.WASTE_PLANKS_STAIRS.get(), "Waste Planks Stairs");
         add(ModBlocks.WASTE_PLANKS_SLAB.get(), "Waste Planks Slab");
+        add(ModBlocks.WASTE_FENCE.get(), "Waste Fence");
+        add(ModBlocks.WASTE_FENCE_GATE.get(), "Waste Fence Gate");
+        add(ModBlocks.WASTE_PRESSURE_PLATE.get(), "Waste Pressure Plate");
 
         // Kinetic & Shafts
         add(ModBlocks.HAND_CRANK_BLOCK.get(), "Hand Crank");
@@ -2111,6 +2114,9 @@ public class ModLangProvider extends LanguageProvider {
         add(ModBlocks.WASTE_PLANKS.get(), "Обугленные доски");
         add(ModBlocks.WASTE_PLANKS_STAIRS.get(), "Обугленные ступени");
         add(ModBlocks.WASTE_PLANKS_SLAB.get(), "Обугленная плита");
+        add(ModBlocks.WASTE_FENCE.get(), "Обугленный забор");
+        add(ModBlocks.WASTE_FENCE_GATE.get(), "Обугленная калитка");
+        add(ModBlocks.WASTE_PRESSURE_PLATE.get(), "Обугленная нажимная пластина");
 
         // Кинетика и валы
         add(ModBlocks.HAND_CRANK_BLOCK.get(), "Ручной привод");

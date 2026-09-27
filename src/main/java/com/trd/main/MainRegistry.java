@@ -243,6 +243,9 @@ public class MainRegistry {
             event.accept(ModBlocks.DECO_BEAM.get());
             event.accept(ModBlocks.BEAM_BLOCK.get());
             event.accept(ModBlocks.STEEL_PROPS.get());
+            event.accept(ModBlocks.WASTE_FENCE.get());
+            event.accept(ModBlocks.WASTE_FENCE_GATE.get());
+            event.accept(ModBlocks.WASTE_PRESSURE_PLATE.get());
             event.accept(ModBlocks.WIRE_FENCE.get());
             event.accept(ModBlocks.WIRE_FENCE_ALT.get());
             event.accept(ModBlocks.DECO_BARREL.get());

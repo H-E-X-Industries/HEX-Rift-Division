@@ -21,7 +21,11 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.CrossCollisionBlock;
+import net.minecraft.world.level.block.FenceBlock;
+import net.minecraft.world.level.block.FenceGateBlock;
 import net.minecraft.world.level.block.LiquidBlock;
+import net.minecraft.world.level.block.PressurePlateBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.SoundType;
@@ -54,7 +58,7 @@ import java.util.List;
  *
  * <p>Действия с блоками копируют водородный взрыв: доски → {@code waste_planks},
  * брёвна → {@code waste_log} (с сохранением оси), дёрн/подзол/мицелий → {@code waste_grass},
- * деревянные ступени/полублоки → обугленные аналоги. Уничтожается лишь то, что не
+ * деревянные ступени/полублоки/заборы/калитки/нажимные пластины → обугленные аналоги. Уничтожается лишь то, что не
  * заменяется, но держит прочность не выше {@link #DESTROY_HARDNESS} — всё остальное
  * горючее просто поджигается ванильным огнём и догорает штатно. Водой/каменной стеной
  * волна не проходит.
@@ -158,6 +162,9 @@ public class ExplosionFire {
         final LongArrayList replacePlanks = new LongArrayList();
         final LongArrayList replaceStairs = new LongArrayList();
         final LongArrayList replaceSlabs = new LongArrayList();
+        final LongArrayList replaceFences = new LongArrayList();
+        final LongArrayList replaceGates = new LongArrayList();
+        final LongArrayList replacePlates = new LongArrayList();
         final LongArrayList destroy = new LongArrayList();
         final List<EntityTarget> entities = new ArrayList<>();
 
@@ -167,6 +174,9 @@ public class ExplosionFire {
         int applyPlanks;
         int applyStairs;
         int applySlabs;
+        int applyFences;
+        int applyGates;
+        int applyPlates;
         int applyDestroy;
         int applyEntity;
 
@@ -342,6 +352,12 @@ public class ExplosionFire {
                 replaceStairs.add(lp);
             } else if (isWoodenSlab(s, level, pos)) {
                 replaceSlabs.add(lp);
+            } else if (isWoodenFence(s, level, pos)) {
+                replaceFences.add(lp);
+            } else if (isWoodenFenceGate(s, level, pos)) {
+                replaceGates.add(lp);
+            } else if (isWoodenPressurePlate(s, level, pos)) {
+                replacePlates.add(lp);
             } else if (isWoodPlanks(s, level, pos)) {
                 replacePlanks.add(lp);
             } else if (hardness <= DESTROY_HARDNESS) {
@@ -545,6 +561,42 @@ public class ExplosionFire {
                 level.setBlock(pos, ModBlocks.WASTE_PLANKS_SLAB.get().defaultBlockState()
                         .setValue(SlabBlock.TYPE, cur.getValue(SlabBlock.TYPE))
                         .setValue(SlabBlock.WATERLOGGED, cur.getValue(SlabBlock.WATERLOGGED)), 3);
+            }
+            for (; applyFences < replaceFences.size(); applyFences++) {
+                if (System.nanoTime() > deadline) return false;
+                long l = replaceFences.getLong(applyFences);
+                BlockPos pos = BlockPos.of(l);
+                if (!level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4)) continue;
+                BlockState cur = level.getBlockState(pos);
+                if (!isWoodenFence(cur, level, pos)) continue;
+                level.setBlock(pos, ModBlocks.WASTE_FENCE.get().defaultBlockState()
+                        .setValue(CrossCollisionBlock.NORTH, cur.getValue(CrossCollisionBlock.NORTH))
+                        .setValue(CrossCollisionBlock.EAST, cur.getValue(CrossCollisionBlock.EAST))
+                        .setValue(CrossCollisionBlock.SOUTH, cur.getValue(CrossCollisionBlock.SOUTH))
+                        .setValue(CrossCollisionBlock.WEST, cur.getValue(CrossCollisionBlock.WEST))
+                        .setValue(CrossCollisionBlock.WATERLOGGED, cur.getValue(CrossCollisionBlock.WATERLOGGED)), 3);
+            }
+            for (; applyGates < replaceGates.size(); applyGates++) {
+                if (System.nanoTime() > deadline) return false;
+                long l = replaceGates.getLong(applyGates);
+                BlockPos pos = BlockPos.of(l);
+                if (!level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4)) continue;
+                BlockState cur = level.getBlockState(pos);
+                if (!isWoodenFenceGate(cur, level, pos)) continue;
+                level.setBlock(pos, ModBlocks.WASTE_FENCE_GATE.get().defaultBlockState()
+                        .setValue(FenceGateBlock.FACING, cur.getValue(FenceGateBlock.FACING))
+                        .setValue(FenceGateBlock.OPEN, cur.getValue(FenceGateBlock.OPEN))
+                        .setValue(FenceGateBlock.IN_WALL, cur.getValue(FenceGateBlock.IN_WALL)), 3);
+            }
+            for (; applyPlates < replacePlates.size(); applyPlates++) {
+                if (System.nanoTime() > deadline) return false;
+                long l = replacePlates.getLong(applyPlates);
+                BlockPos pos = BlockPos.of(l);
+                if (!level.hasChunk(pos.getX() >> 4, pos.getZ() >> 4)) continue;
+                BlockState cur = level.getBlockState(pos);
+                if (!isWoodenPressurePlate(cur, level, pos)) continue;
+                level.setBlock(pos, ModBlocks.WASTE_PRESSURE_PLATE.get().defaultBlockState()
+                        .setValue(PressurePlateBlock.POWERED, cur.getValue(PressurePlateBlock.POWERED)), 3);
             }
             for (; applyDestroy < destroy.size(); applyDestroy++) {
                 if (System.nanoTime() > deadline) return false;
@@ -783,7 +835,10 @@ public class ExplosionFire {
                 || s.is(ModBlocks.WASTE_GRASS.get())
                 || s.is(ModBlocks.WASTE_PLANKS.get())
                 || s.is(ModBlocks.WASTE_PLANKS_STAIRS.get())
-                || s.is(ModBlocks.WASTE_PLANKS_SLAB.get());
+                || s.is(ModBlocks.WASTE_PLANKS_SLAB.get())
+                || s.is(ModBlocks.WASTE_FENCE.get())
+                || s.is(ModBlocks.WASTE_FENCE_GATE.get())
+                || s.is(ModBlocks.WASTE_PRESSURE_PLATE.get());
     }
 
     private static boolean isNaturalSoil(BlockState s) {
@@ -796,6 +851,29 @@ public class ExplosionFire {
 
     private static boolean isWoodenSlab(BlockState s, ServerLevel level, BlockPos pos) {
         return s.getBlock() instanceof SlabBlock && s.getSoundType(level, pos, null) == SoundType.WOOD;
+    }
+
+    /**
+     * Деревянный забор, обугливающийся в {@code waste_fence}. Проверка по звуку отсекает
+     * металлические заборы мода ({@code wire_fence} — {@link SoundType#METAL}), которые
+     * наследуют {@link FenceBlock}, но обугливаться не должны.
+     */
+    private static boolean isWoodenFence(BlockState s, ServerLevel level, BlockPos pos) {
+        return s.getBlock() instanceof FenceBlock && s.getSoundType(level, pos, null) == SoundType.WOOD;
+    }
+
+    /** Деревянная калитка, обугливающаяся в {@code waste_fence_gate}. */
+    private static boolean isWoodenFenceGate(BlockState s, ServerLevel level, BlockPos pos) {
+        return s.getBlock() instanceof FenceGateBlock && s.getSoundType(level, pos, null) == SoundType.WOOD;
+    }
+
+    /**
+     * Деревянная нажимная пластина, обугливающаяся в {@code waste_pressure_plate}.
+     * {@link PressurePlateBlock} — только деревянные и каменные; взвешенные металлические
+     * пластины наследуют {@code BasePressurePlateBlock} и сюда не попадают.
+     */
+    private static boolean isWoodenPressurePlate(BlockState s, ServerLevel level, BlockPos pos) {
+        return s.getBlock() instanceof PressurePlateBlock && s.getSoundType(level, pos, null) == SoundType.WOOD;
     }
 
     private static boolean isWoodPlanks(BlockState s, ServerLevel level, BlockPos pos) {

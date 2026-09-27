@@ -58,6 +58,7 @@ import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockSetType;
+import net.minecraft.world.level.block.state.properties.WoodType;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.registries.DeferredRegister;
@@ -663,6 +664,13 @@ public class ModBlocks {
                     BlockBehaviour.Properties.copy(WASTE_PLANKS.get())));
     public static final RegistryObject<SlabBlock> WASTE_PLANKS_SLAB = registerBlock("waste_planks_slab",
             () -> new SlabBlock(BlockBehaviour.Properties.copy(WASTE_PLANKS.get())));
+    public static final RegistryObject<FenceBlock> WASTE_FENCE = registerBlock("waste_fence",
+            () -> new FenceBlock(BlockBehaviour.Properties.copy(Blocks.OAK_FENCE)));
+    public static final RegistryObject<FenceGateBlock> WASTE_FENCE_GATE = registerBlock("waste_fence_gate",
+            () -> new FenceGateBlock(BlockBehaviour.Properties.copy(Blocks.OAK_FENCE_GATE), WoodType.DARK_OAK));
+    public static final RegistryObject<PressurePlateBlock> WASTE_PRESSURE_PLATE = registerBlock("waste_pressure_plate",
+            () -> new PressurePlateBlock(PressurePlateBlock.Sensitivity.EVERYTHING,
+                    BlockBehaviour.Properties.copy(Blocks.OAK_PRESSURE_PLATE), BlockSetType.DARK_OAK));
 
     public static final RegistryObject<Block> CASTING_DESCENT = registerBlock("casting_descent",
             () -> new CastingDescentBlock(BlockBehaviour.Properties.of()
