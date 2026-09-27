@@ -126,6 +126,11 @@ public class ModCapabilities {
                     return null;
                 }
         );
+        event.registerBlockEntity(
+                ENERGY_RECEIVER,
+                com.trd.block.entity.ModBlockEntities.CHEMICAL_PLANT_HEATER_BE.get(),
+                (be, side) -> be.getEnergyReceiver(side)
+        );
 
         // IEnergyConnector
         event.registerBlockEntity(
@@ -216,6 +221,11 @@ public class ModCapabilities {
                     }
                     return null;
                 }
+        );
+        event.registerBlockEntity(
+                ENERGY_CONNECTOR,
+                com.trd.block.entity.ModBlockEntities.CHEMICAL_PLANT_HEATER_BE.get(),
+                (be, side) -> be.getEnergyConnector(side)
         );
 
         // Forge Energy Block Capability
@@ -312,6 +322,16 @@ public class ModCapabilities {
                     }
                     return null;
                 }
+        );
+        event.registerBlockEntity(
+                net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
+                com.trd.block.entity.ModBlockEntities.CHEMICAL_PLANT_REACTION_CHAMBER_BE.get(),
+                (be, side) -> be.getItemHandler()
+        );
+        event.registerBlockEntity(
+                net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
+                com.trd.block.entity.ModBlockEntities.CHEMICAL_PLANT_PORT_BE.get(),
+                (be, side) -> be.getItemHandler(side)
         );
     // Item Capabilities
     event.registerItem(ENERGY_PROVIDER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 5000, 100, 100), com.trd.item.ModItems.BATTERY.get());
@@ -413,6 +433,12 @@ public class ModCapabilities {
     event.registerBlockEntity(
             net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
             com.trd.block.entity.ModBlockEntities.CENTRIFUGE_MOTOR_BE.get(),
+            (be, side) -> be.getFluidHandler(side)
+    );
+
+    event.registerBlockEntity(
+            net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
+            com.trd.block.entity.ModBlockEntities.CHEMICAL_PLANT_PORT_BE.get(),
             (be, side) -> be.getFluidHandler(side)
     );
 

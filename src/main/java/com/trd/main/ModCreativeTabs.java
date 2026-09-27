@@ -44,6 +44,10 @@ public class ModCreativeTabs {
                         output.accept(ModItems.TRASH.get());
                         output.accept(ModItems.BLACK_ASH.get());
                         output.accept(ModItems.SODA_CRYSTAL.get());
+                        output.accept(ModItems.SODA.get());
+                        output.accept(ModItems.ALUMINUM_HYDROXIDE.get());
+                        output.accept(ModItems.QUICKLIME.get());
+                        output.accept(ModBlocks.CONCRETE.get());
                         output.accept(ModItems.BAUXITE_CHUNK.get());
                         output.accept(ModItems.BAUXITE_POWDER.get());
                         output.accept(ModItems.DOLOMITE_CHUNK.get());
@@ -191,6 +195,11 @@ public class ModCreativeTabs {
                         output.accept(ModItems.VISHELASHIVATEL_ITEM.get());
                         output.accept(ModBlocks.MORY_BLOCK.get());
                         output.accept(ModBlocks.ANTON_CHIGUR.get());
+
+                        // Chemical Plant
+                        output.accept(ModBlocks.CHEMICAL_PLANT_HEATER.get());
+                        output.accept(ModBlocks.CHEMICAL_PLANT_REACTION_CHAMBER.get());
+                        output.accept(ModBlocks.CHEMICAL_PLANT_PORT.get());
 
                         // Optic Microscope
                         output.accept(ModBlocks.OPTIC_MICROSCOPE.get());

@@ -192,6 +192,21 @@ public class ModBlockEntities {
                     ModBlocks.VISHELASHIVATEL.get()
             ).build(null));
 
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.industrial.chemistry.ChemicalPlantReactionChamberBlockEntity>> CHEMICAL_PLANT_REACTION_CHAMBER_BE =
+            BLOCK_ENTITIES.register("chemical_plant_reaction_chamber_be",
+                    () -> BlockEntityType.Builder.of(com.trd.block.entity.industrial.chemistry.ChemicalPlantReactionChamberBlockEntity::new,
+                            ModBlocks.CHEMICAL_PLANT_REACTION_CHAMBER.get()).build(null));
+
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.industrial.chemistry.ChemicalPlantPortBlockEntity>> CHEMICAL_PLANT_PORT_BE =
+            BLOCK_ENTITIES.register("chemical_plant_port_be",
+                    () -> BlockEntityType.Builder.of(com.trd.block.entity.industrial.chemistry.ChemicalPlantPortBlockEntity::new,
+                            ModBlocks.CHEMICAL_PLANT_PORT.get()).build(null));
+
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.industrial.chemistry.ChemicalPlantHeaterBlockEntity>> CHEMICAL_PLANT_HEATER_BE =
+            BLOCK_ENTITIES.register("chemical_plant_heater_be",
+                    () -> BlockEntityType.Builder.of(com.trd.block.entity.industrial.chemistry.ChemicalPlantHeaterBlockEntity::new,
+                            ModBlocks.CHEMICAL_PLANT_HEATER.get()).build(null));
+
     public static void register(IEventBus eventBus) {
         BLOCK_ENTITIES.register(eventBus);
     }

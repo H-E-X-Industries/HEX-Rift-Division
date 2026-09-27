@@ -254,6 +254,31 @@ public class ModBlocks {
     public static final DeferredBlock<Block> ANTON_CHIGUR = registerBlock("anton_chigur",
             () -> new Block(BlockBehaviour.Properties.of().strength(1.0F, 3.0F).sound(net.minecraft.world.level.block.SoundType.WOOD).requiresCorrectToolForDrops()));
 
+    public static final DeferredBlock<Block> CONCRETE = registerBlock("concrete",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.0F, 18.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<com.trd.block.basic.industrial.chemistry.ChemicalPlantHeaterBlock> CHEMICAL_PLANT_HEATER = registerBlock("chemical_plant_heater",
+            () -> new com.trd.block.basic.industrial.chemistry.ChemicalPlantHeaterBlock(BlockBehaviour.Properties.of()
+                    .strength(2.0F, 6.0F)
+                    .sound(net.minecraft.world.level.block.SoundType.STONE)
+                    .requiresCorrectToolForDrops()
+                    .noOcclusion()));
+
+    public static final DeferredBlock<com.trd.block.basic.industrial.chemistry.ChemicalPlantReactionChamberBlock> CHEMICAL_PLANT_REACTION_CHAMBER = registerBlock("chemical_plant_reaction_chamber",
+            () -> new com.trd.block.basic.industrial.chemistry.ChemicalPlantReactionChamberBlock(BlockBehaviour.Properties.of()
+                    .strength(2.0F, 6.0F)
+                    .sound(net.minecraft.world.level.block.SoundType.STONE)
+                    .requiresCorrectToolForDrops()
+                    .noOcclusion()));
+
+    public static final DeferredBlock<com.trd.block.basic.industrial.chemistry.ChemicalPlantPortBlock> CHEMICAL_PLANT_PORT = registerBlock("chemical_plant_port",
+            () -> new com.trd.block.basic.industrial.chemistry.ChemicalPlantPortBlock(BlockBehaviour.Properties.of()
+                    .strength(2.0F, 6.0F)
+                    .sound(net.minecraft.world.level.block.SoundType.STONE)
+                    .requiresCorrectToolForDrops()
+                    .noOcclusion()));
+
     private static <T extends Block & IMultiblockController> DeferredBlock<T> registerMultiblock(String name, Supplier<T> block) {
         DeferredBlock<T> toReturn = BLOCKS.register(name, block);
         ModItems.ITEMS.register(name, () -> new MultiblockBlockItem(toReturn.get(), new Item.Properties()));

@@ -59,6 +59,12 @@ public class ModMenuTypes {
     public static final java.util.function.Supplier<MenuType<com.trd.menu.industrial.VishelashivatelMenu>> VISHELASHIVATEL_MENU =
             MENUS.register("vishelashivatel_menu", () -> IMenuTypeExtension.create(com.trd.menu.industrial.VishelashivatelMenu::create));
 
+    public static final java.util.function.Supplier<MenuType<com.trd.menu.industrial.ChemicalPlantReactionChamberMenu>> CHEMICAL_PLANT_REACTION_CHAMBER_MENU =
+            MENUS.register("chemical_plant_reaction_chamber_menu", () -> IMenuTypeExtension.create(com.trd.menu.industrial.ChemicalPlantReactionChamberMenu::new));
+
+    public static final java.util.function.Supplier<MenuType<com.trd.menu.industrial.ChemicalPlantPortMenu>> CHEMICAL_PLANT_PORT_MENU =
+            MENUS.register("chemical_plant_port_menu", () -> IMenuTypeExtension.create(com.trd.menu.industrial.ChemicalPlantPortMenu::new));
+
     public static void register(IEventBus eventBus) {
         MENUS.register(eventBus);
     }

@@ -33,6 +33,8 @@ public class ModClientSetup {
         event.register(com.trd.menu.ModMenuTypes.CENTRIFUGE_MENU.get(), com.trd.client.overlay.gui.CentrifugeScreen::new);
         event.register(com.trd.menu.ModMenuTypes.CENTRIFUGE_CYLINDER_MENU.get(), com.trd.client.overlay.gui.CentrifugeCylinderScreen::new);
         event.register(com.trd.menu.ModMenuTypes.VISHELASHIVATEL_MENU.get(), com.trd.client.overlay.gui.VishelashivatelScreen::new);
+        event.register(com.trd.menu.ModMenuTypes.CHEMICAL_PLANT_PORT_MENU.get(), com.trd.client.overlay.gui.GUIChemicalPlantPort::new);
+        event.register(com.trd.menu.ModMenuTypes.CHEMICAL_PLANT_REACTION_CHAMBER_MENU.get(), com.trd.client.overlay.gui.GUIChemicalPlantReactionChamber::new);
     }
 
     @SubscribeEvent

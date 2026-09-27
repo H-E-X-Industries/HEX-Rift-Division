@@ -74,6 +74,12 @@ public class ModItems {
             () -> new Item(new Item.Properties()));
     public static final DeferredItem<Item> SODA_CRYSTAL = ITEMS.register("soda_crystal",
             () -> new Item(new Item.Properties()));
+    public static final DeferredItem<Item> SODA = ITEMS.register("soda",
+            () -> new Item(new Item.Properties()));
+    public static final DeferredItem<Item> ALUMINUM_HYDROXIDE = ITEMS.register("aluminum_hydroxide",
+            () -> new Item(new Item.Properties()));
+    public static final DeferredItem<Item> QUICKLIME = ITEMS.register("quicklime",
+            () -> new Item(new Item.Properties()));
 
     public static final DeferredItem<Item> CREATIVE_BATTERY = ITEMS.register("battery_creative", () -> new com.trd.item.industrial.energy.ItemCreativeBattery(new Item.Properties()));
     public static final DeferredItem<Item> BATTERY = ITEMS.register("battery", () -> new com.trd.item.industrial.energy.ModBatteryItem(new Item.Properties(), 5000, 100, 100));

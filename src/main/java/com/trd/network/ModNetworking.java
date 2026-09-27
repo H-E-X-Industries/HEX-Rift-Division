@@ -82,5 +82,23 @@ public class ModNetworking {
             com.trd.network.packet.rotation.ScrollHandCrankPacket.STREAM_CODEC,
             com.trd.network.packet.rotation.ScrollHandCrankPacket::handle
         );
+
+        registrar.playToServer(
+            com.trd.network.packet.chemistry.ClearChemicalRecipePacket.TYPE,
+            com.trd.network.packet.chemistry.ClearChemicalRecipePacket.STREAM_CODEC,
+            com.trd.network.packet.chemistry.ClearChemicalRecipePacket::handle
+        );
+
+        registrar.playToServer(
+            com.trd.network.packet.chemistry.SelectChemicalRecipePacket.TYPE,
+            com.trd.network.packet.chemistry.SelectChemicalRecipePacket.STREAM_CODEC,
+            com.trd.network.packet.chemistry.SelectChemicalRecipePacket::handle
+        );
+
+        registrar.playToServer(
+            com.trd.network.packet.chemistry.UpdatePortModePacket.TYPE,
+            com.trd.network.packet.chemistry.UpdatePortModePacket.STREAM_CODEC,
+            com.trd.network.packet.chemistry.UpdatePortModePacket::handle
+        );
     }
 }
