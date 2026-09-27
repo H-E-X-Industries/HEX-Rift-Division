@@ -125,7 +125,7 @@ public class ConnectorBlockEntity extends BlockEntity implements IEnergyConnecto
         BlockState state = getBlockState();
         if (!state.hasProperty(ConnectorBlock.FACING)) return false;
         Direction facing = state.getValue(ConnectorBlock.FACING);
-        return facing == Direction.UP && side == Direction.DOWN;
+        return side == facing.getOpposite();
     }
 
     // ========== Capabilities ==========

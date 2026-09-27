@@ -1,0 +1,37 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "trd:titanium_nugget"
+    },
+    {
+      "item": "trd:titanium_nugget"
+    },
+    {
+      "item": "trd:titanium_nugget"
+    },
+    {
+      "item": "trd:titanium_nugget"
+    },
+    {
+      "item": "trd:titanium_nugget"
+    },
+    {
+      "item": "trd:titanium_nugget"
+    },
+    {
+      "item": "trd:titanium_nugget"
+    },
+    {
+      "item": "trd:titanium_nugget"
+    },
+    {
+      "item": "trd:titanium_nugget"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "trd:titanium_ingot"
+  }
+}

@@ -207,6 +207,12 @@ public class ModBlockEntities {
                     () -> BlockEntityType.Builder.of(com.trd.block.entity.industrial.chemistry.ChemicalPlantHeaterBlockEntity::new,
                             ModBlocks.CHEMICAL_PLANT_HEATER.get()).build(null));
 
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.multiblock.industrial.coccer.CoccerOvenBlockEntity>> COCCER_OVEN_BE =
+            BLOCK_ENTITIES.register("coccer_oven_be", () -> BlockEntityType.Builder.of(
+                    com.trd.multiblock.industrial.coccer.CoccerOvenBlockEntity::new,
+                    ModBlocks.COCCER_OVEN.get()
+            ).build(null));
+
     public static void register(IEventBus eventBus) {
         BLOCK_ENTITIES.register(eventBus);
     }

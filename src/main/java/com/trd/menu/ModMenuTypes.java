@@ -65,6 +65,9 @@ public class ModMenuTypes {
     public static final java.util.function.Supplier<MenuType<com.trd.menu.industrial.ChemicalPlantPortMenu>> CHEMICAL_PLANT_PORT_MENU =
             MENUS.register("chemical_plant_port_menu", () -> IMenuTypeExtension.create(com.trd.menu.industrial.ChemicalPlantPortMenu::new));
 
+    public static final java.util.function.Supplier<MenuType<com.trd.menu.industrial.CoccerOvenMenu>> COCCER_OVEN_MENU =
+            MENUS.register("coccer_oven_menu", () -> IMenuTypeExtension.create(com.trd.menu.industrial.CoccerOvenMenu::create));
+
     public static void register(IEventBus eventBus) {
         MENUS.register(eventBus);
     }

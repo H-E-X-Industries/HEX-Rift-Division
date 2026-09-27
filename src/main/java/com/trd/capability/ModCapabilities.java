@@ -333,6 +333,11 @@ public class ModCapabilities {
                 com.trd.block.entity.ModBlockEntities.CHEMICAL_PLANT_PORT_BE.get(),
                 (be, side) -> be.getItemHandler(side)
         );
+        event.registerBlockEntity(
+                net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
+                com.trd.block.entity.ModBlockEntities.COCCER_OVEN_BE.get(),
+                (be, side) -> be.getInventory()
+        );
     // Item Capabilities
     event.registerItem(ENERGY_PROVIDER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 5000, 100, 100), com.trd.item.ModItems.BATTERY.get());
     event.registerItem(ENERGY_RECEIVER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 5000, 100, 100), com.trd.item.ModItems.BATTERY.get());
@@ -442,12 +447,19 @@ public class ModCapabilities {
             (be, side) -> be.getFluidHandler(side)
     );
 
+    event.registerBlockEntity(
+            net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
+            com.trd.block.entity.ModBlockEntities.COCCER_OVEN_BE.get(),
+            (be, side) -> be.getFluidHandlerCapability()
+    );
+
     // Item Fluid Capabilities
     net.neoforged.neoforge.capabilities.ICapabilityProvider<net.minecraft.world.item.ItemStack, Void, net.neoforged.neoforge.fluids.capability.IFluidHandlerItem> fluidContainerProvider =
         (stack, ctx) -> new com.trd.item.industrial.fluids.FluidContainerItem.FluidHandler(stack, (com.trd.item.industrial.fluids.FluidContainerItem) stack.getItem());
 
     event.registerItem(net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.ITEM, fluidContainerProvider,
         com.trd.item.ModItems.PIPETTE.get(),
+        com.trd.item.ModItems.PIPETTE_IDUSTRIAL.get(),
         com.trd.item.ModItems.FLUID_TANK_IRON.get()
     );
 }

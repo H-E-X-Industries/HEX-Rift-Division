@@ -58,9 +58,14 @@ public class ConnectorBlock extends BaseEntityBlock {
         builder.add(FACING);
     }
 
+    @Nullable
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return this.defaultBlockState().setValue(FACING, context.getClickedFace());
+        BlockState state = this.defaultBlockState().setValue(FACING, context.getClickedFace());
+        if (state.canSurvive(context.getLevel(), context.getClickedPos())) {
+            return state;
+        }
+        return null;
     }
 
     @Override
@@ -73,8 +78,17 @@ public class ConnectorBlock extends BaseEntityBlock {
         Direction facing = state.getValue(FACING);
         BlockPos supportPos = pos.relative(facing.getOpposite());
         BlockState support = level.getBlockState(supportPos);
-        // Провода имеют тонкую форму и их грани не "sturdy" — разрешаем крепление к ним напрямую
+        // Провода, батареи и энергоблоки имеют тонкую форму или неполные грани — разрешаем крепление к ним напрямую
         if (support.getBlock() instanceof WireBlock) return true;
+        if (support.getBlock() instanceof MachineBatteryBlock) return true;
+        if (support.getBlock() instanceof SwitchBlock) return true;
+        if (support.getBlock() instanceof com.trd.multiblock.system.MultiblockPartBlock) return true;
+        BlockEntity be = level.getBlockEntity(supportPos);
+        if (be instanceof com.trd.api.energy.IEnergyConnector ||
+            be instanceof com.trd.api.energy.IEnergyProvider ||
+            be instanceof com.trd.api.energy.IEnergyReceiver) {
+            return true;
+        }
         return support.isFaceSturdy(level, supportPos, facing);
     }
 

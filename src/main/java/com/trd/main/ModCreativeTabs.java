@@ -175,6 +175,7 @@ public class ModCreativeTabs {
                         output.accept(ModBlocks.CASTING_POT.get());
                         output.accept(ModBlocks.CASTING_DESCENT.get());
                         output.accept(ModItems.POKER.get());
+                        output.accept(ModItems.HAMMER.get());
                         output.accept(ModItems.MOLD_EMPTY.get());
                         output.accept(ModItems.MOLD_INGOT.get());
                         output.accept(ModItems.MOLD_NUGGET.get());
@@ -189,12 +190,25 @@ public class ModCreativeTabs {
                         // Industrial Machines
                         output.accept(ModItems.DROBITEL_ITEM.get());
                         output.accept(ModItems.BLADE.get());
+                        output.accept(ModBlocks.COCCER_OVEN.get());
                         output.accept(ModBlocks.CENTRIFUGE_MOTOR.get());
                         output.accept(ModBlocks.CENTRIFUGE_CONUS.get());
                         output.accept(ModBlocks.CENTRIFUGE_CYLINDER.get());
                         output.accept(ModItems.VISHELASHIVATEL_ITEM.get());
                         output.accept(ModBlocks.MORY_BLOCK.get());
                         output.accept(ModBlocks.ANTON_CHIGUR.get());
+
+                        // Refractory Materials (Coke Oven / Smelter construction)
+                        output.accept(ModItems.FIRE_SMES.get());
+                        output.accept(ModItems.DOLOMITE_SMES.get());
+                        output.accept(ModItems.FIREBRICK.get());
+                        output.accept(ModItems.REINFORCEDBRICK.get());
+                        output.accept(ModBlocks.FIREBRICK_BLOCK.get());
+                        output.accept(ModBlocks.FIREBRICK_STAIRS.get());
+                        output.accept(ModBlocks.FIREBRICK_SLAB.get());
+                        output.accept(ModBlocks.REINFORCEDBRICK_BLOCK.get());
+                        output.accept(ModBlocks.REINFORCEDBRICK_STAIRS.get());
+                        output.accept(ModBlocks.REINFORCEDBRICK_SLAB.get());
 
                         // Chemical Plant
                         output.accept(ModBlocks.CHEMICAL_PLANT_HEATER.get());

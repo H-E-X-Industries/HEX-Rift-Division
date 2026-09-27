@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:stonecutting",
+  "ingredient": {
+    "item": "trd:reinforcedbrick_block"
+  },
+  "result": {
+    "count": 1,
+    "id": "trd:reinforcedbrick_stairs"
+  }
+}

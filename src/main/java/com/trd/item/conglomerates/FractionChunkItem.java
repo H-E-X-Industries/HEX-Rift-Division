@@ -310,9 +310,9 @@ public class FractionChunkItem extends Item {
             int nr = Math.min(255, (int) (br * 0.7f) + (int) (ar * 0.3f));
             int ng = Math.min(255, (int) (bg * 0.7f) + ag);
             int nb = Math.min(255, (int) (bb * 0.7f) + ab);
-            return (nr << 16) | (ng << 8) | nb;
+            return 0xFF000000 | (nr << 16) | (ng << 8) | nb;
         }
-        return (br << 16) | (bg << 8) | bb;
+        return 0xFF000000 | (br << 16) | (bg << 8) | bb;
     }
 
     // ══════════════════ ТУЛТИП ══════════════════

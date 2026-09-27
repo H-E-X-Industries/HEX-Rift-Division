@@ -1,0 +1,37 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "trd:tin_nugget"
+    },
+    {
+      "item": "trd:tin_nugget"
+    },
+    {
+      "item": "trd:tin_nugget"
+    },
+    {
+      "item": "trd:tin_nugget"
+    },
+    {
+      "item": "trd:tin_nugget"
+    },
+    {
+      "item": "trd:tin_nugget"
+    },
+    {
+      "item": "trd:tin_nugget"
+    },
+    {
+      "item": "trd:tin_nugget"
+    },
+    {
+      "item": "trd:tin_nugget"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "trd:tin_ingot"
+  }
+}

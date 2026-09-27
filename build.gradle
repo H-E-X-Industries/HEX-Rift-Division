@@ -111,6 +111,10 @@ dependencies {
 
     // 3. Flywheel (NeoForge 1.21.1)
     implementation "dev.engine-room.flywheel:flywheel-neoforge-1.21.1:1.0.6-44"
+
+    // 4. JEI (Just Enough Items)
+    compileOnly "mezz.jei:jei-1.21.1-neoforge-api:19.21.0.247"
+    localRuntime "mezz.jei:jei-1.21.1-neoforge:19.21.0.247"
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.

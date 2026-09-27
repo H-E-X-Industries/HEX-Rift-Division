@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": {
+      "item": "trd:dolomite_smes"
+    },
+    "$": {
+      "item": "trd:firebrick"
+    },
+    "@": {
+      "item": "trd:reinforcedbrick"
+    }
+  },
+  "pattern": [
+    "   ",
+    "$#$",
+    "@@@"
+  ],
+  "result": {
+    "count": 1,
+    "id": "trd:casting_pot"
+  }
+}

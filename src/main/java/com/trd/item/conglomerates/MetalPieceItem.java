@@ -68,17 +68,16 @@ public class MetalPieceItem extends Item {
      */
     public static int getDisplayColor(ItemStack stack) {
         String metalId = getMetal(stack);
-        if (metalId == null) return 0xFFFFFF;
-        int base = 0x767676;
-        if (!isRoasted(stack)) return base;
-        return heatColor(base);
-    }
-
-    private static int heatColor(int rgb) {
-        int r = (rgb >> 16) & 0xFF;
-        int g = (rgb >> 8) & 0xFF;
-        int b = rgb & 0xFF;
-        return ((r / 2) << 16) | ((g / 4) << 8) | (b / 4);
+        if (metalId == null) return -1;
+        int base = com.trd.api.metallurgy.system.MetallurgyRegistry.get(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, metalId))
+                .map(com.trd.api.metallurgy.system.Metal::getColor)
+                .orElse(0x767676);
+        if (!isRoasted(stack)) return 0xFF000000 | base;
+        int br = (base >> 16) & 0xFF, bg = (base >> 8) & 0xFF, bb = base & 0xFF;
+        int nr = Math.min(255, (int) (br * 0.7f) + (int) (255 * 0.3f));
+        int ng = Math.min(255, (int) (bg * 0.7f) + (int) (255 * 0.5f));
+        int nb = Math.min(255, (int) (bb * 0.7f) + (int) (255 * 0.2f));
+        return 0xFF000000 | (nr << 16) | (ng << 8) | nb;
     }
 
     @Override

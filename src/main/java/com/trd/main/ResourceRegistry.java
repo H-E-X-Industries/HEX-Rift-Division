@@ -173,4 +173,8 @@ public class ResourceRegistry {
     public static List<ResourceEntry> getAll() {
         return RESOURCES;
     }
+
+    public static List<ResourceEntry> getResources() {
+        return RESOURCES;
+    }
 }

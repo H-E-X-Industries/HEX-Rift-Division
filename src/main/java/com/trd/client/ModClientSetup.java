@@ -35,6 +35,7 @@ public class ModClientSetup {
         event.register(com.trd.menu.ModMenuTypes.VISHELASHIVATEL_MENU.get(), com.trd.client.overlay.gui.VishelashivatelScreen::new);
         event.register(com.trd.menu.ModMenuTypes.CHEMICAL_PLANT_PORT_MENU.get(), com.trd.client.overlay.gui.GUIChemicalPlantPort::new);
         event.register(com.trd.menu.ModMenuTypes.CHEMICAL_PLANT_REACTION_CHAMBER_MENU.get(), com.trd.client.overlay.gui.GUIChemicalPlantReactionChamber::new);
+        event.register(com.trd.menu.ModMenuTypes.COCCER_OVEN_MENU.get(), com.trd.client.overlay.gui.CoccerOvenScreen::new);
     }
 
     @SubscribeEvent
@@ -88,7 +89,7 @@ public class ModClientSetup {
                 }
             }
             return -1;
-        }, com.trd.item.ModItems.PIPETTE.get(), com.trd.item.ModItems.FLUID_TANK_IRON.get());
+        }, com.trd.item.ModItems.PIPETTE.get(), com.trd.item.ModItems.PIPETTE_IDUSTRIAL.get(), com.trd.item.ModItems.FLUID_TANK_IRON.get());
 
         for (net.neoforged.neoforge.registries.DeferredHolder<net.minecraft.world.item.Item, ? extends net.minecraft.world.item.Item> dropObj : com.trd.api.fluids.ModFluids.getAllFluidDrops().values()) {
             event.register((stack, tintIndex) -> {
@@ -296,12 +297,39 @@ public class ModClientSetup {
         event.register((stack, tintIndex) -> {
             if (tintIndex == 0) {
                 net.minecraft.world.item.component.CustomData customData = stack.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
-                if (customData != null && customData.contains("MetalColor")) {
-                    return customData.copyTag().getInt("MetalColor");
+                if (customData != null) {
+                    net.minecraft.nbt.CompoundTag tag = customData.copyTag();
+                    if (tag.contains("MetalColor")) {
+                        return 0xFF000000 | tag.getInt("MetalColor");
+                    }
+                    if (tag.contains("MetalId")) {
+                        try {
+                            net.minecraft.resources.ResourceLocation id = net.minecraft.resources.ResourceLocation.parse(tag.getString("MetalId"));
+                            return com.trd.api.metallurgy.system.MetallurgyRegistry.get(id)
+                                    .map(m -> 0xFF000000 | m.getColor())
+                                    .orElse(-1);
+                        } catch (Exception ignored) {}
+                    }
                 }
             }
-            return 0xFFFFFF;
+            return -1;
         }, com.trd.item.ModItems.LIQUID_METAL.get());
+
+        // Кусок фракции: тинт по цвету фракции и состоянию
+        event.register((stack, tintIndex) -> {
+            if (tintIndex == 0 && stack.getItem() instanceof com.trd.item.conglomerates.FractionChunkItem) {
+                return com.trd.item.conglomerates.FractionChunkItem.getDisplayColor(stack);
+            }
+            return -1;
+        }, com.trd.item.ModItems.FRACTION_CHUNK.get());
+
+        // Кусочек металла: тинт по цвету металла
+        event.register((stack, tintIndex) -> {
+            if (tintIndex == 0 && stack.getItem() instanceof com.trd.item.conglomerates.MetalPieceItem) {
+                return com.trd.item.conglomerates.MetalPieceItem.getDisplayColor(stack);
+            }
+            return -1;
+        }, com.trd.item.ModItems.METAL_PIECE.get());
     }
 
     private static void registerItemHeatColor(net.neoforged.neoforge.client.event.RegisterColorHandlersEvent.Item event, Object... items) {

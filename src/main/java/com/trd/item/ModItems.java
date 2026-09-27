@@ -106,6 +106,11 @@ public class ModItems {
     // Fluid Containers
     public static final DeferredItem<Item> PIPETTE = ITEMS.register("pipette",
             () -> new com.trd.item.industrial.fluids.FluidContainerItem(new Item.Properties().stacksTo(1), 50, 80, 100));
+    public static final DeferredItem<Item> PIPETTE_IDUSTRIAL = ITEMS.register("pipette_idustrial",
+            () -> new com.trd.item.industrial.fluids.FluidContainerItem(new Item.Properties().stacksTo(1), 100, 240, 270));
+
+    public static final DeferredItem<Item> HAMMER = ITEMS.register("hammer",
+            () -> new com.trd.item.industrial.fluids.HammerItem());
 
     public static final DeferredItem<Item> HARD_ROCK = ITEMS.register("hard_rock",
             () -> new Item(new Item.Properties()));
@@ -196,6 +201,14 @@ public class ModItems {
     public static final DeferredItem<Item> ROPE = ITEMS.register("rope",
             () -> new Item(new Item.Properties()));
     public static final DeferredItem<Item> LIGNITE = ITEMS.register("lignite",
+            () -> new Item(new Item.Properties()));
+    public static final DeferredItem<Item> FIRE_SMES = ITEMS.register("fire_smes",
+            () -> new Item(new Item.Properties()));
+    public static final DeferredItem<Item> DOLOMITE_SMES = ITEMS.register("dolomite_smes",
+            () -> new Item(new Item.Properties()));
+    public static final DeferredItem<Item> FIREBRICK = ITEMS.register("firebrick",
+            () -> new Item(new Item.Properties()));
+    public static final DeferredItem<Item> REINFORCEDBRICK = ITEMS.register("reinforcedbrick",
             () -> new Item(new Item.Properties()));
 
     public static void register(IEventBus eventBus) {

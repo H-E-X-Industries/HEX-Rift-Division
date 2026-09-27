@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "#": {
+      "item": "trd:fire_smes"
+    },
+    "@": {
+      "item": "trd:firebrick"
+    }
+  },
+  "pattern": [
+    "@@@",
+    "###",
+    "@@@"
+  ],
+  "result": {
+    "count": 1,
+    "id": "trd:mold_ingot"
+  }
+}

@@ -248,6 +248,9 @@ public class ModBlocks {
     public static final DeferredBlock<Block> VISHELASHIVATEL = BLOCKS.register("vishelashivatel",
             () -> new com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().strength(3.0f, 10.0f)));
 
+    public static final DeferredBlock<com.trd.multiblock.industrial.coccer.CoccerOvenBlock> COCCER_OVEN = registerMultiblock("coccer_oven",
+            () -> new com.trd.multiblock.industrial.coccer.CoccerOvenBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.NETHER_BRICKS).strength(3.0f, 10.0f).noOcclusion()));
+
     public static final DeferredBlock<Block> MORY_BLOCK = registerBlock("mory_block",
             () -> new Block(BlockBehaviour.Properties.of().strength(2.0F, 6.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
 
@@ -278,6 +281,23 @@ public class ModBlocks {
                     .sound(net.minecraft.world.level.block.SoundType.STONE)
                     .requiresCorrectToolForDrops()
                     .noOcclusion()));
+
+    public static final DeferredBlock<Block> FIREBRICK_BLOCK = registerBlock("firebrick_block",
+            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.STONE_BRICKS)));
+    public static final DeferredBlock<Block> REINFORCEDBRICK_BLOCK = registerBlock("reinforcedbrick_block",
+            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.STONE_BRICKS)));
+    public static final DeferredBlock<net.minecraft.world.level.block.StairBlock> FIREBRICK_STAIRS = registerBlock("firebrick_stairs",
+            () -> new net.minecraft.world.level.block.StairBlock(FIREBRICK_BLOCK.get().defaultBlockState(), BlockBehaviour.Properties.ofFullCopy(FIREBRICK_BLOCK.get())));
+    public static final DeferredBlock<net.minecraft.world.level.block.StairBlock> REINFORCEDBRICK_STAIRS = registerBlock("reinforcedbrick_stairs",
+            () -> new net.minecraft.world.level.block.StairBlock(REINFORCEDBRICK_BLOCK.get().defaultBlockState(), BlockBehaviour.Properties.ofFullCopy(REINFORCEDBRICK_BLOCK.get())));
+    public static final DeferredBlock<net.minecraft.world.level.block.SlabBlock> FIREBRICK_SLAB = registerBlock("firebrick_slab",
+            () -> new net.minecraft.world.level.block.SlabBlock(BlockBehaviour.Properties.ofFullCopy(FIREBRICK_BLOCK.get())));
+    public static final DeferredBlock<net.minecraft.world.level.block.SlabBlock> REINFORCEDBRICK_SLAB = registerBlock("reinforcedbrick_slab",
+            () -> new net.minecraft.world.level.block.SlabBlock(BlockBehaviour.Properties.ofFullCopy(REINFORCEDBRICK_BLOCK.get())));
+    public static final DeferredBlock<Block> SMALL_SMELTER = registerBlock("small_smelter",
+            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().strength(3.0f, 10.0f)));
+    public static final DeferredBlock<Block> DET_MINER = registerBlock("det_miner",
+            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.TNT)));
 
     private static <T extends Block & IMultiblockController> DeferredBlock<T> registerMultiblock(String name, Supplier<T> block) {
         DeferredBlock<T> toReturn = BLOCKS.register(name, block);

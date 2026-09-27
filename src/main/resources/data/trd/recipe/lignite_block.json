@@ -1,0 +1,37 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "trd:lignite"
+    },
+    {
+      "item": "trd:lignite"
+    },
+    {
+      "item": "trd:lignite"
+    },
+    {
+      "item": "trd:lignite"
+    },
+    {
+      "item": "trd:lignite"
+    },
+    {
+      "item": "trd:lignite"
+    },
+    {
+      "item": "trd:lignite"
+    },
+    {
+      "item": "trd:lignite"
+    },
+    {
+      "item": "trd:lignite"
+    }
+  ],
+  "result": {
+    "count": 1,
+    "id": "trd:lignite_block"
+  }
+}

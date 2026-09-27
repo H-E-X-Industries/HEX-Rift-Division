@@ -150,10 +150,10 @@ public class WireBlock extends BaseEntityBlock {
             return sideFromNeighbor != facing && sideFromNeighbor != facing.getOpposite();
         }
 
-        // 3. Коннектор — только если он стоит на проводе (UP) и провод снизу (DOWN)
+        // 3. Коннектор — только если провод находится у основания коннектора
         if (block instanceof ConnectorBlock) {
             Direction facing = neighborState.getValue(ConnectorBlock.FACING);
-            return facing == Direction.UP && sideFromNeighbor == Direction.DOWN;
+            return sideFromNeighbor == facing.getOpposite();
         }
 
         // 4.

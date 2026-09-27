@@ -36,6 +36,8 @@ public class TrdDatagen {
                 Set.of(MainRegistry.MOD_ID)
         ));
 
+        generator.addProvider(event.includeServer(), new com.trd.datagen.recipes.ModRecipeProvider(output, lookupProvider));
+
         generator.addProvider(event.includeClient(), new ModBlockStateProvider(output, event.getExistingFileHelper()));
     }
 }
