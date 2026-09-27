@@ -6,6 +6,7 @@ import com.trd.api.rotation.ShaftDiameter;
 import com.trd.api.rotation.ShaftMaterial;
 import com.trd.block.entity.industrial.rotation.ShaftBlockEntity;
 import com.trd.item.ModItems;
+import com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlock;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -299,6 +300,11 @@ public class ShaftBlock extends BaseEntityBlock {
             placementFacing = stateAgainst.getValue(HandCrankBlock.FACING).getOpposite();
         } else if (stateAgainst.getBlock() instanceof TachometerBlock) {
             placementFacing = stateAgainst.getValue(TachometerBlock.FACING);
+        } else if (stateAgainst.getBlock() instanceof VishelashivatelBlock) {
+            if (clickedFace != Direction.UP) {
+                return null;
+            }
+            placementFacing = Direction.UP;
         } else if (stateAgainst.getBlock() instanceof com.trd.multiblock.system.MultiblockPartBlock) {
             BlockEntity be = level.getBlockEntity(posAgainst);
             if (be instanceof com.trd.multiblock.system.roles.IMultiblockPart part
@@ -397,6 +403,9 @@ public class ShaftBlock extends BaseEntityBlock {
         }
         if (block instanceof TachometerBlock) {
             return state.getValue(TachometerBlock.HAS_SHAFT) && state.getValue(TachometerBlock.FACING).getAxis() == axisDir.getAxis();
+        }
+        if (block instanceof VishelashivatelBlock) {
+            return axisDir == Direction.DOWN;
         }
         if (block instanceof com.trd.multiblock.system.MultiblockPartBlock) {
             BlockEntity be = level.getBlockEntity(pos);

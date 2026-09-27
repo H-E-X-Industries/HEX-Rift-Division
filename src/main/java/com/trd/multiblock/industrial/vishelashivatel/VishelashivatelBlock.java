@@ -3,6 +3,7 @@ package com.trd.multiblock.industrial.vishelashivatel;
 import com.mojang.serialization.MapCodec;
 import com.trd.api.rotation.KineticNetworkManager;
 import com.trd.block.basic.ModBlocks;
+import com.trd.block.basic.industrial.rotation.ShaftBlock;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.multiblock.system.IMultiblockController;
 import com.trd.multiblock.system.MultiblockStructureHelper;
@@ -145,6 +146,7 @@ public class VishelashivatelBlock extends BaseEntityBlock implements IMultiblock
             KineticNetworkManager.get((ServerLevel) level).updateNetworkAfterRemove(pos);
             Direction facing = state.getValue(FACING);
             getStructureHelper().destroyStructure(level, pos, facing);
+            ShaftBlock.checkAndBreakUnsupportedShafts(level, pos, Direction.Axis.Y);
         }
         super.onRemove(state, level, pos, newState, isMoving);
     }

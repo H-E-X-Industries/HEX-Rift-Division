@@ -195,7 +195,8 @@ public class MultiblockStructureHelper {
             Blocks.AIR, Blocks.CAVE_AIR, Blocks.VOID_AIR, Blocks.SNOW, Blocks.VINE, Blocks.WATER, Blocks.LAVA
     );
 
-    private boolean isBlockReplaceable(BlockState state) {
+    public boolean isBlockReplaceable(BlockState state) {
+        if (state.isAir() || state.canBeReplaced()) return true;
         if (replaceableBlocks.contains(state.getBlock())) return true;
         return state.is(BlockTags.REPLACEABLE_BY_TREES) || state.is(BlockTags.FLOWERS) || state.is(BlockTags.SAPLINGS);
     }
@@ -249,8 +250,8 @@ public class MultiblockStructureHelper {
     public boolean checkPlacement(Level level, BlockPos controllerPos, Direction facing, Player player) {
         List<BlockPos> obstructions = new ArrayList<>();
         for (BlockPos relativePos : structureMap.keySet()) {
-            
             BlockPos worldPos = getRotatedPos(controllerPos, relativePos, facing);
+            if (worldPos.equals(controllerPos)) continue;
             BlockState existingState = level.getBlockState(worldPos);
 
             if (!isBlockReplaceable(existingState)) {
@@ -260,9 +261,8 @@ public class MultiblockStructureHelper {
 
         if (!obstructions.isEmpty()) {
             if (player != null) {
-                player.displayClientMessage(Component.literal("§cCannot place multiblock here! Area is obstructed."), true);
+                player.displayClientMessage(Component.translatable("message.trd.multiblock.obstructed"), true);
             }
-            // TODO: Вы можете добавить пакет подсветки красным цветом (HighlightBlocksPacket) здесь
             return false;
         }
 
@@ -272,8 +272,8 @@ public class MultiblockStructureHelper {
     public boolean checkPlacement(Level level, BlockPos controllerPos, Direction.Axis axis, Player player) {
         List<BlockPos> obstructions = new ArrayList<>();
         for (BlockPos relativePos : structureMap.keySet()) {
-            
             BlockPos worldPos = getRotatedPosAxis(controllerPos, relativePos, axis);
+            if (worldPos.equals(controllerPos)) continue;
             BlockState existingState = level.getBlockState(worldPos);
 
             if (!isBlockReplaceable(existingState)) {
@@ -283,7 +283,7 @@ public class MultiblockStructureHelper {
 
         if (!obstructions.isEmpty()) {
             if (player != null) {
-                player.displayClientMessage(Component.literal("§cCannot place multiblock here! Area is obstructed."), true);
+                player.displayClientMessage(Component.translatable("message.trd.multiblock.obstructed"), true);
             }
             return false;
         }
@@ -295,6 +295,7 @@ public class MultiblockStructureHelper {
         List<BlockPos> obstructions = new ArrayList<>();
         for (BlockPos relativePos : structureMap.keySet()) {
             BlockPos worldPos = getRotatedStatorPos(controllerPos, relativePos, facing, axis);
+            if (worldPos.equals(controllerPos)) continue;
             BlockState existingState = level.getBlockState(worldPos);
 
             if (!isBlockReplaceable(existingState)) {
@@ -304,7 +305,7 @@ public class MultiblockStructureHelper {
 
         if (!obstructions.isEmpty()) {
             if (player != null) {
-                player.displayClientMessage(Component.literal("§cCannot place multiblock here! Area is obstructed."), true);
+                player.displayClientMessage(Component.translatable("message.trd.multiblock.obstructed"), true);
             }
             return false;
         }
@@ -320,6 +321,15 @@ public class MultiblockStructureHelper {
 
     public synchronized void placeStructure(Level level, BlockPos controllerPos, Direction.Axis axis, IMultiblockController controller) {
         if (level.isClientSide) return;
+
+        for (BlockPos gridPos : structureMap.keySet()) {
+            BlockPos worldPos = getRotatedPosAxis(controllerPos, gridPos, axis);
+            if (worldPos.equals(controllerPos)) continue;
+            if (!isBlockReplaceable(level.getBlockState(worldPos))) {
+                LOGGER.warn("Aborted placeStructure at {} because block at {} is not replaceable!", controllerPos, worldPos);
+                return;
+            }
+        }
 
         List<BlockPos> allPlacedPositions = new ArrayList<>();
 
@@ -359,6 +369,15 @@ public class MultiblockStructureHelper {
 
     public synchronized void placeStructure(Level level, BlockPos controllerPos, Direction facing, IMultiblockController controller) {
         if (level.isClientSide) return;
+
+        for (BlockPos gridPos : structureMap.keySet()) {
+            BlockPos worldPos = getRotatedPos(controllerPos, gridPos, facing);
+            if (worldPos.equals(controllerPos)) continue;
+            if (!isBlockReplaceable(level.getBlockState(worldPos))) {
+                LOGGER.warn("Aborted placeStructure at {} because block at {} is not replaceable!", controllerPos, worldPos);
+                return;
+            }
+        }
 
         List<BlockPos> allPlacedPositions = new ArrayList<>();
 
@@ -414,6 +433,15 @@ public class MultiblockStructureHelper {
 
     public synchronized void placeStructureStator(Level level, BlockPos controllerPos, Direction facing, Direction.Axis axis, IMultiblockController controller) {
         if (level.isClientSide) return;
+
+        for (BlockPos gridPos : structureMap.keySet()) {
+            BlockPos worldPos = getRotatedStatorPos(controllerPos, gridPos, facing, axis);
+            if (worldPos.equals(controllerPos)) continue;
+            if (!isBlockReplaceable(level.getBlockState(worldPos))) {
+                LOGGER.warn("Aborted placeStructureStator at {} because block at {} is not replaceable!", controllerPos, worldPos);
+                return;
+            }
+        }
 
         List<BlockPos> allPlacedPositions = new ArrayList<>();
 

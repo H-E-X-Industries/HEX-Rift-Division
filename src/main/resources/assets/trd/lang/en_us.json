@@ -743,6 +743,8 @@
   "message.trd.wire_coil.started": "§aConnection started... Click the second connector.",
   "message.trd.wire_coil.success": "§bConnection successfully established!",
   "message.trd.wire_coil.too_far": "§cToo far! Maximum length: %s blocks.",
+  "message.trd.multiblock.obstructed": "§cCannot place multiblock here! Area is obstructed.",
+  "message.trd.multiblock.wire_obstructed": "§cCannot place multiblock here! Wires are in the way.",
   "metal.trd.aluminum": "Aluminum",
   "metal.trd.beryllium": "Beryllium",
   "metal.trd.bronze": "Bronze",

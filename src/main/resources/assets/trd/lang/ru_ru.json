@@ -755,6 +755,8 @@
   "message.trd.wire_coil.started": "§aНачато соединение... Кликните по второму коннектору.",
   "message.trd.wire_coil.success": "§bСоединение успешно установлено!",
   "message.trd.wire_coil.too_far": "§cСлишком далеко! Максимальная длина: %s блоков.",
+  "message.trd.multiblock.obstructed": "§cНевозможно разместить мультиблок! Место заблокировано.",
+  "message.trd.multiblock.wire_obstructed": "§cНевозможно разместить мультиблок! Провода на пути.",
   "metal.trd.aluminum": "Алюминий",
   "metal.trd.beryllium": "Бериллий",
   "metal.trd.bronze": "Бронза",

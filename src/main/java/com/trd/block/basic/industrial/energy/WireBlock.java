@@ -134,7 +134,7 @@ public class WireBlock extends BaseEntityBlock {
             BlockState neighborState) {
 
         // 1. К другим проводам?
-        if (neighborState.is(this)) {
+        if (neighborState.getBlock() instanceof WireBlock) {
             return true;
         }
 
@@ -150,9 +150,19 @@ public class WireBlock extends BaseEntityBlock {
             return sideFromNeighbor != facing && sideFromNeighbor != facing.getOpposite();
         }
 
-        // 3.
+        // 3. Коннектор — только если он стоит на проводе (UP) и провод снизу (DOWN)
+        if (block instanceof ConnectorBlock) {
+            Direction facing = neighborState.getValue(ConnectorBlock.FACING);
+            return facing == Direction.UP && sideFromNeighbor == Direction.DOWN;
+        }
+
+        // 4.
         BlockEntity be = world.getBlockEntity(neighborPos);
         if (be == null) {
+            return false;
+        }
+
+        if (be instanceof IEnergyConnector connector && !connector.canConnectEnergy(sideFromNeighbor)) {
             return false;
         }
 

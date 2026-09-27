@@ -76,7 +76,13 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
     public PartRole getPartRole() { return role; }
 
     @Override
-    public void setAllowedClimbSides(Set<Direction> sides) { this.allowedClimbSides = sides; }
+    public void setAllowedClimbSides(Set<Direction> sides) {
+        this.allowedClimbSides = sides;
+        setChanged();
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 2);
+        }
+    }
 
     @Override
     public Set<Direction> getAllowedClimbSides() { return allowedClimbSides; }
@@ -263,6 +269,15 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
     @Override
     public Packet<ClientGamePacketListener> getUpdatePacket() {
         return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public void onDataPacket(net.minecraft.network.Connection net, ClientboundBlockEntityDataPacket pkt, HolderLookup.Provider lookupProvider) {
+        super.onDataPacket(net, pkt, lookupProvider);
+        CompoundTag tag = pkt.getTag();
+        if (tag != null) {
+            loadAdditional(tag, lookupProvider);
+        }
     }
 
     @Override

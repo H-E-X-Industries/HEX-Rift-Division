@@ -15,10 +15,12 @@ import javax.annotation.Nullable;
  * Таким образом другие моды могут взаимодействовать с огромными значениями энергии!
  */
 public final class PackedEnergyCapabilityProvider {
+    private final IEnergyConnector handler;
     private final IEnergyStorage feLow;
     private final IEnergyStorage feHigh;
 
     public PackedEnergyCapabilityProvider(IEnergyConnector handler) {
+        this.handler = handler;
         // LOW биты (0 - 2,147,483,647) - для большинства модов
         this.feLow = new LongEnergyWrapper(handler, LongEnergyWrapper.BitMode.LOW);
 
@@ -33,6 +35,9 @@ public final class PackedEnergyCapabilityProvider {
      */
     @Nullable
     public IEnergyStorage getCapability(@Nullable Direction side) {
+        if (side != null && !handler.canConnectEnergy(side)) {
+            return null;
+        }
         return side == Direction.DOWN ? feHigh : feLow;
     }
 

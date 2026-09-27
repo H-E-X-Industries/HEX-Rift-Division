@@ -466,8 +466,13 @@ public class MachineBatteryBlockEntity extends EnergyNodeBlockEntity
 
     @Override
     public boolean canConnectEnergy(Direction side) {
-        Direction facing = this.getBlockState().getValue(MachineBatteryBlock.FACING);
-        return side == facing.getOpposite();
+        return side == getBackSide();
+    }
+
+    public Direction getBackSide() {
+        BlockState state = getBlockState();
+        if (!state.hasProperty(MachineBatteryBlock.FACING)) return Direction.SOUTH;
+        return state.getValue(MachineBatteryBlock.FACING).getOpposite();
     }
 
     public IItemHandler getItemHandler() {

@@ -122,14 +122,19 @@ public class ConnectorBlockEntity extends BlockEntity implements IEnergyConnecto
 
     @Override
     public boolean canConnectEnergy(Direction side) {
-        Direction facing = getBlockState().getValue(ConnectorBlock.FACING);
-        return side == facing.getOpposite();
+        BlockState state = getBlockState();
+        if (!state.hasProperty(ConnectorBlock.FACING)) return false;
+        Direction facing = state.getValue(ConnectorBlock.FACING);
+        return facing == Direction.UP && side == Direction.DOWN;
     }
 
     // ========== Capabilities ==========
     @Nullable
     public IEnergyConnector getEnergyConnector(@Nullable Direction side) {
-        return this;
+        if (side == null || canConnectEnergy(side)) {
+            return this;
+        }
+        return null;
     }
 
 
