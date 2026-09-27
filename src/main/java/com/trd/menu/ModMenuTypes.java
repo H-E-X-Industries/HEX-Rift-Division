@@ -68,6 +68,12 @@ public class ModMenuTypes {
     public static final java.util.function.Supplier<MenuType<com.trd.menu.industrial.CoccerOvenMenu>> COCCER_OVEN_MENU =
             MENUS.register("coccer_oven_menu", () -> IMenuTypeExtension.create(com.trd.menu.industrial.CoccerOvenMenu::create));
 
+    public static final java.util.function.Supplier<MenuType<com.trd.menu.industrial.StanokMenu>> STANOK_MENU =
+            MENUS.register("stanok_menu", () -> IMenuTypeExtension.create(com.trd.menu.industrial.StanokMenu::new));
+
+    public static final java.util.function.Supplier<MenuType<com.trd.menu.industrial.SteelStorageMenu>> STEEL_STORAGE_MENU =
+            MENUS.register("steel_storage_menu", () -> IMenuTypeExtension.create(com.trd.menu.industrial.SteelStorageMenu::new));
+
     public static void register(IEventBus eventBus) {
         MENUS.register(eventBus);
     }

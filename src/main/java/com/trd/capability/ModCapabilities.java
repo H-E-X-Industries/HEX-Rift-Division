@@ -319,9 +319,26 @@ public class ModCapabilities {
                                 return leacher.getItemPortCapability();
                             }
                         }
+                        if (core instanceof com.trd.multiblock.industrial.stanok.StanokBlockEntity stanok) {
+                            if (be.getPartRole() == com.trd.multiblock.system.PartRole.CARGO_PORT) {
+                                net.minecraft.core.Direction facing = stanok.getBlockState().getValue(com.trd.multiblock.industrial.stanok.StanokBlock.FACING);
+                                if (side == facing.getClockWise() || side == facing.getCounterClockWise()) {
+                                    return stanok.getCargoPortCapability();
+                                }
+                                return null;
+                            }
+                        }
+                        if (core instanceof com.trd.multiblock.industrial.steel_storage.SteelStorageBlockEntity steelStorage) {
+                            return steelStorage.getInventory();
+                        }
                     }
                     return null;
                 }
+        );
+        event.registerBlockEntity(
+                net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
+                com.trd.block.entity.ModBlockEntities.STEEL_STORAGE_BE.get(),
+                (be, side) -> be.getInventory()
         );
         event.registerBlockEntity(
                 net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
@@ -337,6 +354,11 @@ public class ModCapabilities {
                 net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
                 com.trd.block.entity.ModBlockEntities.COCCER_OVEN_BE.get(),
                 (be, side) -> be.getInventory()
+        );
+        event.registerBlockEntity(
+                net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
+                com.trd.block.entity.ModBlockEntities.STANOK_BE.get(),
+                (be, side) -> null
         );
     // Item Capabilities
     event.registerItem(ENERGY_PROVIDER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 5000, 100, 100), com.trd.item.ModItems.BATTERY.get());

@@ -190,7 +190,12 @@ public class ModCreativeTabs {
                         // Industrial Machines
                         output.accept(ModItems.DROBITEL_ITEM.get());
                         output.accept(ModItems.BLADE.get());
+                        output.accept(ModBlocks.STANOK.get());
+                        output.accept(ModItems.PRESS_CARRIAGE.get());
+                        output.accept(ModItems.WIRE_CARRIAGE.get());
+                        output.accept(ModItems.FREZA_CARRIAGE.get());
                         output.accept(ModBlocks.COCCER_OVEN.get());
+                        output.accept(ModBlocks.STEEL_STORAGE.get());
                         output.accept(ModBlocks.CENTRIFUGE_MOTOR.get());
                         output.accept(ModBlocks.CENTRIFUGE_CONUS.get());
                         output.accept(ModBlocks.CENTRIFUGE_CYLINDER.get());

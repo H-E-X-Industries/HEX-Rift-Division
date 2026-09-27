@@ -40,6 +40,7 @@ public class MainRegistry {
             com.trd.multiblock.industrial.vishelashivatel.VishelashivatelRecipes.init();
             com.trd.api.chemistry.ChemicalPlantRecipeRegistry.init();
             com.trd.multiblock.industrial.coccer.CoccerOvenRecipeRegistry.init();
+            com.trd.multiblock.industrial.stanok.StanokRecipes.register();
         });
         LOGGER.info("HEX Rift Division Setup Complete!");
     }

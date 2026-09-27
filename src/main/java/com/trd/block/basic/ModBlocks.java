@@ -251,6 +251,12 @@ public class ModBlocks {
     public static final DeferredBlock<com.trd.multiblock.industrial.coccer.CoccerOvenBlock> COCCER_OVEN = registerMultiblock("coccer_oven",
             () -> new com.trd.multiblock.industrial.coccer.CoccerOvenBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.NETHER_BRICKS).strength(3.0f, 10.0f).noOcclusion()));
 
+    public static final DeferredBlock<com.trd.multiblock.industrial.stanok.StanokBlock> STANOK = registerMultiblock("stanok",
+            () -> new com.trd.multiblock.industrial.stanok.StanokBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().strength(3.0f, 10.0f)));
+
+    public static final DeferredBlock<com.trd.multiblock.industrial.steel_storage.SteelStorageBlock> STEEL_STORAGE = registerMultiblock("steel_storage",
+            () -> new com.trd.multiblock.industrial.steel_storage.SteelStorageBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().strength(2.5f, 6.0f)));
+
     public static final DeferredBlock<Block> MORY_BLOCK = registerBlock("mory_block",
             () -> new Block(BlockBehaviour.Properties.of().strength(2.0F, 6.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
 

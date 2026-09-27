@@ -116,7 +116,7 @@ public class SteamEngineBlockEntity extends KineticNodeBlockEntity implements IM
                 FluidStack lowPressure = new FluidStack(com.trd.api.fluids.ModFluids.LOW_PRESSURE_STEAM_SOURCE.get(), amount);
                 lowPressureSteamTank.fill(lowPressure, IFluidHandler.FluidAction.EXECUTE);
 
-                long targetSpeed = Math.min(amount * 10L, 240L);
+                long targetSpeed = Math.min(amount * 10L, 250L);
                 long targetTorque = Math.min(amount * 2L, 80L);
 
                 if (currentSpeed != targetSpeed || currentTorque != targetTorque || !isGenerating) {

@@ -169,6 +169,22 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
     public Direction[] getPropagationDirections() {
         if (!isKineticPort() || controllerPos == null || level == null) return new Direction[0];
 
+        // Проверяем контроллер станка (боковые порты: запад-восток)
+        net.minecraft.world.level.block.entity.BlockEntity ctrlBe = level.getBlockEntity(controllerPos);
+        if (ctrlBe instanceof com.trd.multiblock.industrial.stanok.StanokBlockEntity sbe) {
+            BlockPos westPort = sbe.getWestPortPos();
+            BlockPos eastPort = sbe.getEastPortPos();
+
+            Direction facing = Direction.NORTH;
+            if (sbe.getBlockState().hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING)) {
+                facing = sbe.getBlockState().getValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING);
+            }
+
+            if (worldPosition.equals(westPort)) return new Direction[]{facing.getCounterClockWise(), facing.getClockWise()};
+            if (worldPosition.equals(eastPort)) return new Direction[]{facing.getClockWise(), facing.getCounterClockWise()};
+            return new Direction[0];
+        }
+
         BlockState ctrlState = level.getBlockState(controllerPos);
         if (!ctrlState.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING))
             return new Direction[0];
@@ -197,7 +213,8 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
     public boolean canConnectMechanically(net.minecraft.core.BlockPos myPos, net.minecraft.core.BlockPos neighborPos, com.trd.api.rotation.Rotational neighbor) {
         if (!isKineticPort()) return false;
         if (controllerPos != null && neighborPos.equals(controllerPos)) {
-            return true;
+            return neighbor instanceof com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity
+                    || neighbor instanceof com.trd.multiblock.industrial.stanok.StanokBlockEntity;
         }
         for (Direction dir : getPropagationDirections()) {
             if (myPos.relative(dir).equals(neighborPos)) {

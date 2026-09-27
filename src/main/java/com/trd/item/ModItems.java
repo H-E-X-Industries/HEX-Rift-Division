@@ -88,7 +88,9 @@ public class ModItems {
     public static final DeferredItem<Item> BATTERY_TRIXITE = ITEMS.register("battery_trixite", () -> new com.trd.item.industrial.energy.ModBatteryItem(new Item.Properties(), 5000000, 40000, 200000));
     public static final DeferredItem<Item> ENERGY_CELL = ITEMS.register("energy_cell_basic", () -> new com.trd.item.industrial.energy.EnergyCellItem(new Item.Properties().stacksTo(1), 1000000, 5000, 5000));
     public static final DeferredItem<Item> WIRE_COIL = ITEMS.register("wire_coil", () -> new com.trd.item.industrial.energy.WireCoilItem(new Item.Properties().stacksTo(1)));
-    public static final DeferredItem<Item> WIRE_CARRIAGE = ITEMS.register("wire_carriage", () -> new Item(new Item.Properties()));
+    public static final DeferredItem<Item> PRESS_CARRIAGE = ITEMS.register("press_carriage", () -> new Item(new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> WIRE_CARRIAGE = ITEMS.register("wire_carriage", () -> new Item(new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> FREZA_CARRIAGE = ITEMS.register("freza_carriage", () -> new Item(new Item.Properties().stacksTo(1)));
     public static final DeferredItem<Item> INDUSTRIAL_COPPER_WIRE = ITEMS.register("industrial_copper_wire", () -> new Item(new Item.Properties()));
     public static final DeferredItem<Item> GOLD_WIRE = ITEMS.register("gold_wire", () -> new Item(new Item.Properties()));
     public static final DeferredItem<Item> NEODYMIUM_WIRE = ITEMS.register("neodymium_wire", () -> new Item(new Item.Properties()));

@@ -213,6 +213,18 @@ public class ModBlockEntities {
                     ModBlocks.COCCER_OVEN.get()
             ).build(null));
 
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.multiblock.industrial.stanok.StanokBlockEntity>> STANOK_BE =
+            BLOCK_ENTITIES.register("stanok_be", () -> BlockEntityType.Builder.of(
+                    com.trd.multiblock.industrial.stanok.StanokBlockEntity::new,
+                    ModBlocks.STANOK.get()
+            ).build(null));
+
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.multiblock.industrial.steel_storage.SteelStorageBlockEntity>> STEEL_STORAGE_BE =
+            BLOCK_ENTITIES.register("steel_storage", () -> BlockEntityType.Builder.of(
+                    com.trd.multiblock.industrial.steel_storage.SteelStorageBlockEntity::new,
+                    ModBlocks.STEEL_STORAGE.get()
+            ).build(null));
+
     public static void register(IEventBus eventBus) {
         BLOCK_ENTITIES.register(eventBus);
     }

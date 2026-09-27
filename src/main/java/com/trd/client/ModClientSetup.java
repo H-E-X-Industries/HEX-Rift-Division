@@ -36,6 +36,8 @@ public class ModClientSetup {
         event.register(com.trd.menu.ModMenuTypes.CHEMICAL_PLANT_PORT_MENU.get(), com.trd.client.overlay.gui.GUIChemicalPlantPort::new);
         event.register(com.trd.menu.ModMenuTypes.CHEMICAL_PLANT_REACTION_CHAMBER_MENU.get(), com.trd.client.overlay.gui.GUIChemicalPlantReactionChamber::new);
         event.register(com.trd.menu.ModMenuTypes.COCCER_OVEN_MENU.get(), com.trd.client.overlay.gui.CoccerOvenScreen::new);
+        event.register(com.trd.menu.ModMenuTypes.STANOK_MENU.get(), com.trd.client.overlay.gui.GUIStanok::new);
+        event.register(com.trd.menu.ModMenuTypes.STEEL_STORAGE_MENU.get(), com.trd.client.overlay.gui.SteelStorageScreen::new);
     }
 
     @SubscribeEvent
@@ -51,6 +53,7 @@ public class ModClientSetup {
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.CC_MACHINE_BE.get(), com.trd.client.renderer.CCMachineRenderer::new);
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.CENTRIFUGE_CYLINDER_BE.get(), com.trd.client.render.ber.CentrifugeCylinderRenderer::new);
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.VISHELASHIVATEL_BE.get(), com.trd.client.render.ber.VishelachivatelRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.STANOK_BE.get(), com.trd.client.render.StanokRenderer::new);
         // event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.FUEL_TANK_SMALL_BE.get(), com.trd.client.render.ber.FuelTankRenderer::new);
     }
 
@@ -591,6 +594,18 @@ public class ModClientSetup {
 
             @Override
             public boolean skipVanillaRender(com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlockEntity be) {
+                return false;
+            }
+        });
+
+        VisualizerRegistry.setVisualizer(ModBlockEntities.STANOK_BE.get(), new BlockEntityVisualizer<com.trd.multiblock.industrial.stanok.StanokBlockEntity>() {
+            @Override
+            public BlockEntityVisual<? super com.trd.multiblock.industrial.stanok.StanokBlockEntity> createVisual(VisualizationContext ctx, com.trd.multiblock.industrial.stanok.StanokBlockEntity be, float partialTick) {
+                return new com.trd.client.render.flywheel.StanokVisual(ctx, be, partialTick);
+            }
+
+            @Override
+            public boolean skipVanillaRender(com.trd.multiblock.industrial.stanok.StanokBlockEntity be) {
                 return false;
             }
         });

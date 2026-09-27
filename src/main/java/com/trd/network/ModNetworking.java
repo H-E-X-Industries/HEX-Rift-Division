@@ -100,5 +100,17 @@ public class ModNetworking {
             com.trd.network.packet.chemistry.UpdatePortModePacket.STREAM_CODEC,
             com.trd.network.packet.chemistry.UpdatePortModePacket::handle
         );
+
+        registrar.playToServer(
+            com.trd.network.packet.rotation.SelectStanokRecipePacket.TYPE,
+            com.trd.network.packet.rotation.SelectStanokRecipePacket.STREAM_CODEC,
+            com.trd.network.packet.rotation.SelectStanokRecipePacket::handle
+        );
+
+        registrar.playToServer(
+            com.trd.network.packet.rotation.ClearStanokRecipePacket.TYPE,
+            com.trd.network.packet.rotation.ClearStanokRecipePacket.STREAM_CODEC,
+            com.trd.network.packet.rotation.ClearStanokRecipePacket::handle
+        );
     }
 }
