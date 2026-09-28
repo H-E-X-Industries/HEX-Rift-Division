@@ -56,8 +56,14 @@ public class ModClientSetup {
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.STANOK_BE.get(), com.trd.client.render.StanokRenderer::new);
         // event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.FUEL_TANK_SMALL_BE.get(), com.trd.client.render.ber.FuelTankRenderer::new);
 
-        // Рендереры сущностей появятся здесь вместе с их типами
-        // (снаряды гранат, пули, ракеты, турели).
+        event.registerEntityRenderer(com.trd.entity.ModEntities.TURRET_BULLET.get(),
+                com.trd.client.gecko.entity.bullets.TurretBulletRenderer::new);
+    }
+
+    @SubscribeEvent
+    public static void registerKeyMappings(net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent event) {
+        event.register(com.trd.client.config.ModKeyBindings.RELOAD_KEY);
+        event.register(com.trd.client.config.ModKeyBindings.UNLOAD_KEY);
     }
 
     @SubscribeEvent

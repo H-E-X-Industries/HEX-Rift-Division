@@ -249,6 +249,17 @@ public class ModItems {
     // СНАРЯДЫ
     // ═══════════════════════════════════════════════════════
 
+    // ═══════════════════════════════════════════════════════
+    // ПУШКА
+    // ═══════════════════════════════════════════════════════
+
+    public static final DeferredItem<Item> MACHINEGUN = ITEMS.register("machinegun",
+            () -> new com.trd.item.weapons.guns.MachineGunItem(new Item.Properties().stacksTo(1)));
+
+    static {
+        com.trd.api.tooltip.MachineTooltipRegistry.register(MACHINEGUN, "tooltip.trd.machine.machinegun.desc");
+    }
+
     public static final DeferredItem<Item> MISSILE_100MM = ITEMS.register("missile_100mm",
             () -> new com.trd.item.weapons.missiles.MissileItem(new Item.Properties(), "standard", 25.0f, 1.67f));
     public static final DeferredItem<Item> MISSILE_100MM_HE = ITEMS.register("missile_100mm_he",

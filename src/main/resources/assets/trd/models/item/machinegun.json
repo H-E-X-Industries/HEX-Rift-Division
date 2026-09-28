@@ -107,6 +107,6 @@
     }
   },
   "textures": {
-    "particle": "trd:item/machinegun"
+    "particle": "trd:item/gun/machinegun"
   }
 }

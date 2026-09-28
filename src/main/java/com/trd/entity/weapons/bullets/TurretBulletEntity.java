@@ -1,0 +1,596 @@
+package com.trd.entity.weapons.bullets;
+
+import com.trd.entity.ModEntities;
+import com.trd.item.weapons.ammo.AmmoRegistry;
+import com.trd.sound.ModSounds;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.StainedGlassBlock;
+import net.minecraft.world.level.block.StainedGlassPaneBlock;
+import net.minecraft.world.level.block.TintedGlassBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
+import software.bernie.geckolib.animatable.GeoEntity;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.util.GeckoLibUtil;
+
+import java.util.List;
+
+/**
+ * Пупка 20 мм. Общая снасть для пушки и турелей: тип боезаряда приходит из
+ * {@link AmmoRegistry} и определяет пробитие, урон и поведение при попадании.
+ * <p>
+ * Тип боезаряда и время полёта раздаются клиенту через {@link SynchedEntityData},
+ * а не через дополнительные данные спавна — в NeoForge 1.21 механика
+ * {@code IEntityAdditionalSpawnData} удалена, а синхронизированные данные
+ * уходят вместе с пакетом появления сущности.
+ */
+public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
+
+    private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+
+    private static final EntityDataAccessor<String> AMMO_ID =
+            SynchedEntityData.defineId(TurretBulletEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<String> AMMO_TYPE =
+            SynchedEntityData.defineId(TurretBulletEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<Integer> FLIGHT_TIME =
+            SynchedEntityData.defineId(TurretBulletEntity.class, EntityDataSerializers.INT);
+
+    public static final float BULLET_GRAVITY = 0.01F;
+    public static final float AIR_RESISTANCE = 0.99F;
+    public static final float MAX_FLIGHT_DISTANCE = 256.0F;
+
+    /** С какого тика у радио-боезаряда включается увеличенный хитбокс. */
+    private static final int RADIO_FUSE_ACTIVATION = 5;
+    /** Запас к хитбоксу взрывателя, чтобы цель у края всё же срабатывала. */
+    private static final double PROXIMITY_FUSE_MARGIN = 0.25D;
+
+    private float baseDamage = 4.0f;
+    private float baseSpeed = 3.0f;
+    private AmmoType ammoType = AmmoType.NORMAL;
+    private float initialSpeed = 0.0f;
+    private Vec3 initialPosition = null;
+    public float spin = 0;
+
+    /** Цель последнего касания и таймер — только для радио-боезаряда. */
+    private LivingEntity lastHitTarget = null;
+    private int hitTickTimer = 0;
+    private static final double CENTER_DETONATE_RADIUS_SQR = 0.09D;
+
+    public enum AmmoType {
+        NORMAL("normal"), PIERCING("piercing"), HOLLOW("hollow"), INCENDIARY("incendiary"), RADIO("radio");
+
+        public final String id;
+
+        AmmoType(String id) {
+            this.id = id;
+        }
+
+        public static AmmoType fromString(String str) {
+            for (AmmoType type : AmmoType.values()) {
+                if (type.id.equals(str)) return type;
+            }
+            return NORMAL;
+        }
+    }
+
+    public TurretBulletEntity(EntityType<? extends AbstractArrow> type, Level level) {
+        super(type, level);
+        this.noPhysics = true;
+        this.setNoGravity(true);
+    }
+
+    public TurretBulletEntity(Level level, LivingEntity shooter) {
+        // firedFromWeapon обязан быть null: AbstractArrow бросает IllegalArgumentException
+        // на непустом стеке, а пустой ItemStack всё равно считается «непустым» аргументом.
+        super(ModEntities.TURRET_BULLET.get(), shooter, level, ItemStack.EMPTY, null);
+        this.noPhysics = true;
+        this.setNoGravity(true);
+    }
+
+    @Override
+    public EntityDimensions getDimensions(Pose pose) {
+        if (getAmmoType() == AmmoType.RADIO && getFlightDuration() >= RADIO_FUSE_ACTIVATION) {
+            // fixed() = абсолютные размеры (1.5 x 1.5 блока)
+            return EntityDimensions.fixed(1.5F, 1.5F);
+        }
+        return super.getDimensions(pose);
+    }
+
+    @Override
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(AMMO_ID, "default");
+        builder.define(AMMO_TYPE, "normal");
+        builder.define(FLIGHT_TIME, 0);
+    }
+
+    public void setAmmoType(AmmoRegistry.AmmoType ammoType) {
+        if (ammoType == null) return;
+        this.baseDamage = ammoType.damage;
+        this.baseSpeed = ammoType.speed;
+        this.entityData.set(AMMO_ID, ammoType.id);
+
+        if (ammoType.id.contains("piercing")) {
+            this.ammoType = AmmoType.PIERCING;
+            this.entityData.set(AMMO_TYPE, "piercing");
+        } else if (ammoType.id.contains("hollow")) {
+            this.ammoType = AmmoType.HOLLOW;
+            this.entityData.set(AMMO_TYPE, "hollow");
+        } else if (ammoType.id.contains("fire") || ammoType.id.contains("incendiary")) {
+            this.ammoType = AmmoType.INCENDIARY;
+            this.entityData.set(AMMO_TYPE, "incendiary");
+        } else if (ammoType.id.contains("radio")) {
+            this.ammoType = AmmoType.RADIO;
+            this.entityData.set(AMMO_TYPE, "radio");
+        } else {
+            this.ammoType = AmmoType.NORMAL;
+            this.entityData.set(AMMO_TYPE, "normal");
+        }
+
+        this.setBaseDamage(baseDamage);
+    }
+
+    public String getAmmoId() {
+        return this.entityData.get(AMMO_ID);
+    }
+
+    public AmmoType getAmmoType() {
+        return AmmoType.fromString(this.entityData.get(AMMO_TYPE));
+    }
+
+    public int getFlightDuration() {
+        return this.entityData.get(FLIGHT_TIME);
+    }
+
+    private void setFlightDuration(int ticks) {
+        this.entityData.set(FLIGHT_TIME, ticks);
+    }
+
+    public void setBallisticTrajectory(Vec3 startPos, Vec3 velocity) {
+        this.setPos(startPos.x, startPos.y, startPos.z);
+        this.setDeltaMovement(velocity);
+        this.initialSpeed = (float) velocity.length();
+        this.initialPosition = startPos;
+        this.alignToVelocity();
+    }
+
+    public void shootBallisticFromRotation(LivingEntity shooter, float pitch, float yaw, float rollOffset,
+                                           float speed, float divergence) {
+        Vec3 lookDir = getLookDirFromRotation(pitch, yaw);
+        if (divergence > 0) lookDir = addDispersion(lookDir, divergence);
+        Vec3 velocity = lookDir.scale(speed);
+        double startX = shooter.getX();
+        double startY = shooter.getEyeY() - 0.1;
+        double startZ = shooter.getZ();
+        Vec3 offset = lookDir.normalize().scale(0.5);
+        Vec3 startPos = new Vec3(startX, startY, startZ).add(offset);
+        setBallisticTrajectory(startPos, velocity);
+    }
+
+    private static Vec3 getLookDirFromRotation(float pitch, float yaw) {
+        float pitchRad = pitch * ((float) Math.PI / 180.0F);
+        float yawRad = yaw * ((float) Math.PI / 180.0F);
+        return new Vec3(-Math.sin(yawRad) * Math.cos(pitchRad),
+                -Math.sin(pitchRad),
+                Math.cos(yawRad) * Math.cos(pitchRad));
+    }
+
+    private Vec3 addDispersion(Vec3 baseDir, float divergence) {
+        Vec3 normalized = baseDir.normalize();
+        double dx = normalized.x + (this.random.nextGaussian() * divergence * 0.1);
+        double dy = normalized.y + (this.random.nextGaussian() * divergence * 0.1);
+        double dz = normalized.z + (this.random.nextGaussian() * divergence * 0.1);
+        return new Vec3(dx, dy, dz).normalize().scale(baseDir.length());
+    }
+
+    @Override
+    public void tick() {
+        if (this.isRemoved() || this.inGround) {
+            this.discard();
+            return;
+        }
+
+        this.spin += 20.0F;
+        setFlightDuration(getFlightDuration() + 1);
+
+        // Расширение хитбокса с сохранением центра (только у радио-боезаряда)
+        if (getFlightDuration() == RADIO_FUSE_ACTIVATION && getAmmoType() == AmmoType.RADIO) {
+            this.refreshDimensions();
+        }
+
+        if (initialPosition != null && this.position().distanceTo(initialPosition) > MAX_FLIGHT_DISTANCE) {
+            this.discard();
+            return;
+        }
+
+        if (this.tickCount > 200) {
+            this.discard();
+            return;
+        }
+
+        // Логика детонации (RADIO)
+        if (getAmmoType() == AmmoType.RADIO && lastHitTarget != null) {
+            this.hitTickTimer++;
+
+            if (this.hitTickTimer >= 1 || !lastHitTarget.isAlive()) {
+                applyRadioExplosion(this.position());
+                this.discard();
+                return;
+            }
+        }
+
+        // Сохраняем позицию ДО движения
+        Vec3 startPos = this.position();
+        Vec3 motion = this.getDeltaMovement();
+        Vec3 endPos = startPos.add(motion);
+
+        HitResult hit = traceHit(startPos, endPos);
+        if (hit.getType() != HitResult.Type.MISS) {
+            handleHitResult(hit);
+            if (this.isRemoved()) {
+                return;
+            }
+        }
+
+        // Движение (только один раз)
+        this.setPos(endPos.x, endPos.y, endPos.z);
+        motion = motion.scale(AIR_RESISTANCE).add(0.0, -BULLET_GRAVITY, 0.0);
+        this.setDeltaMovement(motion);
+        this.alignToVelocity();
+    }
+
+    private void applyRadioExplosion(Vec3 center) {
+        playHitSound();
+
+        if (!this.level().isClientSide) {
+            AABB box = new AABB(
+                    center.x - 1.8D, center.y - 1.8D, center.z - 1.8D,
+                    center.x + 1.8D, center.y + 1.8D, center.z + 1.8D
+            );
+
+            List<Entity> entities = this.level().getEntities(this, box, e ->
+                    e instanceof LivingEntity living && living.isAlive() && living != this.getOwner()
+            );
+
+            for (Entity e : entities) {
+                LivingEntity living = (LivingEntity) e;
+                double distSqr = living.distanceToSqr(center);
+
+                if (distSqr > (1.8D * 1.8D)) continue;
+
+                double dist = Math.sqrt(distSqr);
+                float falloff = (float) (1.0 - (dist / 1.8D) * 0.7F);
+                float hollowDamage = calculateHollowDamage(living.getArmorValue());
+
+                float finalDamage = Math.max(hollowDamage * falloff * 0.6f, hollowDamage * 0.3f);
+
+                Entity owner = this.getOwner();
+                DamageSource source = owner instanceof LivingEntity livingOwner
+                        ? this.damageSources().mobProjectile(this, livingOwner)
+                        : this.damageSources().arrow(this, owner);
+
+                living.invulnerableTime = 0;
+
+                living.hurt(source, finalDamage);
+                checkAndCountKill(living);
+            }
+        }
+    }
+
+    public void alignToVelocity() {
+        Vec3 velocity = this.getDeltaMovement();
+        double horizontalDist = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
+        this.setYRot((float) (Math.atan2(velocity.x, velocity.z) * (180D / Math.PI)));
+        this.setXRot((float) (Math.atan2(velocity.y, horizontalDist) * (180D / Math.PI)));
+        if (this.tickCount == 0) {
+            this.yRotO = this.getYRot();
+            this.xRotO = this.getXRot();
+        }
+    }
+
+    @Override
+    public void lerpMotion(double x, double y, double z) {
+        super.lerpMotion(x, y, z);
+        this.alignToVelocity();
+    }
+
+    /**
+     * В 1.20.1 направление приходило в custom spawn data, и клиент сразу ставил
+     * {@code yRotO/xRotO}, иначе пуля первые кадры интерполировала поворот от
+     * нуля и визуально проворачивалась.
+     * <p>
+     * В 1.21 того механизма нет. Vanilla {@code recreateFromPacket} выставляет
+     * обе оси ({@code xRot} и {@code yRot}) из пакета появления, но забывает про
+     * предыдущие углы, поэтому поворот всё равно интерполируется от нуля.
+     * Здесь они прижимаются к только что полученным значениям — обе оси сразу.
+     * <p>
+     * {@code alignToVelocity} здесь не вызывается намеренно: скорость приходит
+     * отдельным пакетом позже, и на момент спавна она нулевая, что обнулило бы
+     * только что выставленный поворот.
+     */
+    @Override
+    public void recreateFromPacket(ClientboundAddEntityPacket packet) {
+        super.recreateFromPacket(packet);
+        this.yRotO = this.getYRot();
+        this.xRotO = this.getXRot();
+    }
+
+    private void handleHitResult(HitResult hit) {
+        if (hit.getType() == HitResult.Type.ENTITY) {
+            EntityHitResult entityHit = (EntityHitResult) hit;
+            handleEntityHit(entityHit.getEntity());
+        } else if (hit.getType() == HitResult.Type.BLOCK) {
+            this.onHitBlock((BlockHitResult) hit);
+        }
+    }
+
+    private void handleEntityHit(Entity target) {
+        if (!(target instanceof LivingEntity livingTarget)) return;
+
+        AmmoType currentType = getAmmoType();
+
+        if (currentType == AmmoType.RADIO) {
+            if (lastHitTarget == null) {
+                this.lastHitTarget = livingTarget;
+                this.hitTickTimer = 0;
+
+                float contactDamage = calculateHollowDamage(livingTarget.getArmorValue());
+                Entity owner = this.getOwner();
+                DamageSource source = owner instanceof LivingEntity livingOwner
+                        ? this.damageSources().mobProjectile(this, livingOwner)
+                        : this.damageSources().arrow(this, owner);
+
+                livingTarget.invulnerableTime = 0;
+
+                livingTarget.hurt(source, contactDamage * 0.4f);
+                checkAndCountKill(livingTarget);
+            }
+            return;
+        }
+
+        float finalDamage = calculateDamage(livingTarget, currentType);
+        Entity owner = this.getOwner();
+        DamageSource source = owner instanceof LivingEntity livingOwner
+                ? this.damageSources().mobProjectile(this, livingOwner)
+                : this.damageSources().arrow(this, owner);
+
+        livingTarget.invulnerableTime = 0;
+
+        if (livingTarget.hurt(source, finalDamage)) {
+            applySpecialEffect(livingTarget, currentType);
+            checkAndCountKill(livingTarget);
+        }
+
+        playHitSound();
+        this.discard();
+    }
+
+    private HitResult traceHit(Vec3 start, Vec3 end) {
+        // Радио-боезаряд — не пуля, а воздушный взрыватель: его enlarged хитбокс
+        // (1.5 x 1.5 после 5 тиков) должен срабатывать по близости, а не по лучу.
+        if (getAmmoType() == AmmoType.RADIO && getFlightDuration() >= RADIO_FUSE_ACTIVATION) {
+            EntityHitResult proximity = findProximityHit();
+            if (proximity != null) return proximity;
+        }
+
+        HitResult blockHit = this.level().clip(new ClipContext(
+                start, end,
+                ClipContext.Block.COLLIDER,
+                ClipContext.Fluid.NONE,
+                this
+        ));
+
+        Vec3 endForEntities = end;
+        if (blockHit.getType() != HitResult.Type.MISS) {
+            endForEntities = blockHit.getLocation();
+        }
+
+        float raycastSize = getAmmoType() == AmmoType.RADIO && getFlightDuration() >= RADIO_FUSE_ACTIVATION
+                ? 1.0F : 0.5F;
+        AABB sweep = this.getBoundingBox().expandTowards(end.subtract(start)).inflate(raycastSize);
+        EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(
+                this.level(), this,
+                start, endForEntities,
+                sweep,
+                e -> e.isAlive() && e != this.getOwner() && e.isPickable()
+        );
+
+        return entityHit != null ? entityHit : blockHit;
+    }
+
+    /** Ближайшая живая цель внутри хитбокса взрывателя, либо null. */
+    private EntityHitResult findProximityHit() {
+        AABB fuse = this.getBoundingBox().inflate(PROXIMITY_FUSE_MARGIN);
+
+        Entity closest = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (Entity candidate : this.level().getEntities(this, fuse,
+                e -> e instanceof LivingEntity living
+                        && living.isAlive()
+                        && e != this.getOwner()
+                        && e.isPickable())) {
+            double distance = candidate.distanceToSqr(this.position());
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                closest = candidate;
+            }
+        }
+
+        return closest == null ? null : new EntityHitResult(closest, this.position());
+    }
+
+    @Override
+    protected void onHitBlock(BlockHitResult result) {
+        if (!this.level().isClientSide) {
+            BlockState state = this.level().getBlockState(result.getBlockPos());
+            if (isGlass(state)) {
+                this.level().destroyBlock(result.getBlockPos(), true);
+            }
+            playGroundSound();
+            this.discard();
+        }
+    }
+
+    /** В 1.21.1 {@code AbstractGlassBlock} больше нет: стекло — это подтипы {@code TransparentBlock}. */
+    private static boolean isGlass(BlockState state) {
+        return state.getBlock() instanceof StainedGlassBlock
+                || state.getBlock() instanceof TintedGlassBlock
+                || state.getBlock() instanceof StainedGlassPaneBlock;
+    }
+
+    private float calculateDamage(LivingEntity target, AmmoType type) {
+        float armor = (float) target.getArmorValue();
+        switch (type) {
+            case PIERCING:
+                return calculatePiercingDamage(armor);
+            case HOLLOW:
+                return calculateHollowDamage(armor);
+            case RADIO:
+                return calculateHollowDamage(armor);
+            case INCENDIARY:
+                return calculateIncendiaryDamage(armor);
+            default:
+                return Math.max(baseDamage * (1.0f - armor * 0.02f), baseDamage * 0.4f);
+        }
+    }
+
+    /**
+     * Бронебойный: высокий урон и почти полное игнорирование брони.
+     * Голый против брони — 19, в полном комплекте — всё ещё ~16, потому что
+     * множитель урона зависит от брони лишь на 55%.
+     */
+    private float calculatePiercingDamage(float armor) {
+        float penetration = Math.min(0.60f, 0.20f + baseDamage * 0.02f + baseSpeed * 0.05f);
+        float raw = baseDamage * (1.0f + penetration);
+        float armorFactor = 1.0f - (armor / (armor + 80.0f));
+        return Math.max(raw * (0.45f + 0.55f * armorFactor), baseDamage * 0.75f);
+    }
+
+    /**
+     * Экспансивный: сильнее всех без брони, но быстро вязнет в ней.
+     * Голый — 13.6, в полном комплекте — 4.7. Радио-контакт и взрыв в воздухе
+     * используют ту же формулу, так как это тот же тип сердечника.
+     */
+    private float calculateHollowDamage(float armor) {
+        float armorMultiplier = Math.max(0.40f, 1.70f - (armor / 18.0f));
+        return baseDamage * armorMultiplier;
+    }
+
+    /** Зажигательный: игнорирует броню почти полностью, но бьёт слабо и поджигает. */
+    private float calculateIncendiaryDamage(float armor) {
+        return Math.max(baseDamage * (1.0f - armor * 0.015f), baseDamage * 0.5f);
+    }
+
+    private void applySpecialEffect(LivingEntity target, AmmoType type) {
+        if (type == AmmoType.INCENDIARY) target.igniteForSeconds(5);
+    }
+
+    private void playHitSound() {
+        if (ModSounds.BULLET_IMPACT.isBound()) {
+            this.playSound(ModSounds.BULLET_IMPACT.get(), 0.5F, 0.9F + this.random.nextFloat() * 0.2F);
+        } else {
+            this.playSound(SoundEvents.GENERIC_HURT, 0.5F, 1.0F);
+        }
+    }
+
+    private void playGroundSound() {
+        if (ModSounds.BULLET_GROUND.isBound()) {
+            this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
+                    ModSounds.BULLET_GROUND.get(), net.minecraft.sounds.SoundSource.PLAYERS,
+                    0.5F, 0.9F + this.random.nextFloat() * 0.2F);
+        } else {
+            this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
+                    SoundEvents.STONE_HIT, net.minecraft.sounds.SoundSource.PLAYERS,
+                    0.5F, 1.0F);
+        }
+    }
+
+    @Override
+    protected SoundEvent getDefaultHitGroundSoundEvent() {
+        return ModSounds.BULLET_GROUND.isBound() ? ModSounds.BULLET_GROUND.get() : SoundEvents.ARROW_HIT;
+    }
+
+    @Override
+    public ItemStack getDefaultPickupItem() {
+        return ItemStack.EMPTY;
+    }
+
+    @Override
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+    }
+
+    @Override
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
+        return cache;
+    }
+
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        if (this.initialPosition != null) {
+            tag.putDouble("InitialX", this.initialPosition.x);
+            tag.putDouble("InitialY", this.initialPosition.y);
+            tag.putDouble("InitialZ", this.initialPosition.z);
+        }
+        tag.putFloat("InitialSpeed", this.initialSpeed);
+        tag.putInt("FlightTime", getFlightDuration());
+        if (lastHitTarget != null) {
+            tag.putUUID("LastHitUUID", lastHitTarget.getUUID());
+        }
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        if (tag.contains("InitialX")) {
+            this.initialPosition = new Vec3(
+                    tag.getDouble("InitialX"),
+                    tag.getDouble("InitialY"),
+                    tag.getDouble("InitialZ")
+            );
+        }
+        this.initialSpeed = tag.getFloat("InitialSpeed");
+        setFlightDuration(tag.getInt("FlightTime"));
+    }
+
+    /**
+     * Счётчик убийств ведёт турель, из которой выпущена пуля. Сами турели
+     * приезжают следующей пачкой, поэтому пока это только точка расширения.
+     */
+    private void checkAndCountKill(LivingEntity target) {
+    }
+
+    /**
+     * Ищет тип боезаряда по строковому id предмета.
+     */
+    public static AmmoRegistry.AmmoType lookupAmmoType(String itemId) {
+        if (itemId == null || itemId.isEmpty()) return null;
+        var item = BuiltInRegistries.ITEM.get(ResourceLocation.parse(itemId));
+        return item == null ? null : AmmoRegistry.getAmmoTypeFromItem(item);
+    }
+}

@@ -310,6 +310,8 @@ public class ModCreativeTabs {
                         output.accept(ModItems.DETONATOR.get());
                         output.accept(ModItems.RANGE_DETONATOR.get());
 
+                        output.accept(ModItems.MACHINEGUN.get());
+
                         output.accept(ModItems.AMMO_TURRET.get());
                         output.accept(ModItems.AMMO_TURRET_HOLLOW.get());
                         output.accept(ModItems.AMMO_TURRET_PIERCING.get());
