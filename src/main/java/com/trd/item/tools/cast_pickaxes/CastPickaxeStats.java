@@ -78,7 +78,7 @@ public class CastPickaxeStats {
         };
 
         return new CastPickaxeStats(
-                net.minecraft.world.item.Tiers.IRON,
+                net.minecraft.world.item.Tiers.DIAMOND,
                 40,
                 12.0f,
                 5.0f,
@@ -97,7 +97,7 @@ public class CastPickaxeStats {
 
         // Стальная: TunnelMiner (длинный туннель, 7 блоков)
         return new CastPickaxeStats(
-                net.minecraft.world.item.Tiers.DIAMOND,
+                net.minecraft.world.item.Tiers.NETHERITE,
                 50,
                 15.6f,
                 5.0f,

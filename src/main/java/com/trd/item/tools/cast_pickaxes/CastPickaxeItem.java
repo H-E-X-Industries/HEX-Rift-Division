@@ -329,7 +329,7 @@ public class CastPickaxeItem extends PickaxeItem implements GeoItem {
         float volume = 0.4f + chargePercent * 0.8f;
         float pitch = 1.2f - chargePercent * 0.4f;
         level.playSound(null, pos,
-                SoundEvents.STONE_HIT,
+                com.trd.sound.ModSounds.PICKAXE_HIT.get(),
                 SoundSource.PLAYERS, volume, pitch);
     }
 
@@ -497,7 +497,7 @@ public class CastPickaxeItem extends PickaxeItem implements GeoItem {
             float volume = 0.2F + (chargePercent * 0.6F);
             float pitch = 1.6F - (chargePercent * 0.4F);
             level.playSound(null, target.getX(), target.getY() + target.getBbHeight() * 0.5, target.getZ(),
-                    SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS, volume, pitch);
+                    com.trd.sound.ModSounds.BULLET_IMPACT.get(), SoundSource.PLAYERS, volume, pitch);
 
             return true;
         }
@@ -512,6 +512,15 @@ public class CastPickaxeItem extends PickaxeItem implements GeoItem {
             return false;
         }
         return super.hurtEnemy(stack, target, attacker);
+    }
+
+    /**
+     * Пока идёт зарядка или стоит кулдаун — блоки нельзя ломать обычным ударом.
+     * В 1.20.1 это было переопределением {@code Item#onBlockStartBreak}; в 1.21.1
+     * метода больше нет, поэтому проверка живёт в {@link CastPickaxeBreakHandler}.
+     */
+    public boolean isLockedOut(Player player) {
+        return player.isUsingItem() || player.getCooldowns().isOnCooldown(this);
     }
 
     @Override

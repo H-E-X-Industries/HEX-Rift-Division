@@ -101,7 +101,7 @@ public class SwitchBlock extends BaseEntityBlock {
         }
 
         if (playSound) {
-            level.playSound(null, pos, net.minecraft.sounds.SoundEvents.LEVER_CLICK, SoundSource.BLOCKS, 0.3f, powered ? 1.0f : 0.9f);
+            level.playSound(null, pos, com.trd.sound.ModSounds.LEVER1.get(), SoundSource.BLOCKS, 0.3f, powered ? 1.0f : 0.9f);
         }
         level.updateNeighborsAt(pos, this);
     }
