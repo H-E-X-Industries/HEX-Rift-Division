@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "trd:block/aviabomb_mine" },
+    "facing=east":  { "model": "trd:block/aviabomb_mine", "y": 90 },
+    "facing=south": { "model": "trd:block/aviabomb_mine", "y": 180 },
+    "facing=west":  { "model": "trd:block/aviabomb_mine", "y": 270 }
+  }
+}

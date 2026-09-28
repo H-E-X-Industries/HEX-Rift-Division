@@ -115,6 +115,6 @@
     }
   },
   "textures": {
-    "particle": "trd:item/ammo_turret_fire"
+    "particle": "trd:item/ammo/ammo_turret_fire"
   }
 }

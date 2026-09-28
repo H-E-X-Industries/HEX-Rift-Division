@@ -112,5 +112,23 @@ public class ModNetworking {
             com.trd.network.packet.rotation.ClearStanokRecipePacket.STREAM_CODEC,
             com.trd.network.packet.rotation.ClearStanokRecipePacket::handle
         );
+
+        registrar.playToServer(
+            com.trd.network.packet.guns.PacketShoot.TYPE,
+            com.trd.network.packet.guns.PacketShoot.STREAM_CODEC,
+            com.trd.network.packet.guns.PacketShoot::handle
+        );
+
+        registrar.playToServer(
+            com.trd.network.packet.guns.PacketReloadGun.TYPE,
+            com.trd.network.packet.guns.PacketReloadGun.STREAM_CODEC,
+            com.trd.network.packet.guns.PacketReloadGun::handle
+        );
+
+        registrar.playToServer(
+            com.trd.network.packet.guns.PacketUnloadGun.TYPE,
+            com.trd.network.packet.guns.PacketUnloadGun.STREAM_CODEC,
+            com.trd.network.packet.guns.PacketUnloadGun::handle
+        );
     }
 }

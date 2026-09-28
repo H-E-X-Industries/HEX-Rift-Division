@@ -55,6 +55,15 @@ public class ModClientSetup {
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.VISHELASHIVATEL_BE.get(), com.trd.client.render.ber.VishelachivatelRenderer::new);
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.STANOK_BE.get(), com.trd.client.render.StanokRenderer::new);
         // event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.FUEL_TANK_SMALL_BE.get(), com.trd.client.render.ber.FuelTankRenderer::new);
+
+        event.registerEntityRenderer(com.trd.entity.ModEntities.TURRET_BULLET.get(),
+                com.trd.client.gecko.entity.bullets.TurretBulletRenderer::new);
+    }
+
+    @SubscribeEvent
+    public static void registerKeyMappings(net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent event) {
+        event.register(com.trd.client.config.ModKeyBindings.RELOAD_KEY);
+        event.register(com.trd.client.config.ModKeyBindings.UNLOAD_KEY);
     }
 
     @SubscribeEvent

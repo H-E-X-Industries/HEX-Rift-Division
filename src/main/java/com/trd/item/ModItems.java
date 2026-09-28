@@ -216,6 +216,57 @@ public class ModItems {
     public static final DeferredItem<Item> BEAM_PLACER = ITEMS.register("beam_placer",
             () -> new com.trd.item.tools.BeamPlacerItem(new Item.Properties().stacksTo(1)));
 
+    // ═══════════════════════════════════════════════════════
+    // ВЗРЫВЧАТКА
+    // ═══════════════════════════════════════════════════════
+
+    public static final DeferredItem<Item> DETONATOR = ITEMS.register("detonator",
+            () -> new com.trd.item.weapons.activators.DetonatorItem(new Item.Properties()));
+    public static final DeferredItem<Item> RANGE_DETONATOR = ITEMS.register("range_detonator",
+            () -> new com.trd.item.weapons.activators.RangeDetonatorItem(new Item.Properties()));
+
+    static {
+        com.trd.api.tooltip.MachineTooltipRegistry.register(DETONATOR, "tooltip.trd.machine.detonator.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.register(RANGE_DETONATOR, "tooltip.trd.machine.range_detonator.desc");
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // ПАТРОНЫ
+    // ═══════════════════════════════════════════════════════
+
+    public static final DeferredItem<Item> AMMO_TURRET = ITEMS.register("ammo_turret",
+            () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 8.0f, 3.0f, false));
+    public static final DeferredItem<Item> AMMO_TURRET_PIERCING = ITEMS.register("ammo_turret_piercing",
+            () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 12.0f, 3.0f, true));
+    public static final DeferredItem<Item> AMMO_TURRET_HOLLOW = ITEMS.register("ammo_turret_hollow",
+            () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 8.0f, 3.0f, false));
+    public static final DeferredItem<Item> AMMO_TURRET_FIRE = ITEMS.register("ammo_turret_fire",
+            () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 6.0f, 3.0f, false));
+    public static final DeferredItem<Item> AMMO_TURRET_RADIO = ITEMS.register("ammo_turret_radio",
+            () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 9.0f, 3.0f, false));
+
+    // ═══════════════════════════════════════════════════════
+    // СНАРЯДЫ
+    // ═══════════════════════════════════════════════════════
+
+    // ═══════════════════════════════════════════════════════
+    // ПУШКА
+    // ═══════════════════════════════════════════════════════
+
+    public static final DeferredItem<Item> MACHINEGUN = ITEMS.register("machinegun",
+            () -> new com.trd.item.weapons.guns.MachineGunItem(new Item.Properties().stacksTo(1)));
+
+    static {
+        com.trd.api.tooltip.MachineTooltipRegistry.register(MACHINEGUN, "tooltip.trd.machine.machinegun.desc");
+    }
+
+    public static final DeferredItem<Item> MISSILE_100MM = ITEMS.register("missile_100mm",
+            () -> new com.trd.item.weapons.missiles.MissileItem(new Item.Properties(), "standard", 25.0f, 1.67f));
+    public static final DeferredItem<Item> MISSILE_100MM_HE = ITEMS.register("missile_100mm_he",
+            () -> new com.trd.item.weapons.missiles.MissileItem(new Item.Properties(), "he", 40.0f, 1.67f));
+    public static final DeferredItem<Item> MISSILE_100MM_FIRE = ITEMS.register("missile_100mm_fire",
+            () -> new com.trd.item.weapons.missiles.MissileItem(new Item.Properties(), "fire", 20.0f, 1.67f));
+
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);
     }
