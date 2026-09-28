@@ -27,6 +27,17 @@ public class ModBatteryItem extends Item {
         this.maxExtract = maxExtract;
     }
 
+    public int getCapacity() {
+        return this.capacity;
+    }
+
+    public static void setEnergy(ItemStack stack, long energy) {
+        net.minecraft.world.item.component.CustomData data = stack.getOrDefault(net.minecraft.core.component.DataComponents.CUSTOM_DATA, net.minecraft.world.item.component.CustomData.EMPTY);
+        net.minecraft.nbt.CompoundTag tag = data.copyTag();
+        tag.putLong("energy", energy);
+        stack.set(net.minecraft.core.component.DataComponents.CUSTOM_DATA, net.minecraft.world.item.component.CustomData.of(tag));
+    }
+
     public static void addEnergyTooltip(List<Component> tooltip, long current, long max, ChatFormatting format) {
         tooltip.add(Component.translatable("tooltip.trd.energy", current, max).withStyle(format));
     }

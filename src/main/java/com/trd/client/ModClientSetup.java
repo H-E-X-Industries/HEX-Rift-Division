@@ -391,6 +391,18 @@ public class ModClientSetup {
                 }
             }
         }
+
+        // Подмена модели для невидимых блоков коллизии балок
+        net.minecraft.client.resources.model.ModelResourceLocation beamBaseLocation =
+                net.minecraft.client.renderer.block.BlockModelShaper.stateToModelLocation(com.trd.block.basic.ModBlocks.BEAM_BLOCK.get().defaultBlockState());
+        net.minecraft.client.resources.model.BakedModel beamBaseModel = event.getModels().get(beamBaseLocation);
+        if (beamBaseModel != null) {
+            for (net.minecraft.world.level.block.state.BlockState state : com.trd.block.basic.ModBlocks.BEAM_COLLISION.get().getStateDefinition().getPossibleStates()) {
+                net.minecraft.client.resources.model.ModelResourceLocation location =
+                        net.minecraft.client.renderer.block.BlockModelShaper.stateToModelLocation(state);
+                event.getModels().put(location, new com.trd.client.render.DynamicBeamModel(beamBaseModel));
+            }
+        }
     }
 
     @SubscribeEvent

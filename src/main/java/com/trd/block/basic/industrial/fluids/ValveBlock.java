@@ -144,10 +144,10 @@ public class ValveBlock extends BaseEntityBlock {
         manager.removeNode(pos);
 
         if (open) {
-            level.playSound(null, pos, SoundEvents.LEVER_CLICK, SoundSource.BLOCKS, 0.3f, 1.0f);
+            level.playSound(null, pos, com.trd.sound.ModSounds.LEVER1.get(), SoundSource.BLOCKS, 0.3f, 1.0f);
             manager.addNode(pos); // открыт -> клапан снова узел сети
         } else {
-            level.playSound(null, pos, SoundEvents.LEVER_CLICK, SoundSource.BLOCKS, 0.3f, 0.9f);
+            level.playSound(null, pos, com.trd.sound.ModSounds.LEVER1.get(), SoundSource.BLOCKS, 0.3f, 0.9f);
             // закрыт -> узел НЕ добавляем, поток разорван
         }
         level.updateNeighborsAt(pos, this);

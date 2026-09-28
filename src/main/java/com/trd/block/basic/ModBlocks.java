@@ -9,6 +9,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredBlock;
+import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import com.trd.api.rotation.ShaftDiameter;
 import com.trd.api.rotation.ShaftMaterial;
@@ -265,7 +266,309 @@ public class ModBlocks {
 
     public static final DeferredBlock<Block> CONCRETE = registerBlock("concrete",
             () -> new Block(BlockBehaviour.Properties.of()
-                    .strength(4.0F, 18.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
+                    .strength(4.0F, 54.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
+
+    // ═══════════════════════════════════════════════════════
+    // БЕТОННАЯ ЛИНЕЙКА (строительные блоки)
+    // ═══════════════════════════════════════════════════════
+
+    public static final DeferredBlock<Block> CONCRETE_LINE = registerBlock("concrete_line",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.0F, 54.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<Block> CONCRETE_CUT = registerBlock("concrete_cut",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.0F, 54.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<Block> CONCRETE_RAIL = registerBlock("concrete_rail",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.0F, 54.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<Block> CONCRETE_VENT = registerBlock("concrete_vent",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.0F, 54.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<Block> CONCRETE_REBAR = registerBlock("concrete_rebar",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(10.0F, 90.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<Block> CONCRETE_MOSSY = registerBlock("concrete_mossy",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.0F, 54.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<Block> CONCRETE_OLD = registerBlock("concrete_old",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(3.5F, 30.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<Block> CONCRETE_HAZARD_NEW = registerBlock("concrete_hazard_new",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.0F, 54.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<Block> CONCRETE_HAZARD_OLD = registerBlock("concrete_hazard_old",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.0F, 54.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<Block> CONCRETE_TILE = registerBlock("concrete_tile",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.5F, 60.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<Block> CONCRETE_TILE_ALT = registerBlock("concrete_tile_alt",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.5F, 60.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<Block> CONCRETE_TILE_ALT_BLUE = registerBlock("concrete_tile_alt_blue",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.5F, 60.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<Block> CONCRETE_STRIPPED = registerBlock("concrete_stripped",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.0F, 48.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<Block> CONCRETE_REINFORCED = registerBlock("concrete_reinforced",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.0F, 48.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<Block> CONCRETE_REINFORCED_HEAVY = registerBlock("concrete_reinforced_heavy",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.0F, 48.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<Block> CONCRETE_NET = registerBlock("concrete_net",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(5.5F, 135.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<net.minecraft.world.level.block.TintedGlassBlock> ARMORED_GLASS = registerBlock("armored_glass",
+            () -> new net.minecraft.world.level.block.TintedGlassBlock(BlockBehaviour.Properties.of()
+                    .strength(3.0F, 24.0F)
+                    .sound(net.minecraft.world.level.block.SoundType.STONE)
+                    .requiresCorrectToolForDrops()
+                    .noOcclusion()
+                    .isValidSpawn((state, level, pos, entity) -> false)
+                    .isRedstoneConductor((state, level, pos) -> false)
+                    .isSuffocating((state, level, pos) -> false)
+                    .isViewBlocking((state, level, pos) -> false)));
+
+    // Бетонные плиты и лестницы
+    public static final DeferredBlock<net.minecraft.world.level.block.StairBlock> CONCRETE_STAIRS = registerBlock("concrete_stairs",
+            () -> new net.minecraft.world.level.block.StairBlock(CONCRETE.get().defaultBlockState(),
+                    BlockBehaviour.Properties.ofFullCopy(CONCRETE.get())));
+    public static final DeferredBlock<net.minecraft.world.level.block.SlabBlock> CONCRETE_SLAB = registerBlock("concrete_slab",
+            () -> new net.minecraft.world.level.block.SlabBlock(BlockBehaviour.Properties.ofFullCopy(CONCRETE.get())));
+
+    public static final DeferredBlock<net.minecraft.world.level.block.StairBlock> CONCRETE_MOSSY_STAIRS = registerBlock("concrete_mossy_stairs",
+            () -> new net.minecraft.world.level.block.StairBlock(CONCRETE_MOSSY.get().defaultBlockState(),
+                    BlockBehaviour.Properties.ofFullCopy(CONCRETE_MOSSY.get())));
+    public static final DeferredBlock<net.minecraft.world.level.block.SlabBlock> CONCRETE_MOSSY_SLAB = registerBlock("concrete_mossy_slab",
+            () -> new net.minecraft.world.level.block.SlabBlock(BlockBehaviour.Properties.ofFullCopy(CONCRETE_MOSSY.get())));
+
+    public static final DeferredBlock<net.minecraft.world.level.block.StairBlock> CONCRETE_OLD_STAIRS = registerBlock("concrete_old_stairs",
+            () -> new net.minecraft.world.level.block.StairBlock(CONCRETE_OLD.get().defaultBlockState(),
+                    BlockBehaviour.Properties.ofFullCopy(CONCRETE_OLD.get())));
+    public static final DeferredBlock<net.minecraft.world.level.block.SlabBlock> CONCRETE_OLD_SLAB = registerBlock("concrete_old_slab",
+            () -> new net.minecraft.world.level.block.SlabBlock(BlockBehaviour.Properties.ofFullCopy(CONCRETE_OLD.get())));
+
+    public static final DeferredBlock<net.minecraft.world.level.block.StairBlock> CONCRETE_HAZARD_NEW_STAIRS = registerBlock("concrete_hazard_new_stairs",
+            () -> new net.minecraft.world.level.block.StairBlock(CONCRETE_HAZARD_NEW.get().defaultBlockState(),
+                    BlockBehaviour.Properties.ofFullCopy(CONCRETE_HAZARD_NEW.get())));
+    public static final DeferredBlock<net.minecraft.world.level.block.SlabBlock> CONCRETE_HAZARD_NEW_SLAB = registerBlock("concrete_hazard_new_slab",
+            () -> new net.minecraft.world.level.block.SlabBlock(BlockBehaviour.Properties.ofFullCopy(CONCRETE_HAZARD_NEW.get())));
+
+    public static final DeferredBlock<net.minecraft.world.level.block.StairBlock> CONCRETE_HAZARD_OLD_STAIRS = registerBlock("concrete_hazard_old_stairs",
+            () -> new net.minecraft.world.level.block.StairBlock(CONCRETE_HAZARD_OLD.get().defaultBlockState(),
+                    BlockBehaviour.Properties.ofFullCopy(CONCRETE_HAZARD_OLD.get())));
+    public static final DeferredBlock<net.minecraft.world.level.block.SlabBlock> CONCRETE_HAZARD_OLD_SLAB = registerBlock("concrete_hazard_old_slab",
+            () -> new net.minecraft.world.level.block.SlabBlock(BlockBehaviour.Properties.ofFullCopy(CONCRETE_HAZARD_OLD.get())));
+
+    public static final DeferredBlock<net.minecraft.world.level.block.StairBlock> CONCRETE_TILE_STAIRS = registerBlock("concrete_tile_stairs",
+            () -> new net.minecraft.world.level.block.StairBlock(CONCRETE_TILE.get().defaultBlockState(),
+                    BlockBehaviour.Properties.ofFullCopy(CONCRETE_TILE.get())));
+    public static final DeferredBlock<net.minecraft.world.level.block.SlabBlock> CONCRETE_TILE_SLAB = registerBlock("concrete_tile_slab",
+            () -> new net.minecraft.world.level.block.SlabBlock(BlockBehaviour.Properties.ofFullCopy(CONCRETE_TILE.get())));
+
+    public static final DeferredBlock<net.minecraft.world.level.block.StairBlock> CONCRETE_TILE_ALT_STAIRS = registerBlock("concrete_tile_alt_stairs",
+            () -> new net.minecraft.world.level.block.StairBlock(CONCRETE_TILE_ALT.get().defaultBlockState(),
+                    BlockBehaviour.Properties.ofFullCopy(CONCRETE_TILE_ALT.get())));
+    public static final DeferredBlock<net.minecraft.world.level.block.SlabBlock> CONCRETE_TILE_ALT_SLAB = registerBlock("concrete_tile_alt_slab",
+            () -> new net.minecraft.world.level.block.SlabBlock(BlockBehaviour.Properties.ofFullCopy(CONCRETE_TILE_ALT.get())));
+
+    public static final DeferredBlock<net.minecraft.world.level.block.StairBlock> CONCRETE_TILE_ALT_BLUE_STAIRS = registerBlock("concrete_tile_alt_blue_stairs",
+            () -> new net.minecraft.world.level.block.StairBlock(CONCRETE_TILE_ALT_BLUE.get().defaultBlockState(),
+                    BlockBehaviour.Properties.ofFullCopy(CONCRETE_TILE_ALT_BLUE.get())));
+    public static final DeferredBlock<net.minecraft.world.level.block.SlabBlock> CONCRETE_TILE_ALT_BLUE_SLAB = registerBlock("concrete_tile_alt_blue_slab",
+            () -> new net.minecraft.world.level.block.SlabBlock(BlockBehaviour.Properties.ofFullCopy(CONCRETE_TILE_ALT_BLUE.get())));
+
+    public static final DeferredBlock<net.minecraft.world.level.block.StairBlock> CONCRETE_STRIPPED_STAIRS = registerBlock("concrete_stripped_stairs",
+            () -> new net.minecraft.world.level.block.StairBlock(CONCRETE_STRIPPED.get().defaultBlockState(),
+                    BlockBehaviour.Properties.ofFullCopy(CONCRETE_STRIPPED.get())));
+    public static final DeferredBlock<net.minecraft.world.level.block.SlabBlock> CONCRETE_STRIPPED_SLAB = registerBlock("concrete_stripped_slab",
+            () -> new net.minecraft.world.level.block.SlabBlock(BlockBehaviour.Properties.ofFullCopy(CONCRETE_STRIPPED.get())));
+
+    public static final DeferredBlock<net.minecraft.world.level.block.StairBlock> CONCRETE_REINFORCED_STAIRS = registerBlock("concrete_reinforced_stairs",
+            () -> new net.minecraft.world.level.block.StairBlock(CONCRETE_REINFORCED.get().defaultBlockState(),
+                    BlockBehaviour.Properties.ofFullCopy(CONCRETE_REINFORCED.get())));
+    public static final DeferredBlock<net.minecraft.world.level.block.SlabBlock> CONCRETE_REINFORCED_SLAB = registerBlock("concrete_reinforced_slab",
+            () -> new net.minecraft.world.level.block.SlabBlock(BlockBehaviour.Properties.ofFullCopy(CONCRETE_REINFORCED.get())));
+
+    public static final DeferredBlock<net.minecraft.world.level.block.StairBlock> CONCRETE_REINFORCED_HEAVY_STAIRS = registerBlock("concrete_reinforced_heavy_stairs",
+            () -> new net.minecraft.world.level.block.StairBlock(CONCRETE_REINFORCED_HEAVY.get().defaultBlockState(),
+                    BlockBehaviour.Properties.ofFullCopy(CONCRETE_REINFORCED_HEAVY.get())));
+    public static final DeferredBlock<net.minecraft.world.level.block.SlabBlock> CONCRETE_REINFORCED_HEAVY_SLAB = registerBlock("concrete_reinforced_heavy_slab",
+            () -> new net.minecraft.world.level.block.SlabBlock(BlockBehaviour.Properties.ofFullCopy(CONCRETE_REINFORCED_HEAVY.get())));
+
+    // ═══════════════════════════════════════════════════════
+    // СБОРНЫЕ / АРМИРОВАННЫЕ БЛОКИ
+    // ═══════════════════════════════════════════════════════
+
+    public static final DeferredBlock<Block> CONCRETE_CONSTRUCT_BLOCK = registerBlock("concrete_construct_block",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(15.0F, 270.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
+    public static final DeferredBlock<net.minecraft.world.level.block.StairBlock> CONCRETE_CONSTRUCT_BLOCK_STAIRS = registerBlock("concrete_construct_block_stairs",
+            () -> new net.minecraft.world.level.block.StairBlock(CONCRETE_CONSTRUCT_BLOCK.get().defaultBlockState(),
+                    BlockBehaviour.Properties.ofFullCopy(CONCRETE_CONSTRUCT_BLOCK.get())));
+    public static final DeferredBlock<net.minecraft.world.level.block.SlabBlock> CONCRETE_CONSTRUCT_BLOCK_SLAB = registerBlock("concrete_construct_block_slab",
+            () -> new net.minecraft.world.level.block.SlabBlock(BlockBehaviour.Properties.ofFullCopy(CONCRETE_CONSTRUCT_BLOCK.get())));
+
+    public static final DeferredBlock<Block> STEEL_CONSTRUCT_BLOCK = registerBlock("steel_construct_block",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(10.0F, 60.0F).sound(net.minecraft.world.level.block.SoundType.METAL).requiresCorrectToolForDrops()));
+    public static final DeferredBlock<net.minecraft.world.level.block.StairBlock> STEEL_CONSTRUCT_BLOCK_STAIRS = registerBlock("steel_construct_block_stairs",
+            () -> new net.minecraft.world.level.block.StairBlock(STEEL_CONSTRUCT_BLOCK.get().defaultBlockState(),
+                    BlockBehaviour.Properties.ofFullCopy(STEEL_CONSTRUCT_BLOCK.get())));
+    public static final DeferredBlock<net.minecraft.world.level.block.SlabBlock> STEEL_CONSTRUCT_BLOCK_SLAB = registerBlock("steel_construct_block_slab",
+            () -> new net.minecraft.world.level.block.SlabBlock(BlockBehaviour.Properties.ofFullCopy(STEEL_CONSTRUCT_BLOCK.get())));
+
+    public static final DeferredBlock<Block> STEEL_CONSTRUCT_BLOCK_REINFORCED = registerBlock("steel_construct_block_reinforced",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(30.0F, 380.0F).sound(net.minecraft.world.level.block.SoundType.METAL).requiresCorrectToolForDrops()));
+    public static final DeferredBlock<net.minecraft.world.level.block.StairBlock> STEEL_CONSTRUCT_BLOCK_REINFORCED_STAIRS = registerBlock("steel_construct_block_reinforced_stairs",
+            () -> new net.minecraft.world.level.block.StairBlock(STEEL_CONSTRUCT_BLOCK_REINFORCED.get().defaultBlockState(),
+                    BlockBehaviour.Properties.ofFullCopy(STEEL_CONSTRUCT_BLOCK_REINFORCED.get())));
+    public static final DeferredBlock<net.minecraft.world.level.block.SlabBlock> STEEL_CONSTRUCT_BLOCK_REINFORCED_SLAB = registerBlock("steel_construct_block_reinforced_slab",
+            () -> new net.minecraft.world.level.block.SlabBlock(BlockBehaviour.Properties.ofFullCopy(STEEL_CONSTRUCT_BLOCK_REINFORCED.get())));
+
+    // ═══════════════════════════════════════════════════════
+    // МИНЕРАЛЫ / КАМНИ / ПЛИТКА
+    // ═══════════════════════════════════════════════════════
+
+    public static final DeferredBlock<Block> MINERAL_BLOCK2 = registerBlock("mineral_block2",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(3.0F, 9.0F).sound(net.minecraft.world.level.block.SoundType.METAL).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<Block> MINERAL_TILE = registerBlock("mineral_tile",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(3.5F, 10.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<Block> DOLOMITE_TILE = registerBlock("dolomite_tile",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(3.0F, 9.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<Block> TILE_LIGHT = registerBlock("tile_light",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(2.5F, 8.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<Block> SULFUR_TILE = registerBlock("sulfur_tile",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(2.0F, 6.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<Block> SULFUR_BRICKS = registerBlock("sulfur_bricks",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(2.5F, 7.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
+
+    // ═══════════════════════════════════════════════════════
+    // МЕТАЛЛЫ / СТАЛЬ / БАЛКИ
+    // ═══════════════════════════════════════════════════════
+
+    public static final DeferredBlock<Block> DECO_STEEL = registerBlock("deco_steel",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(5.0F, 12.0F).sound(net.minecraft.world.level.block.SoundType.NETHERITE_BLOCK).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<Block> DECO_STEEL_DARK = registerBlock("deco_steel_dark",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(5.0F, 12.0F).sound(net.minecraft.world.level.block.SoundType.NETHERITE_BLOCK).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<Block> DECO_STEEL_SMOG = registerBlock("deco_steel_smog",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(5.0F, 12.0F).sound(net.minecraft.world.level.block.SoundType.NETHERITE_BLOCK).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<Block> DECO_LEAD = registerBlock("deco_lead",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(3.5F, 10.0F).sound(net.minecraft.world.level.block.SoundType.NETHERITE_BLOCK).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<Block> DECO_BEAM = registerBlock("deco_beam",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.0F, 10.0F).sound(net.minecraft.world.level.block.SoundType.NETHERITE_BLOCK).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<com.trd.block.basic.deco.BeamBlock> BEAM_BLOCK = registerBlock("beam_block",
+            () -> new com.trd.block.basic.deco.BeamBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)
+                    .strength(5.0f, 12.0f).noOcclusion().requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<com.trd.block.basic.deco.SteelPropsBlock> STEEL_PROPS = registerBlock("steel_props",
+            () -> new com.trd.block.basic.deco.SteelPropsBlock(BlockBehaviour.Properties.of()
+                    .strength(4.5F, 11.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
+
+    public static final DeferredBlock<com.trd.block.basic.deco.BarbedWireBlock> BARBED_WIRE = registerBlock("barbed_wire",
+            () -> new com.trd.block.basic.deco.BarbedWireBlock(BlockBehaviour.Properties.of()
+                    .strength(2F, 6.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops().noOcclusion().noCollission()));
+
+    public static final DeferredBlock<com.trd.block.basic.deco.WireFenceBlock> WIRE_FENCE = registerBlock("wire_fence",
+            () -> new com.trd.block.basic.deco.WireFenceBlock(BlockBehaviour.Properties.of()
+                    .strength(2F, 6.0F).sound(net.minecraft.world.level.block.SoundType.METAL).requiresCorrectToolForDrops().noOcclusion().forceSolidOn()));
+
+    public static final DeferredBlock<com.trd.block.basic.deco.WireFenceAltBlock> WIRE_FENCE_ALT = registerBlock("wire_fence_alt",
+            () -> new com.trd.block.basic.deco.WireFenceAltBlock(BlockBehaviour.Properties.of()
+                    .strength(2F, 6.0F).sound(net.minecraft.world.level.block.SoundType.METAL).requiresCorrectToolForDrops().noOcclusion().forceSolidOn()));
+
+    public static final DeferredBlock<com.trd.block.basic.deco.LampBlock> ROUND_LAMP = registerBlock("round_lamp",
+            () -> new com.trd.block.basic.deco.LampBlock(BlockBehaviour.Properties.of()
+                    .strength(6F, 60F)
+                    .sound(net.minecraft.world.level.block.SoundType.STONE)
+                    .requiresCorrectToolForDrops()
+                    .noOcclusion()
+                    .lightLevel(state -> 15)));
+
+    // Невидимые блоки коллизии под лучом (ставятся BeamPlacerItem)
+    public static final DeferredBlock<com.trd.block.basic.deco.BeamCollisionBlock> BEAM_COLLISION = BLOCKS.register("beam_collision",
+            () -> new com.trd.block.basic.deco.BeamCollisionBlock(BlockBehaviour.Properties.of()
+                    .strength(2.0f, 6.0f)
+                    .noOcclusion()
+                    .noLootTable()));
+
+    // ═══════════════════════════════════════════════════════
+    // ДЕРЕВО
+    // ═══════════════════════════════════════════════════════
+
+    public static final DeferredBlock<Block> SEQUOIA_PLANKS = registerBlock("sequoia_planks",
+            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_PLANKS)
+                    .strength(2.5f, 4.0f).requiresCorrectToolForDrops()));
+    public static final DeferredBlock<net.minecraft.world.level.block.StairBlock> SEQUOIA_STAIRS = registerBlock("sequoia_stairs",
+            () -> new net.minecraft.world.level.block.StairBlock(SEQUOIA_PLANKS.get().defaultBlockState(),
+                    BlockBehaviour.Properties.ofFullCopy(SEQUOIA_PLANKS.get())));
+    public static final DeferredBlock<net.minecraft.world.level.block.SlabBlock> SEQUOIA_SLAB = registerBlock("sequoia_slab",
+            () -> new net.minecraft.world.level.block.SlabBlock(BlockBehaviour.Properties.ofFullCopy(SEQUOIA_PLANKS.get())));
+
+    public static final DeferredBlock<Block> WASTE_PLANKS = registerBlock("waste_planks",
+            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_PLANKS)));
+    public static final DeferredBlock<net.minecraft.world.level.block.StairBlock> WASTE_PLANKS_STAIRS = registerBlock("waste_planks_stairs",
+            () -> new net.minecraft.world.level.block.StairBlock(WASTE_PLANKS.get().defaultBlockState(),
+                    BlockBehaviour.Properties.ofFullCopy(WASTE_PLANKS.get())));
+    public static final DeferredBlock<net.minecraft.world.level.block.SlabBlock> WASTE_PLANKS_SLAB = registerBlock("waste_planks_slab",
+            () -> new net.minecraft.world.level.block.SlabBlock(BlockBehaviour.Properties.ofFullCopy(WASTE_PLANKS.get())));
+
+    public static final DeferredBlock<net.minecraft.world.level.block.FenceBlock> WASTE_FENCE = registerBlock("waste_fence",
+            () -> new net.minecraft.world.level.block.FenceBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_FENCE)));
+    public static final DeferredBlock<net.minecraft.world.level.block.FenceGateBlock> WASTE_FENCE_GATE = registerBlock("waste_fence_gate",
+            () -> new net.minecraft.world.level.block.FenceGateBlock(net.minecraft.world.level.block.state.properties.WoodType.DARK_OAK, BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_FENCE_GATE)));
+    public static final DeferredBlock<net.minecraft.world.level.block.PressurePlateBlock> WASTE_PRESSURE_PLATE = registerBlock("waste_pressure_plate",
+            () -> new net.minecraft.world.level.block.PressurePlateBlock(net.minecraft.world.level.block.state.properties.BlockSetType.DARK_OAK,
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_PRESSURE_PLATE)));
+
+    // ДВЕРИ
+    public static final DeferredBlock<net.minecraft.world.level.block.DoorBlock> SEQUOIA_DOOR = registerBlock("sequoia_door",
+            () -> new net.minecraft.world.level.block.DoorBlock(net.minecraft.world.level.block.state.properties.BlockSetType.DARK_OAK,
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.DARK_OAK_DOOR).sound(net.minecraft.world.level.block.SoundType.WOOD).noOcclusion()));
+
+    public static final DeferredBlock<net.minecraft.world.level.block.DoorBlock> STEEL_DOOR = registerBlock("steel_door",
+            () -> new net.minecraft.world.level.block.DoorBlock(net.minecraft.world.level.block.state.properties.BlockSetType.STONE,
+                    BlockBehaviour.Properties.of().strength(15.0F, 160.0F).sound(net.minecraft.world.level.block.SoundType.METAL).noOcclusion()));
 
     public static final DeferredBlock<com.trd.block.basic.industrial.chemistry.ChemicalPlantHeaterBlock> CHEMICAL_PLANT_HEATER = registerBlock("chemical_plant_heater",
             () -> new com.trd.block.basic.industrial.chemistry.ChemicalPlantHeaterBlock(BlockBehaviour.Properties.of()
@@ -321,11 +624,49 @@ public class ModBlocks {
         ModItems.ITEMS.register(name, () -> new BlockItem(block.get(), new Item.Properties()));
     }
 
+    @SafeVarargs
+    private static void registerExplosionTooltip(DeferredHolder<Block, ? extends Block>... blocks) {
+        for (DeferredHolder<Block, ? extends Block> block : blocks) {
+            com.trd.api.tooltip.ExplosionTooltipRegistry.register(block);
+        }
+    }
+
     private static DeferredBlock<Block> registerBattery(String name) {
         DeferredBlock<Block> batteryBlock = BLOCKS.register(name, () -> new com.trd.block.basic.industrial.energy.MachineBatteryBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK).strength(5.0f).requiresCorrectToolForDrops().noOcclusion()));
         com.trd.item.ModItems.ITEMS.register(name, () -> new com.trd.item.industrial.energy.MachineBatteryBlockItem(batteryBlock.get(), new net.minecraft.world.item.Item.Properties()));
         BATTERY_BLOCKS.add(batteryBlock);
         return batteryBlock;
+    }
+
+    static {
+        // ═══════════════════════════════════════════════════════
+        // БЕТОННАЯ ЛИНЕЙКА
+        // ═══════════════════════════════════════════════════════
+        registerExplosionTooltip(
+                CONCRETE, CONCRETE_STAIRS, CONCRETE_SLAB,
+                CONCRETE_MOSSY, CONCRETE_MOSSY_STAIRS, CONCRETE_MOSSY_SLAB,
+                CONCRETE_OLD, CONCRETE_OLD_STAIRS, CONCRETE_OLD_SLAB,
+                CONCRETE_HAZARD_NEW, CONCRETE_HAZARD_NEW_STAIRS, CONCRETE_HAZARD_NEW_SLAB,
+                CONCRETE_HAZARD_OLD, CONCRETE_HAZARD_OLD_STAIRS, CONCRETE_HAZARD_OLD_SLAB,
+                CONCRETE_TILE, CONCRETE_TILE_STAIRS, CONCRETE_TILE_SLAB,
+                CONCRETE_TILE_ALT, CONCRETE_TILE_ALT_STAIRS, CONCRETE_TILE_ALT_SLAB,
+                CONCRETE_TILE_ALT_BLUE, CONCRETE_TILE_ALT_BLUE_STAIRS, CONCRETE_TILE_ALT_BLUE_SLAB,
+                CONCRETE_STRIPPED, CONCRETE_STRIPPED_STAIRS, CONCRETE_STRIPPED_SLAB,
+                CONCRETE_REINFORCED, CONCRETE_REINFORCED_STAIRS, CONCRETE_REINFORCED_SLAB,
+                CONCRETE_REINFORCED_HEAVY, CONCRETE_REINFORCED_HEAVY_STAIRS, CONCRETE_REINFORCED_HEAVY_SLAB,
+                CONCRETE_CONSTRUCT_BLOCK, CONCRETE_CONSTRUCT_BLOCK_SLAB, CONCRETE_CONSTRUCT_BLOCK_STAIRS,
+                STEEL_CONSTRUCT_BLOCK, STEEL_CONSTRUCT_BLOCK_SLAB, STEEL_CONSTRUCT_BLOCK_STAIRS,
+                STEEL_CONSTRUCT_BLOCK_REINFORCED, STEEL_CONSTRUCT_BLOCK_REINFORCED_SLAB, STEEL_CONSTRUCT_BLOCK_REINFORCED_STAIRS,
+                CONCRETE_NET);
+
+        // ═══════════════════════════════════════════════════════
+        // КИРПИЧИ / ПРОЧЕЕ
+        // ═══════════════════════════════════════════════════════
+        registerExplosionTooltip(
+                FIREBRICK_BLOCK, FIREBRICK_STAIRS, FIREBRICK_SLAB,
+                REINFORCEDBRICK_BLOCK, REINFORCEDBRICK_STAIRS, REINFORCEDBRICK_SLAB,
+                ARMORED_GLASS, STEEL_DOOR, ROUND_LAMP,
+                CONCRETE_LINE, CONCRETE_RAIL, CONCRETE_CUT, CONCRETE_REBAR, CONCRETE_VENT);
     }
 
     public static void register(net.neoforged.bus.api.IEventBus eventBus) {

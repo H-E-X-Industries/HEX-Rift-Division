@@ -225,6 +225,12 @@ public class ModBlockEntities {
                     ModBlocks.STEEL_STORAGE.get()
             ).build(null));
 
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.deco.BeamCollisionBlockEntity>> BEAM_COLLISION_BE =
+            BLOCK_ENTITIES.register("beam_collision", () -> BlockEntityType.Builder.of(
+                    com.trd.block.entity.deco.BeamCollisionBlockEntity::new,
+                    ModBlocks.BEAM_COLLISION.get()
+            ).build(null));
+
     public static void register(IEventBus eventBus) {
         BLOCK_ENTITIES.register(eventBus);
     }

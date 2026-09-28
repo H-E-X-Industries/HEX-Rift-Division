@@ -47,6 +47,12 @@ public class ResourceRegistry {
         registerFull("neodymium", ResourceType.METAL,
                 BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).strength(8.0f, 20.0f).requiresCorrectToolForDrops());
 
+        for (ResourceEntry entry : RESOURCES) {
+            if (entry.block != null) {
+                com.trd.api.tooltip.ExplosionTooltipRegistry.register(entry.block);
+            }
+        }
+
         initialized = true;
         MainRegistry.LOGGER.info("ResourceRegistry initialized with {} resources", RESOURCES.size());
     }
