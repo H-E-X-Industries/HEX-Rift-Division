@@ -1,0 +1,215 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "east": "true",
+        "west": "false"
+      },
+      "apply": {
+        "model": "trd:block/wire_fence_post"
+      }
+    },
+    {
+      "when": {
+        "west": "true",
+        "east": "false"
+      },
+      "apply": {
+        "model": "trd:block/wire_fence_post"
+      }
+    },
+    {
+      "when": {
+        "north": "true",
+        "south": "false"
+      },
+      "apply": {
+        "model": "trd:block/wire_fence_post"
+      }
+    },
+    {
+      "when": {
+        "south": "true",
+        "north": "false"
+      },
+      "apply": {
+        "model": "trd:block/wire_fence_post"
+      }
+    },
+    {
+      "when": {
+        "north": "true",
+        "south": "true",
+        "east": "true",
+        "west": "true"
+      },
+      "apply": {
+        "model": "trd:block/wire_fence_post"
+      }
+    },
+    {
+      "when": {
+        "north": "false",
+        "south": "false",
+        "east": "false",
+        "west": "false"
+      },
+      "apply": {
+        "model": "trd:block/wire_fence_post"
+      }
+    },
+
+    {
+      "when": {
+        "east": "true",
+        "west": "true",
+        "north": "false",
+        "south": "false"
+      },
+      "apply": {
+        "model": "trd:block/wire_fence_side"
+      }
+    },
+    {
+      "when": {
+        "north": "true",
+        "south": "true",
+        "east": "false",
+        "west": "false"
+      },
+      "apply": {
+        "model": "trd:block/wire_fence_side",
+        "y": 90
+      }
+    },
+
+    {
+      "when": {
+        "east": "true",
+        "west": "false"
+      },
+      "apply": {
+        "model": "trd:block/wire_fence_side_half",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "east": "true",
+        "west": "true",
+        "north": "true"
+      },
+      "apply": {
+        "model": "trd:block/wire_fence_side_half",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "east": "true",
+        "west": "true",
+        "south": "true"
+      },
+      "apply": {
+        "model": "trd:block/wire_fence_side_half",
+        "y": 90
+      }
+    },
+
+    {
+      "when": {
+        "west": "true",
+        "east": "false"
+      },
+      "apply": {
+        "model": "trd:block/wire_fence_side_half",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "west": "true",
+        "east": "true",
+        "north": "true"
+      },
+      "apply": {
+        "model": "trd:block/wire_fence_side_half",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "west": "true",
+        "east": "true",
+        "south": "true"
+      },
+      "apply": {
+        "model": "trd:block/wire_fence_side_half",
+        "y": 270
+      }
+    },
+
+    {
+      "when": {
+        "north": "true",
+        "south": "false"
+      },
+      "apply": {
+        "model": "trd:block/wire_fence_side_half"
+      }
+    },
+    {
+      "when": {
+        "north": "true",
+        "south": "true",
+        "east": "true"
+      },
+      "apply": {
+        "model": "trd:block/wire_fence_side_half"
+      }
+    },
+    {
+      "when": {
+        "north": "true",
+        "south": "true",
+        "west": "true"
+      },
+      "apply": {
+        "model": "trd:block/wire_fence_side_half"
+      }
+    },
+
+    {
+      "when": {
+        "south": "true",
+        "north": "false"
+      },
+      "apply": {
+        "model": "trd:block/wire_fence_side_half",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "south": "true",
+        "north": "true",
+        "east": "true"
+      },
+      "apply": {
+        "model": "trd:block/wire_fence_side_half",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "south": "true",
+        "north": "true",
+        "west": "true"
+      },
+      "apply": {
+        "model": "trd:block/wire_fence_side_half",
+        "y": 180
+      }
+    }
+  ]
+}

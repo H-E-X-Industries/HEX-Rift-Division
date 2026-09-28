@@ -1,4 +1,4 @@
-﻿{
+{
   "variants": {
     "facing=north,powered=false": {
       "model": "trd:block/switch_off"

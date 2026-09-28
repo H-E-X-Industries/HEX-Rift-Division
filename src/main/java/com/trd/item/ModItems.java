@@ -213,6 +213,9 @@ public class ModItems {
     public static final DeferredItem<Item> REINFORCEDBRICK = ITEMS.register("reinforcedbrick",
             () -> new Item(new Item.Properties()));
 
+    public static final DeferredItem<Item> BEAM_PLACER = ITEMS.register("beam_placer",
+            () -> new com.trd.item.tools.BeamPlacerItem(new Item.Properties().stacksTo(1)));
+
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);
     }

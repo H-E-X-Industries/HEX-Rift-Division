@@ -37,18 +37,100 @@ public class ModCreativeTabs {
     public static final Supplier<CreativeModeTab> trd_BUILD_TAB = CREATIVE_MODE_TABS.register("trd_build_tab",
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup." + MainRegistry.MOD_ID + ".trd_build_tab"))
-                    .icon(() -> new ItemStack(ModBlocks.CONCRETE.get()))
+                    .icon(() -> new ItemStack(ModBlocks.CONCRETE_HAZARD_NEW.get()))
                     .displayItems((parameters, output) -> {
                         output.accept(ModBlocks.CONCRETE.get());
+                        output.accept(ModBlocks.CONCRETE_SLAB.get());
+                        output.accept(ModBlocks.CONCRETE_STAIRS.get());
+                        output.accept(ModBlocks.CONCRETE_OLD.get());
+                        output.accept(ModBlocks.CONCRETE_OLD_SLAB.get());
+                        output.accept(ModBlocks.CONCRETE_OLD_STAIRS.get());
+                        output.accept(ModBlocks.CONCRETE_MOSSY.get());
+                        output.accept(ModBlocks.CONCRETE_MOSSY_SLAB.get());
+                        output.accept(ModBlocks.CONCRETE_MOSSY_STAIRS.get());
+                        output.accept(ModBlocks.CONCRETE_HAZARD_NEW.get());
+                        output.accept(ModBlocks.CONCRETE_HAZARD_NEW_SLAB.get());
+                        output.accept(ModBlocks.CONCRETE_HAZARD_NEW_STAIRS.get());
+                        output.accept(ModBlocks.CONCRETE_HAZARD_OLD.get());
+                        output.accept(ModBlocks.CONCRETE_HAZARD_OLD_SLAB.get());
+                        output.accept(ModBlocks.CONCRETE_HAZARD_OLD_STAIRS.get());
+                        output.accept(ModBlocks.CONCRETE_TILE.get());
+                        output.accept(ModBlocks.CONCRETE_TILE_SLAB.get());
+                        output.accept(ModBlocks.CONCRETE_TILE_STAIRS.get());
+                        output.accept(ModBlocks.CONCRETE_TILE_ALT.get());
+                        output.accept(ModBlocks.CONCRETE_TILE_ALT_SLAB.get());
+                        output.accept(ModBlocks.CONCRETE_TILE_ALT_STAIRS.get());
+                        output.accept(ModBlocks.CONCRETE_TILE_ALT_BLUE.get());
+                        output.accept(ModBlocks.CONCRETE_TILE_ALT_BLUE_SLAB.get());
+                        output.accept(ModBlocks.CONCRETE_TILE_ALT_BLUE_STAIRS.get());
+                        output.accept(ModBlocks.CONCRETE_STRIPPED.get());
+                        output.accept(ModBlocks.CONCRETE_STRIPPED_SLAB.get());
+                        output.accept(ModBlocks.CONCRETE_STRIPPED_STAIRS.get());
+                        output.accept(ModBlocks.CONCRETE_REINFORCED.get());
+                        output.accept(ModBlocks.CONCRETE_REINFORCED_SLAB.get());
+                        output.accept(ModBlocks.CONCRETE_REINFORCED_STAIRS.get());
+                        output.accept(ModBlocks.CONCRETE_REINFORCED_HEAVY.get());
+                        output.accept(ModBlocks.CONCRETE_REINFORCED_HEAVY_SLAB.get());
+                        output.accept(ModBlocks.CONCRETE_REINFORCED_HEAVY_STAIRS.get());
                         output.accept(ModBlocks.FIREBRICK_BLOCK.get());
                         output.accept(ModBlocks.FIREBRICK_SLAB.get());
                         output.accept(ModBlocks.FIREBRICK_STAIRS.get());
                         output.accept(ModBlocks.REINFORCEDBRICK_BLOCK.get());
                         output.accept(ModBlocks.REINFORCEDBRICK_SLAB.get());
                         output.accept(ModBlocks.REINFORCEDBRICK_STAIRS.get());
+                        output.accept(ModBlocks.CONCRETE_CONSTRUCT_BLOCK.get());
+                        output.accept(ModBlocks.CONCRETE_CONSTRUCT_BLOCK_SLAB.get());
+                        output.accept(ModBlocks.CONCRETE_CONSTRUCT_BLOCK_STAIRS.get());
+                        output.accept(ModBlocks.STEEL_CONSTRUCT_BLOCK.get());
+                        output.accept(ModBlocks.STEEL_CONSTRUCT_BLOCK_SLAB.get());
+                        output.accept(ModBlocks.STEEL_CONSTRUCT_BLOCK_STAIRS.get());
+                        output.accept(ModBlocks.STEEL_CONSTRUCT_BLOCK_REINFORCED.get());
+                        output.accept(ModBlocks.STEEL_CONSTRUCT_BLOCK_REINFORCED_SLAB.get());
+                        output.accept(ModBlocks.STEEL_CONSTRUCT_BLOCK_REINFORCED_STAIRS.get());
+                        output.accept(ModBlocks.SEQUOIA_PLANKS.get());
+                        output.accept(ModBlocks.SEQUOIA_SLAB.get());
+                        output.accept(ModBlocks.SEQUOIA_STAIRS.get());
+                        output.accept(ModBlocks.WASTE_PLANKS.get());
+                        output.accept(ModBlocks.WASTE_PLANKS_STAIRS.get());
+                        output.accept(ModBlocks.WASTE_PLANKS_SLAB.get());
+
+                        output.accept(ModBlocks.CONCRETE_LINE.get());
+                        output.accept(ModBlocks.CONCRETE_CUT.get());
+                        output.accept(ModBlocks.CONCRETE_RAIL.get());
+                        output.accept(ModBlocks.CONCRETE_NET.get());
+                        output.accept(ModBlocks.CONCRETE_REBAR.get());
+                        output.accept(ModBlocks.CONCRETE_VENT.get());
+                        output.accept(ModBlocks.ARMORED_GLASS.get());
+
                         output.accept(ModBlocks.MORY_BLOCK.get());
                         output.accept(ModBlocks.ANTON_CHIGUR.get());
+
+                        output.accept(ModBlocks.MINERAL_BLOCK2.get());
+                        output.accept(ModBlocks.MINERAL_TILE.get());
+                        output.accept(ModBlocks.DOLOMITE_TILE.get());
+                        output.accept(ModBlocks.TILE_LIGHT.get());
+                        output.accept(ModBlocks.SULFUR_TILE.get());
+                        output.accept(ModBlocks.SULFUR_BRICKS.get());
+                        output.accept(ModBlocks.DECO_STEEL.get());
+                        output.accept(ModBlocks.DECO_STEEL_DARK.get());
+                        output.accept(ModBlocks.DECO_STEEL_SMOG.get());
+                        output.accept(ModBlocks.DECO_LEAD.get());
+                        output.accept(ModBlocks.DECO_BEAM.get());
+                        output.accept(ModBlocks.BEAM_BLOCK.get());
+
                         output.accept(ModBlocks.DECO_BARREL.get());
+                        output.accept(ModBlocks.STEEL_PROPS.get());
+                        output.accept(ModBlocks.BARBED_WIRE.get());
+                        output.accept(ModBlocks.WASTE_FENCE.get());
+                        output.accept(ModBlocks.WASTE_FENCE_GATE.get());
+                        output.accept(ModBlocks.WASTE_PRESSURE_PLATE.get());
+                        output.accept(ModBlocks.ROUND_LAMP.get());
+                        output.accept(ModBlocks.WIRE_FENCE.get());
+                        output.accept(ModBlocks.WIRE_FENCE_ALT.get());
+
+                        output.accept(ModBlocks.STEEL_DOOR.get());
+                        output.accept(ModBlocks.SEQUOIA_DOOR.get());
+
                     })
                     .build());
 
@@ -62,6 +144,7 @@ public class ModCreativeTabs {
 
                         //ИНСТРУМЕНТЫ
                         output.accept(ModItems.SCREWDRIVER.get());
+                        output.accept(ModItems.BEAM_PLACER.get());
                         output.accept(ModItems.POKER.get());
                         output.accept(ModItems.HAMMER.get());
 
