@@ -26,9 +26,13 @@ public class ModEntities {
     public static final DeferredHolder<EntityType<?>, EntityType<TurretBulletEntity>> TURRET_BULLET =
             ENTITY_TYPES.register("turret_bullet", () -> EntityType.Builder
                     .<TurretBulletEntity>of(TurretBulletEntity::new, MobCategory.MISC)
-                    .sized(0.5F, 0.5F)
-                    .clientTrackingRange(10)
+                    // 0.05 как в 1.20.1: хитбокс и так расширяется на 0.5 в traceHit
+                    .sized(0.05F, 0.05F)
+                    .clientTrackingRange(16)
                     .updateInterval(1)
+                    // без этого клиент не получает скорость пули и не может
+                    // развернуть её вдоль движения
+                    .setShouldReceiveVelocityUpdates(true)
                     .build("trd:turret_bullet"));
 
     public static void register(IEventBus eventBus) {

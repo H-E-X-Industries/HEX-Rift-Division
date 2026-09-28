@@ -346,7 +346,17 @@ public class MachineGunItem extends Item implements GeoItem {
 
     // === СТРЕЛЬБА ===
 
+    /** Выстрел по углу обзора самого сервера. */
     public void performShooting(Level level, Player player, ItemStack stack) {
+        performShooting(level, player, stack, player.getYRot(), player.getXRot());
+    }
+
+    /**
+     * Выстрел в направлении, заданном двумя осями: {@code yaw} и {@code pitch}.
+     * Клиент присылает их в {@link PacketShoot}, чтобы пуля уходила ровно туда,
+     * куда показывал прицел в момент нажатия огня.
+     */
+    public void performShooting(Level level, Player player, ItemStack stack, float yaw, float pitch) {
         if (level.isClientSide) return;
         if (getReloadTimer(stack) > 0 || getShootDelay(stack) > 0) return;
 
@@ -390,7 +400,8 @@ public class MachineGunItem extends Item implements GeoItem {
 
         bullet.setAmmoType(ammoInfo);
 
-        Vec3 lookDir = player.getLookAngle();
+        // Та же математика, что у Entity#getLookAngle, но по двум осям из пакета.
+        Vec3 lookDir = player.calculateViewVector(pitch, yaw);
         Vec3 velocity = lookDir.normalize().add(
                 level.random.nextGaussian() * 0.0075 * 1.0F,
                 level.random.nextGaussian() * 0.0075 * 1.0F,
@@ -406,9 +417,9 @@ public class MachineGunItem extends Item implements GeoItem {
 
         serverLevel.addFreshEntity(bullet);
 
-        float pitch = 0.9F + level.random.nextFloat() * 0.2F;
+        float soundPitch = 0.9F + level.random.nextFloat() * 0.2F;
         SoundEvent shotSound = ModSounds.TURRET_FIRE.isBound() ? ModSounds.TURRET_FIRE.get() : SoundEvents.GENERIC_EXPLODE.value();
-        level.playSound(null, player.getX(), player.getY(), player.getZ(), shotSound, SoundSource.PLAYERS, 1.0F, pitch);
+        level.playSound(null, player.getX(), player.getY(), player.getZ(), shotSound, SoundSource.PLAYERS, 1.0F, soundPitch);
 
         triggerAnim(player, GeoItem.getOrAssignId(stack, serverLevel), "controller", "shot");
     }
@@ -561,7 +572,9 @@ public class MachineGunItem extends Item implements GeoItem {
             // а значение приходит на клиент только в конце перезарядки, то есть
             // может быть устаревшим и заблокировать стрельбу.
             if (mc.options.keyAttack.isDown() && clientShootTimer <= 0) {
-                PacketDistributor.sendToServer(new PacketShoot());
+                // Угол обзора по обеим осям едет вместе с пакетом: серверная копия
+                // поворота игрока отстаёт на тик, и без этого пуля уходила мимо прицела.
+                PacketDistributor.sendToServer(new PacketShoot(mc.player.getYRot(), mc.player.getXRot()));
                 clientShootTimer = CLIENT_MIN_INTERVAL;
                 mc.player.attackAnim = 0;
                 mc.player.oAttackAnim = 0;

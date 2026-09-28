@@ -1,24 +1,22 @@
 package com.trd.client.overlay.hud;
 
 import com.trd.item.weapons.guns.MachineGunItem;
-import com.trd.main.MainRegistry;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.RenderGuiEvent;
 
 /**
  * Счётчик патронов над хотбаром: иконка заряженного боеприпаса и «N + 1 / 25».
  * Показывается только когда в руке пушка.
+ * <p>
+ * Слой вешается в
+ * {@link com.trd.client.renderer.ClientRenderHandler#registerGuiLayers} над
+ * хотбаром — ровно как {@code registerAbove(HOTBAR, "ammo_hud", ...)} в 1.20.1.
  */
-@EventBusSubscriber(modid = MainRegistry.MOD_ID, value = Dist.CLIENT)
 public class OverlayAmmoHud {
 
     /** 24 в ленте + 1 в стволе. */
@@ -26,19 +24,16 @@ public class OverlayAmmoHud {
     private static final int NORMAL_COLOR = 0xFFFFFF;
     private static final int LOW_COLOR = 0xFF5555;
 
-    @SubscribeEvent
-    public static void onRenderGui(RenderGuiEvent.Pre event) {
+    public static void render(GuiGraphics graphics, DeltaTracker delta) {
         Minecraft mc = Minecraft.getInstance();
-        Player player = mc.player;
-        if (player == null) return;
+        if (mc.player == null) return;
 
-        ItemStack stack = player.getMainHandItem();
+        ItemStack stack = mc.player.getMainHandItem();
         if (!(stack.getItem() instanceof MachineGunItem machineGun)) return;
 
         int currentAmmo = machineGun.getAmmo(stack);
         String loadedId = machineGun.getLoadedAmmoID(stack);
 
-        GuiGraphics graphics = event.getGuiGraphics();
         int screenWidth = mc.getWindow().getGuiScaledWidth();
         int screenHeight = mc.getWindow().getGuiScaledHeight();
 

@@ -118,15 +118,15 @@ public class ModCreativeTabs {
                         output.accept(ModBlocks.DECO_BEAM.get());
                         output.accept(ModBlocks.BEAM_BLOCK.get());
 
-                        output.accept(ModBlocks.DECO_BARREL.get());
                         output.accept(ModBlocks.STEEL_PROPS.get());
+                        output.accept(ModBlocks.DECO_BARREL.get());
                         output.accept(ModBlocks.BARBED_WIRE.get());
                         output.accept(ModBlocks.WASTE_FENCE.get());
                         output.accept(ModBlocks.WASTE_FENCE_GATE.get());
                         output.accept(ModBlocks.WASTE_PRESSURE_PLATE.get());
-                        output.accept(ModBlocks.ROUND_LAMP.get());
                         output.accept(ModBlocks.WIRE_FENCE.get());
                         output.accept(ModBlocks.WIRE_FENCE_ALT.get());
+                        output.accept(ModBlocks.ROUND_LAMP.get());
 
                         output.accept(ModBlocks.STEEL_DOOR.get());
                         output.accept(ModBlocks.SEQUOIA_DOOR.get());

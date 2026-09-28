@@ -22,6 +22,7 @@ import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.StainedGlassBlock;
@@ -63,6 +64,12 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
     public static final float BULLET_GRAVITY = 0.01F;
     public static final float AIR_RESISTANCE = 0.99F;
     public static final float MAX_FLIGHT_DISTANCE = 256.0F;
+
+    /**
+     * Предмет-подстановка вместо пустого pickup item. В 1.21 {@code AbstractArrow}
+     * пишет его в NBT безусловно, и пустой стак ломает сохранение сущности.
+     */
+    private static final ItemStack PICKUP_PLACEHOLDER = new ItemStack(Items.ARROW);
 
     /** С какого тика у радио-боезаряда включается увеличенный хитбокс. */
     private static final int RADIO_FUSE_ACTIVATION = 5;
@@ -107,7 +114,7 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
     public TurretBulletEntity(Level level, LivingEntity shooter) {
         // firedFromWeapon обязан быть null: AbstractArrow бросает IllegalArgumentException
         // на непустом стеке, а пустой ItemStack всё равно считается «непустым» аргументом.
-        super(ModEntities.TURRET_BULLET.get(), shooter, level, ItemStack.EMPTY, null);
+        super(ModEntities.TURRET_BULLET.get(), shooter, level, PICKUP_PLACEHOLDER.copy(), null);
         this.noPhysics = true;
         this.setNoGravity(true);
     }
@@ -302,8 +309,21 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
         }
     }
 
+    /**
+     * Разворачивает пулю вдоль её скорости: обе оси (yaw и pitch) считаются из
+     * вектора движения, как в 1.20.1.
+     * <p>
+     * Если скорости ещё нет — например, на клиенте между пакетом появления и
+     * пакетом движения успевает пройти тик, — обе оси не трогаются. Иначе
+     * {@code atan2(0, 0)} обнулял поворот, который только что пришёл в пакете
+     * появления, и пуля до прихода скорости смотрела не туда.
+     */
     public void alignToVelocity() {
         Vec3 velocity = this.getDeltaMovement();
+        if (velocity.lengthSqr() < 1.0E-8D) {
+            return;
+        }
+
         double horizontalDist = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
         this.setYRot((float) (Math.atan2(velocity.x, velocity.z) * (180D / Math.PI)));
         this.setXRot((float) (Math.atan2(velocity.y, horizontalDist) * (180D / Math.PI)));
@@ -330,8 +350,8 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
      * Здесь они прижимаются к только что полученным значениям — обе оси сразу.
      * <p>
      * {@code alignToVelocity} здесь не вызывается намеренно: скорость приходит
-     * отдельным пакетом позже, и на момент спавна она нулевая, что обнулило бы
-     * только что выставленный поворот.
+     * отдельным пакетом позже, и до неё надо сохранить поворот из пакета
+     * появления — метод сам пропускает нулевую скорость.
      */
     @Override
     public void recreateFromPacket(ClientboundAddEntityPacket packet) {
@@ -535,9 +555,19 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
         return ModSounds.BULLET_GROUND.isBound() ? ModSounds.BULLET_GROUND.get() : SoundEvents.ARROW_HIT;
     }
 
+    /**
+     * В 1.20.1 пуля не подбиралась и {@code getPickupItem} возвращал пустой стак,
+     * а {@code AbstractArrow#addAdditionalSaveData} писал его в NBT только если
+     * он непустой. В 1.21 запись безусловная, и пустой стак роняет сохранение
+     * сущности ({@code IllegalStateException: Cannot encode empty ItemStack}), так
+     * что предмет-заглушка обязателен.
+     * <p>
+     * Игрок его всё равно не получит: {@link AbstractArrow.Pickup} у стрел по
+     * умолчанию {@code DISALLOWED}, а пуля сама удаляется при попадании.
+     */
     @Override
-    public ItemStack getDefaultPickupItem() {
-        return ItemStack.EMPTY;
+    protected ItemStack getDefaultPickupItem() {
+        return PICKUP_PLACEHOLDER.copy();
     }
 
     @Override

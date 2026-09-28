@@ -25,9 +25,18 @@ public class TurretBulletRenderer extends GeoEntityRenderer<TurretBulletEntity> 
         addRenderLayer(new TurretBulletGlowLayer(this));
     }
 
+    /**
+     * Разворот пули по всем трём осям: сначала yaw, потом pitch, потом roll.
+     * <p>
+     * Важно переопределять именно шестиаргументный метод. В GeckoLib 4.8.2
+     * (1.20.1) он был единственным, а в 4.9.3 (1.21.1) пятиаргументный стал
+     * проспавшей обёрткой над ним, и рендер вызывает шестиаргументный напрямую.
+     * Переопределение старой подписи молча ничего не делало: пуля рисовалась
+     * дефолтным поворотом тела и не смотрела в сторону полёта.
+     */
     @Override
     protected void applyRotations(TurretBulletEntity animatable, PoseStack poseStack,
-                                  float ageInTicks, float rotationYaw, float partialTick) {
+                                  float ageInTicks, float rotationYaw, float partialTick, float nativeScale) {
         float yaw = Mth.rotLerp(partialTick, animatable.yRotO, animatable.getYRot());
         float pitch = Mth.lerp(partialTick, animatable.xRotO, animatable.getXRot());
 
