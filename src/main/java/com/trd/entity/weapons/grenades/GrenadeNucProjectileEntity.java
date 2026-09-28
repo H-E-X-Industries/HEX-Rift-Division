@@ -125,7 +125,7 @@ public class GrenadeNucProjectileEntity extends ThrowableItemProjectile {
 
         // Водородный взрыв: гладкая воронка + урон мобам по выжженному объёму
         // (сквозь целые стены не пробивается).
-        ExplosionHydrogen.explode(serverLevel, new Vec3(x, y, z), this.getOwner());
+        ExplosionHydrogen.explode(serverLevel, new Vec3(x, y, z), this.getOwner(), true);
 
         ExplosionParticleUtils.spawnAirBombExplosion(serverLevel, x, y, z);
 

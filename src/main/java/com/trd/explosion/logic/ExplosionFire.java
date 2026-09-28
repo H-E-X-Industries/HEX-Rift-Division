@@ -142,6 +142,8 @@ public class ExplosionFire {
         final Vec3 center;
         final DamageSource damageSource;
         final Entity sourceEntity;
+        /** true — источник (метатель) получает урон наравне со всеми остальными. */
+        final boolean hurtSource;
 
         final float waveRadius;
         final float coreRadius;
@@ -194,11 +196,12 @@ public class ExplosionFire {
 
         final long seed;
 
-        State(ServerLevel level, Vec3 center, Entity source, DamageSource damageSource, float coreRadius) {
+        State(ServerLevel level, Vec3 center, Entity source, DamageSource damageSource, float coreRadius, boolean hurtSource) {
             this.level = level;
             this.center = center;
             this.damageSource = damageSource;
             this.sourceEntity = source;
+            this.hurtSource = hurtSource;
             this.waveRadius = WAVE_RANGE;
             this.waveSq = (double) waveRadius * waveRadius;
             this.coreRadius = Math.max(0.5f, coreRadius);
@@ -761,12 +764,20 @@ public class ExplosionFire {
     // ==================== ТОЧКА ВХОДА ====================
 
     public static void explode(ServerLevel level, Vec3 center, Entity source, float radius) {
+        explode(level, center, source, radius, false);
+    }
+
+    /**
+     * @param hurtSource true — источник (метатель) получает урон наравне со всеми остальными.
+     *                   Гранаты передают true, чтобы бросивший гранату игрок страдал от неё сам.
+     */
+    public static void explode(ServerLevel level, Vec3 center, Entity source, float radius, boolean hurtSource) {
         level.playSound(null, center.x, center.y, center.z,
                 SoundEvents.FIRECHARGE_USE, SoundSource.BLOCKS,
                 2.0F, (1.0F + (level.random.nextFloat() - level.random.nextFloat()) * 0.2F) * 0.7F);
 
         if (QUEUE.size() >= MAX_QUEUED_EXPLOSIONS) return;
-        State state = new State(level, center, source, level.damageSources().explosion(source, source), radius);
+        State state = new State(level, center, source, level.damageSources().explosion(source, source), radius, hurtSource);
         collectEntities(state);
 
         QUEUE.addLast(state);
@@ -909,7 +920,7 @@ public class ExplosionFire {
                 new AABB(center, center).inflate(state.waveRadius + 3.0));
 
         for (LivingEntity e : found) {
-            if (e == state.sourceEntity || !e.isAlive()) continue;
+            if ((!state.hurtSource && e == state.sourceEntity) || !e.isAlive()) continue;
             double d = e.distanceToSqr(center);
             if (d > state.waveSq) continue;
 

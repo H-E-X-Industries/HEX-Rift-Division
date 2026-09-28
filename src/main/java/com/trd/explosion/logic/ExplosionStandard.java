@@ -9,13 +9,18 @@ public class ExplosionStandard {
     public static void explode(Level level, Vec3 center, Entity source, float radius, float damage) {
         if (level.isClientSide) return;
 
-        // Ванильный взрыв с разрушением блоков и уроном сущностям
-        level.explode(
-                source,
-                center.x, center.y, center.z,
-                radius,
-                false, // без огня
-                Level.ExplosionInteraction.BLOCK
-        );
+        // Ванильный взрыв: разрушение блоков, дроп и отбрасывание.
+        // Урон сущностям подавляем — считаем его самим по damage.
+        VanillaExplosionDamage.withoutEntityDamage(() ->
+                level.explode(
+                        source,
+                        center.x, center.y, center.z,
+                        radius,
+                        false, // без огня
+                        Level.ExplosionInteraction.BLOCK
+                ));
+
+        // Собственный урон: максимум в эпицентре, линейный спад к нулю на краю радиуса.
+        VanillaExplosionDamage.damageEntities(level, center, source, radius, damage);
     }
 }

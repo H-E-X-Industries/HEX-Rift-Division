@@ -12,6 +12,9 @@ import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Mod.EventBusSubscriber(modid = MainRegistry.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class MachineTooltipHandler {
 
@@ -42,7 +45,13 @@ public class MachineTooltipHandler {
         }
     }
 
-    /** Парсит текст: всё белое, а всё что между | | - золотое. Сам | не отображается. */
+    /**
+     * Парсит текст: всё белое, а всё что между | | - золотое. Сам | не отображается.
+     * <p>
+     * Если подсвеченный сегмент начинается с §-кодов, они применяются вместо золотого:
+     * {@code |§cЗажигательная|}. Ведущие коды снимаются из текста, остальные § печатаются как есть.
+     * Без кодов поведение прежнее - золото, так что старые описания не меняются.
+     */
     private static MutableComponent parseColoredSentence(String text) {
         MutableComponent result = Component.empty();
         StringBuilder buffer = new StringBuilder();
@@ -53,8 +62,7 @@ public class MachineTooltipHandler {
 
             if (c == '|') {
                 if (buffer.length() > 0) {
-                    result.append(Component.literal(buffer.toString())
-                            .withStyle(inHighlight ? ChatFormatting.GOLD : ChatFormatting.WHITE));
+                    result.append(buildSegment(buffer.toString(), inHighlight));
                     buffer.setLength(0);
                 }
                 inHighlight = !inHighlight;
@@ -64,10 +72,28 @@ public class MachineTooltipHandler {
         }
 
         if (buffer.length() > 0) {
-            result.append(Component.literal(buffer.toString())
-                    .withStyle(inHighlight ? ChatFormatting.GOLD : ChatFormatting.WHITE));
+            result.append(buildSegment(buffer.toString(), inHighlight));
         }
 
+        return result;
+    }
+
+    private static MutableComponent buildSegment(String segment, boolean highlighted) {
+        int i = 0;
+        List<ChatFormatting> codes = new ArrayList<>(2);
+
+        while (i + 1 < segment.length() && segment.charAt(i) == ChatFormatting.PREFIX_CODE) {
+            ChatFormatting code = ChatFormatting.getByCode(segment.charAt(i + 1));
+            if (code == null) break;
+            codes.add(code);
+            i += 2;
+        }
+
+        MutableComponent result = Component.literal(segment.substring(i));
+        result.withStyle(highlighted ? ChatFormatting.GOLD : ChatFormatting.WHITE);
+        if (!codes.isEmpty()) {
+            result.withStyle(codes.toArray(new ChatFormatting[0]));
+        }
         return result;
     }
 }

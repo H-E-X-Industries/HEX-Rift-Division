@@ -46,7 +46,7 @@ public class ModEntities {
             ENTITY_TYPES.register("gravity_grenade_projectile",
                     () -> EntityType.Builder.<GravityGrenadeProjectileEntity>of(GravityGrenadeProjectileEntity::new, MobCategory.MISC)
                             .sized(0.4F, 0.4F)
-                            .clientTrackingRange(8)
+                            .clientTrackingRange(32)
                             .updateInterval(2)
                             .build("gravity_grenade_projectile"));
     public static final RegistryObject<EntityType<GrenadierZombieEntity>> GRENADIER_ZOMBIE =
@@ -110,8 +110,8 @@ public class ModEntities {
             ENTITY_TYPES.register("grenade_if_projectile",
                     () -> EntityType.Builder.<GrenadeIfProjectileEntity>of(GrenadeIfProjectileEntity::new, MobCategory.MISC)
                             .sized(0.25F, 0.25F)
-                            .clientTrackingRange(4)
-                            .updateInterval(10)
+                            .clientTrackingRange(16)
+                            .updateInterval(2)
                             .build("grenade_if_projectile"));
 
     public static final RegistryObject<EntityType<GrenadeIfProjectileEntity>> GRENADE_IF_FIRE_PROJECTILE =
@@ -124,8 +124,8 @@ public class ModEntities {
             ENTITY_TYPES.register("grenade_if_slime_projectile",
                     () -> EntityType.Builder.<GrenadeIfProjectileEntity>of(GrenadeIfProjectileEntity::new, MobCategory.MISC)
                             .sized(0.25F, 0.25F)
-                            .clientTrackingRange(4)
-                            .updateInterval(10)
+                            .clientTrackingRange(16)
+                            .updateInterval(2)
                             .build("grenade_if_slime_projectile"));
 
     public static final RegistryObject<EntityType<GrenadeIfProjectileEntity>> GRENADE_IF_HE_PROJECTILE =
@@ -139,7 +139,7 @@ public class ModEntities {
             ENTITY_TYPES.register("grenade_nuc_projectile",
                     () -> EntityType.Builder.<GrenadeNucProjectileEntity>of(GrenadeNucProjectileEntity::new, MobCategory.MISC)
                             .sized(0.25F, 0.25F)
-                            .clientTrackingRange(4)
-                            .updateInterval(10)
+                            .clientTrackingRange(64)
+                            .updateInterval(2)
                             .build("grenade_nuc_projectile"));
 }

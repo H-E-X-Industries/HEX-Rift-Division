@@ -209,11 +209,12 @@ public class GrenadeIfProjectileEntity extends ThrowableItemProjectile {
         exploded = true;
         Vec3 center = new Vec3(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
         Level level = level();
+        float radius = grenadeType.getExplosionPower();
         switch (grenadeType) {
-            case GRENADE_IF -> ExplosionStandard.explode(level, center, this.getOwner(), 5.0f, 45.0f);
-            case GRENADE_IF_HE -> ExplosionHE.explode(level, center, this.getOwner(), 8.0f, 80.0f);
-            case GRENADE_IF_FIRE -> ExplosionFire.explode((ServerLevel) level, center, this.getOwner(), 3.0f);
-            case GRENADE_IF_SLIME -> ExplosionStandard.explode(level, center, this.getOwner(), 6.0f, 60.0f);
+            case GRENADE_IF -> ExplosionStandard.explode(level, center, this.getOwner(), radius, grenadeType.getCustomDamage());
+            case GRENADE_IF_HE -> ExplosionHE.explode(level, center, this.getOwner(), radius, grenadeType.getCustomDamage());
+            case GRENADE_IF_FIRE -> ExplosionFire.explode((ServerLevel) level, center, this.getOwner(), radius, true);
+            case GRENADE_IF_SLIME -> ExplosionStandard.explode(level, center, this.getOwner(), radius, grenadeType.getCustomDamage());
         }
         this.discard();
     }

@@ -262,34 +262,28 @@ public class ModLangProvider extends LanguageProvider {
 
         // ═══ GRENADE TOOLTIPS ═══
 
-// Global charge hint for all chargable grenades
-        add("tooltip.trd.grenade.charge_hint", "§8Hold RMB to adjust throw impulse");
+// Grenades - shift tooltip, same format as the machine descs:
+// |...| = gold highlight, leading section codes inside || override the colour,
+// sentences split on ". ", no stray colour codes.
 
 // Standard grenades (bouncing)
-        add("tooltip.trd.grenade.common.line1", "§7Hand anti-personnel grenade");
-        add("tooltip.trd.grenade.standard.line2", "§8Type: §fFragmentation §8| Bounces: §f3 §8| Radius: §f3.5 §8| Damage: §f20");
-        add("tooltip.trd.grenade.he.line2", "§8Type: §fHigh Explosive §8| Bounces: §f3 §8| Radius: §f7.0 §8| Damage: §f40");
-        add("tooltip.trd.grenade.fire.line2", "§8Type: §cIncendiary §8| Bounces: §f3 §8| Radius: §f3.0 §8| Damage: §f30");
-        add("tooltip.trd.grenade.slime.line2", "§8Type: §aSticky §8| Bounces: §f4 §8| Radius: §f3.5 §8| Damage: §f30 §8[Sticks to targets]");
-        add("tooltip.trd.grenade.smart.line2", "§8Type: §eSmart §8| Bounces: §f3 §8| Radius: §f3.5/7.0 §8| Damage: §f20/40 §8[Detonates on contact]");
-        add("tooltip.trd.grenade.default.line2", "§8Standard fragmentation grenade");
+        add("tooltip.trd.grenade.standard.desc", "|§6Fragmentation| - a hand-thrown anti-personnel grenade. Detonates on the third bounce. |Bounces: 3| / |Radius: 3.5| / |Damage: 20|. |Hold RMB| to adjust throw impulse.");
+        add("tooltip.trd.grenade.he.desc", "|§bHigh Explosive| - a hand-thrown anti-personnel grenade with a much wider blast. Detonates on the third bounce. |Bounces: 3| / |Radius: 7.0| / |Damage: 40|. |Hold RMB| to adjust throw impulse.");
+        add("tooltip.trd.grenade.fire.desc", "|§cIncendiary| - sets everything caught in the blast on fire. Detonates on the third bounce. |Bounces: 3| / |Damage: 30| / |Burn: 15s|. |Hold RMB| to adjust throw impulse.");
+        add("tooltip.trd.grenade.slime.desc", "|§aSticky| - sticks to the first block or entity it touches, then detonates after 2 seconds. |Radius: 3.5| / |Damage: 30|. |Hold RMB| to adjust throw impulse.");
+        add("tooltip.trd.grenade.smart.desc", "|§eSmart| - detonates on contact with any entity, including the one who threw it. Otherwise detonates on the third bounce. |Bounces: 3| / |Radius: 3.5 / 7.0| / |Damage: 20 / 40|. |Hold RMB| to adjust throw impulse.");
 
 // Impact grenades (inertial fuze)
-        add("tooltip.trd.grenade_if.common.line1", "§7Impact grenade with inertial fuze");
-        add("tooltip.trd.grenade_if.standard.line2", "§8Type: §fFragmentation §8| Radius: §f5.0 §8| Damage: §f45 §8| Delay: §f4s");
-        add("tooltip.trd.grenade_if.he.line2", "§8Type: §fHigh Explosive §8| Radius: §f8.0 §8| Damage: §f80 §8| Delay: §f4s");
-        add("tooltip.trd.grenade_if.slime.line2", "§8Type: §aSticky §8| Radius: §f6.0 §8| Damage: §f60 §8| Delay: §f4s §8[Sticks to targets]");
-        add("tooltip.trd.grenade_if.fire.line2", "§8Type: §cIncendiary §8| Radius: §f6.0 §8| Damage: §f60 §8| Delay: §f4s");
-        add("tooltip.trd.grenade_if.default.line2", "§8Impact fragmentation grenade");
+        add("tooltip.trd.grenade_if.standard.desc", "|§6Fragmentation| - an impact grenade with an inertial fuze, 4 second delay. |Radius: 5.0| / |Damage: 45|. |Hold RMB| to adjust throw impulse.");
+        add("tooltip.trd.grenade_if.he.desc", "|§bHigh Explosive| - an impact grenade with an inertial fuze, 4 second delay. |Radius: 8.0| / |Damage: 80|. |Hold RMB| to adjust throw impulse.");
+        add("tooltip.trd.grenade_if.fire.desc", "|§cIncendiary| - an impact grenade with an inertial fuze, 4 second delay. Sets the whole area on fire. |Damage: 30| / |Burn: 15s|. |Hold RMB| to adjust throw impulse.");
+        add("tooltip.trd.grenade_if.slime.desc", "|§aSticky| - an impact grenade with an inertial fuze, 4 second delay. Sticks to the first block or entity it touches. |Radius: 6.0| / |Damage: 60|. |Hold RMB| to adjust throw impulse.");
 
 // Gravity grenade
-        add("tooltip.trd.gravity_grenade.line1", "§d§lEXPERIMENTAL §7gravity weapon");
-        add("tooltip.trd.gravity_grenade.line2", "§8Creates a gravity vortex, then scatters targets");
+        add("tooltip.trd.gravity_grenade.desc", "|§5§lGravity| - an experimental weapon. Pulls everything within 15 blocks into a vortex, then launches it. Deals no damage, displacement only. |Delay: 4s|. |Hold RMB| to adjust throw impulse.");
 
 // Nuclear (hydrogen) grenade
-        add("tooltip.trd.grenade_nuc.line1", "§4§lTACTICAL HYDROGEN CHARGE");
-        add("tooltip.trd.grenade_nuc.line2", "§cRadius 25 §8| Damage 200 §8| Delay 7s");
-        add("tooltip.trd.grenade_nuc.line3", "§8Penetrates cover. Use with extreme caution.");
+        add("tooltip.trd.grenade_nuc.desc", "|§4§lHydrogen Charge| - a tactical charge that punches through cover. Use with extreme caution. |Damage zone: 40| / |Damage: 500| / |Crater: 16| / |Delay: 7s|. |Hold RMB| to adjust throw impulse.");
 
         // ═══ BATTERY TOOLTIPS (ModBatteryItem) ═══
         add("tooltip.trd.battery.stored", "§7Charge:");
@@ -1905,34 +1899,28 @@ public class ModLangProvider extends LanguageProvider {
 
         // ═══ ТУЛТИПЫ ГРАНАТ ═══
 
-// Общий hint для всех заряжаемых гранат
-        add("tooltip.trd.grenade.charge_hint", "§8Удерживайте ПКМ для регулировки импульса броска");
+// Гранаты — тултип по Shift, тот же формат, что у описаний машин:
+// |...| = золотая подсветка, ведущие §-коды внутри || переопределяют цвет,
+// предложения режутся по ". ", лишних цветовых кодов нет.
 
 // Обычные гранаты (с отскоком)
-        add("tooltip.trd.grenade.common.line1", "§7Ручная противопехотная граната");
-        add("tooltip.trd.grenade.standard.line2", "§8Тип: §fОсколочная §8| Отскоков: §f3 §8| Радиус: §f3.5 §8| Урон: §f20");
-        add("tooltip.trd.grenade.he.line2", "§8Тип: §fФугасная §8| Отскоков: §f3 §8| Радиус: §f7.0 §8| Урон: §f40");
-        add("tooltip.trd.grenade.fire.line2", "§8Тип: §cЗажигательная §8| Отскоков: §f3 §8| Радиус: §f3.0 §8| Урон: §f30");
-        add("tooltip.trd.grenade.slime.line2", "§8Тип: §aЛипучка §8| Отскоков: §f4 §8| Радиус: §f3.5 §8| Урон: §f30 §8[Прилипает к целям]");
-        add("tooltip.trd.grenade.smart.line2", "§8Тип: §eУмная §8| Отскоков: §f3 §8| Радиус: §f3.5/7.0 §8| Урон: §f20/40 §8[Детонация при контакте]");
-        add("tooltip.trd.grenade.default.line2", "§8Стандартная осколочная граната");
+        add("tooltip.trd.grenade.standard.desc", "|§6Осколочная| - ручная противопехотная граната. Взрывается на третьем отскоке. |Отскоков: 3| / |Радиус: 3.5| / |Урон: 20|. Удерживайте |ПКМ| для регулировки импульса броска.");
+        add("tooltip.trd.grenade.he.desc", "|§bФугасная| - ручная противопехотная граната с намного большим радиусом поражения. Взрывается на третьем отскоке. |Отскоков: 3| / Радиус: 7.0| / |Урон: 40|. Удерживайте |ПКМ| для регулировки импульса броска.");
+        add("tooltip.trd.grenade.fire.desc", "|§cЗажигательная| - поджигает всё в зоне поражения. Взрывается на третьем отскоке. |Отскоков: 3| / |Урон: 30| / |Поджог: 15с|. Удерживайте |ПКМ| для регулировки импульса броска.");
+        add("tooltip.trd.grenade.slime.desc", "|§aЛипучка| - прилипает к первому блоку или сущности, затем срабатывает через 2 секунды. |Радиус: 3.5| / |Урон: 30|. Удерживайте |ПКМ| для регулировки импульса броска.");
+        add("tooltip.trd.grenade.smart.desc", "|§eУмная| - взрывается при контакте с любой сущностью, включая бросившего. Иначе - на третьем отскоке. |Отскоков: 3| / |Радиус: 3.5 / 7.0| / |Урон: 20 / 40|. Удерживайте |ПКМ| для регулировки импульса броска.");
 
 // Ударные гранаты (инерционный взрыватель)
-        add("tooltip.trd.grenade_if.common.line1", "§7Ударная граната с инерционным взрывателем");
-        add("tooltip.trd.grenade_if.standard.line2", "§8Тип: §fОсколочная §8| Радиус: §f5.0 §8| Урон: §f45 §8| Задержка: §f4с");
-        add("tooltip.trd.grenade_if.he.line2", "§8Тип: §fФугасная §8| Радиус: §f8.0 §8| Урон: §f80 §8| Задержка: §f4с");
-        add("tooltip.trd.grenade_if.slime.line2", "§8Тип: §aЛипучка §8| Радиус: §f6.0 §8| Урон: §f60 §8| Задержка: §f4с §8[Прилипает к целям]");
-        add("tooltip.trd.grenade_if.fire.line2", "§8Тип: §cЗажигательная §8| Радиус: §f6.0 §8| Урон: §f60 §8| Задержка: §f4с");
-        add("tooltip.trd.grenade_if.default.line2", "§8Ударная осколочная граната");
+        add("tooltip.trd.grenade_if.standard.desc", "|§6Осколочная| - ударная граната с инерционным взрывателем, задержка 4 секунды. |Радиус: 5.0| / |Урон: 45|. Удерживайте |ПКМ| для регулировки импульса броска.");
+        add("tooltip.trd.grenade_if.he.desc", "|§bФугасная| - ударная граната с инерционным взрывателем, задержка 4 секунды. |Радиус: 8.0| / |Урон: 80|. Удерживайте |ПКМ| для регулировки импульса броска.");
+        add("tooltip.trd.grenade_if.fire.desc", "|§cЗажигательная| - ударная граната с инерционным взрывателем, задержка 4 секунды. Поджигает всё в зоне поражения. |Урон: 30| / |Поджог: 15с|. Удерживайте |ПКМ| для регулировки импульса броска.");
+        add("tooltip.trd.grenade_if.slime.desc", "|§aЛипучка| - ударная граната с инерционным взрывателем, задержка 4 секунды. Прилипает к первому блоку или сущности. |Радиус: 6.0| / |Урон: 60|. Удерживайте |ПКМ| для регулировки импульса броска.");
 
 // Грави-граната
-        add("tooltip.trd.gravity_grenade.line1", "§d§lЭКСПЕРИМЕНТАЛЬНОЕ §7гравитационное оружие");
-        add("tooltip.trd.gravity_grenade.line2", "§8Создаёт вихрь притяжения, затем разбрасывает цели");
+        add("tooltip.trd.gravity_grenade.desc", "|§5§lГравитационная| - экспериментальное оружие. Затягивает всё в радиусе 15 блоков в вихрь, затем разбрасывает. |Задержка: 4с|. Удерживайте |ПКМ| для регулировки импульса броска.");
 
 // Ядерная (водородная) граната
-        add("tooltip.trd.grenade_nuc.line1", "§4§lТАКТИЧЕСКИЙ ВОДОРОДНЫЙ ЗАРЯД");
-        add("tooltip.trd.grenade_nuc.line2", "§cРадиус 25 §8| Урон 200 §8| Задержка 7с");
-        add("tooltip.trd.grenade_nuc.line3", "§8Пробивает укрепления. Использовать с огромной осторожностью.");
+        add("tooltip.trd.grenade_nuc.desc", "|§4§lВодородный заряд| - тактический заряд, пробивающий укрепления. Использовать с огромной осторожностью. |Зона урона: 40| / |Урон: 500| / |Воронка: 16| / |Задержка: 7с|. |Удерживайте ПКМ| для регулировки импульса броска.");
 
 // ═══ ТУЛТИПЫ АККУМУЛЯТОРОВ (ModBatteryItem) ═══
         add("tooltip.trd.battery.stored", "§7Заряд:");

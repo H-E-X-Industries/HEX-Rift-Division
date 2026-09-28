@@ -4,10 +4,12 @@ import com.trd.sound.ModSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
@@ -139,6 +141,26 @@ public class GravityGrenadeProjectileEntity extends ThrowableItemProjectile {
         }
     }
 
+    /**
+     * Задаёт скорость сущности так, чтобы она реально сдвинулась.
+     * <p>
+     * {@code hasImpulse} недостаточно: {@code ServerEntity.sendChanges()} отправляет импульс через
+     * {@code broadcast}, а {@code ChunkMap.TrackedEntity.broadcast} рассылает его только тем, кто в
+     * {@code seenBy} — а игрока в своём же {@code seenBy} нет ({@code updatePlayer} пропускает
+     * {@code p != this.entity}). Поэтому скорость до игрока не доходит никогда, и вихрь крутит только
+     * мобов. {@code hurtMarked} идёт через {@code broadcastAndSend}, который дополнительно шлёт пакет
+     * владельцу ({@code ((ServerPlayer)entity).connection.send(...)}), плюс мы шлём пакет напрямую —
+     * так же, как это делает ванильный {@code Player.attack}.
+     */
+    private static void applyMotion(Entity entity, Vec3 motion) {
+        entity.setDeltaMovement(motion);
+        entity.hasImpulse = true;
+        entity.hurtMarked = true;
+        if (entity instanceof ServerPlayer serverPlayer) {
+            serverPlayer.connection.send(new ClientboundSetEntityMotionPacket(serverPlayer));
+        }
+    }
+
     // === ОСНОВНАЯ ЛОГИКА ВРАЩЕНИЯ ===
     private void applyPull(Vec3 center, int tick) {
         double radiusSq = EFFECT_RADIUS * EFFECT_RADIUS;
@@ -213,8 +235,7 @@ public class GravityGrenadeProjectileEntity extends ThrowableItemProjectile {
             // Ограничение скорости
             if (newVel.length() > 4.0) newVel = newVel.scale(4.0 / newVel.length());
 
-            e.setDeltaMovement(newVel);
-            e.hasImpulse = true;
+            applyMotion(e, newVel);
             e.fallDistance = 0;
             e.setOnGround(false);
         }
@@ -375,11 +396,9 @@ public class GravityGrenadeProjectileEntity extends ThrowableItemProjectile {
             Vec3 toCenter = new Vec3(center.x - e.getX(), center.y - e.getY(), center.z - e.getZ());
             double dist = toCenter.length();
             if (dist > 0.01) {
-                Vec3 gather = toCenter.normalize().scale(3.0);
-                e.setDeltaMovement(gather);
-                e.hasImpulse = true;
+                applyMotion(e, toCenter.normalize().scale(3.0));
             } else {
-                e.setDeltaMovement(Vec3.ZERO);
+                applyMotion(e, Vec3.ZERO);
             }
             e.fallDistance = 0;
         }
@@ -408,8 +427,7 @@ public class GravityGrenadeProjectileEntity extends ThrowableItemProjectile {
                     pushUp,
                     dir.z * pushHor + spreadZ
             );
-            e.setDeltaMovement(impulse);
-            e.hasImpulse = true;
+            applyMotion(e, impulse);
             if (!(e instanceof LivingEntity)) continue;
             e.level().playSound(null, e.blockPosition(), SoundEvents.PLAYER_ATTACK_KNOCKBACK, SoundSource.PLAYERS, 1.0f, 0.8f);
         }
