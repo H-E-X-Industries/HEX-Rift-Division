@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "trd:wire_fence",
+    "trd:wire_fence_alt",
+    "trd:wire_fence_gate",
+    "trd:steel_props"
+  ]
+}
