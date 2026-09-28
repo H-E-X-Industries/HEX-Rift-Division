@@ -530,6 +530,19 @@ public class ModItems {
 // РЕГИСТРАЦИЯ МАШИННЫХ ТУЛТИПОВ
 // ═══════════════════════════════════════════════════════
     static {
+    // Гранаты
+    MachineTooltipRegistry.register(GRENADE, "tooltip.trd.grenade.standard.desc");
+    MachineTooltipRegistry.register(GRENADEHE, "tooltip.trd.grenade.he.desc");
+    MachineTooltipRegistry.register(GRENADEFIRE, "tooltip.trd.grenade.fire.desc");
+    MachineTooltipRegistry.register(GRENADESLIME, "tooltip.trd.grenade.slime.desc");
+    MachineTooltipRegistry.register(GRENADESMART, "tooltip.trd.grenade.smart.desc");
+    MachineTooltipRegistry.register(GRENADE_IF, "tooltip.trd.grenade_if.standard.desc");
+    MachineTooltipRegistry.register(GRENADE_IF_HE, "tooltip.trd.grenade_if.he.desc");
+    MachineTooltipRegistry.register(GRENADE_IF_FIRE, "tooltip.trd.grenade_if.fire.desc");
+    MachineTooltipRegistry.register(GRENADE_IF_SLIME, "tooltip.trd.grenade_if.slime.desc");
+    MachineTooltipRegistry.register(GRENADE_NUC, "tooltip.trd.grenade_nuc.desc");
+    MachineTooltipRegistry.register(GRAVITY_GRENADE, "tooltip.trd.gravity_grenade.desc");
+
     // Генератор
     MachineTooltipRegistry.register(STATOR_ITEM, "tooltip.trd.machine.stator.desc");
     MachineTooltipRegistry.register(COPPER_ROTOR, "tooltip.trd.machine.rotor.desc");

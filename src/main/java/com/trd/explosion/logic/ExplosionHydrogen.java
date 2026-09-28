@@ -181,6 +181,8 @@ public class ExplosionHydrogen {
         final Vec3 center;
         final DamageSource damageSource;
         final Entity sourceEntity;
+        /** true — источник (метатель) получает урон наравне со всеми остальными. */
+        final boolean hurtSource;
 
         final double zone1Sq;
         final double zone2Sq;
@@ -255,11 +257,12 @@ public class ExplosionHydrogen {
         final LongOpenHashSet floodVisited = new LongOpenHashSet(CRATER_MAX_JOBS / 4);
         final ArrayDeque<BasaltJob> basaltJobs = new ArrayDeque<>();
 
-        State(ServerLevel level, Vec3 center, Entity source, DamageSource damageSource) {
+        State(ServerLevel level, Vec3 center, Entity source, DamageSource damageSource, boolean hurtSource) {
             this.level = level;
             this.center = center;
             this.damageSource = damageSource;
             this.sourceEntity = source;
+            this.hurtSource = hurtSource;
             this.zone1Radius = ZONE_1_RADIUS;
             this.zone2Radius = ZONE_2_RADIUS;
             this.zone1Sq = (double) zone1Radius * zone1Radius;
@@ -1091,13 +1094,21 @@ BlockState s = level.getBlockState(pos);
     // ==================== ТОЧКА ВХОДА ====================
 
     public static void explode(ServerLevel level, Vec3 center, Entity source) {
+        explode(level, center, source, false);
+    }
+
+    /**
+     * @param hurtSource true — источник (метатель) получает урон наравне со всеми остальными.
+     *                   Гранаты передают true, чтобы бросивший гранату игрок страдал от неё сам.
+     */
+    public static void explode(ServerLevel level, Vec3 center, Entity source, boolean hurtSource) {
         level.playSound(null, center.x, center.y, center.z,
                 SoundEvents.GENERIC_EXPLODE, SoundSource.BLOCKS, 6.0F, 0.4F);
 
         discardItemsNearby(level, center, ZONE_2_RADIUS + 2.0f);
 
         if (QUEUE.size() >= MAX_QUEUED_EXPLOSIONS) return;
-        State state = new State(level, center, source, cremationSource(level, source));
+        State state = new State(level, center, source, cremationSource(level, source), hurtSource);
         collectEntities(state);
 
         QUEUE.addLast(state);
@@ -1322,7 +1333,7 @@ BlockState s = level.getBlockState(pos);
                 new AABB(center, center).inflate(state.zone2Radius + 3.0));
 
         for (LivingEntity e : found) {
-            if (e == state.sourceEntity || !e.isAlive()) continue;
+            if ((!state.hurtSource && e == state.sourceEntity) || !e.isAlive()) continue;
             double d = e.distanceToSqr(center);
             if (d > state.zone2Sq) continue;
 

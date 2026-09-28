@@ -40,6 +40,12 @@ public class GrenadeProjectileEntity extends ThrowableItemProjectile {
     private int stuckEntityId = -1;
     private Vec3 stuckOffset = Vec3.ZERO;
 
+    /** Радиус взрыва умной гранаты при детонации от контакта с сущностью. */
+    private static final float SMART_CONTACT_RADIUS = 7.0f;
+
+    /** Аварийный таймер (10с) для гранат, которые так и не попали в блок. */
+    private static final int FAILSAFE_TICKS = 200;
+
     private static final Random RANDOM = new Random();
 
     public GrenadeProjectileEntity(EntityType<? extends ThrowableItemProjectile> entityType, Level level) {
@@ -109,7 +115,11 @@ public class GrenadeProjectileEntity extends ThrowableItemProjectile {
             if (stuckTimer <= 0) explode(false);
         }
 
-        if (grenadeType == GrenadeType.SMART && !stuck && !exploded && this.tickCount > 200) {
+        // Страховка (10с). Осколочные/фугасные/зажигательные взрываются только по отскокам,
+        // а липучка — по таймеру прилипания. Если граната так и не встретила блок (бросок
+        // в пустоту, лава, застревание), она падала бы вечно и никогда не взорвалась.
+        // Покрывает и SMART, которому нужен тот же аварийный срок.
+        if (!stuck && !exploded && this.tickCount > FAILSAFE_TICKS) {
             explode(false);
         }
     }
@@ -210,19 +220,20 @@ public class GrenadeProjectileEntity extends ThrowableItemProjectile {
         exploded = true;
         Vec3 pos = this.position();
         Level level = level();
+        float radius = grenadeType.getExplosionPower();
         switch (grenadeType) {
-            case STANDARD -> ExplosionStandard.explode(level, pos, this.getOwner(), 3.5f, grenadeType.getCustomDamage());
-            case HE -> ExplosionHE.explode(level, pos, this.getOwner(), 7.0f, grenadeType.getCustomDamage());
-            case FIRE -> ExplosionFire.explode((ServerLevel) level, pos, this.getOwner(), 3.0f);
+            case STANDARD -> ExplosionStandard.explode(level, pos, this.getOwner(), radius, grenadeType.getCustomDamage());
+            case HE -> ExplosionHE.explode(level, pos, this.getOwner(), radius, grenadeType.getCustomDamage());
+            case FIRE -> ExplosionFire.explode((ServerLevel) level, pos, this.getOwner(), radius, true);
             case SMART -> {
                 if (smartEntityHit) {
-                    ExplosionHE.explode(level, pos, this.getOwner(), 7.0f, 40.0f);
-                    ExplosionFire.explode((ServerLevel) level, pos, this.getOwner(), 2.0f);
+                    ExplosionHE.explode(level, pos, this.getOwner(), SMART_CONTACT_RADIUS, 40.0f);
+                    ExplosionFire.explode((ServerLevel) level, pos, this.getOwner(), 2.0f, true);
                 } else {
-                    ExplosionStandard.explode(level, pos, this.getOwner(), 3.5f, 20.0f);
+                    ExplosionStandard.explode(level, pos, this.getOwner(), radius, grenadeType.getCustomDamage());
                 }
             }
-            case SLIME -> ExplosionStandard.explode(level, pos, this.getOwner(), 3.5f, grenadeType.getCustomDamage());
+            case SLIME -> ExplosionStandard.explode(level, pos, this.getOwner(), radius, grenadeType.getCustomDamage());
         }
         this.discard();
     }
