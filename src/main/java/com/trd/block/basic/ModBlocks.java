@@ -606,7 +606,13 @@ public class ModBlocks {
     public static final DeferredBlock<Block> SMALL_SMELTER = registerBlock("small_smelter",
             () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().strength(3.0f, 10.0f)));
     public static final DeferredBlock<Block> DET_MINER = registerBlock("det_miner",
-            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.TNT)));
+            () -> new com.trd.block.basic.weapons.explosives.DetMinerBlock(
+                    BlockBehaviour.Properties.of().strength(0.5F, 6.0F)
+                            .sound(net.minecraft.world.level.block.SoundType.STONE)
+                            .requiresCorrectToolForDrops()));
+    public static final DeferredBlock<Block> AVIABOMB_MINE = registerBlock("aviabomb_mine",
+            () -> new com.trd.block.basic.weapons.explosives.SideOBlock(
+                    BlockBehaviour.Properties.of().strength(2.0F, 6.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
 
     private static <T extends Block & IMultiblockController> DeferredBlock<T> registerMultiblock(String name, Supplier<T> block) {
         DeferredBlock<T> toReturn = BLOCKS.register(name, block);

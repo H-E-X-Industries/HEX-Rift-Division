@@ -306,6 +306,19 @@ public class ModCreativeTabs {
                         output.accept(ModItems.CAST_PICKAXE_STEEL.get());
 
                         output.accept(ModBlocks.DET_MINER.get());
+                        output.accept(ModBlocks.AVIABOMB_MINE.get());
+                        output.accept(ModItems.DETONATOR.get());
+                        output.accept(ModItems.RANGE_DETONATOR.get());
+
+                        output.accept(ModItems.AMMO_TURRET.get());
+                        output.accept(ModItems.AMMO_TURRET_HOLLOW.get());
+                        output.accept(ModItems.AMMO_TURRET_PIERCING.get());
+                        output.accept(ModItems.AMMO_TURRET_FIRE.get());
+                        output.accept(ModItems.AMMO_TURRET_RADIO.get());
+
+                        output.accept(ModItems.MISSILE_100MM.get());
+                        output.accept(ModItems.MISSILE_100MM_HE.get());
+                        output.accept(ModItems.MISSILE_100MM_FIRE.get());
                     })
                     .build());
 

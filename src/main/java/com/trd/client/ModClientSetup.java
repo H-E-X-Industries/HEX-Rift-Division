@@ -55,6 +55,9 @@ public class ModClientSetup {
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.VISHELASHIVATEL_BE.get(), com.trd.client.render.ber.VishelachivatelRenderer::new);
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.STANOK_BE.get(), com.trd.client.render.StanokRenderer::new);
         // event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.FUEL_TANK_SMALL_BE.get(), com.trd.client.render.ber.FuelTankRenderer::new);
+
+        // Рендереры сущностей появятся здесь вместе с их типами
+        // (снаряды гранат, пули, ракеты, турели).
     }
 
     @SubscribeEvent
