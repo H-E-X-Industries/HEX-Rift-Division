@@ -1,8 +1,0 @@
-{
-  "feature": "trd:special_ore_sulfur_cluster",
-  "placement": [
-    {
-      "type": "minecraft:biome"
-    }
-  ]
-}

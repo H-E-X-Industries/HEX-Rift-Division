@@ -1,8 +1,0 @@
-{
-  "type": "minecraft:stonecutting",
-  "count": 1,
-  "ingredient": {
-    "item": "trd:firebrick_block"
-  },
-  "result": "trd:firebrick_stairs"
-}

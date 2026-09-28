@@ -1,8 +1,0 @@
-{
-  "parent": "minecraft:block/slab_top",
-  "textures": {
-    "bottom": "trd:block/concrete_stripped",
-    "side": "trd:block/concrete_stripped",
-    "top": "trd:block/concrete_stripped"
-  }
-}
