@@ -1,0 +1,76 @@
+{
+  "jars": [
+    {
+      "identifier": {
+        "group": "dev.engine-room.flywheel",
+        "artifact": "flywheel-neoforge-1.21.1"
+      },
+      "version": {
+        "range": "[1.0,2.0)",
+        "artifactVersion": "1.0.6"
+      },
+      "path": "META-INF/jarjar/flywheel-neoforge-1.21.1-1.0.6.jar",
+      "isObfuscated": false
+    },
+    {
+      "identifier": {
+        "group": "org.lwjgl",
+        "artifact": "lwjgl-ktx"
+      },
+      "version": {
+        "range": "[3.3.3,)",
+        "artifactVersion": "3.3.3"
+      },
+      "path": "META-INF/jarjar/lwjgl-ktx-3.3.3.jar",
+      "isObfuscated": false
+    },
+    {
+      "identifier": {
+        "group": "org.lwjgl",
+        "artifact": "lwjgl-ktx"
+      },
+      "version": {
+        "range": "[3.3.3,)",
+        "artifactVersion": "3.3.3"
+      },
+      "path": "META-INF/jarjar/lwjgl-ktx-3.3.3-natives-linux.jar",
+      "isObfuscated": false
+    },
+    {
+      "identifier": {
+        "group": "org.lwjgl",
+        "artifact": "lwjgl-ktx"
+      },
+      "version": {
+        "range": "[3.3.3,)",
+        "artifactVersion": "3.3.3"
+      },
+      "path": "META-INF/jarjar/lwjgl-ktx-3.3.3-natives-windows.jar",
+      "isObfuscated": false
+    },
+    {
+      "identifier": {
+        "group": "org.lwjgl",
+        "artifact": "lwjgl-ktx"
+      },
+      "version": {
+        "range": "[3.3.3,)",
+        "artifactVersion": "3.3.3"
+      },
+      "path": "META-INF/jarjar/lwjgl-ktx-3.3.3-natives-macos.jar",
+      "isObfuscated": false
+    },
+    {
+      "identifier": {
+        "group": "org.lwjgl",
+        "artifact": "lwjgl-ktx"
+      },
+      "version": {
+        "range": "[3.3.3,)",
+        "artifactVersion": "3.3.3"
+      },
+      "path": "META-INF/jarjar/lwjgl-ktx-3.3.3-natives-macos-arm64.jar",
+      "isObfuscated": false
+    }
+  ]
+}

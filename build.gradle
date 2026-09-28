@@ -48,6 +48,9 @@ repositories {
     maven { url = "https://maven.blamejared.com" }
     maven { url = "https://modmaven.dev/" }
     maven { url = "https://maven.parchmentmc.org" }
+    flatDir {
+        dir 'libs'
+    }
 }
 
 base {
@@ -109,10 +112,18 @@ dependencies {
     // 2. TerraBlender (NeoForge 1.21.1)
     implementation "com.github.glitchfiend:TerraBlender-neoforge:1.21.1-4.1.0.8"
 
-    // 3. Flywheel (NeoForge 1.21.1)
-    implementation "dev.engine-room.flywheel:flywheel-neoforge-1.21.1:1.0.6-44"
+    // 3. Flywheel (NeoForge 1.21.1) - compileOnly as GemRender provides it via jarJar
+    compileOnly "dev.engine-room.flywheel:flywheel-neoforge-1.21.1:1.0.6-44"
 
-    // 4. JEI (Just Enough Items)
+    // 4. GemRender (bundled via Jar-in-Jar)
+    implementation name: 'gemrender', version: '0.1.4'
+    jarJar(name: 'gemrender') {
+        version {
+            strictly '[0.1.0, 1.0.0)'
+        }
+    }
+
+    // 5. JEI (Just Enough Items)
     compileOnly "mezz.jei:jei-1.21.1-neoforge-api:19.21.0.247"
     localRuntime "mezz.jei:jei-1.21.1-neoforge:19.21.0.247"
 }

@@ -1,0 +1,79 @@
+# GemRender: NeoForge mod metadata.
+# The dollar-brace tokens below are expanded by the generateModMetadata task in build.gradle from gradle.properties.
+modLoader = "javafml"
+loaderVersion = "[1,)"
+license = "GPL-3"
+
+[[mods]]
+modId = "gemrender"
+version = "0.1.4"
+displayName = "GemRender"
+authors = "MrNorwood"
+description = '''A GPU-driven model and animation renderer for Minecraft: a glTF 2.0 asset pipeline on top of Flywheel's retained instancing, with skinning evaluated in the vertex shader so animated models stay instanced.'''
+
+
+
+
+# Mixin configs are declared to FML here on NeoForge (no MANIFEST MixinConfigs attribute).
+# Client-only: every mixin GemRender applies targets Flywheel's rendering internals.
+[[mixins]]
+config = "gemrender.mixins.json"
+
+
+# The retained item/armour/hand path. Its own config so it can be left out whole on a version whose
+# item pipeline it cannot hook -- see `direct_supported` in that version's gradle.properties -- and
+# so that the two eras of vanilla item pipeline can carry different mixins under one property. The
+# name is filled in from `directMixinSet` in build.gradle; only one of the two is ever in the jar.
+[[mixins]]
+config = "gemrender.direct.mixins.json"
+
+
+# iris-flw-compat is never on the classpath: -Piris drops it into run/mods and no other run has it.
+# Its config is required = false so a launch without it skips the mixin instead of refusing to start.
+#
+# Declared only where the shader stack exists. `required = false` covers a missing MOD, not a missing
+# CONFIG: naming a config the jar does not carry is a hard load failure, and build.gradle drops the
+# file from resources wherever iris_supported is false.
+[[mixins]]
+config = "gemrender.irisflw.mixins.json"
+
+# Colorwheel is the other implementation of the same bridge, and only one of the two can be installed
+# at a time. Its mixins name their targets by string, so the jar needs no Colorwheel on its compile
+# classpath and the config is inert on a launch without it.
+[[mixins]]
+config = "gemrender.colorwheel.mixins.json"
+
+
+
+# --- Required: NeoForge ---
+[[dependencies.gemrender]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.1.1,22)"
+ordering = "NONE"
+side = "BOTH"
+
+# --- Required: Minecraft ---
+[[dependencies.gemrender]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21.1,1.22)"
+ordering = "NONE"
+side = "BOTH"
+
+# --- Required: Flywheel ---
+# GemRender is a layer on top of Flywheel, not an alternative to it: models are Flywheel Models, draws are
+# Flywheel Instancers, culling is Flywheel's. Without it there is nothing to render through.
+#
+# Jar-in-jar'd, under the same group:artifact Create nests Flywheel under, so FML resolves the two as
+# one dependency and loads a single copy. A Flywheel installed in mods/ wins over both. Still declared
+# required: the range below is what GemRender needs of whichever copy ends up loading.
+#
+# ordering = AFTER so Flywheel's backends are registered before GemRender asks for an Instancer.
+[[dependencies.gemrender]]
+modId = "flywheel"
+type = "required"
+versionRange = "[1.0,2.0)"
+ordering = "AFTER"
+side = "CLIENT"
+
