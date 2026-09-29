@@ -231,6 +231,11 @@ public class ModBlockEntities {
                     ModBlocks.BEAM_COLLISION.get()
             ).build(null));
 
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.weapons.TurretLightPlacerBlockEntity>> TURRET_LIGHT_PLACER_BE =
+            BLOCK_ENTITIES.register("turret_light_placer", () -> net.minecraft.world.level.block.entity.BlockEntityType.Builder.of(
+                    com.trd.block.entity.weapons.TurretLightPlacerBlockEntity::new,
+                    ModBlocks.TURRET_LIGHT_PLACER.get()).build(null));
+
     public static void register(IEventBus eventBus) {
         BLOCK_ENTITIES.register(eventBus);
     }

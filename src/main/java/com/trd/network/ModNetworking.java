@@ -148,5 +148,31 @@ public class ModNetworking {
             com.trd.network.packet.explosion.SpawnExplosionParticlesPacket.STREAM_CODEC,
             com.trd.network.packet.explosion.SpawnExplosionParticlesPacket::handle
         );
+
+        // === ТУРЕЛИ ===
+
+        registrar.playToClient(
+            com.trd.network.packet.turrets.PacketChipFeedback.TYPE,
+            com.trd.network.packet.turrets.PacketChipFeedback.STREAM_CODEC,
+            com.trd.network.packet.turrets.PacketChipFeedback::handle
+        );
+
+        registrar.playToServer(
+            com.trd.network.packet.turrets.PacketToggleTurret.TYPE,
+            com.trd.network.packet.turrets.PacketToggleTurret.STREAM_CODEC,
+            com.trd.network.packet.turrets.PacketToggleTurret::handle
+        );
+
+        registrar.playToServer(
+            com.trd.network.packet.turrets.PacketUpdateTurretSettings.TYPE,
+            com.trd.network.packet.turrets.PacketUpdateTurretSettings.STREAM_CODEC,
+            com.trd.network.packet.turrets.PacketUpdateTurretSettings::handle
+        );
+
+        registrar.playToServer(
+            com.trd.network.packet.turrets.PacketModifyTurretChip.TYPE,
+            com.trd.network.packet.turrets.PacketModifyTurretChip.STREAM_CODEC,
+            com.trd.network.packet.turrets.PacketModifyTurretChip::handle
+        );
     }
 }

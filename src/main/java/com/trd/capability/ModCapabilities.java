@@ -243,6 +243,11 @@ public class ModCapabilities {
         // Forge Item Handler Block Capability
         event.registerBlockEntity(
                 net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
+                com.trd.block.entity.ModBlockEntities.TURRET_LIGHT_PLACER_BE.get(),
+                (be, side) -> be.getItemHandler()
+        );
+        event.registerBlockEntity(
+                net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
                 com.trd.block.entity.ModBlockEntities.MACHINE_BATTERY_BE.get(),
                 (be, side) -> be.getItemHandler()
         );

@@ -1,6 +1,8 @@
 package com.trd.entity;
 
 import com.trd.entity.weapons.bullets.TurretBulletEntity;
+import com.trd.entity.weapons.turrets.TurretLightEntity;
+import com.trd.entity.weapons.turrets.TurretLightLinkedEntity;
 import com.trd.entity.weapons.grenades.GravityGrenadeProjectileEntity;
 import com.trd.entity.weapons.grenades.GrenadeIfProjectileEntity;
 import com.trd.entity.weapons.grenades.GrenadeNucProjectileEntity;
@@ -38,6 +40,24 @@ public class ModEntities {
                     // развернуть её вдоль движения
                     .setShouldReceiveVelocityUpdates(true)
                     .build("trd:turret_bullet"));
+
+    // === ТУРЕЛИ ===
+
+    public static final DeferredHolder<EntityType<?>, EntityType<TurretLightEntity>> TURRET_LIGHT =
+            ENTITY_TYPES.register("turret_light", () -> EntityType.Builder
+                    .<TurretLightEntity>of(TurretLightEntity::new, MobCategory.MONSTER)
+                    .sized(0.8F, 0.8F)
+                    .clientTrackingRange(16)
+                    .updateInterval(2)
+                    .build("trd:turret_light"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<TurretLightLinkedEntity>> TURRET_LIGHT_LINKED =
+            ENTITY_TYPES.register("turret_light_linked", () -> EntityType.Builder
+                    .<TurretLightLinkedEntity>of(TurretLightLinkedEntity::new, MobCategory.MONSTER)
+                    .sized(0.8F, 0.8F)
+                    .clientTrackingRange(16)
+                    .updateInterval(2)
+                    .build("trd:turret_light_linked"));
 
     // === ГРАНАТЫ ===
 

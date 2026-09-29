@@ -263,6 +263,28 @@ public class ModItems {
         com.trd.api.tooltip.MachineTooltipRegistry.register(MACHINEGUN, "tooltip.trd.machine.machinegun.desc");
     }
 
+    // ═══════════════════════════════════════════════════════
+    // ТУРЕЛИ
+    // ═══════════════════════════════════════════════════════
+
+    // Предмет-форма блока-буфера (turret_light_placer) регистрируется в ModBlocks:
+    // helper registerBlock всегда вешает обычный BlockItem, а нужен кастомный
+    // TurretLightPlacerBlockItem (GeoItem). Вкладка берёт ModBlocks.TURRET_LIGHT_PLACER.get().
+    public static final DeferredItem<Item> TURRET_LIGHT_PORTATIVE_PLACER = ITEMS.register("turret_light_portative_placer",
+            () -> new com.trd.item.weapons.turrets.TurretLightPortativePlacer(new Item.Properties().stacksTo(1)));
+
+    public static final DeferredItem<Item> PIG_TURRET_PLACER = ITEMS.register("pig_turret_placer",
+            () -> new com.trd.item.weapons.turrets.PigTurretPlacerItem(new Item.Properties().stacksTo(1)));
+
+    public static final DeferredItem<Item> TURRET_CHIP = ITEMS.register("turret_chip",
+            () -> new com.trd.item.weapons.turrets.TurretChipItem(new Item.Properties()));
+
+    static {
+        com.trd.api.tooltip.MachineTooltipRegistry.register(TURRET_LIGHT_PORTATIVE_PLACER, "tooltip.trd.machine.turret_portative.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.register(PIG_TURRET_PLACER, "tooltip.trd.machine.pig_turret.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.register(TURRET_CHIP, "tooltip.trd.machine.turret_chip.desc");
+    }
+
     public static final DeferredItem<Item> MISSILE_100MM = ITEMS.register("missile_100mm",
             () -> new com.trd.item.weapons.missiles.MissileItem(new Item.Properties(), "standard", 25.0f, 1.67f));
     public static final DeferredItem<Item> MISSILE_100MM_HE = ITEMS.register("missile_100mm_he",

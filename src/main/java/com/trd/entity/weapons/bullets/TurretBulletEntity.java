@@ -613,6 +613,16 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
      * приезжают следующей пачкой, поэтому пока это только точка расширения.
      */
     private void checkAndCountKill(LivingEntity target) {
+        if (target.isDeadOrDying()) {
+            Entity owner = this.getOwner();
+            if (owner instanceof com.trd.entity.weapons.turrets.TurretLightLinkedEntity turret) {
+                net.minecraft.core.BlockPos pos = turret.getParentBlock();
+                if (pos != null && this.level().getBlockEntity(pos)
+                        instanceof com.trd.block.entity.weapons.TurretLightPlacerBlockEntity be) {
+                    be.incrementKills();
+                }
+            }
+        }
     }
 
     /**

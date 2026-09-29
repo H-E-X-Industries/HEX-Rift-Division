@@ -722,6 +722,30 @@ public class ModBlocks {
                 CONCRETE_LINE, CONCRETE_RAIL, CONCRETE_CUT, CONCRETE_REBAR, CONCRETE_VENT);
     }
 
+    // === ТУРЕЛИ ===
+
+    /**
+     * Буфер турели регистрируется НЕ через {@link #registerBlock}: тому helper всегда
+     * вешает обычный {@link BlockItem}, а здесь нужен свой {@code TurretLightPlacerBlockItem}
+     * (GeoItem с кастомным рендерером). Поэтому item-часть регистрируем вручную —
+     * так же, как это делает {@link #registerBattery}.
+     */
+    public static final DeferredBlock<com.trd.block.basic.weapons.TurretLightPlacerBlock> TURRET_LIGHT_PLACER =
+            registerTurretPlacer();
+
+    private static DeferredBlock<com.trd.block.basic.weapons.TurretLightPlacerBlock> registerTurretPlacer() {
+        DeferredBlock<com.trd.block.basic.weapons.TurretLightPlacerBlock> block = BLOCKS.register(
+                "turret_light_placer",
+                () -> new com.trd.block.basic.weapons.TurretLightPlacerBlock(
+                        BlockBehaviour.Properties.ofFullCopy(Blocks.STONE)
+                                .strength(5.0f, 30.0f).noOcclusion().requiresCorrectToolForDrops()));
+        com.trd.item.ModItems.ITEMS.register("turret_light_placer",
+                () -> new com.trd.item.weapons.turrets.TurretLightPlacerBlockItem(
+                        block.get(), new Item.Properties()));
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(block, "tooltip.trd.machine.turret_light.desc");
+        return block;
+    }
+
     public static void register(net.neoforged.bus.api.IEventBus eventBus) {
         BLOCKS.register(eventBus);
 

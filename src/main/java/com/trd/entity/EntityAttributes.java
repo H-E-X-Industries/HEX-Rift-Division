@@ -17,7 +17,10 @@ public class EntityAttributes {
 
     @SubscribeEvent
     public static void onEntityAttributeCreation(EntityAttributeCreationEvent event) {
-        // Здесь появятся вызовы event.put(...) вместе с классами сущностей:
-        //   TURRET_LIGHT и TURRET_LIGHT_LINKED -> TurretLightEntity.createAttributes()
+        event.put(ModEntities.TURRET_LIGHT.get(),
+                com.trd.entity.weapons.turrets.TurretLightEntity.createAttributes().build());
+        // Блочная турель использует тот же набор, что и свободная
+        event.put(ModEntities.TURRET_LIGHT_LINKED.get(),
+                com.trd.entity.weapons.turrets.TurretLightEntity.createAttributes().build());
     }
 }

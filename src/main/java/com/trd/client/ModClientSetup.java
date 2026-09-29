@@ -38,6 +38,7 @@ public class ModClientSetup {
         event.register(com.trd.menu.ModMenuTypes.COCCER_OVEN_MENU.get(), com.trd.client.overlay.gui.CoccerOvenScreen::new);
         event.register(com.trd.menu.ModMenuTypes.STANOK_MENU.get(), com.trd.client.overlay.gui.GUIStanok::new);
         event.register(com.trd.menu.ModMenuTypes.STEEL_STORAGE_MENU.get(), com.trd.client.overlay.gui.SteelStorageScreen::new);
+        event.register(com.trd.menu.ModMenuTypes.TURRET_AMMO_MENU.get(), com.trd.client.overlay.gui.GUITurretAmmo::new);
     }
 
     @SubscribeEvent
@@ -58,6 +59,12 @@ public class ModClientSetup {
 
         event.registerEntityRenderer(com.trd.entity.ModEntities.TURRET_BULLET.get(),
                 com.trd.client.gecko.entity.bullets.TurretBulletRenderer::new);
+        event.registerEntityRenderer(com.trd.entity.ModEntities.TURRET_LIGHT.get(),
+                com.trd.client.gecko.entity.turrets.TurretLightRenderer::new);
+        event.registerEntityRenderer(com.trd.entity.ModEntities.TURRET_LIGHT_LINKED.get(),
+                com.trd.client.gecko.entity.turrets.TurretLightLinkedRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.TURRET_LIGHT_PLACER_BE.get(),
+                com.trd.client.gecko.block.turrets.TurretLightPlacerRenderer::new);
 
         // Гранаты рисуются ванильным рендерером брошенного предмета (модель самого предмета).
         // Без регистрации клиент рисует на их месте свинью.
