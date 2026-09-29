@@ -3,6 +3,7 @@ package com.trd.entity;
 import com.trd.entity.weapons.bullets.TurretBulletEntity;
 import com.trd.entity.weapons.grenades.GravityGrenadeProjectileEntity;
 import com.trd.entity.weapons.grenades.GrenadeIfProjectileEntity;
+import com.trd.entity.weapons.grenades.GrenadeNucProjectileEntity;
 import com.trd.entity.weapons.grenades.GrenadeProjectileEntity;
 import com.trd.main.MainRegistry;
 import net.minecraft.core.registries.Registries;
@@ -39,7 +40,6 @@ public class ModEntities {
                     .build("trd:turret_bullet"));
 
     // === ГРАНАТЫ ===
-    // Зажигательные и водородная гранаты добавятся вместе с ExplosionFire/ExplosionHydrogen.
 
     public static final DeferredHolder<EntityType<?>, EntityType<GravityGrenadeProjectileEntity>> GRAVITY_GRENADE_PROJECTILE =
             ENTITY_TYPES.register("gravity_grenade_projectile", () -> EntityType.Builder
@@ -73,6 +73,12 @@ public class ModEntities {
                     .sized(0.5f, 0.5f)
                     .build("trd:grenadeslime_projectile"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<GrenadeProjectileEntity>> GRENADEFIRE_PROJECTILE =
+            ENTITY_TYPES.register("grenadefire_projectile", () -> EntityType.Builder
+                    .<GrenadeProjectileEntity>of(GrenadeProjectileEntity::new, MobCategory.MISC)
+                    .sized(0.5f, 0.5f)
+                    .build("trd:grenadefire_projectile"));
+
     public static final DeferredHolder<EntityType<?>, EntityType<GrenadeIfProjectileEntity>> GRENADE_IF_PROJECTILE =
             ENTITY_TYPES.register("grenade_if_projectile", () -> EntityType.Builder
                     .<GrenadeIfProjectileEntity>of(GrenadeIfProjectileEntity::new, MobCategory.MISC)
@@ -80,6 +86,12 @@ public class ModEntities {
                     .clientTrackingRange(16)
                     .updateInterval(2)
                     .build("trd:grenade_if_projectile"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<GrenadeIfProjectileEntity>> GRENADE_IF_FIRE_PROJECTILE =
+            ENTITY_TYPES.register("grenade_if_fire_projectile", () -> EntityType.Builder
+                    .<GrenadeIfProjectileEntity>of(GrenadeIfProjectileEntity::new, MobCategory.MISC)
+                    .sized(0.5f, 0.5f)
+                    .build("trd:grenade_if_fire_projectile"));
 
     public static final DeferredHolder<EntityType<?>, EntityType<GrenadeIfProjectileEntity>> GRENADE_IF_SLIME_PROJECTILE =
             ENTITY_TYPES.register("grenade_if_slime_projectile", () -> EntityType.Builder
@@ -94,6 +106,14 @@ public class ModEntities {
                     .<GrenadeIfProjectileEntity>of(GrenadeIfProjectileEntity::new, MobCategory.MISC)
                     .sized(0.5f, 0.5f)
                     .build("trd:grenade_if_he_projectile"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<GrenadeNucProjectileEntity>> GRENADE_NUC_PROJECTILE =
+            ENTITY_TYPES.register("grenade_nuc_projectile", () -> EntityType.Builder
+                    .<GrenadeNucProjectileEntity>of(GrenadeNucProjectileEntity::new, MobCategory.MISC)
+                    .sized(0.25F, 0.25F)
+                    .clientTrackingRange(64)
+                    .updateInterval(2)
+                    .build("trd:grenade_nuc_projectile"));
 
     public static void register(IEventBus eventBus) {
         ENTITY_TYPES.register(eventBus);

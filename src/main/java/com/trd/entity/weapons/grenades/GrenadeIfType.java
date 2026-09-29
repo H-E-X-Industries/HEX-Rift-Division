@@ -11,9 +11,6 @@ import java.util.function.Supplier;
  * explosionPower — единственный источник правды о радиусе взрыва, customDamage — максимальный урон,
  * с линейным спадом к нулю на краю радиуса. Ударные гранаты не отскакивают от блоков по своему
  * BOUNCE_MULTIPLIER — отскок задаёт GrenadeIfProjectileEntity.
- * <p>
- * Тип {@code GRENADE_IF_FIRE} (зажигательная) ждёт порта {@code ExplosionFire} — на этом этапе
- * он не выдаётся.
  */
 public enum GrenadeIfType {
     // Осколочная ударная: радиус 5.0, урон 45
@@ -23,7 +20,11 @@ public enum GrenadeIfType {
     GRENADE_IF_HE(8.0f, 80.0f, ModItems.GRENADE_IF_HE::get),
 
     // Липучка ударная: радиус 6.0, урон 60, прилипает к блокам и сущностям
-    GRENADE_IF_SLIME(6.0f, 60.0f, ModItems.GRENADE_IF_SLIME::get);
+    GRENADE_IF_SLIME(6.0f, 60.0f, ModItems.GRENADE_IF_SLIME::get),
+
+    // Зажигательная ударная: радиус 3.0. Реальный взрыв — ExplosionFire (30 → 6),
+    // customDamage не применяется напрямую: радиус из тултипа = радиусу взрыва.
+    GRENADE_IF_FIRE(3.0f, 30.0f, ModItems.GRENADE_IF_FIRE::get);
 
     private final float explosionPower;
     private final float customDamage;

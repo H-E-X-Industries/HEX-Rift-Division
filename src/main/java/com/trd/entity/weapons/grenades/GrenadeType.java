@@ -19,6 +19,10 @@ public enum GrenadeType {
     // Фугасная: 3 отскока, радиус 7.0, урон 40
     HE(3, 0.3f, 7.0f, 40.0f, false, () -> ModItems.GRENADEHE.get()),
 
+    // Зажигательная: 3 отскока, радиус 3.0, урон 30. Реальный взрыв — ExplosionFire
+    // (30 → 6), damage нигде не применяется напрямую: радиус из тултипа = радиусу взрыва.
+    FIRE(3, 0.3f, 3.0f, 30.0f, false, () -> ModItems.GRENADEFIRE.get()),
+
     // Липучка: 4 отскока, прилипает к блокам и сущностям, радиус 3.5, урон 30
     SLIME(4, 0.51f, 3.5f, 30.0f, false, () -> ModItems.GRENADESLIME.get()),
 

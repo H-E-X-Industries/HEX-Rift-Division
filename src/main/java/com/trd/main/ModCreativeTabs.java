@@ -299,7 +299,7 @@ public class ModCreativeTabs {
     public static final Supplier<CreativeModeTab> trd_WEAPONS_TAB = CREATIVE_MODE_TABS.register("trd_weapons_tab",
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup." + MainRegistry.MOD_ID + ".trd_weapons_tab"))
-                    .icon(() -> new ItemStack(ModItems.CAST_PICKAXE_IRON.get()))
+                    .icon(() -> new ItemStack(ModItems.GRENADE_NUC.get()))
                     .withTabsBefore(id("trd_tech_tab"))
                     .displayItems((parameters, output) -> {
                         output.accept(ModItems.CAST_PICKAXE_IRON.get());
@@ -310,15 +310,18 @@ public class ModCreativeTabs {
                         output.accept(ModItems.DETONATOR.get());
                         output.accept(ModItems.RANGE_DETONATOR.get());
 
-                        // Гранаты (порядок как в 1.20.1; зажигательные и водородная — позже)
+                        // Гранаты (порядок как в 1.20.1)
                         output.accept(ModItems.GRENADE.get());
                         output.accept(ModItems.GRENADEHE.get());
+                        output.accept(ModItems.GRENADEFIRE.get());
                         output.accept(ModItems.GRENADESLIME.get());
                         output.accept(ModItems.GRENADE_IF.get());
                         output.accept(ModItems.GRENADE_IF_HE.get());
                         output.accept(ModItems.GRENADE_IF_SLIME.get());
+                        output.accept(ModItems.GRENADE_IF_FIRE.get());
                         output.accept(ModItems.GRENADESMART.get());
                         output.accept(ModItems.GRAVITY_GRENADE.get());
+                        output.accept(ModItems.GRENADE_NUC.get());
 
                         output.accept(ModItems.MACHINEGUN.get());
 
@@ -465,6 +468,11 @@ public class ModCreativeTabs {
                         output.accept(ModBlocks.SEQUOIA_BARK.get());
                         output.accept(ModBlocks.SEQUOIA_HEARTWOOD.get());
                         output.accept(ModBlocks.SEQUOIA_BIOME_MOSS.get());
+                        output.accept(ModBlocks.BASALT_SOFT.get());
+                        // BASALT_SOFT_2/3/4 остались в реестре ради старых миров, но в креативе их нет:
+                        // все четыре текстуры теперь у одного блока через свойство variant.
+                        output.accept(ModBlocks.WASTE_LOG.get());
+                        output.accept(ModBlocks.WASTE_GRASS.get());
                     })
                     .build());
 

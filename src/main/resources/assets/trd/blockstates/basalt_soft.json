@@ -1,0 +1,16 @@
+{
+  "variants": {
+    "variant=0": {
+      "model": "trd:block/basalt_soft_v0"
+    },
+    "variant=1": {
+      "model": "trd:block/basalt_soft_v1"
+    },
+    "variant=2": {
+      "model": "trd:block/basalt_soft_v2"
+    },
+    "variant=3": {
+      "model": "trd:block/basalt_soft_v3"
+    }
+  }
+}

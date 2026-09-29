@@ -561,6 +561,53 @@ public class ModBlocks {
             () -> new net.minecraft.world.level.block.PressurePlateBlock(net.minecraft.world.level.block.state.properties.BlockSetType.DARK_OAK,
                     BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_PRESSURE_PLATE)));
 
+    // ═══════════════════════════════════════════════════════
+    // ВОРОНКА ВОДОРОДНОЙ ГРАНАТЫ И КОПОТЬ-ТИНТЫ (ExplosionHydrogen / ExplosionFire)
+    // ═══════════════════════════════════════════════════════
+
+    public static final DeferredBlock<net.minecraft.world.level.block.RotatedPillarBlock> WASTE_LOG = registerBlock("waste_log",
+            () -> new net.minecraft.world.level.block.RotatedPillarBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_WOOD)
+                    .sound(net.minecraft.world.level.block.SoundType.WOOD)));
+
+    public static final DeferredBlock<WasteGrassBlock> WASTE_GRASS = registerBlock("waste_grass",
+            () -> new WasteGrassBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.GRASS_BLOCK)
+                    .sound(net.minecraft.world.level.block.SoundType.GRASS)));
+
+    public static final DeferredBlock<Block> BASALT_ROUGH = registerBlock("basalt_rough",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .mapColor(net.minecraft.world.level.material.MapColor.DEEPSLATE)
+                    .strength(0.5F, 6.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<ScorchedBasaltBlock> BASALT_SCORCHED = registerBlock("basalt_scorched",
+            () -> new ScorchedBasaltBlock(BlockBehaviour.Properties.of()
+                    .mapColor(net.minecraft.world.level.material.MapColor.COLOR_BLACK)
+                    .strength(0.5F, 6.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<CraterBasaltBlock> BASALT_SOFT = registerBlock("basalt_soft",
+            () -> new CraterBasaltBlock(BlockBehaviour.Properties.of()
+                    .mapColor(net.minecraft.world.level.material.MapColor.DEEPSLATE)
+                    .strength(0.5F, 6.0F).sound(net.minecraft.world.level.block.SoundType.NETHERRACK).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<CraterBasaltBlock> BASALT_SOFT_2 = registerBlock("basalt_soft_2",
+            () -> new CraterBasaltBlock(BlockBehaviour.Properties.of()
+                    .mapColor(net.minecraft.world.level.material.MapColor.DEEPSLATE)
+                    .strength(0.5F, 6.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<CraterBasaltBlock> BASALT_SOFT_3 = registerBlock("basalt_soft_3",
+            () -> new CraterBasaltBlock(BlockBehaviour.Properties.of()
+                    .mapColor(net.minecraft.world.level.material.MapColor.DEEPSLATE)
+                    .strength(0.5F, 6.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<CraterBasaltBlock> BASALT_SOFT_4 = registerBlock("basalt_soft_4",
+            () -> new CraterBasaltBlock(BlockBehaviour.Properties.of()
+                    .mapColor(net.minecraft.world.level.material.MapColor.DEEPSLATE)
+                    .strength(0.5F, 6.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
+
+    // Армированное бетонное стекло: водородная/огненная волна его НЕ ломает (см. ExplosionHydrogen.isGlass).
+    public static final DeferredBlock<Block> CONCRETE_ARMED_GLASS = registerBlock("concrete_armed_glass",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(0.5F, 6.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
+
     // ДВЕРИ
     public static final DeferredBlock<net.minecraft.world.level.block.DoorBlock> SEQUOIA_DOOR = registerBlock("sequoia_door",
             () -> new net.minecraft.world.level.block.DoorBlock(net.minecraft.world.level.block.state.properties.BlockSetType.DARK_OAK,

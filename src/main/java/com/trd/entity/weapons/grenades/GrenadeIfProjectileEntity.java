@@ -1,5 +1,6 @@
 package com.trd.entity.weapons.grenades;
 
+import com.trd.explosion.logic.ExplosionFire;
 import com.trd.explosion.logic.ExplosionHE;
 import com.trd.explosion.logic.ExplosionStandard;
 import com.trd.sound.ModSounds;
@@ -8,6 +9,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -214,6 +216,7 @@ public class GrenadeIfProjectileEntity extends ThrowableItemProjectile {
         switch (grenadeType) {
             case GRENADE_IF -> ExplosionStandard.explode(level, center, this.getOwner(), radius, grenadeType.getCustomDamage());
             case GRENADE_IF_HE -> ExplosionHE.explode(level, center, this.getOwner(), radius, grenadeType.getCustomDamage());
+            case GRENADE_IF_FIRE -> ExplosionFire.explode((ServerLevel) level, center, this.getOwner(), radius, true);
             case GRENADE_IF_SLIME -> ExplosionStandard.explode(level, center, this.getOwner(), radius, grenadeType.getCustomDamage());
         }
         this.discard();

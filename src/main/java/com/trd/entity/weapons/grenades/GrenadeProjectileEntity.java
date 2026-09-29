@@ -1,5 +1,6 @@
 package com.trd.entity.weapons.grenades;
 
+import com.trd.explosion.logic.ExplosionFire;
 import com.trd.explosion.logic.ExplosionHE;
 import com.trd.explosion.logic.ExplosionStandard;
 import com.trd.sound.ModSounds;
@@ -8,6 +9,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -21,12 +23,9 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Осколочная/фугасная/липучая/умная граната.
+ * Осколочная/фугасная/зажигательная/липучая/умная граната.
  * Отскакивает от блоков заданное число раз, потом взрывается; липучка прилипает,
  * умная взрывается от касания сущности.
- * <p>
- * Тип {@link GrenadeType#FIRE} (зажигательная) ждёт порта {@code ExplosionFire}
- * вместе с системой копоти-тинтов — на этом этапе он не выдаётся.
  */
 public class GrenadeProjectileEntity extends ThrowableItemProjectile {
 
@@ -225,9 +224,11 @@ public class GrenadeProjectileEntity extends ThrowableItemProjectile {
         switch (grenadeType) {
             case STANDARD -> ExplosionStandard.explode(level, pos, this.getOwner(), radius, grenadeType.getCustomDamage());
             case HE -> ExplosionHE.explode(level, pos, this.getOwner(), radius, grenadeType.getCustomDamage());
+            case FIRE -> ExplosionFire.explode((ServerLevel) level, pos, this.getOwner(), radius, true);
             case SMART -> {
                 if (smartEntityHit) {
                     ExplosionHE.explode(level, pos, this.getOwner(), SMART_CONTACT_RADIUS, 40.0f);
+                    ExplosionFire.explode((ServerLevel) level, pos, this.getOwner(), 2.0f, true);
                 } else {
                     ExplosionStandard.explode(level, pos, this.getOwner(), radius, grenadeType.getCustomDamage());
                 }
