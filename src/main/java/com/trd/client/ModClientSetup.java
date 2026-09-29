@@ -58,6 +58,20 @@ public class ModClientSetup {
 
         event.registerEntityRenderer(com.trd.entity.ModEntities.TURRET_BULLET.get(),
                 com.trd.client.gecko.entity.bullets.TurretBulletRenderer::new);
+
+        // Гранаты рисуются ванильным рендерером брошенного предмета (модель самого предмета).
+        // Без регистрации клиент рисует на их месте свинью.
+        for (var grenade : java.util.List.of(
+                com.trd.entity.ModEntities.GRAVITY_GRENADE_PROJECTILE,
+                com.trd.entity.ModEntities.GRENADE_PROJECTILE,
+                com.trd.entity.ModEntities.GRENADEHE_PROJECTILE,
+                com.trd.entity.ModEntities.GRENADESMART_PROJECTILE,
+                com.trd.entity.ModEntities.GRENADESLIME_PROJECTILE,
+                com.trd.entity.ModEntities.GRENADE_IF_PROJECTILE,
+                com.trd.entity.ModEntities.GRENADE_IF_HE_PROJECTILE,
+                com.trd.entity.ModEntities.GRENADE_IF_SLIME_PROJECTILE)) {
+            event.registerEntityRenderer(grenade.get(), net.minecraft.client.renderer.entity.ThrownItemRenderer::new);
+        }
     }
 
     @SubscribeEvent
