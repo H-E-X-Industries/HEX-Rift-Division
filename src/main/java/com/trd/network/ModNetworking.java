@@ -130,5 +130,23 @@ public class ModNetworking {
             com.trd.network.packet.guns.PacketUnloadGun.STREAM_CODEC,
             com.trd.network.packet.guns.PacketUnloadGun::handle
         );
+
+        registrar.playToClient(
+            com.trd.network.packet.explosion.SyncCraterPacket.TYPE,
+            com.trd.network.packet.explosion.SyncCraterPacket.STREAM_CODEC,
+            com.trd.network.packet.explosion.SyncCraterPacket::handle
+        );
+
+        registrar.playToClient(
+            com.trd.network.packet.explosion.SyncCraterTintsPacket.TYPE,
+            com.trd.network.packet.explosion.SyncCraterTintsPacket.STREAM_CODEC,
+            com.trd.network.packet.explosion.SyncCraterTintsPacket::handle
+        );
+
+        registrar.playToClient(
+            com.trd.network.packet.explosion.SpawnExplosionParticlesPacket.TYPE,
+            com.trd.network.packet.explosion.SpawnExplosionParticlesPacket.STREAM_CODEC,
+            com.trd.network.packet.explosion.SpawnExplosionParticlesPacket::handle
+        );
     }
 }

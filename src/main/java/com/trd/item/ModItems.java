@@ -1,5 +1,8 @@
 package com.trd.item;
 
+import com.trd.entity.weapons.grenades.GrenadeIfType;
+import com.trd.entity.weapons.grenades.GrenadeType;
+import com.trd.entity.ModEntities;
 import com.trd.main.MainRegistry;
 import net.minecraft.world.item.Item;
 import net.neoforged.bus.api.IEventBus;
@@ -266,6 +269,68 @@ public class ModItems {
             () -> new com.trd.item.weapons.missiles.MissileItem(new Item.Properties(), "he", 40.0f, 1.67f));
     public static final DeferredItem<Item> MISSILE_100MM_FIRE = ITEMS.register("missile_100mm_fire",
             () -> new com.trd.item.weapons.missiles.MissileItem(new Item.Properties(), "fire", 20.0f, 1.67f));
+
+    // ═══════════════════════════════════════════════════════
+    // ГРАНАТЫ
+    // ═══════════════════════════════════════════════════════
+
+    public static final DeferredItem<Item> GRAVITY_GRENADE = ITEMS.register("gravity_grenade",
+            () -> new com.trd.item.weapons.grenades.GravityGrenadeItem(
+                    new Item.Properties().stacksTo(16), ModEntities.GRAVITY_GRENADE_PROJECTILE.get()));
+
+    public static final DeferredItem<Item> GRENADE = ITEMS.register("grenade",
+            () -> new com.trd.item.weapons.grenades.GrenadeItem(new Item.Properties().stacksTo(16),
+                    GrenadeType.STANDARD, ModEntities.GRENADE_PROJECTILE.get()));
+
+    public static final DeferredItem<Item> GRENADEHE = ITEMS.register("grenadehe",
+            () -> new com.trd.item.weapons.grenades.GrenadeItem(new Item.Properties().stacksTo(16),
+                    GrenadeType.HE, ModEntities.GRENADEHE_PROJECTILE.get()));
+
+    public static final DeferredItem<Item> GRENADEFIRE = ITEMS.register("grenadefire",
+            () -> new com.trd.item.weapons.grenades.GrenadeItem(new Item.Properties().stacksTo(16),
+                    GrenadeType.FIRE, ModEntities.GRENADEFIRE_PROJECTILE.get()));
+
+    public static final DeferredItem<Item> GRENADESLIME = ITEMS.register("grenadeslime",
+            () -> new com.trd.item.weapons.grenades.GrenadeItem(new Item.Properties().stacksTo(16),
+                    GrenadeType.SLIME, ModEntities.GRENADESLIME_PROJECTILE.get()));
+
+    public static final DeferredItem<Item> GRENADESMART = ITEMS.register("grenadesmart",
+            () -> new com.trd.item.weapons.grenades.GrenadeItem(new Item.Properties().stacksTo(16),
+                    GrenadeType.SMART, ModEntities.GRENADESMART_PROJECTILE.get()));
+
+    public static final DeferredItem<Item> GRENADE_IF = ITEMS.register("grenade_if",
+            () -> new com.trd.item.weapons.grenades.GrenadeIfItem(new Item.Properties().stacksTo(16),
+                    GrenadeIfType.GRENADE_IF, ModEntities.GRENADE_IF_PROJECTILE.get()));
+
+    public static final DeferredItem<Item> GRENADE_IF_HE = ITEMS.register("grenade_if_he",
+            () -> new com.trd.item.weapons.grenades.GrenadeIfItem(new Item.Properties().stacksTo(16),
+                    GrenadeIfType.GRENADE_IF_HE, ModEntities.GRENADE_IF_HE_PROJECTILE.get()));
+
+    public static final DeferredItem<Item> GRENADE_IF_SLIME = ITEMS.register("grenade_if_slime",
+            () -> new com.trd.item.weapons.grenades.GrenadeIfItem(new Item.Properties().stacksTo(16),
+                    GrenadeIfType.GRENADE_IF_SLIME, ModEntities.GRENADE_IF_SLIME_PROJECTILE.get()));
+
+    public static final DeferredItem<Item> GRENADE_IF_FIRE = ITEMS.register("grenade_if_fire",
+            () -> new com.trd.item.weapons.grenades.GrenadeIfItem(new Item.Properties().stacksTo(16),
+                    GrenadeIfType.GRENADE_IF_FIRE, ModEntities.GRENADE_IF_FIRE_PROJECTILE.get()));
+
+    public static final DeferredItem<Item> GRENADE_NUC = ITEMS.register("grenade_nuc",
+            () -> new com.trd.item.weapons.grenades.GrenadeNucItem(new Item.Properties().stacksTo(16),
+                    ModEntities.GRENADE_NUC_PROJECTILE.get()));
+
+    static {
+        com.trd.api.tooltip.MachineTooltipRegistry.register(GRENADE, "tooltip.trd.grenade.standard.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.register(GRENADEHE, "tooltip.trd.grenade.he.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.register(GRENADEFIRE, "tooltip.trd.grenade.fire.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.register(GRENADESLIME, "tooltip.trd.grenade.slime.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.register(GRENADESMART, "tooltip.trd.grenade.smart.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.register(GRENADE_IF, "tooltip.trd.grenade_if.standard.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.register(GRENADE_IF_HE, "tooltip.trd.grenade_if.he.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.register(GRENADE_IF_FIRE, "tooltip.trd.grenade_if.fire.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.register(GRENADE_IF_SLIME, "tooltip.trd.grenade_if.slime.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.register(GRENADE_NUC, "tooltip.trd.grenade_nuc.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.register(GRAVITY_GRENADE, "tooltip.trd.gravity_grenade.desc");
+    }
 
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);

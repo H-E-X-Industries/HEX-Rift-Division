@@ -1,0 +1,28 @@
+{
+  "variants": {
+    "light=0": {
+      "model": "trd:block/basalt_scorched_0"
+    },
+    "light=1": {
+      "model": "trd:block/basalt_scorched_1"
+    },
+    "light=2": {
+      "model": "trd:block/basalt_scorched_2"
+    },
+    "light=3": {
+      "model": "trd:block/basalt_scorched_3"
+    },
+    "light=4": {
+      "model": "trd:block/basalt_scorched_4"
+    },
+    "light=5": {
+      "model": "trd:block/basalt_scorched_5"
+    },
+    "light=6": {
+      "model": "trd:block/basalt_scorched_6"
+    },
+    "light=7": {
+      "model": "trd:block/basalt_scorched_7"
+    }
+  }
+}

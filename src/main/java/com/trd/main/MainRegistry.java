@@ -19,6 +19,7 @@ public class MainRegistry {
         com.trd.block.basic.ModBlocks.register(modEventBus);
         com.trd.block.entity.ModBlockEntities.register(modEventBus);
         com.trd.entity.ModEntities.register(modEventBus);
+        com.trd.fx.particle.ModExplosionParticles.PARTICLE_TYPES.register(modEventBus);
         com.trd.item.ModItems.register(modEventBus);
         com.trd.main.ModCreativeTabs.register(modEventBus);
         com.trd.api.components.ModDataComponents.register(modEventBus);

@@ -58,6 +58,23 @@ public class ModClientSetup {
 
         event.registerEntityRenderer(com.trd.entity.ModEntities.TURRET_BULLET.get(),
                 com.trd.client.gecko.entity.bullets.TurretBulletRenderer::new);
+
+        // Гранаты рисуются ванильным рендерером брошенного предмета (модель самого предмета).
+        // Без регистрации клиент рисует на их месте свинью.
+        for (var grenade : java.util.List.of(
+                com.trd.entity.ModEntities.GRAVITY_GRENADE_PROJECTILE,
+                com.trd.entity.ModEntities.GRENADE_PROJECTILE,
+                com.trd.entity.ModEntities.GRENADEHE_PROJECTILE,
+                com.trd.entity.ModEntities.GRENADEFIRE_PROJECTILE,
+                com.trd.entity.ModEntities.GRENADESMART_PROJECTILE,
+                com.trd.entity.ModEntities.GRENADESLIME_PROJECTILE,
+                com.trd.entity.ModEntities.GRENADE_IF_PROJECTILE,
+                com.trd.entity.ModEntities.GRENADE_IF_HE_PROJECTILE,
+                com.trd.entity.ModEntities.GRENADE_IF_SLIME_PROJECTILE,
+                com.trd.entity.ModEntities.GRENADE_IF_FIRE_PROJECTILE,
+                com.trd.entity.ModEntities.GRENADE_NUC_PROJECTILE)) {
+            event.registerEntityRenderer(grenade.get(), net.minecraft.client.renderer.entity.ThrownItemRenderer::new);
+        }
     }
 
     @SubscribeEvent
@@ -381,6 +398,37 @@ public class ModClientSetup {
             }
             return -1;
         }, com.trd.block.basic.ModBlocks.BRONZE_FLUID_PIPE.get(), com.trd.block.basic.ModBlocks.STEEL_FLUID_PIPE.get(), com.trd.block.basic.ModBlocks.LEAD_FLUID_PIPE.get(), com.trd.block.basic.ModBlocks.TUNGSTEN_FLUID_PIPE.get());
+
+        // Кратерные блоки с собственным свойством DARKNESS (мягкий базальт + выжженная трава):
+        // тёмный уровень живёт в BlockState, а не в позиционной базе, поэтому красим здесь.
+        // Их модели помечены tintindex, значит CraterTints.onModelBake их НЕ оборачивает —
+        // без этого хендлера tint не применяется вовсе.
+        event.register((state, level, pos, tintIndex) -> {
+            int dark = state.getValue(com.trd.block.basic.CraterBasaltBlock.DARKNESS);
+            float f = 1.0f - com.trd.client.render.CraterTints.MAX_DARKNESS_RATIO
+                    * (dark / (float) com.trd.block.basic.CraterBasaltBlock.MAX_DARK);
+            int c = (int) (255.0f * f);
+            return 0xFF000000 | (c << 16) | (c << 8) | c;
+        }, com.trd.block.basic.ModBlocks.BASALT_SOFT.get(), com.trd.block.basic.ModBlocks.BASALT_SOFT_2.get(),
+                com.trd.block.basic.ModBlocks.BASALT_SOFT_3.get(), com.trd.block.basic.ModBlocks.BASALT_SOFT_4.get(),
+                com.trd.block.basic.ModBlocks.WASTE_GRASS.get());
+
+        // Дёрн: у него есть свой биомный тинт, поэтому CraterTints его не оборачивает.
+        // Умножаем биомный цвет на позиционное затемнение — снаружи множитель == 1 и цвет
+        // возвращается без изменений, то есть блок ведёт себя как обычно.
+        // ВНИМАНИЕ: не добавлять сюда блоки с кастомным рендерером (как у дверей/жидкостных труб) —
+        // рисуются через BlockEntityRenderer, квадов не отдают.
+        event.register((state, level, pos, tintIndex) -> {
+            int biome = level != null && pos != null
+                    ? net.minecraft.client.renderer.BiomeColors.getAverageGrassColor(level, pos)
+                    : net.minecraft.world.level.FoliageColor.getDefaultColor();
+            float f = com.trd.client.render.CraterTints.darknessMultiplier(level, pos);
+            if (f >= 1.0f) return biome;
+            int r = (int) ((biome >> 16 & 0xFF) * f);
+            int g = (int) ((biome >> 8 & 0xFF) * f);
+            int b = (int) ((biome & 0xFF) * f);
+            return 0xFF000000 | (r << 16) | (g << 8) | b;
+        }, net.minecraft.world.level.block.Blocks.GRASS_BLOCK);
     }
 
     @SubscribeEvent
