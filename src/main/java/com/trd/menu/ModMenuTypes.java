@@ -77,6 +77,9 @@ public class ModMenuTypes {
     public static final java.util.function.Supplier<MenuType<com.trd.menu.turrets.TurretLightMenu>> TURRET_AMMO_MENU =
             MENUS.register("turret_ammo_menu", () -> IMenuTypeExtension.create(com.trd.menu.turrets.TurretLightMenu::new));
 
+    public static final java.util.function.Supplier<MenuType<com.trd.menu.turrets.TromboneMenu>> TROMBONE_MENU =
+            MENUS.register("trombone_menu", () -> IMenuTypeExtension.create(com.trd.menu.turrets.TromboneMenu::new));
+
     public static void register(IEventBus eventBus) {
         MENUS.register(eventBus);
     }

@@ -39,6 +39,8 @@ public record PacketUpdateTurretSettings(BlockPos pos, int settingIndex, boolean
                 BlockEntity be = player.level().getBlockEntity(pos);
                 if (be instanceof TurretLightPlacerBlockEntity turretBE) {
                     turretBE.updateAttackSetting(settingIndex, value);
+                } else if (be instanceof com.trd.block.entity.weapons.MissileTurretBlockEntity missileBE) {
+                    missileBE.updateAttackSetting(settingIndex, value);
                 }
             }
         });

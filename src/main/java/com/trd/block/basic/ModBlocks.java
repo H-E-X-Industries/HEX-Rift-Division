@@ -725,6 +725,17 @@ public class ModBlocks {
     // === ТУРЕЛИ ===
 
     /**
+     * Ракетница «Тромбон» — мультиблок-контроллер 1×1×2. Регистрируется через
+     * {@link #registerMultiblock}, потому что предмет-форма тут обычный BlockItem
+     * и кастомный BlockItem не требуется.
+     */
+    public static final DeferredBlock<com.trd.block.basic.weapons.MissileTurretBlock> TROMBONE =
+            registerMultiblock("trombone",
+                    () -> new com.trd.block.basic.weapons.MissileTurretBlock(
+                            BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK)
+                                    .strength(5.0f).requiresCorrectToolForDrops().noOcclusion()));
+
+    /**
      * Буфер турели регистрируется НЕ через {@link #registerBlock}: тому helper всегда
      * вешает обычный {@link BlockItem}, а здесь нужен свой {@code TurretLightPlacerBlockItem}
      * (GeoItem с кастомным рендерером). Поэтому item-часть регистрируем вручную —
@@ -746,11 +757,18 @@ public class ModBlocks {
         return block;
     }
 
+    // Визуальный прокси-блок для ракеты: MissileLightRenderer рендерит его
+    // (модель .obj) в мире у сущности. Ставить руками нельзя.
+    public static final DeferredBlock<Block> MISSILE_LIGHT = registerBlock("missile_light",
+            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.STONE)
+                    .strength(5.0f, 30.0f).noOcclusion().requiresCorrectToolForDrops()));
+
     public static void register(net.neoforged.bus.api.IEventBus eventBus) {
         BLOCKS.register(eventBus);
 
         ModItems.ITEMS.register("fuel_tank_big", () -> new com.trd.multiblock.system.FuelTankBlockItem(FUEL_TANK_BIG.get(), 2592000, new net.minecraft.world.item.Item.Properties()));
         ModItems.ITEMS.register("fuel_tank_small", () -> new com.trd.multiblock.system.FuelTankBlockItem(FUEL_TANK_SMALL.get(), 288000, new net.minecraft.world.item.Item.Properties()));
 
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(TROMBONE, "tooltip.trd.machine.trombone.desc");
     }
 }

@@ -34,6 +34,8 @@ public record PacketChipFeedback(boolean success) implements CustomPacketPayload
             Screen currentScreen = Minecraft.getInstance().screen;
             if (currentScreen instanceof GUITurretAmmo gui) {
                 gui.handleFeedback(success);
+            } else if (currentScreen instanceof com.trd.client.overlay.gui.GUITrombone gui) {
+                gui.handleFeedback(success);
             }
         });
     }

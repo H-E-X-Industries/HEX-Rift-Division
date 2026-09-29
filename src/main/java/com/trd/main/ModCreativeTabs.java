@@ -326,6 +326,7 @@ public class ModCreativeTabs {
                         output.accept(ModItems.MACHINEGUN.get());
 
                         output.accept(ModBlocks.TURRET_LIGHT_PLACER.get());
+                        output.accept(ModBlocks.TROMBONE.get());
                         output.accept(ModItems.TURRET_LIGHT_PORTATIVE_PLACER.get());
                         output.accept(ModItems.PIG_TURRET_PLACER.get());
                         output.accept(ModItems.TURRET_CHIP.get());

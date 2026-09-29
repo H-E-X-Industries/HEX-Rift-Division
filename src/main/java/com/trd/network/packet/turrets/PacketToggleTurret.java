@@ -35,6 +35,8 @@ public record PacketToggleTurret(BlockPos pos) implements CustomPacketPayload {
                 BlockEntity be = player.level().getBlockEntity(pos);
                 if (be instanceof TurretLightPlacerBlockEntity turretBE) {
                     turretBE.togglePower();
+                } else if (be instanceof com.trd.block.entity.weapons.MissileTurretBlockEntity missileBE) {
+                    missileBE.togglePower();
                 }
             }
         });

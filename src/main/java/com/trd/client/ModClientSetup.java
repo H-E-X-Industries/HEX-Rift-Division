@@ -39,6 +39,7 @@ public class ModClientSetup {
         event.register(com.trd.menu.ModMenuTypes.STANOK_MENU.get(), com.trd.client.overlay.gui.GUIStanok::new);
         event.register(com.trd.menu.ModMenuTypes.STEEL_STORAGE_MENU.get(), com.trd.client.overlay.gui.SteelStorageScreen::new);
         event.register(com.trd.menu.ModMenuTypes.TURRET_AMMO_MENU.get(), com.trd.client.overlay.gui.GUITurretAmmo::new);
+        event.register(com.trd.menu.ModMenuTypes.TROMBONE_MENU.get(), com.trd.client.overlay.gui.GUITrombone::new);
     }
 
     @SubscribeEvent
@@ -63,6 +64,8 @@ public class ModClientSetup {
                 com.trd.client.gecko.entity.turrets.TurretLightRenderer::new);
         event.registerEntityRenderer(com.trd.entity.ModEntities.TURRET_LIGHT_LINKED.get(),
                 com.trd.client.gecko.entity.turrets.TurretLightLinkedRenderer::new);
+        event.registerEntityRenderer(com.trd.entity.ModEntities.MISSILE_LIGHT.get(),
+                com.trd.client.renderer.MissileLightRenderer::new);
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.TURRET_LIGHT_PLACER_BE.get(),
                 com.trd.client.gecko.block.turrets.TurretLightPlacerRenderer::new);
 
@@ -420,6 +423,18 @@ public class ModClientSetup {
                 com.trd.block.basic.ModBlocks.BASALT_SOFT_3.get(), com.trd.block.basic.ModBlocks.BASALT_SOFT_4.get(),
                 com.trd.block.basic.ModBlocks.WASTE_GRASS.get());
 
+        // Запёкшийся базальт: у него обратная шкала — LIGHT=7 это нормальный свет,
+        // LIGHT=0 это темно у центра воронки. Модели помечены tintindex, поэтому
+        // CraterTints их не оборачивает и цвет обязан приходить отсюда.
+        event.register((state, level, pos, tintIndex) -> {
+            int light = state.getValue(com.trd.block.basic.ScorchedBasaltBlock.LIGHT);
+            float f = 1.0f - com.trd.client.render.CraterTints.MAX_DARKNESS_RATIO
+                    * ((com.trd.block.basic.ScorchedBasaltBlock.MAX_LIGHT - light)
+                       / (float) com.trd.block.basic.ScorchedBasaltBlock.MAX_LIGHT);
+            int c = (int) (255.0f * f);
+            return 0xFF000000 | (c << 16) | (c << 8) | c;
+        }, com.trd.block.basic.ModBlocks.BASALT_SCORCHED.get());
+
         // Дёрн: у него есть свой биомный тинт, поэтому CraterTints его не оборачивает.
         // Умножаем биомный цвет на позиционное затемнение — снаружи множитель == 1 и цвет
         // возвращается без изменений, то есть блок ведёт себя как обычно.
@@ -428,7 +443,10 @@ public class ModClientSetup {
         event.register((state, level, pos, tintIndex) -> {
             int biome = level != null && pos != null
                     ? net.minecraft.client.renderer.BiomeColors.getAverageGrassColor(level, pos)
-                    : net.minecraft.world.level.FoliageColor.getDefaultColor();
+                    // В 1.20.1 здесь стоял FoliageColor.getDefaultColor() — он заметно темнее
+                    // и в инвентаре дёрн выглядел не так, как у ваниллы. GrassColor — то,
+                    // что использует сам BlockColors.createDefault() для Blocks.GRASS_BLOCK.
+                    : net.minecraft.world.level.GrassColor.getDefaultColor();
             float f = com.trd.client.render.CraterTints.darknessMultiplier(level, pos);
             if (f >= 1.0f) return biome;
             int r = (int) ((biome >> 16 & 0xFF) * f);

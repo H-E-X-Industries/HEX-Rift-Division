@@ -242,6 +242,7 @@
     "entity.trd.turret_bullet":  "Turret Bullet",
     "entity.trd.turret_light":  "Light Turret",
     "entity.trd.turret_light_linked":  "Linked Light Turret",
+    "entity.trd.missile_light":  "Light Missile",
     "gui.trd.battery.mode.both":  "Mode: Input \u0026 Output",
     "gui.trd.battery.mode.both.desc":  "All energy operations are allowed.",
     "gui.trd.battery.mode.input":  "Mode: Input Only",

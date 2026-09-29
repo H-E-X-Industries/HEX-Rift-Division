@@ -246,6 +246,7 @@
     "entity.trd.turret_bullet":  "Пуля турели",
     "entity.trd.turret_light":  "Лёгкая турель",
     "entity.trd.turret_light_linked":  "Связанная лёгкая турель",
+    "entity.trd.missile_light":  "Лёгкая ракета",
     "fluid.trd.aluminate_solution":  "Алюминатный Раствор",
     "fluid.trd.carbon_dioxide":  "Углекислый газ",
     "fluid.trd.hydrogen_chlorine":  "Хлороводород",

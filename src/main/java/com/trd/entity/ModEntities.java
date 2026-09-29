@@ -59,6 +59,18 @@ public class ModEntities {
                     .updateInterval(2)
                     .build("trd:turret_light_linked"));
 
+    public static final DeferredHolder<EntityType<?>, EntityType<com.trd.entity.weapons.missiles.MissileLightEntity>> MISSILE_LIGHT =
+            ENTITY_TYPES.register("missile_light", () -> EntityType.Builder
+                    .<com.trd.entity.weapons.missiles.MissileLightEntity>of(com.trd.entity.weapons.missiles.MissileLightEntity::new, MobCategory.MISC)
+                    .sized(0.4F, 1.0F)
+                    .clientTrackingRange(128)
+                    .updateInterval(1)
+                    // ОБЯЗАТЕЛЬНО: в 1.21 IEntityAdditionalSpawnData/writeSpawnData удалены,
+                    // скорость ракеты приходит только со штатным пакетом спавна, и без этого
+                    // флага клиент её не получит — ракета будет висеть на месте.
+                    .setShouldReceiveVelocityUpdates(true)
+                    .build("trd:missile_light"));
+
     // === ГРАНАТЫ ===
 
     public static final DeferredHolder<EntityType<?>, EntityType<GravityGrenadeProjectileEntity>> GRAVITY_GRENADE_PROJECTILE =

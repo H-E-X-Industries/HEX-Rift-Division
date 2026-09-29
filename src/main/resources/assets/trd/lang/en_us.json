@@ -246,6 +246,7 @@
     "entity.trd.turret_bullet":  "Turret Bullet",
     "entity.trd.turret_light":  "Light Turret",
     "entity.trd.turret_light_linked":  "Linked Light Turret",
+    "entity.trd.missile_light":  "Light Missile",
     "fluid.trd.aluminate_solution":  "Aluminate Solution",
     "fluid.trd.carbon_dioxide":  "Carbon Dioxide",
     "fluid.trd.hydrogen_chlorine":  "Hydrogen Chlorine",

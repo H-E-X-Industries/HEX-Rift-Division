@@ -40,5 +40,13 @@ public class TrdDatagen {
 
         generator.addProvider(event.includeClient(), new ModBlockStateProvider(output, event.getExistingFileHelper()));
         generator.addProvider(event.includeServer(), new com.trd.data.tags.ModBlockTagProvider(output, lookupProvider, event.getExistingFileHelper()));
-    }
+        // В 1.21.1 BlockLootSubProvider больше не DataProvider: его надо заворачивать
+        // в LootTableProvider с SubProviderEntry, отдающим HolderLookup.Provider.
+        generator.addProvider(event.includeServer(), new net.minecraft.data.loot.LootTableProvider(
+                output,
+                java.util.Set.of(),
+                java.util.List.of(new net.minecraft.data.loot.LootTableProvider.SubProviderEntry(
+                        com.trd.data.loot.ModBlockLootTableProvider::new,
+                        net.minecraft.world.level.storage.loot.parameters.LootContextParamSets.BLOCK)),
+                lookupProvider));    }
 }

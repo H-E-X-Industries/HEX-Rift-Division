@@ -170,6 +170,12 @@ public class ModNetworking {
         );
 
         registrar.playToServer(
+            com.trd.network.packet.turrets.PacketToggleExtraButton.TYPE,
+            com.trd.network.packet.turrets.PacketToggleExtraButton.STREAM_CODEC,
+            com.trd.network.packet.turrets.PacketToggleExtraButton::handle
+        );
+
+        registrar.playToServer(
             com.trd.network.packet.turrets.PacketModifyTurretChip.TYPE,
             com.trd.network.packet.turrets.PacketModifyTurretChip.STREAM_CODEC,
             com.trd.network.packet.turrets.PacketModifyTurretChip::handle

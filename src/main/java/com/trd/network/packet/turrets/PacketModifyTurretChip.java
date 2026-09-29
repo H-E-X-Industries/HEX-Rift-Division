@@ -49,6 +49,9 @@ public record PacketModifyTurretChip(int action, String payload) implements Cust
             ItemStack stack = ItemStack.EMPTY;
             if (player.containerMenu instanceof TurretLightMenu menu) {
                 stack = menu.getAmmoContainer().getStackInSlot(9);
+            } else if (player.containerMenu instanceof com.trd.menu.turrets.TromboneMenu menu) {
+                stack = menu.getMissileContainer().getStackInSlot(
+                        com.trd.block.entity.weapons.MissileAmmoContainer.CHIP_SLOT_INDEX);
             }
 
             if (!(stack.getItem() instanceof TurretChipItem)) return;

@@ -236,6 +236,11 @@ public class ModBlockEntities {
                     com.trd.block.entity.weapons.TurretLightPlacerBlockEntity::new,
                     ModBlocks.TURRET_LIGHT_PLACER.get()).build(null));
 
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.weapons.MissileTurretBlockEntity>> MISSILE_TURRET_BE =
+            BLOCK_ENTITIES.register("missile_turret", () -> net.minecraft.world.level.block.entity.BlockEntityType.Builder.of(
+                    com.trd.block.entity.weapons.MissileTurretBlockEntity::new,
+                    ModBlocks.TROMBONE.get()).build(null));
+
     public static void register(IEventBus eventBus) {
         BLOCK_ENTITIES.register(eventBus);
     }
