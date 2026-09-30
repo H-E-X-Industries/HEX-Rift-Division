@@ -7,6 +7,7 @@ import com.trd.entity.weapons.grenades.GravityGrenadeProjectileEntity;
 import com.trd.entity.weapons.grenades.GrenadeIfProjectileEntity;
 import com.trd.entity.weapons.grenades.GrenadeNucProjectileEntity;
 import com.trd.entity.weapons.grenades.GrenadeProjectileEntity;
+import com.trd.entity.mobs.grenadier.GrenadierZombieEntity;
 import com.trd.main.MainRegistry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
@@ -146,6 +147,14 @@ public class ModEntities {
                     .clientTrackingRange(64)
                     .updateInterval(2)
                     .build("trd:grenade_nuc_projectile"));
+
+    // === МОБЫ ===
+
+    public static final DeferredHolder<EntityType<?>, EntityType<GrenadierZombieEntity>> GRENADIER_ZOMBIE =
+            ENTITY_TYPES.register("grenadier_zombie", () -> EntityType.Builder
+                    .<GrenadierZombieEntity>of(GrenadierZombieEntity::new, MobCategory.MONSTER)
+                    .sized(0.6F, 1.95F) // Размеры как у обычного зомби
+                    .build("trd:grenadier_zombie"));
 
     public static void register(IEventBus eventBus) {
         ENTITY_TYPES.register(eventBus);

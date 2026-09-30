@@ -102,8 +102,5 @@
         2
       ]
     }
-  },
-  "textures": {
-    "particle": "trd:item/demoman_glasses"
   }
 }

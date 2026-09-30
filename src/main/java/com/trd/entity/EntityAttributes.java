@@ -22,5 +22,7 @@ public class EntityAttributes {
         // Блочная турель использует тот же набор, что и свободная
         event.put(ModEntities.TURRET_LIGHT_LINKED.get(),
                 com.trd.entity.weapons.turrets.TurretLightEntity.createAttributes().build());
+        event.put(ModEntities.GRENADIER_ZOMBIE.get(),
+                com.trd.entity.mobs.grenadier.GrenadierZombieEntity.createAttributes().build());
     }
 }

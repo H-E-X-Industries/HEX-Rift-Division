@@ -354,6 +354,27 @@ public class ModItems {
         com.trd.api.tooltip.MachineTooltipRegistry.register(GRAVITY_GRENADE, "tooltip.trd.gravity_grenade.desc");
     }
 
+    // ═══════════════════════════════════════════════════════
+    // МОБЫ
+    // ═══════════════════════════════════════════════════════
+
+    public static final DeferredItem<Item> GRENADIER_ZOMBIE_SPAWN_EGG = ITEMS.register("grenadier_zombie_spawn_egg",
+            () -> new net.minecraft.world.item.SpawnEggItem(ModEntities.GRENADIER_ZOMBIE.get(), 0x4C7F52, 0x8B0000,
+                    new Item.Properties()));
+
+    // ═══════════════════════════════════════════════════════
+    // БРОНЯ
+    // ═══════════════════════════════════════════════════════
+
+    // 1.21.1: прочность больше не берётся из материала, её задаёт Item.Properties.
+    // В 1.20.1 было 13 (слот HEAD) * 15 (durabilityMultiplier) = 195.
+    public static final DeferredItem<Item> GRENADIER_GOGGLES = ITEMS.register("grenadier_goggles",
+            () -> new com.trd.item.armor.GrenadierGogglesItem(
+                    com.trd.item.armor.GrenadierArmorMaterial.GRENADIER,
+                    net.minecraft.world.item.ArmorItem.Type.HELMET,
+                    new Item.Properties().stacksTo(1).durability(
+                            com.trd.item.armor.GrenadierArmorMaterial.DURABILITY)));
+
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);
     }

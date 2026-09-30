@@ -66,6 +66,8 @@ public class ModClientSetup {
                 com.trd.client.gecko.entity.turrets.TurretLightLinkedRenderer::new);
         event.registerEntityRenderer(com.trd.entity.ModEntities.MISSILE_LIGHT.get(),
                 com.trd.client.renderer.MissileLightRenderer::new);
+        event.registerEntityRenderer(com.trd.entity.ModEntities.GRENADIER_ZOMBIE.get(),
+                com.trd.client.renderer.GrenadierZombieRenderer::new);
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.TURRET_LIGHT_PLACER_BE.get(),
                 com.trd.client.gecko.block.turrets.TurretLightPlacerRenderer::new);
 

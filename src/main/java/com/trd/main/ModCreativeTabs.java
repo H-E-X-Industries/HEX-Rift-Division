@@ -305,6 +305,8 @@ public class ModCreativeTabs {
                         output.accept(ModItems.CAST_PICKAXE_IRON.get());
                         output.accept(ModItems.CAST_PICKAXE_STEEL.get());
 
+                        output.accept(ModItems.GRENADIER_GOGGLES.get());
+
                         output.accept(ModBlocks.DET_MINER.get());
                         output.accept(ModBlocks.AVIABOMB_MINE.get());
                         output.accept(ModItems.DETONATOR.get());
@@ -479,6 +481,10 @@ public class ModCreativeTabs {
                         // все четыре текстуры теперь у одного блока через свойство variant.
                         output.accept(ModBlocks.WASTE_LOG.get());
                         output.accept(ModBlocks.WASTE_GRASS.get());
+
+                        // Яйцо гренадёра. Яйца червей и блоки улья в 1.20.1 стояли
+                        // следом, но они завязаны на измерение некроза — пока пропускаем.
+                        output.accept(ModItems.GRENADIER_ZOMBIE_SPAWN_EGG.get());
                     })
                     .build());
 
