@@ -118,12 +118,66 @@ public class ExplosionFire {
     private static final int MAX_RAY_STEPS = 1024;
 
     private static final ArrayDeque<State> QUEUE = new ArrayDeque<>();
+    /**
+     * Защищает {@link #QUEUE} и внутренние коллекции State.
+     * См. ExplosionHydrogen#QUEUE_LOCK: рендер-поток читает состояние взрыва
+     * параллельно с серверным, а fastutil-коллекции не потокобезопасны.
+     */
+    private static final Object QUEUE_LOCK = new Object();
     private static boolean DRAIN_PENDING = false;
 
     private static long tickBudgetNanos = DEFAULT_TICK_BUDGET_NANOS;
     private static long lastDrainNanos = System.nanoTime();
 
     private enum Phase { PRELOAD, SCAN, DAMAGE, APPLY, TINT, FINISH }
+
+    /**
+     * Снимок одного активного взрыва для дебаг-рендера (F3).
+     * <p>
+     * Взрыв живёт несколько тиков и продвигается по фазам, а состояние лежит в
+     * приватной очереди — рисовать фронт волны из рендерера неоткуда. Этот метод
+     * отдаёт только чтение и вызывается лишь когда дебаг включён, так что на
+     * обычный геймплей не влияет.
+     */
+    public record DebugSnapshot(
+            Vec3 center,
+            float waveRadius,
+            float coreRadius,
+            String phase,
+            BlockPos scanCursor,
+            long[] fire,
+            long[] replace,
+            long[] destroy
+    ) {}
+
+    /**
+     * Снимок последнего взрыва для дебага — в списке не больше одного элемента.
+     * Пока идёт активный взрыв, показывается он; иначе — последний достреленный.
+     */
+    public static List<DebugSnapshot> debugActiveExplosions() {
+        List<DebugSnapshot> out = new ArrayList<>(1);
+        synchronized (QUEUE_LOCK) {
+            for (State s : QUEUE) {
+                DebugSnapshot snap = s.cachedDebugSnapshot();
+                if (snap != null) out.add(snap);
+            }
+            if (out.isEmpty() && !remembered.isEmpty()) {
+                out.add(remembered.peekLast());
+            }
+        }
+        return out.size() > 1 ? out.subList(out.size() - 1, out.size()) : out;
+    }
+
+    private static long[] concat(LongArrayList... lists) {
+        long total = 0;
+        for (LongArrayList l : lists) total += l.size();
+        long[] out = new long[(int) total];
+        int at = 0;
+        for (LongArrayList l : lists) {
+            for (int i = 0; i < l.size(); i++) out[at++] = l.getLong(i);
+        }
+        return out;
+    }
 
     private static final class EntityTarget {
         final LivingEntity entity;
@@ -183,6 +237,22 @@ public class ExplosionFire {
         int applyEntity;
 
         /** Кеш DDA-лучей по целевой ячейке: бит достижимости + пробитие (без клетки цели). */
+        /** Кеш снимка для дебага: списки блоков копируются тысячами элементов,
+         *  делать это каждый кадр слишком дорого, поэтому пересобираем не чаще
+         *  чем раз в DEBUG_SNAPSHOT_INTERVAL_NANOS. */
+        private DebugSnapshot debugSnapshot;
+        private long debugSnapshotAt;
+
+        private DebugSnapshot cachedDebugSnapshot() {
+            long now = System.nanoTime();
+            if (debugSnapshot != null && now - debugSnapshotAt < DEBUG_SNAPSHOT_INTERVAL_NANOS) {
+                return debugSnapshot;
+            }
+            debugSnapshot = snapshotOf(this, phase.name());
+            debugSnapshotAt = now;
+            return debugSnapshot;
+        }
+
         final Long2LongOpenHashMap rayCache = new Long2LongOpenHashMap();
 
         private static final long RAY_REACHED = 1L;
@@ -776,13 +846,16 @@ public class ExplosionFire {
                 SoundEvents.FIRECHARGE_USE, SoundSource.BLOCKS,
                 2.0F, (1.0F + (level.random.nextFloat() - level.random.nextFloat()) * 0.2F) * 0.7F);
 
-        if (QUEUE.size() >= MAX_QUEUED_EXPLOSIONS) return;
+        synchronized (QUEUE_LOCK) {
+            if (QUEUE.size() >= MAX_QUEUED_EXPLOSIONS) return;
+        }
         State state = new State(level, center, source, level.damageSources().explosion(source, source), radius, hurtSource);
         collectEntities(state);
 
-        QUEUE.addLast(state);
-        if (!DRAIN_PENDING) scheduleDrain(level.getServer());
-    }
+        synchronized (QUEUE_LOCK) {
+            QUEUE.addLast(state);
+        }
+        if (!DRAIN_PENDING) scheduleDrain(level.getServer());    }
 
     // ==================== ПЛАНИРОВЩИК ====================
 
@@ -798,14 +871,54 @@ public class ExplosionFire {
         adaptBudget(now);
         long deadline = now + tickBudgetNanos;
 
-        while (!QUEUE.isEmpty()) {
-            State st = QUEUE.peek();
-            if (!st.work(deadline)) break;
-            QUEUE.poll();
-        }
+        synchronized (QUEUE_LOCK) {
+            while (!QUEUE.isEmpty()) {
+                State st = QUEUE.peek();
+                if (!st.work(deadline)) break;
+                QUEUE.poll();
+                rememberFinished(st);
+            }
 
-        if (!QUEUE.isEmpty() && !DRAIN_PENDING) {
-            scheduleDrain(server);
+            if (!QUEUE.isEmpty() && !DRAIN_PENDING) {
+                scheduleDrain(server);
+            }
+        }
+    }
+
+    /**
+     * Сколько последних достреленных взрывов держать в дебаге. 1 = показывается
+     * ровно один взрыв, и каждый следующий затирает предыдущий.
+     */
+    public static int MAX_REMEMBERED_EXPLOSIONS = 1;
+    private static final java.util.Deque<DebugSnapshot> remembered = new ArrayDeque<>();
+    /** Как часто пересобирать снимок активного взрыва для рендера. */
+    public static final long DEBUG_SNAPSHOT_INTERVAL_NANOS = 150_000_000L;
+
+    /**
+     * Запоминает достреленный взрыв навсегда (пока не вытеснится более новым) —
+     * иначе отрисовка исчезает в тот же тик, когда State's больше нет в очереди.
+     */
+    private static void rememberFinished(State st) {
+        DebugSnapshot snap = snapshotOf(st, "DONE");
+        if (snap == null) return;
+        // вызывается из-под QUEUE_LOCK, повторно локачить не нужно
+        remembered.addLast(snap);
+        while (remembered.size() > Math.max(0, MAX_REMEMBERED_EXPLOSIONS)) {
+            remembered.removeFirst();
+        }
+    }
+
+    private static DebugSnapshot snapshotOf(State s, String phase) {
+        try {
+            return new DebugSnapshot(
+                    s.center, s.waveRadius, s.coreRadius, phase,
+                    new BlockPos(s.scanX, s.scanY, s.scanZ),
+                    s.fire.toLongArray(),
+                    concat(s.replaceLog, s.replaceGrass, s.replacePlanks, s.replaceStairs,
+                            s.replaceSlabs, s.replaceFences, s.replaceGates, s.replacePlates),
+                    s.destroy.toLongArray());
+        } catch (Throwable t) {
+            return null;   // дебаг не имеет права ронять игру
         }
     }
 
