@@ -369,6 +369,11 @@ public class ModClientSetup {
             }
             return -1;
         }, com.trd.item.ModItems.METAL_PIECE.get());
+
+        // Хвоя секвойи в инвентаре
+        event.register((stack, tintIndex) -> {
+            return 9219125;
+        }, com.trd.block.basic.ModBlocks.SEQUOIA_LEAVES.get());
     }
 
     private static void registerItemHeatColor(net.neoforged.neoforge.client.event.RegisterColorHandlersEvent.Item event, Object... items) {
@@ -454,6 +459,13 @@ public class ModClientSetup {
             int b = (int) ((biome & 0xFF) * f);
             return 0xFF000000 | (r << 16) | (g << 8) | b;
         }, net.minecraft.world.level.block.Blocks.GRASS_BLOCK);
+
+        // Хвоя секвойи: красится в цвет листвы биома
+        event.register((state, level, pos, tintIndex) -> {
+            return level != null && pos != null
+                    ? net.minecraft.client.renderer.BiomeColors.getAverageFoliageColor(level, pos)
+                    : 9219125;
+        }, com.trd.block.basic.ModBlocks.SEQUOIA_LEAVES.get());
     }
 
     @SubscribeEvent

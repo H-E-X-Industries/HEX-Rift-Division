@@ -29,6 +29,8 @@ public class MainRegistry {
         com.trd.menu.ModMenuTypes.register(modEventBus);
         com.trd.sound.ModSounds.register(modEventBus);
         com.trd.worldgen.feature.ModFeatures.FEATURES.register(modEventBus);
+        com.trd.worldgen.tree.custom.ModTrunkPlacerTypes.register(modEventBus);
+        com.trd.worldgen.tree.custom.ModFoliagePlacerTypes.register(modEventBus);
         
         modEventBus.addListener(this::commonSetup);
     }
@@ -43,6 +45,14 @@ public class MainRegistry {
             com.trd.api.chemistry.ChemicalPlantRecipeRegistry.init();
             com.trd.multiblock.industrial.coccer.CoccerOvenRecipeRegistry.init();
             com.trd.multiblock.industrial.stanok.StanokRecipes.register();
+
+            // TerraBlender
+            terrablender.api.Regions.register(new com.trd.worldgen.biome.terrablender.ModOverworldRegion(
+                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MOD_ID, "overworld"), 2));
+            terrablender.api.SurfaceRuleManager.addSurfaceRules(
+                    terrablender.api.SurfaceRuleManager.RuleCategory.OVERWORLD,
+                    MOD_ID,
+                    com.trd.worldgen.biome.ModSurfaceRules.makeRules());
         });
         LOGGER.info("HEX Rift Division Setup Complete!");
     }

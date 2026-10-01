@@ -37,6 +37,14 @@ public class ModBlocks {
             () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_PLANKS)));
     public static final DeferredBlock<Block> SEQUOIA_BIOME_MOSS = registerBlock("sequoia_biome_moss",
             () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.MOSS_BLOCK)));
+    public static final DeferredBlock<Block> SEQUOIA_ROOTS = registerBlock("sequoia_roots",
+            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_PLANKS).strength(0.5f, 4.0f).requiresCorrectToolForDrops()));
+    public static final DeferredBlock<Block> SEQUOIA_ROOTS_MOSSY = registerBlock("sequoia_roots_mossy",
+            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_PLANKS).strength(0.5f, 4.0f).requiresCorrectToolForDrops()));
+    public static final DeferredBlock<Block> SEQUOIA_LEAVES = registerBlock("sequoia_leaves",
+            () -> new net.minecraft.world.level.block.LeavesBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.SPRUCE_LEAVES).noOcclusion()
+                    .isSuffocating((state, level, pos) -> false)
+                    .isViewBlocking((state, level, pos) -> false)));
             
     public static final DeferredBlock<Block> LIGNITE_ORE = registerBlock("lignite_ore",
             () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.COAL_ORE)));
@@ -612,6 +620,10 @@ public class ModBlocks {
     public static final DeferredBlock<net.minecraft.world.level.block.DoorBlock> SEQUOIA_DOOR = registerBlock("sequoia_door",
             () -> new net.minecraft.world.level.block.DoorBlock(net.minecraft.world.level.block.state.properties.BlockSetType.DARK_OAK,
                     BlockBehaviour.Properties.ofFullCopy(Blocks.DARK_OAK_DOOR).sound(net.minecraft.world.level.block.SoundType.WOOD).noOcclusion()));
+
+    public static final DeferredBlock<net.minecraft.world.level.block.TrapDoorBlock> SEQUOIA_TRAPDOOR = registerBlock("sequoia_trapdoor",
+            () -> new net.minecraft.world.level.block.TrapDoorBlock(net.minecraft.world.level.block.state.properties.BlockSetType.DARK_OAK,
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.DARK_OAK_TRAPDOOR).sound(net.minecraft.world.level.block.SoundType.WOOD).noOcclusion()));
 
     public static final DeferredBlock<net.minecraft.world.level.block.DoorBlock> STEEL_DOOR = registerBlock("steel_door",
             () -> new net.minecraft.world.level.block.DoorBlock(net.minecraft.world.level.block.state.properties.BlockSetType.STONE,

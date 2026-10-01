@@ -130,6 +130,7 @@ public class ModCreativeTabs {
 
                         output.accept(ModBlocks.STEEL_DOOR.get());
                         output.accept(ModBlocks.SEQUOIA_DOOR.get());
+                        output.accept(ModBlocks.SEQUOIA_TRAPDOOR.get());
 
                     })
                     .build());
@@ -472,7 +473,13 @@ public class ModCreativeTabs {
                         output.accept(ModBlocks.SULFUR_CLUSTER.get());
                         output.accept(ModBlocks.BAUXITE.get());
                         output.accept(ModBlocks.SEQUOIA_BARK.get());
+                        output.accept(ModBlocks.SEQUOIA_BARK_MOSSY.get());
+                        output.accept(ModBlocks.SEQUOIA_BARK_DARK.get());
+                        output.accept(ModBlocks.SEQUOIA_BARK_LIGHT.get());
                         output.accept(ModBlocks.SEQUOIA_HEARTWOOD.get());
+                        output.accept(ModBlocks.SEQUOIA_ROOTS.get());
+                        output.accept(ModBlocks.SEQUOIA_ROOTS_MOSSY.get());
+                        output.accept(ModBlocks.SEQUOIA_LEAVES.get());
                         output.accept(ModBlocks.SEQUOIA_BIOME_MOSS.get());
                         output.accept(ModBlocks.BASALT_SOFT.get());
                         // BASALT_SOFT_2/3/4 остались в реестре ради старых миров, но в креативе их нет:

@@ -19,6 +19,9 @@ import java.util.List;
 // Размещать в: src/main/java/razchexlitiel/trd/worldgen/ModPlacedFeatures.java
 public class ModPlacedFeatures {
 
+    public static final ResourceKey<PlacedFeature> GIANT_SEQUOIA_PLACED_KEY = registerKey("giant_sequoia_placed");
+    public static final ResourceKey<PlacedFeature> SMALL_SEQUOIA_PLACED_KEY = registerKey("small_sequoia_placed");
+    public static final ResourceKey<PlacedFeature> MEDIUM_SEQUOIA_PLACED_KEY = registerKey("medium_sequoia_placed");
 
     // 2. Сборка (DataGen)
     public static void bootstrap(BootstrapContext<PlacedFeature> context) {
@@ -57,6 +60,27 @@ public class ModPlacedFeatures {
                     BiomeFilter.biome()
             ));
         }
+
+        // === СЕКВОЙИ ===
+        var giantSequoia = configuredFeatures.getOrThrow(ModConfiguredFeatures.GIANT_SEQUOIA_KEY);
+        var smallSequoia = configuredFeatures.getOrThrow(ModConfiguredFeatures.SMALL_SEQUOIA_KEY);
+        var mediumSequoia = configuredFeatures.getOrThrow(ModConfiguredFeatures.MEDIUM_SEQUOIA_KEY);
+
+        register(context, GIANT_SEQUOIA_PLACED_KEY, giantSequoia,
+                List.of(
+                        RarityFilter.onAverageOnceEvery(5),
+                        InSquarePlacement.spread(),
+                        SurfaceWaterDepthFilter.forMaxDepth(0),
+                        PlacementUtils.HEIGHTMAP_OCEAN_FLOOR,
+                        PlacementUtils.filteredByBlockSurvival(Blocks.OAK_SAPLING),
+                        BiomeFilter.biome()
+                ));
+
+        register(context, SMALL_SEQUOIA_PLACED_KEY, smallSequoia,
+                VegetationPlacements.treePlacement(PlacementUtils.countExtra(1, 0.1f, 1), Blocks.SPRUCE_SAPLING));
+
+        register(context, MEDIUM_SEQUOIA_PLACED_KEY, mediumSequoia,
+                VegetationPlacements.treePlacement(PlacementUtils.countExtra(0, 0.25f, 1), Blocks.SPRUCE_SAPLING));
     }
 
     // --- Вспомогательные методы ---
