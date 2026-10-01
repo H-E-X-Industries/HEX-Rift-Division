@@ -132,6 +132,12 @@ public class ModNetworking {
         );
 
         registrar.playToClient(
+            com.trd.network.packet.guns.PacketMachineGunAnim.TYPE,
+            com.trd.network.packet.guns.PacketMachineGunAnim.STREAM_CODEC,
+            com.trd.network.packet.guns.PacketMachineGunAnim::handle
+        );
+
+        registrar.playToClient(
             com.trd.network.packet.explosion.SyncCraterPacket.TYPE,
             com.trd.network.packet.explosion.SyncCraterPacket.STREAM_CODEC,
             com.trd.network.packet.explosion.SyncCraterPacket::handle

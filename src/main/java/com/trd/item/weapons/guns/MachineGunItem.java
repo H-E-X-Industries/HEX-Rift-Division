@@ -5,6 +5,7 @@ import com.trd.client.gecko.item.guns.MachineGunRenderer;
 import com.trd.entity.weapons.bullets.TurretBulletEntity;
 import com.trd.item.weapons.ammo.AmmoRegistry;
 import com.trd.main.MainRegistry;
+import com.trd.network.packet.guns.PacketMachineGunAnim;
 import com.trd.network.packet.guns.PacketReloadGun;
 import com.trd.network.packet.guns.PacketShoot;
 import com.trd.sound.ModSounds;
@@ -34,20 +35,11 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
-import software.bernie.geckolib.animatable.GeoItem;
-import software.bernie.geckolib.animatable.SingletonGeoAnimatable;
-import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.AnimatableManager;
-import software.bernie.geckolib.animation.AnimationController;
-import software.bernie.geckolib.animation.PlayState;
-import software.bernie.geckolib.animation.RawAnimation;
-import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -57,8 +49,13 @@ import java.util.function.Consumer;
  * которые регистрируются в {@link AmmoRegistry}. Стрельба и перезарядка идут
  * через пакеты: клиент только рисует и отправляет намерение, всё решение
  * принимает сервер.
+ * <p>
+ * Модель и анимации живут в glTF ({@code models/item/ap_17.gltf}) и рисуются
+ * через GemRender, поэтому класс больше не {@code GeoItem}. Клиентское состояние
+ * анимаций держит {@link MachineGunClientAnim}, а сервер сообщает о разовых
+ * клипах пакетом {@link PacketMachineGunAnim}.
  */
-public class MachineGunItem extends Item implements GeoItem {
+public class MachineGunItem extends Item {
 
     private static final int SHOT_ANIM_TICKS = 14;
     private static final int MAG_CAPACITY = 24;
@@ -69,11 +66,15 @@ public class MachineGunItem extends Item implements GeoItem {
     private static final String LOADED_AMMO_ID_TAG = "LoadedAmmoID";
     private static final String GUN_CALIBER = "20mm_turret";
 
-    private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
-
     public MachineGunItem(Properties properties) {
         super(properties.stacksTo(1));
-        SingletonGeoAnimatable.registerSyncedAnimatable(this);
+    }
+
+    /** Просит клиент проиграть разовый клип: {@code reload} или {@code flip}. */
+    private static void sendAnim(Player player, String anim) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            PacketDistributor.sendToPlayer(serverPlayer, new PacketMachineGunAnim(anim));
+        }
     }
 
     @Override
@@ -222,12 +223,11 @@ public class MachineGunItem extends Item implements GeoItem {
         if (player.level().isClientSide) return;
         if (getReloadTimer(stack) > 0) return;
 
-        long instanceId = GeoItem.getOrAssignId(stack, (ServerLevel) player.level());
         int currentAmmo = getAmmo(stack);
 
         // 1) Полный магазин -> FLIP (разрядить/проверить)
         if (currentAmmo >= MAX_TOTAL_AMMO) {
-            triggerAnim(player, instanceId, "controller", "flip");
+            sendAnim(player, MachineGunClientAnim.FLIP);
             setReloadTimer(stack, FLIP_ANIM_TICKS);
             return;
         }
@@ -241,7 +241,7 @@ public class MachineGunItem extends Item implements GeoItem {
 
         // 2) Подходящих патронов нет -> FLIP (даже в креативе)
         if (targetAmmoId == null) {
-            triggerAnim(player, instanceId, "controller", "flip");
+            sendAnim(player, MachineGunClientAnim.FLIP);
             setReloadTimer(stack, FLIP_ANIM_TICKS);
             return;
         }
@@ -255,7 +255,7 @@ public class MachineGunItem extends Item implements GeoItem {
                 setLoadedAmmoID(stack, targetAmmoId);
             }
 
-            triggerAnim(player, instanceId, "controller", "reload");
+            sendAnim(player, MachineGunClientAnim.RELOAD);
             setReloadTimer(stack, RELOAD_ANIM_TICKS);
             return;
         }
@@ -270,10 +270,10 @@ public class MachineGunItem extends Item implements GeoItem {
             }
             setPendingAmmo(stack, taken);
             player.getInventory().setChanged();
-            triggerAnim(player, instanceId, "controller", "reload");
+            sendAnim(player, MachineGunClientAnim.RELOAD);
             setReloadTimer(stack, RELOAD_ANIM_TICKS);
         } else {
-            triggerAnim(player, instanceId, "controller", "flip");
+            sendAnim(player, MachineGunClientAnim.FLIP);
             setReloadTimer(stack, FLIP_ANIM_TICKS);
         }
     }
@@ -370,10 +370,8 @@ public class MachineGunItem extends Item implements GeoItem {
 
             setShootDelay(stack, SHOT_ANIM_TICKS);
 
-            if (level instanceof ServerLevel serverLevel) {
-                triggerAnim(player, GeoItem.getOrAssignId(stack, serverLevel), "controller", "shot_empty");
-            }
-
+            // Анимации пустого выстрела в glTF нет: клиент её не запускает,
+            // остаётся только щелчок затвора выше.
             return;
         }
 
@@ -420,39 +418,9 @@ public class MachineGunItem extends Item implements GeoItem {
         float soundPitch = 0.9F + level.random.nextFloat() * 0.2F;
         SoundEvent shotSound = ModSounds.TURRET_FIRE.isBound() ? ModSounds.TURRET_FIRE.get() : SoundEvents.GENERIC_EXPLODE.value();
         level.playSound(null, player.getX(), player.getY(), player.getZ(), shotSound, SoundSource.PLAYERS, 1.0F, soundPitch);
-
-        triggerAnim(player, GeoItem.getOrAssignId(stack, serverLevel), "controller", "shot");
     }
 
-    // === GECKOLIB КОНТРОЛЛЕР ===
-
-    @Override
-    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>(this, "controller", 0, event -> {
-            // Предикат вызывается и на сервере, а логика ниже работает только с клиентским состоянием
-            if (FMLEnvironment.dist.isClient()) {
-                return MachineGunClientUtils.handleAnimation(this, event);
-            }
-            return PlayState.STOP;
-        })
-                .triggerableAnim("reload", RawAnimation.begin().thenPlay("reload"))
-                .triggerableAnim("flip", RawAnimation.begin().thenPlay("flip"))
-                .triggerableAnim("shot", RawAnimation.begin().thenPlay("shot"))
-                .triggerableAnim("shot_empty", RawAnimation.begin().thenPlay("shot_empty"))
-                .setSoundKeyframeHandler(event -> {
-                    if (FMLEnvironment.dist.isClient()) {
-                        String soundName = event.getKeyframeData().getSound();
-                        if (soundName != null && !soundName.isEmpty()) {
-                            MachineGunClientUtils.playSoundClient(soundName);
-                        }
-                    }
-                }));
-    }
-
-    @Override
-    public AnimatableInstanceCache getAnimatableInstanceCache() {
-        return cache;
-    }
+    // === КЛИЕНТСКИЙ РЕНДЕР ===
 
     @Override
     public void initializeClient(Consumer<IClientItemExtensions> consumer) {
@@ -525,11 +493,6 @@ public class MachineGunItem extends Item implements GeoItem {
         return UseAnim.NONE;
     }
 
-    @Override
-    public double getBoneResetTime() {
-        return 0;
-    }
-
     // === КЛИЕНТ ===
 
     @EventBusSubscriber(modid = MainRegistry.MOD_ID, value = Dist.CLIENT)
@@ -553,8 +516,11 @@ public class MachineGunItem extends Item implements GeoItem {
             ItemStack stack = mc.player.getMainHandItem();
             if (!(stack.getItem() instanceof MachineGunItem)) {
                 clientShootTimer = SHOT_ANIM_TICKS;
+                MachineGunClientAnim.reset();
                 return;
             }
+
+            MachineGunClientAnim.tick(stack, mc.options.keyAttack.isDown());
 
             if (ModKeyBindings.RELOAD_KEY.consumeClick()) {
                 PacketDistributor.sendToServer(new PacketReloadGun());

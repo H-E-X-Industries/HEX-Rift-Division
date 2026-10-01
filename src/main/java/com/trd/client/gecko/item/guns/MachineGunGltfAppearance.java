@@ -1,0 +1,57 @@
+package com.trd.client.gecko.item.guns;
+
+import com.trd.item.weapons.guns.MachineGunClientAnim;
+import com.trd.main.MainRegistry;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.wf.gemrender.asset.GemRenderModels;
+import com.wf.gemrender.direct.ItemAppearance;
+import com.wf.gemrender.gltf.GemRenderGltfModel;
+import com.wf.gemrender.gltf.GltfAnimation;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
+
+/**
+ * Облик пушки на glTF вместо геколибовской geo-модели.
+ * <p>
+ * Модель и её клипы живут в {@code assets/trd/models/item/ap_17.gltf}: там же
+ * зашиты анимации {@code shot}, {@code reload} и {@code flip}. Какой клип
+ * показывать и на какой секунде — решает {@link MachineGunClientAnim}.
+ * <p>
+ * Геколибовский рендерер подставлял 5 разных текстур по типу заряженного
+ * патрона; в glTF текстура одна, и вариативности тут больше нет.
+ */
+public class MachineGunGltfAppearance implements ItemAppearance {
+
+    private static final ResourceLocation MODEL =
+            ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "models/item/ap_17.gltf");
+
+    @Override
+    public GemRenderGltfModel model(ItemStack stack, ItemDisplayContext context) {
+        return GemRenderModels.get(MODEL);
+    }
+
+    @Override
+    public GltfAnimation clip(ItemStack stack, ItemDisplayContext context) {
+        GemRenderGltfModel model = model(stack, context);
+        if (model == null) return null;
+
+        String current = MachineGunClientAnim.current();
+        if (current == null) return null;
+
+        GltfAnimation animation = model.animation(current);
+        // Клип мог не загрузиться — лучше показать пушку в покое, чем упасть.
+        return animation != null ? animation : null;
+    }
+
+    @Override
+    public float seconds(ItemStack stack, ItemDisplayContext context, float partialTick) {
+        return MachineGunClientAnim.seconds();
+    }
+
+    @Override
+    public void transform(ItemStack stack, ItemDisplayContext context, PoseStack poseStack) {
+        // Масштаб и разворот задаёт сама модель: в glTF оружие уже выстроено
+        // в системе координат GemRender, дополнительных трансформаций не нужно.
+    }
+}
