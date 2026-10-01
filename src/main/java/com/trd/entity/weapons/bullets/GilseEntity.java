@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.phys.Vec3;
@@ -40,6 +41,12 @@ public class GilseEntity extends Entity {
     /** Гравитация вдвое меньше земной: лёгкая гильза должна явно падать. */
     private static final double GRAVITY = 0.12D;
     private static final double DRAG = 0.98D;
+
+    /**
+     * Трение о землю. Сильнее воздушного, поэтому улегшаяся гильза быстро
+     * останавливается, а не скользит бесконечно.
+     */
+    private static final double GROUND_DRAG = 0.7D;
 
     private static final double RESTING_SPEED = 0.02D;
     private static final double BOUNCE = 0.3D;
@@ -87,30 +94,47 @@ public class GilseEntity extends Entity {
 
         super.tick();
 
+        Vec3 motion = this.getDeltaMovement();
+
         if (this.onGround()) {
             // Улеглась: ползём по земле и постепенно тормозим.
-            Vec3 motion = this.getDeltaMovement();
-            this.setDeltaMovement(motion.x * DRAG, motion.y, motion.z * DRAG);
+            motion = motion.scale(GROUND_DRAG);
             if (motion.horizontalDistanceSqr() < RESTING_SPEED * RESTING_SPEED) {
-                this.setDeltaMovement(Vec3.ZERO);
+                motion = Vec3.ZERO;
             }
+            // Вертикальную составляющую гасим полностью: прилипла к земле.
+            motion = new Vec3(motion.x, 0.0D, motion.z);
         } else {
-            Vec3 motion = this.getDeltaMovement();
-            this.setDeltaMovement(motion.x * DRAG, motion.y - GRAVITY, motion.z * DRAG);
+            motion = motion.scale(DRAG).add(0.0D, -GRAVITY, 0.0D);
         }
 
-        // Отскок: убираем вертикальную составляющую и гасим вертикальную скорость.
-        if (this.onGround() && this.getDeltaMovement().y < 0.0D) {
-            Vec3 motion = this.getDeltaMovement();
-            this.setDeltaMovement(motion.x * BOUNCE, -motion.y * BOUNCE, motion.z * BOUNCE);
+        this.setDeltaMovement(motion);
+
+        // Именно move() двигает сущность и разруливает столкновения. Раньше его
+        // здесь не было вовсе, поэтому гильза меняла только скорость и поворот,
+        // а координаты оставались в точке спавна — визуально она зависала в
+        // воздухе возле оружия. onGround() тоже проставляется внутри move(),
+        // поэтому без него условие «лежит на земле» никогда не выполнялось.
+        this.move(MoverType.SELF, motion);
+
+        // Отскок от блока: гасим вертикальную скорость и подбрасываем вверх.
+        if (this.onGround() && motion.y < 0.0D) {
+            Vec3 after = this.getDeltaMovement();
+            this.setDeltaMovement(after.x * BOUNCE, -after.y * BOUNCE, after.z * BOUNCE);
+            this.hasImpulse = true;
         }
 
         // Кувыркаемся вслед за движением.
-        Vec3 motion = this.getDeltaMovement();
-        if (motion.lengthSqr() > 1.0E-6D) {
-            double horizontal = Math.sqrt(motion.x * motion.x + motion.z * motion.z);
-            this.setYRot((float) (Math.atan2(motion.x, motion.z) * (180.0D / Math.PI)));
-            this.setXRot((float) (Math.atan2(motion.y, horizontal) * (180.0D / Math.PI)));
+        Vec3 now = this.getDeltaMovement();
+        if (now.lengthSqr() > 1.0E-6D) {
+            double horizontal = Math.sqrt(now.x * now.x + now.z * now.z);
+            this.setYRot((float) (Math.atan2(now.x, now.z) * (180.0D / Math.PI)));
+            this.setXRot((float) (Math.atan2(now.y, horizontal) * (180.0D / Math.PI)));
+        }
+
+        // Просевшая гильза не должна раз в тик будить сеть пакетом позиции.
+        if (motion.lengthSqr() > 1.0E-5D) {
+            this.hasImpulse = true;
         }
     }
 

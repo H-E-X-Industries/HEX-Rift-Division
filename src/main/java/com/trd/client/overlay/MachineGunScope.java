@@ -1,5 +1,6 @@
 package com.trd.client.overlay;
 
+import com.trd.client.config.ModKeyBindings;
 import com.trd.item.weapons.guns.MachineGunItem;
 import com.trd.main.MainRegistry;
 import net.minecraft.client.KeyMapping;
@@ -15,8 +16,8 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
-
-import java.util.List;
+import net.neoforged.neoforge.client.event.ViewportEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
  * Оптический прицел пушки: зум, скрытый интерфейс и оверлей.
@@ -48,36 +49,65 @@ public final class MachineGunScope {
      */
     private static final float CIRCLE_FRAC = 199.0f / 301.0f;
 
+    /**
+     * Доля наименьшей стороны экрана, которую занимает круг прицела.
+     * <p>
+     * Раньше диаметр брался равным {@code min(w, h)}, и круг упирался в верх
+     * и низ экрана: чёрная оправа обрезалась краями кадра. Чуть меньший
+     * диаметр оставляет видную рамку со всех сторон.
+     */
+    private static final float CIRCLE_SCREEN_FRAC = 0.94f;
+
     /** Во сколько раз поднимается точность в прицеле. */
     public static final float ACCURACY_BONUS = 2.0f;
 
     private static final double ZOOM_FACTOR = 4.0;
-    private static final int FOV_APPLY_INTERVAL = 2;
 
     private static boolean scoped;
     private static boolean pendingToggle;
-    private static int ticks;
-
-    /**
- * ПКМ нажата прямо сейчас. Отслеживается по фронту нажатия, а не по событию:
- * {@code InteractionKeyMappingTriggered} срабатывает и на нажатии, и на
- * автоповторе удержания, и на отпускании не приходит вовсе. Одно нажатие
- * включает прицел, следующее — выключает, и держится он дальше сам.
- */
     private static boolean useHeld;
 
     /**
-     * FOV игрока до входа в прицел: зум считается от него, и на выходе это
-     * значение возвращается. Брать «текущий» FOV нельзя — тогда повторные
-     * входы делили бы его всё сильнее.
+     * ПКМ нажата прямо сейчас. Отслеживается по фронту нажатия, а не по событию:
+     * {@code InteractionKeyMappingTriggered} срабатывает и на нажатии, и на
+     * автоповторе удержания, и на отпускании не приходит вовсе. Одно нажатие
+     * включает прицел, следующее — выключает, и держится он дальше сам.
      */
-    private static int savedFov = 70;
-
     private static final float SCOPE_MOVE_MULTIPLIER = 0.5f;
 
     /** id временного модификатора скорости, снимается при выходе из прицела. */
     private static final ResourceLocation MOVEMENT_MODIFIER_ID =
             ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "scope_slowdown");
+
+    /**
+     * Клавиши, нажатие которых сбрасывает прицел. ЛКМ (огонь) и ПКМ (сам
+     * прицел) сюда не входят намеренно.
+     * <p>
+     * Список строится один раз и кэшируется: поля у {@code Options} final, и
+     * пересобирать список каждый тик незачем.
+     */
+    private static KeyMapping[] cachedActionKeys;
+
+    private static KeyMapping[] actionKeys(Minecraft mc) {
+        KeyMapping[] cached = cachedActionKeys;
+        if (cached == null) {
+            cached = new KeyMapping[]{
+                    ModKeyBindings.RELOAD_KEY,
+                    ModKeyBindings.UNLOAD_KEY,
+                    mc.options.keyJump,
+                    mc.options.keyShift,
+                    mc.options.keySprint,
+                    mc.options.keyUp,
+                    mc.options.keyDown,
+                    mc.options.keyLeft,
+                    mc.options.keyRight,
+                    mc.options.keySwapOffhand,
+                    mc.options.keyDrop
+            };
+            cachedActionKeys = cached;
+        }
+        return cached;
+    }
 
     private MachineGunScope() {
     }
@@ -93,6 +123,25 @@ public final class MachineGunScope {
 
     public static float moveMultiplier() {
         return scoped ? SCOPE_MOVE_MULTIPLIER : 1.0f;
+    }
+
+    /**
+     * Зум.
+     * <p>
+     * Раньше FOV менялся через {@code options.fov().set(...)}. Это не работало:
+     * у настройки FOV в 1.21 стоит {@code IntRange(30, 110)}, а 70/4 = 17 за
+     * границы не влезает, и {@code OptionInstance#set} молча откатывал
+     * значение к исходному. Поэтому зум был нулевым даже при делении на два.
+     * <p>
+     * Теперь FOV не трогаем вовсе, а домножаем уже готовый итог в
+     * {@code ComputeFov}: событие срабатывает после применения настроек, и
+     * ограничение диапазона на него не распространяется.
+     */
+    @SubscribeEvent
+    public static void onComputeFov(ViewportEvent.ComputeFov event) {
+        if (scoped) {
+            event.setFOV(event.getFOV() / ZOOM_FACTOR);
+        }
     }
 
     @SubscribeEvent
@@ -115,11 +164,10 @@ public final class MachineGunScope {
         // Прицел сбрасывает всё, кроме самого огня: и клавиши, и ЛКМ по
         // блоку, и движение. Выстрел прицел не закрывает — для этого он и нужен.
         // ПКМ сюда не попадает: он обрабатывается выше и переключает прицел.
-        if (scoped && !event.isAttack() && !event.isUseItem()) {
+        if (scoped && !event.isAttack()) {
             close();
         }
-
-        }
+    }
 
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent.Post event) {
@@ -149,7 +197,7 @@ public final class MachineGunScope {
             if (scoped) {
                 close();
             } else if (gun) {
-                open(mc);
+                open();
             }
         }
 
@@ -165,42 +213,86 @@ public final class MachineGunScope {
             return;
         }
 
-        // Держим FOV ровно: эффекты зума и биомов его двигают, а нам нужен
-        // предсказуемый множитель. Обновляем не каждый тик, а раз в два.
-        if (++ticks >= FOV_APPLY_INTERVAL) {
-            ticks = 0;
-            mc.options.fov().set((int) Math.round(savedFov / ZOOM_FACTOR));
+        // В прицеле любое действие кроме стрельбы его закрывает: перезарядка,
+        // разрядка, прыжок, смена слота, движение. Проверяем именно факт нажатия
+        // (фронт), а не удержание — иначе прицел слетал бы с первого же кадра
+        // стрельбы, где удерживается ЛКМ.
+        if (actionKeyPressed(mc)) {
+            close();
         }
 
         applyMoveMultiplier(player);
     }
 
-    private static void open(Minecraft mc) {
+    /**
+     * Было ли в этом тике нажатие хотя бы одной из «действующих» клавиш.
+     * <p>
+     * Клавиши модов (R и G) сюда попадают напрямую: событие
+     * {@code InteractionKeyMappingTriggered} в NeoForge срабатывает только на
+     * мышиных кнопках — оно вызывается из {@code startAttack},
+     * {@code continueAttack}, {@code startUseItem} и pick-block, и обычные
+     * клавиатурные бинды в этот список не входят. Поэтому перезарядка и
+     * разрядка раньше вообще не сбрасывали прицел.
+     * <p>
+     * Фронт нажатия отслеживаем сами, через {@code isDown()}, а не через
+     * {@code consumeClick()}: тот же клик читает
+     * {@link com.trd.item.weapons.guns.MachineGunItem} в своём тике, и
+     * consumeClick() забрал бы его у перезарядки — нажатие R закрывало бы
+     * прицел, но патроны бы не досылались.
+     */
+    private static boolean actionKeyPressed(Minecraft mc) {
+        KeyMapping[] keys = actionKeys(mc);
+
+        boolean[] wasDown = pressedState;
+        if (wasDown == null || wasDown.length != keys.length) {
+            wasDown = new boolean[keys.length];
+            pressedState = wasDown;
+        }
+
+        boolean pressed = false;
+        for (int i = 0; i < keys.length; i++) {
+            boolean down = keys[i].isDown();
+            // Фронт: зажатая клавиша не должна сбрасывать прицел каждый тик.
+            if (down && !wasDown[i]) {
+                pressed = true;
+            }
+            wasDown[i] = down;
+        }
+
+        return pressed;
+    }
+
+    /** Состояние «была ли клавиша зажата» на прошлом тике. */
+    private static boolean[] pressedState;
+
+    private static void open() {
         if (scoped) return;
         scoped = true;
-        savedFov = mc.options.fov().get();
-        ticks = 0;
+        syncScopeState();
     }
 
     private static void close() {
         if (!scoped) return;
         scoped = false;
+        syncScopeState();
+    }
 
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.options != null) {
-            mc.options.fov().set(savedFov);
-        }
-
-        LocalPlayer player = mc.player;
-        if (player != null) applyMoveMultiplier(player);
+    /**
+     * Сообщает серверу о смене состояния, чтобы замедление скорости
+     * применялось и там, а не только на клиенте.
+     */
+    private static void syncScopeState() {
+        PacketDistributor.sendToServer(new com.trd.network.packet.guns.PacketScopeState(scoped));
     }
 
     /**
      * Замедляет игрока вдвое через временный модификатор атрибута скорости.
      * <p>
-     * Важно: множитель считается от {@code getBaseValue()}, то есть от голого
-     * значения атрибута, а не от текущего. Иначе модификатор накапливался бы
-     * тик за тиком и игрок замедлялся всё сильнее.
+     * Сумма модификатора обязана быть равна {@code множитель - 1}, то есть -0.5,
+     * а не {@code база * (множитель - 1)}. У {@code ADD_MULTIPLIED_BASE} база
+     * уже умножается на amount, поэтому вариант с умножением на базу давал
+     * 0.1 + 0.1 * -0.05 = 0.095 вместо 0.1 — то есть замедление на 5% вместо
+     * половины, которое на глаз не видно.
      */
     private static void applyMoveMultiplier(LocalPlayer player) {
         if (player == null) return;
@@ -220,10 +312,9 @@ public final class MachineGunScope {
         // Модификатор уже стоит — переустанавливать не нужно.
         if (existing != null) return;
 
-        double base = attribute.getBaseValue();
         attribute.addTransientModifier(new AttributeModifier(
                 MOVEMENT_MODIFIER_ID,
-                base * (SCOPE_MOVE_MULTIPLIER - 1.0),
+                SCOPE_MOVE_MULTIPLIER - 1.0,
                 AttributeModifier.Operation.ADD_MULTIPLIED_BASE));
     }
 
@@ -263,24 +354,42 @@ public final class MachineGunScope {
      * правильный выбор.
      */
     private static void drawScope(net.minecraft.client.gui.GuiGraphics graphics, int screenW, int screenH) {
-        // Размер считаем от диаметра круга, а не от большей стороны экрана.
-        // Прозрачный круг занимает 199 из 301 пикселя текстуры, то есть
-        // CIRCLE_FRAC от её стороны. Если рисовать квадрат по большей стороне
-        // экрана, то на 16:9 круг по вертикали не влезает и обрезается краями
-        // кадра. Поэтому сторона = нужный диаметр / CIRCLE_FRAC, а чёрные
-        // углы текстуры при этом просто уходят за пределы экрана — ровно то,
-        // что нужно.
-        int diameter = Math.min(screenW, screenH);
+        // Диаметр круга задаём долей меньшей стороны экрана, а не всей стороной
+        // целиком. При диаметре, равном min(w, h), круг касался верхнего и
+        // нижнего краёв кадра, и чёрная оправа вокруг него срезалась краями
+        // экрана — прицел выглядел обрезанным. Теперь вокруг круга всегда есть
+        // видимая рамка.
+        int diameter = (int) (Math.min(screenW, screenH) * CIRCLE_SCREEN_FRAC);
+
+        // Сторона текстуры = диаметр / доля круга: чёрные углы текстуры при
+        // этом уходят за пределы экрана — ровно то, что нужно.
         int size = (int) Math.ceil(diameter / CIRCLE_FRAC);
 
         int x = (screenW - size) / 2;
         int y = (screenH - size) / 2;
+
+        // По бокам от квадрата текстуры остаётся свободная область. На 16:9 она
+        // заметная, и сквозь неё был виден мир. Закрашиваем её чёрным: полосы
+        // по краям экрана, не заходя внутрь круга.
+        int black = 0xFF000000;
+        if (screenW > diameter) {
+            int side = (screenW - diameter) / 2;
+            graphics.fill(0, 0, side, screenH, black);
+            graphics.fill(screenW - side, 0, screenW, screenH, black);
+        }
+        if (screenH > diameter) {
+            int side = (screenH - diameter) / 2;
+            graphics.fill(0, 0, screenW, side, black);
+            graphics.fill(0, screenH - side, screenW, screenH, black);
+        }
 
         // Именно эта, 11-аргументная перегрузка. У 9-аргументной
         // (atlas, x, y, u, v, width, height, texW, texH) параметр width идёт
         // одновременно и размером на экране, и шириной участка в пикселях
         // текстуры, а UV считается как uWidth / textureWidth. Если туда отдать
         // size, UV уходит далеко за 1.0 и прицел рисуется сеткой повторов.
+        //
+        // Круг в текстуре прозрачный, поэтому заливка по краям его не задевает.
         graphics.blit(SCOPE_TEXTURE, x, y, size, size,
                 0.0f, 0.0f, SCOPE_TEX_SIZE, SCOPE_TEX_SIZE, SCOPE_TEX_SIZE, SCOPE_TEX_SIZE);
     }

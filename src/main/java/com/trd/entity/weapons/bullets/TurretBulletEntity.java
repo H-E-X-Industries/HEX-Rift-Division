@@ -89,18 +89,26 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
     private static final double PROXIMITY_FUSE_MARGIN = 0.25D;
 
     /**
- * Направление полёта, посчитанное один раз на сервере и разосланное клиенту
- * пакетами поворота. Отдельное поле нужно потому, что поворот сущности
- * меняется каждый тик, и клиент без него интерполирует между устаревшими
- * углами — ствол пули заметно метался.
- */
-    private Vec3 flightDirection;
+     * Предыдущая позиция, пришедшая с сервера. Нужна клиенту для интерполяции
+     * отрисовки: {@code xOld} затирается {@code setOldPosAndRot()} каждый тик,
+     * поэтому собственный якорь приходится хранить отдельно.
+     * <p>
+     * Направление полёта тоже берётся из разности этих двух точек, а не из
+     * {@code deltaMovement}: скорость в пакетах появления и движения клампится
+     * до ±3.9 блока/тик, а пуля летит быстрее, и локальный вектор оказывался
+     * неверным. Разность координат при этом точная — квантование по позиции
+     * здесь не применяется.
+     */
+    private double serverPrevX;
+    private double serverPrevY;
+    private double serverPrevZ;
 
     /**
- * Флаг «поворот уже пришёл с сервера». Сбрасывается при появлении, чтобы
- * первый пакет скорости не перебил направление из пакета появления.
- */
-    private boolean clientDriven = true;
+     * Пришёл ли пакет позиции с прошлого тика. Без этого флага клиентский тик
+     * без пакета снова прижал бы {@code xOld} к старой точке, и отрисовка
+     * повторила бы уже пройденный отрезок — пуля дёргалась бы назад.
+     */
+    private boolean serverPositionReceived;
 
     private float baseDamage = 4.0f;
     private float baseSpeed = 3.0f;
@@ -244,6 +252,29 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
 
     @Override
     public void tick() {
+        // Физику считает только сервер. Раньше клиент прогонял тот же tick(),
+        // из-за чего позиция считалась дважды: пакетами ServerEntity и ещё раз
+        // локально. Пакеты при этом клампят дельту до ±3.9 блока/тик, а пуля
+        // быстрее, поэтому локальная траектория расходилась с серверной и
+        // пуля дёргалась на экране. Теперь клиент только принимает готовые
+        // координаты и сглаживает их в рендере (см. flightDirection).
+        if (this.level().isClientSide) {
+            // ClientLevel#tickNonPassenger вызывает setOldPosAndRot() перед
+            // tick() и прижимает xOld/yOld/zOld к текущей точке, из-за чего
+            // между тиками интерполировать нечего. Возвращаем якорь,
+            // который lerpTo сохранил в прошлый раз.
+            //
+            // Если пакета не было, якорь не трогаем: иначе отрисовка повторила
+            // бы уже пройденный отрезок и пуля дёрнулась бы назад.
+            if (this.serverPositionReceived) {
+                this.xOld = this.serverPrevX;
+                this.yOld = this.serverPrevY;
+                this.zOld = this.serverPrevZ;
+                this.serverPositionReceived = false;
+            }
+            return;
+        }
+
         if (this.isRemoved() || this.inGround) {
             this.discard();
             return;
@@ -355,8 +386,6 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
         double horizontalDist = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
         this.setYRot((float) (Math.atan2(velocity.x, velocity.z) * (180D / Math.PI)));
         this.setXRot((float) (Math.atan2(velocity.y, horizontalDist) * (180D / Math.PI)));
-        this.flightDirection = velocity.normalize();
-        this.clientDriven = true;
 
         if (this.tickCount == 0) {
             this.yRotO = this.getYRot();
@@ -365,17 +394,49 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
     }
 
     /**
-     * Направление полёта для рендера. На сервере оно считается из скорости,
-     * на клиенте — из локальной скорости, которой достаточно: пакеты скорости
-     * шли ровно по той же траектории, что и позиция, а вот поворот сущности
-     * приходил отдельно и заметно от него отставал.
+     * Направление полёта для рендера — разность двух последних позиций,
+     * пришедших с сервера.
+     * <p>
+     * Раньше здесь читался {@code deltaMovement}, но пакеты появления и
+     * движения клампят скорость до ±3.9 блока/тик, так что локальный вектор
+     * на быстрой пуле был попросту неверным. Разность координат квантованию по
+     * скорости не подвержена и совпадает с реальной траекторией.
      */
     public Vec3 flightDirection() {
-        if (!this.level().isClientSide) {
-            return this.flightDirection != null ? this.flightDirection : Vec3.ZERO;
+        double dx = this.getX() - this.serverPrevX;
+        double dy = this.getY() - this.serverPrevY;
+        double dz = this.getZ() - this.serverPrevZ;
+
+        Vec3 delta = new Vec3(dx, dy, dz);
+        if (delta.lengthSqr() > 1.0E-8D) {
+            return delta.normalize();
         }
-        Vec3 motion = this.getDeltaMovement();
-        return motion.lengthSqr() > 1.0E-8D ? motion.normalize() : Vec3.ZERO;
+
+        // Только что появилась: предыдущей позиции ещё нет, падаем назад
+        // на углы, которые сервер успел прислать в пакете появления.
+        double horizontal = Math.sqrt(dx * dx + dz * dz);
+        if (horizontal > 1.0E-8D || Math.abs(dy) > 1.0E-8D) {
+            return new Vec3(
+                    Math.sin(Math.toRadians(this.getYRot())),
+                    -Math.sin(Math.toRadians(this.getXRot())),
+                    Math.cos(Math.toRadians(this.getYRot()))
+            ).normalize();
+        }
+
+        return Vec3.ZERO;
+    }
+
+    /** Предыдущая серверная позиция — для сглаживания отрисовки. */
+    public double getServerPrevX() {
+        return this.serverPrevX;
+    }
+
+    public double getServerPrevY() {
+        return this.serverPrevY;
+    }
+
+    public double getServerPrevZ() {
+        return this.serverPrevZ;
     }
 
     @Override
@@ -390,30 +451,36 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
     }
 
     /**
-     * В 1.20.1 направление приходило в custom spawn data, и клиент сразу ставил
-     * {@code yRotO/xRotO}, иначе пуля первые кадры интерполировала поворот от
-     * нуля и визуально проворачивалась.
+     * Позиция приходит из пакета, а {@link AbstractArrow#lerpTo} делает
+     * {@code setPos}, не трогая {@code xOld}. Из-за этого у рендера не было
+     * двух точек для интерполяции, и пуля шла ступеньками по тикам.
      * <p>
-     * В 1.21 того механизма нет. Vanilla {@code recreateFromPacket} выставляет
-     * обе оси ({@code xRot} и {@code yRot}) из пакета появления, но забывает про
-     * предыдущие углы, поэтому поворот всё равно интерполируется от нуля.
-     * Здесь они прижимаются к только что полученным значениям — обе оси сразу.
-     * <p>
-     * {@code alignToVelocity} здесь не вызывается намеренно: скорость приходит
-     * отдельным пакетом позже, и до неё надо сохранить поворот из пакета
-     * появления — метод сам пропускает нулевую скорость.
+     * Здесь текущая позиция запоминается как предыдущая, а новая ставится
+     * поверх. Рендер потом сглаживает между ними сам — см.
+     * {@link #getServerPrevX()} и {@link #flightDirection()}.
      */
+    @Override
+    public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps) {
+        if (this.level().isClientSide) {
+            this.serverPrevX = this.getX();
+            this.serverPrevY = this.getY();
+            this.serverPrevZ = this.getZ();
+            this.serverPositionReceived = true;
+        }
+        super.lerpTo(x, y, z, yRot, xRot, steps);
+    }
+
     @Override
     public void recreateFromPacket(ClientboundAddEntityPacket packet) {
         super.recreateFromPacket(packet);
         this.yRotO = this.getYRot();
         this.xRotO = this.getXRot();
-        // Клиент не должен пересчитывать поворот из скорости: скорость приходит
-        // отдельными пакетами и заметно отстаёт от позиции, из-за чего ствол
-        // пули метался между двумя направлениями, пока на миникарте пуля шла
-        // ровно. Направление приходит готовым в пакете поворота и меняется
-        // плавно, поэтому выставляем прошлый угол сразу и не трогаем его.
-        this.clientDriven = false;
+        // Якорь первой интерполяции: до первого пакета позиции двигаться не
+        // от чего, поэтому предыдущая точка совпадает с текущей.
+        this.serverPrevX = this.getX();
+        this.serverPrevY = this.getY();
+        this.serverPrevZ = this.getZ();
+        this.serverPositionReceived = false;
     }
 
     private void handleHitResult(HitResult hit) {

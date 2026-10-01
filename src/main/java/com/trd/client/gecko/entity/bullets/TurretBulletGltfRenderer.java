@@ -14,6 +14,7 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -50,6 +51,26 @@ public class TurretBulletGltfRenderer extends EntityRenderer<TurretBulletEntity>
     }
 
     @Override
+    public Vec3 getRenderOffset(TurretBulletEntity entity, float partialTicks) {
+        // Позиция приходит с сервера дискретно — по пакету на тик. На скорости
+        // 6 блоков/тик это 20 ступенек в секунду, и без сглаживания пуля шла
+        // рывками. Смещение считаем от базовой точки рендера (она равна
+        // интерполированным xOld/x) к нашей, сглаженной между двумя пакетами.
+        if (entity.level().isClientSide) {
+            double x = Mth.lerp(partialTicks, entity.getServerPrevX(), entity.getX());
+            double y = Mth.lerp(partialTicks, entity.getServerPrevY(), entity.getY());
+            double z = Mth.lerp(partialTicks, entity.getServerPrevZ(), entity.getZ());
+
+            return new Vec3(
+                    x - Mth.lerp(partialTicks, entity.xOld, entity.getX()),
+                    y - Mth.lerp(partialTicks, entity.yOld, entity.getY()),
+                    z - Mth.lerp(partialTicks, entity.zOld, entity.getZ())
+            );
+        }
+        return Vec3.ZERO;
+    }
+
+    @Override
     public void render(TurretBulletEntity entity, float yaw, float partialTick, PoseStack poseStack,
                        MultiBufferSource bufferSource, int packedLight) {
         var model = GemRenderModels.get(MODEL);
@@ -57,9 +78,8 @@ public class TurretBulletGltfRenderer extends EntityRenderer<TurretBulletEntity>
             return;
         }
 
-        // Направление берём из вектора полёта, а не из углов сущности. Углы приходят
-        // отдельным пакетом поворота и на клиенте отстают от позиции, из-за
-        // чего ствол пули метался, хотя сама пуля летела ровно.
+        // Направление берём из вектора полёта, а не из углов сущности: углы
+        // приходят отдельным пакетом поворота и заметно отстают от позиции.
         Vec3 dir = entity.flightDirection();
         if (dir.lengthSqr() < 1.0E-8D) {
             // Скорости ещё нет — fallback на углы сущности, иначе пуля не видна.

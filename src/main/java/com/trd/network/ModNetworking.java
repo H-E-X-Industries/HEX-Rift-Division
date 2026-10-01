@@ -131,6 +131,12 @@ public class ModNetworking {
             com.trd.network.packet.guns.PacketUnloadGun::handle
         );
 
+        registrar.playToServer(
+            com.trd.network.packet.guns.PacketScopeState.TYPE,
+            com.trd.network.packet.guns.PacketScopeState.STREAM_CODEC,
+            com.trd.network.packet.guns.PacketScopeState::handle
+        );
+
         registrar.playToClient(
             com.trd.network.packet.guns.PacketMachineGunAnim.TYPE,
             com.trd.network.packet.guns.PacketMachineGunAnim.STREAM_CODEC,
