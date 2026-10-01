@@ -180,5 +180,19 @@ public class ModNetworking {
             com.trd.network.packet.turrets.PacketModifyTurretChip.STREAM_CODEC,
             com.trd.network.packet.turrets.PacketModifyTurretChip::handle
         );
+
+        // === РЕДСТОУН-РАДИО ===
+
+        registrar.playToClient(
+            com.trd.network.packet.redstone.RedstoneRadioSyncPacket.TYPE,
+            com.trd.network.packet.redstone.RedstoneRadioSyncPacket.STREAM_CODEC,
+            com.trd.network.packet.redstone.RedstoneRadioSyncPacket::handle
+        );
+
+        registrar.playToServer(
+            com.trd.network.packet.redstone.RedstoneRadioChannelPacket.TYPE,
+            com.trd.network.packet.redstone.RedstoneRadioChannelPacket.STREAM_CODEC,
+            com.trd.network.packet.redstone.RedstoneRadioChannelPacket::handle
+        );
     }
 }

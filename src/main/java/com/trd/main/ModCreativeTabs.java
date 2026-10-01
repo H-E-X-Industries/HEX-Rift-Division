@@ -293,6 +293,11 @@ public class ModCreativeTabs {
                         output.accept(ModBlocks.CONVEYOR.get());
                         output.accept(ModBlocks.CONVEYOR_ELEVATOR.get());
                         output.accept(ModBlocks.SORTIROVSHIK.get());
+
+                        // ═══ РЕДСТОУН-РАДИО ═══
+
+                        output.accept(ModBlocks.REDSTONE_RADIO_TRANSMITTER.get());
+                        output.accept(ModBlocks.REDSTONE_RADIO_RECEIVER.get());
                     })
                     .build());
 

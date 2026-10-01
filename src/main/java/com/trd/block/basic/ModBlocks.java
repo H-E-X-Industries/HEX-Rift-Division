@@ -661,6 +661,28 @@ public class ModBlocks {
             () -> new com.trd.block.basic.weapons.explosives.SideOBlock(
                     BlockBehaviour.Properties.of().strength(2.0F, 6.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
 
+    // ═══════════════════════════════════════════════════════
+    // РЕДСТОУН-РАДИО
+    // ═══════════════════════════════════════════════════════
+
+    public static final DeferredBlock<Block> REDSTONE_RADIO_TRANSMITTER = registerBlock("redstone_radio_transmitter",
+            () -> new com.trd.block.basic.redstone.RedstoneRadioBlock(
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.REDSTONE_TORCH)
+                            .noOcclusion()
+                            .strength(0.0F)
+                            .instabreak()
+                            .lightLevel(state -> state.getValue(com.trd.block.basic.redstone.RedstoneRadioBlock.POWERED) ? 7 : 0),
+                    true));
+
+    public static final DeferredBlock<Block> REDSTONE_RADIO_RECEIVER = registerBlock("redstone_radio_receiver",
+            () -> new com.trd.block.basic.redstone.RedstoneRadioBlock(
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.REDSTONE_TORCH)
+                            .noOcclusion()
+                            .strength(0.0F)
+                            .instabreak()
+                            .lightLevel(state -> state.getValue(com.trd.block.basic.redstone.RedstoneRadioBlock.POWERED) ? 7 : 0),
+                    false));
+
     private static <T extends Block & IMultiblockController> DeferredBlock<T> registerMultiblock(String name, Supplier<T> block) {
         DeferredBlock<T> toReturn = BLOCKS.register(name, block);
         ModItems.ITEMS.register(name, () -> new MultiblockBlockItem(toReturn.get(), new Item.Properties()));

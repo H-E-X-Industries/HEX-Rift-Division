@@ -80,6 +80,11 @@ public class ModMenuTypes {
     public static final java.util.function.Supplier<MenuType<com.trd.menu.turrets.TromboneMenu>> TROMBONE_MENU =
             MENUS.register("trombone_menu", () -> IMenuTypeExtension.create(com.trd.menu.turrets.TromboneMenu::new));
 
+    // Позиция блока приходит в буфере, который пишет IPlayerExtension#openMenu(MenuProvider, BlockPos),
+    // поэтому меню нужен клиентский конструктор с FriendlyByteBuf
+    public static final java.util.function.Supplier<MenuType<com.trd.menu.industrial.RedstoneRadioMenu>> REDSTONE_RADIO_MENU =
+            MENUS.register("redstone_radio_menu", () -> IMenuTypeExtension.create(com.trd.menu.industrial.RedstoneRadioMenu::new));
+
     public static void register(IEventBus eventBus) {
         MENUS.register(eventBus);
     }

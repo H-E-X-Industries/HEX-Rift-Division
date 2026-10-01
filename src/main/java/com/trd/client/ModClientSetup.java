@@ -40,6 +40,7 @@ public class ModClientSetup {
         event.register(com.trd.menu.ModMenuTypes.STEEL_STORAGE_MENU.get(), com.trd.client.overlay.gui.SteelStorageScreen::new);
         event.register(com.trd.menu.ModMenuTypes.TURRET_AMMO_MENU.get(), com.trd.client.overlay.gui.GUITurretAmmo::new);
         event.register(com.trd.menu.ModMenuTypes.TROMBONE_MENU.get(), com.trd.client.overlay.gui.GUITrombone::new);
+        event.register(com.trd.menu.ModMenuTypes.REDSTONE_RADIO_MENU.get(), com.trd.client.overlay.gui.GUIRedstoneRadio::new);
     }
 
     @SubscribeEvent
