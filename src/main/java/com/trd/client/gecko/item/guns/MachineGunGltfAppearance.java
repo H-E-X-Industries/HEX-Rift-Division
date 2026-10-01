@@ -57,7 +57,8 @@ public class MachineGunGltfAppearance implements ItemAppearance {
 
     @Override
     public void transform(ItemStack stack, ItemDisplayContext context, PoseStack poseStack) {
-        // Масштаб и разворот задаёт сама модель: в glTF оружие уже выстроено
-        // в системе координат GemRender, дополнительных трансформаций не нужно.
+        // Трансформацию не трогаем: любая попытка сдвинуть модель здесь
+        // двигает само оружие в руке. Покачивание камеры (bobView) при этом
+        // остаётся, его глушат на уровне рендера — см. MachineGunScopeOverlay.
     }
 }

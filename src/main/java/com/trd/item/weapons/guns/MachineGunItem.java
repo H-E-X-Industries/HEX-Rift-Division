@@ -60,11 +60,25 @@ public class MachineGunItem extends Item {
     private static final int SHOT_ANIM_TICKS = 14;
     private static final int MAG_CAPACITY = 24;
     private static final int MAX_TOTAL_AMMO = MAG_CAPACITY + 1;
-    private static final int RELOAD_ANIM_TICKS = 100;
-    private static final int FLIP_ANIM_TICKS = 80;
-    private static final int RELOAD_AMMO_ADD_TICK = 95;
+    // Длины блокировки стрельбы приведены к новым клипам glTF: reload длится
+    // 3.125 с (62 тика), flip — 3.9167 с (78 тиков). Раньше здесь стояли 100 и
+    // 80 от пятисекундных анимаций, и пушка простаивала впустую после конца
+    // клипа. Правку нужно повторять, если анимации перезальют заново.
+    private static final int RELOAD_ANIM_TICKS = 63;
+    private static final int FLIP_ANIM_TICKS = 79;
+    private static final int RELOAD_AMMO_ADD_TICK = 60;
     private static final String LOADED_AMMO_ID_TAG = "LoadedAmmoID";
     private static final String GUN_CALIBER = "20mm_turret";
+
+    /**
+     * Базовый разброс выстрела, как гауссово отклонение по каждой оси.
+     * Раньше число было продублировано в вызове {@code add(...)}, в прицеле
+     * оно делится на {@link com.trd.client.overlay.MachineGunScope#ACCURACY_BONUS}.
+     */
+    private static final float SCATTER = 0.0075f;
+
+    /** Ускорение пули относительно скорости патрона из реестра. */
+    private static final float SPEED_MULTIPLIER = 2.0f;
 
     public MachineGunItem(Properties properties) {
         super(properties.stacksTo(1));
@@ -353,7 +367,7 @@ public class MachineGunItem extends Item {
 
     /** Выстрел по углу обзора самого сервера. */
     public void performShooting(Level level, Player player, ItemStack stack) {
-        performShooting(level, player, stack, player.getYRot(), player.getXRot());
+        performShooting(level, player, stack, player.getYRot(), player.getXRot(), false);
     }
 
     /**
@@ -361,7 +375,8 @@ public class MachineGunItem extends Item {
      * Клиент присылает их в {@link PacketShoot}, чтобы пуля уходила ровно туда,
      * куда показывал прицел в момент нажатия огня.
      */
-    public void performShooting(Level level, Player player, ItemStack stack, float yaw, float pitch) {
+    public void performShooting(Level level, Player player, ItemStack stack, float yaw, float pitch,
+                                boolean scoped) {
         if (level.isClientSide) return;
         if (getReloadTimer(stack) > 0 || getShootDelay(stack) > 0) return;
 
@@ -404,12 +419,20 @@ public class MachineGunItem extends Item {
         bullet.setAmmoType(ammoInfo);
 
         // Та же математика, что у Entity#getLookAngle, но по двум осям из пакета.
+        // Разброс в прицеле вдвое ниже: точность ×2. Множитель приходит с
+        // клиента вместе с углом выстрела — там же, где и сам прицел.
+        float spread = (float) (SCATTER * com.trd.client.overlay.MachineGunScope.spreadMultiplier());
+
+        // Скорость пули удваивается относительно паспортной у патрона: из скорости
+        // 6.0 блока/тик (120 м/с) она становится 240 м/с. Множитель вынесен в
+        // константу, потому что AIR_RESISTANCE в пуле тоже подобрана под прежнюю
+        // скорость — при вдвое более быстрой пуле она почти не влияет.
         Vec3 lookDir = player.calculateViewVector(pitch, yaw);
         Vec3 velocity = lookDir.normalize().add(
-                level.random.nextGaussian() * 0.0075 * 1.0F,
-                level.random.nextGaussian() * 0.0075 * 1.0F,
-                level.random.nextGaussian() * 0.0075 * 1.0F
-        ).scale(ammoInfo.speed);
+                level.random.nextGaussian() * spread,
+                level.random.nextGaussian() * spread,
+                level.random.nextGaussian() * spread
+        ).scale(ammoInfo.speed * SPEED_MULTIPLIER);
 
         Vec3 right = lookDir.cross(new Vec3(0, 1, 0)).normalize();
         Vec3 spawnPos = player.position().add(right.scale(0.2)).add(0, player.getEyeY() - player.getY() - 0.1, 0);
@@ -553,7 +576,9 @@ ItemStack stack = mc.player.getMainHandItem();
             if (mc.options.keyAttack.isDown() && clientShootTimer <= 0) {
                 // Угол обзора по обеим осям едет вместе с пакетом: серверная копия
                 // поворота игрока отстаёт на тик, и без этого пуля уходила мимо прицела.
-                PacketDistributor.sendToServer(new PacketShoot(mc.player.getYRot(), mc.player.getXRot()));
+                // Прицел тоже едет: сервер снимет разброс вдвое, когда игрок в него смотрит.
+                PacketDistributor.sendToServer(new PacketShoot(mc.player.getYRot(), mc.player.getXRot(),
+                        com.trd.client.overlay.MachineGunScope.isScoped()));
                 clientShootTimer = CLIENT_MIN_INTERVAL;
                 mc.player.attackAnim = 0;
                 mc.player.oAttackAnim = 0;

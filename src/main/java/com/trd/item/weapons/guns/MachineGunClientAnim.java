@@ -42,18 +42,28 @@ public final class MachineGunClientAnim {
 
     /**
      * Длины клипов. Инициализируются один раз из самого glTF в
-     * {@link #syncDurations}: у {@code shot} клип 0.3333 с, у {@code reload} и
-     * {@code flip} — по 5 с. Держать эти числа вручную опасно: значение больше
+     * {@link #syncDurations}. Держать эти числа вручную опасно: значение больше
      * реальной длины клипа обрезает анимацию, и она выглядит «дёрганой».
      */
     private static float shotDuration = 0.3333f;
-    private static float reloadDuration = 5.0f;
-    private static float flipDuration = 5.0f;
+    private static float reloadDuration = 3.125f;
+    private static float flipDuration = 3.9167f;
 
-    /** Тики, на которых звучат затворные звуки перезарядки. */
-    private static final int SOUND_MAG_PULL = 9;
-    private static final int SOUND_HEAVY_CLICK = 73;
-    private static final int SOUND_CLICK = 92;
+    /**
+     * Моменты затворных звуков как доля длины клипа, а не как тики.
+     * <p>
+     * Тики привязывали звуки к прежним пятисекундным анимациям. Нынешний
+     * {@code reload} длится 3.125 с (62 тика), а {@code flip} — 3.9167 с
+     * (78 тиков), и жёсткие 73/92 тика туда просто не влезали: звуков не было
+     * вообще. Доли переживают переэкспорт модели.
+     */
+    private static final float MAG_PULL_AT = 0.20f;
+    private static final float MAG_IN_AT = 0.34f;
+    private static final float BOLT_AT = 0.82f;
+
+    private static float magPullTick;
+    private static float magInTick;
+    private static float boltTick;
 
     @Nullable
     private static String current;
@@ -74,6 +84,9 @@ public final class MachineGunClientAnim {
      */
     @Nullable
     private static String queued;
+
+    /** Сколько из трёх затворных звуков уже прозвучало в текущем клипе. */
+    private static int played;
 
     private MachineGunClientAnim() {
     }
@@ -99,6 +112,14 @@ public final class MachineGunClientAnim {
         if (flip != null) {
             flipDuration = flip.duration();
         }
+
+        // Звуки целимся в узлы анимации: у reload это уход магазина вниз
+        // (тик ~15) и его возврат (тик ~50), у flip — доворот патронника
+        // (тик ~46) и возврат магазина (тик ~70).
+        float reloadTicks = reloadDuration * 20.0f;
+        magPullTick = Math.min(reloadTicks * 0.24f, 16.0f);
+        magInTick = Math.min(reloadTicks * 0.40f, 26.0f);
+        boltTick = Math.min(reloadTicks * 0.80f, 51.0f);
     }
 
     /**
@@ -133,6 +154,7 @@ public final class MachineGunClientAnim {
         current = anim;
         age = 0;
         preciseAge = 0.0;
+        played = 0;
     }
 
     /** Тик клиента: доводит текущий клип до конца и подхватывает очередной. */
@@ -146,6 +168,7 @@ public final class MachineGunClientAnim {
             current = null;
             age = 0;
             preciseAge = 0.0;
+            played = 0;
 
             if (queued != null) {
                 String next = queued;
@@ -156,9 +179,7 @@ public final class MachineGunClientAnim {
         }
 
         // Затворные звуки есть только у reload/flip.
-        if (age <= SOUND_CLICK) {
-            playReloadSound(age);
-        }
+        playReloadSound(age);
     }
 
     /** Сброс состояния — пушка убрана из руки или открыт какой-то экран. */
@@ -167,6 +188,7 @@ public final class MachineGunClientAnim {
         age = 0;
         preciseAge = 0.0;
         queued = null;
+        played = 0;
     }
 
     /** Имя клипа для рендера либо {@code null}, если пушка в покое. */
@@ -206,13 +228,21 @@ public final class MachineGunClientAnim {
     }
 
     private static void playReloadSound(int tick) {
-        String name = switch (tick) {
-            case SOUND_MAG_PULL -> "gunpull";
-            case SOUND_HEAVY_CLICK -> "heavy_gunclick";
-            case SOUND_CLICK -> "gunclick";
-            default -> null;
-        };
-        if (name == null) return;
+        if (SHOT.equals(current)) return;
+
+        String name;
+        if (tick >= magPullTick && played < 1) {
+            name = "gunpull";
+            played = 1;
+        } else if (tick >= magInTick && played < 2) {
+            name = "heavy_gunclick";
+            played = 2;
+        } else if (tick >= boltTick && played < 3) {
+            name = "gunclick";
+            played = 3;
+        } else {
+            return;
+        }
 
         Minecraft mc = Minecraft.getInstance();
         Player player = mc.player;

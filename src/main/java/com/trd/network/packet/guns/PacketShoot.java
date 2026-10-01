@@ -23,7 +23,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * ровно то, что было видно в момент выстрела, поэтому он применяется до
  * расчёта направления.
  */
-public record PacketShoot(float yaw, float pitch) implements CustomPacketPayload {
+public record PacketShoot(float yaw, float pitch, boolean scoped) implements CustomPacketPayload {
 
     public static final Type<PacketShoot> TYPE =
             new Type<>(ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "shoot"));
@@ -32,6 +32,7 @@ public record PacketShoot(float yaw, float pitch) implements CustomPacketPayload
             StreamCodec.composite(
                     ByteBufCodecs.FLOAT, PacketShoot::yaw,
                     ByteBufCodecs.FLOAT, PacketShoot::pitch,
+                    ByteBufCodecs.BOOL, PacketShoot::scoped,
                     PacketShoot::new);
 
     @Override
@@ -49,7 +50,7 @@ public record PacketShoot(float yaw, float pitch) implements CustomPacketPayload
                     float shotYaw = Float.isFinite(yaw) ? yaw : player.getYRot();
                     float shotPitch = Float.isFinite(pitch) ? Mth.clamp(pitch, -90.0F, 90.0F) : player.getXRot();
 
-                    gun.performShooting(player.serverLevel(), player, stack, shotYaw, shotPitch);
+                    gun.performShooting(player.serverLevel(), player, stack, shotYaw, shotPitch, scoped);
                     player.inventoryMenu.broadcastChanges();
                 }
             }
