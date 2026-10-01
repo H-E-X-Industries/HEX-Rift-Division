@@ -1,6 +1,7 @@
 package com.trd.client.gecko.entity.bullets;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import com.trd.entity.weapons.bullets.GilseEntity;
 import com.wf.gemrender.asset.GemRenderModels;
 import com.wf.gemrender.direct.DirectPass;
@@ -64,6 +65,16 @@ public class GilseRenderer extends EntityRenderer<GilseEntity> {
 
         poseStack.pushPose();
         poseStack.scale(MODEL_SCALE, MODEL_SCALE, MODEL_SCALE);
+
+        // Поворот вдоль собственной скорости гильзы плюс прокрутка вокруг оси
+        // полёта. Именно эти углы приезжают с сервера в SynchedEntityData, а не
+        // берутся из getDeltaMovement(), как у пули: скорость гильзы клиенту не
+        // синхронизируется, и посчитанный на клиенте угол смотрел бы не туда.
+        // Углы интерполируются между тиками, иначе гильза дёргалась бы раз в
+        // 20 мс.
+        poseStack.mulPose(Axis.YP.rotationDegrees(entity.getRenderYaw(partialTick) - 180.0F));
+        poseStack.mulPose(Axis.XP.rotationDegrees(entity.getRenderPitch(partialTick)));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(entity.getRenderSpin(partialTick)));
 
         var matrix = poseStack.last().pose();
         DirectRenderer.submit(model, (com.wf.gemrender.gltf.GltfAnimation) null, 0.0f,
