@@ -32,6 +32,7 @@ public class TrdDatagen {
                 new RegistrySetBuilder()
                         .add(Registries.CONFIGURED_FEATURE, ModConfiguredFeatures::bootstrap)
                         .add(Registries.PLACED_FEATURE, ModPlacedFeatures::bootstrap)
+                        .add(Registries.BIOME, com.trd.worldgen.biome.ModBiomes::bootstrap)
                         .add(NeoForgeRegistries.Keys.BIOME_MODIFIERS, ModBiomeModifiers::bootstrap),
                 Set.of(MainRegistry.MOD_ID)
         ));

@@ -41,7 +41,19 @@ public class ModBlockTagProvider extends BlockTagsProvider {
             ModBlocks.WASTE_PLANKS_SLAB.get(),
             ModBlocks.WASTE_FENCE.get(),
             ModBlocks.WASTE_FENCE_GATE.get(),
-            ModBlocks.WASTE_PRESSURE_PLATE.get()
+            ModBlocks.WASTE_PRESSURE_PLATE.get(),
+            ModBlocks.SEQUOIA_PLANKS.get(),
+            ModBlocks.SEQUOIA_SLAB.get(),
+            ModBlocks.SEQUOIA_STAIRS.get(),
+            ModBlocks.SEQUOIA_DOOR.get(),
+            ModBlocks.SEQUOIA_TRAPDOOR.get(),
+            ModBlocks.SEQUOIA_BARK.get(),
+            ModBlocks.SEQUOIA_BARK_MOSSY.get(),
+            ModBlocks.SEQUOIA_BARK_DARK.get(),
+            ModBlocks.SEQUOIA_BARK_LIGHT.get(),
+            ModBlocks.SEQUOIA_HEARTWOOD.get(),
+            ModBlocks.SEQUOIA_ROOTS.get(),
+            ModBlocks.SEQUOIA_ROOTS_MOSSY.get()
     );
 
     /** Киркой уровня алмаза: прочность от 10. */
@@ -123,7 +135,6 @@ public class ModBlockTagProvider extends BlockTagsProvider {
             ModBlocks.DECO_BEAM.get(),
             ModBlocks.BEAM_BLOCK.get(),
             ModBlocks.STEEL_PROPS.get(),
-            ModBlocks.SEQUOIA_DOOR.get(),
             // ограждения и проволока
             ModBlocks.BARBED_WIRE.get(),
             ModBlocks.WIRE_FENCE.get(),
@@ -131,9 +142,6 @@ public class ModBlockTagProvider extends BlockTagsProvider {
             ModBlocks.ROUND_LAMP.get(),
             // прочее
             ModBlocks.MINERAL_BLOCK2.get(),
-            ModBlocks.SEQUOIA_PLANKS.get(),
-            ModBlocks.SEQUOIA_SLAB.get(),
-            ModBlocks.SEQUOIA_STAIRS.get(),
             ModBlocks.BEARING_BLOCK.get(),
             ModBlocks.CLUTCH.get(),
             ModBlocks.MOTOR_ELECTRO.get(),
@@ -163,6 +171,10 @@ public class ModBlockTagProvider extends BlockTagsProvider {
         ModBlocks.BLOCKS.getEntries().forEach(entry -> {
             Block block = entry.get();
 
+            if (block instanceof net.minecraft.world.level.block.LeavesBlock) {
+                return;
+            }
+
             if (AXE_BLOCKS.contains(block)) {
                 axeTag.add(block);
                 return;
@@ -187,17 +199,34 @@ public class ModBlockTagProvider extends BlockTagsProvider {
             stoneTag.add(block);
         });
 
+        tag(BlockTags.LEAVES)
+                .add(ModBlocks.SEQUOIA_LEAVES.get());
+
         tag(BlockTags.LOGS)
                 .add(ModBlocks.SEQUOIA_HEARTWOOD.get())
                 .add(ModBlocks.SEQUOIA_BARK.get())
                 .add(ModBlocks.SEQUOIA_BARK_MOSSY.get())
                 .add(ModBlocks.SEQUOIA_BARK_DARK.get())
-                .add(ModBlocks.SEQUOIA_BARK_LIGHT.get());
+                .add(ModBlocks.SEQUOIA_BARK_LIGHT.get())
+                .add(ModBlocks.SEQUOIA_ROOTS.get())
+                .add(ModBlocks.SEQUOIA_ROOTS_MOSSY.get());
 
         tag(BlockTags.LOGS_THAT_BURN)
                 .add(ModBlocks.SEQUOIA_HEARTWOOD.get());
 
         tag(BlockTags.DIRT)
+                .add(ModBlocks.SEQUOIA_BIOME_MOSS.get());
+
+        tag(BlockTags.ANIMALS_SPAWNABLE_ON)
+                .add(ModBlocks.SEQUOIA_BIOME_MOSS.get());
+
+        tag(BlockTags.WOLVES_SPAWNABLE_ON)
+                .add(ModBlocks.SEQUOIA_BIOME_MOSS.get());
+
+        tag(BlockTags.FOXES_SPAWNABLE_ON)
+                .add(ModBlocks.SEQUOIA_BIOME_MOSS.get());
+
+        tag(BlockTags.RABBITS_SPAWNABLE_ON)
                 .add(ModBlocks.SEQUOIA_BIOME_MOSS.get());
 
         tag(BlockTags.FENCES)

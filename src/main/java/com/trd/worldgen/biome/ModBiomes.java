@@ -10,6 +10,8 @@ import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.Musics;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeGenerationSettings;
 import net.minecraft.world.level.biome.BiomeSpecialEffects;
@@ -31,6 +33,9 @@ public class ModBiomes {
     private static Biome sequoiaGroveBiome(BootstrapContext<Biome> context) {
         MobSpawnSettings.Builder spawnBuilder = new MobSpawnSettings.Builder();
         BiomeDefaultFeatures.farmAnimals(spawnBuilder);
+        spawnBuilder.addSpawn(MobCategory.CREATURE, new MobSpawnSettings.SpawnerData(EntityType.WOLF, 8, 4, 4));
+        spawnBuilder.addSpawn(MobCategory.CREATURE, new MobSpawnSettings.SpawnerData(EntityType.FOX, 8, 2, 4));
+        spawnBuilder.addSpawn(MobCategory.CREATURE, new MobSpawnSettings.SpawnerData(EntityType.RABBIT, 4, 2, 3));
         BiomeDefaultFeatures.commonSpawns(spawnBuilder);
 
         // Позже сюда мы добавим спавн нашей гигантской секвойи
@@ -52,9 +57,11 @@ public class ModBiomes {
         BiomeDefaultFeatures.addDefaultSoftDisks(biomeBuilder);
 
         // ШАГ 5: Растительность (СТРОЖАЙШИЙ ПОРЯДОК!)
-        // 5.1 Сначала ВСЕГДА идут деревья
-
         // 5.1 Сначала ВСЕГДА идут деревья (Строго от ГИГАНТОВ к малышам!)
+        biomeBuilder.addFeature(GenerationStep.Decoration.SURFACE_STRUCTURES, ModPlacedFeatures.GIANT_SEQUOIA_PLACED_KEY);
+
+        biomeBuilder.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, ModPlacedFeatures.MEDIUM_SEQUOIA_PLACED_KEY);
+        biomeBuilder.addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, ModPlacedFeatures.SMALL_SEQUOIA_PLACED_KEY);
 
         // 5.2 Затем трава и папоротники
         BiomeDefaultFeatures.addFerns(biomeBuilder);

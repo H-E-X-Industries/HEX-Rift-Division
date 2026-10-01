@@ -12,9 +12,20 @@ import net.minecraft.world.level.levelgen.feature.configurations.OreConfiguratio
 import com.trd.main.MainRegistry;
 import net.minecraft.world.level.levelgen.structure.templatesystem.TagMatchTest;
 
+import com.trd.block.basic.ModBlocks;
+import com.trd.worldgen.tree.custom.*;
+import net.minecraft.util.valueproviders.ConstantInt;
+import net.minecraft.world.level.levelgen.feature.configurations.TreeConfiguration;
+import net.minecraft.world.level.levelgen.feature.featuresize.TwoLayersFeatureSize;
+import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
+
 import java.util.List;
 
 public class ModConfiguredFeatures {
+
+    public static final ResourceKey<ConfiguredFeature<?, ?>> GIANT_SEQUOIA_KEY = registerKey("giant_sequoia");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> SMALL_SEQUOIA_KEY = registerKey("small_sequoia");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> MEDIUM_SEQUOIA_KEY = registerKey("medium_sequoia");
 
     public static void bootstrap(BootstrapContext<ConfiguredFeature<?, ?>> context) {
 
@@ -55,6 +66,31 @@ public class ModConfiguredFeatures {
                             entry.rarity, entry.maxStretch, "conglomerate_" + entry.name
                     ));
         }
+
+        // --- СЕКВОЙИ ---
+        register(context, GIANT_SEQUOIA_KEY, Feature.TREE, new TreeConfiguration.TreeConfigurationBuilder(
+                BlockStateProvider.simple(ModBlocks.SEQUOIA_BARK.get()),
+                new GiantSequoiaTrunkPlacer(150, 10, 10),
+                BlockStateProvider.simple(ModBlocks.SEQUOIA_LEAVES.get()),
+                new GiantSequoiaFoliagePlacer(ConstantInt.of(3), ConstantInt.of(0)),
+                new TwoLayersFeatureSize(1, 0, 2)
+        ).build());
+
+        register(context, SMALL_SEQUOIA_KEY, Feature.TREE, new TreeConfiguration.TreeConfigurationBuilder(
+                BlockStateProvider.simple(ModBlocks.SEQUOIA_BARK.get()),
+                new MiniSequoiaTrunkPlacer(12, 0, 0),
+                BlockStateProvider.simple(ModBlocks.SEQUOIA_LEAVES.get()),
+                new MiniSequoiaFoliagePlacer(ConstantInt.of(1), ConstantInt.of(0)),
+                new TwoLayersFeatureSize(2, 0, 2)
+        ).build());
+
+        register(context, MEDIUM_SEQUOIA_KEY, Feature.TREE, new TreeConfiguration.TreeConfigurationBuilder(
+                BlockStateProvider.simple(ModBlocks.SEQUOIA_BARK.get()),
+                new MediumSequoiaTrunkPlacer(35, 0, 0),
+                BlockStateProvider.simple(ModBlocks.SEQUOIA_LEAVES.get()),
+                new MediumSequoiaFoliagePlacer(ConstantInt.of(1), ConstantInt.of(0)),
+                new TwoLayersFeatureSize(3, 0, 3)
+        ).build());
     }
 
     public static ResourceKey<ConfiguredFeature<?, ?>> registerKey(String name) {
