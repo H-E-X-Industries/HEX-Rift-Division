@@ -2,6 +2,7 @@ package com.trd.item.weapons.guns;
 
 import com.trd.client.config.ModKeyBindings;
 import com.trd.client.gecko.item.guns.MachineGunRenderer;
+import com.trd.entity.weapons.bullets.GilseEntity;
 import com.trd.entity.weapons.bullets.TurretBulletEntity;
 import com.trd.item.weapons.ammo.AmmoRegistry;
 import com.trd.main.MainRegistry;
@@ -439,9 +440,27 @@ public class MachineGunItem extends Item {
 
         bullet.setPos(spawnPos.x, spawnPos.y, spawnPos.z);
         bullet.setDeltaMovement(velocity);
+
+        // Направление выставляем до появления в мире: пакет появления несёт
+        // только yaw/pitch и отправляется на addFreshEntity, а рендер читает
+        // ещё и собственный spin. Без этого пуля первый кадр смотрит не туда.
         bullet.alignToVelocity();
+        bullet.setYRot(bullet.getYRot());
+        bullet.setXRot(bullet.getXRot());
+        bullet.yRotO = bullet.getYRot();
+        bullet.xRotO = bullet.getXRot();
 
         serverLevel.addFreshEntity(bullet);
+
+        // Гильза вылетает из ствола вбок и вниз от направления выстрела.
+        Vec3 up = new Vec3(0, 1, 0);
+        Vec3 side = velocity.normalize().cross(up).normalize();
+        Vec3 muzzle = spawnPos.add(velocity.normalize().scale(0.35));
+        Vec3 shellVelocity = side.scale(2.0).add(up.scale(1.6)).add(velocity.normalize().scale(0.6));
+
+        GilseEntity gilse = new GilseEntity(serverLevel, player, muzzle, shellVelocity);
+        gilse.enforceLimit(serverLevel, player);
+        serverLevel.addFreshEntity(gilse);
 
         float soundPitch = 0.9F + level.random.nextFloat() * 0.2F;
         SoundEvent shotSound = ModSounds.TURRET_FIRE.isBound() ? ModSounds.TURRET_FIRE.get() : SoundEvents.GENERIC_EXPLODE.value();

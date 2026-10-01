@@ -1,5 +1,6 @@
 package com.trd.entity;
 
+import com.trd.entity.weapons.bullets.GilseEntity;
 import com.trd.entity.weapons.bullets.TurretBulletEntity;
 import com.trd.entity.weapons.turrets.TurretLightEntity;
 import com.trd.entity.weapons.turrets.TurretLightLinkedEntity;
@@ -41,6 +42,20 @@ public class ModEntities {
                     // развернуть её вдоль движения
                     .setShouldReceiveVelocityUpdates(true)
                     .build("trd:turret_bullet"));
+
+    /**
+     * Гильза: падает на землю после выстрела, живёт 30 секунд, не больше
+     * пяти штук на стрелка. Маленький хитбокс и {@code noPhysics=false} —
+     * нужны физике {@code ItemEntity}, иначе она считает, что лежит на земле.
+     */
+    public static final DeferredHolder<EntityType<?>, EntityType<GilseEntity>> GILSE =
+            ENTITY_TYPES.register("gilse", () -> EntityType.Builder
+                    .<GilseEntity>of(GilseEntity::new, MobCategory.MISC)
+                    .sized(0.1F, 0.1F)
+                    .clientTrackingRange(8)
+                    .updateInterval(4)
+                    .setShouldReceiveVelocityUpdates(true)
+                    .build("trd:gilse"));
 
     // === ТУРЕЛИ ===
 

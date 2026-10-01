@@ -42,17 +42,28 @@ public final class MachineGunScope {
      */
     private static final int SCOPE_TEX_SIZE = 301;
 
+    /**
+     * Доля стороны текстуры, занятая прозрачным кругом: диаметр 199 px из 301.
+     * Измерено по самой текстуре, а не взято на глаз.
+     */
+    private static final float CIRCLE_FRAC = 199.0f / 301.0f;
+
     /** Во сколько раз поднимается точность в прицеле. */
     public static final float ACCURACY_BONUS = 2.0f;
 
-    private static final double ZOOM_FACTOR = 2.5;
+    private static final double ZOOM_FACTOR = 4.0;
     private static final int FOV_APPLY_INTERVAL = 2;
 
     private static boolean scoped;
     private static boolean pendingToggle;
     private static int ticks;
 
-    /** Кнопка ПКМ зажата: без этого удержание переключало бы прицел каждый повтор. */
+    /**
+ * ПКМ нажата прямо сейчас. Отслеживается по фронту нажатия, а не по событию:
+ * {@code InteractionKeyMappingTriggered} срабатывает и на нажатии, и на
+ * автоповторе удержания, и на отпускании не приходит вовсе. Одно нажатие
+ * включает прицел, следующее — выключает, и держится он дальше сам.
+ */
     private static boolean useHeld;
 
     /**
@@ -120,17 +131,14 @@ public final class MachineGunScope {
             return;
         }
 
-        // Состояние кнопок берём из самого key mapping, а не из события:
-        // событие срабатывает только в момент нажатия и на автоповторе, и
-        // отпускания не порождает вовсе. Отпускание ПКМ снимает прицел —
-        // иначе удержание переключало бы его десятки раз в секунду.
+        // Отпускание ПКМ больше не снимает прицел: он должен включаться и держаться
+        // по одному нажатию. Фронт нажатия нужен только чтобы отсечь автоповтор
+        // удержания, который иначе переключал бы прицел десятки раз в секунду.
         boolean useDown = mc.options.keyUse.isDown();
         if (useDown != useHeld) {
             useHeld = useDown;
-            if (!useDown && scoped) {
-                close();
-            }
         }
+
         boolean gun = heldGun() != null;
 
         if (pendingToggle) {
@@ -255,7 +263,16 @@ public final class MachineGunScope {
      * правильный выбор.
      */
     private static void drawScope(net.minecraft.client.gui.GuiGraphics graphics, int screenW, int screenH) {
-        int size = Math.max(screenW, screenH);
+        // Размер считаем от диаметра круга, а не от большей стороны экрана.
+        // Прозрачный круг занимает 199 из 301 пикселя текстуры, то есть
+        // CIRCLE_FRAC от её стороны. Если рисовать квадрат по большей стороне
+        // экрана, то на 16:9 круг по вертикали не влезает и обрезается краями
+        // кадра. Поэтому сторона = нужный диаметр / CIRCLE_FRAC, а чёрные
+        // углы текстуры при этом просто уходят за пределы экрана — ровно то,
+        // что нужно.
+        int diameter = Math.min(screenW, screenH);
+        int size = (int) Math.ceil(diameter / CIRCLE_FRAC);
+
         int x = (screenW - size) / 2;
         int y = (screenH - size) / 2;
 
@@ -263,9 +280,7 @@ public final class MachineGunScope {
         // (atlas, x, y, u, v, width, height, texW, texH) параметр width идёт
         // одновременно и размером на экране, и шириной участка в пикселях
         // текстуры, а UV считается как uWidth / textureWidth. Если туда отдать
-        // size, UV уходит далеко за 1.0 и прицел рисуется сеткой поверхностей:
-        // при 1024 это ровно 1024/256 = 4 повтора. Поэтому здесь явно
-        // указываем и размер на экране (size), и участок текстуры (301).
+        // size, UV уходит далеко за 1.0 и прицел рисуется сеткой повторов.
         graphics.blit(SCOPE_TEXTURE, x, y, size, size,
                 0.0f, 0.0f, SCOPE_TEX_SIZE, SCOPE_TEX_SIZE, SCOPE_TEX_SIZE, SCOPE_TEX_SIZE);
     }

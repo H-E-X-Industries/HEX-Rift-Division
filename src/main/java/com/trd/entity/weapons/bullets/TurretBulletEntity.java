@@ -61,6 +61,18 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
     private static final EntityDataAccessor<Integer> FLIGHT_TIME =
             SynchedEntityData.defineId(TurretBulletEntity.class, EntityDataSerializers.INT);
 
+    /**
+     * Собственное вращение пули вокруг оси полёта.
+     * <p>
+     * Именно синхронизированные данные, а не обычное поле: {@code spin} растёт
+     * каждый тик, и без синхронизации клиент держал бы свой ноль, из-за чего
+     * пуля на экране игрока не крутилась, пока на сервере вертелась. Пакет
+     * появления несёт только yaw/pitch, поэтому первое значение нужно
+     * выставить до {@code addFreshEntity}.
+     */
+    private static final EntityDataAccessor<Float> SPIN =
+            SynchedEntityData.defineId(TurretBulletEntity.class, EntityDataSerializers.FLOAT);
+
     public static final float BULLET_GRAVITY = 0.01F;
     public static final float AIR_RESISTANCE = 0.99F;
     public static final float MAX_FLIGHT_DISTANCE = 256.0F;
@@ -75,6 +87,20 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
     private static final int RADIO_FUSE_ACTIVATION = 5;
     /** Запас к хитбоксу взрывателя, чтобы цель у края всё же срабатывала. */
     private static final double PROXIMITY_FUSE_MARGIN = 0.25D;
+
+    /**
+ * Направление полёта, посчитанное один раз на сервере и разосланное клиенту
+ * пакетами поворота. Отдельное поле нужно потому, что поворот сущности
+ * меняется каждый тик, и клиент без него интерполирует между устаревшими
+ * углами — ствол пули заметно метался.
+ */
+    private Vec3 flightDirection;
+
+    /**
+ * Флаг «поворот уже пришёл с сервера». Сбрасывается при появлении, чтобы
+ * первый пакет скорости не перебил направление из пакета появления.
+ */
+    private boolean clientDriven = true;
 
     private float baseDamage = 4.0f;
     private float baseSpeed = 3.0f;
@@ -134,6 +160,7 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
         builder.define(AMMO_ID, "default");
         builder.define(AMMO_TYPE, "normal");
         builder.define(FLIGHT_TIME, 0);
+        builder.define(SPIN, 0.0F);
     }
 
     public void setAmmoType(AmmoRegistry.AmmoType ammoType) {
@@ -222,7 +249,8 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
             return;
         }
 
-        this.spin += 20.0F;
+        this.spin = (this.spin + 20.0F) % 360.0F;
+        this.entityData.set(SPIN, this.spin);
         setFlightDuration(getFlightDuration() + 1);
 
         // Расширение хитбокса с сохранением центра (только у радио-боезаряда)
@@ -327,16 +355,38 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
         double horizontalDist = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
         this.setYRot((float) (Math.atan2(velocity.x, velocity.z) * (180D / Math.PI)));
         this.setXRot((float) (Math.atan2(velocity.y, horizontalDist) * (180D / Math.PI)));
+        this.flightDirection = velocity.normalize();
+        this.clientDriven = true;
+
         if (this.tickCount == 0) {
             this.yRotO = this.getYRot();
             this.xRotO = this.getXRot();
         }
     }
 
+    /**
+     * Направление полёта для рендера. На сервере оно считается из скорости,
+     * на клиенте — из локальной скорости, которой достаточно: пакеты скорости
+     * шли ровно по той же траектории, что и позиция, а вот поворот сущности
+     * приходил отдельно и заметно от него отставал.
+     */
+    public Vec3 flightDirection() {
+        if (!this.level().isClientSide) {
+            return this.flightDirection != null ? this.flightDirection : Vec3.ZERO;
+        }
+        Vec3 motion = this.getDeltaMovement();
+        return motion.lengthSqr() > 1.0E-8D ? motion.normalize() : Vec3.ZERO;
+    }
+
     @Override
     public void lerpMotion(double x, double y, double z) {
         super.lerpMotion(x, y, z);
-        this.alignToVelocity();
+        // Поворот на клиенте ведём только из пакетов, а не из скорости: пакет
+        // скорости приходит отдельно от пакета позиции, и между ними ствол
+        // пули успевал дёрнуться. alignToVelocity здесь и был источником шатания.
+        if (!this.level().isClientSide) {
+            this.alignToVelocity();
+        }
     }
 
     /**
@@ -358,6 +408,12 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
         super.recreateFromPacket(packet);
         this.yRotO = this.getYRot();
         this.xRotO = this.getXRot();
+        // Клиент не должен пересчитывать поворот из скорости: скорость приходит
+        // отдельными пакетами и заметно отстаёт от позиции, из-за чего ствол
+        // пули метался между двумя направлениями, пока на миникарте пуля шла
+        // ровно. Направление приходит готовым в пакете поворота и меняется
+        // плавно, поэтому выставляем прошлый угол сразу и не трогаем его.
+        this.clientDriven = false;
     }
 
     private void handleHitResult(HitResult hit) {
