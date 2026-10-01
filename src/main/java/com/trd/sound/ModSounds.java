@@ -36,6 +36,7 @@ public class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> STANOK_FREZA = registerSoundEvents("stanok_freza");
     public static final DeferredHolder<SoundEvent, SoundEvent> MOTOR_ELECTRO_START = registerSoundEvents("motor_electro_start");
     public static final DeferredHolder<SoundEvent, SoundEvent> MOTOR_ELECTRO_LOOP = registerSoundEvents("motor_electro_loop");
+    public static final DeferredHolder<SoundEvent, SoundEvent> GILSE_LIGHT = registerSoundEvents("gilse_light");
 
     private static DeferredHolder<SoundEvent, SoundEvent> registerSoundEvents(String name) {
         return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, name)));

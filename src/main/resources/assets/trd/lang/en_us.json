@@ -1047,5 +1047,6 @@
     "tooltip.trd.grenade_if.fire.desc":  "|\u00a7cIncendiary| - an impact grenade with an inertial fuze, 4 second delay. Sets the whole area on fire. |Damage: 30| / |Burn: 15s|. |Hold RMB| to adjust throw impulse.",
     "tooltip.trd.grenade_if.slime.desc":  "|\u00a7aSticky| - an impact grenade with an inertial fuze, 4 second delay. Sticks to the first block or entity it touches. |Radius: 6.0| / |Damage: 60|. |Hold RMB| to adjust throw impulse.",
     "tooltip.trd.gravity_grenade.desc":  "|\u00a75\u00a7lGravity| - an experimental weapon. Pulls everything within 15 blocks into a vortex, then launches it. Deals no damage, displacement only. |Delay: 4s|. |Hold RMB| to adjust throw impulse.",
-    "tooltip.trd.grenade_nuc.desc":  "|\u00a74\u00a7lHydrogen Charge| - a tactical charge that punches through cover. Use with extreme caution. |Damage zone: 40| / |Damage: 500| / |Crater: 16| / |Delay: 7s|. |Hold RMB| to adjust throw impulse."
+    "tooltip.trd.grenade_nuc.desc":  "|\u00a74\u00a7lHydrogen Charge| - a tactical charge that punches through cover. Use with extreme caution. |Damage zone: 40| / |Damage: 500| / |Crater: 16| / |Delay: 7s|. |Hold RMB| to adjust throw impulse.",
+    "sounds.trd.gilse_light": "Casing clinks"
 }

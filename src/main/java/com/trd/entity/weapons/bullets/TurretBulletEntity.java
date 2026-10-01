@@ -103,13 +103,6 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
     private double serverPrevY;
     private double serverPrevZ;
 
-    /**
-     * Пришёл ли пакет позиции с прошлого тика. Без этого флага клиентский тик
-     * без пакета снова прижал бы {@code xOld} к старой точке, и отрисовка
-     * повторила бы уже пройденный отрезок — пуля дёргалась бы назад.
-     */
-    private boolean serverPositionReceived;
-
     private float baseDamage = 4.0f;
     private float baseSpeed = 3.0f;
     private AmmoType ammoType = AmmoType.NORMAL;
@@ -259,19 +252,10 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
         // пуля дёргалась на экране. Теперь клиент только принимает готовые
         // координаты и сглаживает их в рендере (см. flightDirection).
         if (this.level().isClientSide) {
-            // ClientLevel#tickNonPassenger вызывает setOldPosAndRot() перед
-            // tick() и прижимает xOld/yOld/zOld к текущей точке, из-за чего
-            // между тиками интерполировать нечего. Возвращаем якорь,
-            // который lerpTo сохранил в прошлый раз.
-            //
-            // Если пакета не было, якорь не трогаем: иначе отрисовка повторила
-            // бы уже пройденный отрезок и пуля дёрнулась бы назад.
-            if (this.serverPositionReceived) {
-                this.xOld = this.serverPrevX;
-                this.yOld = this.serverPrevY;
-                this.zOld = this.serverPrevZ;
-                this.serverPositionReceived = false;
-            }
+            // Позицию не двигаем и xOld не подменяем: рендер сглаживает её сам
+            // по двум точкам (serverPrev и текущей). Подменять xOld здесь было
+            // бессмысленно — тогда обе точки в смещении рендера совпадали и
+            // интерполяция давала ноль, то есть пуля шла дискретно.
             return;
         }
 
@@ -465,7 +449,6 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
             this.serverPrevX = this.getX();
             this.serverPrevY = this.getY();
             this.serverPrevZ = this.getZ();
-            this.serverPositionReceived = true;
         }
         super.lerpTo(x, y, z, yRot, xRot, steps);
     }
@@ -480,7 +463,6 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
         this.serverPrevX = this.getX();
         this.serverPrevY = this.getY();
         this.serverPrevZ = this.getZ();
-        this.serverPositionReceived = false;
     }
 
     private void handleHitResult(HitResult hit) {

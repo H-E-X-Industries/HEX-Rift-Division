@@ -59,7 +59,11 @@ public class ModEntities {
     public static final DeferredHolder<EntityType<?>, EntityType<GilseEntity>> GILSE =
             ENTITY_TYPES.register("gilse", () -> EntityType.Builder
                     .<GilseEntity>of(GilseEntity::new, MobCategory.MISC)
-                    .sized(0.1F, 0.1F)
+                    // 0.2 вместо 0.1: гильза вдвое крупнее. Хитбокс и размер
+                    // модели в GilseRenderer.scale должны совпадать, иначе
+                    // визуально большая гильза будет сталкиваться с блоками
+                    // по невидимой мелкой рамке.
+                    .sized(0.2F, 0.2F)
                     .clientTrackingRange(8)
                     .updateInterval(4)
                     .setShouldReceiveVelocityUpdates(true)

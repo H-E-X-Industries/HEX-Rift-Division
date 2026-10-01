@@ -22,6 +22,16 @@ public class GilseRenderer extends EntityRenderer<GilseEntity> {
             ResourceLocation.fromNamespaceAndPath(com.trd.main.MainRegistry.MOD_ID,
                     "models/entity/gilse.gltf");
 
+    /**
+     * Увеличение модели вдвое относительно исходного размера.
+     * <p>
+     * Размер сущности ({@code EntityType#sized}) задаёт только хитбокс, на
+     * геометрию glTF он не влияет, поэтому масштаб ставится здесь. Значение
+     * согласовано с {@code ModEntities.GILSE}: хитбокс 0.2, модель выросла
+     * пропорционально.
+     */
+    private static final float MODEL_SCALE = 2.0F;
+
     public GilseRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager);
         this.shadowRadius = 0.0F;
@@ -52,10 +62,15 @@ public class GilseRenderer extends EntityRenderer<GilseEntity> {
             return;
         }
 
+        poseStack.pushPose();
+        poseStack.scale(MODEL_SCALE, MODEL_SCALE, MODEL_SCALE);
+
         var matrix = poseStack.last().pose();
         DirectRenderer.submit(model, (com.wf.gemrender.gltf.GltfAnimation) null, 0.0f,
                 matrix, packedLight, net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY,
                 0xFFFFFFFF, DirectPass.LEVEL,
                 com.wf.gemrender.texture.VariantUv.NONE);
+
+        poseStack.popPose();
     }
 }

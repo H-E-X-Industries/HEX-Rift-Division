@@ -454,9 +454,31 @@ public class MachineGunItem extends Item {
 
         // Гильза вылетает из ствола вбок и вниз от направления выстрела.
         Vec3 up = new Vec3(0, 1, 0);
-        Vec3 side = velocity.normalize().cross(up).normalize();
-        Vec3 muzzle = spawnPos.add(velocity.normalize().scale(0.35));
-        Vec3 shellVelocity = side.scale(2.0).add(up.scale(1.6)).add(velocity.normalize().scale(0.6));
+        Vec3 forward = velocity.normalize();
+        Vec3 side = forward.cross(up);
+        // Выстрел строго вверх или вниз даёт нулевое векторное произведение,
+        // и normalize() на нуле превращается в NaN. В таком случае берём
+        // произведение с другим вектором — сторону выбирать всё равно нужно.
+        if (side.lengthSqr() < 1.0E-6D) {
+            side = forward.cross(new Vec3(1, 0, 0));
+        }
+        if (side.lengthSqr() < 1.0E-6D) {
+            side = new Vec3(1, 0, 0);
+        } else {
+            side = side.normalize();
+        }
+        Vec3 muzzle = spawnPos.add(forward.scale(0.35));
+        // Скорости подобраны так, чтобы гильза вылетела примерно на полблока
+        // в сторону, подпрыгнула от блока и тут же осыпалась: дальний разлёт
+        // гасит сильное горизонтальное трение в GilseEntity
+        // (HORIZONTAL_AIR_DRAG), а отскок ровно один (BOUNCE там же).
+        //
+        // Боковой выброс заметно сильнее вертикального: гильза должна улететь
+        // из-под ствола в сторону, а не просто упасть под ноги. Раньше эти
+        // значения были 2.0/1.6/0.6 — с трением 0.98 по горизонтали это давало
+        // разлёт в десятки блоков, а после ослабления трения гильза сыпалась
+        // под пушку мёртвым грузом.
+        Vec3 shellVelocity = side.scale(0.26).add(up.scale(0.30)).add(forward.scale(0.05));
 
         GilseEntity gilse = new GilseEntity(serverLevel, player, muzzle, shellVelocity);
         gilse.enforceLimit(serverLevel, player);

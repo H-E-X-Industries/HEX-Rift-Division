@@ -52,19 +52,20 @@ public class TurretBulletGltfRenderer extends EntityRenderer<TurretBulletEntity>
 
     @Override
     public Vec3 getRenderOffset(TurretBulletEntity entity, float partialTicks) {
-        // Позиция приходит с сервера дискретно — по пакету на тик. На скорости
-        // 6 блоков/тик это 20 ступенек в секунду, и без сглаживания пуля шла
-        // рывками. Смещение считаем от базовой точки рендера (она равна
-        // интерполированным xOld/x) к нашей, сглаженной между двумя пакетами.
+        // Позиция приходит с сервера дискретно — по пакету на тик, то есть
+        // 20 раз в секунду. На скорости 6 блоков/тик это 20 крупных ступенек в
+        // секунду, и без сглаживания пуля шла рывками, будто по точкам.
+        //
+        // Смещение считаем целиком: сглаженная точка минус текущая позиция
+        // сущности. Раньше здесь вычиталась ещё и интерполированная xOld, но
+        // на клиенте xOld каждый тик прижимается к текущей точке вызовом
+        // setOldPosAndRot(), из-за чего обе величины совпадали и смещение
+        // всегда выходило нулевым — то есть никакого сглаживания не было.
         if (entity.level().isClientSide) {
-            double x = Mth.lerp(partialTicks, entity.getServerPrevX(), entity.getX());
-            double y = Mth.lerp(partialTicks, entity.getServerPrevY(), entity.getY());
-            double z = Mth.lerp(partialTicks, entity.getServerPrevZ(), entity.getZ());
-
             return new Vec3(
-                    x - Mth.lerp(partialTicks, entity.xOld, entity.getX()),
-                    y - Mth.lerp(partialTicks, entity.yOld, entity.getY()),
-                    z - Mth.lerp(partialTicks, entity.zOld, entity.getZ())
+                    Mth.lerp(partialTicks, entity.getServerPrevX(), entity.getX()) - entity.getX(),
+                    Mth.lerp(partialTicks, entity.getServerPrevY(), entity.getY()) - entity.getY(),
+                    Mth.lerp(partialTicks, entity.getServerPrevZ(), entity.getZ()) - entity.getZ()
             );
         }
         return Vec3.ZERO;
