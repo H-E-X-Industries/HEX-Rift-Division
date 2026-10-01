@@ -28,7 +28,14 @@ public class MachineGunGltfAppearance implements ItemAppearance {
 
     @Override
     public GemRenderGltfModel model(ItemStack stack, ItemDisplayContext context) {
-        return GemRenderModels.get(MODEL);
+        GemRenderGltfModel model = GemRenderModels.get(MODEL);
+        // Длины клипов берём из самого glTF, а не из констант в коде: при
+        // переэкспорте модели из Blockbench они изменятся, и захардкоженные
+        // значения снова разойдутся с анимацией.
+        if (model != null) {
+            MachineGunClientAnim.syncDurations(model);
+        }
+        return model;
     }
 
     @Override
@@ -39,14 +46,13 @@ public class MachineGunGltfAppearance implements ItemAppearance {
         String current = MachineGunClientAnim.current();
         if (current == null) return null;
 
-        GltfAnimation animation = model.animation(current);
         // Клип мог не загрузиться — лучше показать пушку в покое, чем упасть.
-        return animation != null ? animation : null;
+        return model.animation(current);
     }
 
     @Override
     public float seconds(ItemStack stack, ItemDisplayContext context, float partialTick) {
-        return MachineGunClientAnim.seconds();
+        return MachineGunClientAnim.seconds(partialTick);
     }
 
     @Override

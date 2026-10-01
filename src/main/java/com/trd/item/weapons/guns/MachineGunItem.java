@@ -70,7 +70,12 @@ public class MachineGunItem extends Item {
         super(properties.stacksTo(1));
     }
 
-    /** Просит клиент проиграть разовый клип: {@code reload} или {@code flip}. */
+    /**
+     * Просит клиент проиграть клип: {@code shot}, {@code reload} или {@code flip}.
+     * <p>
+     * Клиент держит строго один клип за раз, поэтому повторные выстрелы во время
+     * уже идущей анимации просто игнорируются на его стороне.
+     */
     private static void sendAnim(Player player, String anim) {
         if (player instanceof ServerPlayer serverPlayer) {
             PacketDistributor.sendToPlayer(serverPlayer, new PacketMachineGunAnim(anim));
@@ -418,6 +423,11 @@ public class MachineGunItem extends Item {
         float soundPitch = 0.9F + level.random.nextFloat() * 0.2F;
         SoundEvent shotSound = ModSounds.TURRET_FIRE.isBound() ? ModSounds.TURRET_FIRE.get() : SoundEvents.GENERIC_EXPLODE.value();
         level.playSound(null, player.getX(), player.getY(), player.getZ(), shotSound, SoundSource.PLAYERS, 1.0F, soundPitch);
+
+        // Анимацию выстрела запускаем только здесь — на реальном выстреле.
+        // Клиент держит один клип за раз, поэтому анимация не может наложиться
+        // на перезарядку или на предыдущий выстрел.
+        sendAnim(player, MachineGunClientAnim.SHOT);
     }
 
     // === КЛИЕНТСКИЙ РЕНДЕР ===
@@ -513,14 +523,17 @@ public class MachineGunItem extends Item {
             net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
             if (mc.player == null || mc.screen != null) return;
 
-            ItemStack stack = mc.player.getMainHandItem();
+ItemStack stack = mc.player.getMainHandItem();
             if (!(stack.getItem() instanceof MachineGunItem)) {
                 clientShootTimer = SHOT_ANIM_TICKS;
                 MachineGunClientAnim.reset();
                 return;
             }
 
-            MachineGunClientAnim.tick(stack, mc.options.keyAttack.isDown());
+            // Анимацию не выбирает этот класс: её запускает сервер через
+            // PacketMachineGunAnim по факту выстрела или перезарядки. Здесь
+            // только двигаем текущий клип до конца.
+            MachineGunClientAnim.tick();
 
             if (ModKeyBindings.RELOAD_KEY.consumeClick()) {
                 PacketDistributor.sendToServer(new PacketReloadGun());
