@@ -654,6 +654,8 @@
     "item.trd.limestone_powder":  "Limestone Powder",
     "item.trd.liquid_metal":  "Liquid Metal",
     "item.trd.machinegun":  "\u0027A.P. 17\u0027",
+    "item.trd.machinegun.warning.in_water":  "Gun will not fire underwater",
+    "item.trd.machinegun.warning.twohanded":  "Requires both hands!",
     "key.categories.trd":  "Crustal Incursion",
     "key.trd.reload":  "Reload Weapon",
     "key.trd.unload":  "Unload Weapon",

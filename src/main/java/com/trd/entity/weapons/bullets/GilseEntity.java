@@ -39,14 +39,24 @@ public class GilseEntity extends Entity {
     /** Максимум гильз на одного стрелка. */
     public static final int MAX_PER_SHOOTER = 5;
 
-    /** Гравитация вдвое меньше земной: лёгкая гильза должна явно падать. */
-    private static final double GRAVITY = 0.12D;
+    /**
+     * Гравитация и трение подобраны под падение лёгкой латунной гильзы.
+     * <p>
+     * Раньше здесь стояло 0.12 и 0.3, и это давало падение заметно медленнее
+     * любого другого предмета в игре: предельная вертикальная скорость
+     * {@code GRAVITY / (1 - DRAG)} = 0.12 / 0.7 = 0.17 блока/тик, то есть
+     * гильза с высоты трёх блоков летела больше секунды. Теперь предельная
+     * скорость вдвое выше — 0.49 блока/тик, около 10 м/с, — и падение читается
+     * как падение небольшого тела, а не как зависание в воздухе.
+     */
+    private static final double GRAVITY = 0.22D;
 
     /**
-     * Трение о вертикальную скорость в полёте. Лёгкое, чтобы гильза
-     * нормально падала, а не висела в воздухе.
+     * Трение о вертикальную скорость в полёте. Умеренное: и слишком слабое, и
+     * слишком сильное трение уводит предельную скорость от нужной величины,
+     * поэтому важно их соотношение, а не значение по отдельности.
      */
-    private static final double DRAG = 0.7D;
+    private static final double DRAG = 0.55D;
 
     /**
      * Трение о горизонтальную скорость в полёте.
@@ -79,26 +89,67 @@ public class GilseEntity extends Entity {
     private static final double BOUNCE = 0.9D;
     private static final double MIN_BOUNCE_SPEED = 0.05D;
 
+    /**
+     * Сколько тиков после появления касание поверхности ещё не считается
+     * ударом — ни звука, ни отскока, ни переворота гильзы.
+     * <p>
+     * Гильза появляется в четверти блока от глаза и в упор к игроку, то есть
+     * заведомо внутри объёма, где что-то может быть: стена, в которую
+     * упёрся стрелок, блок под ногами при выстреле вниз. Без этой паузы щелчок
+     * и отскок проигрывались в первый же тик жизни, ещё на выходе из ствола.
+     * За два пропущенных тика гильза улетает примерно на блок, и всё, до чего
+     * можно долететь за это время, — это реальное препятствие, а не точка
+     * вылета.
+     */
+    private static final int SPAWN_GRACE_TICKS = 2;
+
+    /**
+     * Максимальный сдвиг гильзы за тик, в блоках. Всё, что длиннее, — не
+     * полёт, а телепорт пакетами, и рендерный якорь надо сбрасывать на текущую
+     * точку, иначе интерполяция протянется от старой позиции через полкарты.
+     */
+    private static final double MAX_STEP = 2.0D;
+
+    /**
+     * Насколько глубоко гильза проверяет опору под собой, в блоках.
+     * <p>
+     * Это замена {@code Entity#onGround}, которой раньше пользовался этот
+     * класс, и причина главных бед гильзы. У {@code Entity#onGround} флаг
+     * перезаписывается на каждом {@code move()} значением
+     * {@code verticalCollisionBelow}, а оно истинно только когда вертикальная
+     * скорость ненулевая. У лежащей гильзы вертикальная скорость как раз
+     * обнуляется, поэтому флаг каждый тик сбрасывался, на следующем тике
+     * применялась гравитация, и цикл повторялся: гильза то считалась лежащей,
+     * то падающей. Побочный эффект был куда хуже: {@code ServerEntity} шлёт
+     * пакет телепорта всякий раз, когда onGround у сущности меняется, то есть
+     * мигающий флаг превращал полёт в череду телепортов, а рендерный якорь
+     * клиента от них не обновлялся. Гильза дёргалась мелкими рывками вместо
+     * плавного полёта. Собственная проверка опоры такой зависимости от
+     * скорости не имеет.
+     */
+    private static final double GROUND_PROBE = 0.02D;
+
     private static final EntityDataAccessor<Integer> SHOT_TICK =
             SynchedEntityData.defineId(GilseEntity.class, EntityDataSerializers.INT);
 
     /**
-     * Направление полёта гильзы: yaw и pitch в градусах плюс собственное
-     * вращение вокруг оси полёта.
+     * Ориентация гильзы: yaw и pitch в градусах плюс собственное вращение
+     * вокруг оси полёта.
      * <p>
-     * Именно здесь, а не в {@code setYRot}, потому что у гильзы не
-     * синхронизируется скорость. Пуля рендерит углы, посчитанные клиентом из
-     * {@code getDeltaMovement()}, и это допустимо только потому, что её
-     * скорость приходит пакетами {@code ClientboundSetEntityMotionPacket} и
-     * совпадает с серверной. У гильзы клиент физичит сам, причём {@code bounce()}
-     * отрабатывает только на сервере, — поэтому выведенный из скорости угол
-     * разошёлся бы с реальным и гильза смотрела бы не туда, куда летит.
+     * Задаётся один раз — при вылете, ещё в конструкторе, то есть до
+     * {@code addFreshEntity} и до первого кадра на экране. Дальше она не
+     * трогается, пока гильза ни обо что не стукнётся: ни своя скорость, ни
+     * гравитация её не двигают.
      * <p>
-     * Эти три float едут через {@code SynchedEntityData}, а не в пакете
-     * поворота: пакет поворота квантуется до байта ({@code yaw * 256 / 360}),
-     * это 1.4 градуса шага и заметные рывки, плюс он шлёт раз в
-     * {@code updateInterval} тиков — то есть раз в 4 тика. Данные же
-     * отправляются каждый тик без квантования.
+     * Раньше углы выводились из скорости каждый тик. Из-за этого падающая
+     * гильза дёргала осью: на участках, где горизонтальная скорость близка к
+     * нулю, pitch выходил около -90°, и цилиндр читался как воткнутый дном
+     * в пол, будто у него центр тяжести внизу. Теперь в полёте углы стоят
+     * смирно, а переворачивается гильза ровно один раз — при первом ударе.
+     * <p>
+     * Едут они через {@code SynchedEntityData}, а не в пакете поворота: тот
+     * квантуется до байта ({@code yaw * 256 / 360}, шаг 1.4 градуса) и
+     * шлётся раз в {@code updateInterval} тиков.
      */
     private static final EntityDataAccessor<Float> FLIGHT_YAW =
             SynchedEntityData.defineId(GilseEntity.class, EntityDataSerializers.FLOAT);
@@ -107,11 +158,11 @@ public class GilseEntity extends Entity {
     private static final EntityDataAccessor<Float> FLIGHT_SPIN =
             SynchedEntityData.defineId(GilseEntity.class, EntityDataSerializers.FLOAT);
 
-    /** Текущий yaw полёта в градусах. Публичный: читает рендерер. */
+    /** Текущий yaw полёта в градусах. */
     public float flightYawDeg;
-    /** Текущий pitch полёта в градусах. Публичный: читает рендерер. */
+    /** Текущий pitch полёта в градусах. */
     public float flightPitchDeg;
-    /** Собственное вращение вокруг оси полёта. Публичный: читает рендерер. */
+    /** Собственное вращение вокруг оси полёта. */
     public float flightSpinDeg;
 
     private float prevFlightYawDeg;
@@ -129,15 +180,6 @@ public class GilseEntity extends Entity {
     public float getRenderSpin(float partialTick) {
         return net.minecraft.util.Mth.lerp(partialTick, this.prevFlightSpinDeg, this.flightSpinDeg);
     }
-
-    /**
-     * Радиус столкновения гильз между собой.
-     * <p>
-     * Чуть меньше половины хитбокса (0.2, то есть 0.1): иначе две гильзы,
-     * просто рядом лежащие, числились бы пересекающимися и разлетались бы
-     * каждую секунду, не переставая.
-     */
-    private static final double CASING_RADIUS = 0.09D;
 
     /**
      * Процент возврата скорости при ударе гильзы о гильзу. 0.4 — чтобы они
@@ -158,10 +200,39 @@ public class GilseEntity extends Entity {
     private int age;
 
     /**
-     * Отскочила ли гильза уже. Отскок разрешён ровно один: иначе на неровной
-     * поверхности гильза начинает клацать и подпрыгивать по каждому бугорку.
+     * Лежит ли гильза на опоре. Собственный флаг вместо
+     * {@link Entity#onGround()}: см. {@link #GROUND_PROBE}.
+     */
+    private boolean grounded;
+
+    /**
+     * Предыдущая серверная позиция — для сглаживания отрисовки, ровно как у
+     * пули в {@code TurretBulletEntity}.
+     * <p>
+     * Встроенная интерполяция уровня бесполезна: {@code ClientLevel#tickNonPassenger}
+     * перед тиком вызывает {@code setOldPosAndRot()}, поэтому {@code xOld} на
+     * клиенте всегда равен текущей позиции и подстановка в рендер не сглаживает
+     * ничего. Позиция гильзы приходит с сервера дискретно, а её собственную
+     * физику клиент больше не считает, поэтому без этого сдвига гильза шла бы
+     * ступеньками по 20 раз в секунду.
+     */
+    private double serverPrevX;
+    private double serverPrevY;
+    private double serverPrevZ;
+
+    /**
+     * Отскочила ли гильза от поверхности. Отскок и щелчок разрешены ровно
+     * один раз: иначе на неровной поверхности гильза начинает клацать и
+     * подпрыгивать по каждому бугорку.
      */
     private boolean bounced;
+
+    /**
+     * Переворачивали ли гильзу уже. Ориентация в полёте не меняется, и
+     * переворот случается один раз — при первом ударе о блок или соседнюю
+     * гильзу.
+     */
+    private boolean tumbled;
 
     /**
      * UUID стрелка. У {@link Entity} нет встроенного владельца — это поле есть
@@ -181,16 +252,87 @@ public GilseEntity(Level level, LivingEntity shooter, Vec3 pos, Vec3 velocity) {
         this.setPos(pos.x, pos.y, pos.z);
         this.setDeltaMovement(velocity);
 
-        // Направление — по собственной скорости гильзы, а не по повороту
-        // стрелка. Гильза вылетает вбок из-под ствола, и поворот игрока тут
-        // ни при чём: раньше гильза выставлялась по нему и первый кадр
-        // смотрела туда, куда смотрит игрок, а не туда, куда летит сама.
-        this.syncFlightAngle();
-        // Прошлые углы прижимаем к текущим, иначе рендер в первый кадр
+        // Направление задаётся здесь, до появления в мире: первый же кадр на
+        // экране должен показать гильзу уже летящую боком из-под ствола, а не
+        // стоящую произвольно. Считаем по собственной скорости вылета, а не по
+        // повороту стрелка: гильза вылетает вбок, и поворот игрока тут ни при
+        // чём.
+        applyFlightAngle(velocity);
+
+        this.serverPrevX = pos.x;
+        this.serverPrevY = pos.y;
+        this.serverPrevZ = pos.z;
+    }
+
+    /**
+     * Ставит ориентацию гильзы по вектору скорости и публикует её клиентам.
+     * <p>
+     * Зовётся дважды за жизнь: на вылете и при первом ударе. Между ними
+     * ориентация не меняется — ни своя скорость, ни гравитация её не трогают.
+     */
+    private void applyFlightAngle(Vec3 velocity) {
+        double horizontal = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
+
+        this.flightYawDeg = (float) (Math.atan2(velocity.x, velocity.z) * (180.0D / Math.PI));
+        this.flightPitchDeg = (float) (Math.atan2(velocity.y, horizontal) * (180.0D / Math.PI));
+        // Небольшой начальный крен вокруг оси: гильза вылетает крутясь, и
+        // жёстко нулевой спин выглядел бы как подшитый к вилке цилиндр.
+        this.flightSpinDeg = (float) (horizontal * SPIN_PER_SPEED);
+
+        this.setYRot(this.flightYawDeg);
+        this.setXRot(this.flightPitchDeg);
+
+        // Предыдущие углы прижимаем к текущим, иначе рендер в первый кадр
         // интерполирует поворот от нуля и гильза доворачивается на месте.
         this.prevFlightYawDeg = this.flightYawDeg;
         this.prevFlightPitchDeg = this.flightPitchDeg;
         this.prevFlightSpinDeg = this.flightSpinDeg;
+
+        this.entityData.set(FLIGHT_YAW, this.flightYawDeg);
+        this.entityData.set(FLIGHT_PITCH, this.flightPitchDeg);
+        this.entityData.set(FLIGHT_SPIN, this.flightSpinDeg);
+    }
+
+    /**
+     * Удар переворачивает гильзу: дальше она летит уже новым углом, пока снова
+     * не упрётся. Ровно один раз за жизнь.
+     */
+    private void tumbleOnImpact(Vec3 incoming) {
+        if (incoming.lengthSqr() < 1.0E-8D) {
+            return;
+        }
+        this.tumbled = true;
+        applyFlightAngle(incoming);
+    }
+
+    /**
+     * Разность двух последних координат, пришедших с сервера: на сколько
+     * гильза сдвинулась за тик.
+     */
+    private Vec3 positionDelta() {
+        return new Vec3(
+                this.getX() - this.serverPrevX,
+                this.getY() - this.serverPrevY,
+                this.getZ() - this.serverPrevZ
+        );
+    }
+
+    /**
+     * Прижимает рендерный якорь к текущей точке, если гильза переместилась
+     * слишком далеко для одного тика.
+     * <p>
+     * Так прилетает телепорт пакетами, а не {@code lerpTo}: в нём координаты
+     * абсолютные и предыдущая точка не сохраняется. Якорь остался бы на старой
+     * позиции, и интерполяция в рендере протянулась бы через полкарты —
+     * гильза дёргалась бы мелкими рывками, вместо того чтобы просто переставить
+     * себя на новое место.
+     */
+    private void snapRenderAnchorIfTeleported() {
+        if (this.positionDelta().lengthSqr() > MAX_STEP * MAX_STEP) {
+            this.serverPrevX = this.getX();
+            this.serverPrevY = this.getY();
+            this.serverPrevZ = this.getZ();
+        }
     }
 
     @Override
@@ -203,6 +345,29 @@ public GilseEntity(Level level, LivingEntity shooter, Vec3 pos, Vec3 velocity) {
 
     @Override
     public void tick() {
+        // Запоминаем предыдущие углы до того, как посчитаем новые: между ними
+        // рендер интерполирует, иначе гильза доворачивалась бы рывками по тику.
+        this.prevFlightYawDeg = this.flightYawDeg;
+        this.prevFlightPitchDeg = this.flightPitchDeg;
+        this.prevFlightSpinDeg = this.flightSpinDeg;
+
+        // Физику и ориентацию считает только сервер, как у пули в
+        // TurretBulletEntity. Раньше клиент прогонял тот же tick(), из-за чего
+        // позиция получалась дважды: локально и ещё раз из authoritative-пакетов,
+        // причём пакеты приходили раз в 4 тика (updateInterval). Клиентские
+        // столкновения гильз между собой и отскок при этом не считались вовсе,
+        // так что клиент показывал пересекающиеся гильзы и провалившиеся в
+        // стены — то есть ровно то, чего не должно быть видно.
+        if (this.level().isClientSide) {
+            // Углы клиент только читает: их публикует сервер, и больше их
+            // никто не пересчитывает.
+            this.flightYawDeg = this.entityData.get(FLIGHT_YAW);
+            this.flightPitchDeg = this.entityData.get(FLIGHT_PITCH);
+            this.flightSpinDeg = this.entityData.get(FLIGHT_SPIN);
+            snapRenderAnchorIfTeleported();
+            return;
+        }
+
         if (++this.age >= LIFETIME_TICKS) {
             this.discard();
             return;
@@ -210,22 +375,15 @@ public GilseEntity(Level level, LivingEntity shooter, Vec3 pos, Vec3 velocity) {
 
         super.tick();
 
-        // Запоминаем предыдущие углы до того, как посчитаем новые: между ними
-        // рендер интерполирует, иначе гильза вращалась бы рывками по тику.
-        this.prevFlightYawDeg = this.flightYawDeg;
-        this.prevFlightPitchDeg = this.flightPitchDeg;
-        this.prevFlightSpinDeg = this.flightSpinDeg;
-
         Vec3 motion = this.getDeltaMovement();
 
-        if (this.onGround()) {
-            // Улеглась: ползём по земле и постепенно тормозим.
-            motion = motion.scale(GROUND_DRAG);
+        if (this.grounded) {
+            // Улеглась: ползём по земле и постепенно тормозим. Вертикальную
+            // составляющую гасим полностью — прилипла к опоре.
+            motion = new Vec3(motion.x * GROUND_DRAG, 0.0D, motion.z * GROUND_DRAG);
             if (motion.horizontalDistanceSqr() < RESTING_SPEED * RESTING_SPEED) {
                 motion = Vec3.ZERO;
             }
-            // Вертикальную составляющую гасим полностью: прилипла к земле.
-            motion = new Vec3(motion.x, 0.0D, motion.z);
         } else {
             // По вертикали лёгкое трение, по горизонтали — сильное (см.
             // HORIZONTAL_AIR_DRAG): так гильза быстро падает, но далеко не
@@ -239,60 +397,122 @@ public GilseEntity(Level level, LivingEntity shooter, Vec3 pos, Vec3 velocity) {
 
         this.setDeltaMovement(motion);
 
-        // Было ли касание блока на этом тике. Отслеживается только для отскока.
-        boolean wasOnGround = this.onGround();
-        boolean hitGround = false;
-
-        // Именно move() двигает сущность и разруливает столкновения. Раньше его
-        // здесь не было вовсе, поэтому гильза меняла только скорость и поворот,
-        // а координаты оставались в точке спавна — визуально она зависала в
-        // воздухе возле оружия. onGround() тоже проставляется внутри move(),
-        // поэтому без него условие «лежит на земле» никогда не выполнялось.
+        // Именно move() двигает сущность и разруливает столкновения с блоками.
+        double yBefore = this.getY();
         this.move(MoverType.SELF, motion);
+        double yAfter = this.getY();
 
-        // Удар о пол или о стену: было в воздухе, оказалось на земле.
-        hitGround = !wasOnGround && this.onGround();
+        // Что именно заблокировало гильзу. move() гасит о препятствие
+        // горизонтальные компоненты скорости, но вертикальную оставляет как
+        // была, а о вертикальном ударе сообщает только сдвигом позиции.
+        Vec3 afterMove = this.getDeltaMovement();
+        boolean blockedDown = yAfter < yBefore - 1.0E-6D;
+        boolean blockedUp = yAfter > yBefore + 1.0E-6D;
+        boolean blockedX = Math.abs(afterMove.x - motion.x) > 1.0E-6D;
+        boolean blockedZ = Math.abs(afterMove.z - motion.z) > 1.0E-6D;
+        boolean touchedBlock = blockedDown || blockedUp || blockedX || blockedZ;
 
-        // Боковой удар: move() гасит компоненту движения о препятствие, но
-        // onGround() при этом остаётся false.
-        if (!hitGround && !wasOnGround) {
-            Vec3 after = this.getDeltaMovement();
-            if (Math.abs(after.y - motion.y) > 1.0E-4D
-                    || Math.abs(after.x - motion.x) > 1.0E-4D
-                    || Math.abs(after.z - motion.z) > 1.0E-4D) {
-                hitGround = true;
-            }
-        }
-
-        // Отскок и звук — строго на первом касании, больше ни разу.
+        // Опора под собой: собственная проверка вместо Entity#onGround, см.
+        // GROUND_PROBE. Она работает и когда гильза ползёт по полу при
+        // нулевой вертикальной скорости, и когда только что упала.
         //
-        // Раньше звук висел на hitGround, и это давало непрерывное щёлканье:
-        // у лежащей гильзы move() каждый тик чуть гасит вертикальную
-        // компоненту, вторая проверка это ловит как касание, и звук играл
-        // каждые 50 мс все 30 секунд жизни. Теперь оба события заперты на
-        // флаге bounced — за жизнь гильзы ровно один щелчок и один отскок.
-        if (hitGround && !bounced) {
-            bounced = true;
-            // Скорость берём до move(): он обнуляет fallDistance внутри себя.
+        // «Летит вверх» опорой не считается: иначе отскок, который задаёт
+        // положительную вертикальную скорость, тут же гасился бы следующим
+        // же тиком, и гильза просто прилипала к полу без подскока.
+        boolean wasGrounded = this.grounded;
+        this.grounded = blockedDown || (supportedBelow() && motion.y <= 0.0D);
+
+        // Флаг Entity#onGround сюда возвращаем намеренно. Он нужен не только
+        // самому move(), но и ServerEntity: тот шлёт полный пакет телепорта
+        // каждый раз, когда onGround у сущности меняется. У ползущей гильзы
+        // вертикальная скорость обнулена, и Entity#onGround обнулялся тут же,
+        // то есть флаг мигал через тик и на пакете, и на рендере — гильза
+        // получала телепорт вместо сдвига и дёргалась мелкими рывками.
+        this.setOnGround(this.grounded);
+
+        // Первый удар о поверхность: щелчок, отскок и переворот гильзы. Всё
+        // заперто на флаге bounced, так что за жизнь ровно один щелчок и один
+        // отскок. Пауза после появления отсекает касание в точке вылета, а
+        // порог по вертикали — случайное чиркнувшие о стену боком.
+        boolean realImpact = Math.abs(motion.y) >= MIN_BOUNCE_SPEED;
+        if (touchedBlock && !this.bounced && this.age > SPAWN_GRACE_TICKS && realImpact) {
+            this.bounced = true;
+            // Переворот идёт по скорости ДО отскока: та скорость, с которой
+            // гильза пришла к поверхности, и есть то, как она на неё налетела.
+            tumbleOnImpact(motion);
             playImpactSound(motion.y);
-            bounce(motion);
+            bounce(motion, contactNormal(motion, blockedDown, blockedUp, blockedX, blockedZ));
+        } else if (touchedBlock && !this.tumbled && motion.lengthSqr() > 1.0E-8D
+                && this.age > SPAWN_GRACE_TICKS) {
+            // Чиркнули боком, отскока не будет — но позу гильза всё равно
+            // сбрасывает, удар есть.
+            tumbleOnImpact(motion);
+        }
+        // Упала и не отскочила (например, порог отскока не пройден) — тоже
+        // считаем приземлением, но уже без звука.
+        if (!wasGrounded && this.grounded && !this.bounced) {
+            this.bounced = true;
+            tumbleOnImpact(motion);
+            bounce(motion, new Vec3(0.0D, 1.0D, 0.0D));
         }
 
-        // Гильзы отскакивают друг от друга. Именно здесь, а не до move():
-        // к этому моменту обе уже разошлись блоками и move() успел обработать
-        // столкновения с миром, так что толчок от другой гильзы не уйдёт в
-        // стену.
+        // Гильзы разводятся друг от друга последними: к этому моменту обе уже
+        // разошлись блоками и move() успел обработать столкновения с миром.
         collideWithOtherCasings();
-
-        // Угол считаем последним: к этому моменту скорость уже изменилась и
-        // от отскока о блок, и от удара о другую гильзу. Посчитали бы раньше —
-        // гильза отрисовалась бы по устаревшему направлению.
-        syncFlightAngle();
 
         // Просевшая гильза не должна раз в тик будить сеть пакетом позиции.
         if (motion.lengthSqr() > 1.0E-5D) {
             this.hasImpulse = true;
         }
+    }
+
+    /** Есть ли под гильзой блок, на который она может опереться. */
+    private boolean supportedBelow() {
+        // getBlockCollisions отдаёт Iterable, а не список: emptiness проверяем
+        // через итератор, лишнюю коллекцию ради одного флага не заводим.
+        return this.level().getBlockCollisions(this,
+                this.getBoundingBox().move(0.0D, -GROUND_PROBE, 0.0D)).iterator().hasNext();
+    }
+
+    /**
+     * Проверяет блоки по хитбоксу, сдвинутому на {@code push}: не впихнёт ли
+     * гильзу разведение в стену.
+     */
+    private boolean hitsBlock(net.minecraft.world.phys.AABB box, Vec3 push) {
+        return this.level().getBlockCollisions(this, box.move(push)).iterator().hasNext();
+    }
+
+    @Override
+    public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps) {
+        if (this.level().isClientSide) {
+            this.serverPrevX = this.getX();
+            this.serverPrevY = this.getY();
+            this.serverPrevZ = this.getZ();
+        }
+        super.lerpTo(x, y, z, yRot, xRot, steps);
+    }
+
+    @Override
+    public void recreateFromPacket(net.minecraft.network.protocol.game.ClientboundAddEntityPacket packet) {
+        super.recreateFromPacket(packet);
+        this.serverPrevX = this.getX();
+        this.serverPrevY = this.getY();
+        this.serverPrevZ = this.getZ();
+        this.prevFlightYawDeg = this.flightYawDeg;
+        this.prevFlightPitchDeg = this.flightPitchDeg;
+    }
+
+    /** Предыдущая серверная позиция — читает рендерер для сглаживания. */
+    public double getServerPrevX() {
+        return this.serverPrevX;
+    }
+
+    public double getServerPrevY() {
+        return this.serverPrevY;
+    }
+
+    public double getServerPrevZ() {
+        return this.serverPrevZ;
     }
 
     /**
@@ -333,76 +553,23 @@ public GilseEntity(Level level, LivingEntity shooter, Vec3 pos, Vec3 velocity) {
      * Формула та же, что у гранат ({@code GrenadeIfProjectileEntity}): скорость
      * зеркально отражается относительно нормали поверхности, то есть
      * {@code v - 2 * (v . n) * n}, и гасится на {@link #BOUNCE}. Раньше здесь
-     * было простоое переворачивание вертикальной компоненты, из-за чего удар о
+     * было простое переворачивание вертикальной компоненты, из-за чего удар о
      * боковую стену гасил скорость совсем, а удар о пол не давал подброса под
      * углом.
      * <p>
-     * Вызывается исключительно на сервере: отскок меняет физику сущности, и
-     * клиентское предсказание только мешало бы — сервер всё равно пришлёт
-     * authoritative-позицию.
+     * Нормаль приходит снаружи: {@link #contactNormal} больше не угадывает её
+     * по тому, какие компоненты скорости изменились, а берёт из факта
+     * столкновения, разобранного в {@code tick()}.
      */
-    private void bounce(Vec3 incoming) {
-        if (this.level().isClientSide) return;
-
-        // Упав так медленно, что отскок был бы незаметен: просто ложимся.
+    private void bounce(Vec3 incoming, Vec3 normal) {
+        // Упал так медленно, что отскок был бы незаметен: просто ложимся.
         if (incoming.length() < MIN_BOUNCE_SPEED) {
             return;
         }
 
-        Vec3 normal = contactNormal(incoming);
         Vec3 reflected = incoming.subtract(normal.scale(2.0D * incoming.dot(normal)));
         this.setDeltaMovement(reflected.scale(BOUNCE));
         this.hasImpulse = true;
-    }
-
-    /**
-     * Пересчитывает направление полёта и публикует его клиентам.
-     * <p>
-     * На сервере угол считается из скорости и кладётся в
-     * {@link SynchedEntityData}; на клиенте, наоборот, только читается оттуда и
-     * ничего сам не вычисляет. Односторонность тут принципиальна: клиентская
-     * физика гильзы не совпадает с серверной (отскок и столкновения играются
-     * только на сервере), поэтому если бы клиент ещё и считал углы у себя, они
-     * бы постоянно перетягивали значение туда, куда гильза уже не летит.
-     * <p>
-     * Плюс к yaw/pitch идёт собственное вращение вокруг оси полёта: гильза —
-     * цилиндр, и без прокрутки вокруг своей оси она выглядит просто
-     * наклоняющейся, а не кувыркающейся.
-     */
-    private void syncFlightAngle() {
-        if (this.level().isClientSide) {
-            this.flightYawDeg = this.entityData.get(FLIGHT_YAW);
-            this.flightPitchDeg = this.entityData.get(FLIGHT_PITCH);
-            this.flightSpinDeg = this.entityData.get(FLIGHT_SPIN);
-            return;
-        }
-
-        Vec3 dir = this.getDeltaMovement();
-        double horizontal = Math.sqrt(dir.x * dir.x + dir.z * dir.z);
-
-        if (dir.lengthSqr() > 1.0E-6D) {
-            // Направление на спине гильзы смотрит вдоль полёта. Формулы те же,
-            // что у пули в TurretBulletGltfRenderer.
-            float yawDeg = (float) (Math.atan2(dir.x, dir.z) * (180.0D / Math.PI));
-            float pitchDeg = (float) (Math.atan2(dir.y, horizontal) * (180.0D / Math.PI));
-
-            // Вращение копится, а не задаётся заново: полный оборот должен
-            // занимать столько же времени, сколько идёт круг вокруг оси.
-            this.flightSpinDeg =
-                    (this.flightSpinDeg + (float) (horizontal * SPIN_PER_SPEED)) % 360.0F;
-
-            this.setYRot(yawDeg);
-            this.setXRot(pitchDeg);
-
-            this.flightYawDeg = yawDeg;
-            this.flightPitchDeg = pitchDeg;
-        }
-        // При почти нулевой скорости углы не трогаем: пересчёт в ноль дёргал бы
-        // улегшуюся гильзу на последнем тике перед остановкой.
-
-        this.entityData.set(FLIGHT_YAW, this.flightYawDeg);
-        this.entityData.set(FLIGHT_PITCH, this.flightPitchDeg);
-        this.entityData.set(FLIGHT_SPIN, this.flightSpinDeg);
     }
 
     /**
@@ -414,24 +581,28 @@ public GilseEntity(Level level, LivingEntity shooter, Vec3 pos, Vec3 velocity) {
      * столкновение двух шариков: сначала разводим позиции по нормали, затем
      * обмениваемся скоростью вдоль этой нормали.
      * <p>
-     * Только сервер: и позиции, и скорость здесь меняются из расчёта,
-     * клиентская копия физики их не повторит, а разойтись им после этого
-     * разрешено — authoritative-пакет всё перезапишет.
+     * Разводим именно когда хитбоксы реально пересекаются, то есть по
+     * {@code getBbWidth()}. Прежняя константа 0.09 была меньше половины
+     * хитбокса, и настоящие пересечения (меньше 0.2) не разрешались вовсе —
+     * гильзы проходили друг сквозь друга.
+     * <p>
+     * Разведение позиций проверяется на блоки. Раньше сдвиг применялся без
+     * проверки, и зажатая между стеной и соседней гильзой гильза уезжала в
+     * стену: {@code move()} считает столкновения от текущего хитбокса, а из
+     * блока, в который он уже утоплен, вытолкнуть нельзя — там всегда ноль.
+     * Дальше такая гильза оставалась в стене до конца жизни.
      */
     private void collideWithOtherCasings() {
-        if (this.level().isClientSide) {
-            return;
-        }
+        double minDist = this.getBbWidth();
 
         List<GilseEntity> others = new ArrayList<>();
         this.level().getEntities(EntityTypeTest.forClass(GilseEntity.class),
-                this.getBoundingBox().inflate(CASING_RADIUS),
+                this.getBoundingBox().inflate(minDist),
                 (other) -> other != this, others);
 
         for (GilseEntity other : others) {
             Vec3 diff = this.position().subtract(other.position());
             double distSqr = diff.lengthSqr();
-            double minDist = CASING_RADIUS * 2.0D;
 
             // Полностью совпавшие позиции (дистанция ровно ноль) нормаль не
             // определит — пропускаем такую пару, пусть просто останутся
@@ -449,12 +620,18 @@ public GilseEntity(Level level, LivingEntity shooter, Vec3 pos, Vec3 velocity) {
             // развело бы гильзы только по скорости, оставив визуальное
             // пересечение.
             double overlap = (minDist - dist) * 0.5D;
-            this.setPos(this.getX() + normal.x * overlap,
-                    this.getY() + normal.y * overlap,
-                    this.getZ() + normal.z * overlap);
-            other.setPos(other.getX() - normal.x * overlap,
-                    other.getY() - normal.y * overlap,
-                    other.getZ() - normal.z * overlap);
+            Vec3 push = normal.scale(overlap);
+
+            if (!hitsBlock(this.getBoundingBox(), push)) {
+                this.setPos(this.getX() + push.x, this.getY() + push.y, this.getZ() + push.z);
+            }
+
+            Vec3 pushBack = push.scale(-1.0D);
+            if (!hitsBlock(other.getBoundingBox(), pushBack)) {
+                other.setPos(other.getX() + pushBack.x,
+                        other.getY() + pushBack.y,
+                        other.getZ() + pushBack.z);
+            }
 
             Vec3 relative = this.getDeltaMovement().subtract(other.getDeltaMovement());
             double approachSpeed = relative.dot(normal);
@@ -471,6 +648,11 @@ public GilseEntity(Level level, LivingEntity shooter, Vec3 pos, Vec3 velocity) {
             this.setDeltaMovement(this.getDeltaMovement().subtract(normal.scale(impulse)));
             other.setDeltaMovement(other.getDeltaMovement().add(normal.scale(impulse)));
 
+            // Удар о соседнюю гильзу — тоже удар: обе поворачиваются на
+            // изменившейся скорости. Дальше до следующего касания поза держится.
+            tumbleOnImpact(this.getDeltaMovement());
+            tumbleOnImpact(other.getDeltaMovement());
+
             this.hasImpulse = true;
             other.hasImpulse = true;
         }
@@ -481,48 +663,35 @@ public GilseEntity(Level level, LivingEntity shooter, Vec3 pos, Vec3 velocity) {
      * <p>
      * У гранат она приходит из {@code BlockHitResult} вместе с лучом. У гильзы
      * своего луча нет — она просто перемещается вызовом {@code move()}, и тот
-     * гасит компоненту движения о препятствие, но нормаль не отдаёт. Поэтому
-     * направление определяем по тому, какие компоненты скорости изменились:
-     * погашенная по вертикали — удар о пол или о потолок, по горизонтали — о
-     * стену.
+     * нормаль не отдаёт. Поэтому она собирается из флагов столкновения,
+     * разобранных в {@code tick()}: пол, потолок и та горизонтальная ось, по
+     * которой гасится компонента движения.
      */
-    private Vec3 contactNormal(Vec3 incoming) {
-        Vec3 after = this.getDeltaMovement();
-        Vec3 delta = after.subtract(incoming);
+    private static Vec3 contactNormal(Vec3 incoming, boolean blockedDown, boolean blockedUp,
+                                     boolean blockedX, boolean blockedZ) {
+        if (blockedDown) return new Vec3(0.0D, 1.0D, 0.0D);
+        if (blockedUp) return new Vec3(0.0D, -1.0D, 0.0D);
 
-        boolean hitVertical = Math.abs(delta.y) > 1.0E-4D;
-        boolean hitHorizontal =
-                Math.abs(delta.x) > 1.0E-4D || Math.abs(delta.z) > 1.0E-4D;
-
-        // Два сразу — угловой удар. Берём нормаль по преобладающей компоненте
-        // скорости: она указывает, с какой стороны прилетел удар.
-        if (hitVertical && hitHorizontal) {
-            double ax = Math.abs(incoming.x);
-            double ay = Math.abs(incoming.y);
-            double az = Math.abs(incoming.z);
-            if (ay >= ax && ay >= az) {
-                return new Vec3(0.0D, incoming.y >= 0.0D ? 1.0D : -1.0D, 0.0D);
-            }
-            if (ax >= az) {
-                return new Vec3(incoming.x >= 0.0D ? 1.0D : -1.0D, 0.0D, 0.0D);
-            }
-            return new Vec3(0.0D, 0.0D, incoming.z >= 0.0D ? 1.0D : -1.0D);
+        if (blockedX && !blockedZ) {
+            return new Vec3(incoming.x >= 0.0D ? -1.0D : 1.0D, 0.0D, 0.0D);
+        }
+        if (blockedZ && !blockedX) {
+            return new Vec3(0.0D, 0.0D, incoming.z >= 0.0D ? -1.0D : 1.0D);
         }
 
-        if (hitVertical) {
-            return new Vec3(0.0D, incoming.y >= 0.0D ? 1.0D : -1.0D, 0.0D);
+        // Две горизонтальные оси сразу — угловой удар о ребро. Берём нормаль по
+        // преобладающей компоненте скорости: она указывает, с какой стороны
+        // прилетел удар.
+        double ax = Math.abs(incoming.x);
+        double az = Math.abs(incoming.z);
+        if (blockedX && ax >= az) {
+            return new Vec3(incoming.x >= 0.0D ? -1.0D : 1.0D, 0.0D, 0.0D);
+        }
+        if (blockedZ) {
+            return new Vec3(0.0D, 0.0D, incoming.z >= 0.0D ? -1.0D : 1.0D);
         }
 
-        if (hitHorizontal) {
-            // Стена: нормаль лежит в плоскости пола, берём её из той
-            // горизонтальной оси, по которой ударились сильнее.
-            if (Math.abs(after.x - incoming.x) > Math.abs(after.z - incoming.z)) {
-                return new Vec3(incoming.x >= 0.0D ? 1.0D : -1.0D, 0.0D, 0.0D);
-            }
-            return new Vec3(0.0D, 0.0D, incoming.z >= 0.0D ? 1.0D : -1.0D);
-        }
-
-        // Столкновения не было (среда или погрешность) — отражаемся от пола.
+        // Столкновения не было (погрешность) — отражаемся от пола.
         return new Vec3(0.0D, 1.0D, 0.0D);
     }
 
@@ -575,8 +744,8 @@ public GilseEntity(Level level, LivingEntity shooter, Vec3 pos, Vec3 velocity) {
         // Отскок необратим: после перезагрузки мира гильза не должна
         // подпрыгивать заново.
         tag.putBoolean("GilseBounced", this.bounced);
-        // Вращение копится с момента вылета. Без него перезагрузка мира
-        // обнулила бы его, и гильза дёрнулась бы на произвольный угол.
+        tag.putBoolean("GilseGrounded", this.grounded);
+        tag.putBoolean("GilseTumbled", this.tumbled);
         tag.putFloat("GilseSpin", this.flightSpinDeg);
     }
 
@@ -588,7 +757,10 @@ public GilseEntity(Level level, LivingEntity shooter, Vec3 pos, Vec3 velocity) {
             this.shooterUUID = tag.getUUID("GilseShooter");
         }
         this.bounced = tag.getBoolean("GilseBounced");
+        // Опора переживает перезагрузку мира, иначе первое же сохранение
+        // подбросило бы улегшуюся гильзу на пол-блока вверх.
+        this.grounded = tag.getBoolean("GilseGrounded");
+        this.tumbled = tag.getBoolean("GilseTumbled");
         this.flightSpinDeg = tag.getFloat("GilseSpin");
-        this.entityData.set(FLIGHT_SPIN, this.flightSpinDeg);
     }
 }

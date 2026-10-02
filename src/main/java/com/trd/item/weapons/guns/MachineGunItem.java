@@ -2,6 +2,7 @@ package com.trd.item.weapons.guns;
 
 import com.trd.client.config.ModKeyBindings;
 import com.trd.client.gecko.item.guns.MachineGunRenderer;
+import com.trd.client.overlay.MachineGunScope;
 import com.trd.entity.weapons.bullets.GilseEntity;
 import com.trd.entity.weapons.bullets.TurretBulletEntity;
 import com.trd.item.weapons.ammo.AmmoRegistry;
@@ -21,6 +22,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
@@ -69,17 +71,72 @@ public class MachineGunItem extends Item {
     private static final int FLIP_ANIM_TICKS = 79;
     private static final int RELOAD_AMMO_ADD_TICK = 60;
     private static final String LOADED_AMMO_ID_TAG = "LoadedAmmoID";
+    private static final String HANDS_WARN_TAG = "HandsWarn";
     private static final String GUN_CALIBER = "20mm_turret";
 
     /**
-     * Базовый разброс выстрела, как гауссово отклонение по каждой оси.
-     * Раньше число было продублировано в вызове {@code add(...)}, в прицеле
-     * оно делится на {@link com.trd.client.overlay.MachineGunScope#ACCURACY_BONUS}.
+     * Базовый разброс выстрела, как гауссово отклонение по каждой оси единичного
+     * вектора направления.
+     * <p>
+     * Раньше здесь стояло 0.0075 — примерно 0.43° на ось. При скорости пули
+     * 12 блоков/тик это давало уход около 0.75 блока на сотне метров, то есть
+     * пушка мазала заметно сильнее лука. Сейчас значение уменьшено в 15 раз:
+     * на сотне метров разброс составляет около 0.05 блока, а в прицеле — вдвое
+     * меньше. Разброс оставлен ненулевым специально: он гасит идеальную
+     * параллельность ствола и камеры, но глазом уже не читается.
+     * <p>
+     * Важно: константа живёт здесь, а не в {@link MachineGunScope}. Разброс
+     * считает сервер, а клиентский класс на выделенном сервере всё равно
+     * отдавал бы 1.0 — прицел попросту не влиял бы на меткость.
      */
-    private static final float SCATTER = 0.0075f;
+    private static final float SCATTER = 0.0005f;
+
+    /** Во сколько раз в прицеле падает разброс, то есть растёт точность. */
+    public static final float SCOPED_ACCURACY_BONUS = 2.0f;
+
+    /**
+     * Тиков тишины между сообщениями «нужны обе руки». Без этого игрок,
+     * удерживающий огонь, получал бы сообщение на каждый пакет стрельбы.
+     */
+    private static final int HANDS_WARN_COOLDOWN = 30;
 
     /** Ускорение пули относительно скорости патрона из реестра. */
     private static final float SPEED_MULTIPLIER = 2.0f;
+
+    /** Насколько ствол смещён вбок от вертикали через плечо стрелка. */
+    private static final double GUN_SIDE_OFFSET = 0.2D;
+
+    /** Насколько ствол опущен относительно уровня глаз. */
+    private static final double MUZZLE_DROP = 0.1D;
+
+    /**
+     * Насколько пуля вылетает из камеры вперёд в прицеле.
+     * <p>
+     * Ровно из глаза она вылетать не может: {@code traceHit} проверяет блоки по
+     * лучу, и старт внутри собственной головы означал бы мгновенное попадание
+     * в любой блок, к которому иглот прижался. Полблока вперёд достаточно,
+     * чтобы дуло целиком вышло из головы и пуля шла ровно по оптической оси.
+     */
+    private static final double SCOPED_FORWARD = 0.3D;
+
+    /**
+     * Единичный вектор вправо относительно направления взгляда.
+     * <p>
+     * Выстрел строго вверх или строго вниз даёт нулевое векторное произведение
+     * с вертикалью, и {@code normalize()} на нуле молча возвращает нулевой
+     * вектор — то есть смещение вбок просто исчезало. Поэтому при вырожденном
+     * произведении берём другую ось.
+     */
+    private static Vec3 perpendicular(Vec3 direction) {
+        Vec3 side = direction.cross(new Vec3(0, 1, 0));
+        if (side.lengthSqr() < 1.0E-6D) {
+            side = direction.cross(new Vec3(1, 0, 0));
+        }
+        if (side.lengthSqr() < 1.0E-6D) {
+            return new Vec3(1, 0, 0);
+        }
+        return side.normalize();
+    }
 
     public MachineGunItem(Properties properties) {
         super(properties.stacksTo(1));
@@ -163,6 +220,35 @@ public class MachineGunItem extends Item {
         writeTag(stack, tag);
     }
 
+    public int getHandsWarnTimer(ItemStack stack) {
+        return readTag(stack).getInt(HANDS_WARN_TAG);
+    }
+
+    public void setHandsWarnTimer(ItemStack stack, int timer) {
+        CompoundTag tag = readTag(stack);
+        tag.putInt(HANDS_WARN_TAG, Math.max(0, timer));
+        writeTag(stack, tag);
+    }
+
+    /**
+     * Пушка — оружие под обе руки, поэтому стрелять можно, только когда вторая
+     * рука свободна. Тот же принцип, что у литой кирки (см.
+     * {@code CastPickaxeItem#canUse}), но проверка живёт на сервере: клиент про
+     * пакет ничего не знает.
+     */
+    public static boolean hasBothHandsFree(Player player) {
+        return player.getOffhandItem().isEmpty();
+    }
+
+    /**
+     * Пока стрелок в воде, оружие не работает: мокрый затвор и отказной стопор.
+     * Проверяются и тело, и глаза — в брызгах прицел уже не видно, а вода на
+     * уровне глаз означает полное погружение.
+     */
+    public static boolean isSubmerged(Player player) {
+        return player.isInWater() || player.isEyeInFluid(FluidTags.WATER);
+    }
+
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
         super.inventoryTick(stack, level, entity, slotId, isSelected);
@@ -177,6 +263,9 @@ public class MachineGunItem extends Item {
                 }
                 return;
             }
+
+            int warn = getHandsWarnTimer(stack);
+            if (warn > 0) setHandsWarnTimer(stack, warn - 1);
 
             int delay = getShootDelay(stack);
             if (delay > 0) setShootDelay(stack, delay - 1);
@@ -381,6 +470,20 @@ public class MachineGunItem extends Item {
         if (level.isClientSide) return;
         if (getReloadTimer(stack) > 0 || getShootDelay(stack) > 0) return;
 
+        // Пушка работает только под обе руки. Проверка до всего остального:
+        // иначе заблокированный стрелок ещё и патрон бы расходовал.
+        if (!hasBothHandsFree(player)) {
+            warnBlocked(player, stack, "item.trd.machinegun.warning.twohanded");
+            return;
+        }
+
+        // В воде оружие отказного типа: ни выстрела, ни звука, ни расхода
+        // патрона. Всплыл — снова стреляет.
+        if (isSubmerged(player)) {
+            warnBlocked(player, stack, "item.trd.machinegun.warning.in_water");
+            return;
+        }
+
         int ammo = getAmmo(stack);
 
         // Пустой выстрел (ammo == 0)
@@ -420,9 +523,11 @@ public class MachineGunItem extends Item {
         bullet.setAmmoType(ammoInfo);
 
         // Та же математика, что у Entity#getLookAngle, но по двум осям из пакета.
-        // Разброс в прицеле вдвое ниже: точность ×2. Множитель приходит с
-        // клиента вместе с углом выстрела — там же, где и сам прицел.
-        float spread = (float) (SCATTER * com.trd.client.overlay.MachineGunScope.spreadMultiplier());
+        // Разброс в прицеле вдвое ниже: точность ×2. Флаг прицела едет с
+        // клиента в этом же пакете — раньше он там был, но не использовался, и
+        // разброс считался по клиентскому классу, который на сервере всегда
+        // отдавал 1.0.
+        float spread = scoped ? SCATTER / SCOPED_ACCURACY_BONUS : SCATTER;
 
         // Скорость пули удваивается относительно паспортной у патрона: из скорости
         // 6.0 блока/тик (120 м/с) она становится 240 м/с. Множитель вынесен в
@@ -435,8 +540,23 @@ public class MachineGunItem extends Item {
                 level.random.nextGaussian() * spread
         ).scale(ammoInfo.speed * SPEED_MULTIPLIER);
 
-        Vec3 right = lookDir.cross(new Vec3(0, 1, 0)).normalize();
-        Vec3 spawnPos = player.position().add(right.scale(0.2)).add(0, player.getEyeY() - player.getY() - 0.1, 0);
+        // Точка вылета. В прицеле пуля обязана идти по оптической оси: только
+        // там перекрестье совпадает с направлением взгляда. Раньше точка вылета
+        // всегда бралась от ствола — на 0.2 блока вбок и на 0.1 вниз от глаз, —
+        // и в прицеле пуля уходила заметно сбоку от мушки.
+        //
+        // Вперёд от камеры, а не из неё самой: луч столкновений стартует в точке
+        // появления, и мгновенный старт внутри собственной головы означал бы
+        // попадание в любой блок вплотную к игроку.
+        //
+        // Без прицела остаётся как было: от ствола вниз и в сторону, там
+        // расхождение со стволом и нужно.
+        Vec3 gunPos = player.position()
+                .add(perpendicular(lookDir).scale(GUN_SIDE_OFFSET))
+                .add(0.0D, player.getEyeY() - player.getY() - MUZZLE_DROP, 0.0D);
+        Vec3 spawnPos = scoped
+                ? player.getEyePosition().add(lookDir.normalize().scale(SCOPED_FORWARD))
+                : gunPos;
 
         bullet.setPos(spawnPos.x, spawnPos.y, spawnPos.z);
         bullet.setDeltaMovement(velocity);
@@ -455,19 +575,11 @@ public class MachineGunItem extends Item {
         // Гильза вылетает из ствола вбок и вниз от направления выстрела.
         Vec3 up = new Vec3(0, 1, 0);
         Vec3 forward = velocity.normalize();
-        Vec3 side = forward.cross(up);
-        // Выстрел строго вверх или вниз даёт нулевое векторное произведение,
-        // и normalize() на нуле превращается в NaN. В таком случае берём
-        // произведение с другим вектором — сторону выбирать всё равно нужно.
-        if (side.lengthSqr() < 1.0E-6D) {
-            side = forward.cross(new Vec3(1, 0, 0));
-        }
-        if (side.lengthSqr() < 1.0E-6D) {
-            side = new Vec3(1, 0, 0);
-        } else {
-            side = side.normalize();
-        }
-        Vec3 muzzle = spawnPos.add(forward.scale(0.35));
+        // Сторона всегда от ствола, а не из точки вылета: в прицеле пуля
+        // появляется у глаза, и выбрасывать гильзу оттуда означало бы сыпать
+        // её перед лицом стрелка.
+        Vec3 side = perpendicular(forward);
+        Vec3 muzzle = gunPos.add(forward.scale(0.35));
         // Скорости подобраны так, чтобы гильза вылетела примерно на полблока
         // в сторону, подпрыгнула от блока и тут же осыпалась: дальний разлёт
         // гасит сильное горизонтальное трение в GilseEntity
@@ -492,6 +604,18 @@ public class MachineGunItem extends Item {
         // Клиент держит один клип за раз, поэтому анимация не может наложиться
         // на перезарядку или на предыдущий выстрел.
         sendAnim(player, MachineGunClientAnim.SHOT);
+    }
+
+    /**
+     * Сообщает игроку, почему оружие не сработало. Показывается в action bar и
+     * не чаще раза в {@link #HANDS_WARN_COOLDOWN} тиков, иначе удержание огня
+     * превращало бы подсказку в непрерывный поток текста.
+     */
+    private void warnBlocked(Player player, ItemStack stack, String key) {
+        if (getHandsWarnTimer(stack) > 0) return;
+
+        setHandsWarnTimer(stack, HANDS_WARN_COOLDOWN);
+        player.displayClientMessage(Component.translatable(key).withStyle(ChatFormatting.RED), true);
     }
 
     // === КЛИЕНТСКИЙ РЕНДЕР ===
@@ -611,10 +735,17 @@ ItemStack stack = mc.player.getMainHandItem();
 
             if (clientShootTimer > 0) clientShootTimer--;
 
+            // Те же два запрета, что и на сервере, продублированы здесь ради
+            // отклика: иначе игрок в воде или со щитом в левой руке удерживал бы
+            // огонь вхолостую. Решение всё равно принимает сервер — клиентская
+            // проверка нужна только чтобы не слать пакеты впустую.
+            boolean blocked = !MachineGunItem.hasBothHandsFree(mc.player)
+                    || MachineGunItem.isSubmerged(mc.player);
+
             // Проверки ReloadTimer здесь намеренно нет: сервер всё равно её делает,
             // а значение приходит на клиент только в конце перезарядки, то есть
             // может быть устаревшим и заблокировать стрельбу.
-            if (mc.options.keyAttack.isDown() && clientShootTimer <= 0) {
+            if (mc.options.keyAttack.isDown() && clientShootTimer <= 0 && !blocked) {
                 // Угол обзора по обеим осям едет вместе с пакетом: серверная копия
                 // поворота игрока отстаёт на тик, и без этого пуля уходила мимо прицела.
                 // Прицел тоже едет: сервер снимет разброс вдвое, когда игрок в него смотрит.

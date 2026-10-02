@@ -58,9 +58,6 @@ public final class MachineGunScope {
      */
     private static final float CIRCLE_SCREEN_FRAC = 0.94f;
 
-    /** Во сколько раз поднимается точность в прицеле. */
-    public static final float ACCURACY_BONUS = 2.0f;
-
     private static final double ZOOM_FACTOR = 4.0;
 
     private static boolean scoped;
@@ -114,11 +111,6 @@ public final class MachineGunScope {
 
     public static boolean isScoped() {
         return scoped;
-    }
-
-    /** Множитель разброса: в прицеле точность выше, то есть разброс ниже. */
-    public static float spreadMultiplier() {
-        return scoped ? 1.0f / ACCURACY_BONUS : 1.0f;
     }
 
     public static float moveMultiplier() {

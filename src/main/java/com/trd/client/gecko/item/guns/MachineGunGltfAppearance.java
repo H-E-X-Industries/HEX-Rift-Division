@@ -1,5 +1,6 @@
 package com.trd.client.gecko.item.guns;
 
+import com.trd.client.overlay.MachineGunScope;
 import com.trd.item.weapons.guns.MachineGunClientAnim;
 import com.trd.main.MainRegistry;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -28,6 +29,18 @@ public class MachineGunGltfAppearance implements ItemAppearance {
 
     @Override
     public GemRenderGltfModel model(ItemStack stack, ItemDisplayContext context) {
+        // Пока открыт прицел, оружие от первого лица не рисуется: в круге
+        // оптики видна только мушка, а ствол и лента закрывали бы обзор.
+        // GemRender трактует null как «нечего рисовать» и просто выходит из
+        // draw(), поэтому возвращать пустую модель тут безопасно.
+        //
+        // Проверка именно first-person: в третьем лице пушку в руках другого
+        // игрока по-прежнему видно, иначе она исчезала бы у всех, кто смотрит
+        // на стрелка.
+        if (context.firstPerson() && MachineGunScope.isScoped()) {
+            return null;
+        }
+
         GemRenderGltfModel model = GemRenderModels.get(MODEL);
         // Длины клипов берём из самого glTF, а не из констант в коде: при
         // переэкспорте модели из Blockbench они изменятся, и захардкоженные
@@ -59,6 +72,6 @@ public class MachineGunGltfAppearance implements ItemAppearance {
     public void transform(ItemStack stack, ItemDisplayContext context, PoseStack poseStack) {
         // Трансформацию не трогаем: любая попытка сдвинуть модель здесь
         // двигает само оружие в руке. Покачивание камеры (bobView) при этом
-        // остаётся, его глушат на уровне рендера — см. MachineGunScopeOverlay.
+        // остаётся, его глушат на уровне рендера — см. MachineGunScope.
     }
 }

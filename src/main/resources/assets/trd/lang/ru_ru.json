@@ -654,6 +654,8 @@
     "item.trd.limestone_powder":  "Порошок известняка",
     "item.trd.liquid_metal":  "Жидкий металл",
     "item.trd.machinegun":  "\u0027А.П. 17\u0027",
+    "item.trd.machinegun.warning.twohanded":  "Нужны обе руки!",
+    "item.trd.machinegun.warning.in_water":  "Пушка не стреляет в воде",
     "key.categories.trd":  "Crustal Incursion",
     "key.trd.reload":  "\u041f\u0435\u0440\u0435\u0437\u0430\u0440\u044f\u0434\u043a\u0430",
     "key.trd.unload":  "\u0420\u0430\u0437\u0440\u044f\u0434\u043a\u0430",
