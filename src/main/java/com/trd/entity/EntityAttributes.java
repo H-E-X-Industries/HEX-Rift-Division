@@ -22,5 +22,11 @@ public class EntityAttributes {
         // Блочная турель использует тот же набор, что и свободная
         event.put(ModEntities.TURRET_LIGHT_LINKED.get(),
                 com.trd.entity.weapons.turrets.TurretLightEntity.createAttributes().build());
+
+        // Черви
+        event.put(ModEntities.DEPTH_WORM.get(),
+                com.trd.entity.mobs.depth_worm.DepthWormEntity.createAttributes().build());
+        event.put(ModEntities.DEPTH_WORM_BRUTAL.get(),
+                com.trd.entity.mobs.depth_worm.DepthWormBrutalEntity.createAttributes().build());
     }
 }
