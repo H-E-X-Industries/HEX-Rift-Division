@@ -221,14 +221,20 @@ public final class MachineGunModel {
      * Считается в три шага: кость прогоняется через текущий клип, её матрица
      * домножается на точку внутри кости, а результат — на матрицу пушки в руке.
      * Всё это учитывает и отдачу ствола, и поворот кисти, и покачивание камеры.
+     * <p>
+     * Клип может быть {@code null}, и это нормальный случай, а не поломка:
+     * {@link GltfPose#evaluate} сам пропускает анимацию и собирает позу покоя.
+     * Анимация играет долю секунды, а выстрел клиент шлёт каждый тик, поэтому
+     * точки вылета без этого не существовало бы в паузах между клипами, и
+     * пушка стреляла бы из серверной формулы.
      *
      * @param locator кость из блокбенчовского локатора; если такой кости в модели
      *                нет, берётся {@link #DEFAULT_MUZZLE_BONE}
      * @return мировая точка дула либо {@code null}, если кость не нашлась
      */
-    public static Vec3 worldMuzzle(GemRenderGltfModel model, GltfAnimation clip, float seconds,
+    public static Vec3 worldMuzzle(GemRenderGltfModel model, @Nullable GltfAnimation clip, float seconds,
                                    @Nullable String locator, Camera camera) {
-        if (model == null || clip == null || camera == null || !itemMatrixSeen) return null;
+        if (model == null || camera == null || !itemMatrixSeen) return null;
 
         try {
             return computeMuzzle(model, clip, seconds, locator, camera);
@@ -259,12 +265,32 @@ public final class MachineGunModel {
         // проходит по evaluationOrder() и домножает родителей, то есть на выходе
         // мировая матрица ноды, а не её локальная.
         //
+        // Элементы массива обязаны существовать. compose пишет в них через
+        // NodeTable#localTransform(node, out), и в массиве из null он падает на
+        // первой же кости с NullPointerException — а worldMuzzle глотает
+        // исключение и отдаёт null. Так локатор дула не работал никогда: точка
+        // вылета молча уезжала на серверную формулу.
+        //
+        // Клип может быть null — это не поломка, а поза покоя, и evaluate её
+        // обрабатывает сам (просто не применяет анимацию). Покой нужен не
+        // реже, чем клип: анимация выстрела живёт доли секунды, а выстрел
+        // клиент шлёт каждый тик, и в паузах между клипами точка вылета была бы
+        // недоступна. Именно из-за этого пушка при вертикальном выстреле
+        // вылетала из блока, в котором стоит игрок.
+        //
         // Размер — именно layout().size(), а НЕ model.newPalette(): последний
         // sized по jointCount(), то есть по числу суставов скина. У пушки с
         // четырьмя суставами и пятью костями он на кость короче, и GltfPose при
         // записи в палитру уходил за её конец.
         Matrix4f[] palette = new Matrix4f[model.layout().size()];
+        for (int i = 0; i < palette.length; i++) {
+            palette[i] = new Matrix4f();
+        }
         GltfPose.evaluate(model.layout(), clip, seconds, palette);
+
+        if (slot >= palette.length) {
+            return null;
+        }
 
         Vector4f modelSpace = new Vector4f(muzzleOffset.x(), muzzleOffset.y(), muzzleOffset.z(), 1.0F);
         modelSpace.mul(palette[slot]);

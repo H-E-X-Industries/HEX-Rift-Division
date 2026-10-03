@@ -26,6 +26,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
@@ -200,14 +201,14 @@ private static final double SCOPED_FORWARD = 1.8D;
     private static final double THIRD_PERSON_RIGHT   = 0.3D;
 
     /**
-     * Доворот точки вылета на пять пикселей влево от всего, что нарисовано.
+     * Доворот точки вылета на четыре с половиной пикселя влево от всего, что
+     * нарисовано.
      * <p>
-     * Пять пикселей — это {@code 5/16} блока, ровно мера, в которой дальше
-     * считаются все остальные смещения. Сдвиг общий для первого и третьего
-     * лица и применяется один раз, уже к выбранной точке вылета: и к
-     * клиентскому кончику ствола из модели, и к серверной формуле. Иначе
-     * формула и модель разъезжались бы на эти пиксели между собой, а пуля всё
-     * равно появлялась бы с одного места.
+     * Полпикселя — это {@code 0.5/16} блока; остальные смещения считаются в
+     * той же мере. Сдвиг общий для первого и третьего лица и применяется один
+     * раз, уже к выбранной точке вылета: и к клиентскому кончику ствола из
+     * модели, и к серверной формуле. Иначе формула и модель разъезжались бы на
+     * эти пиксели между собой, а пуля всё равно появлялась бы с одного места.
      * <p>
      * Направление берётся от взгляда, а не от руки: в прицеле и в третьем лице
      * это одно и то же «влево от стрелка».
@@ -217,13 +218,36 @@ private static final double SCOPED_FORWARD = 1.8D;
      * перекрестья, а на близкой дистанции расхождение вообще переставало бы
      * попадать туда, куда смотрит игрок.
      */
-    private static final double MUZZLE_SIDE_SHIFT = 5.0D / 16.0D;
+    private static final double MUZZLE_SIDE_SHIFT = 4.5D / 16.0D;
 
     /**
-     * Насколько точка вылета выносится из хитбокса стрелка при вертикальном
-     * выстреле. Запас нужен, чтобы луч столкновений стартовал уже снаружи.
+ * Отдача: насколько игрока отбрасывает назад за один выстрел, в блоках на тик.
+ * <p>
+ * Импульс кладётся прямо в скорость игрока, а не в «виртуальную» величину:
+ * {@code LivingEntity#travel} берёт текущую скорость, домножает её на трение и
+ * добавляет движение от игрока, поэтому толчок живёт по-настоящему — игрок
+ * сдвигается, а на бегу его заметно сносит назад.
+ */
+    private static final double RECOIL_PUSH = 0.2D;
+
+    /**
+     * Разброс отдачи камеры на один выстрел, градусы.
+     * <p>
+     * Сначала было полтора и один: на автоматическом огне камера дрожала так,
+     * что прицел был не удержать. Сейчас это верхняя граница без брони и без
+     * прицела; всё остальное множители.
      */
-    private static final double SHOOTER_CLEARANCE = 0.1D;
+    static final float RECOIL_YAW_DEGREES = 0.3F;
+    static final float RECOIL_PITCH_DEGREES = 0.45F;
+
+    /** Прицел: отдача вдвое слабее. */
+    private static final float SCOPED_RECOIL_SCALE = 0.5F;
+
+    /** Присед или лёжа: отдача втрое слабее. */
+    private static final float STABLE_RECOIL_SCALE = 1.0F / 3.0F;
+
+    /** Полный комплект брони — 20 очков, а насколько он гасит отдачу. */
+    private static final float MAX_ARMOR_RECOIL_DAMPING = 0.5F;
 
     /**
      * Смещение окна выброса гильзы вбок и вверх относительно ствола.
@@ -234,7 +258,21 @@ private static final double SCOPED_FORWARD = 1.8D;
      */
     private static final double PORT_SIDE_OFFSET = 0.16D;
     private static final double PORT_UP_OFFSET = 0.02D;
-    private static final double PORT_FORWARD = -0.1D;
+
+    /**
+     * Смещение окна выброса гильзы вдоль ствола.
+     * <p>
+     * Положительное значение выносит гильзу вперёд, к дулу. Раньше она
+     * появлялась заметно позади, у самого казённика, и на автоматическом огне
+     * падающие гильзы вылетали из-под руки, а не из оружия.
+     */
+    private static final double PORT_FORWARD = 0.4D;
+
+    /**
+     * Насколько окно выброса выносится из хитбокса стрелка при вертикальном
+     * выстреле. Запас нужен, чтобы гильза не тонула в игроке.
+     */
+    private static final double SHOOTER_CLEARANCE = 0.1D;
 
     /**
      * Единичный вектор вправо относительно направления взгляда.
@@ -258,41 +296,17 @@ private static final double SCOPED_FORWARD = 1.8D;
     }
 
     /**
-     * Насколько далеко по лучу выходит из хитбокса.
+     * Выносит точку выброса гильзы из хитбокса стрелка.
      * <p>
-     * Обычный слэб-метод: для каждой оси берётся ближайшая из двух границ и
-     * из всех трёх — наибольшая. Возвращает {@code 0}, если точка снаружи.
-     * Оси, параллельные лучу, пропускаются: по ним луч не пересекает границу и
-     * ждать выхода неоткуда.
-     */
-    private static double exitDistance(Vec3 origin, Vec3 direction, AABB box) {
-        double[] o = {origin.x, origin.y, origin.z};
-        double[] d = {direction.x, direction.y, direction.z};
-        double[] min = {box.minX, box.minY, box.minZ};
-        double[] max = {box.maxX, box.maxY, box.maxZ};
-
-        double exit = 0.0D;
-        for (int axis = 0; axis < 3; axis++) {
-            if (Math.abs(d[axis]) < 1.0E-9D) {
-                continue;
-            }
-            double a = (min[axis] - o[axis]) / d[axis];
-            double b = (max[axis] - o[axis]) / d[axis];
-            exit = Math.max(exit, Math.min(a, b));
-        }
-        return exit;
-    }
-
-    /**
-     * Выносит точку вылета из собственного хитбокса стрелка.
+     * Только для гильзы. У пули своя точка вылета есть — кончик ствола из
+     * модели, — и сдвигать её вдоль взгляда нельзя: смотрит игрок вверх, точка
+     * уезжала вверх от дула, смотрит вниз — вниз, то есть «гуляла» вместе с
+     * наклоном. Гильза же считается только по этой формуле, и при вертикальном
+     * выстреле её окно оказывалось внутри игрока.
      * <p>
-     * Строго вертикальный выстрел — единственный случай, где и клиентский
-     * кончик ствола из модели, и серверная формула оказываются <em>внутри</em>
-     * блока, в котором стоит игрок: луч столкновений стартует в чужой
-     * геометрии, пуля не летит никуда и визуально выходит из пола или из
-     * земли под ногами. Сдвиг вдоль взгляда до самого дальнего края хитбокса
-     * (+ запас) это лечит, и делается одинаково для пули и для гильзы —
-     * обе точки считаются от одного и того же ствола.
+     * Дальше считается обычным слэб-методом: для каждой оси берётся ближайшая
+     * из двух границ и из всех трёх — наибольшая. Оси, параллельные лучу,
+     * пропускаются: по ним луч не пересекает границу и ждать выхода неоткуда.
      */
     private static Vec3 clearOfShooter(Vec3 point, Vec3 forward, Player player) {
         AABB box = player.getBoundingBox().inflate(SHOOTER_CLEARANCE);
@@ -303,7 +317,50 @@ private static final double SCOPED_FORWARD = 1.8D;
         if (!box.contains(point)) {
             return point;
         }
-        return point.add(forward.scale(exitDistance(point, forward, box)));
+
+        double[] origin = {point.x, point.y, point.z};
+        double[] direction = {forward.x, forward.y, forward.z};
+        double[] min = {box.minX, box.minY, box.minZ};
+        double[] max = {box.maxX, box.maxY, box.maxZ};
+
+        double exit = 0.0D;
+        for (int axis = 0; axis < 3; axis++) {
+            if (Math.abs(direction[axis]) < 1.0E-9D) {
+                continue;
+            }
+            double near = (min[axis] - origin[axis]) / direction[axis];
+            double far = (max[axis] - origin[axis]) / direction[axis];
+            exit = Math.max(exit, Math.min(near, far));
+        }
+        return point.add(forward.scale(exit));
+    }
+
+    /**
+     * Насколько слабее отдача от брони, прицела и стойки.
+     * <p>
+     * Броня — основной множитель, и он единственный зависит от того, что
+     * стрелок надел: в полном комплекте отдача вдвое слабее, в половине — на
+     * четверть. Остальные два положения уменьшают отдачу прицелом и стойкой и
+     * не смотрят на снаряжение.
+     * <p>
+     * Считается и на сервере по его копии игрока, и на клиенте по своей,
+     * поэтому в двух местах значения держатся одинаковыми.
+     *
+     * @param scoped смотрит ли игрок в прицел
+     */
+    public static float recoilScale(Player player, boolean scoped) {
+        float armor = player.getArmorValue() / 20.0F;
+        float scale = 1.0F - armor * MAX_ARMOR_RECOIL_DAMPING;
+
+        if (scoped) {
+            scale *= SCOPED_RECOIL_SCALE;
+        }
+        if (player.isCrouching()
+                || player.getPose() == net.minecraft.world.entity.Pose.SLEEPING
+                || player.getPose() == net.minecraft.world.entity.Pose.FALL_FLYING) {
+            scale *= STABLE_RECOIL_SCALE;
+        }
+        return Mth.clamp(scale, 0.0F, 1.0F);
     }
 
     /**
@@ -311,10 +368,7 @@ private static final double SCOPED_FORWARD = 1.8D;
      * клиенте.
      * <p>
      * Сервер сдвигает присланную точку ещё на {@link #MUZZLE_SIDE_SHIFT} влево,
-     * и без повторения того же самого вспышка в дуле стояла бы на пять
-     * пикселей правее пули. Вынос из хитбокса стрелка здесь не повторяется: он
-     * зависит от серверного угла выстрела, а на пять пикселей подсветку не
-     * сдвинуть и незачем.
+     * и без повторения того же самого вспышка в дуле стояла бы правее пули.
      *
      * @param muzzle  точка из пакета; {@code null} — эффектов не будет
      * @param lookDir направление взгляда стрелка
@@ -881,18 +935,13 @@ private static final double SCOPED_FORWARD = 1.8D;
                                 .add(forward.scale(MUZZLE_LENGTH + THIRD_PERSON_FORWARD))
                                 .add(side.scale(THIRD_PERSON_RIGHT - THIRD_PERSON_LEFT));
 
-        // Пять пикселей влево — поверх всего, что выбрано выше. Сдвиг один и
-        // общий для клиентской точки и для серверной формулы, поэтому вид от
-        // первого и третьего лица не расходится; в прицеле не применяется,
-        // там точка вылета обязана лежать на оптической оси.
+        // Четыре с половиной пикселя влево — поверх всего, что выбрано выше. Сдвиг
+        // один и общий для клиентской точки и для серверной формулы, поэтому
+        // вид от первого и третьего лица не расходится; в прицеле не
+        // применяется, там точка вылета обязана лежать на оптической оси.
         if (!scoped) {
             spawnPos = spawnPos.subtract(side.scale(MUZZLE_SIDE_SHIFT));
         }
-
-        // И последнее: из хитбокса стрелка. При вертикальном выстреле точка
-        // вылета иначе лежит внутри блока, в котором стоит игрок, и луч
-        // столкновений стартует в чужой геометрии — пуля не летит никуда.
-        spawnPos = clearOfShooter(spawnPos, forward, player);
 
         bullet.setPos(spawnPos.x, spawnPos.y, spawnPos.z);
 
@@ -904,6 +953,12 @@ private static final double SCOPED_FORWARD = 1.8D;
         bullet.setLaunchDirection(velocity);
 
         serverLevel.addFreshEntity(bullet);
+
+        // Отдача толкает стрелка назад по курсу выстрела. Именно по курсу, а не
+        // по горизонтали: при выстреле вверх толчок идёт вверх, и стоя под
+        // низким потолком это ещё и подбрасывает, что и читается как отдача.
+        player.setDeltaMovement(
+                player.getDeltaMovement().add(forward.scale(-RECOIL_PUSH * recoilScale(player, scoped))));
 
         // Звука и вспышки здесь больше нет: они приходят с помеченных кадров
         // анимации — звук ставит в очередь сервер, вспышку по локатору спавнит
@@ -1131,6 +1186,12 @@ ItemStack stack = mc.player.getMainHandItem();
                             muzzle, mc.player.calculateViewVector(mc.player.getXRot(), mc.player.getYRot()),
                             mc.player.getYRot()));
                 }
+
+                // Отдача камеры дёргается здесь же, в тике нажатия. На сервере её потом
+                // тоже можно было бы ждать, но углы камеры живут на клиенте, и
+                // дёрганье по пакету пришло бы на тик позже и не совпало бы с
+                // анимацией.
+                MachineGunRecoil.kick(recoilScale(mc.player, scoped));
 
                 PacketShoot packet = muzzle == null
                         ? PacketShoot.of(mc.player.getYRot(), mc.player.getXRot(), scoped)

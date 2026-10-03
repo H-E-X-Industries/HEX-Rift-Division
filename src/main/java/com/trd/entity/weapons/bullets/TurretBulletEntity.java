@@ -108,6 +108,15 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
 
     /** С какого тика у радио-боезаряда включается увеличенный хитбокс. */
     private static final int RADIO_FUSE_ACTIVATION = 5;
+
+    /**
+     * На сколько блоков нарисованная пуля может отставать от настоящей.
+     * <p>
+     * Без зажима отставание равно целому тику полёта, а пуля летит на шесть
+     * блоков за тик.
+     */
+    private static final double MAX_RENDER_LAG = 0.25D;
+
     /** Запас к хитбоксу взрывателя, чтобы цель у края всё же срабатывала. */
     private static final double PROXIMITY_FUSE_MARGIN = 0.25D;
 
@@ -559,11 +568,26 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
         if (!this.level().isClientSide) {
             return Vec3.ZERO;
         }
-        return new Vec3(
+
+        Vec3 lag = new Vec3(
                 Mth.lerp(partialTick, this.serverPrevX, this.getX()) - this.getX(),
                 Mth.lerp(partialTick, this.serverPrevY, this.getY()) - this.getY(),
                 Mth.lerp(partialTick, this.serverPrevZ, this.getZ()) - this.getZ()
         );
+
+        // Отставание без ограничения равно целому тику полёта. Пуля летит на
+        // шесть блоков за тик, то есть на первом кадре тика нарисованная пуля
+        // ещё там, где была в прошлом тике, — на шесть блоков позади настоящей.
+        // Для пули, которая входит в моб и летит дальше, это читалось не как
+        // пролёт, а как вытянутый луч, а после мобов — как исчезновение.
+        //
+        // Зажим не даёт нарисованной точке уходить дальше четверти блока от
+        // настоящей позиции: она остаётся на пуле, а не на её прошлом тике.
+        double lagSqr = lag.lengthSqr();
+        if (lagSqr > MAX_RENDER_LAG * MAX_RENDER_LAG) {
+            lag = lag.scale(MAX_RENDER_LAG / Math.sqrt(lagSqr));
+        }
+        return lag;
     }
 
     @Override
@@ -665,14 +689,26 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
         }
     }
 
-    /** Ближайшая ещё не прошитая цель на отрезке луча. */
+    /**
+     * Ближайшая ещё не прошитая цель на отрезке луча.
+     * <p>
+     * Именно {@link LivingEntity}, а не любая сущность: {@link #handleEntityHit}
+     * неживые игнорирует и в счётчик пробитых не кладёт, поэтому такая цель
+     * возвращалась бы тем же лучом снова и снова, и цикл в
+     * {@link #handlePiercingHits} выедал бы все восемь итераций, не дойдя до
+     * мобов за ней.
+     */
     private EntityHitResult nearestMob(Vec3 start, Vec3 limit) {
         AABB sweep = this.getBoundingBox().expandTowards(limit.subtract(start)).inflate(0.5F);
         return ProjectileUtil.getEntityHitResult(
                 this.level(), this,
                 start, limit,
                 sweep,
-                e -> e.isAlive() && e != this.getOwner() && e.isPickable() && !piercedTargets.contains(e.getId())
+                e -> e instanceof LivingEntity living
+                        && living.isAlive()
+                        && e != this.getOwner()
+                        && e.isPickable()
+                        && !piercedTargets.contains(e.getId())
         );
     }
 
@@ -817,10 +853,9 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
             return;
         }
 
-        // Зажигательный поджигает: попадание в уже горящий блок перекидывает
-        // огонь на ближайшую горюю поверхность рядом.
+        // Зажигательный поджигает: и горящий блок, в который попал, и обычный.
         if (getAmmoType() == AmmoType.INCENDIARY) {
-            spreadFire(pos);
+            ignite(pos);
         }
 
         playGroundSound();
@@ -850,20 +885,36 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
     }
 
     /**
-     * Перекидывает огонь с горящего блока на ближайшую горюю поверхность.
-     * <p>
-     * Огонь ставится только в пустую клетку, под которой есть что-то горюе, —
-     * ровно те же условия, по которым живёт обычный огонь. За тик попадания
-     * поджигается одна точка: иначе пуля разжигала бы куст леса.
+ * Зажигательный поджигает то, во что попал.
+ * <p>
+     * Два случая, и оба приводят к огню, а не к одному его виду:
+     * попадание в уже горящий блок перекидывает огонь на ближайшую горюю
+     * поверхность рядом с ним, а попадание в обычный блок ставит огонь прямо
+     * над ним — там, где огонь занял бы место при поджоге гола.
      */
-    private void spreadFire(BlockPos pos) {
+    private void ignite(BlockPos pos) {
         BlockState hit = this.level().getBlockState(pos);
-        if (!(hit.getBlock() instanceof FireBlock)) {
+
+        if (hit.getBlock() instanceof FireBlock) {
+            igniteAround(pos);
             return;
         }
 
-        for (BlockPos around : BlockPos.betweenClosed(pos.offset(-1, -1, -1), pos.offset(1, 1, 1))) {
-            if (around.equals(pos) || !this.level().getBlockState(around).isAir()) {
+        if (!hit.isFlammable(this.level(), pos, Direction.UP)) {
+            return;
+        }
+        placeFire(pos.above());
+    }
+
+    /**
+     * Перекидывает огонь с горящего блока на ближайшую горюю поверхность.
+     * <p>
+     * За тик попадания поджигается одна точка: иначе пуля разжигала бы куст
+     * леса.
+     */
+    private void igniteAround(BlockPos firePos) {
+        for (BlockPos around : BlockPos.betweenClosed(firePos.offset(-1, -1, -1), firePos.offset(1, 1, 1))) {
+            if (around.equals(firePos) || !this.level().getBlockState(around).isAir()) {
                 continue;
             }
             if (!this.level().getBlockState(around.below())
@@ -873,6 +924,17 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
             this.level().setBlockAndUpdate(around, Blocks.FIRE.defaultBlockState());
             return;
         }
+    }
+
+    /** Ставит огонь, если его там вообще можно поставить. */
+    private void placeFire(BlockPos pos) {
+        if (!this.level().getBlockState(pos).isAir()) {
+            return;
+        }
+        if (!FireBlock.canBePlacedAt(this.level(), pos, Direction.UP)) {
+            return;
+        }
+        this.level().setBlockAndUpdate(pos, Blocks.FIRE.defaultBlockState());
     }
 
     private float calculateDamage(LivingEntity target, AmmoType type) {
