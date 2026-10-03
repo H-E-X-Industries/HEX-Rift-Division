@@ -359,6 +359,12 @@ public final class MachineGunScope {
         // рисование в Post не выполнялось никогда.
         drawScope(graphics, graphics.guiWidth(), graphics.guiHeight());
 
+        // Счётчик патронов поверх оверлея. Слоем он бы и не доехал: событие
+        // ниже отменяется целиком, а на отмене GuiLayerManager выходит, не
+        // выполнив ни одного слоя. Поэтому рисуем его руками последним — поверх
+        // и виньетки, и всего остального.
+        com.trd.client.overlay.hud.OverlayAmmoHud.render(graphics);
+
         // Отменяем слой целиком, чтобы под оверлеем не осталось хотбара,
         // полосок и подсказок: оверлей непрозрачен по краям и накрывает их.
         event.setCanceled(true);

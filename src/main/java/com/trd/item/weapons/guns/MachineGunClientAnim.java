@@ -49,6 +49,17 @@ public final class MachineGunClientAnim {
     public static final String FLIP = "flip";
 
     /**
+     * Путь вспышки в дуле.
+     * <p>
+     * Он же стоит в {@code particle_effects} клипа выстрела, но там вспышка
+     * спавнится по локатору кости — то есть по нарисованному стволу, а не по
+     * точке, из которой на самом деле появляется пуля. Двух вспышек быть не
+     * должно, поэтому маркер с этим путём пропускается: вспышка ставится один
+     * раз, в момент выстрела, из {@link #spawnShotFlash}.
+     */
+    private static final String FLASH_EFFECT = "trd:shot";
+
+    /**
      * Длины клипов. Инициализируются один раз из самого glTF в
      * {@link #syncDurations}. Держать эти числа вручную опасно: значение больше
      * реальной длины клипа обрезает анимацию, и она выглядит «дёрганой».
@@ -311,6 +322,29 @@ public final class MachineGunClientAnim {
         return cachedModel;
     }
 
+    /**
+     * Вспышка в точке вылета.
+     * <p>
+     * Ставится в тот же тик, в который уходит пакет выстрела, и ровно в ту
+     * точку, что уходит в пакете, — поэтому вспышка и пуля всегда появляются
+     * одновременно и из одной точки. В прицеле не ставится: там точка вылета
+     * у самой камеры, и вспышка перекрыла бы круг прицела.
+     *
+     * @param at точка появления пули; {@code null} — вспышки не будет
+     */
+    public static void spawnShotFlash(@Nullable Vec3 at) {
+        if (at == null) {
+            return;
+        }
+
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) {
+            return;
+        }
+
+        mc.level.addParticle(com.trd.fx.particle.ModExplosionParticles.SHOT.get(), at.x, at.y, at.z, 0.0D, 0.0D, 0.0D);
+    }
+
     private static void spawnParticle(MachineGunAnimation.Marker marker) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
@@ -321,6 +355,10 @@ public final class MachineGunClientAnim {
         // В 1.21.1 ParticleOptions — это сам ParticleType у простых частиц,
         // отдельного класса-обёртки нет: неизвестно, SimpleParticleType ли это.
         if (!(type instanceof ParticleOptions options)) return;
+
+        // Вспышка в дуле ставится из точки вылета пули, а не по локатору:
+        // см. FLASH_EFFECT и spawnShotFlash.
+        if (FLASH_EFFECT.equals(marker.id())) return;
 
         // Точка вылета берётся из модели: локатор с кости прогоняется через
         // текущий клип и домножается на матрицу, которой пушка нарисована в

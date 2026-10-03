@@ -3,6 +3,8 @@ package com.trd.entity.weapons.bullets;
 import com.trd.entity.ModEntities;
 import com.trd.item.weapons.ammo.AmmoRegistry;
 import com.trd.sound.ModSounds;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
@@ -26,6 +28,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.FireBlock;
 import net.minecraft.world.level.block.StainedGlassBlock;
 import net.minecraft.world.level.block.StainedGlassPaneBlock;
 import net.minecraft.world.level.block.TintedGlassBlock;
@@ -40,6 +44,7 @@ import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -153,6 +158,35 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
     private LivingEntity lastHitTarget = null;
     private int hitTickTimer = 0;
     private static final double CENTER_DETONATE_RADIUS_SQR = 0.09D;
+
+    /**
+     * Сколько блоков пробила бронебойная пуля.
+     * <p>
+     * Считаются именно те блоки, сквозь которые она прошла насквозь: стекло и
+     * лёд разбиваются и не тратят пробитие, потому что их и так не остаётся.
+     */
+    private int blocksPierced = 0;
+
+    /**
+     * Кого бронебойная пуля уже прошила.
+     * <p>
+     * Пуля летит на шесть блоков за тик, и её трассировка накрывает разом
+     * несколько метров пути, так что без этого списка та же цель цеплялась бы
+     * снова на следующем тике и урон падал бы не вдвое, а на каждый тик полёта.
+     */
+    private final List<Integer> piercedTargets = new ArrayList<>();
+
+    /** Сколько блоков пробивает бронебойная пуля. */
+    private static final int PIERCING_BLOCK_BUDGET = 2;
+
+    /** Во столько раз падает урон по каждой следующей прошитой цели. */
+    private static final float PIERCING_DAMAGE_FALLOFF = 2.0F;
+
+    /** Столько целей бронебойная пуля снимает за один тик полёта. */
+    private static final int PIERCING_MAX_SWEEP_HITS = 8;
+
+    /** Насколько луч продолжается за прошитой целью. */
+    private static final double PIERCING_TARGET_STEP = 0.15D;
 
     public enum AmmoType {
         NORMAL("normal"), PIERCING("piercing"), HOLLOW("hollow"), INCENDIARY("incendiary"), RADIO("radio");
@@ -342,7 +376,11 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
 
         HitResult hit = traceHit(startPos, endPos);
         if (hit.getType() != HitResult.Type.MISS) {
-            handleHitResult(hit);
+            if (getAmmoType() == AmmoType.PIERCING) {
+                handlePiercingHits(startPos, endPos);
+            } else {
+                handleHitResult(hit);
+            }
             if (this.isRemoved()) {
                 return;
             }
@@ -580,6 +618,76 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
         }
     }
 
+    /**
+     * Бронебойный снимает за один тик всю шеренгу и доходит до стены за ней.
+     * <p>
+     * Пуля летит на шесть блоков за тик, и путь тика накрывает сразу несколько
+     * целей, стоящих друг за другом. {@link ProjectileUtil#getEntityHitResult}
+     * возвращает только ближайшую, а следующий тик пуля уже пролетела дальше —
+     * то есть вся шеренга кроме первой осталась бы нетронутой. Здесь трассировка
+     * по целям повторяется: каждая найденная получает урон (вдвое меньше
+     * предыдущей), а луч продолжается за ней.
+     * <p>
+     * Блок ищется отдельно от целей, а не берётся из {@link #traceHit}: там при
+     * попадании в моб возвращается цель, и стена за ней осталась бы незамеченной
+     * — пуля пролетела бы сквозь неё, ни потратив пробитие, ни остановившись.
+     */
+    private void handlePiercingHits(Vec3 start, Vec3 end) {
+        BlockHitResult wall = this.level().clip(new ClipContext(
+                start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this
+        ));
+
+        // Цели ищутся только до стены: за ней их всё равно не видно.
+        Vec3 limit = wall.getType() == HitResult.Type.MISS ? end : wall.getLocation();
+        Vec3 origin = start;
+        int guard = 0;
+
+        while (guard++ < PIERCING_MAX_SWEEP_HITS) {
+            EntityHitResult mob = nearestMob(origin, limit);
+            if (mob == null) {
+                break;
+            }
+
+            handleEntityHit(mob.getEntity());
+            if (this.isRemoved()) {
+                return;
+            }
+            // Луч продолжается сразу за найденной целью; сама цель уже в
+            // piercedTargets и повторно не вернётся. Шаг идёт по текущему
+            // курсу, а не по направлению вылета: пуля с первых тиков уже
+            // просела по гравитации, и шаг по старому курсу увел бы луч с
+            // настоящей траектории.
+            origin = mob.getLocation().add(currentDirection().scale(PIERCING_TARGET_STEP));
+        }
+
+        if (wall.getType() == HitResult.Type.BLOCK) {
+            this.onHitBlock(wall);
+        }
+    }
+
+    /** Ближайшая ещё не прошитая цель на отрезке луча. */
+    private EntityHitResult nearestMob(Vec3 start, Vec3 limit) {
+        AABB sweep = this.getBoundingBox().expandTowards(limit.subtract(start)).inflate(0.5F);
+        return ProjectileUtil.getEntityHitResult(
+                this.level(), this,
+                start, limit,
+                sweep,
+                e -> e.isAlive() && e != this.getOwner() && e.isPickable() && !piercedTargets.contains(e.getId())
+        );
+    }
+
+    /**
+     * Курс пули прямо сейчас.
+     * <p>
+     * Скорость на сервере точная, в отличие от направления вылета: гравитация
+     * и сопротивление воздуха успевают изменить траекторию, и через десяток
+     * тиков старый курс уходит от настоящего на заметный угол.
+     */
+    private Vec3 currentDirection() {
+        Vec3 motion = this.getDeltaMovement();
+        return motion.lengthSqr() > 1.0E-8D ? motion.normalize() : launchDirection();
+    }
+
     private void handleEntityHit(Entity target) {
         if (!(target instanceof LivingEntity livingTarget)) return;
 
@@ -612,9 +720,23 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
 
         livingTarget.invulnerableTime = 0;
 
+        // Бронебойный идёт насквозь: каждая следующая цель получает вдвое
+        // меньше, потому что боезаряд прошёл через столько-то препятствий.
+        boolean piercing = currentType == AmmoType.PIERCING;
+        if (piercing) {
+            finalDamage /= (float) Math.pow(PIERCING_DAMAGE_FALLOFF, piercedTargets.size());
+        }
+
         if (livingTarget.hurt(source, finalDamage)) {
             applySpecialEffect(livingTarget, currentType);
             checkAndCountKill(livingTarget);
+        }
+
+        if (piercing) {
+            piercedTargets.add(livingTarget.getId());
+            playHitSound();
+            // Пуля летит дальше: следующая цель стоит впереди по курсу.
+            return;
         }
 
         playHitSound();
@@ -648,7 +770,7 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
                 this.level(), this,
                 start, endForEntities,
                 sweep,
-                e -> e.isAlive() && e != this.getOwner() && e.isPickable()
+                e -> e.isAlive() && e != this.getOwner() && e.isPickable() && !piercedTargets.contains(e.getId())
         );
 
         return entityHit != null ? entityHit : blockHit;
@@ -677,14 +799,37 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
 
     @Override
     protected void onHitBlock(BlockHitResult result) {
-        if (!this.level().isClientSide) {
-            BlockState state = this.level().getBlockState(result.getBlockPos());
-            if (isGlass(state)) {
-                this.level().destroyBlock(result.getBlockPos(), true);
-            }
-            playGroundSound();
-            this.discard();
+        if (this.level().isClientSide) {
+            return;
         }
+
+        BlockPos pos = result.getBlockPos();
+        BlockState state = this.level().getBlockState(pos);
+
+        // Стекло и обычный лёд выбиваются любым боезарядом: это рыхлые
+        // материалы, которые пуля должна пробивать, а не останавливаться о них.
+        if (isBreakable(state)) {
+            this.level().destroyBlock(pos, true);
+        } else if (canPierceBlock()) {
+            // Бронебойный проходит насквозь и летит дальше: блок не трогаем, но
+            // каждая пробутая стена стоит ему одного из двух.
+            blocksPierced++;
+            return;
+        }
+
+        // Зажигательный поджигает: попадание в уже горящий блок перекидывает
+        // огонь на ближайшую горюю поверхность рядом.
+        if (getAmmoType() == AmmoType.INCENDIARY) {
+            spreadFire(pos);
+        }
+
+        playGroundSound();
+        this.discard();
+    }
+
+    /** Остался ли ещё запас на пробитие блока. */
+    private boolean canPierceBlock() {
+        return getAmmoType() == AmmoType.PIERCING && blocksPierced < PIERCING_BLOCK_BUDGET;
     }
 
     /** В 1.21.1 {@code AbstractGlassBlock} больше нет: стекло — это подтипы {@code TransparentBlock}. */
@@ -692,6 +837,42 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
         return state.getBlock() instanceof StainedGlassBlock
                 || state.getBlock() instanceof TintedGlassBlock
                 || state.getBlock() instanceof StainedGlassPaneBlock;
+    }
+
+    /**
+     * Что пуля выбивает насквозь без траты пробития.
+     * <p>
+     * Только ванильное стекло и обычный лёд: упакованный и инейный лёд — это
+     * уже другие блоки, и ломать их пуля не должна.
+     */
+    private static boolean isBreakable(BlockState state) {
+        return isGlass(state) || state.is(Blocks.ICE);
+    }
+
+    /**
+     * Перекидывает огонь с горящего блока на ближайшую горюю поверхность.
+     * <p>
+     * Огонь ставится только в пустую клетку, под которой есть что-то горюе, —
+     * ровно те же условия, по которым живёт обычный огонь. За тик попадания
+     * поджигается одна точка: иначе пуля разжигала бы куст леса.
+     */
+    private void spreadFire(BlockPos pos) {
+        BlockState hit = this.level().getBlockState(pos);
+        if (!(hit.getBlock() instanceof FireBlock)) {
+            return;
+        }
+
+        for (BlockPos around : BlockPos.betweenClosed(pos.offset(-1, -1, -1), pos.offset(1, 1, 1))) {
+            if (around.equals(pos) || !this.level().getBlockState(around).isAir()) {
+                continue;
+            }
+            if (!this.level().getBlockState(around.below())
+                    .isFlammable(this.level(), around.below(), Direction.UP)) {
+                continue;
+            }
+            this.level().setBlockAndUpdate(around, Blocks.FIRE.defaultBlockState());
+            return;
+        }
     }
 
     private float calculateDamage(LivingEntity target, AmmoType type) {
@@ -805,6 +986,10 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
         // собственного курса — синхронизированные данные с появлением не летят.
         tag.putFloat("LaunchYaw", this.entityData.get(LAUNCH_YAW));
         tag.putFloat("LaunchPitch", this.entityData.get(LAUNCH_PITCH));
+        // Пробитие переживает перезагрузку чанка: без него загруженная с диска
+        // пуля получила бы вторую попытку пробить столько же блоков.
+        tag.putInt("BlocksPierced", blocksPierced);
+        tag.putIntArray("PiercedTargets", piercedTargets);
         if (lastHitTarget != null) {
             tag.putUUID("LastHitUUID", lastHitTarget.getUUID());
         }
@@ -824,6 +1009,11 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
         setFlightDuration(tag.getInt("FlightTime"));
         this.entityData.set(LAUNCH_YAW, tag.getFloat("LaunchYaw"));
         this.entityData.set(LAUNCH_PITCH, tag.getFloat("LaunchPitch"));
+        blocksPierced = tag.getInt("BlocksPierced");
+        piercedTargets.clear();
+        for (int id : tag.getIntArray("PiercedTargets")) {
+            piercedTargets.add(id);
+        }
     }
 
     /**

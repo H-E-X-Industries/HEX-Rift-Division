@@ -517,6 +517,10 @@ public class ModClientSetup {
             @Override
             protected void apply(Void object, ResourceManager resourceManager, ProfilerFiller profiler) {
                 com.trd.client.gecko.item.guns.MachineGunModel.invalidate();
+                // Разметка кадров тоже кэшируется, а лежит в json, который
+                // правится руками в Blockbench. Без сброса новые времена
+                // звуков подхватывались бы только после перезапуска игры.
+                com.trd.item.weapons.guns.MachineGunAnimation.invalidate();
             }
         });
     }

@@ -16,6 +16,10 @@ import net.minecraft.world.item.ItemStack;
  * Слой вешается в
  * {@link com.trd.client.renderer.ClientRenderHandler#registerGuiLayers} над
  * хотбаром — ровно как {@code registerAbove(HOTBAR, "ammo_hud", ...)} в 1.20.1.
+ * <p>
+ * В прицеле слой не рисуется вовсе: {@link com.trd.client.overlay.MachineGunScope}
+ * отменяет {@code RenderGuiEvent.Pre}, а на отмене слой до конца не доходит.
+ * Поэтому там счётчик рисуется вручную, сразу поверх оверлея прицела.
  */
 public class OverlayAmmoHud {
 
@@ -25,6 +29,11 @@ public class OverlayAmmoHud {
     private static final int LOW_COLOR = 0xFF5555;
 
     public static void render(GuiGraphics graphics, DeltaTracker delta) {
+        render(graphics);
+    }
+
+    /** Без слоя: вызывается из прицела, где слои уже отменены. */
+    public static void render(GuiGraphics graphics) {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
 

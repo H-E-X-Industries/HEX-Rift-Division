@@ -37,6 +37,7 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -49,6 +50,8 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.List;
 import java.util.function.Consumer;
+
+import javax.annotation.Nullable;
 
 /**
  * Автоматическая 20-мм пушка. Питается патронами калибра {@code 20mm_turret},
@@ -161,12 +164,17 @@ public class MachineGunItem extends Item {
      * лучу, и старт внутри собственной головы означал бы мгновенное попадание
      * в любой блок, к которому иглот прижался.
      * <p>
-     * Значение выросло с 0.3 до 0.8: в прицеле камера стоит у глаза, и пуля,
-     * появлявшаяся в полблоке от него, читалась как вылетающая из головы.
-     * Впереди она оказывается уже за пределами собственного хитбокса игрока, и
-     * луч столкновений стартует там же, где на самом деле выходит дуло.
+     * Значение выросло с 0.3 до 0.8, а потом до 1.8: в прицеле камера стоит у
+     * глаза, и пуля, появлявшаяся в полблоке от него, читалась как вылетающая
+     * из головы. Ещё блок вперёд уводит её и от стен в упоре — стоять к
+     * противнику вплотную и простреливать его насквозь было нельзя, луч
+     * столкновений стартовал бы в его клетке.
+     * <p>
+     * Промахнуться мимо цели в упоре это не значит: луч стартует в точке
+     * появления и тут же идёт на шесть блоков, поэтому моб в упоре и блок под
+     * ногами всё равно попадают под трассировку на первом же тике полёта.
      */
-    private static final double SCOPED_FORWARD = 0.8D;
+private static final double SCOPED_FORWARD = 1.8D;
 
     /**
      * Насколько длинно дуло выходит из-за плеча стрелка.
@@ -192,9 +200,9 @@ public class MachineGunItem extends Item {
     private static final double THIRD_PERSON_RIGHT   = 0.3D;
 
     /**
-     * Доворот точки вылета на четыре пикселя влево от всего, что нарисовано.
+     * Доворот точки вылета на пять пикселей влево от всего, что нарисовано.
      * <p>
-     * Четыре пикселя — это {@code 4/16} блока, ровно мера, в которой дальше
+     * Пять пикселей — это {@code 5/16} блока, ровно мера, в которой дальше
      * считаются все остальные смещения. Сдвиг общий для первого и третьего
      * лица и применяется один раз, уже к выбранной точке вылета: и к
      * клиентскому кончику ствола из модели, и к серверной формуле. Иначе
@@ -209,7 +217,13 @@ public class MachineGunItem extends Item {
      * перекрестья, а на близкой дистанции расхождение вообще переставало бы
      * попадать туда, куда смотрит игрок.
      */
-    private static final double MUZZLE_SIDE_SHIFT = 4.0D / 16.0D;
+    private static final double MUZZLE_SIDE_SHIFT = 5.0D / 16.0D;
+
+    /**
+     * Насколько точка вылета выносится из хитбокса стрелка при вертикальном
+     * выстреле. Запас нужен, чтобы луч столкновений стартовал уже снаружи.
+     */
+    private static final double SHOOTER_CLEARANCE = 0.1D;
 
     /**
      * Смещение окна выброса гильзы вбок и вверх относительно ствола.
@@ -227,18 +241,91 @@ public class MachineGunItem extends Item {
      * <p>
      * Выстрел строго вверх или строго вниз даёт нулевое векторное произведение
      * с вертикалью, и {@code normalize()} на нуле молча возвращает нулевой
-     * вектор — то есть смещение вбок просто исчезало. Поэтому при вырожденном
-     * произведении берём другую ось.
+     * вектор — то есть смещение вбок просто исчезало бы. Тогда берётся
+     * другая ось, но и она к yaw стрелка не привязана: строго вертикальный
+     * вектор вообще не несёт информации о повороте, и все стрелки, смотрящие
+     * вверх, получали бы одну и ту же мировую «правую» сторону. Поэтому
+     * вырожденный случай считается по {@code yaw} — там боковое смещение
+     * остаётся настоящим «вправо от стрелка».
      */
-    private static Vec3 perpendicular(Vec3 direction) {
+    private static Vec3 perpendicular(Vec3 direction, float yaw) {
         Vec3 side = direction.cross(new Vec3(0, 1, 0));
         if (side.lengthSqr() < 1.0E-6D) {
-            side = direction.cross(new Vec3(1, 0, 0));
-        }
-        if (side.lengthSqr() < 1.0E-6D) {
-            return new Vec3(1, 0, 0);
+            double yawRad = yaw * (Math.PI / 180.0D);
+            side = new Vec3(-Math.cos(yawRad), 0.0D, Math.sin(yawRad));
         }
         return side.normalize();
+    }
+
+    /**
+     * Насколько далеко по лучу выходит из хитбокса.
+     * <p>
+     * Обычный слэб-метод: для каждой оси берётся ближайшая из двух границ и
+     * из всех трёх — наибольшая. Возвращает {@code 0}, если точка снаружи.
+     * Оси, параллельные лучу, пропускаются: по ним луч не пересекает границу и
+     * ждать выхода неоткуда.
+     */
+    private static double exitDistance(Vec3 origin, Vec3 direction, AABB box) {
+        double[] o = {origin.x, origin.y, origin.z};
+        double[] d = {direction.x, direction.y, direction.z};
+        double[] min = {box.minX, box.minY, box.minZ};
+        double[] max = {box.maxX, box.maxY, box.maxZ};
+
+        double exit = 0.0D;
+        for (int axis = 0; axis < 3; axis++) {
+            if (Math.abs(d[axis]) < 1.0E-9D) {
+                continue;
+            }
+            double a = (min[axis] - o[axis]) / d[axis];
+            double b = (max[axis] - o[axis]) / d[axis];
+            exit = Math.max(exit, Math.min(a, b));
+        }
+        return exit;
+    }
+
+    /**
+     * Выносит точку вылета из собственного хитбокса стрелка.
+     * <p>
+     * Строго вертикальный выстрел — единственный случай, где и клиентский
+     * кончик ствола из модели, и серверная формула оказываются <em>внутри</em>
+     * блока, в котором стоит игрок: луч столкновений стартует в чужой
+     * геометрии, пуля не летит никуда и визуально выходит из пола или из
+     * земли под ногами. Сдвиг вдоль взгляда до самого дальнего края хитбокса
+     * (+ запас) это лечит, и делается одинаково для пули и для гильзы —
+     * обе точки считаются от одного и того же ствола.
+     */
+    private static Vec3 clearOfShooter(Vec3 point, Vec3 forward, Player player) {
+        AABB box = player.getBoundingBox().inflate(SHOOTER_CLEARANCE);
+
+        // Точка и так снаружи — двигать нечего. Проверка обязательна: slab-метод
+        // для луча, идущего от хитбокса наружу в сторону, противоположную его
+        // грани, выдаёт положительный выход, и пустой сдвиг увел бы точку зря.
+        if (!box.contains(point)) {
+            return point;
+        }
+        return point.add(forward.scale(exitDistance(point, forward, box)));
+    }
+
+    /**
+     * Точка, из которой на самом деле появляется пуля — для эффектов на
+     * клиенте.
+     * <p>
+     * Сервер сдвигает присланную точку ещё на {@link #MUZZLE_SIDE_SHIFT} влево,
+     * и без повторения того же самого вспышка в дуле стояла бы на пять
+     * пикселей правее пули. Вынос из хитбокса стрелка здесь не повторяется: он
+     * зависит от серверного угла выстрела, а на пять пикселей подсветку не
+     * сдвинуть и незачем.
+     *
+     * @param muzzle  точка из пакета; {@code null} — эффектов не будет
+     * @param lookDir направление взгляда стрелка
+     * @param yaw     поворот стрелка вокруг вертикали
+     */
+    @Nullable
+    public static Vec3 shotOrigin(@Nullable Vec3 muzzle, Vec3 lookDir, float yaw) {
+        if (muzzle == null) {
+            return null;
+        }
+        return muzzle.subtract(perpendicular(lookDir, yaw).scale(MUZZLE_SIDE_SHIFT));
     }
 
     public MachineGunItem(Properties properties) {
@@ -774,7 +861,7 @@ public class MachineGunItem extends Item {
         // используются дальше и для точки вылета пули, и для точки выброса
         // гильзы: брать их от разных векторов означало бы, что прицел и
         // казённик живут в разных системах координат.
-        Vec3 side = perpendicular(lookDir);
+        Vec3 side = perpendicular(lookDir, yaw);
         Vec3 forward = velocity.normalize();
 
         Vec3 gunPos = player.position()
@@ -794,13 +881,18 @@ public class MachineGunItem extends Item {
                                 .add(forward.scale(MUZZLE_LENGTH + THIRD_PERSON_FORWARD))
                                 .add(side.scale(THIRD_PERSON_RIGHT - THIRD_PERSON_LEFT));
 
-        // Четыре пикселя влево — поверх всего, что выбрано выше. Сдвиг один и
+        // Пять пикселей влево — поверх всего, что выбрано выше. Сдвиг один и
         // общий для клиентской точки и для серверной формулы, поэтому вид от
         // первого и третьего лица не расходится; в прицеле не применяется,
         // там точка вылета обязана лежать на оптической оси.
         if (!scoped) {
             spawnPos = spawnPos.subtract(side.scale(MUZZLE_SIDE_SHIFT));
         }
+
+        // И последнее: из хитбокса стрелка. При вертикальном выстреле точка
+        // вылета иначе лежит внутри блока, в котором стоит игрок, и луч
+        // столкновений стартует в чужой геометрии — пуля не летит никуда.
+        spawnPos = clearOfShooter(spawnPos, forward, player);
 
         bullet.setPos(spawnPos.x, spawnPos.y, spawnPos.z);
 
@@ -828,6 +920,11 @@ public class MachineGunItem extends Item {
                 .add(side.scale(PORT_SIDE_OFFSET))
                 .add(up.scale(PORT_UP_OFFSET))
                 .add(forward.scale(PORT_FORWARD));
+
+        // Гильза вылетает из той же точки, что и пуля, и по той же причине
+        // выносится из хитбокса стрелка: иначе при вертикальном выстреле она
+        // появлялась бы в полу блока под ногами и тут же в нём и тонула.
+        portPos = clearOfShooter(portPos, forward, player);
 
         // Скорости подобраны так, чтобы гильза вылетела примерно на блок в
         // сторону, упала и тут же осела: дальний разлёт гасит трение в
@@ -1024,6 +1121,17 @@ ItemStack stack = mc.player.getMainHandItem();
                 // сдвинуться, и пакет ушёл бы с кончиком ствола от прошлого кадра.
                 net.minecraft.world.phys.Vec3 muzzle = currentMuzzle();
                 boolean scoped = com.trd.client.overlay.MachineGunScope.isScoped();
+
+                // Вспышка в дуле ставится здесь же, в том же тике и ровно в той
+                // же точке, что уйдёт в пакете: так она никогда не разъезжается
+                // с пулей и не зависит от того, успел ли клиент проиграть
+                // анимацию. В прицеле вспышки нет — она перекрыла бы круг.
+                if (!scoped) {
+                    MachineGunClientAnim.spawnShotFlash(MachineGunItem.shotOrigin(
+                            muzzle, mc.player.calculateViewVector(mc.player.getXRot(), mc.player.getYRot()),
+                            mc.player.getYRot()));
+                }
+
                 PacketShoot packet = muzzle == null
                         ? PacketShoot.of(mc.player.getYRot(), mc.player.getXRot(), scoped)
                         : PacketShoot.of(mc.player.getYRot(), mc.player.getXRot(), scoped, muzzle);
