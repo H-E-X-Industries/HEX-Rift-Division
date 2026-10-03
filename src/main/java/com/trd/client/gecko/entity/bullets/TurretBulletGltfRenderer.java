@@ -3,11 +3,8 @@ package com.trd.client.gecko.entity.bullets;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.trd.entity.weapons.bullets.TurretBulletEntity;
-import com.trd.main.MainRegistry;
-import com.wf.gemrender.asset.GemRenderModels;
 import com.wf.gemrender.direct.DirectPass;
 import com.wf.gemrender.direct.DirectRenderer;
-import com.wf.gemrender.texture.VariantUv;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.culling.Frustum;
@@ -24,11 +21,11 @@ import net.minecraft.world.phys.Vec3;
  * потом pitch, потом собственное вращение пули вокруг оси полёта. Углы берутся
  * с интерполяцией между прошлым и текущим тиком, иначе на высоком FPS пуля
  * дёргалась бы между тиками.
+ * <p>
+ * Текстура своя на каждый тип патрона и выбирается полосой сшитого атласа —
+ * см. {@link TurretBulletVariants}.
  */
 public class TurretBulletGltfRenderer extends EntityRenderer<TurretBulletEntity> {
-
-    private static final ResourceLocation MODEL =
-            ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "models/entity/turret_bullet.gltf");
 
     public TurretBulletGltfRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager);
@@ -69,7 +66,7 @@ public class TurretBulletGltfRenderer extends EntityRenderer<TurretBulletEntity>
     @Override
     public void render(TurretBulletEntity entity, float yaw, float partialTick, PoseStack poseStack,
                        MultiBufferSource bufferSource, int packedLight) {
-        var model = GemRenderModels.get(MODEL);
+        var model = TurretBulletVariants.model();
         if (model == null) {
             return;
         }
@@ -101,8 +98,12 @@ public class TurretBulletGltfRenderer extends EntityRenderer<TurretBulletEntity>
         // верхняя правая texel'а лайтмапы, которая есть в карте освещения всегда.
         // Трассер должен читаться на любом фоне, иначе в тёмном коридоре его
         // просто не видно, а сам выстрел читается только по звуку.
+        //
+        // Полоса атласа — по типу заряженного патрона: у бронебойного, полого,
+        // зажигательного и радио свои текстуры, и переключается она сменой UV,
+        // а не перезагрузкой модели.
         DirectRenderer.submit(model, (com.wf.gemrender.gltf.GltfAnimation) null, 0.0f,
                 poseStack.last().pose(), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY,
-                0xFFFFFFFF, DirectPass.LEVEL, VariantUv.NONE);
+                0xFFFFFFFF, DirectPass.LEVEL, TurretBulletVariants.variant(model, entity));
     }
 }

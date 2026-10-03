@@ -712,11 +712,12 @@ public class GilseEntity extends Entity {
         float pitch = 0.92F + this.random.nextFloat() * 0.18F;
         float volume = (0.3F + strength * 0.55F) * (0.9F + this.random.nextFloat() * 0.2F);
 
-        // Половина от полной. При автоматическом огне гильз сыплется сразу по
+        // Четверть от полной. При автоматическом огне гильз сыплется сразу по
         // несколько штук, и на полной громкости щелчки сливались в непрерывный
-        // треск, в котором отдельную гильзу уже не разобрать.
+        // треск, в котором отдельную гильзу уже не разобрать; вдвое тише всё
+        // равно оставалось слышно, как Machine Gun'овский лайк.
         this.level().playSound(null, this.getX(), this.getY(), this.getZ(),
-                ModSounds.GILSE_LIGHT.get(), SoundSource.PLAYERS, volume * 0.5F, pitch);
+                ModSounds.GILSE_LIGHT.get(), SoundSource.PLAYERS, volume * 0.25F, pitch);
     }
 
     /**

@@ -63,6 +63,11 @@ public class ModClientSetup {
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.STANOK_BE.get(), com.trd.client.render.StanokRenderer::new);
         // event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.FUEL_TANK_SMALL_BE.get(), com.trd.client.render.ber.FuelTankRenderer::new);
 
+        // Пять текстур пули сшиваются в один атлас вариантов. Звать надо до
+        // первого выстрела, иначе первые пули просто не рисуются: модель
+        // грузится асинхронно, а рендерер на пустой модели выходит.
+        com.trd.client.gecko.entity.bullets.TurretBulletVariants.load();
+
         event.registerEntityRenderer(com.trd.entity.ModEntities.TURRET_BULLET.get(),
                 com.trd.client.gecko.entity.bullets.TurretBulletGltfRenderer::new);
         event.registerEntityRenderer(com.trd.entity.ModEntities.GILSE.get(),
