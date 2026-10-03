@@ -338,11 +338,20 @@ public class ModCreativeTabs {
                         output.accept(ModItems.PIG_TURRET_PLACER.get());
                         output.accept(ModItems.TURRET_CHIP.get());
 
-                        output.accept(ModItems.AMMO_TURRET.get());
-                        output.accept(ModItems.AMMO_TURRET_HOLLOW.get());
-                        output.accept(ModItems.AMMO_TURRET_PIERCING.get());
-                        output.accept(ModItems.AMMO_TURRET_FIRE.get());
-                        output.accept(ModItems.AMMO_TURRET_RADIO.get());
+                        // Патроны идут парами: сначала обычный, потом его трассирующая версия, и
+                        // только потом следующий тип боезаряда. Так переключатель
+                        // «трассер / не трассер» не ищется по всему списку, а
+                        // стоит рядом с тем же патроном.
+                        output.accept(ModItems.TURRET_AMMO.get());
+                        output.accept(ModItems.TURRET_AMMO_TRACER.get());
+                        output.accept(ModItems.TURRET_AMMO_AP.get());
+                        output.accept(ModItems.TURRET_AMMO_AP_TRACER.get());
+                        output.accept(ModItems.TURRET_AMMO_HOLLOW.get());
+                        output.accept(ModItems.TURRET_AMMO_HOLLOW_TRACER.get());
+                        output.accept(ModItems.TURRET_AMMO_FIRE.get());
+                        output.accept(ModItems.TURRET_AMMO_FIRE_TRACER.get());
+                        output.accept(ModItems.TURRET_AMMO_RADIO.get());
+                        output.accept(ModItems.TURRET_AMMO_RADIO_TRACER.get());
 
                         output.accept(ModItems.MISSILE_100MM.get());
                         output.accept(ModItems.MISSILE_100MM_HE.get());

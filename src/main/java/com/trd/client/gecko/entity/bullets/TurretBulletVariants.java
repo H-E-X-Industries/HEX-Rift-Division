@@ -17,7 +17,10 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /**
- * Пять текстур пули — по одной на тип патрона — одной моделью.
+ * Модели и текстуры пули, разложенные по двум видам боезаряда.
+ *
+ * <p><b>Трассер.</b> Пять текстур — по одной на тип патрона — одной моделью
+ * {@code turret_bullet.gltf}. Это те самые полосатые шлейфы, что и раньше.
  * <p>
  * В геколибе это было пять geo-моделей, и тип пули выбирался прямо в
  * {@code getTextureResource}. На glTF так не выйдет: геометрия у всех вариантов
@@ -30,36 +33,49 @@ import javax.annotation.Nullable;
  * Порядок полос задан {@link AmmoType#ordinal()} и жёстко зашит в модель:
  * нулевая полоса — обычный патрон, дальше по одному на бронебойный, полый,
  * зажигательный и радио. Список вариантов и палитра строятся из одной карты
- * {@link #TEXTURES}, поэтому разъехаться они не могут; сверху стоит проверка
- * по {@link GemRenderGltfModel#variantCount()}.
+ * {@link #TRACER_TEXTURES}, поэтому разъехаться они не могут; сверху стоит
+ * проверка по {@link GemRenderGltfModel#variantCount()}.
+ *
+ * <p><b>Обычный патрон.</b> Своя модель {@code turret_bullet2.gltf} и одна
+ * текстура на все пять типов: различать их нечем и незачем, силуэт у боезарядов
+ * без трассера одинаковый. Текстура прописана внутри самой модели
+ * ({@code images.uri}), поэтому варианты тут не нужны и модель грузится обычным
+ * {@link GemRenderModels#get}, как гильза, — без атласа и без сшивания.
+ * <p>
+ * Геометрия у моделей разная по толщине (обычная пуля вдвое шире трассирующей)
+ * и обе вытянуты вдоль оси полёта, так что поворот в рендерере у них общий.
  */
 public final class TurretBulletVariants {
 
-    /** Модель пули: геометрия общая для всех типов патрона. */
-    private static final ResourceLocation MODEL =
+    /** Модель трассера: геометрия общая для всех типов патрона. */
+    private static final ResourceLocation TRACER_MODEL =
             ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "models/entity/turret_bullet.gltf");
 
-    /** Текстура обычного патрона: она же в glTF, и она же нулевая полоса. */
+    /** Модель обычного боезаряда: одна на все типы. */
+    private static final ResourceLocation PLAIN_MODEL =
+            ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "models/entity/turret_bullet2.gltf");
+
+    /** Текстура трассера обычного патрона: она же в glTF, и она же нулевая полоса. */
     private static final ResourceLocation BASE_TEXTURE =
             ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "textures/entity/turret_bullet.png");
 
-    private static final Map<AmmoType, ResourceLocation> TEXTURES = new EnumMap<>(AmmoType.class);
+    private static final Map<AmmoType, ResourceLocation> TRACER_TEXTURES = new EnumMap<>(AmmoType.class);
 
     /** Варианты в порядке {@link AmmoType#ordinal()}: индекс списка = полоса в атласе. */
-    private static final List<Map<ResourceLocation, ResourceLocation>> VARIANTS;
+    private static final List<Map<ResourceLocation, ResourceLocation>> TRACER_VARIANTS;
 
     @Nullable
-    private static ModelCache.Handle<GemRenderGltfModel> handle;
+    private static ModelCache.Handle<GemRenderGltfModel> tracerHandle;
 
     static {
-        TEXTURES.put(AmmoType.NORMAL, BASE_TEXTURE);
-        TEXTURES.put(AmmoType.PIERCING, texture("turret_bullet_ap"));
-        TEXTURES.put(AmmoType.HOLLOW, texture("turret_bullet_hollow"));
-        TEXTURES.put(AmmoType.INCENDIARY, texture("turret_bullet_fire"));
-        TEXTURES.put(AmmoType.RADIO, texture("turret_bullet_radio"));
+        TRACER_TEXTURES.put(AmmoType.NORMAL, BASE_TEXTURE);
+        TRACER_TEXTURES.put(AmmoType.PIERCING, texture("turret_bullet_ap"));
+        TRACER_TEXTURES.put(AmmoType.HOLLOW, texture("turret_bullet_hollow"));
+        TRACER_TEXTURES.put(AmmoType.INCENDIARY, texture("turret_bullet_fire"));
+        TRACER_TEXTURES.put(AmmoType.RADIO, texture("turret_bullet_radio"));
 
-        VARIANTS = Stream.of(AmmoType.values())
-                .map(TEXTURES::get)
+        TRACER_VARIANTS = Stream.of(AmmoType.values())
+                .map(TRACER_TEXTURES::get)
                 .map(tex -> Map.of(BASE_TEXTURE, tex))
                 .toList();
     }
@@ -72,12 +88,13 @@ public final class TurretBulletVariants {
     }
 
     /**
-     * Ставит варианты в очередь на загрузку. Звать достаточно один раз, из
-     * клиентской регистрации рендереров.
+     * Ставит модель трассера в очередь на загрузку. Звать достаточно один раз,
+     * из клиентской регистрации рендереров.
      * <p>
-     * Именно один — {@link GemRenderModels#variants} кладёт билдер в общий
+     * По одной модели — {@link GemRenderModels#variants} кладёт билдер в общий
      * словарь по {@code putIfAbsent}, но каждый вызов возвращает новую ручку, а
-     * нам нужна одна: пока она грузится, пули просто не рисуются.
+     * нам нужна ровно одна: пока она грузится, трассеры просто не рисуются.
+     * Обычная пуля здесь не участвует — она грузится сама, по {@code get}.
      * <p>
      * Оба идентификатора — это модель, и так оно и должно быть:
      * {@code variants} внутри переставляет их местами и отдаёт
@@ -91,37 +108,63 @@ public final class TurretBulletVariants {
      * помечает модель сломанной до следующей перезагрузки ресурсов — пуля
      * тогда просто не рисуется.
      * <p>
-     * При перезагрузке ресурсов ничего заново звать не надо — ручка сама
+     * При перезагрузке ресурсов ничего заново вызывать не надо — ручка сама
      * перезапросит модель у кеша GemRender.
      */
     public static synchronized void load() {
-        if (handle != null) return;
-        handle = GemRenderModels.variants(MODEL, MODEL, VARIANTS);
+        if (tracerHandle == null) {
+            tracerHandle = GemRenderModels.variants(TRACER_MODEL, TRACER_MODEL, TRACER_VARIANTS);
+        }
     }
 
-    /** Модель со сшитыми вариантами либо {@code null}, пока она ещё грузится. */
+    /** Модель трассера со сшитыми вариантами либо {@code null}, пока она ещё грузится. */
     @Nullable
-    public static synchronized GemRenderGltfModel model() {
+    public static synchronized GemRenderGltfModel tracerModel() {
         load();
-        return handle != null ? handle.get() : null;
+        return tracerHandle != null ? tracerHandle.get() : null;
     }
 
     /**
-     * Полоса атласа для пули: своя на каждый тип патрона.
+     * Модель обычного боезаряда либо {@code null}, пока она ещё грузится.
+     * <p>
+     * Без вариантов и без ручки: текстура прописана в самой модели, а
+     * {@code get} и так отдаёт кешированную модель и {@code null}, пока та не
+     * готова, — ровно как у гильзы.
+     */
+    @Nullable
+    public static GemRenderGltfModel plainModel() {
+        return GemRenderModels.get(PLAIN_MODEL);
+    }
+
+    /**
+     * Модель для конкретной пули: трассеру своя, обычному боезаряду своя.
+     * <p>
+     * Пока нужная модель не загрузилась, берётся любая из двух: лучше нарисовать
+     * пулю не тем, чем она должна быть, чем не нарисовать её совсем — на
+     * автоматическом огне мигание читается как потеря пули, а лишняя минус
+     * секунда на загрузку модели этого не стоит.
+     */
+    @Nullable
+    public static GemRenderGltfModel modelFor(TurretBulletEntity entity) {
+        return entity.isTracer() ? tracerModel() : plainModel();
+    }
+
+    /**
+     * Полоса атласа трассера: своя на каждый тип патрона.
      * <p>
      * Возвращает {@link VariantUv#NONE}, пока варианты не собрались или если
      * полосы для этого типа нет: {@code NONE} — это нулевая полоса, то есть
      * обычный патрон, и пуля в худшем случае нарисуется не тем, чем должна.
      */
-    public static VariantUv variant(@Nullable GemRenderGltfModel model, @Nullable AmmoType type) {
+    public static VariantUv tracerVariant(@Nullable GemRenderGltfModel model, @Nullable AmmoType type) {
         if (model == null || type == null) return VariantUv.NONE;
 
         int band = type.ordinal();
         return band < model.variantCount() ? model.variant(band) : VariantUv.NONE;
     }
 
-    /** Полоса атласа для конкретной пули. */
-    public static VariantUv variant(@Nullable GemRenderGltfModel model, TurretBulletEntity entity) {
-        return variant(model, entity.getAmmoType());
+    /** Полоса атласа трассера для конкретной пули. */
+    public static VariantUv tracerVariant(@Nullable GemRenderGltfModel model, TurretBulletEntity entity) {
+        return tracerVariant(model, entity.getAmmoType());
     }
 }

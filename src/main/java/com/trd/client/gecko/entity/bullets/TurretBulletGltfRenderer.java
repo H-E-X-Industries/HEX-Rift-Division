@@ -5,6 +5,7 @@ import com.mojang.math.Axis;
 import com.trd.entity.weapons.bullets.TurretBulletEntity;
 import com.wf.gemrender.direct.DirectPass;
 import com.wf.gemrender.direct.DirectRenderer;
+import com.wf.gemrender.texture.VariantUv;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.culling.Frustum;
@@ -22,10 +23,32 @@ import net.minecraft.world.phys.Vec3;
  * с интерполяцией между прошлым и текущим тиком, иначе на высоком FPS пуля
  * дёргалась бы между тиками.
  * <p>
- * Текстура своя на каждый тип патрона и выбирается полосой сшитого атласа —
- * см. {@link TurretBulletVariants}.
+ * Модель и яркость выбираются по заряженному патрону:
+ * <ul>
+ *   <li>трассер — своя модель со шлейфом, своя текстура на тип патрона, и
+ *       {@link LightTexture#FULL_BRIGHT}: он должен читаться на любом фоне, иначе
+ *       в тёмном коридоре его просто не видно, а сам выстрел читается только по
+ *       звуку;</li>
+ *   <li>обычный боезаряд — своя модель с одной текстурой на все типы и обычное
+ *       освещение точки.</li>
+ * </ul>
+ * Раньше трассер был единственным вариантом, и яркость {@code FULL_BRIGHT}
+ * доставалась всем пулям сразу; теперь она достаётся именно тем, кто её
+ * заслужил, — светящимся.
  */
 public class TurretBulletGltfRenderer extends EntityRenderer<TurretBulletEntity> {
+
+    /**
+     * Увеличение модели обычного боезаряда.
+     * <p>
+     * Единица — модель в размере хитбокса, как и у гильзы. Стоит единица:
+     * геометрия у моделей разная (обычная пуля шире трассирующей полосы вдвое
+     * почти, 0.0375 против 0.025 блока), но обе вытянуты вдоль оси полёта и обе
+     * вывозились под свой спрайт, так что трогать их размер без нужды нельзя.
+     * Константа оставлена именно как ручка подстройки: если пуля на экране
+     * покажется велика или мелка, крутить здесь.
+     */
+    private static final float PLAIN_MODEL_SCALE = 1.0F;
 
     public TurretBulletGltfRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager);
@@ -66,7 +89,8 @@ public class TurretBulletGltfRenderer extends EntityRenderer<TurretBulletEntity>
     @Override
     public void render(TurretBulletEntity entity, float yaw, float partialTick, PoseStack poseStack,
                        MultiBufferSource bufferSource, int packedLight) {
-        var model = TurretBulletVariants.model();
+        boolean tracer = entity.isTracer();
+        var model = TurretBulletVariants.modelFor(entity);
         if (model == null) {
             return;
         }
@@ -91,19 +115,20 @@ public class TurretBulletGltfRenderer extends EntityRenderer<TurretBulletEntity>
         // Собственное вращение пули вокруг оси полёта.
         poseStack.mulPose(Axis.ZP.rotationDegrees(entity.spin));
 
-        // Пуля светится в темноте: текстура рисуется на максимальной яркости
-        // независимо от освещения точки. Вместо штатного packedLight, который
-        // приходит в сущность от сервера и в пещере равен почти нулю, кладём
-        // LightTexture.FULL_BRIGHT — это те же блок 15 и небо 15, то есть
-        // верхняя правая texel'а лайтмапы, которая есть в карте освещения всегда.
-        // Трассер должен читаться на любом фоне, иначе в тёмном коридоре его
-        // просто не видно, а сам выстрел читается только по звуку.
-        //
-        // Полоса атласа — по типу заряженного патрона: у бронебойного, полого,
-        // зажигательного и радио свои текстуры, и переключается она сменой UV,
-        // а не перезагрузкой модели.
+        poseStack.pushPose();
+        if (!tracer) {
+            poseStack.scale(PLAIN_MODEL_SCALE, PLAIN_MODEL_SCALE, PLAIN_MODEL_SCALE);
+        }
+
+        // Полоса атласа — только у трассера: у него своя ячейка на тип
+        // патрона, и переключается она сменой UV, а не перезагрузкой модели.
+        // У обычного боезаряда вариантов нет вовсе, и рисуется он целиком,
+        // своей текстурой.
         DirectRenderer.submit(model, (com.wf.gemrender.gltf.GltfAnimation) null, 0.0f,
-                poseStack.last().pose(), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY,
-                0xFFFFFFFF, DirectPass.LEVEL, TurretBulletVariants.variant(model, entity));
+                poseStack.last().pose(), tracer ? LightTexture.FULL_BRIGHT : packedLight,
+                OverlayTexture.NO_OVERLAY, 0xFFFFFFFF, DirectPass.LEVEL,
+                tracer ? TurretBulletVariants.tracerVariant(model, entity) : VariantUv.NONE);
+
+        poseStack.popPose();
     }
 }

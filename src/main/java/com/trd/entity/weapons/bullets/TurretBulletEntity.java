@@ -44,10 +44,6 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import software.bernie.geckolib.animatable.GeoEntity;
-import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.AnimatableManager;
-import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,15 +56,35 @@ import java.util.List;
  * а не через дополнительные данные спавна — в NeoForge 1.21 механика
  * {@code IEntityAdditionalSpawnData} удалена, а синхронизированные данные
  * уходят вместе с пакетом появления сущности.
+ * <p>
+ * <b>Никакого GeckoLib.</b> Пуля не анимируется и не скелетная: у неё есть
+ * только собственное вращение вокруг оси полёта, а его считает сервер и
+ * раздаёт в {@code SPIN}. Раньше класс был {@code GeoEntity} с пустым
+ * {@code registerControllers} и кешем анимаций — то есть тянул в себя всю
+ * библиотеку ради ничего: пуля рисуется GemRender'ом напрямую из glTF
+ * (см. {@code TurretBulletGltfRenderer}) и от геколибовского рендерера не
+ * зависит вообще. Аналогично снят GeckoLib и с патронов: они стали обычными
+ * предметами с двумерными спрайтами.
  */
-public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
-
-    private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+public class TurretBulletEntity extends AbstractArrow {
 
     private static final EntityDataAccessor<String> AMMO_ID =
             SynchedEntityData.defineId(TurretBulletEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<String> AMMO_TYPE =
             SynchedEntityData.defineId(TurretBulletEntity.class, EntityDataSerializers.STRING);
+
+    /**
+     * Трассерный ли заряженный патрон, в синхронизированных данных.
+     * <p>
+     * Именно синхронизированные, а не обычное поле: модель и яркость пули
+     * выбирает клиент, а у него своей копии предмета нет, и до появления пули в
+     * мире смотреть не на что. Флаг ставится на сервере до
+     * {@code addFreshEntity}, поэтому первый кадр уже рисует нужную модель, а не
+     * обычную и не ничего.
+     */
+    private static final EntityDataAccessor<Boolean> AMMO_TRACER =
+            SynchedEntityData.defineId(TurretBulletEntity.class, EntityDataSerializers.BOOLEAN);
+
     private static final EntityDataAccessor<Integer> FLIGHT_TIME =
             SynchedEntityData.defineId(TurretBulletEntity.class, EntityDataSerializers.INT);
 
@@ -247,10 +263,45 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
         super.defineSynchedData(builder);
         builder.define(AMMO_ID, "default");
         builder.define(AMMO_TYPE, "normal");
+        builder.define(AMMO_TRACER, false);
         builder.define(FLIGHT_TIME, 0);
         builder.define(SPIN, 0.0F);
         builder.define(LAUNCH_YAW, 0.0F);
         builder.define(LAUNCH_PITCH, 0.0F);
+    }
+
+    /**
+     * Разбирает id патрона на сердцевину и признак трассера.
+     * <p>
+     * Ид патронов теперь устроены как {@code turret_ammo_ap_tracer}, то есть
+     * {@code <вид>_<тип>_<трассер>}, и разбирать их приходится по словам, а не
+     * поиском подстроки: подстрока «ap» есть и в бронебойном, и в
+     * {@code trd:turret_ammo}, а «piercing», по которому сортировали раньше, в
+     * новых id не встречается вовсе. Слово «trasser» выброшено наравне с
+     * «tracer» — в id оно именно в таком написании.
+     */
+    private static AmmoType bulletTypeOf(String ammoId) {
+        String path = ammoId.contains(":") ? ammoId.substring(ammoId.indexOf(':') + 1) : ammoId;
+
+        for (String word : path.split("_")) {
+            switch (word) {
+                case "ap", "piercing" -> {
+                    return AmmoType.PIERCING;
+                }
+                case "hollow" -> {
+                    return AmmoType.HOLLOW;
+                }
+                case "fire", "incendiary" -> {
+                    return AmmoType.INCENDIARY;
+                }
+                case "radio" -> {
+                    return AmmoType.RADIO;
+                }
+                default -> {
+                }
+            }
+        }
+        return AmmoType.NORMAL;
     }
 
     public void setAmmoType(AmmoRegistry.AmmoType ammoType) {
@@ -259,22 +310,15 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
         this.baseSpeed = ammoType.speed;
         this.entityData.set(AMMO_ID, ammoType.id);
 
-        if (ammoType.id.contains("piercing")) {
-            this.ammoType = AmmoType.PIERCING;
-            this.entityData.set(AMMO_TYPE, "piercing");
-        } else if (ammoType.id.contains("hollow")) {
-            this.ammoType = AmmoType.HOLLOW;
-            this.entityData.set(AMMO_TYPE, "hollow");
-        } else if (ammoType.id.contains("fire") || ammoType.id.contains("incendiary")) {
-            this.ammoType = AmmoType.INCENDIARY;
-            this.entityData.set(AMMO_TYPE, "incendiary");
-        } else if (ammoType.id.contains("radio")) {
-            this.ammoType = AmmoType.RADIO;
-            this.entityData.set(AMMO_TYPE, "radio");
-        } else {
-            this.ammoType = AmmoType.NORMAL;
-            this.entityData.set(AMMO_TYPE, "normal");
-        }
+        // Трассер известен из предмета, а не выводится из id: он приезжает в
+        // AmmoRegistry.AmmoType вместе с уроном и скоростью, и если бы
+        // разбирался тут, то пустой боеприпас без предмета (все запасные
+        // варианты в setAmmoType ниже) выглядел бы трассером по одному слову в
+        // id и рисовался бы светящимся.
+        this.entityData.set(AMMO_TRACER, ammoType.tracer);
+
+        this.ammoType = bulletTypeOf(ammoType.id);
+        this.entityData.set(AMMO_TYPE, this.ammoType.id);
 
         this.setBaseDamage(baseDamage);
     }
@@ -285,6 +329,15 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
 
     public AmmoType getAmmoType() {
         return AmmoType.fromString(this.entityData.get(AMMO_TYPE));
+    }
+
+    /**
+     * Трассерная ли пуля: от неё зависят модель и яркость отрисовки.
+     *
+     * @see TurretBulletEntity#AMMO_TRACER
+     */
+    public boolean isTracer() {
+        return this.entityData.get(AMMO_TRACER);
     }
 
     public int getFlightDuration() {
@@ -1060,15 +1113,6 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
     @Override
     protected ItemStack getDefaultPickupItem() {
         return PICKUP_PLACEHOLDER.copy();
-    }
-
-    @Override
-    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-    }
-
-    @Override
-    public AnimatableInstanceCache getAnimatableInstanceCache() {
-        return cache;
     }
 
     @Override

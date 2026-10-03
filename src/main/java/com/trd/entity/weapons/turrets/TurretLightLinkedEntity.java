@@ -402,7 +402,7 @@ public class TurretLightLinkedEntity extends Monster implements GeoEntity, Range
                     if (type != null) {
                         bullet.setAmmoType(type);
                     } else {
-                        bullet.setAmmoType(new AmmoRegistry.AmmoType(itemId.toString(), ammoUsed.getCaliber(), ammoUsed.getDamage(), ammoUsed.getSpeed(), ammoUsed.isPiercing()));
+                        bullet.setAmmoType(new AmmoRegistry.AmmoType(itemId.toString(), ammoUsed.getCaliber(), ammoUsed.getDamage(), ammoUsed.getSpeed(), ammoUsed.isPiercing(), ammoUsed.isTracer()));
                     }
                 }
             } else {
