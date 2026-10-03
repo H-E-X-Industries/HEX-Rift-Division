@@ -39,16 +39,19 @@ import net.minecraft.world.phys.Vec3;
 public class TurretBulletGltfRenderer extends EntityRenderer<TurretBulletEntity> {
 
     /**
-     * Увеличение модели обычного боезаряда.
+     * Увеличение модели пули.
      * <p>
-     * Единица — модель в размере хитбокса, как и у гильзы. Стоит единица:
-     * геометрия у моделей разная (обычная пуля шире трассирующей полосы вдвое
-     * почти, 0.0375 против 0.025 блока), но обе вытянуты вдоль оси полёта и обе
-     * вывозились под свой спрайт, так что трогать их размер без нужды нельзя.
-     * Константа оставлена именно как ручка подстройки: если пуля на экране
-     * покажется велика или мелка, крутить здесь.
+     * Единица — модель в размере хитбокса, как и у гильзы. Половина у обеих
+     * моделей: геометрия у них разная (обычная пуля шире трассирующей полосы
+     * почти вдвое, 0.0375 против 0.025 блока), и в исходном размере на скорости
+     * 240 м/с пуля читалась заметно крупнее настоящей — особенно обычная, у
+     * которой после уменьшения остаётся около 0.019 блока в толщину и 0.047 в
+     * длину, то есть примерно два сантиметра на двадцатимиллиметровом патроне.
+     * <p>
+     * Масштаб единый для трассирующей и обычной: уменьшить надо обе, а разница
+     * между ними задана геометрией, и ручка одна.
      */
-    private static final float PLAIN_MODEL_SCALE = 1.0F;
+    private static final float MODEL_SCALE = 0.5F;
 
     public TurretBulletGltfRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager);
@@ -116,9 +119,7 @@ public class TurretBulletGltfRenderer extends EntityRenderer<TurretBulletEntity>
         poseStack.mulPose(Axis.ZP.rotationDegrees(entity.spin));
 
         poseStack.pushPose();
-        if (!tracer) {
-            poseStack.scale(PLAIN_MODEL_SCALE, PLAIN_MODEL_SCALE, PLAIN_MODEL_SCALE);
-        }
+        poseStack.scale(MODEL_SCALE, MODEL_SCALE, MODEL_SCALE);
 
         // Полоса атласа — только у трассера: у него своя ячейка на тип
         // патрона, и переключается она сменой UV, а не перезагрузкой модели.

@@ -42,8 +42,8 @@ import net.minecraft.util.Mth;
  */
 public class ShotFlashParticle extends TextureSheetParticle {
 
-    /** Диаметр вспышки в блоках. */
-    private static final float SIZE = 0.125F;
+    /** Диаметр вспышки в блоках: полметра, вдвое больше прежних 0.125. */
+    private static final float SIZE = 0.25F;
 
     /** Время жизни в тиках: 0.05 секунды, один кадр. */
     private static final int LIFETIME_TICKS = 1;

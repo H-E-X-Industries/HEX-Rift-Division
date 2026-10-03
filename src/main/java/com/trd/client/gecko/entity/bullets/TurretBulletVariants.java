@@ -73,6 +73,11 @@ public final class TurretBulletVariants {
         TRACER_TEXTURES.put(AmmoType.HOLLOW, texture("turret_bullet_hollow"));
         TRACER_TEXTURES.put(AmmoType.INCENDIARY, texture("turret_bullet_fire"));
         TRACER_TEXTURES.put(AmmoType.RADIO, texture("turret_bullet_radio"));
+        // Фугасный трассирующий берёт ту же полосу, что и обычный патрон: своей
+        // текстуры у него нет, а отличать его на лету должен взрыв, а не цвет
+        // шлейфа. Заодно это лишняя полоса в атласе с копией картинки — ровно
+        // поэтому у него ordinal 5, а новое значение добавлено в конец перечисления.
+        TRACER_TEXTURES.put(AmmoType.HE, BASE_TEXTURE);
 
         TRACER_VARIANTS = Stream.of(AmmoType.values())
                 .map(TRACER_TEXTURES::get)

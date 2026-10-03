@@ -112,9 +112,22 @@ public class MachineGunItem extends Item {
     private static final int RELOAD_ANIM_TICKS = 92;
     private static final int FLIP_ANIM_TICKS = 84;
 
-    /** На каком тике перезарядки патроны доезжают в магазин. */
+    /**
+     * На каком тике с начала клипа патроны берутся из инвентаря.
+     * <p>
+     * Отсчёт от начала, а не от конца: у клипов перезарядки и разрядки разная
+     * длина, и обратный отсчёт уводил бы одну и ту же отметку на разные тики.
+     * Оба момента считаются от старта жеста, поэтому жест работает одинаково
+     * при любой длине клипа.
+     */
+    private static final int RELOAD_CONSUME_TICK = 50;
+
+    /** На каком тике с начала клипа патроны доезжают в магазин. */
     private static final int RELOAD_AMMO_ADD_TICK = 60;
     private static final String LOADED_AMMO_ID_TAG = "LoadedAmmoID";
+
+    /** Длина текущего клипа перезарядки: по ней считается время с его начала. */
+    private static final String RELOAD_LENGTH_TAG = "ReloadLength";
     private static final String HANDS_WARN_TAG = "HandsWarn";
 
     /** Очередь звуков клипа: список compound'ов с отсчётом и путём звука. */
@@ -648,6 +661,32 @@ private static final double SCOPED_FORWARD = 1.8D;
         writeTag(stack, tag);
     }
 
+    /**
+     * Длина текущего клипа в тиках, по ней считается, сколько тиков прошло с
+     * его начала.
+     * <p>
+     * Нужна именно потому, что моменты «забрать патроны» и «досыпать их» заданы
+     * от начала жеста, а {@link #getReloadTimer} считает в обратную сторону.
+     * Раньше те же моменты проверялись как {@code timer == RELOAD_ANIM_TICKS - 50
+     * || timer == FLIP_ANIM_TICKS - 50}, то есть двумя значениями обратного
+     * отсчёта сразу: отсчёт с 92 до 0 проходит и через 42, и через 34, и
+     * патроны списывались дважды — ровно вдвое больше, чем досыпалось.
+     * <p>
+     * При отсутствии значения (оружие, пойманное посреди перезарядки обновлением)
+     * берётся длина клипа перезарядки: она длиннее, так что отметки внутри
+     * клипа всё равно отработают.
+     */
+    private static int getReloadLength(ItemStack stack) {
+        int length = readTag(stack).getInt(RELOAD_LENGTH_TAG);
+        return length > 0 ? length : RELOAD_ANIM_TICKS;
+    }
+
+    private static void setReloadLength(ItemStack stack, int length) {
+        CompoundTag tag = readTag(stack);
+        tag.putInt(RELOAD_LENGTH_TAG, length);
+        writeTag(stack, tag);
+    }
+
     public int getPendingAmmo(ItemStack stack) {
         return readTag(stack).getInt("PendingAmmo");
     }
@@ -731,21 +770,32 @@ private static final double SCOPED_FORWARD = 1.8D;
             if (reloadTimer > 0) {
                 setReloadTimer(stack, reloadTimer - 1);
 
-                // Изъятие патронов из инвентаря на 50-м тике (2.5 сек)
-                if (reloadTimer == (RELOAD_ANIM_TICKS - 50) || reloadTimer == (FLIP_ANIM_TICKS - 50)) {
+                // Моменты считаются от начала клипа, а не сравнением обратного
+                // отсчёта с двумя значениями сразу: отсчёт с 92 до 0 проходит и
+                // через 42, и через 34, и патроны списывались дважды, то есть
+                // вдвое больше, чем досыпалось потом в магазин.
+                int elapsed = getReloadLength(stack) - reloadTimer;
+
+                // Изъятие патронов из инвентаря на 50-м тике жеста (2.5 сек)
+                if (elapsed == RELOAD_CONSUME_TICK) {
                     int pending = getPendingAmmo(stack);
                     if (pending > 0 && !player.isCreative()) {
                         String loadedId = getLoadedAmmoID(stack);
                         if (loadedId != null && !loadedId.isEmpty()) {
-                            consumeAmmoById(player, loadedId, pending);
+                            // В магазин досыпается ровно столько, сколько реально
+                            // забрали: если игрок выбросил часть патронов, пока
+                            // шёл жест, досыпалось бы то, чего он не отдал.
+                            int taken = consumeAmmoById(player, loadedId, pending);
+                            setPendingAmmo(stack, taken);
                             player.getInventory().setChanged();
+                        } else {
+                            setPendingAmmo(stack, 0);
                         }
                     }
                 }
 
-                // Добавление патронов в оружие на 10-м тике (конец анимации)
-                if (reloadTimer == (RELOAD_ANIM_TICKS - RELOAD_AMMO_ADD_TICK) ||
-                        reloadTimer == (FLIP_ANIM_TICKS - RELOAD_AMMO_ADD_TICK)) {
+                // Добавление патронов в оружие на 60-м тике жеста
+                if (elapsed == RELOAD_AMMO_ADD_TICK) {
                     int pending = getPendingAmmo(stack);
                     if (pending > 0) {
                         setAmmo(stack, getAmmo(stack) + pending);
@@ -794,9 +844,13 @@ private static final double SCOPED_FORWARD = 1.8D;
      * освободится раньше конца жеста и патроны досыпаются в его середине.
      */
     private void startClip(Player player, ItemStack stack, String clip) {
-        setReloadTimer(stack, MachineGunClientAnim.RELOAD.equals(clip)
-                ? RELOAD_ANIM_TICKS
-                : FLIP_ANIM_TICKS);
+        int ticks = MachineGunClientAnim.RELOAD.equals(clip) ? RELOAD_ANIM_TICKS : FLIP_ANIM_TICKS;
+
+        setReloadTimer(stack, ticks);
+        // Длина нужна не для блокировки, а чтобы inventoryTick знал, сколько тиков
+        // прошло с начала жеста: обе отметки — «забрать патроны» и «досыпать» —
+        // заданы от старта, а таймер идёт в обратную сторону.
+        setReloadLength(stack, ticks);
 
         scheduleClipSounds(player.level(), player, stack, clip, clipSeconds(clip));
         sendAnim(player, clip);

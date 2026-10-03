@@ -256,8 +256,8 @@ public class ModItems {
      * иконок; правильное написание «tracer» разошлось бы с ними, а
      * переименовывать иконки ради этого не стоит.
      * <p>
-     * Фугасных патронов ({@code turret_ammo_he}) здесь нет: иконки под них уже
-     * лежат, но сам боезаряд ещё не заведён.
+     * Фугасные патроны ({@code turret_ammo_he} и его трассирующая версия) идут
+     * последней парой — см. ниже.
      */
     public static final DeferredItem<Item> TURRET_AMMO = ITEMS.register("turret_ammo",
             () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 8.0f, 3.0f, false, false));
@@ -279,6 +279,10 @@ public class ModItems {
             () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 9.0f, 3.0f, false, false));
     public static final DeferredItem<Item> TURRET_AMMO_RADIO_TRACER = ITEMS.register("turret_ammo_radio_tracer",
             () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 9.0f, 3.0f, false, true));
+    public static final DeferredItem<Item> TURRET_AMMO_HE = ITEMS.register("turret_ammo_he",
+            () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 25.0f, 3.0f, false, false));
+    public static final DeferredItem<Item> TURRET_AMMO_HE_TRACER = ITEMS.register("turret_ammo_he_tracer",
+            () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 25.0f, 3.0f, false, true));
 
     // ═══════════════════════════════════════════════════════
     // СНАРЯДЫ
