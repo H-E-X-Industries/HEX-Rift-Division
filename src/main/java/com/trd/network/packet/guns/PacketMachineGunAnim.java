@@ -15,6 +15,11 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
  * только пока анимацию тикал {@code GeoItemRenderer}. С переходом на glTF
  * рендерером стал GemRender, а он не тикает контроллеры геколиба, поэтому
  * синхронизация анимаций переехала в отдельный пакет.
+ * <p>
+ * Пакет — это ещё и подтверждение выстрела: его сервер шлёт только когда пуля
+ * действительно появилась. Вспышка ставится по нему, а не по нажатию, иначе
+ * при пустом магазине или в воде вспышка была бы без пули, а при очереди
+ * вспышки копились бы и висели после последнего выстрела.
  */
 public record PacketMachineGunAnim(String anim) implements CustomPacketPayload {
 
@@ -32,6 +37,16 @@ public record PacketMachineGunAnim(String anim) implements CustomPacketPayload {
     }
 
     public void handle(IPayloadContext ctx) {
-        ctx.enqueueWork(() -> com.trd.item.weapons.guns.MachineGunClientAnim.trigger(anim));
+        ctx.enqueueWork(() -> {
+            boolean started = com.trd.item.weapons.guns.MachineGunClientAnim.trigger(anim);
+
+            // Выстрел мог и не начаться: клиент держит ровно один клип, и если
+            // игрок лупит чаще, чем длится анимация, запрос отбрасывается.
+            // Вспышка ставится только когда клип действительно пошёл — иначе
+            // она появлялась бы чаще, чем летят пули.
+            if (started && com.trd.item.weapons.guns.MachineGunClientAnim.SHOT.equals(anim)) {
+                com.trd.item.weapons.guns.MachineGunClientAnim.spawnShotFlash();
+            }
+        });
     }
 }

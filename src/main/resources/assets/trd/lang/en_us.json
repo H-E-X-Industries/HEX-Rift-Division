@@ -232,6 +232,7 @@
     "block.trd.wire_fence_alt":  "Thin Wire Fence",
     "block.trd.zinc_block":  "Block of Zinc",
     "death.attack.crusher":  "%1$s became minced meat",
+  "death.attack.turretBullet":  "%1$s was shot down by %2$s",
     "entity.trd.depth_worm":  "Depth Worm",
     "entity.trd.grenade_if_fire_projectile":  "Incendiary Impact Grenade",
     "entity.trd.grenade_if_he_projectile":  "HE Impact Grenade",

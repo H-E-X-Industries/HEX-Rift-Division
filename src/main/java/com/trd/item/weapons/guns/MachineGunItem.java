@@ -1,7 +1,6 @@
 package com.trd.item.weapons.guns;
 
 import com.trd.client.config.ModKeyBindings;
-import com.trd.client.gecko.item.guns.MachineGunModel;
 import com.trd.client.gecko.item.guns.MachineGunRenderer;
 import com.trd.client.overlay.MachineGunScope;
 import com.trd.entity.weapons.bullets.GilseEntity;
@@ -249,6 +248,30 @@ private static final double SCOPED_FORWARD = 1.8D;
     /** Полный комплект брони — 20 очков, а насколько он гасит отдачу. */
     private static final float MAX_ARMOR_RECOIL_DAMPING = 0.5F;
 
+    /** На сколько толчок растёт при полностью накопленной отдаче. */
+    private static final float HEAT_PUSH_MULTIPLIER = 1.5F;
+
+    /**
+     * Сколько очков брони съедают накопленную отдачу.
+     * <p>
+     * Броня съедает тем больше, чем дольше стреляешь: короткая очередь на
+     * брони почти не гасится, а длинная — уже заметно.
+     */
+    private static final float HEAT_ARMOR_DAMPING = 0.6F;
+
+    /**
+     * Накопленная отдача, 0..1.
+     * <p>
+     * Растёт тем быстрее, чем короче пауза между выстрелами: ровно на два
+     * выстрела в секунду она не растёт вовсе, а на автоматическом огне добирается
+     * до единицы примерно за две секунды. Падает сама, стоит только перестать
+     * стрелять.
+     */
+    private static final String RECOIL_HEAT_TAG = "RecoilHeat";
+
+    /** За сколько секунд непрерывной стрельбы отдача добирается до максимума. */
+    private static final float HEAT_RAMP_SECONDS = 2.0F;
+
     /**
      * Смещение окна выброса гильзы вбок и вверх относительно ствола.
      * <p>
@@ -336,21 +359,25 @@ private static final double SCOPED_FORWARD = 1.8D;
     }
 
     /**
-     * Насколько слабее отдача от брони, прицела и стойки.
+     * Насколько слабее отдача от брони, прицела, стойки и накопленного огня.
      * <p>
-     * Броня — основной множитель, и он единственный зависит от того, что
-     * стрелок надел: в полном комплекте отдача вдвое слабее, в половине — на
-     * четверть. Остальные два положения уменьшают отдачу прицелом и стойкой и
-     * не смотрят на снаряжение.
+     * Броня — единственный множитель, который смотрит на снаряжение: в полном
+     * комплекте отдача вдвое слабее, в половине — на четверть, и при этом тем
+     * сильнее гасит накопленный огонь. Огонь копится от частоты стрельбы и
+     * спадает, стоит только перестать стрелять. Прицел и стойка уменьшают
+     * отдачу втрое и не смотрят ни на что.
      * <p>
-     * Считается и на сервере по его копии игрока, и на клиенте по своей,
-     * поэтому в двух местах значения держатся одинаковыми.
+     * Один и тот же метод зовут и сервер (для толчка игрока), и клиент (для
+     * камеры), поэтому при разных значениях на двух сторонах одно дёргалось бы
+     * не в тон другому.
      *
      * @param scoped смотрит ли игрок в прицел
+     * @param heat   накопленная отдача, 0..1
      */
-    public static float recoilScale(Player player, boolean scoped) {
+    public static float recoilScale(Player player, boolean scoped, float heat) {
         float armor = player.getArmorValue() / 20.0F;
-        float scale = 1.0F - armor * MAX_ARMOR_RECOIL_DAMPING;
+        float scale = (1.0F - armor * MAX_ARMOR_RECOIL_DAMPING)
+                * (1.0F + heat * HEAT_PUSH_MULTIPLIER * (1.0F - armor * HEAT_ARMOR_DAMPING));
 
         if (scoped) {
             scale *= SCOPED_RECOIL_SCALE;
@@ -360,26 +387,107 @@ private static final double SCOPED_FORWARD = 1.8D;
                 || player.getPose() == net.minecraft.world.entity.Pose.FALL_FLYING) {
             scale *= STABLE_RECOIL_SCALE;
         }
-        return Mth.clamp(scale, 0.0F, 1.0F);
+        return Mth.clamp(scale, 0.0F, 3.0F);
     }
 
     /**
-     * Точка, из которой на самом деле появляется пуля — для эффектов на
-     * клиенте.
-     * <p>
-     * Сервер сдвигает присланную точку ещё на {@link #MUZZLE_SIDE_SHIFT} влево,
-     * и без повторения того же самого вспышка в дуле стояла бы правее пули.
-     *
-     * @param muzzle  точка из пакета; {@code null} — эффектов не будет
-     * @param lookDir направление взгляда стрелка
-     * @param yaw     поворот стрелка вокруг вертикали
+     * Отдача без огня: то же самое, но без накопления. Удобно там, где выстрела
+     * не было и считать нечего.
      */
-    @Nullable
-    public static Vec3 shotOrigin(@Nullable Vec3 muzzle, Vec3 lookDir, float yaw) {
-        if (muzzle == null) {
-            return null;
+    public static float recoilScale(Player player, boolean scoped) {
+        return recoilScale(player, scoped, 0.0F);
+    }
+
+    /**
+     * Накопленная отдача, 0..1, из NBT оружия.
+     * <p>
+     * Хранится в самом оружии, а не в статике: у игрока их может быть
+     * сколько угодно, и у каждого своя. Через {@code DataComponents.CUSTOM_DATA}
+     * значение уезжает и на клиент, поэтому дёрганье камеры считается по той же
+     * величине, что и толчок на сервере.
+     */
+    private static float recoilHeat(ItemStack stack) {
+        return readTag(stack).getFloat(RECOIL_HEAT_TAG);
+    }
+
+    /**
+     * Копит отдачу по темпу выстрелов и возвращает новое значение.
+     * <p>
+     * Темп считается по интервалу между выстрелами, а не по числу выстрелов в
+     * секунду: обратный отсчёт тиков между ними уже есть в самом оружии, и он
+     * переживает любые пропуски. Пауза короче, чем {@link #SHOT_ANIM_TICKS},
+     * добавляет отдачу; пауза длиннее — отнимает.
+     */
+    private static float addRecoilHeat(ItemStack stack) {
+        CompoundTag tag = readTag(stack);
+        int ticks = tag.getInt(RECOIL_HEAT_TAG + "Ticks") + 1;
+
+        float step = SHOT_ANIM_TICKS <= ticks
+                ? 1.0F / HEAT_RAMP_SECONDS * (1.0F - (float) SHOT_ANIM_TICKS / ticks)
+                : -(float) (ticks - SHOT_ANIM_TICKS) / (HEAT_RAMP_SECONDS * 20.0F);
+
+        float heat = Mth.clamp(tag.getFloat(RECOIL_HEAT_TAG) + step, 0.0F, 1.0F);
+
+        tag.putInt(RECOIL_HEAT_TAG + "Ticks", ticks);
+        tag.putFloat(RECOIL_HEAT_TAG, heat);
+        writeTag(stack, tag);
+        return heat;
+    }
+
+    /**
+     * Остывание. Копится оно само по темпу выстрелов, а тут только сброс: без
+     * новых выстрелов последний записанный интервал так и остался бы коротким,
+     * и отдача держалась бы вечно.
+     */
+    private static void coolRecoilHeat(ItemStack stack) {
+        CompoundTag tag = readTag(stack);
+        int ticks = tag.getInt(RECOIL_HEAT_TAG + "Ticks");
+        float heat = tag.getFloat(RECOIL_HEAT_TAG);
+
+        if (ticks <= SHOT_ANIM_TICKS || heat <= 0.0F) {
+            if (ticks == 0 && heat <= 0.0F) {
+                return;
+            }
+            tag.putInt(RECOIL_HEAT_TAG + "Ticks", 0);
+            tag.putFloat(RECOIL_HEAT_TAG, 0.0F);
+            writeTag(stack, tag);
+            return;
         }
-        return muzzle.subtract(perpendicular(lookDir, yaw).scale(MUZZLE_SIDE_SHIFT));
+
+        heat = Mth.clamp(heat - (float) (ticks - SHOT_ANIM_TICKS) / (HEAT_RAMP_SECONDS * 20.0F), 0.0F, 1.0F);
+        tag.putFloat(RECOIL_HEAT_TAG, heat);
+        writeTag(stack, tag);
+    }
+
+    /**
+     * Точка, из которой вылетает пуля.
+     * <p>
+     * Считается здесь и на сервере, и на клиенте, иначе вспышка в дуле и сама
+     * пуля разъезжались бы: клиентской кончик ствола из модели для этого не
+     * годится — при первом взгляде он сбит от нарисованного дула, потому что
+     * модель анимируется остатком предыдущего кадра, а смена оружия и переход
+     * между первым и третьим лицом вовсе не анимируются.
+     * <p>
+     * В прицеле пуля идёт строго по оптической оси, из глаза: точка у дула там
+     * сбита вбок и уводила бы визг с перекрестья.
+     *
+     * @param lookDir направление взгляда стрелка
+     */
+    public static Vec3 shotOrigin(Player player, Vec3 lookDir, float yaw, boolean scoped) {
+        Vec3 side = perpendicular(lookDir, yaw);
+        Vec3 forward = lookDir.normalize();
+
+        if (scoped) {
+            return player.getEyePosition().add(forward.scale(SCOPED_FORWARD));
+        }
+
+        Vec3 gunPos = player.position()
+                .add(side.scale(GUN_SIDE_OFFSET))
+                .add(0.0D, player.getEyeY() - player.getY() - MUZZLE_DROP, 0.0D);
+
+        return gunPos
+                .add(forward.scale(MUZZLE_LENGTH + THIRD_PERSON_FORWARD))
+                .add(side.scale(THIRD_PERSON_RIGHT - THIRD_PERSON_LEFT - MUZZLE_SIDE_SHIFT));
     }
 
     public MachineGunItem(Properties properties) {
@@ -498,6 +606,13 @@ private static final double SCOPED_FORWARD = 1.8D;
         super.inventoryTick(stack, level, entity, slotId, isSelected);
 
         if (!level.isClientSide && entity instanceof Player player) {
+
+            // Отдача остывает, пока не стреляют. Без этого она держалась бы
+            // вечно: последний записанный интервал между выстрелами так и
+            // остался бы коротким.
+            if (getShootDelay(stack) <= 0) {
+                coolRecoilHeat(stack);
+            }
 
             if (!isSelected) {
                 if (getReloadTimer(stack) > 0) {
@@ -812,19 +927,16 @@ private static final double SCOPED_FORWARD = 1.8D;
 
     /** Выстрел по углу обзора самого сервера. */
     public void performShooting(Level level, Player player, ItemStack stack) {
-        performShooting(level, player, stack, player.getYRot(), player.getXRot(), false, null);
+        performShooting(level, player, stack, player.getYRot(), player.getXRot(), false);
     }
 
     /**
      * Выстрел в направлении, заданном двумя осями: {@code yaw} и {@code pitch}.
      * Клиент присылает их в {@link PacketShoot}, чтобы пуля уходила ровно туда,
      * куда показывал прицел в момент нажатия огня.
-     *
-     * @param muzzle кончик ствола, посчитанный клиентом по локатору из модели;
-     *               {@code null} — тогда точка считается серверной формулой
      */
     public void performShooting(Level level, Player player, ItemStack stack, float yaw, float pitch,
-                                boolean scoped, Vec3 muzzle) {
+                                boolean scoped) {
         if (level.isClientSide) return;
         if (getReloadTimer(stack) > 0 || getShootDelay(stack) > 0) return;
 
@@ -867,6 +979,9 @@ private static final double SCOPED_FORWARD = 1.8D;
         setShootDelay(stack, SHOT_ANIM_TICKS);
 
         if (!(level instanceof ServerLevel serverLevel)) return;
+
+        // Огонь отдачи копится по темпу выстрелов и уходит в толчок и в камеру.
+        float heat = addRecoilHeat(stack);
 
         TurretBulletEntity bullet = new TurretBulletEntity(serverLevel, player);
 
@@ -922,26 +1037,9 @@ private static final double SCOPED_FORWARD = 1.8D;
                 .add(side.scale(GUN_SIDE_OFFSET))
                 .add(0.0D, player.getEyeY() - player.getY() - MUZZLE_DROP, 0.0D);
 
-        // Точка вылета. Приоритет у клиентской: кончик ствола, посчитанный по
-        // локатору из модели, — единственная точка, которая совпадает с тем, что
-        // нарисовано на экране, и в третьем лице, и в прицеле, и при просадке
-        // кадров. Формула от позиции игрока остаётся запасным вариантом: если
-        // клиент её не прислал, считаем здесь.
-        Vec3 spawnPos = muzzle != null
-                ? muzzle
-                : scoped
-                        ? player.getEyePosition().add(forward.scale(SCOPED_FORWARD))
-                        : gunPos
-                                .add(forward.scale(MUZZLE_LENGTH + THIRD_PERSON_FORWARD))
-                                .add(side.scale(THIRD_PERSON_RIGHT - THIRD_PERSON_LEFT));
-
-        // Четыре с половиной пикселя влево — поверх всего, что выбрано выше. Сдвиг
-        // один и общий для клиентской точки и для серверной формулы, поэтому
-        // вид от первого и третьего лица не расходится; в прицеле не
-        // применяется, там точка вылета обязана лежать на оптической оси.
-        if (!scoped) {
-            spawnPos = spawnPos.subtract(side.scale(MUZZLE_SIDE_SHIFT));
-        }
+        // Точка вылета — ровно та же, что и у вспышки на клиенте, иначе визг и
+        // пуля разъезжались бы на длину ствола.
+        Vec3 spawnPos = shotOrigin(player, lookDir, yaw, scoped);
 
         bullet.setPos(spawnPos.x, spawnPos.y, spawnPos.z);
 
@@ -957,8 +1055,11 @@ private static final double SCOPED_FORWARD = 1.8D;
         // Отдача толкает стрелка назад по курсу выстрела. Именно по курсу, а не
         // по горизонтали: при выстреле вверх толчок идёт вверх, и стоя под
         // низким потолком это ещё и подбрасывает, что и читается как отдача.
-        player.setDeltaMovement(
-                player.getDeltaMovement().add(forward.scale(-RECOIL_PUSH * recoilScale(player, scoped))));
+        //
+        // Множитель один и тот же, что и у камеры, но посчитанный здесь, на
+        // сервере: свой клиентский у стрелка ещё не обновлён.
+        player.setDeltaMovement(player.getDeltaMovement().add(
+                forward.scale(-RECOIL_PUSH * recoilScale(player, scoped, heat))));
 
         // Звука и вспышки здесь больше нет: они приходят с помеченных кадров
         // анимации — звук ставит в очередь сервер, вспышку по локатору спавнит
@@ -1107,24 +1208,6 @@ private static final double SCOPED_FORWARD = 1.8D;
 
         private static int clientShootTimer = 0;
 
-        /**
-         * Кончик ствола на момент нажатия: та же точка, что уходит во вспышку.
-         *
-         * @return {@code null}, если пушка ещё не рисовалась и матрицы предмета нет
-         */
-        @javax.annotation.Nullable
-        private static net.minecraft.world.phys.Vec3 currentMuzzle() {
-            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
-            if (mc.player == null || !MachineGunModel.hasItemMatrix()) return null;
-
-            return MachineGunModel.worldMuzzle(
-                    MachineGunClientAnim.model(),
-                    MachineGunClientAnim.currentClip(),
-                    MachineGunClientAnim.seconds(0.0F),
-                    null,
-                    mc.gameRenderer.getMainCamera());
-        }
-
         @SubscribeEvent
         public static void onClientTick(ClientTickEvent.Post event) {
             net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
@@ -1168,35 +1251,16 @@ ItemStack stack = mc.player.getMainHandItem();
                 // Угол обзора по обеим осям едет вместе с пакетом: серверная копия
                 // поворота игрока отстаёт на тик, и без этого пуля уходила мимо прицела.
                 // Прицел тоже едет: сервер снимет разброс вдвое, когда игрок в него смотрит.
-                // И кончик ствола: он считается по локатору из модели, поэтому пуля
-                // вылетает ровно оттуда, откуда нарисовано дуло, а не из точки,
-                // угаданной формулой от позиции игрока. Без матрицы предмета (его ещё
-                // не рисовали) пакет уходит без неё, и сервер посчитает точку у себя.
-                // Точка берётся один раз: между двумя вызовами анимация успела бы
-                // сдвинуться, и пакет ушёл бы с кончиком ствола от прошлого кадра.
-                net.minecraft.world.phys.Vec3 muzzle = currentMuzzle();
                 boolean scoped = com.trd.client.overlay.MachineGunScope.isScoped();
 
-                // Вспышка в дуле ставится здесь же, в том же тике и ровно в той
-                // же точке, что уйдёт в пакете: так она никогда не разъезжается
-                // с пулей и не зависит от того, успел ли клиент проиграть
-                // анимацию. В прицеле вспышки нет — она перекрыла бы круг.
-                if (!scoped) {
-                    MachineGunClientAnim.spawnShotFlash(MachineGunItem.shotOrigin(
-                            muzzle, mc.player.calculateViewVector(mc.player.getXRot(), mc.player.getYRot()),
-                            mc.player.getYRot()));
-                }
+                // Отдача камеры дёргается здесь же, в тике нажатия: углы камеры
+                // живут на клиенте, и по пакету дёрганье пришло бы на тик позже
+                // и не совпало бы с анимацией. Огонь отдачи берётся из оружия —
+                // он уехал с сервера тем же пакетом данных, что и патроны.
+                MachineGunRecoil.kick(recoilScale(mc.player, scoped, recoilHeat(stack)));
 
-                // Отдача камеры дёргается здесь же, в тике нажатия. На сервере её потом
-                // тоже можно было бы ждать, но углы камеры живут на клиенте, и
-                // дёрганье по пакету пришло бы на тик позже и не совпало бы с
-                // анимацией.
-                MachineGunRecoil.kick(recoilScale(mc.player, scoped));
-
-                PacketShoot packet = muzzle == null
-                        ? PacketShoot.of(mc.player.getYRot(), mc.player.getXRot(), scoped)
-                        : PacketShoot.of(mc.player.getYRot(), mc.player.getXRot(), scoped, muzzle);
-                PacketDistributor.sendToServer(packet);
+                PacketDistributor.sendToServer(
+                        PacketShoot.of(mc.player.getYRot(), mc.player.getXRot(), scoped));
                 clientShootTimer = CLIENT_MIN_INTERVAL;
                 mc.player.attackAnim = 0;
                 mc.player.oAttackAnim = 0;

@@ -2,21 +2,26 @@ package com.trd.entity.weapons.bullets;
 
 import com.trd.entity.ModEntities;
 import com.trd.item.weapons.ammo.AmmoRegistry;
+import com.trd.main.MainRegistry;
 import com.trd.sound.ModSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
@@ -427,10 +432,7 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
 
                 float finalDamage = Math.max(hollowDamage * falloff * 0.6f, hollowDamage * 0.3f);
 
-                Entity owner = this.getOwner();
-                DamageSource source = owner instanceof LivingEntity livingOwner
-                        ? this.damageSources().mobProjectile(this, livingOwner)
-                        : this.damageSources().arrow(this, owner);
+                DamageSource source = bulletDamageSource();
 
                 living.invulnerableTime = 0;
 
@@ -724,6 +726,34 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
         return motion.lengthSqr() > 1.0E-8D ? motion.normalize() : launchDirection();
     }
 
+    /**
+     * Тип урона пули.
+     * <p>
+     * Отдельный нужен ради блока неуязвимости: {@code LivingEntity#hurt}
+     * сравнивает урон с предыдущим и отбрасывает его, если он не больше, когда у
+     * цели уже стоит неуязвимость от только что нанесённого урона. Огонь от
+     * зажигательной пули как раз и оставляет такую неуязвимость, и следующая
+     * пуля того же залпа уходила в молоко. Тип помечен в
+     * {@code bypasses_cooldown}, и проверка не выполняется вовсе.
+     */
+    private static final ResourceKey<DamageType> BULLET_DAMAGE =
+            ResourceKey.create(Registries.DAMAGE_TYPE,
+                    ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "turret_bullet"));
+
+    /**
+     * Урон пули.
+     * <p>
+     * Наносится своим типом, который обходит блок неуязвимости, поэтому
+     * очередь зажигательных пулей не съедает сама себя: подожжённая первым
+     * цель не мешает второму попасть.
+     */
+    private DamageSource bulletDamageSource() {
+        Entity owner = this.getOwner();
+        return owner instanceof LivingEntity livingOwner
+                ? this.damageSources().source(BULLET_DAMAGE, livingOwner, this)
+                : this.damageSources().source(BULLET_DAMAGE, null, this);
+    }
+
     private void handleEntityHit(Entity target) {
         if (!(target instanceof LivingEntity livingTarget)) return;
 
@@ -735,10 +765,7 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
                 this.hitTickTimer = 0;
 
                 float contactDamage = calculateHollowDamage(livingTarget.getArmorValue());
-                Entity owner = this.getOwner();
-                DamageSource source = owner instanceof LivingEntity livingOwner
-                        ? this.damageSources().mobProjectile(this, livingOwner)
-                        : this.damageSources().arrow(this, owner);
+                DamageSource source = bulletDamageSource();
 
                 livingTarget.invulnerableTime = 0;
 
@@ -749,10 +776,7 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
         }
 
         float finalDamage = calculateDamage(livingTarget, currentType);
-        Entity owner = this.getOwner();
-        DamageSource source = owner instanceof LivingEntity livingOwner
-                ? this.damageSources().mobProjectile(this, livingOwner)
-                : this.damageSources().arrow(this, owner);
+        DamageSource source = bulletDamageSource();
 
         livingTarget.invulnerableTime = 0;
 
@@ -842,11 +866,16 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
         BlockPos pos = result.getBlockPos();
         BlockState state = this.level().getBlockState(pos);
 
-        // Стекло и обычный лёд выбиваются любым боезарядом: это рыхлые
-        // материалы, которые пуля должна пробивать, а не останавливаться о них.
+        // Стекло и обычный лёд выбиваются любым боезарядом, и на этом пуля не
+        // останавливается: рыхлый материал она пробивает без всякой траты
+        // пробития. Останавливало, и как раз ломало всё остальное: пуля умирала
+        // на первом же стекле, а мобы за ним оставались невредимы.
         if (isBreakable(state)) {
             this.level().destroyBlock(pos, true);
-        } else if (canPierceBlock()) {
+            return;
+        }
+
+        if (canPierceBlock()) {
             // Бронебойный проходит насквозь и летит дальше: блок не трогаем, но
             // каждая пробутая стена стоит ему одного из двух.
             blocksPierced++;
@@ -884,13 +913,14 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
         return isGlass(state) || state.is(Blocks.ICE);
     }
 
-    /**
- * Зажигательный поджигает то, во что попал.
- * <p>
+/**
+     * Зажигательный поджигает то, во что попал.
+     * <p>
      * Два случая, и оба приводят к огню, а не к одному его виду:
      * попадание в уже горящий блок перекидывает огонь на ближайшую горюю
-     * поверхность рядом с ним, а попадание в обычный блок ставит огонь прямо
-     * над ним — там, где огонь занял бы место при поджоге гола.
+     * поверхность рядом с ним, а попадание в горючий блок поджигает его самого —
+     * и не только сверху, но и со всех сторон, потому что горящая трава или
+     * забор стоят вплотную к соседям и огонь на них переходит сам.
      */
     private void ignite(BlockPos pos) {
         BlockState hit = this.level().getBlockState(pos);
@@ -903,8 +933,16 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
         if (!hit.isFlammable(this.level(), pos, Direction.UP)) {
             return;
         }
-        placeFire(pos.above());
+
+        // Огонь ставится в пустую клетку, прилегающую к блоку, и только если он
+        // там вообще может стоять, то есть если под ним или сбоку есть
+        // твёрдая опора. Направление — от клетки огня к опоре, как это делает
+        // сам {@code FireBlock}.
+        for (Direction dir : Direction.values()) {
+            placeFire(pos.relative(dir), dir.getOpposite());
+        }
     }
+
 
     /**
      * Перекидывает огонь с горящего блока на ближайшую горюю поверхность.
@@ -927,11 +965,11 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
     }
 
     /** Ставит огонь, если его там вообще можно поставить. */
-    private void placeFire(BlockPos pos) {
+    private void placeFire(BlockPos pos, Direction support) {
         if (!this.level().getBlockState(pos).isAir()) {
             return;
         }
-        if (!FireBlock.canBePlacedAt(this.level(), pos, Direction.UP)) {
+        if (!FireBlock.canBePlacedAt(this.level(), pos, support)) {
             return;
         }
         this.level().setBlockAndUpdate(pos, Blocks.FIRE.defaultBlockState());

@@ -12,9 +12,10 @@ import net.minecraft.core.particles.SimpleParticleType;
 /**
  * Вспышка в дуле: короткая, всегда светящаяся и абсолютно инертная.
  *
- * <p>Ни физики, ни гравитации, ни собственной скорости: вспышка просто висит в
- * точке вылета все четыре тика своей жизни и исчезает. Единственное, что она
- * делает, — гаснет alpha'ом, поэтому читается как выстрел даже боковым зрением.
+ * <p>Живёт всего два тика. Раньше было четыре, и при автоматическом огне
+ * вспышки накрывали друг друга: пушка выстреливает каждые шесть тиков, то
+ * предыдущая ещё не гасла, и дуло светилось непрерывно даже после того, как
+ * игрок отпустил огонь.
  *
  * <p>Свет задан не материалом, а {@link #getLightColor(float)}: у частиц нет
  * своего шейдера, и яркость приходит из второго UV-канала вершины, то есть
@@ -32,8 +33,8 @@ public class ShotFlashParticle extends TextureSheetParticle {
     /** Диаметр вспышки в блоках. */
     private static final float SIZE = 0.125F;
 
-    /** Время жизни в тиках: 0.2 секунды. */
-    private static final int LIFETIME_TICKS = 4;
+    /** Время жизни в тиках: 0.1 секунды. */
+    private static final int LIFETIME_TICKS = 2;
 
     public ShotFlashParticle(ClientLevel level, double x, double y, double z, SpriteSet sprites) {
         super(level, x, y, z, 0.0D, 0.0D, 0.0D);

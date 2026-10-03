@@ -232,6 +232,7 @@
     "block.trd.wire_fence_alt":  "Тонкий проволочный забор",
     "block.trd.zinc_block":  "Цинковый блок",
     "death.attack.crusher":  "%1$s стал фаршем",
+  "death.attack.turretBullet":  "%1$s залеван пулей в %2$s",
     "entity.trd.depth_worm":  "Глубинный червь",
     "entity.trd.grenade_if_fire_projectile":  "Зажигательная ударная граната",
     "entity.trd.grenade_if_he_projectile":  "Фугасная ударная граната",

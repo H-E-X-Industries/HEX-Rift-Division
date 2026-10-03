@@ -325,24 +325,27 @@ public final class MachineGunClientAnim {
     /**
      * Вспышка в точке вылета.
      * <p>
-     * Ставится в тот же тик, в который уходит пакет выстрела, и ровно в ту
-     * точку, что уходит в пакете, — поэтому вспышка и пуля всегда появляются
-     * одновременно и из одной точки. В прицеле не ставится: там точка вылета
-     * у самой камеры, и вспышка перекрыла бы круг прицела.
-     *
-     * @param at точка появления пули; {@code null} — вспышки не будет
+     * Ставится по пакету анимации, то есть ровно тогда, когда сервер выпустил
+     * пулю, и в той же точке, что её вылета — обе стороны считают её одним
+     * {@link MachineGunItem#shotOrigin}. В прицеле не ставится: там точка
+     * вылета у самой камеры, и вспышка перекрыла бы круг прицела.
      */
-    public static void spawnShotFlash(@Nullable Vec3 at) {
-        if (at == null) {
-            return;
-        }
-
+    public static void spawnShotFlash() {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null) {
+        if (mc.player == null || mc.level == null) return;
+
+        if (MachineGunScope.isScoped()) {
             return;
         }
 
-        mc.level.addParticle(com.trd.fx.particle.ModExplosionParticles.SHOT.get(), at.x, at.y, at.z, 0.0D, 0.0D, 0.0D);
+        Vec3 at = MachineGunItem.shotOrigin(
+                mc.player,
+                mc.player.calculateViewVector(mc.player.getXRot(), mc.player.getYRot()),
+                mc.player.getYRot(),
+                false);
+
+        mc.level.addParticle(com.trd.fx.particle.ModExplosionParticles.SHOT.get(), at.x, at.y, at.z,
+                0.0D, 0.0D, 0.0D);
     }
 
     private static void spawnParticle(MachineGunAnimation.Marker marker) {
