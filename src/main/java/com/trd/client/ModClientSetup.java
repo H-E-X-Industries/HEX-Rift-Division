@@ -66,8 +66,13 @@ public class ModClientSetup {
                 com.trd.client.gecko.entity.turrets.TurretLightLinkedRenderer::new);
         event.registerEntityRenderer(com.trd.entity.ModEntities.MISSILE_LIGHT.get(),
                 com.trd.client.renderer.MissileLightRenderer::new);
+        event.registerEntityRenderer(com.trd.entity.ModEntities.DEPTH_WORM.get(),
+                com.trd.client.gecko.entity.mobs.DepthWormRenderer::new);
+        event.registerEntityRenderer(com.trd.entity.ModEntities.DEPTH_WORM_BRUTAL.get(),
+                com.trd.client.gecko.entity.mobs.DepthWormBrutalRenderer::new);
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.TURRET_LIGHT_PLACER_BE.get(),
                 com.trd.client.gecko.block.turrets.TurretLightPlacerRenderer::new);
+
 
         // Гранаты рисуются ванильным рендерером брошенного предмета (модель самого предмета).
         // Без регистрации клиент рисует на их месте свинью.

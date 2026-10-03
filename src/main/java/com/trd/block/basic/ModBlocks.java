@@ -616,6 +616,19 @@ public class ModBlocks {
             () -> new Block(BlockBehaviour.Properties.of()
                     .strength(0.5F, 6.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
 
+    // БЛОКИ УЛЬЯ
+    public static final DeferredBlock<Block> DEPTH_WORM_NEST = registerBlock("depth_worm_nest",
+            () -> new com.trd.block.basic.necrosis.hive.DepthWormNestBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.MUD).sound(net.minecraft.world.level.block.SoundType.MUD)));
+    public static final DeferredBlock<Block> HIVE_SOIL = registerBlock("hive_soil",
+            () -> new com.trd.block.basic.necrosis.hive.HiveSoilBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.MUD).sound(net.minecraft.world.level.block.SoundType.MUD)));
+    public static final DeferredBlock<Block> DEPTH_WORM_NEST_DEAD = registerBlock("depth_worm_nest_dead",
+            () -> new com.trd.block.basic.necrosis.hive.DepthWormNestBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.MUD).sound(net.minecraft.world.level.block.SoundType.MUD)));
+    public static final DeferredBlock<Block> HIVE_SOIL_DEAD = registerBlock("hive_soil_dead",
+            () -> new com.trd.block.basic.necrosis.hive.HiveSoilBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.MUD).sound(net.minecraft.world.level.block.SoundType.MUD)));
+    public static final DeferredBlock<Block> HIVE_ROOTS = registerBlock("hive_roots",
+            () -> new com.trd.block.basic.necrosis.hive.HiveRootsBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.SPORE_BLOSSOM).noCollission().instabreak()));
+
+
     // ДВЕРИ
     public static final DeferredBlock<net.minecraft.world.level.block.DoorBlock> SEQUOIA_DOOR = registerBlock("sequoia_door",
             () -> new net.minecraft.world.level.block.DoorBlock(net.minecraft.world.level.block.state.properties.BlockSetType.DARK_OAK,
