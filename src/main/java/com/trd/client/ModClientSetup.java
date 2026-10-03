@@ -8,10 +8,14 @@ import dev.engine_room.flywheel.api.visual.BlockEntityVisual;
 import dev.engine_room.flywheel.api.visualization.BlockEntityVisualizer;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
 import dev.engine_room.flywheel.api.visualization.VisualizerRegistry;
+import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.util.profiling.ProfilerFiller;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
 
 @EventBusSubscriber(modid = MainRegistry.MOD_ID, value = Dist.CLIENT)
 public class ModClientSetup {
@@ -490,6 +494,26 @@ public class ModClientSetup {
                 event.getModels().put(location, new com.trd.client.render.DynamicBeamModel(beamBaseModel));
             }
         }
+    }
+
+    /**
+     * Помеченные кадры и локатор дула разбираются из glTF и кэшируются, поэтому
+     * после перезагрузки ресурсов кэш надо сбросить — иначе правка модели не
+     * подхватится до перезапуска игры.
+     */
+    @SubscribeEvent
+    public static void onAddReloadListener(RegisterClientReloadListenersEvent event) {
+        event.registerReloadListener(new SimplePreparableReloadListener<Void>() {
+            @Override
+            protected Void prepare(ResourceManager resourceManager, ProfilerFiller profiler) {
+                return null;
+            }
+
+            @Override
+            protected void apply(Void object, ResourceManager resourceManager, ProfilerFiller profiler) {
+                com.trd.client.gecko.item.guns.MachineGunModel.invalidate();
+            }
+        });
     }
 
     @SubscribeEvent

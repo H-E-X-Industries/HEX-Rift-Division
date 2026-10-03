@@ -26,4 +26,14 @@ public class ModExplosionParticles {
 
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> MUSHROOM_SMOKE =
             PARTICLE_TYPES.register("mushroom_smoke", () -> new SimpleParticleType(true));
+
+    /**
+     * Вспышка выстрела: короткая, всегда светящаяся, без физики.
+     * <p>
+     * Имя типа обязано совпадать с файлом {@code particles/shot.json}, иначе
+     * движ частиц не найдёт список спрайтов и в логе будет «missing particle
+     * sprites».
+     */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> SHOT =
+            PARTICLE_TYPES.register("shot", () -> new SimpleParticleType(true));
 }

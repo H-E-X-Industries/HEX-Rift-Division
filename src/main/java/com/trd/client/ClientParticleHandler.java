@@ -5,6 +5,7 @@ import com.trd.fx.particle.ExplosionSparkParticle;
 import com.trd.fx.particle.FireSparkParticle;
 import com.trd.fx.particle.ModExplosionParticles;
 import com.trd.fx.particle.MushroomSmokeParticle;
+import com.trd.fx.particle.ShotFlashParticle;
 import com.trd.fx.particle.WaveSmokeParticle;
 import com.trd.main.MainRegistry;
 import net.neoforged.api.distmarker.Dist;
@@ -36,5 +37,9 @@ public class ClientParticleHandler {
         event.registerSpriteSet(
                 ModExplosionParticles.MUSHROOM_SMOKE.get(),
                 MushroomSmokeParticle.Provider::new);
+
+        event.registerSpriteSet(
+                ModExplosionParticles.SHOT.get(),
+                ShotFlashParticle.Provider::new);
     }
 }

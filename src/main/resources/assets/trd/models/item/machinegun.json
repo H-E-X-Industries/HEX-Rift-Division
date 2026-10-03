@@ -6,7 +6,7 @@
       "translation": [
         0,
         0,
-        -7
+        -4.5
       ],
       "scale": [
         2,
@@ -18,7 +18,7 @@
       "translation": [
         0,
         0,
-        -7
+        -4.5
       ],
       "scale": [
         2,
@@ -29,15 +29,15 @@
     "firstperson_righthand": {
       "translation": [
         -7.5,
-        5.5,
-        2
+        4.75,
+        3
       ]
     },
     "firstperson_lefthand": {
       "translation": [
         -7.5,
-        5.5,
-        2
+        4.75,
+        3
       ]
     },
     "ground": {
@@ -59,14 +59,14 @@
         -134.76000000000022
       ],
       "translation": [
-        -2.25,
+        -2.5,
         -1,
         0
       ],
       "scale": [
-        1.8,
-        1.8,
-        1.8
+        1.5,
+        1.5,
+        1.5
       ]
     },
     "head": {

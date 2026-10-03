@@ -1,6 +1,7 @@
 package com.trd.item.weapons.guns;
 
 import com.trd.client.config.ModKeyBindings;
+import com.trd.client.gecko.item.guns.MachineGunModel;
 import com.trd.client.gecko.item.guns.MachineGunRenderer;
 import com.trd.client.overlay.MachineGunScope;
 import com.trd.entity.weapons.bullets.GilseEntity;
@@ -16,6 +17,8 @@ import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -60,18 +63,60 @@ import java.util.function.Consumer;
  */
 public class MachineGunItem extends Item {
 
-    private static final int SHOT_ANIM_TICKS = 14;
+    /**
+     * Минимальный перерыв между выстрелами в тиках.
+     * <p>
+     * Полтик — это 0.05 с, то есть предел, ниже которого стрельба превращается
+     * в лаги: каждый выстрел это ещё и сущность пули, сущность гильзы, звук на
+     * всехNearby и пакет анимации. Значение только удерживает нижнюю границу,
+     * а не задаёт темп.
+     */
+    private static final int MIN_SHOT_INTERVAL_TICKS = 1;
+
+    /**
+     * Длина клипа выстрела в тиках: glTF-клип {@code shot} идёт 0.3333 с, то есть
+     * 6.67 тика.
+     * <p>
+     * <b>Почему 6, а не 7.</b> Клип отыгрывается начиная с первого тика, поэтому
+     * на интервале в 7 тиков последние 0.033 с анимации не успевали показаться:
+     * ствол на последнем кадре уже почти вернулся, а потом резко прыгал в
+     * покой. Плюс между клипами оставался целый тик позы покоя, и при автоматичеcком
+     * огне это читалось как то, что пушку колотит назад. Шесть тиков — это ровно
+     * столько, сколько клип реально успевает отыграть, и следующий выстрел
+     * приходит, пока он ещё идёт.
+     * <p>
+     * Длина проверяется по самой модели: {@link MachineGunClientAnim} тянет её из
+     * glTF, и если clip перезальют с другой длиной, здесь понадобится правка.
+     */
+    private static final int SHOT_ANIM_TICKS = 6;
+
+    /** Длина клипа выстрела в секундах — ею подгоняются времена звуков. */
+    private static final float SHOT_CLIP_SECONDS = SHOT_ANIM_TICKS / 20.0F;
+
     private static final int MAG_CAPACITY = 24;
     private static final int MAX_TOTAL_AMMO = MAG_CAPACITY + 1;
-    // Длины блокировки стрельбы приведены к новым клипам glTF: reload длится
-    // 3.125 с (62 тика), flip — 3.9167 с (78 тиков). Раньше здесь стояли 100 и
-    // 80 от пятисекундных анимаций, и пушка простаивала впустую после конца
-    // клипа. Правку нужно повторять, если анимации перезальют заново.
-    private static final int RELOAD_ANIM_TICKS = 63;
-    private static final int FLIP_ANIM_TICKS = 79;
+
+    /**
+     * Длины блокировки перезарядки и разрядки, в тиках.
+     * <p>
+     * Взяты из glTF, а не из старой пятисекундной модели: у клипа
+     * {@code reload} последний ключ на 4.5833 с (92 тика), у {@code flip} — на
+     * 4.1667 с (84 тика). Раньше здесь стояли 63 и 79 от прежних клипов, из-за
+     * чего оружие переставало быть занятым за полторы секунды до конца жеста, а
+     * патроны досыпались в середине перезарядки — и звуки, привязанные к
+     * анимации, уезжали мимо неё.
+     */
+    private static final int RELOAD_ANIM_TICKS = 92;
+    private static final int FLIP_ANIM_TICKS = 84;
+
+    /** На каком тике перезарядки патроны доезжают в магазин. */
     private static final int RELOAD_AMMO_ADD_TICK = 60;
     private static final String LOADED_AMMO_ID_TAG = "LoadedAmmoID";
     private static final String HANDS_WARN_TAG = "HandsWarn";
+
+    /** Очередь звуков клипа: список compound'ов с отсчётом и путём звука. */
+    private static final String SCHEDULED_SOUNDS_TAG = "ScheduledSounds";
+
     private static final String GUN_CALIBER = "20mm_turret";
 
     /**
@@ -114,10 +159,46 @@ public class MachineGunItem extends Item {
      * <p>
      * Ровно из глаза она вылетать не может: {@code traceHit} проверяет блоки по
      * лучу, и старт внутри собственной головы означал бы мгновенное попадание
-     * в любой блок, к которому иглот прижался. Полблока вперёд достаточно,
-     * чтобы дуло целиком вышло из головы и пуля шла ровно по оптической оси.
+     * в любой блок, к которому иглот прижался.
+     * <p>
+     * Значение выросло с 0.3 до 0.8: в прицеле камера стоит у глаза, и пуля,
+     * появлявшаяся в полблоке от него, читалась как вылетающая из головы.
+     * Впереди она оказывается уже за пределами собственного хитбокса игрока, и
+     * луч столкновений стартует там же, где на самом деле выходит дуло.
      */
-    private static final double SCOPED_FORWARD = 0.3D;
+    private static final double SCOPED_FORWARD = 0.8D;
+
+    /**
+     * Насколько длинно дуло выходит из-за плеча стрелка.
+     * <p>
+     * Точка появления пули сдвинута вперёд по стволу, а не остаётся у плеча:
+     * иначе пуля возникает прямо перед камерой, ещё не выйдя из оружия, и
+     * первый кадр выстрела читается как вспышка в воздухе.
+     */
+    private static final double MUZZLE_LENGTH = 0.45D;
+
+    /**
+     * Доворот точки вылета от третьего лица: столько вперёд, столько влево и
+     * столько вправо от оси ствола.
+     * <p>
+     * Считается от ствола, а не от игрока. Правый сдвиг нужен потому, что ствол
+     * и так вынесен вправо на {@link #GUN_SIDE_OFFSET}: пуля оттуда вылетала
+     * заметно сбоку от дула, и на третьем лице визг уходил мимо оружия.
+     */
+    private static final double THIRD_PERSON_FORWARD = 0.25D;
+    private static final double THIRD_PERSON_LEFT = 0.125D;
+    private static final double THIRD_PERSON_RIGHT = 0.3D;
+
+    /**
+     * Смещение окна выброса гильзы вбок и вверх относительно ствола.
+     * <p>
+     * Гильза появляется здесь, а не у дула: она должна быть видна целиком до
+     * того, как вылетит. Значения близки к реальным — окно у автоматического
+     * ствола расположено сразу позади и выше оси ствола.
+     */
+    private static final double PORT_SIDE_OFFSET = 0.16D;
+    private static final double PORT_UP_OFFSET = 0.02D;
+    private static final double PORT_FORWARD = -0.1D;
 
     /**
      * Единичный вектор вправо относительно направления взгляда.
@@ -270,6 +351,8 @@ public class MachineGunItem extends Item {
             int delay = getShootDelay(stack);
             if (delay > 0) setShootDelay(stack, delay - 1);
 
+            tickScheduledSounds(level, player, stack);
+
             int reloadTimer = getReloadTimer(stack);
             if (reloadTimer > 0) {
                 setReloadTimer(stack, reloadTimer - 1);
@@ -328,6 +411,35 @@ public class MachineGunItem extends Item {
 
     // === ПЕРЕЗАРЯДКА ===
 
+    /**
+     * Запускает клип перезарядки: блокирует оружие, ставит звуки клипа в очередь
+     * и отправляет анимацию.
+     * <p>
+     * Все три дела обязаны идти отсюда. Блокировка и анимация — по длине клипа,
+     * а звуки — по его же помеченным кадрам; если разъехались, оружие
+     * освободится раньше конца жеста и патроны досыпаются в его середине.
+     */
+    private void startClip(Player player, ItemStack stack, String clip) {
+        setReloadTimer(stack, MachineGunClientAnim.RELOAD.equals(clip)
+                ? RELOAD_ANIM_TICKS
+                : FLIP_ANIM_TICKS);
+
+        scheduleClipSounds(player.level(), player, stack, clip, clipSeconds(clip));
+        sendAnim(player, clip);
+    }
+
+    /**
+     * Длина клипа в секундах по тем же числам, что и блокировка.
+     * <p>
+     * Нужна для подгонки времён звуков: {@link MachineGunAnimation} приводит их
+     * к той длине, которую сюда передали, а длиной на сервере остаётся ровно то,
+     * чему равна блокировка в тиках. Так маркер не уедет за конец анимации.
+     */
+    private static float clipSeconds(String clip) {
+        int ticks = MachineGunClientAnim.RELOAD.equals(clip) ? RELOAD_ANIM_TICKS : FLIP_ANIM_TICKS;
+        return ticks / 20.0F;
+    }
+
     public void reloadGun(Player player, ItemStack stack) {
         if (player.level().isClientSide) return;
         if (getReloadTimer(stack) > 0) return;
@@ -336,8 +448,7 @@ public class MachineGunItem extends Item {
 
         // 1) Полный магазин -> FLIP (разрядить/проверить)
         if (currentAmmo >= MAX_TOTAL_AMMO) {
-            sendAnim(player, MachineGunClientAnim.FLIP);
-            setReloadTimer(stack, FLIP_ANIM_TICKS);
+            startClip(player, stack, MachineGunClientAnim.FLIP);
             return;
         }
 
@@ -350,8 +461,7 @@ public class MachineGunItem extends Item {
 
         // 2) Подходящих патронов нет -> FLIP (даже в креативе)
         if (targetAmmoId == null) {
-            sendAnim(player, MachineGunClientAnim.FLIP);
-            setReloadTimer(stack, FLIP_ANIM_TICKS);
+            startClip(player, stack, MachineGunClientAnim.FLIP);
             return;
         }
 
@@ -364,8 +474,7 @@ public class MachineGunItem extends Item {
                 setLoadedAmmoID(stack, targetAmmoId);
             }
 
-            sendAnim(player, MachineGunClientAnim.RELOAD);
-            setReloadTimer(stack, RELOAD_ANIM_TICKS);
+            startClip(player, stack, MachineGunClientAnim.RELOAD);
             return;
         }
 
@@ -379,11 +488,9 @@ public class MachineGunItem extends Item {
             }
             setPendingAmmo(stack, taken);
             player.getInventory().setChanged();
-            sendAnim(player, MachineGunClientAnim.RELOAD);
-            setReloadTimer(stack, RELOAD_ANIM_TICKS);
+            startClip(player, stack, MachineGunClientAnim.RELOAD);
         } else {
-            sendAnim(player, MachineGunClientAnim.FLIP);
-            setReloadTimer(stack, FLIP_ANIM_TICKS);
+            startClip(player, stack, MachineGunClientAnim.FLIP);
         }
     }
 
@@ -453,20 +560,108 @@ public class MachineGunItem extends Item {
         return taken;
     }
 
-    // === СТРЕЛЬБА ===
+    // === ЗВУКИ, ПРИВЯЗАННЫЕ К АНИМАЦИИ ===
+
+    /**
+     * Ставит звуки клипа в очередь на серверные тики.
+     * <p>
+     * Сервер — единственный, кто может проиграть звук так, чтобы его услышали
+     * все вокруг: {@code level.playSound} рассылает его nearby-игрокам. Но момент
+     * выстрела на сервере и на клиенте один и тот же (пакет анимации уходит в
+     * тот же тик), поэтому очередь на серверных тиках попадает ровно на тот же
+     * кадр анимации, что и у стрелка.
+     * <p>
+     * Очередь хранится в NBT самого оружия, а не в статике: переживает смену
+     * слота, смену предмета в руке и не течёт после выхода игрока.
+     *
+     * @param clip          имя клипа, как в glTF
+     * @param clipDuration  длина клипа в секундах
+     */
+    private void scheduleClipSounds(Level level, Player player, ItemStack stack, String clip,
+                                    float clipDuration) {
+        List<MachineGunAnimation.Marker> markers = MachineGunAnimation.sounds(clip, clipDuration);
+        if (markers.isEmpty()) {
+            return;
+        }
+
+        CompoundTag tag = readTag(stack);
+        ListTag queue = tag.getList(SCHEDULED_SOUNDS_TAG, Tag.TAG_COMPOUND);
+
+        for (MachineGunAnimation.Marker marker : markers) {
+            // В секундах маркера — округление вверх, чтобы звук не ушёл на кадр
+            // раньше анимации: клип на клиенте идёт с точностью до кадра.
+            int in = Math.max(1, (int) Math.ceil(marker.time() * 20.0D));
+            CompoundTag entry = new CompoundTag();
+            entry.putInt("In", in);
+            entry.putString("Id", marker.id());
+            queue.add(entry);
+        }
+
+        if (!queue.isEmpty()) {
+            tag.put(SCHEDULED_SOUNDS_TAG, queue);
+            writeTag(stack, tag);
+        }
+    }
+
+    /**
+     * Проигрывает всё, что дозрело, и сдвигает остальное на тик.
+     * <p>
+     * Список каждый раз пересобирается заново: он длиной в единицы и живёт
+     * меньше пяти секунд, а возиться с отдельным обратным отсчётом ради этого
+     * невыгодно.
+     */
+    private void tickScheduledSounds(Level level, Player player, ItemStack stack) {
+        CompoundTag tag = readTag(stack);
+        ListTag queue = tag.getList(SCHEDULED_SOUNDS_TAG, Tag.TAG_COMPOUND);
+        if (queue.isEmpty()) {
+            return;
+        }
+
+        ListTag pending = new ListTag();
+        for (int i = 0; i < queue.size(); i++) {
+            CompoundTag entry = queue.getCompound(i).copy();
+            int in = entry.getInt("In") - 1;
+            if (in <= 0) {
+                SoundEvent sound = MachineGunAnimation.sound(entry.getString("Id"));
+                if (sound != null) {
+                    level.playSound(null, player.getX(), player.getY(), player.getZ(), sound,
+                            SoundSource.PLAYERS, 1.0F, soundPitch(level));
+                }
+                continue;
+            }
+            entry.putInt("In", in);
+            pending.add(entry);
+        }
+
+        if (pending.isEmpty()) {
+            tag.remove(SCHEDULED_SOUNDS_TAG);
+        } else {
+            tag.put(SCHEDULED_SOUNDS_TAG, pending);
+        }
+        writeTag(stack, tag);
+    }
+
+    private static float soundPitch(Level level) {
+        return 0.9F + level.random.nextFloat() * 0.2F;
+    }
+
+    // === СЕТКА ===
 
     /** Выстрел по углу обзора самого сервера. */
     public void performShooting(Level level, Player player, ItemStack stack) {
-        performShooting(level, player, stack, player.getYRot(), player.getXRot(), false);
+        performShooting(level, player, stack, player.getYRot(), player.getXRot(), false, null);
     }
 
     /**
      * Выстрел в направлении, заданном двумя осями: {@code yaw} и {@code pitch}.
      * Клиент присылает их в {@link PacketShoot}, чтобы пуля уходила ровно туда,
      * куда показывал прицел в момент нажатия огня.
+     *
+     * @param muzzle кончик ствола, посчитанный клиентом по локатору из модели;
+     *               {@code null} — тогда точка считается серверной формулой
      */
     public void performShooting(Level level, Player player, ItemStack stack, float yaw, float pitch,
-                                boolean scoped) {
+                                boolean scoped, Vec3 muzzle) {
         if (level.isClientSide) return;
         if (getReloadTimer(stack) > 0 || getShootDelay(stack) > 0) return;
 
@@ -550,59 +745,78 @@ public class MachineGunItem extends Item {
         // попадание в любой блок вплотную к игроку.
         //
         // Без прицела остаётся как было: от ствола вниз и в сторону, там
-        // расхождение со стволом и нужно.
+        // расхождение со стволом и нужно, но уже с конца дула и с доворотом
+        // влево, чтобы визг шёл из оружия, а не мимо него.
+        //
+        // Сторона (вправо от стрелка) и направление считаются один раз и
+        // используются дальше и для точки вылета пули, и для точки выброса
+        // гильзы: брать их от разных векторов означало бы, что прицел и
+        // казённик живут в разных системах координат.
+        Vec3 side = perpendicular(lookDir);
+        Vec3 forward = velocity.normalize();
+
         Vec3 gunPos = player.position()
-                .add(perpendicular(lookDir).scale(GUN_SIDE_OFFSET))
+                .add(side.scale(GUN_SIDE_OFFSET))
                 .add(0.0D, player.getEyeY() - player.getY() - MUZZLE_DROP, 0.0D);
-        Vec3 spawnPos = scoped
-                ? player.getEyePosition().add(lookDir.normalize().scale(SCOPED_FORWARD))
-                : gunPos;
+
+        // Точка вылета. Приоритет у клиентской: кончик ствола, посчитанный по
+        // локатору из модели, — единственная точка, которая совпадает с тем, что
+        // нарисовано на экране, и в третьем лице, и в прицеле, и при просадке
+        // кадров. Формула от позиции игрока остаётся запасным вариантом: если
+        // клиент её не прислал, считаем здесь.
+        Vec3 spawnPos = muzzle != null
+                ? muzzle
+                : scoped
+                        ? player.getEyePosition().add(forward.scale(SCOPED_FORWARD))
+                        : gunPos
+                                .add(forward.scale(MUZZLE_LENGTH + THIRD_PERSON_FORWARD))
+                                .add(side.scale(THIRD_PERSON_RIGHT - THIRD_PERSON_LEFT));
 
         bullet.setPos(spawnPos.x, spawnPos.y, spawnPos.z);
-        bullet.setDeltaMovement(velocity);
 
-        // Направление выставляем до появления в мире: пакет появления несёт
-        // только yaw/pitch и отправляется на addFreshEntity, а рендер читает
-        // ещё и собственный spin. Без этого пуля первый кадр смотрит не туда.
-        bullet.alignToVelocity();
-        bullet.setYRot(bullet.getYRot());
-        bullet.setXRot(bullet.getXRot());
-        bullet.yRotO = bullet.getYRot();
-        bullet.xRotO = bullet.getXRot();
+        // Скорость и ориентация — одним вызовом и обязательно до
+        // addFreshEntity: пакет появления формируется при добавлении сущности в
+        // уровень и несёт только поворот сущности, то есть выставить углы позже
+        // уже некуда. Плюс сюда кладётся точный вектор вылета, и первый кадр на
+        // клиенте совпадает с последующими.
+        bullet.setLaunchDirection(velocity);
 
         serverLevel.addFreshEntity(bullet);
 
-        // Гильза вылетает из ствола вбок и вниз от направления выстрела.
+        // Звука и вспышки здесь больше нет: они приходят с помеченных кадров
+        // анимации — звук ставит в очередь сервер, вспышку по локатору спавнит
+        // клиент. Так они совпадают с отдачей ствола, а не с моментом нажатия.
+
+        // Гильза вылетает из казённика вбок и вверх от направления выстрела.
         Vec3 up = new Vec3(0, 1, 0);
-        Vec3 forward = velocity.normalize();
-        // Сторона всегда от ствола, а не из точки вылета: в прицеле пуля
-        // появляется у глаза, и выбрасывать гильзу оттуда означало бы сыпать
-        // её перед лицом стрелка.
-        Vec3 side = perpendicular(forward);
-        Vec3 muzzle = gunPos.add(forward.scale(0.35));
-        // Скорости подобраны так, чтобы гильза вылетела примерно на полблока
-        // в сторону, подпрыгнула от блока и тут же осыпалась: дальний разлёт
-        // гасит сильное горизонтальное трение в GilseEntity
-        // (HORIZONTAL_AIR_DRAG), а отскок ровно один (BOUNCE там же).
+
+        // Появляется у самого казённика, а не у дула: гильза обязана быть видна
+        // целиком до того, как вылетит из пушки. Раньше точка появления была на
+        // 0.35 блока впереди gunPos, то есть у самой руки, и гильза возникала
+        // на виду, уже отлетев от ствола.
+        Vec3 portPos = gunPos
+                .add(side.scale(PORT_SIDE_OFFSET))
+                .add(up.scale(PORT_UP_OFFSET))
+                .add(forward.scale(PORT_FORWARD));
+
+        // Скорости подобраны так, чтобы гильза вылетела примерно на блок в
+        // сторону, упала и тут же осела: дальний разлёт гасит трение в
+        // GilseEntity (HORIZONTAL_AIR_DRAG), а на полу гильза раскачивается по
+        // затухающей пружине (SETTLE_STIFFNESS там же).
         //
         // Боковой выброс заметно сильнее вертикального: гильза должна улететь
-        // из-под ствола в сторону, а не просто упасть под ноги. Раньше эти
-        // значения были 2.0/1.6/0.6 — с трением 0.98 по горизонтали это давало
-        // разлёт в десятки блоков, а после ослабления трения гильза сыпалась
-        // под пушку мёртвым грузом.
-        Vec3 shellVelocity = side.scale(0.26).add(up.scale(0.30)).add(forward.scale(0.05));
+        // из-под ствола в сторону, а не просто упасть под ноги.
+        Vec3 shellVelocity = side.scale(0.30).add(up.scale(0.34)).add(forward.scale(0.04));
 
-        GilseEntity gilse = new GilseEntity(serverLevel, player, muzzle, shellVelocity);
+        GilseEntity gilse = new GilseEntity(serverLevel, player, portPos, shellVelocity);
         gilse.enforceLimit(serverLevel, player);
         serverLevel.addFreshEntity(gilse);
 
-        float soundPitch = 0.9F + level.random.nextFloat() * 0.2F;
-        SoundEvent shotSound = ModSounds.TURRET_FIRE.isBound() ? ModSounds.TURRET_FIRE.get() : SoundEvents.GENERIC_EXPLODE.value();
-        level.playSound(null, player.getX(), player.getY(), player.getZ(), shotSound, SoundSource.PLAYERS, 1.0F, soundPitch);
-
+        // Звук выстрела — серверный, но не «сейчас»: времена берём из помеченных
+        // кадров анимации и раскладываем по серверным тикам, чтобы щелчок
+        // совпал с пиком отдачи. Вспышку добавляет клиент по локатору модели.
+        scheduleClipSounds(serverLevel, player, stack, MachineGunClientAnim.SHOT, SHOT_CLIP_SECONDS);
         // Анимацию выстрела запускаем только здесь — на реальном выстреле.
-        // Клиент держит один клип за раз, поэтому анимация не может наложиться
-        // на перезарядку или на предыдущий выстрел.
         sendAnim(player, MachineGunClientAnim.SHOT);
     }
 
@@ -701,10 +915,33 @@ public class MachineGunItem extends Item {
          * сигнализирует о намерении. Если клиентский интервал равнялся бы
          * серверному, пакет мог прийти на тик раньше, чем сервер дозреет, и
          * выстрел молча терялся — при удержании ЛКМ это давало провалы.
+         * <p>
+         * Значение равно {@link #MIN_SHOT_INTERVAL_TICKS}: клиент шлёт пакет
+         * каждый тик и жмёт темп себе, а сервер отсекает лишнее. Держать
+         * здесь больше незачем, а при запасе меньше полтика клиент начнёт
+         * насыпать пакетами, которые сервер всё равно выбросит.
          */
-        private static final int CLIENT_MIN_INTERVAL = 2;
+        private static final int CLIENT_MIN_INTERVAL = MIN_SHOT_INTERVAL_TICKS;
 
         private static int clientShootTimer = 0;
+
+        /**
+         * Кончик ствола на момент нажатия: та же точка, что уходит во вспышку.
+         *
+         * @return {@code null}, если пушка ещё не рисовалась и матрицы предмета нет
+         */
+        @javax.annotation.Nullable
+        private static net.minecraft.world.phys.Vec3 currentMuzzle() {
+            net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+            if (mc.player == null || !MachineGunModel.hasItemMatrix()) return null;
+
+            return MachineGunModel.worldMuzzle(
+                    MachineGunClientAnim.model(),
+                    MachineGunClientAnim.currentClip(),
+                    MachineGunClientAnim.seconds(0.0F),
+                    null,
+                    mc.gameRenderer.getMainCamera());
+        }
 
         @SubscribeEvent
         public static void onClientTick(ClientTickEvent.Post event) {
@@ -749,8 +986,18 @@ ItemStack stack = mc.player.getMainHandItem();
                 // Угол обзора по обеим осям едет вместе с пакетом: серверная копия
                 // поворота игрока отстаёт на тик, и без этого пуля уходила мимо прицела.
                 // Прицел тоже едет: сервер снимет разброс вдвое, когда игрок в него смотрит.
-                PacketDistributor.sendToServer(new PacketShoot(mc.player.getYRot(), mc.player.getXRot(),
-                        com.trd.client.overlay.MachineGunScope.isScoped()));
+                // И кончик ствола: он считается по локатору из модели, поэтому пуля
+                // вылетает ровно оттуда, откуда нарисовано дуло, а не из точки,
+                // угаданной формулой от позиции игрока. Без матрицы предмета (его ещё
+                // не рисовали) пакет уходит без неё, и сервер посчитает точку у себя.
+                // Точка берётся один раз: между двумя вызовами анимация успела бы
+                // сдвинуться, и пакет ушёл бы с кончиком ствола от прошлого кадра.
+                net.minecraft.world.phys.Vec3 muzzle = currentMuzzle();
+                boolean scoped = com.trd.client.overlay.MachineGunScope.isScoped();
+                PacketShoot packet = muzzle == null
+                        ? PacketShoot.of(mc.player.getYRot(), mc.player.getXRot(), scoped)
+                        : PacketShoot.of(mc.player.getYRot(), mc.player.getXRot(), scoped, muzzle);
+                PacketDistributor.sendToServer(packet);
                 clientShootTimer = CLIENT_MIN_INTERVAL;
                 mc.player.attackAnim = 0;
                 mc.player.oAttackAnim = 0;

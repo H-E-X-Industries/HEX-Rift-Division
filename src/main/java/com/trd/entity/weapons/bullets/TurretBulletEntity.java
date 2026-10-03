@@ -13,6 +13,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
@@ -73,6 +74,23 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
     private static final EntityDataAccessor<Float> SPIN =
             SynchedEntityData.defineId(TurretBulletEntity.class, EntityDataSerializers.FLOAT);
 
+    /**
+     * Точное направление вылета, в градусах: те же два угла, что и у
+     * {@link #alignToVelocity()}, но отдельными значениями.
+     * <p>
+     * Пакет появления несёт только yaw/pitch, а те квантуются до байта — шаг
+     * получается 1.4 градуса. Для летящей пули, проходящей полсотни блоков за
+     * секунду, этого хватает, но на первом кадре заметно: рендер успевает
+     * взять направление из поворота, а уже со второго кадра берёт его из
+     * разности координат, и пуля видимо доворачивается сразу после появления.
+     * Точное направление вылета едет вместе с пакетом появления, поэтому
+     * первый кадр совпадает со всеми остальными.
+     */
+    private static final EntityDataAccessor<Float> LAUNCH_YAW =
+            SynchedEntityData.defineId(TurretBulletEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> LAUNCH_PITCH =
+            SynchedEntityData.defineId(TurretBulletEntity.class, EntityDataSerializers.FLOAT);
+
     public static final float BULLET_GRAVITY = 0.01F;
     public static final float AIR_RESISTANCE = 0.99F;
     public static final float MAX_FLIGHT_DISTANCE = 256.0F;
@@ -102,6 +120,27 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
     private double serverPrevX;
     private double serverPrevY;
     private double serverPrevZ;
+
+    /**
+     * Счётчик пакетов позиции, принятых клиентом, и его значение на прошлом
+     * клиентском тике.
+     * <p>
+     * Пакеты позиции шлются не каждый тик, а только если смещение превысило
+     * 1/4096 блока: {@code ServerEntity} сравнивает его с накопленным от
+     * предыдущего пакета. Пока пуля летит, порог всегда превышен, но как
+     * только она остановилась — а при попадании в щит или в воду это случается
+     * — пакеты перестают приходить, и якорь остался бы на точке, с которой
+     * пуля встала. Рендер интерполировал бы вечно оттуда, то есть пуля
+     * висела бы позади своей настоящей позиции.
+     * <p>
+     * Отличать «пакет пришёл» от «пакета не было» можно по счётчику: пакеты
+     * разбираются до тика сущностей ({@code MultiPlayerGameMode#tick} вызывает
+     * разбор пакетов, {@code Minecraft#tick} — {@code level.tickEntities()} уже
+     * после), поэтому к моменту нашего {@code tick()} счётчик за этот тик уже
+     * изменился, если пакет был.
+     */
+    private long packetsSeen;
+    private long packetsSeenAtLastTick;
 
     private float baseDamage = 4.0f;
     private float baseSpeed = 3.0f;
@@ -162,6 +201,8 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
         builder.define(AMMO_TYPE, "normal");
         builder.define(FLIGHT_TIME, 0);
         builder.define(SPIN, 0.0F);
+        builder.define(LAUNCH_YAW, 0.0F);
+        builder.define(LAUNCH_PITCH, 0.0F);
     }
 
     public void setAmmoType(AmmoRegistry.AmmoType ammoType) {
@@ -208,10 +249,9 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
 
     public void setBallisticTrajectory(Vec3 startPos, Vec3 velocity) {
         this.setPos(startPos.x, startPos.y, startPos.z);
-        this.setDeltaMovement(velocity);
         this.initialSpeed = (float) velocity.length();
         this.initialPosition = startPos;
-        this.alignToVelocity();
+        setLaunchDirection(velocity);
     }
 
     public void shootBallisticFromRotation(LivingEntity shooter, float pitch, float yaw, float rollOffset,
@@ -256,6 +296,7 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
             // по двум точкам (serverPrev и текущей). Подменять xOld здесь было
             // бессмысленно — тогда обе точки в смещении рендера совпадали и
             // интерполяция давала ноль, то есть пуля шла дискретно.
+            expireRenderAnchor();
             return;
         }
 
@@ -353,6 +394,39 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
     }
 
     /**
+     * Ставит скорость и ориентацию пули на вылет — <b>до</b> появления в мире.
+     * <p>
+     * Зовётся стрелком сразу перед {@code addFreshEntity}. Ориентация обязана
+     * быть готова именно к этому моменту: пакет появления формируется при
+     * добавлении сущности в уровень и несёт только поворот сущности, так что
+     * выставить углы позже — уже некуда, первый кадр увидит пулю неориентированной.
+     * <p>
+     * Точное направление вылета кладётся ещё и в синхронизированные данные: на
+     * клиенте до первого пакета позиции брать его больше неоткуда, а поворот из
+     * пакета квантуется до байта и гуляет на полтора градуса. С ним пуля
+     * доворачивалась бы на первом кадре.
+     */
+    public void setLaunchDirection(Vec3 velocity) {
+        this.setDeltaMovement(velocity);
+
+        if (velocity.lengthSqr() < 1.0E-8D) {
+            return;
+        }
+
+        double horizontal = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
+        float yaw = (float) (Math.atan2(velocity.x, velocity.z) * (180D / Math.PI));
+        float pitch = (float) (Math.atan2(velocity.y, horizontal) * (180D / Math.PI));
+
+        this.setYRot(yaw);
+        this.setXRot(pitch);
+        this.yRotO = yaw;
+        this.xRotO = pitch;
+
+        this.entityData.set(LAUNCH_YAW, yaw);
+        this.entityData.set(LAUNCH_PITCH, pitch);
+    }
+
+    /**
      * Разворачивает пулю вдоль её скорости: обе оси (yaw и pitch) считаются из
      * вектора движения, как в 1.20.1.
      * <p>
@@ -396,31 +470,62 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
             return delta.normalize();
         }
 
-        // Только что появилась: предыдущей позиции ещё нет, падаем назад
-        // на углы, которые сервер успел прислать в пакете появления.
-        double horizontal = Math.sqrt(dx * dx + dz * dz);
-        if (horizontal > 1.0E-8D || Math.abs(dy) > 1.0E-8D) {
-            return new Vec3(
-                    Math.sin(Math.toRadians(this.getYRot())),
-                    -Math.sin(Math.toRadians(this.getXRot())),
-                    Math.cos(Math.toRadians(this.getYRot()))
-            ).normalize();
+        // Предыдущей координаты ещё нет: до первого пакета позиции берём точное
+        // направление вылета, пришедшее вместе с появлением. Поворот из пакета
+        // появления для этого не годится — он квантуется до байта и вдобавок
+        // переворачивает вертикаль, так что пуля дёргалась бы на первом кадре.
+        return launchDirection();
+    }
+
+    /** Направление вылета ровно тем, каким его задал стрелок. */
+    public Vec3 launchDirection() {
+        float yaw = this.entityData.get(LAUNCH_YAW);
+        float pitch = this.entityData.get(LAUNCH_PITCH);
+
+        double yawRad = Math.toRadians(yaw);
+        double pitchRad = Math.toRadians(pitch);
+        double horizontal = Math.cos(pitchRad);
+
+        return new Vec3(
+                Math.sin(yawRad) * horizontal,
+                Math.sin(pitchRad),
+                Math.cos(yawRad) * horizontal
+        );
+    }
+
+    /**
+     * Прижимает рендерный якорь к текущей точке.
+     * <p>
+     * Нужна на появлении сущности: до первого пакета позиции двигаться не от
+     * чего, поэтому предыдущая точка обязана совпадать с текущей.
+     */
+    private void snapRenderAnchor() {
+        this.serverPrevX = this.getX();
+        this.serverPrevY = this.getY();
+        this.serverPrevZ = this.getZ();
+    }
+
+    /** Сбрасывает якорь, если сервер перестал двигать пулю. См. {@link #packetsSeen}. */
+    private void expireRenderAnchor() {
+        if (this.packetsSeen == this.packetsSeenAtLastTick) {
+            this.snapRenderAnchor();
         }
-
-        return Vec3.ZERO;
+        this.packetsSeenAtLastTick = this.packetsSeen;
     }
 
-    /** Предыдущая серверная позиция — для сглаживания отрисовки. */
-    public double getServerPrevX() {
-        return this.serverPrevX;
-    }
-
-    public double getServerPrevY() {
-        return this.serverPrevY;
-    }
-
-    public double getServerPrevZ() {
-        return this.serverPrevZ;
+    /**
+     * Смещение отрисовки: насколько модель сместить, чтобы попасть в
+     * сглаженную точку вместо дискретной серверной.
+     */
+    public Vec3 renderOffset(float partialTick) {
+        if (!this.level().isClientSide) {
+            return Vec3.ZERO;
+        }
+        return new Vec3(
+                Mth.lerp(partialTick, this.serverPrevX, this.getX()) - this.getX(),
+                Mth.lerp(partialTick, this.serverPrevY, this.getY()) - this.getY(),
+                Mth.lerp(partialTick, this.serverPrevZ, this.getZ()) - this.getZ()
+        );
     }
 
     @Override
@@ -449,6 +554,7 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
             this.serverPrevX = this.getX();
             this.serverPrevY = this.getY();
             this.serverPrevZ = this.getZ();
+            this.packetsSeen++;
         }
         super.lerpTo(x, y, z, yRot, xRot, steps);
     }
@@ -459,10 +565,10 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
         this.yRotO = this.getYRot();
         this.xRotO = this.getXRot();
         // Якорь первой интерполяции: до первого пакета позиции двигаться не
-        // от чего, поэтому предыдущая точка совпадает с текущей.
-        this.serverPrevX = this.getX();
-        this.serverPrevY = this.getY();
-        this.serverPrevZ = this.getZ();
+        // от чего, поэтому предыдущая точка совпадает с текущей. Направление
+        // вылета при этом уже есть — оно пришло вместе с появлением.
+        this.packetsSeen++;
+        this.snapRenderAnchor();
     }
 
     private void handleHitResult(HitResult hit) {
@@ -694,6 +800,11 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
         }
         tag.putFloat("InitialSpeed", this.initialSpeed);
         tag.putInt("FlightTime", getFlightDuration());
+        // Направление вылета переживает перезагрузку чанка: без него пуля,
+        // загруженная с диска, на первом кадре смотрела бы в юг вместо
+        // собственного курса — синхронизированные данные с появлением не летят.
+        tag.putFloat("LaunchYaw", this.entityData.get(LAUNCH_YAW));
+        tag.putFloat("LaunchPitch", this.entityData.get(LAUNCH_PITCH));
         if (lastHitTarget != null) {
             tag.putUUID("LastHitUUID", lastHitTarget.getUUID());
         }
@@ -711,6 +822,8 @@ public class TurretBulletEntity extends AbstractArrow implements GeoEntity {
         }
         this.initialSpeed = tag.getFloat("InitialSpeed");
         setFlightDuration(tag.getInt("FlightTime"));
+        this.entityData.set(LAUNCH_YAW, tag.getFloat("LaunchYaw"));
+        this.entityData.set(LAUNCH_PITCH, tag.getFloat("LaunchPitch"));
     }
 
     /**

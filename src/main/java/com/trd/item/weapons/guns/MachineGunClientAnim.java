@@ -1,13 +1,18 @@
 package com.trd.item.weapons.guns;
 
-import com.trd.main.MainRegistry;
+import com.trd.client.gecko.item.guns.MachineGunModel;
+import com.trd.client.overlay.MachineGunScope;
 import com.wf.gemrender.gltf.GemRenderGltfModel;
 import com.wf.gemrender.gltf.GltfAnimation;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
+
+import java.util.List;
 
 import javax.annotation.Nullable;
 
@@ -27,11 +32,14 @@ import javax.annotation.Nullable;
  * Теперь каждый выстрел и каждая перезарядка приходят с сервера отдельным
  * запросом, поэтому анимация привязана к реальным событиям, а не к нажатию.
  * <p>
- * Звуки и тайминги перенесены из {@code animations/machinegun.animation.json}
- * один в один: gunpull на 0.4583 с, heavy_gunclick на 3.6667 с, gunclick на
- * 4.625 с — это 9, 73 и 92 тика.
+ * <b>Звуки и частицы приходят по часам анимации.</b> Кадры, помеченные прямо в
+ * glTF, разбирает {@link MachineGunModel} и проигрывает
+ * {@link #playMarkedEffects()}. Никаких захардкоженных тиков и никакого
+ * геколиба: пометил кадр на кости в Blockbench — и звук или вспышка поехали
+ * вместе с анимацией. Частица ставится на локатор дула из самой модели.
  */
 public final class MachineGunClientAnim {
+
 
     /** Клип стрельбы: короткий отскок ствола. */
     public static final String SHOT = "shot";
@@ -49,25 +57,36 @@ public final class MachineGunClientAnim {
     private static float reloadDuration = 3.125f;
     private static float flipDuration = 3.9167f;
 
-    /**
-     * Моменты затворных звуков как доля длины клипа, а не как тики.
-     * <p>
-     * Тики привязывали звуки к прежним пятисекундным анимациям. Нынешний
-     * {@code reload} длится 3.125 с (62 тика), а {@code flip} — 3.9167 с
-     * (78 тиков), и жёсткие 73/92 тика туда просто не влезали: звуков не было
-     * вообще. Доли переживают переэкспорт модели.
-     */
-    private static final float MAG_PULL_AT = 0.20f;
-    private static final float MAG_IN_AT = 0.34f;
-    private static final float BOLT_AT = 0.82f;
-
-    private static float magPullTick;
-    private static float magInTick;
-    private static float boltTick;
-
     @Nullable
     private static String current;
     private static int age;
+
+    /**
+     * Помеченные частицы текущего клипа и курсор по ним.
+     * <p>
+     * Только частицы: звуки ставит в очередь сервер, см.
+     * {@link MachineGunItem#scheduleClipSounds}. Курсор, а не флаг «уже играл», —
+     * потому что один клип может нести несколько кадров, а тик за тиком их нужно
+     * отбирать по времени. Так кадр срабатывает ровно один раз, даже если между
+     * тиками анимация перескочит сразу через два эффекта.
+     */
+    private static List<MachineGunAnimation.Marker> markers = List.of();
+    private static int markerCursor;
+
+    /**
+     * Клип и момент, на которых считается локатор дула для частиц.
+     * <p>
+     * Держим именно то, что было в момент срабатывания кадра, а не то, что
+     * покажет рендером сейчас: у локатора есть смысл только в момент эффекта, а
+     * к следующему тику анимация уже уехала вперёд.
+     */
+    @Nullable
+    private static GltfAnimation markerClip;
+    private static float markerSeconds;
+
+    /** Модель, из которой берётся локатор. */
+    @Nullable
+    private static GemRenderGltfModel cachedModel;
 
     /**
      * Дробный возраст клипа. Растёт на {@link #tick}, но рендер читает его же с
@@ -85,9 +104,6 @@ public final class MachineGunClientAnim {
     @Nullable
     private static String queued;
 
-    /** Сколько из трёх затворных звуков уже прозвучало в текущем клипе. */
-    private static int played;
-
     private MachineGunClientAnim() {
     }
 
@@ -98,6 +114,8 @@ public final class MachineGunClientAnim {
      * GemRender, а на сервере той нет.
      */
     public static void syncDurations(GemRenderGltfModel model) {
+        cachedModel = model;
+
         GltfAnimation shot = model.animation(SHOT);
         if (shot != null) {
             shotDuration = shot.duration();
@@ -112,27 +130,33 @@ public final class MachineGunClientAnim {
         if (flip != null) {
             flipDuration = flip.duration();
         }
-
-        // Звуки целимся в узлы анимации: у reload это уход магазина вниз
-        // (тик ~15) и его возврат (тик ~50), у flip — доворот патронника
-        // (тик ~46) и возврат магазина (тик ~70).
-        float reloadTicks = reloadDuration * 20.0f;
-        magPullTick = Math.min(reloadTicks * 0.24f, 16.0f);
-        magInTick = Math.min(reloadTicks * 0.40f, 26.0f);
-        boltTick = Math.min(reloadTicks * 0.80f, 51.0f);
     }
 
     /**
-     * Запрос на проигрывание клипа. Возвращает {@code false}, если клип уже
-     * играет и повтор того же клипа начать нельзя.
+     * Запрос на проигрывание клипа.
+     * <p>
+     * Клип выстрела — исключение: его перезапуск разрешён, и это не дёрганье, а
+     * ровно то, как должна вести себя автоматика. Темп стрельбы (6 тиков) короче
+     * клипа (6.67), поэтому следующий выстрел всегда приходит, пока отдача
+     * ещё идёт. Если бы повтор отбрасывался, между выстрелами оставался бы
+     * целый тик позы покоя, и ствол дёргался бы назад-вперёд дважды на выстрел.
+     * <p>
+     * Для reload и flip перезапуск по-прежнему запрещён: там он сорвал бы жест
+     * на середине.
+     *
+     * @return {@code false}, если клип не удалось запустить
      */
     public static boolean trigger(String anim) {
         if (durationOf(anim) <= 0.0f) return false;
 
         if (anim.equals(current)) {
-            // Тот же клип уже идёт: перезапуск с нуля и есть главный источник
-            // дёрганья, поэтому игнорируем повтор.
-            return false;
+            if (!SHOT.equals(anim)) {
+                return false;
+            }
+            // Перезапуск с нуля: пик отдачи должен приходиться на новый выстрел,
+            // а не на произвольный кадр предыдущего.
+            begin(anim);
+            return true;
         }
 
         if (current != null) {
@@ -154,7 +178,13 @@ public final class MachineGunClientAnim {
         current = anim;
         age = 0;
         preciseAge = 0.0;
-        played = 0;
+
+        // Помеченные кадры берём здесь: длины клипов к этому моменту уже
+        // известны из прошлого кадра рендера.
+        markers = MachineGunAnimation.particles(anim, durationOf(anim));
+        markerCursor = 0;
+        markerClip = null;
+        markerSeconds = 0.0F;
     }
 
     /** Тик клиента: доводит текущий клип до конца и подхватывает очередной. */
@@ -168,7 +198,10 @@ public final class MachineGunClientAnim {
             current = null;
             age = 0;
             preciseAge = 0.0;
-            played = 0;
+                markers = List.of();
+            markerCursor = 0;
+            markerClip = null;
+            markerSeconds = 0.0F;
 
             if (queued != null) {
                 String next = queued;
@@ -178,8 +211,7 @@ public final class MachineGunClientAnim {
             return;
         }
 
-        // Затворные звуки есть только у reload/flip.
-        playReloadSound(age);
+        playMarkedParticles();
     }
 
     /** Сброс состояния — пушка убрана из руки или открыт какой-то экран. */
@@ -188,7 +220,10 @@ public final class MachineGunClientAnim {
         age = 0;
         preciseAge = 0.0;
         queued = null;
-        played = 0;
+        markers = List.of();
+        markerCursor = 0;
+        markerClip = null;
+        markerSeconds = 0.0F;
     }
 
     /** Имя клипа для рендера либо {@code null}, если пушка в покое. */
@@ -227,31 +262,79 @@ public final class MachineGunClientAnim {
         return 0.0f;
     }
 
-    private static void playReloadSound(int tick) {
-        if (SHOT.equals(current)) return;
+    /**
+     * Проигрывает помеченные кадры, до которых дошла анимация.
+     * <p>
+     * Отбор идёт по интервалу {@code (было, стало]}, а не по флажку «уже
+     * проиграно». Это даёт два свойства: кадр срабатывает ровно один раз, даже
+     * если между тиками анимация перескочила сразу через два эффекта, и клип,
+     * начатый с середины (смена длины при перезагрузке ресурсов), не выдаёт
+     * всю разом.
+     * <p>
+     * Всё играется на клиенте — ровно как это делал GeckoLib: сервер о такой
+     * метке не знает, а позиция оружия в руке у него всё равно другой.
+     */
+    private static void playMarkedParticles() {
+        if (markers.isEmpty()) return;
 
-        String name;
-        if (tick >= magPullTick && played < 1) {
-            name = "gunpull";
-            played = 1;
-        } else if (tick >= magInTick && played < 2) {
-            name = "heavy_gunclick";
-            played = 2;
-        } else if (tick >= boltTick && played < 3) {
-            name = "gunclick";
-            played = 3;
-        } else {
-            return;
+        float now = (float) (preciseAge / 20.0);
+
+        // Пока кадр не сработал, запоминаем, на какой секунде клипа мы находимся:
+        // локатор дула считается именно на этом моменте, а не когда рендер
+        // дойдёт до следующего тика.
+        if (markerClip == null) {
+            markerClip = currentClip();
+            markerSeconds = now;
         }
 
+        while (markerCursor < markers.size()) {
+            MachineGunAnimation.Marker marker = markers.get(markerCursor);
+            if (marker.time() > now) break;
+            // Нижней границы нет намеренно: курсор и так не даёт кадру
+            // сработать дважды, а вот маркер на 0.0 при строгом сравнении
+            // отсекался бы навсегда — cursorTime в начале равен нулю же.
+            // Именно на нуле и стоит выстрел: вспышка и щелчок в первый кадр.
+            spawnParticle(marker);
+            markerCursor++;
+        }
+    }
+
+    @Nullable
+    public static GltfAnimation currentClip() {
+        GemRenderGltfModel model = cachedModel;
+        return model != null && current != null ? model.animation(current) : null;
+    }
+
+    /** Модель, из которой берётся локатор. */
+    @Nullable
+    public static GemRenderGltfModel model() {
+        return cachedModel;
+    }
+
+    private static void spawnParticle(MachineGunAnimation.Marker marker) {
         Minecraft mc = Minecraft.getInstance();
-        Player player = mc.player;
-        if (player == null) return;
+        if (mc.player == null || mc.level == null) return;
 
-        SoundEvent sound = BuiltInRegistries.SOUND_EVENT.get(
-                ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, name));
-        if (sound == null) return;
+        ParticleType<?> type = BuiltInRegistries.PARTICLE_TYPE
+                .getOptional(ResourceLocation.tryParse(marker.id()))
+                .orElse(null);
+        // В 1.21.1 ParticleOptions — это сам ParticleType у простых частиц,
+        // отдельного класса-обёртки нет: неизвестно, SimpleParticleType ли это.
+        if (!(type instanceof ParticleOptions options)) return;
 
-        player.playSound(sound, 1.0F, 1.0F);
+        // Точка вылета берётся из модели: локатор с кости прогоняется через
+        // текущий клип и домножается на матрицу, которой пушка нарисована в
+        // руке. Формулой от позиции игрока она не заменяется — та на поворот
+        // кисти и отдачу ствола не смотрит.
+        //
+        // В прицеле вспышка не нужна: точка вылета там у самой камеры, и
+        // вспышка перекрыла бы весь круг прицела.
+        if (MachineGunScope.isScoped()) return;
+
+        Vec3 muzzle = MachineGunModel.worldMuzzle(cachedModel, markerClip, markerSeconds,
+                marker.locator(), mc.gameRenderer.getMainCamera());
+        if (muzzle == null) return;
+
+        mc.level.addParticle(options, muzzle.x, muzzle.y, muzzle.z, 0.0D, 0.0D, 0.0D);
     }
 }

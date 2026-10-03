@@ -113,6 +113,18 @@ public final class MachineGunScope {
         return scoped;
     }
 
+    /**
+     * Активен ли прицел прямо сейчас, то есть включён <em>и</em> камера от первого лица.
+     * <p>
+     * Зум и оверлей спрашивают именно это, а не просто флаг: игрок может
+     * переключить камеру на F5 между тиками, и состояние снимется только в
+     * следующем {@code ClientTickEvent.Post}. Без этой проверки на один кадр
+     * оставалась виньетка прицела поверх вида от третьего лица.
+     */
+    private static boolean isScopeActive() {
+        return scoped && Minecraft.getInstance().options.getCameraType().isFirstPerson();
+    }
+
     public static float moveMultiplier() {
         return scoped ? SCOPE_MOVE_MULTIPLIER : 1.0f;
     }
@@ -131,7 +143,7 @@ public final class MachineGunScope {
      */
     @SubscribeEvent
     public static void onComputeFov(ViewportEvent.ComputeFov event) {
-        if (scoped) {
+        if (isScopeActive()) {
             event.setFOV(event.getFOV() / ZOOM_FACTOR);
         }
     }
@@ -200,6 +212,16 @@ public final class MachineGunScope {
             return;
         }
 
+        // Прицел — это вид из глаза: в третьем лице камера стоит за спиной,
+        // оверлей с виньеткой наезжает на модель игрока, и прицел оказывается
+        // перекошенным и бесполезным. Поэтому вход из третьего лица запрещён,
+        // и уже открытый прицел от такого переключения снимается сам.
+        if (!mc.options.getCameraType().isFirstPerson()) {
+            if (scoped) close();
+            applyMoveMultiplier(null);
+            return;
+        }
+
         if (!scoped) {
             applyMoveMultiplier(null);
             return;
@@ -259,6 +281,8 @@ public final class MachineGunScope {
 
     private static void open() {
         if (scoped) return;
+        // Вход из третьего лица запрещён: см. комментарий в onClientTick.
+        if (!Minecraft.getInstance().options.getCameraType().isFirstPerson()) return;
         scoped = true;
         syncScopeState();
     }
@@ -324,7 +348,7 @@ public final class MachineGunScope {
      */
     @SubscribeEvent
     public static void onRenderGuiPre(RenderGuiEvent.Pre event) {
-        if (!scoped) return;
+        if (!isScopeActive()) return;
 
         var graphics = event.getGuiGraphics();
 

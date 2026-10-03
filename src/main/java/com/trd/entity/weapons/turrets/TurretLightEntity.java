@@ -353,13 +353,10 @@ public class TurretLightEntity extends Monster implements GeoEntity, RangedAttac
             }
 
             bullet.setPos(muzzlePos.x, muzzlePos.y, muzzlePos.z);
-            bullet.setDeltaMovement(ballisticVelocity);
-
-            float bulletYaw = (float) (Math.atan2(ballisticVelocity.x, ballisticVelocity.z) * (180D / Math.PI));
-            bullet.setYRot(bulletYaw);
-            bullet.setXRot(targetPitch);
-            bullet.yRotO = bulletYaw;
-            bullet.xRotO = targetPitch;
+            // Скорость и ориентация одним вызовом до addFreshEntity: пакет
+            // появления несёт только поворот сущности, выставить углы позже
+            // некуда, а первый кадр обязан показать пулю уже по стволу.
+            bullet.setLaunchDirection(ballisticVelocity);
 
             serverLevel.addFreshEntity(bullet);
         }

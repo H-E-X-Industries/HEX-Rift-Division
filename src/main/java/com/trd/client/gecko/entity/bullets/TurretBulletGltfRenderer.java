@@ -8,13 +8,13 @@ import com.wf.gemrender.asset.GemRenderModels;
 import com.wf.gemrender.direct.DirectPass;
 import com.wf.gemrender.direct.DirectRenderer;
 import com.wf.gemrender.texture.VariantUv;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -61,14 +61,9 @@ public class TurretBulletGltfRenderer extends EntityRenderer<TurretBulletEntity>
         // на клиенте xOld каждый тик прижимается к текущей точке вызовом
         // setOldPosAndRot(), из-за чего обе величины совпадали и смещение
         // всегда выходило нулевым — то есть никакого сглаживания не было.
-        if (entity.level().isClientSide) {
-            return new Vec3(
-                    Mth.lerp(partialTicks, entity.getServerPrevX(), entity.getX()) - entity.getX(),
-                    Mth.lerp(partialTicks, entity.getServerPrevY(), entity.getY()) - entity.getY(),
-                    Mth.lerp(partialTicks, entity.getServerPrevZ(), entity.getZ()) - entity.getZ()
-            );
-        }
-        return Vec3.ZERO;
+        // Сам якорь и его сброс при отсутствии пакетов живут в
+        // TurretBulletEntity.
+        return entity.renderOffset(partialTicks);
     }
 
     @Override
@@ -99,8 +94,15 @@ public class TurretBulletGltfRenderer extends EntityRenderer<TurretBulletEntity>
         // Собственное вращение пули вокруг оси полёта.
         poseStack.mulPose(Axis.ZP.rotationDegrees(entity.spin));
 
+        // Пуля светится в темноте: текстура рисуется на максимальной яркости
+        // независимо от освещения точки. Вместо штатного packedLight, который
+        // приходит в сущность от сервера и в пещере равен почти нулю, кладём
+        // LightTexture.FULL_BRIGHT — это те же блок 15 и небо 15, то есть
+        // верхняя правая texel'а лайтмапы, которая есть в карте освещения всегда.
+        // Трассер должен читаться на любом фоне, иначе в тёмном коридоре его
+        // просто не видно, а сам выстрел читается только по звуку.
         DirectRenderer.submit(model, (com.wf.gemrender.gltf.GltfAnimation) null, 0.0f,
-                poseStack.last().pose(), packedLight, OverlayTexture.NO_OVERLAY,
+                poseStack.last().pose(), LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY,
                 0xFFFFFFFF, DirectPass.LEVEL, VariantUv.NONE);
     }
 }

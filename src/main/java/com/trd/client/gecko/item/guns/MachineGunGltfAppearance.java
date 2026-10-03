@@ -19,6 +19,10 @@ import net.minecraft.world.item.ItemStack;
  * зашиты анимации {@code shot}, {@code reload} и {@code flip}. Какой клип
  * показывать и на какой секунде — решает {@link MachineGunClientAnim}.
  * <p>
+ * Геколиб в проекте не осталось: от него отказывались ради перехода на glTF, и
+ * всё, что раньше жило в его animation.json, теперь живёт в самой модели —
+ * см. {@link MachineGunModel}.
+ * <p>
  * Геколибовский рендерер подставлял 5 разных текстур по типу заряженного
  * патрона; в glTF текстура одна, и вариативности тут больше нет.
  */
@@ -70,8 +74,12 @@ public class MachineGunGltfAppearance implements ItemAppearance {
 
     @Override
     public void transform(ItemStack stack, ItemDisplayContext context, PoseStack poseStack) {
-        // Трансформацию не трогаем: любая попытка сдвинуть модель здесь
-        // двигает само оружие в руке. Покачивание камеры (bobView) при этом
-        // остаётся, его глушат на уровне рендера — см. MachineGunScope.
+        // Локатор дула снимается именно здесь. GemRenderItemRenderer#draw зовёт
+        // transform последним перед тем, как отдать матрицу в
+        // DirectRenderer.submit, поэтому внутри PoseStack уже лежит полная
+        // матрица «модель → мир» — со всеми смещениями предметного контекста.
+        // Взять её позже негде, а без неё кость модели остаётся в своей системе
+        // координат, и вспышка выстрела уезжает от ствола.
+        MachineGunModel.captureItemMatrix(context, poseStack.last().pose());
     }
 }
