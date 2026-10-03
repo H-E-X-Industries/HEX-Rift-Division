@@ -8,14 +8,26 @@ import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.particle.TextureSheetParticle;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.util.Mth;
 
 /**
  * Вспышка в дуле: короткая, всегда светящаяся и абсолютно инертная.
  *
- * <p>Живёт всего два тика. Раньше было четыре, и при автоматическом огне
- * вспышки накрывали друг друга: пушка выстреливает каждые шесть тиков, то
- * предыдущая ещё не гасла, и дуло светилось непрерывно даже после того, как
- * игрок отпустил огонь.
+ * <p>Живёт один тик, то есть рисуется ровно один кадр. Раньше было четыре,
+ * потом два, и при автоматическом огне вспышки накрывали друг друга: пушка
+ * выстреливает каждые шесть тиков, то есть предыдущая ещё не гасла, и дуло
+ * светилось непрерывно даже после того, как игрок отпустил огонь. Тик — это
+ * меньше, чем может длиться частица, зато столько же, сколько длится выстрел
+ * на экране: вспышка совпадает с началом клипа и не живёт дольше него.
+ *
+ * <p>Каждая вспышка слегка отличается от предыдущей: у неё свой
+ * {@link #roll} — случайный поворот вокруг собственной оси, то есть ровно тот
+ * штрих несимметричного пятна, который иначе выдаёт, что одна и та же
+ * картинка просто мигает на месте, — и свой размер в разбросе
+ * {@link #SIZE_JITTER_MIN..#SIZE_JITTER_MAX}. Обе величины берутся один раз на
+ * частицу и не меняются: {@code oRoll} ставится в то же значение, что и
+ * {@code roll}, иначе кадр интерполировался бы от нуля и вспышка ещё и
+ * проворачивалась бы, пока гаснет.
  *
  * <p>Свет задан не материалом, а {@link #getLightColor(float)}: у частиц нет
  * своего шейдера, и яркость приходит из второго UV-канала вершины, то есть
@@ -33,8 +45,18 @@ public class ShotFlashParticle extends TextureSheetParticle {
     /** Диаметр вспышки в блоках. */
     private static final float SIZE = 0.125F;
 
-    /** Время жизни в тиках: 0.1 секунды. */
-    private static final int LIFETIME_TICKS = 2;
+    /** Время жизни в тиках: 0.05 секунды, один кадр. */
+    private static final int LIFETIME_TICKS = 1;
+
+    /**
+     * Границы разброса размера.
+     * <p>
+     * Плюс-минус десять процентов: ровно столько нужно, чтобы соседние
+     * вспышки в одной очереди не читались как одна и та же картинка, и мало
+     * достаточно, чтобы дуло не «дышало».
+     */
+    private static final float SIZE_JITTER_MIN = 0.9F;
+    private static final float SIZE_JITTER_MAX = 1.1F;
 
     public ShotFlashParticle(ClientLevel level, double x, double y, double z, SpriteSet sprites) {
         super(level, x, y, z, 0.0D, 0.0D, 0.0D);
@@ -49,8 +71,14 @@ public class ShotFlashParticle extends TextureSheetParticle {
         this.zd = 0.0D;
 
         this.lifetime = LIFETIME_TICKS;
-        this.quadSize = SIZE * 0.5F;
+        this.quadSize = SIZE * 0.5F * Mth.nextFloat(this.random, SIZE_JITTER_MIN, SIZE_JITTER_MAX);
         this.alpha = 1.0F;
+
+        // Поворот вокруг своей оси на всём времени жизни: oRoll равен roll, иначе
+        // частица ещё и крутилась бы, пока гаснет.
+        float angle = this.random.nextFloat() * (float) (Math.PI * 2.0D);
+        this.roll = angle;
+        this.oRoll = angle;
 
         // Аддитивный блендинг: вспышка добавляет свет, а не закрывает его.
         // На светлом фоне вырез виден и обычным наложением, на тёмном — нет.
@@ -80,7 +108,10 @@ public class ShotFlashParticle extends TextureSheetParticle {
             return;
         }
 
-        // Плавное гашение вместо резкого исчезновения на последнем тике.
+        // При жизни в один тик это даёт нулевую прозрачность сразу, то есть
+        // вспышка гаснет вместе с последним кадром, а не висит затухающим
+        // пятном. Если LIFETIME_TICKS поднимут, строка начнёт снова гасить
+        // по линейке, и отдельного кода для этого не понадобится.
         this.alpha = Math.max(0.0F, 1.0F - (float) this.age / (float) this.lifetime);
     }
 

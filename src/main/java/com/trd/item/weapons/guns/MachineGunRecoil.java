@@ -1,124 +1,91 @@
 package com.trd.item.weapons.guns;
 
-import com.trd.main.MainRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Mth;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.client.event.ViewportEvent;
 
 import java.util.Random;
 
 /**
- * Отдача пушки: короткое смещение камеры вбок и вверх после каждого выстрела.
+ * Отдача пушки: разворот взгляда стрелка вверх и вбок на каждый выстрел.
  *
- * <p>Смещение <b>чисто клиентское</b> и никогда не отправляется на сервер:
- * поворот игрока в майнкрафте серверный, и если бы дёргать настоящий
- * {@code setYRot}, то уходило бы на полградуса всерьёз, а на стороне других
- * игроков камера всё равно осталась бы ровной. Поэтому смещение прибавляется к
- * углам камеры в {@link ViewportEvent.ComputeCameraAngles} и гаснет само.
+ * <p>Отдача бьёт по <b>настоящему повороту игрока</b> ({@code setXRot} /
+ * {@code setYRot}), а не по углам камеры в {@code ViewportEvent}, как было
+ * раньше. Разница принципиальная: углы камеры серверу неизвестны, пуля летит
+ * по настоящему повороту, поэтому смещение камеры всегда расходилось с
+ * прицелом — игрок целился в одно место, а видел мушку в другом. Такое смещение
+ * можно было сколько угодно усиливать и обязательно приходилось гасить: иначе
+ * дёрганое изображение перестаёт читаться. Старое затухание за семь тиков и
+ * было этим гашением — на автоматическом огне камера дрожала, а попасть можно
+ * было туда же, куда и до начала очереди.
  *
- * <p>Затухание идёт по smoothstep, а не умножением на коэффициент за тик.
- * Умножение начинается сразу с полного значения и потом просто деградирует —
- * в начале тика камера дёргается рывком, и на автоматическом огне это читается
- * как дрожь, а не как отдача. Smoothstep даёт нулевую скорость на обоих концах,
- * то есть камера мягко уходит и так же мягко возвращается.
+ * <p>Теперь увод остаётся в повороте, то есть одинаково в прицеле и в самой
+ * пуле, и <b>не возвращается</b>: ствол уехал — уехал и прицел. Чтобы вести
+ * очередь, придётся всё время тянуть мышь вниз и против угла вбок, и чем
+ * очередь длиннее, тем сильнее увод (см. накопление огня в
+ * {@link MachineGunItem#recoilScale}). Короткая очередь стоит почти ничего,
+ * длинная без коррекции уходит в стену — ровно то, ради чего пушка и
+ * управляется руками, а не прицелом.
+ *
+ * <p>Поворот уезжает на сервер сам, из обычного пакета движения: клиент шлёт
+ * {@code Rot}, как только угол отличается от последнего отправленного, поэтому
+ * другие игроки видят, куда уводит стрелка. Вместе с текущим углом двигается и
+ * предыдущий кадр ({@code xRotO} / {@code yRotO}) — иначе в третьем лице
+ * модель игрока растянулась бы на все накопленные градусы, потому что между
+ * кадрами она интерполируется между этими двумя величинами.
  *
  * <p>Знак по обеим осям случаен: настоящая отдача автомата уводит ствол вверх
  * и вбок неравномерно, а ровное смещение в одну сторону читалось бы как
  * прилипание прицела к краю экрана.
  */
-@EventBusSubscriber(modid = MainRegistry.MOD_ID, value = Dist.CLIENT)
 public final class MachineGunRecoil {
 
-    /** Сколько тиков живёт одно дёрганье. */
-    private static final int DURATION_TICKS = 7;
-
     private static final Random RANDOM = new Random();
-
-    /** Амплитуда по горизонтали на момент последнего выстрела, градусы. */
-    private static float yaw;
-
-    /** Амплитуда по вертикали на момент последнего выстрела, градусы. */
-    private static float pitch;
-
-    private static int age;
 
     private MachineGunRecoil() {
     }
 
     /**
-     * Дёргает камеру на выстрел.
+     * Уводит взгляд стрелка на выстрел.
+     * <p>
+     * Выстрел при этом уходит из пакета по <i>прошлому</i> углу: см. порядок
+     * вызовов в {@link MachineGunItem.ClientHandlers}. Иначе первый же выстрел
+     * летел бы уже сдвинутым прицелом, то есть отдача съедала бы всю точность
+     * первого выстрела.
      *
-     * @param scale множитель ослабления: броня, прицел и стойка глушат отдачу,
-     *              см. {@link MachineGunItem#recoilScale}
+     * @param scale множитель ослабления: броня, прицел, стойка и накопленный
+     *              огонь, см. {@link MachineGunItem#recoilScale}
      */
     public static void kick(float scale) {
         if (scale <= 0.0F) {
             return;
         }
 
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null) {
+            return;
+        }
+
         float vertical = MachineGunItem.RECOIL_PITCH_DEGREES * scale;
         float horizontal = MachineGunItem.RECOIL_YAW_DEGREES * scale;
 
-        // Складывается, а не заменяется: очередь выстрелов должна давать более
-        // плотную отдачу, чем одиночная, и не обнулять предыдущую. Потолок —
-        // две амплитуды: на автоматическом огне дёрганье и так сливается в
-        // сплошное дрожание, а дальше оно только отнимает читаемость прицела.
-        pitch = Mth.clamp(pitch + sign(vertical), -vertical * 2.0F, vertical * 2.0F);
-        yaw = Mth.clamp(yaw + sign(horizontal), -horizontal * 2.0F, horizontal * 2.0F);
-        age = 0;
+        float pitchDelta = sign(vertical);
+        float yawDelta = sign(horizontal);
+
+        // Наклон клампится вручную: Entity#setXRot в 1.21.1 ничего не
+        // ограничивает, а за 90° взгляд переваливается через пол и картинка
+        // переворачивается. Yaw только заворачивается в круг, иначе за долгую
+        // очередь он уходит на тысячи градусов.
+        player.setXRot(Mth.clamp(player.getXRot() + pitchDelta, -90.0F, 90.0F));
+        player.setYRot(Mth.wrapDegrees(player.getYRot() + yawDelta));
+
+        // Предыдущий кадр поворота едет на те же дельты — ровно как это делает
+        // Entity#turn, из которого взят и клампинг, и правка xRotO/yRotO.
+        player.xRotO = Mth.clamp(player.xRotO + pitchDelta, -90.0F, 90.0F);
+        player.yRotO = Mth.wrapDegrees(player.yRotO + yawDelta);
     }
 
     private static float sign(float magnitude) {
         return RANDOM.nextBoolean() ? magnitude : -magnitude;
-    }
-
-    @SubscribeEvent
-    public static void onClientTick(ClientTickEvent.Post event) {
-        if (yaw == 0.0F && pitch == 0.0F) {
-            return;
-        }
-
-        if (++age >= DURATION_TICKS) {
-            yaw = 0.0F;
-            pitch = 0.0F;
-            return;
-        }
-    }
-
-    /**
-     * Доля амплитуды на текущем тике: 1 в начале, 0 в конце, и ноль по скорости
-     * на обоих краях.
-     */
-    private static float envelope() {
-        float t = 1.0F - (float) age / DURATION_TICKS;
-        return t * t * (3.0F - 2.0F * t);
-    }
-
-    /**
-     * Прибавляет отдачу к углам камеры.
-     * <p>
-     * В третьем лице отдача не показывается: смещение там уехало бы вместе с
-     * камерой от плеча игрока и выглядело бы как поворот всего мира.
-     */
-    @SubscribeEvent
-    public static void onComputeCameraAngles(ViewportEvent.ComputeCameraAngles event) {
-        if (yaw == 0.0F && pitch == 0.0F) {
-            return;
-        }
-
-        Minecraft mc = Minecraft.getInstance();
-        LocalPlayer player = mc.player;
-        if (player == null || !mc.options.getCameraType().isFirstPerson()) {
-            return;
-        }
-
-        float amount = envelope();
-        event.setYaw((float) (event.getYaw() + yaw * amount));
-        event.setPitch(Mth.clamp(event.getPitch() + pitch * amount, -90.0F, 90.0F));
     }
 }
