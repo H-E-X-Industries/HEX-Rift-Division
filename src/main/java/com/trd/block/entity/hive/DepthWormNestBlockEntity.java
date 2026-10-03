@@ -80,6 +80,12 @@ public class DepthWormNestBlockEntity extends BlockEntity implements HiveNetwork
         if (!tag.contains("BoundNest")) {
             tag.putLong("BoundNest", this.worldPosition.asLong());
         }
+        // Free healing and effect cleansing on entering the nest
+        String id = tag.getString("id");
+        boolean isBrutal = id.contains("brutal");
+        tag.putFloat("Health", isBrutal ? 45.0f : 15.0f);
+        tag.remove("ActiveEffects");
+
         storedWorms.add(tag);
         setChanged();
     }
@@ -88,10 +94,16 @@ public class DepthWormNestBlockEntity extends BlockEntity implements HiveNetwork
         if (level.isClientSide) return;
 
         if (level.getGameTime() % 20 == 0 && blockEntity.hasWormsReadyForRelease()) {
-            AABB searchArea = new AABB(pos).inflate(10);
+            // 2x radius (20 blocks instead of 10)
+            AABB searchArea = new AABB(pos).inflate(20);
             List<LivingEntity> enemies = level.getEntitiesOfClass(LivingEntity.class, searchArea,
-                    e -> e.isAlive() && e.deathTime <= 0 && !(e instanceof DepthWormEntity) &&
-                            !(e instanceof Player p && (p.isCreative() || p.isSpectator())));
+                    e -> e.isAlive() && e.deathTime <= 0
+                            && !(e instanceof DepthWormEntity)
+                            && e.getType() != net.minecraft.world.entity.EntityType.BAT
+                            && !e.isInLava()
+                            && !e.isInWater()
+                            && !e.level().getBlockState(e.blockPosition().below()).is(net.minecraft.world.level.block.Blocks.LAVA)
+                            && !(e instanceof Player p && (p.isCreative() || p.isSpectator())));
 
             if (!enemies.isEmpty()) {
                 LivingEntity target = enemies.get(0);
@@ -245,37 +257,77 @@ public class DepthWormNestBlockEntity extends BlockEntity implements HiveNetwork
         this.setChanged();
     }
 
+    private boolean isSafeSpawn(BlockPos pos) {
+        if (level == null) return false;
+        BlockState feet = level.getBlockState(pos);
+        if (!feet.isAir() && !feet.getCollisionShape(level, pos).isEmpty()) return false;
+        if (!feet.getFluidState().isEmpty()) return false;
+
+        BlockPos head = pos.above();
+        BlockState headState = level.getBlockState(head);
+        if (!headState.isAir() && !headState.getCollisionShape(level, head).isEmpty()) return false;
+        if (!headState.getFluidState().isEmpty()) return false;
+
+        BlockPos below = pos.below();
+        BlockState belowState = level.getBlockState(below);
+        if (belowState.isAir() || !belowState.getFluidState().isEmpty()) return false;
+        return !belowState.getCollisionShape(level, below).isEmpty() || belowState.isFaceSturdy(level, below, Direction.UP);
+    }
+
     private List<BlockPos> findMultipleSpawnPoints(BlockPos center, int needed) {
         List<BlockPos> points = new ArrayList<>();
 
-        for (int radius = 1; radius <= 4 && points.size() < needed; radius++) {
+        // 1. Search outward from center for safe standable ground
+        for (int radius = 0; radius <= 5 && points.size() < needed; radius++) {
             for (int x = -radius; x <= radius && points.size() < needed; x++) {
                 for (int z = -radius; z <= radius && points.size() < needed; z++) {
-                    if (Math.abs(x) != radius && Math.abs(z) != radius) continue;
+                    if (radius > 0 && Math.abs(x) != radius && Math.abs(z) != radius) continue;
 
-                    for (int y = 0; y <= 2 && points.size() < needed; y++) {
-                        BlockPos p = center.offset(x, y, z);
-                        if (level.getBlockState(p).isAir() &&
-                                !level.getBlockState(p.below()).isAir() &&
-                                level.getBlockState(p.below()).getFluidState().isEmpty()) {
+                    // Scan from surface above center downwards to find standable surface
+                    for (int dy = 4; dy >= -3 && points.size() < needed; dy--) {
+                        BlockPos p = center.offset(x, dy, z);
+                        if (isSafeSpawn(p)) {
                             points.add(p);
+                            break;
                         }
                     }
                 }
             }
         }
 
-        if (points.size() < needed) {
-            for (int y = 1; y <= 5 && points.size() < needed; y++) {
-                BlockPos p = center.above(y);
-                if (level.getBlockState(p).isAir()) {
-                    points.add(p);
+        // 2. If center is suspended over air, search around nest block entity position
+        if (points.size() < needed && !center.equals(this.worldPosition)) {
+            for (int radius = 0; radius <= 4 && points.size() < needed; radius++) {
+                for (int x = -radius; x <= radius && points.size() < needed; x++) {
+                    for (int z = -radius; z <= radius && points.size() < needed; z++) {
+                        if (radius > 0 && Math.abs(x) != radius && Math.abs(z) != radius) continue;
+                        for (int dy = 4; dy >= -3 && points.size() < needed; dy--) {
+                            BlockPos p = this.worldPosition.offset(x, dy, z);
+                            if (isSafeSpawn(p) && !points.contains(p)) {
+                                points.add(p);
+                                break;
+                            }
+                        }
+                    }
                 }
             }
         }
 
+        // 3. Fallback: if enclosed or surrounded, climb column until safe surface found
+        if (points.isEmpty()) {
+            BlockPos p = center.above();
+            while (p.getY() < level.getMaxBuildHeight() && (!level.getBlockState(p).isAir() || level.getBlockState(p.below()).isAir())) {
+                p = p.above();
+            }
+            if (isSafeSpawn(p)) {
+                points.add(p);
+            } else {
+                points.add(this.worldPosition.above());
+            }
+        }
+
         while (points.size() < needed) {
-            points.add(center.above(points.size()));
+            points.add(points.get(points.size() % points.size()));
         }
 
         return points;

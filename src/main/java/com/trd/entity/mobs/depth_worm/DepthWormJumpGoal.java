@@ -30,7 +30,14 @@ public class DepthWormJumpGoal extends Goal {
 
         this.target = this.worm.getTarget();
         if (this.target == null || !this.target.isAlive()) return false;
+        if (this.target.getType() == net.minecraft.world.entity.EntityType.BAT) return false;
         if (this.worm.isInWater() || this.target.isInWater()) return false;
+        if (this.worm.isInLava() || this.target.isInLava()) return false;
+
+        net.minecraft.world.level.block.state.BlockState targetBelow =
+                this.target.level().getBlockState(this.target.blockPosition().below());
+        if (targetBelow.is(net.minecraft.world.level.block.Blocks.LAVA)) return false;
+
         double dist = this.worm.distanceTo(this.target);
         return dist >= this.jumpRangeMin && dist <= this.jumpRangeMax;
     }
@@ -67,6 +74,15 @@ public class DepthWormJumpGoal extends Goal {
             return;
         }
 
+        if (this.target.getType() == net.minecraft.world.entity.EntityType.BAT ||
+            this.target.isInLava() ||
+            this.target.level().getBlockState(this.target.blockPosition().below()).is(net.minecraft.world.level.block.Blocks.LAVA)) {
+            this.worm.setAttacking(false);
+            this.jumpTimer = 0;
+            this.jumpPerformed = true;
+            return;
+        }
+
         double dist = this.worm.distanceTo(this.target);
         if (dist > this.jumpRangeMax + 2.0F) {
             this.worm.setAttacking(false);
@@ -88,31 +104,42 @@ public class DepthWormJumpGoal extends Goal {
         Vec3 wormPos = this.worm.position();
         Vec3 targetPos = this.target.position();
 
-        double targetY = targetPos.y + this.target.getBbHeight() * 0.5;
-
         double dx = targetPos.x - wormPos.x;
-        double dy = targetY - wormPos.y;
         double dz = targetPos.z - wormPos.z;
-
         double horizontalDist = Math.sqrt(dx * dx + dz * dz);
+        if (horizontalDist < 0.001) return;
 
-        double baseSpeed = 0.9;
-        double speed = baseSpeed + (horizontalDist * 0.08);
-        speed = Math.min(speed, 1.8);
+        double targetY = targetPos.y + this.target.getBbHeight() * 0.4;
+        double dy = targetY - wormPos.y;
 
-        double verticalBoost;
-        if (dy > 2.0) {
-            verticalBoost = 0.6 + (dy * 0.15);
-        } else if (dy > 0) {
-            verticalBoost = 0.4 + (dy * 0.1);
-        } else if (dy > -1.0) {
-            verticalBoost = 0.35;
-        } else {
-            verticalBoost = 0.25;
+        // Exact Minecraft LivingEntity flight time and velocity calculation:
+        // Living entity air drag: v_horiz_{k+1} = v_horiz_k * 0.91
+        // v_y_{k+1} = (v_y_k - 0.08) * 0.98
+        int ticks = Math.max(8, Math.min(14, (int) Math.round(6.0 + horizontalDist * 0.7)));
+
+        double hFactor = (1.0 - Math.pow(0.91, ticks)) / 0.09;
+        double horizSpeed = horizontalDist / hFactor;
+
+        double a = 0.0;
+        double b = 0.0;
+        double curA = 1.0;
+        double curB = 0.0;
+        for (int k = 0; k < ticks; k++) {
+            a += curA;
+            b += curB;
+            curA *= 0.98;
+            curB = (curB + 0.08) * 0.98;
         }
 
-        Vec3 horizontalDir = new Vec3(dx, 0, dz).normalize();
-        Vec3 velocity = horizontalDir.scale(speed).add(0, verticalBoost, 0);
+        double vy = (dy + b) / a;
+
+        Vec3 horizDir = new Vec3(dx, 0, dz).normalize();
+        Vec3 velocity = new Vec3(horizDir.x * horizSpeed, vy, horizDir.z * horizSpeed);
+
+        // Check if trajectory passes into or over lava
+        if (isTrajectoryLava(wormPos, velocity, ticks)) {
+            return;
+        }
 
         double yaw = Math.atan2(dz, dx) * (180 / Math.PI) - 90;
         this.worm.setYRot((float) yaw);
@@ -122,5 +149,21 @@ public class DepthWormJumpGoal extends Goal {
         this.worm.setDeltaMovement(velocity);
         this.worm.setFlying(true);
         this.worm.ignoreFallDamageTicks = 30;
+    }
+
+    private boolean isTrajectoryLava(Vec3 start, Vec3 initialVel, int ticks) {
+        Vec3 pos = start;
+        Vec3 v = initialVel;
+        for (int k = 0; k <= ticks; k++) {
+            pos = pos.add(v);
+            net.minecraft.core.BlockPos bp = net.minecraft.core.BlockPos.containing(pos);
+            if (this.worm.level().getFluidState(bp).is(net.minecraft.tags.FluidTags.LAVA) ||
+                this.worm.level().getBlockState(bp).is(net.minecraft.world.level.block.Blocks.LAVA) ||
+                this.worm.level().getBlockState(bp.below()).is(net.minecraft.world.level.block.Blocks.LAVA)) {
+                return true;
+            }
+            v = new Vec3(v.x * 0.91, (v.y - 0.08) * 0.98, v.z * 0.91);
+        }
+        return false;
     }
 }

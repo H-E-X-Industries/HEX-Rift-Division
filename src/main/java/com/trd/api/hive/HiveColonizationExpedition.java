@@ -45,7 +45,7 @@ public class HiveColonizationExpedition {
         this.colonistIds.addAll(colonistIds);
         if (colonistRefs != null) this.colonistRefs.addAll(colonistRefs);
         this.startTime = gameTime;
-        this.timeoutTime = gameTime + 1200;
+        this.timeoutTime = gameTime + 2400;
         this.pointsPerWorm = pointsPerWorm;
     }
 
@@ -62,7 +62,7 @@ public class HiveColonizationExpedition {
 
         boolean someoneHurt = false;
         for (DepthWormEntity worm : alive) {
-            if (worm.getHealth() < worm.getMaxHealth() * 0.66f) {
+            if (worm.getHealth() < worm.getMaxHealth() * 0.35f) {
                 someoneHurt = true;
                 break;
             }

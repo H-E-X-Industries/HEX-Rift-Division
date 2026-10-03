@@ -48,8 +48,31 @@ public class DepthWormBrutalEntity extends DepthWormEntity {
                 .add(Attributes.ATTACK_DAMAGE, 4.0D)
                 .add(Attributes.FOLLOW_RANGE, 40.0D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.4D)
-                .add(Attributes.ARMOR, 7.0D);
+                .add(Attributes.ARMOR, 7.0D)
+                .add(Attributes.STEP_HEIGHT, 1.25D)
+                .add(Attributes.FALL_DAMAGE_MULTIPLIER, 0.0D);
     }
+
+    @Override
+    public float getMaxJumpHeight() {
+        return 5.0F;
+    }
+
+    @Override
+    public int getMaxJumpHorizontalRange() {
+        return 5;
+    }
+
+    @Override
+    protected void performMovementJump(double heightDiff, Vec3 dir) {
+        super.performMovementJump(heightDiff, dir);
+        if (heightDiff > 3.2) {
+            Vec3 current = this.getDeltaMovement();
+            Vec3 horiz = dir.normalize().scale(0.58D);
+            this.setDeltaMovement(horiz.x, current.y, horiz.z);
+        }
+    }
+
 
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
@@ -69,11 +92,16 @@ public class DepthWormBrutalEntity extends DepthWormEntity {
         this.goalSelector.addGoal(3, new WaterAvoidingRandomStrollGoal(this, 0.8D));
         this.goalSelector.addGoal(4, new RandomLookAroundGoal(this));
 
-        this.targetSelector.addGoal(0, new NearestAttackableTargetGoal<>(this, Player.class, true));
-        this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, LivingEntity.class, true,
+        this.targetSelector.addGoal(0, new NearestAttackableTargetGoal<>(this, Player.class, false,
+                (target) -> !target.isInLava() && !target.isInWater() && !target.level().getBlockState(target.blockPosition().below()).is(net.minecraft.world.level.block.Blocks.LAVA)));
+        this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, LivingEntity.class, false,
                 (target) -> target.isAlive()
                         && target.deathTime <= 0
-                        && !(target instanceof DepthWormEntity)));
+                        && !(target instanceof DepthWormEntity)
+                        && target.getType() != net.minecraft.world.entity.EntityType.BAT
+                        && !target.isInLava()
+                        && !target.isInWater()
+                        && !target.level().getBlockState(target.blockPosition().below()).is(net.minecraft.world.level.block.Blocks.LAVA)));
         this.targetSelector.addGoal(2, new HurtByTargetGoal(this).setAlertOthers());
     }
 
@@ -95,7 +123,7 @@ public class DepthWormBrutalEntity extends DepthWormEntity {
         boolean wasFlying = this.isFlying();
         super.aiStep();
 
-        if (this.onGround() && this.isFlying() && !this.isImpaling()) {
+        if (this.onGround() && this.isFlying() && !this.isImpaling() && this.ignoreFallDamageTicks <= 35) {
             this.setFlying(false);
             this.setPreparingJump(false);
             this.handleLanding();
@@ -134,6 +162,14 @@ public class DepthWormBrutalEntity extends DepthWormEntity {
                 target.hurt(this.damageSources().mobAttack(this), fall - 3.0F);
             }
             clearImpaledTarget();
+        } else {
+            LivingEntity curTarget = this.getTarget();
+            if (curTarget != null && curTarget.isAlive() && this.distanceToSqr(curTarget) < 16.0) {
+                curTarget.hurt(this.damageSources().mobAttack(this), 12.0F);
+                Vec3 knock = curTarget.position().subtract(this.position()).normalize().scale(0.8D).add(0, 0.3D, 0);
+                curTarget.setDeltaMovement(curTarget.getDeltaMovement().add(knock));
+                curTarget.hurtMarked = true;
+            }
         }
         this.setPreparingJump(false);
     }
@@ -189,7 +225,12 @@ public class DepthWormBrutalEntity extends DepthWormEntity {
 
     @Override
     public boolean causeFallDamage(float distance, float multiplier, DamageSource source) {
-        return this.ignoreFallDamageTicks <= 0 && super.causeFallDamage(distance, multiplier * 0.5F, source);
+        return false;
+    }
+
+    @Override
+    public int calculateFallDamage(float distance, float damageMultiplier) {
+        return 0;
     }
 
     public void triggerPostAttackAnim() {

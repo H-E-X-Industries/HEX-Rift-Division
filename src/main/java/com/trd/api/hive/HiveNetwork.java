@@ -178,77 +178,37 @@ public class HiveNetwork {
     }
 
     private void processHunger(Level level) {
-        long currentTime = level.getGameTime();
-        long timeSinceLastFed = currentTime - lastFedTime;
-
-        if (timeSinceLastFed >= UPKEEP_INTERVAL && killsPool > 0) {
-            int daysPassed = (int) (timeSinceLastFed / UPKEEP_INTERVAL);
-            int upkeep = Math.min(daysPassed * DAILY_UPKEEP, killsPool);
-            killsPool -= upkeep;
-            lastFedTime = currentTime;
-
-            if (isAwakened && killsPool < AWAKEN_THRESHOLD) {
-                isAwakened = false;
-                currentState = HiveState.DORMANT;
-            }
-        }
-
-        if (killsPool <= 0) {
-            if (starvationStartTime < 0) starvationStartTime = currentTime;
-            if (currentTime - starvationStartTime > STARVATION_DEATH_TIME) {
-                dieFromStarvation(level);
-            } else if (currentState != HiveState.STARVATION && currentState != HiveState.DEAD) {
-                currentState = HiveState.STARVATION;
-                currentScenario = DevelopmentScenario.SURVIVAL;
-            }
-        } else {
-            starvationStartTime = -1;
+        // Hunger mechanics completely removed: hives do not consume upkeep points and never starve.
+        starvationStartTime = -1;
+        if (currentState == HiveState.STARVATION) {
+            currentState = HiveState.DORMANT;
         }
     }
 
     private void processHealing(Level level) {
-        if (killsPool <= 0) return;
-        int available = getAvailablePoints(level);
-
+        // Healing and effect cleansing are completely free (cost 0 points)
         for (BlockPos nestPos : wormCounts.keySet()) {
-            if (available <= 0 && !canSpendReserve(level)) return;
             if (!level.isLoaded(nestPos)) continue;
             BlockEntity be = level.getBlockEntity(nestPos);
             if (be instanceof DepthWormNestBlockEntity nest) {
-                while ((available > 0 || !canSpendReserve(level)) && nest.hasInjuredWorms()) {
-                    if (nest.healOneWorm()) {
-                        killsPool--;
-                        available = getAvailablePoints(level);
-                    } else break;
+                while (nest.hasInjuredWorms()) {
+                    if (!nest.healOneWorm()) break;
                 }
             }
         }
     }
 
     private void dieFromStarvation(Level level) {
-        currentState = HiveState.DEAD;
-
-        for (BlockPos pos : new ArrayList<>(members)) {
-            if (!level.isLoaded(pos)) continue;
-            BlockState current = level.getBlockState(pos);
-            if (current.is(ModBlocks.HIVE_SOIL.get())) {
-                level.setBlock(pos, ModBlocks.HIVE_SOIL_DEAD.get().defaultBlockState(), 3);
-            } else if (current.is(ModBlocks.DEPTH_WORM_NEST.get())) {
-                level.setBlock(pos, ModBlocks.DEPTH_WORM_NEST_DEAD.get().defaultBlockState(), 3);
-                BlockEntity be = level.getBlockEntity(pos);
-                if (be instanceof DepthWormNestBlockEntity nest) nest.releaseWormsAndNotify();
-            }
-        }
-        members.clear();
-        wormCounts.clear();
-        activeWorms = 0;
+        // Starvation removed: hives never die from starvation
     }
 
     public void update(Level level) {
         if (level.isClientSide || currentState == HiveState.DEAD) return;
 
-        int hungerTickRate = isAwakened ? 100 : 600;
-        if (level.getGameTime() % hungerTickRate == 0) processHunger(level);
+        // Healing is completely free and processed continuously
+        if (level.getGameTime() % 20 == 0) {
+            processHealing(level);
+        }
 
         if (!isAwakened) return;
         if (!hasAnyLoadedChunk(level)) return;
@@ -630,6 +590,9 @@ public class HiveNetwork {
 
             Entity entity = EntityType.loadEntityRecursive(wormTag, level, (e) -> {
                 BlockPos spawn = cand.nestPos().above();
+                while (spawn.getY() < level.getMaxBuildHeight() && (!level.getBlockState(spawn).isAir() || level.getBlockState(spawn.below()).isAir())) {
+                    spawn = spawn.above();
+                }
                 e.moveTo(spawn.getX() + 0.5, spawn.getY(), spawn.getZ() + 0.5,
                         level.getRandom().nextFloat() * 360F, 0);
                 e.setUUID(UUID.randomUUID());

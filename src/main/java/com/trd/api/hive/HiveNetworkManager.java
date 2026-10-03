@@ -142,8 +142,10 @@ public class HiveNetworkManager extends SavedData {
         BlockPos bestNest = null;
         int minWorms = Integer.MAX_VALUE;
 
+        // 1. Try to find a non-full nest
         for (BlockPos pos : network.members) {
             if (!network.wormCounts.containsKey(pos)) continue;
+            if (!level.isLoaded(pos)) continue;
             BlockEntity be = level.getBlockEntity(pos);
             if (!(be instanceof DepthWormNestBlockEntity nest) || nest.isFull()) continue;
 
@@ -154,16 +156,36 @@ public class HiveNetworkManager extends SavedData {
             }
         }
 
-        if (bestNest == null) return false;
-
-        BlockEntity be = level.getBlockEntity(bestNest);
-        if (be instanceof DepthWormNestBlockEntity nest) {
-            nest.addWormTag(wormData);
-            network.wormCounts.put(bestNest, nest.getStoredWormsCount());
-            setDirty();
-            return true;
+        // 2. If all loaded nests are full, pick the nest with the least worms so worm is never rejected
+        if (bestNest == null) {
+            for (BlockPos pos : network.members) {
+                if (!network.wormCounts.containsKey(pos)) continue;
+                if (!level.isLoaded(pos)) continue;
+                BlockEntity be = level.getBlockEntity(pos);
+                if (be instanceof DepthWormNestBlockEntity nest) {
+                    int count = nest.getStoredWormsCount();
+                    if (count < minWorms) {
+                        minWorms = count;
+                        bestNest = pos;
+                    }
+                }
+            }
         }
-        return false;
+
+        if (bestNest != null) {
+            BlockEntity be = level.getBlockEntity(bestNest);
+            if (be instanceof DepthWormNestBlockEntity nest) {
+                nest.addWormTag(wormData);
+                network.wormCounts.put(bestNest, nest.getStoredWormsCount());
+                setDirty();
+                return true;
+            }
+        }
+
+        // 3. Fallback: if no nest block is loaded or only soil exists, convert returning worm to network points
+        network.addPoints(10, level);
+        setDirty();
+        return true;
     }
 
     public void updateWormCount(UUID networkId, BlockPos pos, int delta) {

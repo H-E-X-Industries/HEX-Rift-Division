@@ -26,6 +26,10 @@ public class DepthWormBrutalJumpGoal extends Goal {
     private int noMovementTicks = 0;
     private Vec3 lastJumpPos = Vec3.ZERO;
 
+    private int totalFlightTicks = 0;
+    private Vec3 launchDirection = Vec3.ZERO;
+    private double baseHorizSpeed = 0.0;
+
     public DepthWormBrutalJumpGoal(DepthWormBrutalEntity worm, double speedModifier, float jumpRangeMin, float jumpRangeMax) {
         this.worm = worm;
         this.jumpRangeMin = jumpRangeMin;
@@ -38,6 +42,7 @@ public class DepthWormBrutalJumpGoal extends Goal {
         this.prepareTimer = PREPARE_TIME;
         this.jumpPerformed = false;
         this.jumpTickCounter = 0;
+        this.totalFlightTicks = 0;
         this.noMovementTicks = 0;
         this.worm.setPreparingJump(true);
         this.worm.getNavigation().stop();
@@ -51,14 +56,9 @@ public class DepthWormBrutalJumpGoal extends Goal {
         this.worm.setFlying(false);
         this.jumpPerformed = false;
         this.jumpTickCounter = 0;
+        this.totalFlightTicks = 0;
         this.noMovementTicks = 0;
         this.worm.getNavigation().stop();
-
-        if (!worm.onGround() && !worm.isImpaling()) {
-            Vec3 v = this.worm.getDeltaMovement();
-            this.worm.setDeltaMovement(v.multiply(0.5, -0.3, 0.5));
-        }
-
         this.worm.triggerPostAttackAnim();
     }
 
@@ -80,7 +80,19 @@ public class DepthWormBrutalJumpGoal extends Goal {
             }
             return false;
         }
+        if (this.target.getType() == net.minecraft.world.entity.EntityType.BAT) return false;
         if (this.worm.isInWater() || this.target.isInWater()) {
+            if (this.worm.isPreparingJump()) abortPrepare();
+            return false;
+        }
+        if (this.worm.isInLava() || this.target.isInLava()) {
+            if (this.worm.isPreparingJump()) abortPrepare();
+            return false;
+        }
+
+        net.minecraft.world.level.block.state.BlockState targetBelow =
+                this.target.level().getBlockState(this.target.blockPosition().below());
+        if (targetBelow.is(net.minecraft.world.level.block.Blocks.LAVA)) {
             if (this.worm.isPreparingJump()) abortPrepare();
             return false;
         }
@@ -110,7 +122,13 @@ public class DepthWormBrutalJumpGoal extends Goal {
         if (this.worm.isColonist()) return false;
 
         if (this.target == null || !this.target.isAlive()) return false;
+        if (this.target.getType() == net.minecraft.world.entity.EntityType.BAT) return false;
         if (this.worm.isInWater() || this.target.isInWater()) return false;
+        if (this.worm.isInLava() || this.target.isInLava()) return false;
+
+        net.minecraft.world.level.block.state.BlockState targetBelow =
+                this.target.level().getBlockState(this.target.blockPosition().below());
+        if (targetBelow.is(net.minecraft.world.level.block.Blocks.LAVA)) return false;
 
         if (this.worm.isImpaling()) {
             LivingEntity impaled = this.worm.getImpaledTarget();
@@ -132,7 +150,8 @@ public class DepthWormBrutalJumpGoal extends Goal {
         }
 
         if (jumpTickCounter > MAX_JUMP_TICKS) return false;
-        if (worm.onGround() && !worm.isImpaling()) return false;
+        // Do not abort on ground if still within expected flight duration
+        if (jumpTickCounter >= totalFlightTicks && worm.onGround() && !worm.isImpaling()) return false;
         return true;
     }
 
@@ -142,7 +161,10 @@ public class DepthWormBrutalJumpGoal extends Goal {
             abortPrepare();
             return;
         }
-        if (this.worm.isInWater() || this.target.isInWater()) {
+        if (this.target.getType() == net.minecraft.world.entity.EntityType.BAT ||
+            this.worm.isInWater() || this.target.isInWater() ||
+            this.worm.isInLava() || this.target.isInLava() ||
+            this.target.level().getBlockState(this.target.blockPosition().below()).is(net.minecraft.world.level.block.Blocks.LAVA)) {
             abortPrepare();
             return;
         }
@@ -174,11 +196,23 @@ public class DepthWormBrutalJumpGoal extends Goal {
             jumpTickCounter++;
             Vec3 cur = this.worm.position();
             if (cur.distanceToSqr(lastJumpPos) < 0.0025) {
-                if (++noMovementTicks > 8) return;
+                if (++noMovementTicks > 12) return;
             } else {
                 noMovementTicks = 0;
                 lastJumpPos = cur;
             }
+
+            // Carry through ground bumps during the flight window
+            if (jumpTickCounter < totalFlightTicks && this.worm.onGround() && !this.worm.isImpaling()) {
+                Vec3 curVel = this.worm.getDeltaMovement();
+                double expectedSpeed = baseHorizSpeed * Math.pow(0.91, jumpTickCounter);
+                if (curVel.horizontalDistance() < expectedSpeed * 0.7 && launchDirection.lengthSqr() > 0.001) {
+                    Vec3 fwd = launchDirection.scale(expectedSpeed * 0.85);
+                    this.worm.setDeltaMovement(fwd.x, Math.max(curVel.y, 0.12D), fwd.z);
+                    this.worm.hasImpulse = true;
+                }
+            }
+
             checkMidAirCollision();
         }
     }
@@ -213,41 +247,51 @@ public class DepthWormBrutalJumpGoal extends Goal {
         Vec3 targetPos = this.target.position();
         Vec3 targetVel = this.target.getDeltaMovement();
 
-        double flatDist = Math.sqrt(
-                (targetPos.x - wormPos.x) * (targetPos.x - wormPos.x) +
-                        (targetPos.z - wormPos.z) * (targetPos.z - wormPos.z)
-        );
+        double dx = targetPos.x - wormPos.x;
+        double dz = targetPos.z - wormPos.z;
+        double flatDist = Math.sqrt(dx * dx + dz * dz);
+        if (flatDist < 0.001) return false;
 
-        double t = solveFlightTime(flatDist, targetPos.y - wormPos.y);
-        if (t < 0) return false;
+        // Flight time: fast, high-momentum leap (10 to 18 ticks)
+        int ticks = Math.max(10, Math.min(18, (int) Math.round(6.0 + flatDist * 0.55)));
+        this.totalFlightTicks = ticks;
 
-        Vec3 predictedPos = targetPos;
-        for (int i = 0; i < 2; i++) {
-            predictedPos = targetPos.add(targetVel.x * t, 0, targetVel.z * t);
-            double newFlat = Math.sqrt(
-                    (predictedPos.x - wormPos.x) * (predictedPos.x - wormPos.x) +
-                            (predictedPos.z - wormPos.z) * (predictedPos.z - wormPos.z)
-            );
-            t = solveFlightTime(newFlat, predictedPos.y - wormPos.y);
-            if (t < 0) return false;
+        // Target movement prediction
+        Vec3 predictedPos = targetPos.add(targetVel.x * ticks * 0.5, 0, targetVel.z * ticks * 0.5);
+        dx = predictedPos.x - wormPos.x;
+        dz = predictedPos.z - wormPos.z;
+        flatDist = Math.sqrt(dx * dx + dz * dz);
+
+        // Substantial lead (+3.5 blocks) so forward speed stays high through the entire leap
+        Vec3 dir = new Vec3(dx, 0, dz).normalize();
+        this.launchDirection = dir;
+        double leadDist = flatDist + 3.5;
+
+        // Target chest/head height + 1.2 blocks above target so descent cleanly descends directly onto target
+        double targetY = predictedPos.y + this.target.getBbHeight() * 0.5 + 1.2;
+        double dy = targetY - wormPos.y;
+
+        // Exact Minecraft LivingEntity physics with drag 0.91 horizontal, 0.98 vertical + 0.08 gravity:
+        double hFactor = (1.0 - Math.pow(0.91, ticks)) / 0.09;
+        double horizSpeed = leadDist / hFactor;
+        this.baseHorizSpeed = horizSpeed;
+
+        double a = 0.0;
+        double b = 0.0;
+        double curA = 1.0;
+        double curB = 0.0;
+        for (int k = 0; k < ticks; k++) {
+            a += curA;
+            b += curB;
+            curA *= 0.98;
+            curB = (curB + 0.08) * 0.98;
         }
 
-        Vec3 toTarget = predictedPos.subtract(wormPos);
-        Vec3 targetDir = toTarget.normalize();
+        double vy = (dy + b) / a;
 
-        double overshootDistance = 3.0;
-        Vec3 overshootPos = predictedPos.add(targetDir.scale(overshootDistance));
+        Vec3 velocity = new Vec3(dir.x * horizSpeed, vy, dir.z * horizSpeed);
 
-        double targetY = (predictedPos.y + this.target.getBbHeight() * 0.5);
-        double dy = targetY - (wormPos.y + this.worm.getBbHeight() * 0.3);
-
-        double dx = overshootPos.x - wormPos.x;
-        double dz = overshootPos.z - wormPos.z;
-
-        Vec3 velocity = calculateLaunchVelocity(dx, dy, dz, t);
-        if (velocity == null) return false;
-
-        if (!isTrajectoryClear(wormPos, velocity, t)) {
+        if (!isTrajectoryClear(wormPos, velocity, ticks)) {
             return false;
         }
 
@@ -256,6 +300,7 @@ public class DepthWormBrutalJumpGoal extends Goal {
         this.worm.yHeadRot = (float) yaw;
         this.worm.yBodyRot = (float) yaw;
 
+        this.worm.setOnGround(false);
         this.worm.setDeltaMovement(velocity);
         this.worm.setFlying(true);
         this.worm.hasImpulse = true;
@@ -267,44 +312,29 @@ public class DepthWormBrutalJumpGoal extends Goal {
         return true;
     }
 
-    private double solveFlightTime(double horizontalDist, double dy) {
-        double t = Math.max(3.0, horizontalDist / MAX_HORIZONTAL_SPEED);
-        double vy = dy / t + 0.5 * GRAVITY * t;
+    private boolean isTrajectoryClear(Vec3 start, Vec3 initialVel, int ticks) {
+        Vec3 pos = start;
+        Vec3 v = initialVel;
+        for (int i = 0; i <= ticks; i++) {
+            pos = pos.add(v);
 
-        while (vy > MAX_VERTICAL_SPEED && t < 80.0) {
-            t += 1.0;
-            vy = dy / t + 0.5 * GRAVITY * t;
-        }
-
-        if (vy > MAX_VERTICAL_SPEED * 1.3) return -1;
-        return t;
-    }
-
-    private Vec3 calculateLaunchVelocity(double dx, double dy, double dz, double t) {
-        if (t <= 0) return null;
-        double vx = dx / t;
-        double dzVal = dz / t;
-        double vy = dy / t + 0.5 * GRAVITY * t;
-
-        double hSpeed = Math.sqrt(vx * vx + dzVal * dzVal);
-        if (hSpeed > MAX_HORIZONTAL_SPEED * 1.1) return null;
-        if (vy > MAX_VERTICAL_SPEED * 1.2 || vy < -MAX_VERTICAL_SPEED) return null;
-
-        return new Vec3(vx, vy, dzVal);
-    }
-
-    private boolean isTrajectoryClear(Vec3 start, Vec3 velocity, double flightTime) {
-        int steps = (int) (flightTime * 2.0) + 1;
-        for (int i = 0; i <= steps; i++) {
-            double t = (i / (double) steps) * flightTime;
-            double x = start.x + velocity.x * t;
-            double z = start.z + velocity.z * t;
-            double y = start.y + velocity.y * t - 0.5 * GRAVITY * t * t;
-
-            AABB box = new AABB(x - 0.3, y, z - 0.3, x + 0.3, y + 0.6, z + 0.3);
-            if (!worm.level().noCollision(box)) {
+            // Lava check along trajectory and landing
+            net.minecraft.core.BlockPos bp = net.minecraft.core.BlockPos.containing(pos);
+            if (this.worm.level().getFluidState(bp).is(net.minecraft.tags.FluidTags.LAVA) ||
+                this.worm.level().getBlockState(bp).is(net.minecraft.world.level.block.Blocks.LAVA) ||
+                this.worm.level().getBlockState(bp.below()).is(net.minecraft.world.level.block.Blocks.LAVA)) {
                 return false;
             }
+
+            // Only check solid block collisions in mid-flight (exclude first 2 ticks and last 3 ticks)
+            if (i > 2 && i < ticks - 3) {
+                AABB box = new AABB(pos.x - 0.35, pos.y, pos.z - 0.35, pos.x + 0.35, pos.y + 0.7, pos.z + 0.35);
+                if (!worm.level().noCollision(box)) {
+                    return false;
+                }
+            }
+
+            v = new Vec3(v.x * 0.91, (v.y - 0.08) * 0.98, v.z * 0.91);
         }
         return true;
     }
@@ -312,7 +342,7 @@ public class DepthWormBrutalJumpGoal extends Goal {
     private void checkMidAirCollision() {
         if (this.worm.isImpaling()) return;
 
-        AABB wormBox = this.worm.getBoundingBox().inflate(0.4);
+        AABB wormBox = this.worm.getBoundingBox().inflate(1.2);
         if (wormBox.intersects(this.target.getBoundingBox())) {
             executeImpaleOrBounce();
         }
