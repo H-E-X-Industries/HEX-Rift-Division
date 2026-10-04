@@ -110,6 +110,7 @@ public class ModClientSetup {
     public static void registerKeyMappings(net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent event) {
         event.register(com.trd.client.config.ModKeyBindings.RELOAD_KEY);
         event.register(com.trd.client.config.ModKeyBindings.UNLOAD_KEY);
+        event.register(com.trd.client.config.ModKeyBindings.DEBUG_RENDER_KEY);
     }
 
     @SubscribeEvent

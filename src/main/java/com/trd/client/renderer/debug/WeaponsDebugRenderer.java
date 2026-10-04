@@ -73,11 +73,13 @@ public final class WeaponsDebugRenderer {
 
     private static void renderTrombones(Matrix4f m, VertexConsumer v, Level level, Vec3 cam) {
         // Обхода BlockEntity по области в Level нет, поэтому идём по чанкам:
-        // на клиенте и сервере API одинаковый.
-        int minCX = (int) Math.floor((cam.x - 96) / 16.0);
-        int maxCX = (int) Math.floor((cam.x + 96) / 16.0);
-        int minCZ = (int) Math.floor((cam.z - 96) / 16.0);
-        int maxCZ = (int) Math.floor((cam.z + 96) / 16.0);
+        // на клиенте и сервере API одинаковый. Радиус обхода ограничен
+        // MAX_RENDER_DISTANCE — иначе обход и вершины линий съедают кадр.
+        double dist = TurretDebugRenderEvent.MAX_RENDER_DISTANCE;
+        int minCX = (int) Math.floor((cam.x - dist) / 16.0);
+        int maxCX = (int) Math.floor((cam.x + dist) / 16.0);
+        int minCZ = (int) Math.floor((cam.z - dist) / 16.0);
+        int maxCZ = (int) Math.floor((cam.z + dist) / 16.0);
 
         for (int cx = minCX; cx <= maxCX; cx++) {
             for (int cz = minCZ; cz <= maxCZ; cz++) {
@@ -111,7 +113,9 @@ public final class WeaponsDebugRenderer {
     }
 
     private static void renderMissiles(Matrix4f m, VertexConsumer v, Level level, Vec3 cam) {
-        AABB box = new AABB(cam.x - 96, cam.y - 48, cam.z - 96, cam.x + 96, cam.y + 48, cam.z + 96);
+        double dist = TurretDebugRenderEvent.MAX_RENDER_DISTANCE;
+        double distY = dist / 2.0;
+        AABB box = new AABB(cam.x - dist, cam.y - distY, cam.z - dist, cam.x + dist, cam.y + distY, cam.z + dist);
         for (Entity e : level.getEntities((Entity) null, box, x -> x instanceof MissileLightEntity)) {
             MissileLightEntity mis = (MissileLightEntity) e;
             Vec3 p = mis.position();

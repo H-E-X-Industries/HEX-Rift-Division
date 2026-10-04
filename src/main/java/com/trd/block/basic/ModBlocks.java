@@ -264,7 +264,8 @@ public class ModBlocks {
             () -> new com.trd.multiblock.industrial.stanok.StanokBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().strength(3.0f, 10.0f)));
 
     public static final DeferredBlock<com.trd.multiblock.industrial.steel_storage.SteelStorageBlock> STEEL_STORAGE = registerMultiblock("steel_storage",
-            () -> new com.trd.multiblock.industrial.steel_storage.SteelStorageBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().strength(2.5f, 6.0f)));
+            () -> new com.trd.multiblock.industrial.steel_storage.SteelStorageBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().strength(2.5f, 6.0f)),
+            com.trd.multiblock.industrial.steel_storage.SteelStorageItem::new);
 
     public static final DeferredBlock<Block> MORY_BLOCK = registerBlock("mory_block",
             () -> new Block(BlockBehaviour.Properties.of().strength(2.0F, 6.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
@@ -709,8 +710,14 @@ public class ModBlocks {
                     false));
 
     private static <T extends Block & IMultiblockController> DeferredBlock<T> registerMultiblock(String name, Supplier<T> block) {
+        return registerMultiblock(name, block, MultiblockBlockItem::new);
+    }
+
+    /** Тот же мультиблок, но со своим классом предмета (например, с открытием из инвентаря). */
+    private static <T extends Block & IMultiblockController> DeferredBlock<T> registerMultiblock(String name, Supplier<T> block,
+                                                                                          java.util.function.BiFunction<Block, Item.Properties, Item> itemFactory) {
         DeferredBlock<T> toReturn = BLOCKS.register(name, block);
-        ModItems.ITEMS.register(name, () -> new MultiblockBlockItem(toReturn.get(), new Item.Properties()));
+        ModItems.ITEMS.register(name, () -> itemFactory.apply(toReturn.get(), new Item.Properties()));
         return toReturn;
     }
 

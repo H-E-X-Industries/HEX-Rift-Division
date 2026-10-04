@@ -40,15 +40,27 @@ public class SteelStorageBlockEntity extends BlockEntity implements MenuProvider
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            if (stack.isEmpty()) return true;
-            if (stack.getItem() instanceof BlockItem bi) {
-                Block block = bi.getBlock();
-                if (block instanceof ShulkerBoxBlock) return false;
-                if (block instanceof SteelStorageBlock) return false;
-            }
+            if (!isItemAllowed(stack)) return false;
             return super.isItemValid(slot, stack);
         }
     };
+
+    /**
+     * Что вообще можно класть внутрь: не шалкеры и не другие стальные хранилища.
+     * <p>
+     * Проверка вынесена отдельно, потому что её используют оба варианта хранилища —
+     * и блок, и предмет (см. {@link SteelStorageItemInventory}). Без неё предмет-хранилище
+     * можно было бы положить в самого себя, а внутри — в третий, и так до дыры в стеке.
+     */
+    public static boolean isItemAllowed(ItemStack stack) {
+        if (stack.isEmpty()) return true;
+        if (stack.getItem() instanceof BlockItem bi) {
+            Block block = bi.getBlock();
+            if (block instanceof ShulkerBoxBlock) return false;
+            if (block instanceof SteelStorageBlock) return false;
+        }
+        return true;
+    }
 
     public SteelStorageBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.STEEL_STORAGE_BE.get(), pos, state);
