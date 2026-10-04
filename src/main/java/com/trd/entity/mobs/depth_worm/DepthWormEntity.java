@@ -99,7 +99,7 @@ public class DepthWormEntity extends Monster implements GeoEntity {
                 .add(Attributes.MAX_HEALTH, 15.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.25D)
                 .add(Attributes.ATTACK_DAMAGE, 2.5D)
-                .add(Attributes.FOLLOW_RANGE, 36.0D)
+                .add(Attributes.FOLLOW_RANGE, 48.0D)
                 .add(Attributes.ARMOR, 3.0D)
                 .add(Attributes.STEP_HEIGHT, 1.0D)
                 .add(Attributes.FALL_DAMAGE_MULTIPLIER, 0.0D);
@@ -374,6 +374,16 @@ public class DepthWormEntity extends Monster implements GeoEntity {
 
     public void setDigCooldown(int cooldown) {
         this.digCooldown = cooldown;
+    }
+
+    protected boolean isPreparingJump = false;
+
+    public boolean isPreparingJump() {
+        return this.isPreparingJump;
+    }
+
+    public void setPreparingJump(boolean preparing) {
+        this.isPreparingJump = preparing;
     }
 
     public void setKills(int kills) {
@@ -756,17 +766,27 @@ public class DepthWormEntity extends Monster implements GeoEntity {
     protected void tickSwarmDigging() {
         if (this.level().isClientSide) return;
         if (this.digCooldown > 0) return;
-        if (this.isColonist() || this.isRetreating() || this.isFlying()) return;
+        if (this.isColonist() || this.isRetreating() || this.isFlying() || !this.onGround()) return;
+        if (this.isPreparingJump()) return;
         if (this instanceof DepthWormBrutalEntity brutal && (brutal.isImpaling() || brutal.isPreparingJump())) return;
 
         LivingEntity target = this.getTarget();
         if (target == null || !target.isAlive()) return;
-        if (this.distanceToSqr(target) > 28.0 * 28.0) return;
+        if (this.distanceToSqr(target) > 48.0 * 48.0) return;
 
-        // Worms must walk through the open cave as much as possible!
-        // Only dig if blocked by horizontal collision or navigation is stuck/done without reaching!
+        // If the worm can see the target directly through open air, NEVER dig!
+        if (this.hasLineOfSight(target)) {
+            return;
+        }
+
+        // Must be physically stopped by a solid wall!
+        if (!this.horizontalCollision) {
+            return;
+        }
+
+        // If navigation has a valid, non-done path that can reach the target, walk along it!
         net.minecraft.world.level.pathfinder.Path currentPath = this.getNavigation().getPath();
-        if (currentPath != null && !currentPath.isDone() && !this.horizontalCollision) {
+        if (currentPath != null && !currentPath.isDone() && currentPath.canReach()) {
             return;
         }
 
@@ -797,6 +817,7 @@ public class DepthWormEntity extends Monster implements GeoEntity {
         // 3. Find block to dig towards target
         BlockPos blockToBreak = findBlockToDig(target);
         if (blockToBreak == null) return;
+        if (blockToBreak.equals(this.blockPosition().below())) return;
 
         // 4. Destroy the block
         BlockState brokenState = this.level().getBlockState(blockToBreak);
@@ -830,9 +851,15 @@ public class DepthWormEntity extends Monster implements GeoEntity {
     public boolean tryDigTowardsHive(BlockPos nestPos) {
         if (this.level().isClientSide) return false;
         if (this.digCooldown > 0) return false;
-        if (this.isColonist() || this.isFlying()) return false;
+        if (this.isColonist() || this.isFlying() || !this.onGround()) return false;
+        if (this.isPreparingJump()) return false;
         if (this instanceof DepthWormBrutalEntity brutal && (brutal.isImpaling() || brutal.isPreparingJump())) return false;
+        // Never dig towards hive if actively engaged with a living target!
+        if (this.getTarget() != null && this.getTarget().isAlive()) return false;
         if (nestPos == null) return false;
+
+        // Must be blocked by horizontal collision!
+        if (!this.horizontalCollision) return false;
 
         if (this.distanceToSqr(nestPos.getX() + 0.5, nestPos.getY() + 0.5, nestPos.getZ() + 0.5) > 96.0 * 96.0) {
             return false;
@@ -860,6 +887,7 @@ public class DepthWormEntity extends Monster implements GeoEntity {
         // Find block to dig towards hive
         BlockPos blockToBreak = findHiveBlockToDig(nestPos);
         if (blockToBreak == null) return false;
+        if (blockToBreak.equals(this.blockPosition().below())) return false;
 
         BlockState brokenState = this.level().getBlockState(blockToBreak);
         boolean destroyed = this.level().destroyBlock(blockToBreak, true, this);
@@ -893,7 +921,43 @@ public class DepthWormEntity extends Monster implements GeoEntity {
         int dy = nestPos.getY() - wormPos.getY();
         int dz = nestPos.getZ() - wormPos.getZ();
 
-        // 1. Primary horizontal step direction
+        int dirX = Integer.compare(dx, 0);
+        int dirZ = Integer.compare(dz, 0);
+
+        // 1. Check for diagonal slit / corner blocks at the cave entrance:
+        // When worms tunnel diagonally towards a cave, vanilla pathfinder allows diagonal traversal,
+        // leaving the two orthogonal corner blocks and/or threshold sill block intact.
+        // This forms a 1-block diagonal slit where worms get stuck.
+        if (dirX != 0 && dirZ != 0) {
+            BlockPos cornerX = wormPos.offset(dirX, 0, 0);
+            BlockPos cornerZ = wormPos.offset(0, 0, dirZ);
+            BlockPos diagPos = wormPos.offset(dirX, 0, dirZ);
+
+            // If diagPos has air (entering cave), but cornerX or cornerZ is solid:
+            if (!isSolidBlock(diagPos.above(1)) || !isSolidBlock(diagPos)) {
+                if (canWormBreak(cornerX.above(1))) return cornerX.above(1);
+                if (canWormBreak(cornerX)) return cornerX;
+                if (canWormBreak(cornerZ.above(1))) return cornerZ.above(1);
+                if (canWormBreak(cornerZ)) return cornerZ;
+            }
+
+            // If diagPos itself is solid and blocking diagonal passage
+            if (canWormBreak(diagPos.above(1))) return diagPos.above(1);
+            if (canWormBreak(diagPos)) return diagPos;
+        }
+
+        // 2. Check facing direction if colliding horizontally
+        Direction facing = this.getDirection();
+        BlockPos facingPos = wormPos.relative(facing);
+        if (canWormBreak(facingPos.above(1))) return facingPos.above(1);
+        if (canWormBreak(facingPos)) {
+            // Only break facingPos at feet level if its above is air (sill block at entrance) or we need staircase down
+            if (!isSolidBlock(facingPos.above(1)) || dy < 0) {
+                return facingPos;
+            }
+        }
+
+        // 3. Primary horizontal step direction
         int stepX = 0;
         int stepZ = 0;
         if (Math.abs(dx) >= Math.abs(dz) && Math.abs(dx) > 0) {
@@ -901,7 +965,6 @@ public class DepthWormEntity extends Monster implements GeoEntity {
         } else if (Math.abs(dz) > 0) {
             stepZ = Integer.compare(dz, 0);
         } else {
-            Direction facing = this.getDirection();
             stepX = facing.getStepX();
             stepZ = facing.getStepZ();
         }
@@ -932,11 +995,19 @@ public class DepthWormEntity extends Monster implements GeoEntity {
     protected BlockPos findHiveBlockInDirection(BlockPos wormPos, int sx, int sz, int dy) {
         if (sx == 0 && sz == 0) return null;
 
+        BlockPos frontCol = wormPos.offset(sx, 0, sz);
+
+        // If frontCol is solid, but frontCol.above(1) and frontCol.above(2) are AIR:
+        // This is a 1-block sill at the threshold of an open cave!
+        // Break frontCol so worms do not leave 1 block at the end!
+        if (isSolidBlock(frontCol) && !isSolidBlock(frontCol.above(1)) && !isSolidBlock(frontCol.above(2))) {
+            if (canWormBreak(frontCol)) return frontCol;
+        }
+
         if (dy > 0) {
             // Staircase UP towards hive:
             // 1. Head clearance above worm: if stepping up requires head clearance, clear it!
             BlockPos headPos2 = wormPos.above(2);
-            BlockPos frontCol = wormPos.offset(sx, 0, sz);
             if (canWormBreak(headPos2) && (isSolidBlock(frontCol) || isSolidBlock(frontCol.above(1)))) {
                 return headPos2;
             }
@@ -947,6 +1018,9 @@ public class DepthWormEntity extends Monster implements GeoEntity {
             if (canWormBreak(frontUpper)) return frontUpper;
             if (canWormBreak(frontLower)) return frontLower;
 
+            // If frontCol at feet level is blocking and frontCol.above(1) is air
+            if (canWormBreak(frontCol) && !isSolidBlock(frontCol.above(1))) return frontCol;
+
             // 3. Clear dist = 2 step
             BlockPos front2 = wormPos.offset(sx * 2, 0, sz * 2);
             BlockPos front2High = front2.above(3);
@@ -955,6 +1029,7 @@ public class DepthWormEntity extends Monster implements GeoEntity {
             if (canWormBreak(front2High)) return front2High;
             if (canWormBreak(front2Upper)) return front2Upper;
             if (canWormBreak(front2Lower)) return front2Lower;
+            if (canWormBreak(front2) && !isSolidBlock(front2.above(1))) return front2;
         } else if (dy < 0) {
             // Staircase DOWN towards hive:
             for (int dist = 1; dist <= 2; dist++) {
@@ -979,11 +1054,12 @@ public class DepthWormEntity extends Monster implements GeoEntity {
     protected void tickHiveReturnDigging() {
         if (this.level().isClientSide) return;
         if (this.digCooldown > 0) return;
-        if (this.isColonist() || this.isFlying()) return;
+        if (this.isColonist() || this.isFlying() || !this.onGround()) return;
+        if (this.isPreparingJump()) return;
         if (this instanceof DepthWormBrutalEntity brutal && (brutal.isImpaling() || brutal.isPreparingJump())) return;
 
         // Only dig to hive if retreating or idle without target, and has a bound hive
-        if (!this.isRetreating() && this.getTarget() != null) return;
+        if (this.getTarget() != null && this.getTarget().isAlive()) return;
 
         BlockPos bound = this.getBoundNestPos();
         if (bound == null) return;
@@ -993,6 +1069,9 @@ public class DepthWormEntity extends Monster implements GeoEntity {
         if (path != null && !path.isDone() && path.canReach() && !this.horizontalCollision) {
             return;
         }
+
+        // Must be blocked by horizontal collision
+        if (!this.horizontalCollision) return;
 
         // Try to dig towards hive!
         tryDigTowardsHive(bound);

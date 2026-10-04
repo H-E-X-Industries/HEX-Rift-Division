@@ -359,6 +359,15 @@ public class ReturnToHiveGoal extends Goal {
                     }
 
                     if (path != null && path.canReach()) {
+                        if (worm.horizontalCollision && !worm.isFlying()) {
+                            // If colliding horizontally even though path reports canReach,
+                            // we are stuck at a diagonal corner slit or cave entrance threshold!
+                            boolean dug = worm.tryDigTowardsHive(targetPos);
+                            if (dug) {
+                                stuckTicks = 0;
+                                pathRecalcCooldown = 20;
+                            }
+                        }
                         worm.getNavigation().moveTo(path, 1.2D);
                     } else {
                         // Direct navigation through open air is blocked or trapped in a cave!

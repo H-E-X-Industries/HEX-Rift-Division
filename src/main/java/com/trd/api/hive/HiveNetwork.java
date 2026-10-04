@@ -106,7 +106,7 @@ public class HiveNetwork {
     public boolean isAwakened() { return isAwakened; }
 
     public int getMaxPoints() {
-        return Math.max(50, wormCounts.size() * 50);
+        return Math.max(60, wormCounts.size() * 50);
     }
 
     public boolean canSpendReserve(Level level) {

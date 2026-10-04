@@ -17,6 +17,10 @@ public class ModBiomeModifiers {
             ResourceKey.create(NeoForgeRegistries.Keys.BIOME_MODIFIERS,
                     ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "add_conglomerate_vein"));
 
+    public static final ResourceKey<BiomeModifier> ADD_DEPTH_WORM_HIVE =
+            ResourceKey.create(NeoForgeRegistries.Keys.BIOME_MODIFIERS,
+                    ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "add_depth_worm_hive"));
+
     public static void bootstrap(BootstrapContext<BiomeModifier> context) {
         var placedFeatures = context.lookup(Registries.PLACED_FEATURE);
         var biomes = context.lookup(Registries.BIOME);
@@ -50,5 +54,13 @@ public class ModBiomeModifiers {
                             GenerationStep.Decoration.UNDERGROUND_ORES
                     ));
         }
+
+        // === УЛЬИ ГЛУБИННЫХ ЧЕРВЕЙ ===
+        context.register(ADD_DEPTH_WORM_HIVE,
+                new BiomeModifiers.AddFeaturesBiomeModifier(
+                        biomes.getOrThrow(BiomeTags.IS_OVERWORLD),
+                        HolderSet.direct(placedFeatures.getOrThrow(ModPlacedFeatures.DEPTH_WORM_HIVE_PLACED_KEY)),
+                        GenerationStep.Decoration.UNDERGROUND_DECORATION
+                ));
     }
 }

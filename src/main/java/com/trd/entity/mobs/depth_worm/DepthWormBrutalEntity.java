@@ -46,7 +46,7 @@ public class DepthWormBrutalEntity extends DepthWormEntity {
                 .add(Attributes.MAX_HEALTH, 45.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.35D)
                 .add(Attributes.ATTACK_DAMAGE, 4.0D)
-                .add(Attributes.FOLLOW_RANGE, 40.0D)
+                .add(Attributes.FOLLOW_RANGE, 48.0D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 0.4D)
                 .add(Attributes.ARMOR, 7.0D)
                 .add(Attributes.STEP_HEIGHT, 1.25D)
@@ -265,12 +265,15 @@ public class DepthWormBrutalEntity extends DepthWormEntity {
         }));
     }
 
+    @Override
     public boolean isPreparingJump() {
         return this.entityData.get(IS_PREPARING_JUMP);
     }
 
+    @Override
     public void setPreparingJump(boolean v) {
         this.entityData.set(IS_PREPARING_JUMP, v);
+        super.setPreparingJump(v);
     }
 
     public boolean isImpaling() {
