@@ -9,15 +9,46 @@ import org.joml.Matrix4f;
  * <p>
  * В 1.21.1 у {@code VertexConsumer} цепочка называется {@code addVertex(...).setColor(...).setNormal(...)},
  * а завершающего {@code endVertex()} больше нет — вершину закрывает сам {@code addVertex}.
+ * <p>
+ * Всё дальше {@link #MAX_RENDER_DISTANCE} от камеры не рисуется. Ограничение только на обход
+ * сущностей мало: линия «турель → цель» и траектория растягиваются на сотни блоков, и вершины
+ * уходят далеко за пределы видимости, хотя толку от них на экране нет.
  */
 public final class DebugShapes {
 
+    /** Предел отрисовки от камеры. 0 — не ограничивать (вне кадра / без камеры). */
+    private static double maxDistanceSq = 0.0;
+    private static Vec3 viewCenter = null;
+
     private DebugShapes() {
+    }
+
+    /** Задать камеру и предел дистанции на время одного кадра. */
+    public static void beginFrame(Vec3 viewCenter, double maxDistance) {
+        DebugShapes.viewCenter = viewCenter;
+        DebugShapes.maxDistanceSq = maxDistance > 0.0 ? maxDistance * maxDistance : 0.0;
+    }
+
+    public static void endFrame() {
+        DebugShapes.viewCenter = null;
+        DebugShapes.maxDistanceSq = 0.0;
+    }
+
+    /** Вписывается ли точка в предел отрисовки. */
+    public static boolean inRange(Vec3 p) {
+        Vec3 c = viewCenter;
+        if (c == null || maxDistanceSq <= 0.0) {
+            return true;
+        }
+        return c.distanceToSqr(p) <= maxDistanceSq;
     }
 
     /** Отрезок. */
     public static void line(Matrix4f m, VertexConsumer v, Vec3 a, Vec3 b,
                             float r, float g, float bl, float a2) {
+        if (!inRange(a) || !inRange(b)) {
+            return;
+        }
         v.addVertex(m, (float) a.x, (float) a.y, (float) a.z).setColor(r, g, bl, a2).setNormal(0, 1, 0);
         v.addVertex(m, (float) b.x, (float) b.y, (float) b.z).setColor(r, g, bl, a2).setNormal(0, 1, 0);
     }
@@ -25,6 +56,9 @@ public final class DebugShapes {
     /** Каркас куба со стороной {@code size}, центр — {@code center}. */
     public static void box(Matrix4f m, VertexConsumer v, Vec3 center, double size,
                            float r, float g, float b, float a) {
+        if (!inRange(center)) {
+            return;
+        }
         float h = (float) (size / 2.0);
         float x1 = (float) (center.x - h), y1 = (float) (center.y - h), z1 = (float) (center.z - h);
         float x2 = (float) (center.x + h), y2 = (float) (center.y + h), z2 = (float) (center.z + h);

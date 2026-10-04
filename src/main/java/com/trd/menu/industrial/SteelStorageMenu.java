@@ -49,7 +49,7 @@ public class SteelStorageMenu extends AbstractContainerMenu {
                 int index = row * SteelStorageBlockEntity.COLS + col;
                 int x = 8 + col * 18;
                 int y = 15 + row * 18;
-                this.addSlot(new SlotItemHandler(inv, index, x, y));
+                this.addSlot(new StorageSlot(inv, index, x, y));
             }
         }
 
@@ -65,6 +65,37 @@ public class SteelStorageMenu extends AbstractContainerMenu {
         // Хотбар (44, 203) — 145 + 58
         for (int col = 0; col < 9; col++) {
             this.addSlot(new Slot(playerInv, col, invX + col * 18, invY + 58));
+        }
+    }
+
+    /**
+     * Слот хранилища с запретом на уровне самого слота.
+     * <p>
+     * Одного {@code isItemValid} обработчика мало: {@code SlotItemHandler.mayPlace} — это
+     * единственное место, где ванилла спрашивает про предмет при клике, но {@code setByPlayer}
+     * вызывается ею напрямую и никакой проверки не делает. Здесь запрет стоит в обоих местах,
+     * поэтому «перетащить», «шифт-клик», «номерок» и «поставить курсором» закрыты одинаково.
+     */
+    private static class StorageSlot extends SlotItemHandler {
+
+        StorageSlot(IItemHandler itemHandler, int index, int x, int y) {
+            super(itemHandler, index, x, y);
+        }
+
+        @Override
+        public boolean mayPlace(ItemStack stack) {
+            if (!SteelStorageBlockEntity.isItemAllowed(stack)) {
+                return false;
+            }
+            return super.mayPlace(stack);
+        }
+
+        @Override
+        public void setByPlayer(ItemStack stack) {
+            if (!SteelStorageBlockEntity.isItemAllowed(stack)) {
+                return;
+            }
+            super.setByPlayer(stack);
         }
     }
 
@@ -102,8 +133,16 @@ public class SteelStorageMenu extends AbstractContainerMenu {
                 if (!this.moveItemStackTo(itemstack1, SLOTS, this.slots.size(), true)) {
                     return ItemStack.EMPTY;
                 }
-            } else if (!this.moveItemStackTo(itemstack1, 0, SLOTS, false)) {
-                return ItemStack.EMPTY;
+            } else {
+                // Шифт-клик из инвентаря игрока внутрь хранилища. Проверяем запрет
+                // явно, а не только через mayPlace: сюда попадают и ванильные
+                // быстрые слоты, и любая автоматизация, которая зовёт quickMoveStack.
+                if (!SteelStorageBlockEntity.isItemAllowed(itemstack1)) {
+                    return ItemStack.EMPTY;
+                }
+                if (!this.moveItemStackTo(itemstack1, 0, SLOTS, false)) {
+                    return ItemStack.EMPTY;
+                }
             }
             if (itemstack1.isEmpty()) {
                 slot.set(ItemStack.EMPTY);

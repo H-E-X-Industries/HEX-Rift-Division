@@ -98,6 +98,9 @@ public final class WeaponsDebugRenderer {
 
                     if (target == null || !target.isAlive()) continue;
                     Vec3 tp = target.getBoundingBox().getCenter();
+                    // Цель за пределами предела отрисовки не рисуем — иначе линия
+                    // уходит за сотни блоков, хотя на экране её всё равно не видно.
+                    if (!DebugShapes.inRange(tp)) continue;
 
                     // Линия полёта: ракетница -> цель, по ней ракета и летит.
                     // Ровно то, что просят видеть, без догадок о траектории.
@@ -137,7 +140,9 @@ public final class WeaponsDebugRenderer {
             LivingEntity target = mis.getTarget();
             if (target != null && target.isAlive()) {
                 Vec3 tp = target.getBoundingBox().getCenter();
-                DebugShapes.line(m, v, p, tp, TRAJ_R, TRAJ_G, TRAJ_B, 0.35F);
+                if (DebugShapes.inRange(tp)) {
+                    DebugShapes.line(m, v, p, tp, TRAJ_R, TRAJ_G, TRAJ_B, 0.35F);
+                }
             }
         }
     }
