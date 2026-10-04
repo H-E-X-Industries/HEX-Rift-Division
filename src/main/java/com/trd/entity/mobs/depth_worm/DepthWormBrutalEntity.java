@@ -1,0 +1,346 @@
+package com.trd.entity.mobs.depth_worm;
+
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.animation.AnimationController;
+import software.bernie.geckolib.animation.RawAnimation;
+
+public class DepthWormBrutalEntity extends DepthWormEntity {
+
+    private static final EntityDataAccessor<Boolean> IS_PREPARING_JUMP =
+            SynchedEntityData.defineId(DepthWormBrutalEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> IS_IMPALING =
+            SynchedEntityData.defineId(DepthWormBrutalEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> IMPALED_ENTITY_ID =
+            SynchedEntityData.defineId(DepthWormBrutalEntity.class, EntityDataSerializers.INT);
+
+    private LivingEntity impaledTargetCache = null;
+    private int postAttackAnimTimer = 0;
+    private int meleeCooldown = 0;
+    private int impaleTimer = 0;
+
+    public DepthWormBrutalEntity(EntityType<? extends Monster> entityType, Level level) {
+        super(entityType, level);
+    }
+
+    public static AttributeSupplier.Builder createAttributes() {
+        return Monster.createMonsterAttributes()
+                .add(Attributes.MAX_HEALTH, 45.0D)
+                .add(Attributes.MOVEMENT_SPEED, 0.35D)
+                .add(Attributes.ATTACK_DAMAGE, 4.0D)
+                .add(Attributes.FOLLOW_RANGE, 40.0D)
+                .add(Attributes.KNOCKBACK_RESISTANCE, 0.4D)
+                .add(Attributes.ARMOR, 7.0D)
+                .add(Attributes.STEP_HEIGHT, 1.25D)
+                .add(Attributes.FALL_DAMAGE_MULTIPLIER, 0.0D);
+    }
+
+    @Override
+    public float getMaxJumpHeight() {
+        return 5.0F;
+    }
+
+    @Override
+    public int getMaxJumpHorizontalRange() {
+        return 5;
+    }
+
+    @Override
+    protected void performMovementJump(double heightDiff, Vec3 dir) {
+        super.performMovementJump(heightDiff, dir);
+        if (heightDiff > 3.2) {
+            Vec3 current = this.getDeltaMovement();
+            Vec3 horiz = dir.normalize().scale(0.58D);
+            this.setDeltaMovement(horiz.x, current.y, horiz.z);
+        }
+    }
+
+
+    @Override
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(IS_PREPARING_JUMP, false);
+        builder.define(IS_IMPALING, false);
+        builder.define(IMPALED_ENTITY_ID, -1);
+    }
+
+    @Override
+    protected void registerGoals() {
+        this.goalSelector.addGoal(-1, new ColonistReturnGoal(this));
+        this.goalSelector.addGoal(0, new ColonistMoveGoal(this));
+        this.goalSelector.addGoal(0, new DepthWormBrutalJumpGoal(this, 1.8D, 6.0F, 24.0F));
+        this.goalSelector.addGoal(1, new ReturnToHiveGoal(this));
+        this.goalSelector.addGoal(2, new MeleeAttackGoal(this, 1.4D, false));
+        this.goalSelector.addGoal(3, new WaterAvoidingRandomStrollGoal(this, 0.8D));
+        this.goalSelector.addGoal(4, new RandomLookAroundGoal(this));
+
+        this.targetSelector.addGoal(0, new NearestAttackableTargetGoal<>(this, Player.class, false,
+                (target) -> !target.isInLava() && !target.isInWater() && !target.level().getBlockState(target.blockPosition().below()).is(net.minecraft.world.level.block.Blocks.LAVA)));
+        this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, LivingEntity.class, false,
+                (target) -> target.isAlive()
+                        && target.deathTime <= 0
+                        && !(target instanceof DepthWormEntity)
+                        && target.getType() != net.minecraft.world.entity.EntityType.BAT
+                        && !target.isInLava()
+                        && !target.isInWater()
+                        && !target.level().getBlockState(target.blockPosition().below()).is(net.minecraft.world.level.block.Blocks.LAVA)));
+        this.targetSelector.addGoal(2, new HurtByTargetGoal(this).setAlertOthers());
+    }
+
+    @Override
+    public boolean doHurtTarget(Entity target) {
+        if (this.meleeCooldown > 0) return false;
+        this.meleeCooldown = 20;
+        this.triggerPostAttackAnim();
+        return super.doHurtTarget(target);
+    }
+
+    @Override
+    public int getRetreatKillThreshold() {
+        return 30;
+    }
+
+    @Override
+    public void aiStep() {
+        boolean wasFlying = this.isFlying();
+        super.aiStep();
+
+        if (this.onGround() && this.isFlying() && !this.isImpaling() && this.ignoreFallDamageTicks <= 35) {
+            this.setFlying(false);
+            this.setPreparingJump(false);
+            this.handleLanding();
+        }
+
+        if (this.level().isClientSide) return;
+
+        if (this.meleeCooldown > 0) this.meleeCooldown--;
+
+        if (this.postAttackAnimTimer > 0) {
+            if (--this.postAttackAnimTimer == 0) {
+                this.setAttacking(false);
+            }
+        }
+
+        if (this.onGround() && wasFlying && !this.isFlying()) {
+            this.handleLanding();
+        }
+
+        if (this.isImpaling()) {
+            if (--this.impaleTimer <= 0) {
+                clearImpaledTarget();
+                Vec3 bounce = this.getLookAngle().scale(-0.5).add(0, 0.3, 0);
+                this.setDeltaMovement(bounce);
+            } else {
+                this.updateImpaledTargetPosition();
+            }
+        }
+    }
+
+    private void handleLanding() {
+        LivingEntity target = getImpaledTarget();
+        if (target != null && target.isAlive()) {
+            float fall = this.fallDistance;
+            if (fall > 3.0F) {
+                target.hurt(this.damageSources().mobAttack(this), fall - 3.0F);
+            }
+            clearImpaledTarget();
+        } else {
+            LivingEntity curTarget = this.getTarget();
+            if (curTarget != null && curTarget.isAlive() && this.distanceToSqr(curTarget) < 16.0) {
+                curTarget.hurt(this.damageSources().mobAttack(this), 12.0F);
+                Vec3 knock = curTarget.position().subtract(this.position()).normalize().scale(0.8D).add(0, 0.3D, 0);
+                curTarget.setDeltaMovement(curTarget.getDeltaMovement().add(knock));
+                curTarget.hurtMarked = true;
+            }
+        }
+        this.setPreparingJump(false);
+    }
+
+    private void updateImpaledTargetPosition() {
+        LivingEntity target = getImpaledTarget();
+        if (target == null || !target.isAlive()) {
+            clearImpaledTarget();
+            return;
+        }
+
+        Vec3 targetCenter = target.getBoundingBox().getCenter();
+        Vec3 targetVel = target.getDeltaMovement();
+        Vec3 velDir = targetVel.lengthSqr() > 0.001
+                ? targetVel.normalize()
+                : target.getLookAngle();
+
+        double offsetForward = -0.3125;
+        Vec3 attachPos = targetCenter.add(velDir.scale(offsetForward));
+
+        Vec3 wormPos = this.position();
+        double lerp = 0.5;
+        double newX = wormPos.x + (attachPos.x - wormPos.x) * lerp;
+        double newY = wormPos.y + (attachPos.y - wormPos.y) * lerp;
+        double newZ = wormPos.z + (attachPos.z - wormPos.z) * lerp;
+
+        this.setPos(newX, newY, newZ);
+        this.setDeltaMovement(targetVel);
+        Vec3 lookDir = targetCenter.subtract(wormPos);
+        float yaw = (float) (Math.atan2(lookDir.z, lookDir.x) * (180.0 / Math.PI)) - 90.0F;
+        this.setYRot(yaw);
+        this.yHeadRot = yaw;
+        this.yBodyRot = yaw;
+
+        if (this.tickCount % 10 == 0) {
+            target.hurt(this.damageSources().mobAttack(this), 2.0F);
+        }
+
+        if (target instanceof Player player) {
+            player.hurtMarked = true;
+        }
+    }
+
+    @Override
+    protected void checkBrutalTransformation() {
+        // Брутальный червь не эволюционирует дальше
+    }
+
+    @Override
+    protected void transformToBrutal() {
+        // Уже брутальный
+    }
+
+    @Override
+    public boolean causeFallDamage(float distance, float multiplier, DamageSource source) {
+        return false;
+    }
+
+    @Override
+    public int calculateFallDamage(float distance, float damageMultiplier) {
+        return 0;
+    }
+
+    public void triggerPostAttackAnim() {
+        this.postAttackAnimTimer = 20;
+        this.setAttacking(true);
+    }
+
+    @Override
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+        controllers.add(new AnimationController<>(this, "controller", 2, state -> {
+            if (this.isDeadOrDying()) {
+                return state.setAndContinue(RawAnimation.begin().thenPlayAndHold("death"));
+            }
+
+            if (this.isImpaling() || (this.isFlying() && !this.onGround())) {
+                return state.setAndContinue(RawAnimation.begin().thenLoop("jump"));
+            }
+
+            if (this.isPreparingJump()) {
+                return state.setAndContinue(RawAnimation.begin().thenPlayAndHold("prepare"));
+            }
+
+            if (this.isAttacking() || this.postAttackAnimTimer > 0) {
+                return state.setAndContinue(RawAnimation.begin().thenPlayAndHold("attack"));
+            }
+
+            if (state.isMoving()) {
+                return state.setAndContinue(RawAnimation.begin().thenLoop("slide"));
+            }
+
+            return state.setAndContinue(RawAnimation.begin().thenLoop("idle"));
+        }));
+    }
+
+    public boolean isPreparingJump() {
+        return this.entityData.get(IS_PREPARING_JUMP);
+    }
+
+    public void setPreparingJump(boolean v) {
+        this.entityData.set(IS_PREPARING_JUMP, v);
+    }
+
+    public boolean isImpaling() {
+        return this.entityData.get(IS_IMPALING);
+    }
+
+    public void setImpaling(boolean v) {
+        this.entityData.set(IS_IMPALING, v);
+    }
+
+    public int getImpaledEntityId() {
+        return this.entityData.get(IMPALED_ENTITY_ID);
+    }
+
+    public void setImpaledEntityId(int id) {
+        this.entityData.set(IMPALED_ENTITY_ID, id);
+    }
+
+    public LivingEntity getImpaledTarget() {
+        if (this.impaledTargetCache != null && this.impaledTargetCache.isAlive()) {
+            return this.impaledTargetCache;
+        }
+        int id = getImpaledEntityId();
+        if (id != -1) {
+            var e = this.level().getEntity(id);
+            if (e instanceof LivingEntity le) {
+                this.impaledTargetCache = le;
+                return le;
+            }
+        }
+        return null;
+    }
+
+    public void setImpaledTarget(LivingEntity target) {
+        this.impaledTargetCache = target;
+        setImpaledEntityId(target != null ? target.getId() : -1);
+        setImpaling(target != null);
+        if (target != null) {
+            this.impaleTimer = 60;
+        }
+    }
+
+    public void clearImpaledTarget() {
+        this.impaledTargetCache = null;
+        setImpaledEntityId(-1);
+        setImpaling(false);
+        this.impaleTimer = 0;
+    }
+
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putBoolean("PreparingJump", isPreparingJump());
+        tag.putBoolean("Impaling", isImpaling());
+        tag.putInt("ImpaledId", getImpaledEntityId());
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        setPreparingJump(tag.getBoolean("PreparingJump"));
+        setImpaling(tag.getBoolean("Impaling"));
+        setImpaledEntityId(tag.getInt("ImpaledId"));
+    }
+
+    @Override
+    public void remove(RemovalReason reason) {
+        super.remove(reason);
+        if (!this.level().isClientSide && this.isImpaling()) {
+            clearImpaledTarget();
+        }
+    }
+}

@@ -112,7 +112,22 @@ public class ModEntities {
                     .setShouldReceiveVelocityUpdates(true)
                     .build("trd:missile_light"));
 
+    // === ГЛУБИННЫЕ ЧЕРВИ ===
+
+    public static final DeferredHolder<EntityType<?>, EntityType<com.trd.entity.mobs.depth_worm.DepthWormEntity>> DEPTH_WORM =
+            ENTITY_TYPES.register("depth_worm", () -> EntityType.Builder
+                    .of(com.trd.entity.mobs.depth_worm.DepthWormEntity::new, MobCategory.MONSTER)
+                    .sized(0.6F, 0.6F)
+                    .build("trd:depth_worm"));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<com.trd.entity.mobs.depth_worm.DepthWormBrutalEntity>> DEPTH_WORM_BRUTAL =
+            ENTITY_TYPES.register("depth_worm_brutal", () -> EntityType.Builder
+                    .of(com.trd.entity.mobs.depth_worm.DepthWormBrutalEntity::new, MobCategory.MONSTER)
+                    .sized(0.7F, 0.6F)
+                    .build("trd:depth_worm_brutal"));
+
     // === ГРАНАТЫ ===
+
 
     public static final DeferredHolder<EntityType<?>, EntityType<GravityGrenadeProjectileEntity>> GRAVITY_GRENADE_PROJECTILE =
             ENTITY_TYPES.register("gravity_grenade_projectile", () -> EntityType.Builder

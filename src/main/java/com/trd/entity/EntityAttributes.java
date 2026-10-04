@@ -24,5 +24,11 @@ public class EntityAttributes {
                 com.trd.entity.weapons.turrets.TurretLightEntity.createAttributes().build());
         event.put(ModEntities.GRENADIER_ZOMBIE.get(),
                 com.trd.entity.mobs.grenadier.GrenadierZombieEntity.createAttributes().build());
+
+        // Черви
+        event.put(ModEntities.DEPTH_WORM.get(),
+                com.trd.entity.mobs.depth_worm.DepthWormEntity.createAttributes().build());
+        event.put(ModEntities.DEPTH_WORM_BRUTAL.get(),
+                com.trd.entity.mobs.depth_worm.DepthWormBrutalEntity.createAttributes().build());
     }
 }

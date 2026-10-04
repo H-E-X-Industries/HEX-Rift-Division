@@ -37,6 +37,14 @@ public class ModBlocks {
             () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_PLANKS)));
     public static final DeferredBlock<Block> SEQUOIA_BIOME_MOSS = registerBlock("sequoia_biome_moss",
             () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.MOSS_BLOCK)));
+    public static final DeferredBlock<Block> SEQUOIA_ROOTS = registerBlock("sequoia_roots",
+            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_PLANKS).strength(0.5f, 4.0f).requiresCorrectToolForDrops()));
+    public static final DeferredBlock<Block> SEQUOIA_ROOTS_MOSSY = registerBlock("sequoia_roots_mossy",
+            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_PLANKS).strength(0.5f, 4.0f).requiresCorrectToolForDrops()));
+    public static final DeferredBlock<Block> SEQUOIA_LEAVES = registerBlock("sequoia_leaves",
+            () -> new net.minecraft.world.level.block.LeavesBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.SPRUCE_LEAVES).noOcclusion()
+                    .isSuffocating((state, level, pos) -> false)
+                    .isViewBlocking((state, level, pos) -> false)));
             
     public static final DeferredBlock<Block> LIGNITE_ORE = registerBlock("lignite_ore",
             () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.COAL_ORE)));
@@ -608,10 +616,27 @@ public class ModBlocks {
             () -> new Block(BlockBehaviour.Properties.of()
                     .strength(0.5F, 6.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
 
+    // БЛОКИ УЛЬЯ
+    public static final DeferredBlock<Block> DEPTH_WORM_NEST = registerBlock("depth_worm_nest",
+            () -> new com.trd.block.basic.necrosis.hive.DepthWormNestBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.MUD).sound(net.minecraft.world.level.block.SoundType.MUD)));
+    public static final DeferredBlock<Block> HIVE_SOIL = registerBlock("hive_soil",
+            () -> new com.trd.block.basic.necrosis.hive.HiveSoilBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.MUD).sound(net.minecraft.world.level.block.SoundType.MUD)));
+    public static final DeferredBlock<Block> DEPTH_WORM_NEST_DEAD = registerBlock("depth_worm_nest_dead",
+            () -> new com.trd.block.basic.necrosis.hive.DepthWormNestBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.MUD).sound(net.minecraft.world.level.block.SoundType.MUD)));
+    public static final DeferredBlock<Block> HIVE_SOIL_DEAD = registerBlock("hive_soil_dead",
+            () -> new com.trd.block.basic.necrosis.hive.HiveSoilBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.MUD).sound(net.minecraft.world.level.block.SoundType.MUD)));
+    public static final DeferredBlock<Block> HIVE_ROOTS = registerBlock("hive_roots",
+            () -> new com.trd.block.basic.necrosis.hive.HiveRootsBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.SPORE_BLOSSOM).noCollission().instabreak()));
+
+
     // ДВЕРИ
     public static final DeferredBlock<net.minecraft.world.level.block.DoorBlock> SEQUOIA_DOOR = registerBlock("sequoia_door",
             () -> new net.minecraft.world.level.block.DoorBlock(net.minecraft.world.level.block.state.properties.BlockSetType.DARK_OAK,
                     BlockBehaviour.Properties.ofFullCopy(Blocks.DARK_OAK_DOOR).sound(net.minecraft.world.level.block.SoundType.WOOD).noOcclusion()));
+
+    public static final DeferredBlock<net.minecraft.world.level.block.TrapDoorBlock> SEQUOIA_TRAPDOOR = registerBlock("sequoia_trapdoor",
+            () -> new net.minecraft.world.level.block.TrapDoorBlock(net.minecraft.world.level.block.state.properties.BlockSetType.DARK_OAK,
+                    BlockBehaviour.Properties.ofFullCopy(Blocks.DARK_OAK_TRAPDOOR).sound(net.minecraft.world.level.block.SoundType.WOOD).noOcclusion()));
 
     public static final DeferredBlock<net.minecraft.world.level.block.DoorBlock> STEEL_DOOR = registerBlock("steel_door",
             () -> new net.minecraft.world.level.block.DoorBlock(net.minecraft.world.level.block.state.properties.BlockSetType.STONE,

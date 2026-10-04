@@ -380,6 +380,13 @@ public class ModItems {
             () -> new com.trd.item.weapons.grenades.GrenadeNucItem(new Item.Properties().stacksTo(16),
                     ModEntities.GRENADE_NUC_PROJECTILE.get()));
 
+    // ЯЙЦА ПРИЗЫВА
+    public static final DeferredItem<Item> DEPTH_WORM_SPAWN_EGG = ITEMS.register("depth_worm_spawn_egg",
+            () -> new com.trd.item.mobs.DepthWormSpawnEggItem(new Item.Properties()));
+
+    public static final DeferredItem<Item> DEPTH_WORM_BRUTAL_SPAWN_EGG = ITEMS.register("depth_worm_brutal_spawn_egg",
+            () -> new com.trd.item.mobs.DepthWormBrutalSpawnEggItem(new Item.Properties()));
+
     static {
         com.trd.api.tooltip.MachineTooltipRegistry.register(GRENADE, "tooltip.trd.grenade.standard.desc");
         com.trd.api.tooltip.MachineTooltipRegistry.register(GRENADEHE, "tooltip.trd.grenade.he.desc");

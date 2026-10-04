@@ -66,6 +66,18 @@ public class ModBlockEntities {
                     com.trd.block.basic.ModBlocks.CONGLOMERATE.get()
             ).build(null));
 
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.hive.DepthWormNestBlockEntity>> DEPTH_WORM_NEST =
+            BLOCK_ENTITIES.register("depth_worm_nest",
+                    () -> BlockEntityType.Builder.of(com.trd.block.entity.hive.DepthWormNestBlockEntity::new,
+                            ModBlocks.DEPTH_WORM_NEST.get()).build(null));
+
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.hive.HiveSoilBlockEntity>> HIVE_SOIL =
+            BLOCK_ENTITIES.register("hive_soil", () ->
+                    BlockEntityType.Builder.of(com.trd.block.entity.hive.HiveSoilBlockEntity::new, ModBlocks.HIVE_SOIL.get())
+                            .build(null)
+            );
+
+
     public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.industrial.energy.MachineBatteryBlockEntity>> MACHINE_BATTERY_BE = BLOCK_ENTITIES.register("machine_battery_be", () -> { net.minecraft.world.level.block.Block[] validBlocks = ModBlocks.BATTERY_BLOCKS.stream().map(java.util.function.Supplier::get).toArray(net.minecraft.world.level.block.Block[]::new); return BlockEntityType.Builder.of(com.trd.block.entity.industrial.energy.MachineBatteryBlockEntity::new, validBlocks).build(null); });
     public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.industrial.energy.WireBlockEntity>> WIRE_BE = BLOCK_ENTITIES.register("wire_be", () -> BlockEntityType.Builder.of(com.trd.block.entity.industrial.energy.WireBlockEntity::new, ModBlocks.WIRE_COATED.get()).build(null));
     public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.industrial.energy.ConverterBlockEntity>> CONVERTER_BE = BLOCK_ENTITIES.register("converter_be", () -> BlockEntityType.Builder.of(com.trd.block.entity.industrial.energy.ConverterBlockEntity::new, ModBlocks.CONVERTER_BLOCK.get()).build(null));

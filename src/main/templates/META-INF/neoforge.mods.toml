@@ -97,6 +97,13 @@ Example mod description.
     versionRange="[0.1.0,1.0.0)"
     ordering="AFTER"
     side="CLIENT"
+# TerraBlender
+[[dependencies.${mod_id}]]
+    modId="terrablender"
+    type="required"
+    versionRange="[4.1.0.8,)"
+    ordering="AFTER"
+    side="BOTH"
 
 # Features are specific properties of the game environment, that you may want to declare you require. This example declares
 # that your mod requires GL version 3.2 or higher. Other features will be added. They are side aware so declaring this won't

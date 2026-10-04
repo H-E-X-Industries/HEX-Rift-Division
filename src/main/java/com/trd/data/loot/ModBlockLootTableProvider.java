@@ -113,6 +113,11 @@ public class ModBlockLootTableProvider extends net.minecraft.data.loot.BlockLoot
                 continue;
             }
 
+            if (block instanceof net.minecraft.world.level.block.LeavesBlock) {
+                this.add(block, b -> createLeavesDrops(b, net.minecraft.world.level.block.Blocks.SPRUCE_SAPLING, NORMAL_LEAVES_SAPLING_CHANCES));
+                continue;
+            }
+
             if (block instanceof net.minecraft.world.level.block.SlabBlock) {
                 this.add(block, this::createSlabItemTable);
                 continue;
