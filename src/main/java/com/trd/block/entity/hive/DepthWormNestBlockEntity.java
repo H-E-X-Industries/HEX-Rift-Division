@@ -94,8 +94,8 @@ public class DepthWormNestBlockEntity extends BlockEntity implements HiveNetwork
         if (level.isClientSide) return;
 
         if (level.getGameTime() % 20 == 0 && blockEntity.hasWormsReadyForRelease()) {
-            // 2x radius (20 blocks instead of 10)
-            AABB searchArea = new AABB(pos).inflate(20);
+            // Aggression radius 40 blocks
+            AABB searchArea = new AABB(pos).inflate(40);
             List<LivingEntity> enemies = level.getEntitiesOfClass(LivingEntity.class, searchArea,
                     e -> e.isAlive() && e.deathTime <= 0
                             && !(e instanceof DepthWormEntity)

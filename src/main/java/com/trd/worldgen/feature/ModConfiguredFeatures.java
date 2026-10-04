@@ -26,6 +26,7 @@ public class ModConfiguredFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> GIANT_SEQUOIA_KEY = registerKey("giant_sequoia");
     public static final ResourceKey<ConfiguredFeature<?, ?>> SMALL_SEQUOIA_KEY = registerKey("small_sequoia");
     public static final ResourceKey<ConfiguredFeature<?, ?>> MEDIUM_SEQUOIA_KEY = registerKey("medium_sequoia");
+    public static final ResourceKey<ConfiguredFeature<?, ?>> DEPTH_WORM_HIVE_KEY = registerKey("depth_worm_hive");
 
     public static void bootstrap(BootstrapContext<ConfiguredFeature<?, ?>> context) {
 
@@ -91,6 +92,9 @@ public class ModConfiguredFeatures {
                 new MediumSequoiaFoliagePlacer(ConstantInt.of(1), ConstantInt.of(0)),
                 new TwoLayersFeatureSize(3, 0, 3)
         ).build());
+
+        // --- ГЛУБИННЫЕ ЧЕРВИ (УЛЬИ) ---
+        register(context, DEPTH_WORM_HIVE_KEY, ModFeatures.DEPTH_WORM_HIVE.get(), FeatureConfiguration.NONE);
     }
 
     public static ResourceKey<ConfiguredFeature<?, ?>> registerKey(String name) {

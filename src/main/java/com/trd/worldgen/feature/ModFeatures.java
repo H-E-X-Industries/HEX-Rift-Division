@@ -16,4 +16,8 @@ public class ModFeatures {
     public static final java.util.function.Supplier<Feature<SpecialVeinConfiguration>> SPECIAL_VEIN =
             FEATURES.register("special_vein",
                     () -> new SpecialVeinFeature(SpecialVeinConfiguration.CODEC));
+
+    public static final java.util.function.Supplier<Feature<net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration>> DEPTH_WORM_HIVE =
+            FEATURES.register("depth_worm_hive",
+                    () -> new DepthWormHiveFeature(net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration.CODEC));
 }

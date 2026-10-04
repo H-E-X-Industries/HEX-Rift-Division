@@ -54,6 +54,7 @@ public class DepthWormJumpGoal extends Goal {
         this.jumpTimer = PREPARE_TIME;
         this.jumpPerformed = false;
         this.worm.setAttacking(true);
+        this.worm.setPreparingJump(true);
         this.worm.getNavigation().stop();
         this.worm.hasImpulse = true;
     }
@@ -62,6 +63,7 @@ public class DepthWormJumpGoal extends Goal {
     public void stop() {
         this.target = null;
         this.worm.setAttacking(false);
+        this.worm.setPreparingJump(false);
         this.jumpPerformed = false;
     }
 
@@ -69,6 +71,7 @@ public class DepthWormJumpGoal extends Goal {
     public void tick() {
         if (this.target == null || !this.target.isAlive()) {
             this.worm.setAttacking(false);
+            this.worm.setPreparingJump(false);
             this.jumpTimer = 0;
             this.jumpPerformed = true;
             return;
@@ -78,6 +81,7 @@ public class DepthWormJumpGoal extends Goal {
             this.target.isInLava() ||
             this.target.level().getBlockState(this.target.blockPosition().below()).is(net.minecraft.world.level.block.Blocks.LAVA)) {
             this.worm.setAttacking(false);
+            this.worm.setPreparingJump(false);
             this.jumpTimer = 0;
             this.jumpPerformed = true;
             return;
@@ -86,6 +90,7 @@ public class DepthWormJumpGoal extends Goal {
         double dist = this.worm.distanceTo(this.target);
         if (dist > this.jumpRangeMax + 2.0F) {
             this.worm.setAttacking(false);
+            this.worm.setPreparingJump(false);
             this.jumpTimer = 0;
             this.jumpPerformed = true;
             return;
@@ -94,6 +99,7 @@ public class DepthWormJumpGoal extends Goal {
         this.worm.getLookControl().setLookAt(this.target, 30.0F, 30.0F);
 
         if (--this.jumpTimer <= 0 && !jumpPerformed) {
+            this.worm.setPreparingJump(false);
             doJump();
             jumpPerformed = true;
             this.worm.ignoreFallDamageTicks = 30;
