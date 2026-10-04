@@ -48,6 +48,20 @@ public final class VanillaExplosionDamage {
      * Наносит урон сущностям в радиусе: максимум в эпицентре, линейный спад к нулю на краю.
      * Метатель урон получает наравне со всеми — как и в ванильном взрыве.
      * Отбрасывание не делается: его уже применил ванильный взрыв.
+     * <p>
+     * <b>Расстояние считается до центра хитбокса, а не до ног.</b> Раньше здесь
+     * было {@code entity.distanceToSqr(center)}, то есть до {@code position()} —
+     * до земли под ногами. Для высокой сущности это совсем другая точка: у лошади
+     * центр хитбокса выше ног на 1.15 блока, и взрыв, сорванный ровно у её центра,
+     * оказывался для неё на расстоянии 1.15. При радиусе 2.0 это спад больше
+     * половины, а при радиусе 1.0 — вообще ничего, потому что срабатывал отсев
+     * {@code distance > radius}: фугасный патрон пролетал сквозь высокую цель и
+     * не наносил ровно ничего. Мерить надо туда, куда попал взрыв, то есть к
+     * телу.
+     * <p>
+     * Ванильный взрыв меряет до ног, но компенсирует это тем, что держит урон
+     * на расстоянии до двух радиусов, — здесь отсев идёт ровно по радиусу, так
+     * что обе величины обязаны совпадать.
      */
     public static void damageEntities(Level level, Vec3 center, Entity source, float radius, float damage) {
         if (level.isClientSide || damage <= 0.0F || radius <= 0.0F) return;
@@ -60,7 +74,7 @@ public final class VanillaExplosionDamage {
         for (LivingEntity entity : found) {
             if (!entity.isAlive() || entity.ignoreExplosion(null)) continue;
 
-            double distance = Math.sqrt(entity.distanceToSqr(center));
+            double distance = entity.getBoundingBox().getCenter().distanceTo(center);
             if (distance > radius) continue;
 
             float falloff = (float) (1.0 - distance / radius);

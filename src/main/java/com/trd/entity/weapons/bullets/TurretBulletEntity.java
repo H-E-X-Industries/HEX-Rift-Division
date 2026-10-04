@@ -46,6 +46,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -141,30 +142,42 @@ public class TurretBulletEntity extends AbstractArrow {
     /** Запас к хитбоксу взрывателя, чтобы цель у края всё же срабатывала. */
     private static final double PROXIMITY_FUSE_MARGIN = 0.25D;
 
-    /**
-     * Радиус взрыва фугасного патрона, в блоках.
+/**
+     * Радиус взрыва обычного фугасного патрона, в блоках.
      * <p>
      * Вдвое меньше, чем у неразрушающего взрыва ракеты (4.0), и за счёт этого он
      * остаётся локальным: боезаряд не достаёт до цели за стеной тоньше блока,
-     * а в комнате не выбивает всё, что в неё влезло. Ровно два — это ровно
-     * предел, на котором ванильный взрыв ещё берёт «маленькую» частицу вместо
-     * большой: {@code Explosion#finalizeExplosion} выбирает её по радиусу, и
-     * при 2.0 нам ровно тот вид, что нужен пуле.
+     * а в комнате не выбивает всё, что в неё влезло. Ровно два — это ещё и
+     * порог ванильной частицы: {@code Explosion#finalizeExplosion} берёт большую
+     * от {@code radius >= 2.0}, так что малый заряд сразу рисуется вдвое
+     * скромнее.
      */
     private static final float HE_EXPLOSION_RADIUS = 2.0F;
 
     /**
-     * Урон взрыва фугасного патрона в эпицентре, с линейным спадом к нулю на
-     * краю радиуса.
+     * Урон взрыва обычного фугасного патрона в эпицентре, с линейным спадом к
+     * нулю на краю радиуса.
      * <p>
-     * Раньше здесь стояло 16, и на одну лошадь уходило три-пять пуль. Причина
-     была не в числе, а в точке подрыва: он срабатывал у самого края хитбокса, где
-     * спад отнимает почти всё, — теперь пуля рвётся у центра, где урон полный.
-     * Сверху число поднято с 16 до 26: без брони это переживает любой крупный
-     * зверь с одного попадания, а полный комплект брони съедает 80% и оставляет
-     * около пяти — то есть два-три патрона на броненосного противника.
+     * У ракеты там же 25, но она рвётся один раз за полминуты, а фугасный
+     * патрон летит по очереди через каждые шесть тиков. 34 подобрано так, чтобы
+     * одна лошадь (24 HP, своя броня съедает 24%) погибала с одного попадания, а
+     * на полном комплекте брони оставалось около семи — то есть пять патронов на
+     * броненосного противника.
      */
-    private static final float HE_EXPLOSION_DAMAGE = 26.0F;
+    private static final float HE_EXPLOSION_DAMAGE = 34.0F;
+
+    /**
+     * Малый заряд фугасного: вдвое меньше радиуса, вдвое меньше урона и вдвое
+     * меньше эффект.
+     * <p>
+     * Блоки он не разрушает вовсе — это чистый урон по mobs, ровно как тот
+     * неразрушающий взрыв, с которого всё началось. Половина урона взята не «на
+     * глаз», а ровно половина от обычного: заряд того же калибра, вдвое меньше.
+     * Радиус в 1.0 — это ровно порог, за которым ванильный взрыв рисует
+     * маленькую частицу, так что «вдвое меньше» получается и по картинке.
+     */
+    private static final float HE_SAVE_EXPLOSION_RADIUS = 1.0F;
+    private static final float HE_SAVE_EXPLOSION_DAMAGE = HE_EXPLOSION_DAMAGE * 0.5F;
 
     /**
      * Насколько близко к центру цели должна долететь пуля, чтобы рвануть.
@@ -279,14 +292,14 @@ public class TurretBulletEntity extends AbstractArrow {
     /**
  * Тип боезаряда: определяет поведение при попадании.
  * <p>
- * Фугасный добавлен последним, и это не случайно: {@link #ordinal()} задаёт
- * полосу в атласе текстур (см. {@code TurretBulletVariants}), а новое значение
- * в середине списка сдвинуло бы все полосы и перерисовало бы старые пули другой
- * картинкой. В конце списка старые ordinal'ы остаются на своих местах.
+ * Оба значения добавлены в конец списка, и это не случайно: {@link #ordinal()}
+ * задаёт полосу в атласе текстур (см. {@code TurretBulletVariants}), а новое
+ * значение в середине сдвинуло бы все полосы и перерисовало бы старые пули
+ * другой картинкой.
  */
     public enum AmmoType {
         NORMAL("normal"), PIERCING("piercing"), HOLLOW("hollow"), INCENDIARY("incendiary"), RADIO("radio"),
-        HE("he");
+        HE("he"), HE_SAVE("he_save");
 
         public final String id;
 
@@ -338,19 +351,29 @@ public class TurretBulletEntity extends AbstractArrow {
     }
 
     /**
-     * Разбирает id патрона на сердцевину и признак трассера.
+     * Разбирает id патрона на сердцевину и признак малого заряда.
      * <p>
-     * Ид патронов теперь устроены как {@code turret_ammo_ap_tracer}, то есть
-     * {@code <вид>_<тип>_<трассер>}, и разбирать их приходится по словам, а не
+     * Ид патронов устроены как {@code turret_ammo_ap_tracer}, то есть
+     * {@code <вид>_<тип>_<признак>}, и разбирать их приходится по словам, а не
      * поиском подстроки: подстрока «ap» есть и в бронебойном, и в
      * {@code trd:turret_ammo}, а «piercing», по которому сортировали раньше, в
-     * новых id не встречается вовсе. Слово «trasser» выброшено наравне с
-     * «tracer» — в id оно именно в таком написании.
+     * новых id не встречается вовсе. Слово «tracer» выброшено наравне с
+     * «trasser» — в id оно именно в таком написании.
+     * <p>
+     * Малый заряд фугасного проверяется первым и отдельным образом: его id
+     * {@code turret_ammo_he_save} содержит в себе и «he», и без этой проверки он
+     * попал бы в обычный фугасный, а различаются они только разрушением блоков и
+     * размером взрыва.
      */
     private static AmmoType bulletTypeOf(String ammoId) {
         String path = ammoId.contains(":") ? ammoId.substring(ammoId.indexOf(':') + 1) : ammoId;
+        List<String> words = Arrays.asList(path.split("_"));
 
-        for (String word : path.split("_")) {
+        if (words.contains("save") && words.contains("he")) {
+            return AmmoType.HE_SAVE;
+        }
+
+        for (String word : words) {
             switch (word) {
                 case "ap", "piercing" -> {
                     return AmmoType.PIERCING;
@@ -539,20 +562,30 @@ public class TurretBulletEntity extends AbstractArrow {
             Vec3 closest = closestPointOnSegment(startPos, endPos, center);
             double distanceSqr = closest.distanceToSqr(center);
 
-            // Запоминаем точку, где пуля подошла к центру ближе всего. Если в этом
-            // тике оказалось дальше, чем было в прошлом, значит центр уже пройден
-            // и рваться надо там, где было ближе, а не там, где пуля сейчас: иначе
-            // на крупной сущности она улетела бы на десятки блоков и взорвалась в
-            // пустоте.
-            if (distanceSqr > heClosestDistanceSqr && heClosestDistanceSqr < Double.MAX_VALUE) {
-                closest = heClosestPoint;
-                distanceSqr = heClosestDistanceSqr;
-            } else {
+            // «Центр пройден» — это не «стало дальше, чем было», а «не стало
+            // ближе, чем было». Касание, которое так и не подошло к центру (пуля
+            // задела угол хитбокса), расстояние не меняет вовсе: не растёт, но и
+            // не падает. Проверка на «стало дальше» в такой раз не срабатывала
+            // никогда, и пуля улетала цель насквозь, пока не истекал таймер
+            // страховки — уже за пределами хитбокса.
+            if (distanceSqr < heClosestDistanceSqr) {
                 heClosestPoint = closest;
                 heClosestDistanceSqr = distanceSqr;
+            } else if (heClosestPoint != null) {
+                // Рваться надо там, где было ближе всего, а не там, где пуля
+                // сейчас: на крупной сущности она иначе улетила бы на десятки
+                // блоков и взорвалась бы в пустоте.
+                closest = heClosestPoint;
+                distanceSqr = heClosestDistanceSqr;
             }
 
-            if (distanceSqr <= HE_FUSE_RADIUS_SQR
+            // Подрыв в первый же тик после касания, независимо от расстояния.
+            // «Долетел до центра цели» — это указание, ГДЕ рвать, а не условие,
+            // КОГДА рвать: ждать близости нельзя, иначе пуля, задевшая цель не по
+            // центру, пролетала её насквозь. Проверка расстояния остаётся как
+            // второй путь, а таймер — как третий.
+            if (heFuseTicks == 1
+                    || distanceSqr <= HE_FUSE_RADIUS_SQR
                     || !heTarget.isAlive()
                     || heFuseTicks >= HE_FUSE_TIMEOUT) {
                 this.setPos(closest.x, closest.y, closest.z);
@@ -920,13 +953,18 @@ public class TurretBulletEntity extends AbstractArrow {
 
         AmmoType currentType = getAmmoType();
 
-        // Фугасный не бьёт точным попаданием и не рвётся на границе хитбокса: он
-        // запоминает цель, продолжает лететь и детонирует у её центра — см.
-        // фитиль в tick(). Иначе цель в эпицентре получала бы и прямое
-        // попадание, и взрыв, то есть вдвое больше заданного урона за одну пулю.
-        if (currentType == AmmoType.HE) {
+        // Оба фугасных не бьют точным попаданием и не рвутся на границе хитбокса: они
+        // запоминают цель, продолжают лететь и детонируют у её центра — см. фитиль
+        // в tick(). Иначе цель в эпицентре получала бы и прямое попадание, и
+        // взрыв, то есть вдвое больше заданного урона за одну пулю.
+        if (currentType == AmmoType.HE || currentType == AmmoType.HE_SAVE) {
             heTarget = livingTarget;
-            heFuseTicks = 0;
+            // Сразу единица, а не ноль: тик, в котором пуля задела цель, —
+            // уже первый тик фитиля, и подрыв происходит в нём же. При нуле
+            // проверка «первый тик» сдвинулась бы на следующий, и пуля успевала
+            // бы уйти за хитбокс.
+            heFuseTicks = 1;
+            heClosestPoint = null;
             heClosestDistanceSqr = Double.MAX_VALUE;
             return;
         }
@@ -1056,10 +1094,10 @@ public class TurretBulletEntity extends AbstractArrow {
         BlockPos pos = result.getBlockPos();
         BlockState state = this.level().getBlockState(pos);
 
-        // Фугасный разрывается о любой блок: он не выбивает стекло, не пробивает
-        // стену и не поджигает — он просто рвётся там, где остановился. Взрыв
-        // неразрушающий, так что блок под ним остаётся целым.
-        if (getAmmoType() == AmmoType.HE) {
+        // Оба фугасных разрываются о любой блок: они не выбивают стекло, не пробивают
+        // стену и не поджигают — они просто рвутся там, где остановились. Блок под
+        // малым зарядом остаётся целым, под обычным фугасным непрочный ломается.
+        if (getAmmoType() == AmmoType.HE || getAmmoType() == AmmoType.HE_SAVE) {
             detonate();
             return;
         }
@@ -1100,6 +1138,10 @@ public class TurretBulletEntity extends AbstractArrow {
      * Вызывается только с сервера и только когда пуля уже долетела до цели
      * (см. фитиль в {@link #tick()}) либо упёрлась в блок.
      * <p>
+     * Два заряда различаются тремя вещами: разрушает ли взрыв блоки, каков его
+     * радиус с уроном и сколько вспышек нарисовано. Всё остальное — отдача,
+     * звук на убийство, вид — у них общее.
+     * <p>
      * Урон и отбрасывание отдаёт
      * {@link com.trd.explosion.logic.ExplosionHENonDestructive#explode} — тот же
      * неразрушающий взрыв, что и у ракеты, но с радиусом
@@ -1121,22 +1163,36 @@ public class TurretBulletEntity extends AbstractArrow {
             return;
         }
 
+        boolean lightCharge = getAmmoType() == AmmoType.HE_SAVE;
+        float radius = lightCharge ? HE_SAVE_EXPLOSION_RADIUS : HE_EXPLOSION_RADIUS;
+        float damage = lightCharge ? HE_SAVE_EXPLOSION_DAMAGE : HE_EXPLOSION_DAMAGE;
+
         Entity owner = this.getOwner();
         Vec3 center = this.position();
 
         // Снимок живых целей рядом до взрыва: после он уже ничего не покажет.
         // Сама пуля в список не попадает — она стрела, а не живое существо.
         List<LivingEntity> nearby = serverLevel.getEntitiesOfClass(LivingEntity.class,
-                new AABB(center, center).inflate(HE_EXPLOSION_RADIUS),
+                new AABB(center, center).inflate(radius),
                 living -> living.isAlive() && living != owner && living.isPickable());
 
-        com.trd.explosion.logic.ExplosionHENonDestructive.explode(
-                serverLevel, center, owner, HE_EXPLOSION_RADIUS, HE_EXPLOSION_DAMAGE);
+        // Тот же разрыв, что у ракет: обычный фугасный ломает непрочные блоки
+        // (ExplosionInteraction.TNT), малый заряд не трогает их вовсе. Урон в обоих
+        // случаях свой, а не ванильный, иначе он сложился бы с собственным.
+        if (lightCharge) {
+            com.trd.explosion.logic.ExplosionHENonDestructive.explode(
+                    serverLevel, center, owner, radius, damage);
+        } else {
+            com.trd.explosion.logic.ExplosionHE.explode(
+                    serverLevel, center, owner, radius, damage);
+        }
 
-        // Вид эволюции червя: две ванильные вспышки взрыва с небольшим разбросом.
+        // Вид эволюции червя: ванильные вспышки взрыва с небольшим разбросом.
+        // У малого заряда одна вспышка вместо двух — эффект вдвое скромнее,
+        // ровно как сам взрыв.
         serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.EXPLOSION,
                 center.x, center.y, center.z,
-                2,
+                lightCharge ? 1 : 2,
                 0.15D, 0.15D, 0.15D,
                 0.02D);
 

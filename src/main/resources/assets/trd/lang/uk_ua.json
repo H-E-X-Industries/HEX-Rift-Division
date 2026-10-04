@@ -522,6 +522,8 @@
     "item.trd.turret_ammo_radio_tracer":  "20mm Tracer Round with Radio Fuze",
     "item.trd.turret_ammo_he":  "20mm High-Explosive Round",
     "item.trd.turret_ammo_he_tracer":  "20mm Tracer High-Explosive Round",
+    "item.trd.turret_ammo_he_save":  "20mm Low-Charge HE Round",
+    "item.trd.turret_ammo_he_save_tracer":  "20mm Tracer Low-Charge HE Round",
     "item.trd.asbestos":  "Asbestos",
     "item.trd.battery":  "Battery",
     "item.trd.battery_advanced":  "Advanced Battery",

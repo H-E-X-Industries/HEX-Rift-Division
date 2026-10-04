@@ -283,6 +283,10 @@ public class ModItems {
             () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 25.0f, 3.0f, false, false));
     public static final DeferredItem<Item> TURRET_AMMO_HE_TRACER = ITEMS.register("turret_ammo_he_tracer",
             () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 25.0f, 3.0f, false, true));
+    public static final DeferredItem<Item> TURRET_AMMO_HE_SAVE = ITEMS.register("turret_ammo_he_save",
+            () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 17.0f, 3.0f, false, false));
+    public static final DeferredItem<Item> TURRET_AMMO_HE_SAVE_TRACER = ITEMS.register("turret_ammo_he_save_tracer",
+            () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 17.0f, 3.0f, false, true));
 
     // ═══════════════════════════════════════════════════════
     // СНАРЯДЫ

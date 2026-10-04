@@ -567,6 +567,8 @@
     "item.trd.turret_ammo_radio_tracer":  "20-мм трассирующий боеприпас с радиовзрывателем",
     "item.trd.turret_ammo_he":  "20-мм фугасный боеприпас",
     "item.trd.turret_ammo_he_tracer":  "20-мм трассирующий фугасный боеприпас",
+    "item.trd.turret_ammo_he_save":  "20-мм фугасный боеприпас малого заряда",
+    "item.trd.turret_ammo_he_save_tracer":  "20-мм трассирующий фугасный боеприпас малого заряда",
     "item.trd.asbestos":  "Асбест",
     "item.trd.battery":  "Аккумулятор",
     "item.trd.battery_advanced":  "Улучшенный аккумулятор",

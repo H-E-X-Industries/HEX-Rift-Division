@@ -37,6 +37,8 @@ public class AmmoBootstrap {
 
             registerAmmo(ModItems.TURRET_AMMO_HE.get());
             registerAmmo(ModItems.TURRET_AMMO_HE_TRACER.get());
+            registerAmmo(ModItems.TURRET_AMMO_HE_SAVE.get());
+            registerAmmo(ModItems.TURRET_AMMO_HE_SAVE_TRACER.get());
         });
     }
 

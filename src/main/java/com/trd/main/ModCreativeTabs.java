@@ -352,6 +352,8 @@ public class ModCreativeTabs {
                         output.accept(ModItems.TURRET_AMMO_FIRE_TRACER.get());
                         output.accept(ModItems.TURRET_AMMO_RADIO.get());
                         output.accept(ModItems.TURRET_AMMO_RADIO_TRACER.get());
+                        output.accept(ModItems.TURRET_AMMO_HE_SAVE.get());
+                        output.accept(ModItems.TURRET_AMMO_HE_SAVE_TRACER.get());
                         output.accept(ModItems.TURRET_AMMO_HE.get());
                         output.accept(ModItems.TURRET_AMMO_HE_TRACER.get());
 
