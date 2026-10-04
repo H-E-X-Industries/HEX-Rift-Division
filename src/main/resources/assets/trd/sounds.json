@@ -207,5 +207,14 @@
         "attenuation_distance": 16
       }
     ]
+  },
+  "gilse_light": {
+    "category": "block",
+    "subtitle": "sounds.trd.gilse_light",
+    "sounds": [
+      {
+        "name": "trd:gilse_light"
+      }
+    ]
   }
 }

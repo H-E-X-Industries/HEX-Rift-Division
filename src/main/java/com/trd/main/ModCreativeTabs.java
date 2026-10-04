@@ -294,6 +294,11 @@ public class ModCreativeTabs {
                         output.accept(ModBlocks.CONVEYOR.get());
                         output.accept(ModBlocks.CONVEYOR_ELEVATOR.get());
                         output.accept(ModBlocks.SORTIROVSHIK.get());
+
+                        // ═══ РЕДСТОУН-РАДИО ═══
+
+                        output.accept(ModBlocks.REDSTONE_RADIO_TRANSMITTER.get());
+                        output.accept(ModBlocks.REDSTONE_RADIO_RECEIVER.get());
                     })
                     .build());
 
@@ -305,6 +310,8 @@ public class ModCreativeTabs {
                     .displayItems((parameters, output) -> {
                         output.accept(ModItems.CAST_PICKAXE_IRON.get());
                         output.accept(ModItems.CAST_PICKAXE_STEEL.get());
+
+                        output.accept(ModItems.GRENADIER_GOGGLES.get());
 
                         output.accept(ModBlocks.DET_MINER.get());
                         output.accept(ModBlocks.AVIABOMB_MINE.get());
@@ -332,11 +339,24 @@ public class ModCreativeTabs {
                         output.accept(ModItems.PIG_TURRET_PLACER.get());
                         output.accept(ModItems.TURRET_CHIP.get());
 
-                        output.accept(ModItems.AMMO_TURRET.get());
-                        output.accept(ModItems.AMMO_TURRET_HOLLOW.get());
-                        output.accept(ModItems.AMMO_TURRET_PIERCING.get());
-                        output.accept(ModItems.AMMO_TURRET_FIRE.get());
-                        output.accept(ModItems.AMMO_TURRET_RADIO.get());
+                        // Патроны идут парами: сначала обычный, потом его трассирующая версия, и
+                        // только потом следующий тип боезаряда. Так переключатель
+                        // «трассер / не трассер» не ищется по всему списку, а
+                        // стоит рядом с тем же патроном.
+                        output.accept(ModItems.TURRET_AMMO.get());
+                        output.accept(ModItems.TURRET_AMMO_TRACER.get());
+                        output.accept(ModItems.TURRET_AMMO_AP.get());
+                        output.accept(ModItems.TURRET_AMMO_AP_TRACER.get());
+                        output.accept(ModItems.TURRET_AMMO_HOLLOW.get());
+                        output.accept(ModItems.TURRET_AMMO_HOLLOW_TRACER.get());
+                        output.accept(ModItems.TURRET_AMMO_FIRE.get());
+                        output.accept(ModItems.TURRET_AMMO_FIRE_TRACER.get());
+                        output.accept(ModItems.TURRET_AMMO_RADIO.get());
+                        output.accept(ModItems.TURRET_AMMO_RADIO_TRACER.get());
+                        output.accept(ModItems.TURRET_AMMO_HE_SAVE.get());
+                        output.accept(ModItems.TURRET_AMMO_HE_SAVE_TRACER.get());
+                        output.accept(ModItems.TURRET_AMMO_HE.get());
+                        output.accept(ModItems.TURRET_AMMO_HE_TRACER.get());
 
                         output.accept(ModItems.MISSILE_100MM.get());
                         output.accept(ModItems.MISSILE_100MM_HE.get());
@@ -486,14 +506,16 @@ public class ModCreativeTabs {
                         output.accept(ModBlocks.WASTE_LOG.get());
                         output.accept(ModBlocks.WASTE_GRASS.get());
 
-                        // Глубинные черви и улей
-                        output.accept(ModItems.DEPTH_WORM_SPAWN_EGG.get());
-                        output.accept(ModItems.DEPTH_WORM_BRUTAL_SPAWN_EGG.get());
+                       
                         output.accept(ModBlocks.DEPTH_WORM_NEST.get());
                         output.accept(ModBlocks.HIVE_SOIL.get());
                         output.accept(ModBlocks.DEPTH_WORM_NEST_DEAD.get());
                         output.accept(ModBlocks.HIVE_SOIL_DEAD.get());
                         output.accept(ModBlocks.HIVE_ROOTS.get());
+                      
+                       output.accept(ModItems.DEPTH_WORM_SPAWN_EGG.get());
+                        output.accept(ModItems.DEPTH_WORM_BRUTAL_SPAWN_EGG.get());
+                      output.accept(ModItems.GRENADIER_ZOMBIE_SPAWN_EGG.get());
                     })
                     .build());
 

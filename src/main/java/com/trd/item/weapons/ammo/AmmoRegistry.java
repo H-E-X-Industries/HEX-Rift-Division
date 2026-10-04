@@ -24,18 +24,34 @@ public class AmmoRegistry {
         public final float speed;
         public final boolean isPiercing;
 
+        /**
+         * Трассерный ли патрон, см. {@link IAmmoItem#isTracer()}.
+         * <p>
+         * Едет вместе с остальными характеристиками, потому что пуля получает его
+         * отсюда же, а не разбирает id самостоятельно: единственный источник
+         * правды о том, трассер заряжен или нет, это предмет.
+         */
+        public final boolean tracer;
+
         public AmmoType(String id, String caliber, float damage, float speed, boolean isPiercing) {
+            this(id, caliber, damage, speed, isPiercing, false);
+        }
+
+        public AmmoType(String id, String caliber, float damage, float speed, boolean isPiercing,
+                        boolean tracer) {
             this.id = id;
             this.caliber = caliber;
             this.damage = damage;
             this.speed = speed;
             this.isPiercing = isPiercing;
+            this.tracer = tracer;
         }
     }
 
-    public static void register(Item item, String caliber, float damage, float speed, boolean isPiercing) {
+    public static void register(Item item, String caliber, float damage, float speed, boolean isPiercing,
+                                boolean tracer) {
         String itemId = BuiltInRegistries.ITEM.getKey(item).toString();
-        AmmoType type = new AmmoType(itemId, caliber, damage, speed, isPiercing);
+        AmmoType type = new AmmoType(itemId, caliber, damage, speed, isPiercing, tracer);
         AMMO_BY_ID.put(itemId, type);
 
         AMMO_LIST_BY_CALIBER.computeIfAbsent(caliber, k -> new ArrayList<>()).add(type);
@@ -65,7 +81,8 @@ public class AmmoRegistry {
                     iAmmo.getCaliber(),
                     iAmmo.getDamage(),
                     iAmmo.getSpeed(),
-                    iAmmo.isPiercing()
+                    iAmmo.isPiercing(),
+                    iAmmo.isTracer()
             );
         }
         return null;

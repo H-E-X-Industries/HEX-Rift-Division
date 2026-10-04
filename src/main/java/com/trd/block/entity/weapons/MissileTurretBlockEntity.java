@@ -99,6 +99,7 @@ public class MissileTurretBlockEntity extends EnergyNodeBlockEntity {
         if (level.isClientSide) return;
         turret.lifetimeTicks++;
         turret.tickServer((ServerLevel) level, pos, state);
+        turret.tickDebugSync((ServerLevel) level);
     }
 
     private void tickServer(ServerLevel level, BlockPos pos, BlockState state) {
@@ -530,6 +531,7 @@ public class MissileTurretBlockEntity extends EnergyNodeBlockEntity {
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
+        if (tag.contains("DebugTargetId")) debugTargetId = tag.getInt("DebugTargetId");
         cooldownTimer = tag.getInt("Cooldown");
         isSalvoActive = tag.getBoolean("SalvoActive");
         salvoCounter = tag.getInt("SalvoCounter");
@@ -548,6 +550,54 @@ public class MissileTurretBlockEntity extends EnergyNodeBlockEntity {
             currentMissileType = tag.getString("CurrentMissileType");
         }
         if (tag.hasUUID("OwnerUUID")) ownerUUID = tag.getUUID("OwnerUUID");
+    }
+
+    // === ОТЛАДКА (F3) ===
+
+    /** Id текущей цели: на сервере заполняется при поиске, на клиент уходит через getUpdateTag. */
+    private int debugTargetId = -1;
+    private int debugSyncTimer = 0;
+
+    /** Текущая цель поиска. На клиенте берётся по {@link #debugTargetId}. */
+    public LivingEntity getDebugTarget() {
+        if (level == null) return null;
+        if (!level.isClientSide) return currentTarget;
+        if (debugTargetId == -1) return null;
+        return level.getEntity(debugTargetId) instanceof LivingEntity le ? le : null;
+    }
+
+    /** Идёт ли сейчас залп. Только чтение, используется дебаг-рендером. */
+    public boolean isDebugSalvoActive() { return isSalvoActive; }
+
+    /** Тип ракеты, выбранный для текущего залпа. Только чтение. */
+    public String getDebugMissileType() { return currentMissileType; }
+
+    /**
+     * currentTarget — обычное поле, в NBT оно не пишется, поэтому клиент о нём
+     * не знает и дебаг-визуализация на клиенте не работала бы. Отдаём нужное
+     * через штатную синхронизацию BlockEntity (без отдельного пакета).
+     */
+    @Override
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        CompoundTag tag = super.getUpdateTag(registries);
+        tag.putInt("DebugTargetId", debugTargetId);
+        tag.putBoolean("SalvoActive", isSalvoActive);
+        tag.putString("CurrentMissileType", currentMissileType);
+        return tag;
+    }
+
+    @Override
+    public net.minecraft.network.protocol.Packet<net.minecraft.network.protocol.game.ClientGamePacketListener> getUpdatePacket() {
+        return net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    /** Раз в 4 тика шлёт клиенту состояние дебага, пока идёт залп. */
+    private void tickDebugSync(ServerLevel level) {
+        debugTargetId = currentTarget != null ? currentTarget.getId() : -1;
+        if (!isSalvoActive && debugTargetId == -1) return;
+        if (++debugSyncTimer < 4) return;
+        debugSyncTimer = 0;
+        level.sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), 2);
     }
 
     // === ContainerData ===

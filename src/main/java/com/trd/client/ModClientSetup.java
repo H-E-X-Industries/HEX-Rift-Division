@@ -8,10 +8,14 @@ import dev.engine_room.flywheel.api.visual.BlockEntityVisual;
 import dev.engine_room.flywheel.api.visualization.BlockEntityVisualizer;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
 import dev.engine_room.flywheel.api.visualization.VisualizerRegistry;
+import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.util.profiling.ProfilerFiller;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
 
 @EventBusSubscriber(modid = MainRegistry.MOD_ID, value = Dist.CLIENT)
 public class ModClientSetup {
@@ -40,6 +44,7 @@ public class ModClientSetup {
         event.register(com.trd.menu.ModMenuTypes.STEEL_STORAGE_MENU.get(), com.trd.client.overlay.gui.SteelStorageScreen::new);
         event.register(com.trd.menu.ModMenuTypes.TURRET_AMMO_MENU.get(), com.trd.client.overlay.gui.GUITurretAmmo::new);
         event.register(com.trd.menu.ModMenuTypes.TROMBONE_MENU.get(), com.trd.client.overlay.gui.GUITrombone::new);
+        event.register(com.trd.menu.ModMenuTypes.REDSTONE_RADIO_MENU.get(), com.trd.client.overlay.gui.GUIRedstoneRadio::new);
     }
 
     @SubscribeEvent
@@ -58,14 +63,23 @@ public class ModClientSetup {
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.STANOK_BE.get(), com.trd.client.render.StanokRenderer::new);
         // event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.FUEL_TANK_SMALL_BE.get(), com.trd.client.render.ber.FuelTankRenderer::new);
 
+        // Пять текстур пули сшиваются в один атлас вариантов. Звать надо до
+        // первого выстрела, иначе первые пули просто не рисуются: модель
+        // грузится асинхронно, а рендерер на пустой модели выходит.
+        com.trd.client.gecko.entity.bullets.TurretBulletVariants.load();
+
         event.registerEntityRenderer(com.trd.entity.ModEntities.TURRET_BULLET.get(),
-                com.trd.client.gecko.entity.bullets.TurretBulletRenderer::new);
+                com.trd.client.gecko.entity.bullets.TurretBulletGltfRenderer::new);
+        event.registerEntityRenderer(com.trd.entity.ModEntities.GILSE.get(),
+                com.trd.client.gecko.entity.bullets.GilseRenderer::new);
         event.registerEntityRenderer(com.trd.entity.ModEntities.TURRET_LIGHT.get(),
                 com.trd.client.gecko.entity.turrets.TurretLightRenderer::new);
         event.registerEntityRenderer(com.trd.entity.ModEntities.TURRET_LIGHT_LINKED.get(),
                 com.trd.client.gecko.entity.turrets.TurretLightLinkedRenderer::new);
         event.registerEntityRenderer(com.trd.entity.ModEntities.MISSILE_LIGHT.get(),
                 com.trd.client.renderer.MissileLightRenderer::new);
+        event.registerEntityRenderer(com.trd.entity.ModEntities.GRENADIER_ZOMBIE.get(),
+                com.trd.client.renderer.GrenadierZombieRenderer::new);
         event.registerEntityRenderer(com.trd.entity.ModEntities.DEPTH_WORM.get(),
                 com.trd.client.gecko.entity.mobs.DepthWormRenderer::new);
         event.registerEntityRenderer(com.trd.entity.ModEntities.DEPTH_WORM_BRUTAL.get(),
@@ -502,6 +516,30 @@ public class ModClientSetup {
                 event.getModels().put(location, new com.trd.client.render.DynamicBeamModel(beamBaseModel));
             }
         }
+    }
+
+    /**
+     * Помеченные кадры и локатор дула разбираются из glTF и кэшируются, поэтому
+     * после перезагрузки ресурсов кэш надо сбросить — иначе правка модели не
+     * подхватится до перезапуска игры.
+     */
+    @SubscribeEvent
+    public static void onAddReloadListener(RegisterClientReloadListenersEvent event) {
+        event.registerReloadListener(new SimplePreparableReloadListener<Void>() {
+            @Override
+            protected Void prepare(ResourceManager resourceManager, ProfilerFiller profiler) {
+                return null;
+            }
+
+            @Override
+            protected void apply(Void object, ResourceManager resourceManager, ProfilerFiller profiler) {
+                com.trd.client.gecko.item.guns.MachineGunModel.invalidate();
+                // Разметка кадров тоже кэшируется, а лежит в json, который
+                // правится руками в Blockbench. Без сброса новые времена
+                // звуков подхватывались бы только после перезапуска игры.
+                com.trd.item.weapons.guns.MachineGunAnimation.invalidate();
+            }
+        });
     }
 
     @SubscribeEvent

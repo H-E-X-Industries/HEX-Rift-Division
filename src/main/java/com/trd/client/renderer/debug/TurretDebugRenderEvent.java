@@ -46,15 +46,24 @@ public class TurretDebugRenderEvent {
         MultiBufferSource.BufferSource bufferSource = mc.renderBuffers().bufferSource();
 
         Vec3 camPos = mc.gameRenderer.getMainCamera().getPosition();
-        double camX = camPos.x;
-        double camY = camPos.y;
-        double camZ = camPos.z;
 
-        // ищем турели вокруг камеры
+        // 1. Бортовые турели (сетка сканирования, точка упреждения, траектория)
+        renderTurretDebug(poseStack, bufferSource, level, camPos.x, camPos.y, camPos.z);
+
+        // 2. Тромбон и фронт взрывных волн
+        WeaponsDebugRenderer.render(poseStack, bufferSource, level);
+
+        bufferSource.endBatch(net.minecraft.client.renderer.RenderType.lines());
+    }
+
+    /** Обходит турели в радиусе 64 вокруг камеры и зовёт их отрисовку. */
+    private static void renderTurretDebug(PoseStack poseStack, MultiBufferSource.BufferSource bufferSource,
+                                           Level level, double camX, double camY, double camZ) {
         Vec3 renderCenter = new Vec3(camX, camY, camZ);
-        for (Entity entity : level.getEntities(null, new AABB(
+        for (Entity entity : level.getEntities((Entity) null, new AABB(
                 renderCenter.x - 64, renderCenter.y - 64, renderCenter.z - 64,
-                renderCenter.x + 64, renderCenter.y + 64, renderCenter.z + 64))) {
+                renderCenter.x + 64, renderCenter.y + 64, renderCenter.z + 64),
+                e -> e instanceof TurretLightEntity || e instanceof TurretLightLinkedEntity)) {
 
             if (entity instanceof TurretLightEntity turret && !turret.isRemoved()) {
                 TurretDebugRenderer_Enhanced.renderTurretDebug(poseStack, bufferSource, turret, camX, camY, camZ);
@@ -62,7 +71,5 @@ public class TurretDebugRenderEvent {
                 TurretDebugRenderer_Enhanced.renderTurretDebug(poseStack, bufferSource, linked, camX, camY, camZ);
             }
         }
-
-        bufferSource.endBatch(net.minecraft.client.renderer.RenderType.lines());
     }
 }

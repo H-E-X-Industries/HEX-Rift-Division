@@ -48,6 +48,16 @@ repositories {
     maven { url = "https://maven.blamejared.com" }
     maven { url = "https://modmaven.dev/" }
     maven { url = "https://maven.parchmentmc.org" }
+
+    // Modrinth maven for dev helper mods (Xaero's Minimap/World Map, Jade)
+    maven {
+        name = 'Modrinth'
+        url = 'https://api.modrinth.com/maven'
+        content {
+            includeGroup 'maven.modrinth'
+        }
+    }
+
     flatDir {
         dir 'libs'
     }
@@ -126,6 +136,11 @@ dependencies {
     // 5. JEI (Just Enough Items)
     compileOnly "mezz.jei:jei-1.21.1-neoforge-api:19.21.0.247"
     localRuntime "mezz.jei:jei-1.21.1-neoforge:19.21.0.247"
+
+    // 6. Dev helper mods (runtime only): Xaero's Minimap & World Map, Jade (WAILA)
+    runtimeOnly "maven.modrinth:xaeros-minimap:neoforge-1.21.1-26.5.0"
+    runtimeOnly "maven.modrinth:xaeros-world-map:neoforge-1.21.1-1.46.0"
+    runtimeOnly "maven.modrinth:jade:15.10.6+neoforge"
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.

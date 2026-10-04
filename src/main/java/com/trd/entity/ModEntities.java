@@ -1,5 +1,6 @@
 package com.trd.entity;
 
+import com.trd.entity.weapons.bullets.GilseEntity;
 import com.trd.entity.weapons.bullets.TurretBulletEntity;
 import com.trd.entity.weapons.turrets.TurretLightEntity;
 import com.trd.entity.weapons.turrets.TurretLightLinkedEntity;
@@ -7,6 +8,7 @@ import com.trd.entity.weapons.grenades.GravityGrenadeProjectileEntity;
 import com.trd.entity.weapons.grenades.GrenadeIfProjectileEntity;
 import com.trd.entity.weapons.grenades.GrenadeNucProjectileEntity;
 import com.trd.entity.weapons.grenades.GrenadeProjectileEntity;
+import com.trd.entity.mobs.grenadier.GrenadierZombieEntity;
 import com.trd.main.MainRegistry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
@@ -34,12 +36,51 @@ public class ModEntities {
                     .<TurretBulletEntity>of(TurretBulletEntity::new, MobCategory.MISC)
                     // 0.05 как в 1.20.1: хитбокс и так расширяется на 0.5 в traceHit
                     .sized(0.05F, 0.05F)
-                    .clientTrackingRange(16)
+                    // Дальность трекинга умножается на 16, то есть 16 -> 256 блоков.
+                    // Пуля летит до 256 блоков (MAX_FLIGHT_DISTANCE) и на скорости
+                    // 6 блоков/тик проходит это расстояние за ~43 тика, поэтому
+                    // при 256 блоках она исчезала с экрана, не долетев до предела.
+                    // 32 -> 512 блоков с запасом.
+                    .clientTrackingRange(32)
+                    // Позиция шлётся каждый тик: на такой скорости при updateInterval
+                    // больше 1 клиент не успевает получать координаты и пуля
+                    // отрисовывается крупными ступенями.
                     .updateInterval(1)
                     // без этого клиент не получает скорость пули и не может
                     // развернуть её вдоль движения
                     .setShouldReceiveVelocityUpdates(true)
                     .build("trd:turret_bullet"));
+
+    /**
+     * Гильза: падает на землю после выстрела, живёт 30 секунд, не больше
+     * пяти штук на стрелка. Физика — своя, как у {@code ItemEntity}: нужны
+     * {@code noPhysics=false} и гравитация, иначе она считает, что лежит на
+     * земле с самого спавна.
+     */
+    public static final DeferredHolder<EntityType<?>, EntityType<GilseEntity>> GILSE =
+            ENTITY_TYPES.register("gilse", () -> EntityType.Builder
+                    .<GilseEntity>of(GilseEntity::new, MobCategory.MISC)
+                    // 0.08 — это ровно видимое сечение гильзы: в glTF меш имеет
+                    // радиус 0.0203, при MODEL_SCALE 2.0 в мире выходит 0.0406
+                    // в каждую сторону, то есть диаметр 0.081.
+                    //
+                    // Размер обязан совпадать с моделью, потому что
+                    // GilseRenderer центрирует её по центру хитбокса: при
+                    // кубе 0.12 центр модели оказывался на 6 сантиметров выше
+                    // нижней грани, а сама гильза на 4 сантиметра выше центра —
+                    // она висела над полом и не касалась его. Прежний куб 0.2
+                    // был втрое толще самой гильзы, из-за чего она оседала на
+                    // пол-блока раньше, чем касалась стены или пола. Ради
+                    // столкновений гильз друг с другом тоже берётся
+                    // getBbWidth(), поэтому здесь важна именно эта величина.
+                    .sized(0.08F, 0.08F)
+                    .clientTrackingRange(8)
+                    // Позиция шлётся каждый тик. Раз в 4 тика клиент получал
+                    // разреженные координаты, а собственную физику он больше не
+                    // считает, так что гильза на глаз прыгала через блок.
+                    .updateInterval(1)
+                    .setShouldReceiveVelocityUpdates(true)
+                    .build("trd:gilse"));
 
     // === ТУРЕЛИ ===
 
@@ -161,6 +202,14 @@ public class ModEntities {
                     .clientTrackingRange(64)
                     .updateInterval(2)
                     .build("trd:grenade_nuc_projectile"));
+
+    // === МОБЫ ===
+
+    public static final DeferredHolder<EntityType<?>, EntityType<GrenadierZombieEntity>> GRENADIER_ZOMBIE =
+            ENTITY_TYPES.register("grenadier_zombie", () -> EntityType.Builder
+                    .<GrenadierZombieEntity>of(GrenadierZombieEntity::new, MobCategory.MONSTER)
+                    .sized(0.6F, 1.95F) // Размеры как у обычного зомби
+                    .build("trd:grenadier_zombie"));
 
     public static void register(IEventBus eventBus) {
         ENTITY_TYPES.register(eventBus);

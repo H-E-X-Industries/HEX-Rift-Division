@@ -131,6 +131,18 @@ public class ModNetworking {
             com.trd.network.packet.guns.PacketUnloadGun::handle
         );
 
+        registrar.playToServer(
+            com.trd.network.packet.guns.PacketScopeState.TYPE,
+            com.trd.network.packet.guns.PacketScopeState.STREAM_CODEC,
+            com.trd.network.packet.guns.PacketScopeState::handle
+        );
+
+        registrar.playToClient(
+            com.trd.network.packet.guns.PacketMachineGunAnim.TYPE,
+            com.trd.network.packet.guns.PacketMachineGunAnim.STREAM_CODEC,
+            com.trd.network.packet.guns.PacketMachineGunAnim::handle
+        );
+
         registrar.playToClient(
             com.trd.network.packet.explosion.SyncCraterPacket.TYPE,
             com.trd.network.packet.explosion.SyncCraterPacket.STREAM_CODEC,
@@ -179,6 +191,20 @@ public class ModNetworking {
             com.trd.network.packet.turrets.PacketModifyTurretChip.TYPE,
             com.trd.network.packet.turrets.PacketModifyTurretChip.STREAM_CODEC,
             com.trd.network.packet.turrets.PacketModifyTurretChip::handle
+        );
+
+        // === РЕДСТОУН-РАДИО ===
+
+        registrar.playToClient(
+            com.trd.network.packet.redstone.RedstoneRadioSyncPacket.TYPE,
+            com.trd.network.packet.redstone.RedstoneRadioSyncPacket.STREAM_CODEC,
+            com.trd.network.packet.redstone.RedstoneRadioSyncPacket::handle
+        );
+
+        registrar.playToServer(
+            com.trd.network.packet.redstone.RedstoneRadioChannelPacket.TYPE,
+            com.trd.network.packet.redstone.RedstoneRadioChannelPacket.STREAM_CODEC,
+            com.trd.network.packet.redstone.RedstoneRadioChannelPacket::handle
         );
     }
 }

@@ -253,6 +253,20 @@ public class ModBlockEntities {
                     com.trd.block.entity.weapons.MissileTurretBlockEntity::new,
                     ModBlocks.TROMBONE.get()).build(null));
 
+    // ═══════════════════════════════════════════════════════
+    // РЕДСТОУН-РАДИО
+    // ═══════════════════════════════════════════════════════
+
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.redstone.RedstoneRadioTransmitterBlockEntity>> REDSTONE_RADIO_TRANSMITTER_BE =
+            BLOCK_ENTITIES.register("redstone_radio_transmitter", () -> BlockEntityType.Builder.of(
+                    com.trd.block.entity.redstone.RedstoneRadioTransmitterBlockEntity::new,
+                    ModBlocks.REDSTONE_RADIO_TRANSMITTER.get()).build(null));
+
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.redstone.RedstoneRadioReceiverBlockEntity>> REDSTONE_RADIO_RECEIVER_BE =
+            BLOCK_ENTITIES.register("redstone_radio_receiver", () -> BlockEntityType.Builder.of(
+                    com.trd.block.entity.redstone.RedstoneRadioReceiverBlockEntity::new,
+                    ModBlocks.REDSTONE_RADIO_RECEIVER.get()).build(null));
+
     public static void register(IEventBus eventBus) {
         BLOCK_ENTITIES.register(eventBus);
     }

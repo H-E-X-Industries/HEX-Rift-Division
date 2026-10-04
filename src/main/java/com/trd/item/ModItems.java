@@ -237,16 +237,56 @@ public class ModItems {
     // ПАТРОНЫ
     // ═══════════════════════════════════════════════════════
 
-    public static final DeferredItem<Item> AMMO_TURRET = ITEMS.register("ammo_turret",
-            () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 8.0f, 3.0f, false));
-    public static final DeferredItem<Item> AMMO_TURRET_PIERCING = ITEMS.register("ammo_turret_piercing",
-            () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 12.0f, 3.0f, true));
-    public static final DeferredItem<Item> AMMO_TURRET_HOLLOW = ITEMS.register("ammo_turret_hollow",
-            () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 8.0f, 3.0f, false));
-    public static final DeferredItem<Item> AMMO_TURRET_FIRE = ITEMS.register("ammo_turret_fire",
-            () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 6.0f, 3.0f, false));
-    public static final DeferredItem<Item> AMMO_TURRET_RADIO = ITEMS.register("ammo_turret_radio",
-            () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 9.0f, 3.0f, false));
+    /**
+     * Патроны 20 мм, трассирующие и обычные.
+     * <p>
+     * Характеристики у пары одинаковые: различается только то, тянет ли пуля за
+     * собой светящийся след. Всё, что определяет поведение боезаряда, задано
+     * уроном и флагом пробития, а флаг трассера живёт отдельно и на игру не
+     * влияет, кроме модели и яркости отрисовки.
+     * <p>
+     * <b>Про id.</b> Раньше патроны назывались {@code ammo_turret},
+     * {@code ammo_turret_piercing} и так далее. Теперь они называются как свои
+     * иконки: {@code turret_ammo}, {@code turret_ammo_ap},
+     * {@code turret_ammo_trasser} и так далее. Это не косметика: патрон —
+     * обычный предмет с двумерным спрайтом, и иконка обязана называться ровно
+     * как его id ({@code models/item/<id>.json} →
+     * {@code textures/item/ammo/<id>.png}), иначе нарисованные патроны остались
+     * бы пустыми. Слово «trasser» — с одной «с», какой его сделали в файлах
+     * иконок; правильное написание «tracer» разошлось бы с ними, а
+     * переименовывать иконки ради этого не стоит.
+     * <p>
+     * Фугасные патроны ({@code turret_ammo_he} и его трассирующая версия) идут
+     * последней парой — см. ниже.
+     */
+    public static final DeferredItem<Item> TURRET_AMMO = ITEMS.register("turret_ammo",
+            () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 8.0f, 3.0f, false, false));
+    public static final DeferredItem<Item> TURRET_AMMO_TRACER = ITEMS.register("turret_ammo_trasser",
+            () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 8.0f, 3.0f, false, true));
+    public static final DeferredItem<Item> TURRET_AMMO_AP = ITEMS.register("turret_ammo_ap",
+            () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 12.0f, 3.0f, true, false));
+    public static final DeferredItem<Item> TURRET_AMMO_AP_TRACER = ITEMS.register("turret_ammo_ap_tracer",
+            () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 12.0f, 3.0f, true, true));
+    public static final DeferredItem<Item> TURRET_AMMO_HOLLOW = ITEMS.register("turret_ammo_hollow",
+            () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 8.0f, 3.0f, false, false));
+    public static final DeferredItem<Item> TURRET_AMMO_HOLLOW_TRACER = ITEMS.register("turret_ammo_hollow_tracer",
+            () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 8.0f, 3.0f, false, true));
+    public static final DeferredItem<Item> TURRET_AMMO_FIRE = ITEMS.register("turret_ammo_fire",
+            () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 6.0f, 3.0f, false, false));
+    public static final DeferredItem<Item> TURRET_AMMO_FIRE_TRACER = ITEMS.register("turret_ammo_fire_tracer",
+            () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 6.0f, 3.0f, false, true));
+    public static final DeferredItem<Item> TURRET_AMMO_RADIO = ITEMS.register("turret_ammo_radio",
+            () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 9.0f, 3.0f, false, false));
+    public static final DeferredItem<Item> TURRET_AMMO_RADIO_TRACER = ITEMS.register("turret_ammo_radio_tracer",
+            () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 9.0f, 3.0f, false, true));
+    public static final DeferredItem<Item> TURRET_AMMO_HE = ITEMS.register("turret_ammo_he",
+            () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 25.0f, 3.0f, false, false));
+    public static final DeferredItem<Item> TURRET_AMMO_HE_TRACER = ITEMS.register("turret_ammo_he_tracer",
+            () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 25.0f, 3.0f, false, true));
+    public static final DeferredItem<Item> TURRET_AMMO_HE_SAVE = ITEMS.register("turret_ammo_he_save",
+            () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 17.0f, 3.0f, false, false));
+    public static final DeferredItem<Item> TURRET_AMMO_HE_SAVE_TRACER = ITEMS.register("turret_ammo_he_save_tracer",
+            () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 17.0f, 3.0f, false, true));
 
     // ═══════════════════════════════════════════════════════
     // СНАРЯДЫ
@@ -360,6 +400,27 @@ public class ModItems {
         com.trd.api.tooltip.MachineTooltipRegistry.register(GRENADE_NUC, "tooltip.trd.grenade_nuc.desc");
         com.trd.api.tooltip.MachineTooltipRegistry.register(GRAVITY_GRENADE, "tooltip.trd.gravity_grenade.desc");
     }
+
+    // ═══════════════════════════════════════════════════════
+    // МОБЫ
+    // ═══════════════════════════════════════════════════════
+
+    public static final DeferredItem<Item> GRENADIER_ZOMBIE_SPAWN_EGG = ITEMS.register("grenadier_zombie_spawn_egg",
+            () -> new net.minecraft.world.item.SpawnEggItem(ModEntities.GRENADIER_ZOMBIE.get(), 0x4C7F52, 0x8B0000,
+                    new Item.Properties()));
+
+    // ═══════════════════════════════════════════════════════
+    // БРОНЯ
+    // ═══════════════════════════════════════════════════════
+
+    // 1.21.1: прочность больше не берётся из материала, её задаёт Item.Properties.
+    // В 1.20.1 было 13 (слот HEAD) * 15 (durabilityMultiplier) = 195.
+    public static final DeferredItem<Item> GRENADIER_GOGGLES = ITEMS.register("grenadier_goggles",
+            () -> new com.trd.item.armor.GrenadierGogglesItem(
+                    com.trd.item.armor.GrenadierArmorMaterial.GRENADIER,
+                    net.minecraft.world.item.ArmorItem.Type.HELMET,
+                    new Item.Properties().stacksTo(1).durability(
+                            com.trd.item.armor.GrenadierArmorMaterial.DURABILITY)));
 
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);

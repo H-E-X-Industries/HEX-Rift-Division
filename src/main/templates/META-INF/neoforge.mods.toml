@@ -88,6 +88,15 @@ Example mod description.
     ordering="NONE"
     side="BOTH"
 
+# glTF-модели (в том числе пушка) рисуются через GemRender. Он же тянет за собой
+# Flywheel, поэтому AFTER: наш рендерер должен создаваться после его бэкендов.
+# CLIENT: на сервере GemRender не нужен, и ставить его не требуется.
+[[dependencies.${mod_id}]]
+    modId="gemrender"
+    type="required"
+    versionRange="[0.1.0,1.0.0)"
+    ordering="AFTER"
+    side="CLIENT"
 # TerraBlender
 [[dependencies.${mod_id}]]
     modId="terrablender"

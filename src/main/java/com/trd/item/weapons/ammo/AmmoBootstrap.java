@@ -18,11 +18,27 @@ public class AmmoBootstrap {
     @SubscribeEvent
     public static void onCommonSetup(FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
-            registerAmmo(ModItems.AMMO_TURRET.get());
-            registerAmmo(ModItems.AMMO_TURRET_PIERCING.get());
-            registerAmmo(ModItems.AMMO_TURRET_HOLLOW.get());
-            registerAmmo(ModItems.AMMO_TURRET_FIRE.get());
-            registerAmmo(ModItems.AMMO_TURRET_RADIO.get());
+            // Порядок неважен для реестра, но важен для списка патронов калибра:
+            // AmmoRegistry#register складывает их в один список по порядку, и по
+            // нему турель выбирает боеприпас. Сначала обычные, потом трассирующие
+            // того же типа — чтобы пустая турель по умолчанию брала обычный
+            // патрон, а не трассер.
+            registerAmmo(ModItems.TURRET_AMMO.get());
+            registerAmmo(ModItems.TURRET_AMMO_AP.get());
+            registerAmmo(ModItems.TURRET_AMMO_HOLLOW.get());
+            registerAmmo(ModItems.TURRET_AMMO_FIRE.get());
+            registerAmmo(ModItems.TURRET_AMMO_RADIO.get());
+
+            registerAmmo(ModItems.TURRET_AMMO_TRACER.get());
+            registerAmmo(ModItems.TURRET_AMMO_AP_TRACER.get());
+            registerAmmo(ModItems.TURRET_AMMO_HOLLOW_TRACER.get());
+            registerAmmo(ModItems.TURRET_AMMO_FIRE_TRACER.get());
+            registerAmmo(ModItems.TURRET_AMMO_RADIO_TRACER.get());
+
+            registerAmmo(ModItems.TURRET_AMMO_HE.get());
+            registerAmmo(ModItems.TURRET_AMMO_HE_TRACER.get());
+            registerAmmo(ModItems.TURRET_AMMO_HE_SAVE.get());
+            registerAmmo(ModItems.TURRET_AMMO_HE_SAVE_TRACER.get());
         });
     }
 
@@ -33,7 +49,8 @@ public class AmmoBootstrap {
                     ammoItem.getCaliber(),
                     ammoItem.getDamage(),
                     ammoItem.getSpeed(),
-                    ammoItem.isPiercing()
+                    ammoItem.isPiercing(),
+                    ammoItem.isTracer()
             );
         }
     }
