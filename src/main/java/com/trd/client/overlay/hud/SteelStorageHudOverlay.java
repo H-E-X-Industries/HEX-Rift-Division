@@ -8,6 +8,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.BlockHitResult;
@@ -25,6 +26,10 @@ import java.util.Map;
 
 @EventBusSubscriber(modid = MainRegistry.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
 public class SteelStorageHudOverlay {
+
+    private static final String ELLIPSIS = "…";
+    private static final int MAX_TEXT_WIDTH = 180;
+    private static final int MAX_LINES = 8;
 
     @SubscribeEvent
     public static void onRenderHud(RenderGuiEvent.Post event) {
@@ -72,59 +77,69 @@ public class SteelStorageHudOverlay {
 
         int screenWidth = graphics.guiWidth();
         int screenHeight = graphics.guiHeight();
-        int baseX = screenWidth / 2 + 12;
-        int baseY = screenHeight / 2 + 4;
 
         float ratio = totalSlots > 0 ? (float) filledSlots / totalSlots : 0;
         int headerColor = ratio < 0.33f ? 0x55FF55
                 : (ratio < 0.66f ? 0xFFFF55 : 0xFF5555);
-
-        String header = Component.translatable("hud.trd.storage.header", filledSlots, totalSlots).getString();
-        int headerWidth = font.width(header);
-        int maxTextWidth = headerWidth;
-
-        List<String> lines = new ArrayList<>();
-        if (filledSlots == 0) {
-            lines.add(Component.translatable("hud.trd.storage.empty").getString());
-        } else {
-            int shown = 0;
-            for (Map.Entry<String, Integer> entry : items.entrySet()) {
-                if (shown >= 8) {
-                    lines.add(Component.translatable("hud.trd.storage.more", (items.size() - 8)).getString());
-                    break;
-                }
-                String line = Component.translatable("hud.trd.storage.item", entry.getKey(), entry.getValue()).getString();
-                lines.add(line);
-                maxTextWidth = Math.max(maxTextWidth, font.width(line));
-                shown++;
-            }
-        }
 
         int lineHeight = font.lineHeight;
         int paddingX = 4;
         int paddingY = 3;
         int lineSpacing = 1;
 
-        int contentHeight = lines.size() * (lineHeight + lineSpacing) - lineSpacing;
-        int totalHeight = lineHeight + 2 + contentHeight;
-        int bgWidth = maxTextWidth + paddingX * 2;
-        int bgHeight = totalHeight + paddingY * 2;
+        // Панель не должна вылезать за экран, поэтому текст обрезается по ширине
+        int maxTextWidth = Math.max(40, Math.min(MAX_TEXT_WIDTH, screenWidth - (paddingX + 8) * 2));
 
-        if (baseX + bgWidth > screenWidth) {
-            baseX = screenWidth / 2 - bgWidth - 12;
+        String header = fit(font, Component.translatable("hud.trd.storage.header", filledSlots, totalSlots).getString(), maxTextWidth);
+
+        List<String> lines = new ArrayList<>();
+        if (filledSlots == 0) {
+            lines.add(fit(font, Component.translatable("hud.trd.storage.empty").getString(), maxTextWidth));
+        } else {
+            int shown = 0;
+            for (Map.Entry<String, Integer> entry : items.entrySet()) {
+                if (shown >= MAX_LINES) {
+                    lines.add(fit(font, Component.translatable("hud.trd.storage.more", (items.size() - MAX_LINES)).getString(), maxTextWidth));
+                    break;
+                }
+                lines.add(formatItemLine(font, entry.getKey(), entry.getValue(), maxTextWidth));
+                shown++;
+            }
         }
 
-        int bgX = baseX - paddingX;
-        int bgY = baseY - paddingY;
+        int textWidth = font.width(header);
+        for (String line : lines) {
+            textWidth = Math.max(textWidth, font.width(line));
+        }
 
-        graphics.fill(bgX, bgY, bgX + bgWidth, bgY + bgHeight, 0x90000000);
+        int contentHeight = lines.size() * (lineHeight + lineSpacing) - lineSpacing;
+        int totalHeight = lineHeight + 2 + contentHeight;
+        int bgWidth = textWidth + paddingX * 2;
+        int bgHeight = totalHeight + paddingY * 2;
+
+        int baseX = screenWidth / 2 + 12;
+        int baseY = screenHeight / 2 + 4;
+
+        if (baseX + bgWidth > screenWidth - 2) {
+            baseX = screenWidth / 2 - bgWidth - 12;
+        }
+        baseX = Mth.clamp(baseX, 2, Math.max(2, screenWidth - 2 - bgWidth));
+
+        int bgY = baseY - paddingY;
+        if (bgY + bgHeight > screenHeight - 2) {
+            bgY = screenHeight - 2 - bgHeight;
+        }
+        bgY = Math.max(2, bgY);
+        baseY = bgY + paddingY;
+
+        graphics.fill(baseX - paddingX, bgY, baseX - paddingX + bgWidth, bgY + bgHeight, 0x90000000);
 
         int currentY = baseY;
         graphics.drawString(font, header, baseX, currentY, headerColor, true);
         currentY += lineHeight + 2;
 
         if (filledSlots > 0) {
-            graphics.fill(bgX + 2, currentY - 1, bgX + bgWidth - 2, currentY, 0x60FFFFFF);
+            graphics.fill(baseX - paddingX + 2, currentY - 1, baseX - paddingX + bgWidth - 2, currentY, 0x60FFFFFF);
         }
 
         for (String line : lines) {
@@ -133,5 +148,26 @@ public class SteelStorageHudOverlay {
             graphics.drawString(font, line, baseX, currentY, color, true);
             currentY += lineHeight + lineSpacing;
         }
+    }
+
+    /** Обрезает строку по ширине, добавляя многоточие. */
+    private static String fit(Font font, String text, int maxWidth) {
+        if (font.width(text) <= maxWidth) {
+            return text;
+        }
+        return font.plainSubstrByWidth(text, Math.max(0, maxWidth - font.width(ELLIPSIS))) + ELLIPSIS;
+    }
+
+    /** Формирует строку "предмет xколичество", обрезая только слишком длинное название предмета. */
+    private static String formatItemLine(Font font, String name, int count, int maxWidth) {
+        String line = Component.translatable("hud.trd.storage.item", name, count).getString();
+        if (font.width(line) <= maxWidth) {
+            return line;
+        }
+        // Ширина всей строки, кроме названия предмета (считаем по однобуквенному имени)
+        int fixedWidth = font.width(Component.translatable("hud.trd.storage.item", "W", count).getString()) - font.width("W");
+        int nameWidth = Math.max(0, maxWidth - fixedWidth - font.width(ELLIPSIS));
+        line = Component.translatable("hud.trd.storage.item", font.plainSubstrByWidth(name, nameWidth) + ELLIPSIS, count).getString();
+        return font.width(line) <= maxWidth ? line : fit(font, line, maxWidth);
     }
 }

@@ -19,10 +19,18 @@ import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 
 /**
  * Отрисовка отладочной визуализации турелей (сетка сканирования, точка упреждения,
- * траектория) после отрисовки сущностей. Включается по F3.
+ * траектория) после отрисовки сущностей. Включается переназначаемой клавишей
+ * {@link com.trd.client.config.ModKeyBindings#DEBUG_RENDER_KEY}.
  */
 @EventBusSubscriber(modid = MainRegistry.MOD_ID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
 public class TurretDebugRenderEvent {
+
+    /**
+     * Максимальная дистанция от камеры, на которой ещё рисуется дебаг-визуализация.
+     * Дальше линии и сетки сканирования не видно из-за тумана, а вершин они
+     * генерируют десятки тысяч — поэтому режем обход по этому радиусу.
+     */
+    public static final double MAX_RENDER_DISTANCE = 48.0;
 
     @SubscribeEvent
     public static void onRenderLevelStage(RenderLevelStageEvent event) {
@@ -56,13 +64,14 @@ public class TurretDebugRenderEvent {
         bufferSource.endBatch(net.minecraft.client.renderer.RenderType.lines());
     }
 
-    /** Обходит турели в радиусе 64 вокруг камеры и зовёт их отрисовку. */
+    /** Обходит турели в радиусе {@link #MAX_RENDER_DISTANCE} вокруг камеры и зовёт их отрисовку. */
     private static void renderTurretDebug(PoseStack poseStack, MultiBufferSource.BufferSource bufferSource,
                                            Level level, double camX, double camY, double camZ) {
+        double d = MAX_RENDER_DISTANCE;
         Vec3 renderCenter = new Vec3(camX, camY, camZ);
         for (Entity entity : level.getEntities((Entity) null, new AABB(
-                renderCenter.x - 64, renderCenter.y - 64, renderCenter.z - 64,
-                renderCenter.x + 64, renderCenter.y + 64, renderCenter.z + 64),
+                renderCenter.x - d, renderCenter.y - d, renderCenter.z - d,
+                renderCenter.x + d, renderCenter.y + d, renderCenter.z + d),
                 e -> e instanceof TurretLightEntity || e instanceof TurretLightLinkedEntity)) {
 
             if (entity instanceof TurretLightEntity turret && !turret.isRemoved()) {

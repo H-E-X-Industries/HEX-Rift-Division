@@ -670,6 +670,7 @@
     "key.categories.trd":  "Crustal Incursion",
     "key.trd.reload":  "Reload Weapon",
     "key.trd.unload":  "Unload Weapon",
+    "key.trd.debug_render":  "Debug Render",
     "tooltip.trd.machinegun.ammo":  "Rounds: %s + 1 / %s",
     "tooltip.trd.machinegun.ammo_empty":  "Rounds: none",
     "tooltip.trd.machinegun.damage":  "Damage: %.1f",

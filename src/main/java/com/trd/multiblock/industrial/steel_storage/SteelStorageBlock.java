@@ -207,6 +207,11 @@ public class SteelStorageBlock extends BaseEntityBlock implements IMultiblockCon
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+        // Shift + ПКМ = поставить блок. Vanilla и так пропускает взаимодействие с блоком при краде,
+        // но Shift мог быть нажат слишком коротко и сервер ещё не успел обработать состояние
+        if (player.isShiftKeyDown() || player.isCrouching()) {
+            return InteractionResult.PASS;
+        }
         if (!level.isClientSide && level.getBlockEntity(pos) instanceof SteelStorageBlockEntity be) {
             player.openMenu(be, pos);
             return InteractionResult.CONSUME;
