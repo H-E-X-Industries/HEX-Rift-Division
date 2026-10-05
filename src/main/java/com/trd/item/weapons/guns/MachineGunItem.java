@@ -187,7 +187,13 @@ public class MachineGunItem extends Item {
      * появления и тут же идёт на шесть блоков, поэтому моб в упоре и блок под
      * ногами всё равно попадают под трассировку на первом же тике полёта.
      */
-private static final double SCOPED_FORWARD = 1.8D;
+    private static final double SCOPED_FORWARD = 1.3D;
+
+    /**
+     * Смещение точки вылета пули вниз в прицеле, чтобы патроны визуально
+     * вылетали на уровне ствола под оптикой, а не прямо из перекрестья.
+     */
+    private static final double SCOPED_DROP = 0.12D;
 
     /**
      * Насколько длинно дуло выходит из-за плеча стрелка.
@@ -587,7 +593,10 @@ private static final double SCOPED_FORWARD = 1.8D;
         Vec3 forward = lookDir.normalize();
 
         if (scoped) {
-            return player.getEyePosition().add(forward.scale(SCOPED_FORWARD));
+            Vec3 up = side.cross(forward).normalize();
+            return player.getEyePosition()
+                    .add(forward.scale(SCOPED_FORWARD))
+                    .subtract(up.scale(SCOPED_DROP));
         }
 
         Vec3 gunPos = player.position()
@@ -1157,25 +1166,24 @@ private static final double SCOPED_FORWARD = 1.8D;
         // константу, потому что AIR_RESISTANCE в пуле тоже подобрана под прежнюю
         // скорость — при вдвое более быстрой пуле она почти не влияет.
         Vec3 lookDir = player.calculateViewVector(pitch, yaw);
-        Vec3 velocity = lookDir.normalize().add(
+        Vec3 spawnPos = shotOrigin(player, lookDir, yaw, scoped);
+
+        Vec3 baseDir;
+        if (scoped) {
+            // Пристрелка в прицеле на 64 блока: пуля визуально вылетает на уровне
+            // ствола чуть ниже перекрестья, но сводится точно в центр прицела на дистанции.
+            Vec3 targetPoint = player.getEyePosition().add(lookDir.scale(64.0D));
+            baseDir = targetPoint.subtract(spawnPos).normalize();
+        } else {
+            baseDir = lookDir.normalize();
+        }
+
+        Vec3 velocity = baseDir.add(
                 level.random.nextGaussian() * spread,
                 level.random.nextGaussian() * spread,
                 level.random.nextGaussian() * spread
         ).scale(ammoInfo.speed * SPEED_MULTIPLIER);
 
-        // Точка вылета. В прицеле пуля обязана идти по оптической оси: только
-        // там перекрестье совпадает с направлением взгляда. Раньше точка вылета
-        // всегда бралась от ствола — на 0.2 блока вбок и на 0.1 вниз от глаз, —
-        // и в прицеле пуля уходила заметно сбоку от мушки.
-        //
-        // Вперёд от камеры, а не из неё самой: луч столкновений стартует в точке
-        // появления, и мгновенный старт внутри собственной головы означал бы
-        // попадание в любой блок вплотную к игроку.
-        //
-        // Без прицела остаётся как было: от ствола вниз и в сторону, там
-        // расхождение со стволом и нужно, но уже с конца дула и с доворотом
-        // влево, чтобы визг шёл из оружия, а не мимо него.
-        //
         // Сторона (вправо от стрелка) и направление считаются один раз и
         // используются дальше и для точки вылета пули, и для точки выброса
         // гильзы: брать их от разных векторов означало бы, что прицел и
@@ -1186,10 +1194,6 @@ private static final double SCOPED_FORWARD = 1.8D;
         Vec3 gunPos = player.position()
                 .add(side.scale(GUN_SIDE_OFFSET))
                 .add(0.0D, player.getEyeY() - player.getY() - MUZZLE_DROP, 0.0D);
-
-        // Точка вылета — ровно та же, что и у вспышки на клиенте, иначе визг и
-        // пуля разъезжались бы на длину ствола.
-        Vec3 spawnPos = shotOrigin(player, lookDir, yaw, scoped);
 
         bullet.setPos(spawnPos.x, spawnPos.y, spawnPos.z);
 
@@ -1367,6 +1371,7 @@ ItemStack stack = mc.player.getMainHandItem();
             if (!(stack.getItem() instanceof MachineGunItem)) {
                 clientShootTimer = SHOT_ANIM_TICKS;
                 MachineGunClientAnim.reset();
+                MachineGunRecoil.reset();
                 return;
             }
 
