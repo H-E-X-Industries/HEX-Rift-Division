@@ -22,6 +22,7 @@ public class ModPlacedFeatures {
     public static final ResourceKey<PlacedFeature> GIANT_SEQUOIA_PLACED_KEY = registerKey("giant_sequoia_placed");
     public static final ResourceKey<PlacedFeature> SMALL_SEQUOIA_PLACED_KEY = registerKey("small_sequoia_placed");
     public static final ResourceKey<PlacedFeature> MEDIUM_SEQUOIA_PLACED_KEY = registerKey("medium_sequoia_placed");
+    public static final ResourceKey<PlacedFeature> DEPTH_WORM_HIVE_PLACED_KEY = registerKey("depth_worm_hive_placed");
 
     // 2. Сборка (DataGen)
     public static void bootstrap(BootstrapContext<PlacedFeature> context) {
@@ -81,6 +82,18 @@ public class ModPlacedFeatures {
 
         register(context, MEDIUM_SEQUOIA_PLACED_KEY, mediumSequoia,
                 VegetationPlacements.treePlacement(PlacementUtils.countExtra(0, 0.25f, 1), Blocks.SPRUCE_SAPLING));
+
+        // === ГЛУБИННЫЕ ЧЕРВИ (УЛЬИ) ===
+        register(context, DEPTH_WORM_HIVE_PLACED_KEY, configuredFeatures.getOrThrow(ModConfiguredFeatures.DEPTH_WORM_HIVE_KEY),
+                List.of(
+                        RarityFilter.onAverageOnceEvery(7),
+                        InSquarePlacement.spread(),
+                        HeightRangePlacement.uniform(
+                                VerticalAnchor.absolute(-60),
+                                VerticalAnchor.absolute(-5)
+                        ),
+                        BiomeFilter.biome()
+                ));
     }
 
     // --- Вспомогательные методы ---
