@@ -1,7 +1,7 @@
 {
   "replace": false,
   "values": [
-    "trd:turret_bullet",
+    "trd:fire_blast",
     "trd:fire_bullet"
   ]
 }

@@ -1,0 +1,7 @@
+{
+  "message_id": "fireBlast",
+  "exhaustion": 0.1,
+  "scaling": "never",
+  "effects": "burning",
+  "death_message_type": "default"
+}

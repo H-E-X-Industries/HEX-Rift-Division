@@ -55,11 +55,17 @@ public class TurretDebugRenderEvent {
 
         Vec3 camPos = mc.gameRenderer.getMainCamera().getPosition();
 
+        // Всё, что дальше MAX_RENDER_DISTANCE от камеры, не рисуем: обход сущностей
+        // уже ограничен, но линии к целям и траектории тянутся на сотни блоков.
+        DebugShapes.beginFrame(camPos, MAX_RENDER_DISTANCE);
+
         // 1. Бортовые турели (сетка сканирования, точка упреждения, траектория)
         renderTurretDebug(poseStack, bufferSource, level, camPos.x, camPos.y, camPos.z);
 
         // 2. Тромбон и фронт взрывных волн
         WeaponsDebugRenderer.render(poseStack, bufferSource, level);
+
+        DebugShapes.endFrame();
 
         bufferSource.endBatch(net.minecraft.client.renderer.RenderType.lines());
     }

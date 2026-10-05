@@ -44,6 +44,16 @@ public class SteelStorageItemInventory {
                 if (!SteelStorageBlockEntity.isItemAllowed(stack)) return false;
                 return super.isItemValid(slot, stack);
             }
+
+            @Override
+            public void setStackInSlot(int slot, ItemStack stack) {
+                // Последний рубеж: слоты и меню проверяют предмет сами, а сюда
+                // можно достучаться напрямую (автоматизация, capability). Правило
+                // не применяется только при чтении старого NBT — иначе невалидный
+                // предмет просто потерялся бы при загрузке мира.
+                if (!loading && !SteelStorageBlockEntity.isItemAllowed(stack)) return;
+                super.setStackInSlot(slot, stack);
+            }
         };
 
         CompoundTag tag = getStoredTag(stack);

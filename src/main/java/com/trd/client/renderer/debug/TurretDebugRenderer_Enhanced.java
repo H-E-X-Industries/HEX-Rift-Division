@@ -52,6 +52,12 @@ public class TurretDebugRenderer_Enhanced {
         poseStack.pushPose();
 
         Vec3 cameraPos = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
+        // Дальше предела отрисовки (см. DebugShapes#beginFrame) не рисуем ничего:
+        // иначе линия наводки и траектория уходят на сотни блоков за пределы экрана.
+        if (!DebugShapes.inRange(muzzlePos)) {
+            poseStack.popPose();
+            return;
+        }
         poseStack.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
         Matrix4f matrix = poseStack.last().pose();
 
@@ -63,11 +69,12 @@ public class TurretDebugRenderer_Enhanced {
                 float r = isHit ? 0.0F : 1.0F;
                 float g = isHit ? 1.0F : 0.0F;
 
+                if (!DebugShapes.inRange(p)) continue;
                 renderBox(matrix, lineBuilder, p, 0.05, r, g, 0.0F, 0.8F);
             }
         }
 
-        if (targetPoint != null) {
+        if (targetPoint != null && DebugShapes.inRange(targetPoint)) {
             // === ЕСТЬ ЦЕЛЬ ===
 
             // 2. ЦЕНТРОИД (Box)
@@ -87,6 +94,7 @@ public class TurretDebugRenderer_Enhanced {
                 double drag = 0.99;
                 for (int i = 0; i < 50; i++) {
                     Vec3 nextPos = currentPos.add(currentVel);
+                    if (!DebugShapes.inRange(nextPos)) break;
                     lineBuilder.addVertex(matrix, (float)currentPos.x, (float)currentPos.y, (float)currentPos.z)
                             .setColor(TRAJ_R, TRAJ_G, TRAJ_B, TRAJ_A).setNormal(0, 1, 0);
                     lineBuilder.addVertex(matrix, (float)nextPos.x, (float)nextPos.y, (float)nextPos.z)
