@@ -1,14 +1,19 @@
 package com.trd.client.gecko.item.guns;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import com.trd.client.overlay.MachineGunScope;
 import com.trd.item.weapons.guns.MachineGunClientAnim;
 import com.trd.main.MainRegistry;
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.wf.gemrender.asset.GemRenderModels;
 import com.wf.gemrender.direct.ItemAppearance;
 import com.wf.gemrender.gltf.GemRenderGltfModel;
 import com.wf.gemrender.gltf.GltfAnimation;
+import com.wf.gemrender.render.Vanilla;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 
@@ -19,12 +24,8 @@ import net.minecraft.world.item.ItemStack;
  * зашиты анимации {@code shot}, {@code reload} и {@code flip}. Какой клип
  * показывать и на какой секунде — решает {@link MachineGunClientAnim}.
  * <p>
- * Геколиб в проекте не осталось: от него отказывались ради перехода на glTF, и
- * всё, что раньше жило в его animation.json, теперь живёт в самой модели —
- * см. {@link MachineGunModel}.
- * <p>
- * Геколибовский рендерер подставлял 5 разных текстур по типу заряженного
- * патрона; в glTF текстура одна, и вариативности тут больше нет.
+ * При ходьбе и беге от первого лица пулемёт остаётся полностью неподвижным на экране
+ * за счёт точной математической компенсации ванильного покачивания (bobView).
  */
 public class MachineGunGltfAppearance implements ItemAppearance {
 
@@ -35,20 +36,11 @@ public class MachineGunGltfAppearance implements ItemAppearance {
     public GemRenderGltfModel model(ItemStack stack, ItemDisplayContext context) {
         // Пока открыт прицел, оружие от первого лица не рисуется: в круге
         // оптики видна только мушка, а ствол и лента закрывали бы обзор.
-        // GemRender трактует null как «нечего рисовать» и просто выходит из
-        // draw(), поэтому возвращать пустую модель тут безопасно.
-        //
-        // Проверка именно first-person: в третьем лице пушку в руках другого
-        // игрока по-прежнему видно, иначе она исчезала бы у всех, кто смотрит
-        // на стрелка.
         if (context.firstPerson() && MachineGunScope.isScoped()) {
             return null;
         }
 
         GemRenderGltfModel model = GemRenderModels.get(MODEL);
-        // Длины клипов берём из самого glTF, а не из констант в коде: при
-        // переэкспорте модели из Blockbench они изменятся, и захардкоженные
-        // значения снова разойдутся с анимацией.
         if (model != null) {
             MachineGunClientAnim.syncDurations(model);
         }
@@ -63,7 +55,6 @@ public class MachineGunGltfAppearance implements ItemAppearance {
         String current = MachineGunClientAnim.current();
         if (current == null) return null;
 
-        // Клип мог не загрузиться — лучше показать пушку в покое, чем упасть.
         return model.animation(current);
     }
 
@@ -74,12 +65,61 @@ public class MachineGunGltfAppearance implements ItemAppearance {
 
     @Override
     public void transform(ItemStack stack, ItemDisplayContext context, PoseStack poseStack) {
-        // Локатор дула снимается именно здесь. GemRenderItemRenderer#draw зовёт
-        // transform последним перед тем, как отдать матрицу в
-        // DirectRenderer.submit, поэтому внутри PoseStack уже лежит полная
-        // матрица «модель → мир» — со всеми смещениями предметного контекста.
-        // Взять её позже негде, а без неё кость модели остаётся в своей системе
-        // координат, и вспышка выстрела уезжает от ствола.
+        if (context.firstPerson()) {
+            stabilizeBobbing(context, poseStack);
+        }
+
+        // Локатор дула снимается строго ПОСЛЕ применения трансформации:
+        // так вспышка выстрела и эффекты ствола идеально сопровождают пулемёт.
         MachineGunModel.captureItemMatrix(context, poseStack.last().pose());
+    }
+
+    /**
+     * Компенсирует ванильное покачивание (bobView) от первого лица при ходьбе и беге,
+     * делая пулемёт полностью неподвижным на экране.
+     */
+    private void stabilizeBobbing(ItemDisplayContext context, PoseStack poseStack) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.options == null || !mc.options.bobView().get()) {
+            return;
+        }
+
+        LocalPlayer player = mc.player;
+        if (player == null) {
+            return;
+        }
+
+        float partialTick = Vanilla.partialTick();
+        float f = player.walkDist - player.walkDistO;
+        float f1 = -(player.walkDist + f * partialTick);
+        float f2 = Mth.lerp(partialTick, player.oBob, player.bob);
+
+        if (Math.abs(f2) < 1.0E-5F) {
+            return;
+        }
+
+        // Смещение и вращения из GameRenderer#bobView
+        float tx = Mth.sin(f1 * (float) Math.PI) * f2 * 0.5F;
+        float ty = -Math.abs(Mth.cos(f1 * (float) Math.PI) * f2);
+        float rz = Mth.sin(f1 * (float) Math.PI) * f2 * 3.0F;
+        float rx = Math.abs(Mth.cos(f1 * (float) Math.PI - 0.2F) * f2) * 5.0F;
+
+        // Положение руки из ItemInHandRenderer#applyItemArmTransform
+        boolean isRightHand = (context == ItemDisplayContext.FIRST_PERSON_RIGHT_HAND);
+        float handSign = isRightHand ? 1.0F : -1.0F;
+        float armX = handSign * 0.56F;
+        float armY = -0.52F;
+        float armZ = -0.72F;
+
+        // Применяем обратные преобразования:
+        // 1. Сдвигаем обратно в точку вращения руки
+        poseStack.translate(-armX, -armY, -armZ);
+        // 2. Отменяем вращения в обратном порядке
+        poseStack.mulPose(Axis.XP.rotationDegrees(-rx));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(-rz));
+        // 3. Отменяем поступательное смещение покачивания
+        poseStack.translate(-tx, -ty, 0.0F);
+        // 4. Возвращаем руку на исходное статическое положение
+        poseStack.translate(armX, armY, armZ);
     }
 }

@@ -193,6 +193,9 @@ public final class MachineGunModel {
      */
     public static void captureItemMatrix(net.minecraft.world.item.ItemDisplayContext context,
                                          Matrix4f modelToWorld) {
+        if (com.wf.gemrender.direct.IrisDirectBridge.isRenderingShadows()) {
+            return;
+        }
         if (!isHandContext(context)) {
             return;
         }
@@ -202,6 +205,11 @@ public final class MachineGunModel {
 
     /** Рука в первом или третьем лице — только там оружие видимо как оружие. */
     private static boolean isHandContext(net.minecraft.world.item.ItemDisplayContext context) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc != null && mc.options != null && mc.options.getCameraType().isFirstPerson()) {
+            return context == net.minecraft.world.item.ItemDisplayContext.FIRST_PERSON_RIGHT_HAND
+                    || context == net.minecraft.world.item.ItemDisplayContext.FIRST_PERSON_LEFT_HAND;
+        }
         return context == net.minecraft.world.item.ItemDisplayContext.FIRST_PERSON_RIGHT_HAND
                 || context == net.minecraft.world.item.ItemDisplayContext.FIRST_PERSON_LEFT_HAND
                 || context == net.minecraft.world.item.ItemDisplayContext.THIRD_PERSON_RIGHT_HAND

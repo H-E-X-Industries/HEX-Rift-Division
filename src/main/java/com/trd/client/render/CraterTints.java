@@ -33,6 +33,7 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.loading.FMLPaths;
@@ -47,6 +48,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -281,7 +283,7 @@ public final class CraterTints {
      * позиционный цветовой хендлер. Блоки с существующим тинтом (листва, трава, мягкий
      * базальт, выжженная земля) не трогаются — они красятся своими штатными хендлерами.
      */
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onModelBake(ModelEvent.ModifyBakingResult event) {
         Map<ModelResourceLocation, BakedModel> models = event.getModels();
         RandomSource rand = RandomSource.create();
@@ -289,6 +291,8 @@ public final class CraterTints {
         int wrappedStates = 0;
         for (Block block : BuiltInRegistries.BLOCK) {
             if (block.getStateDefinition().getPossibleStates().isEmpty()) continue;
+            // Блоки с невидимой моделью (AIR, INVISIBLE) или рендерером сущности пропускаем
+            if (block.defaultBlockState().getRenderShape() != net.minecraft.world.level.block.RenderShape.MODEL) continue;
 
             boolean existsTint = false;
             for (BlockState st : block.getStateDefinition().getPossibleStates()) {
@@ -351,16 +355,29 @@ public final class CraterTints {
 
     /** Есть ли у модели хоть одна грань с собственным tintindex (такие блоки не трогаем). */
     private static boolean hasTintQuads(BakedModel model, BlockState state, RandomSource rand) {
-        // 5-арг overload: у кастомных моделей геометрия может зависеть от ModelData/RenderType.
-        for (Direction side : Direction.values()) {
-            for (BakedQuad q : model.getQuads(state, side, rand, ModelData.EMPTY, null)) {
-                if (q.getTintIndex() >= 0) return true;
+        try {
+            // 5-арг overload: у кастомных моделей геометрия может зависеть от ModelData/RenderType.
+            for (Direction side : Direction.values()) {
+                List<BakedQuad> quads = model.getQuads(state, side, rand, ModelData.EMPTY, null);
+                if (quads != null) {
+                    for (BakedQuad q : quads) {
+                        if (q.getTintIndex() >= 0) return true;
+                    }
+                }
             }
+            List<BakedQuad> nullQuads = model.getQuads(state, null, rand, ModelData.EMPTY, null);
+            if (nullQuads != null) {
+                for (BakedQuad q : nullQuads) {
+                    if (q.getTintIndex() >= 0) return true;
+                }
+            }
+            return false;
+        } catch (Throwable t) {
+            // Если чужая модель падает при опросе геометрии на этапе запекания
+            // (например, использует ещё не запечённые PartialModel из Flywheel/Create или требует ModelData из мира),
+            // считаем её не подлежащей оборачиванию, чтобы не сломать чужой рендеринг.
+            return true;
         }
-        for (BakedQuad q : model.getQuads(state, null, rand, ModelData.EMPTY, null)) {
-            if (q.getTintIndex() >= 0) return true;
-        }
-        return false;
     }
 
     /**
@@ -401,10 +418,15 @@ public final class CraterTints {
         @Override
         public List<BakedQuad> getQuads(BlockState state, Direction side, RandomSource rand,
                                         ModelData data, RenderType renderType) {
-            List<BakedQuad> quads = base.getQuads(state, side, rand, data, renderType);
-            if (quads.isEmpty() || state == null || data != ModelData.EMPTY) {
+            List<BakedQuad> quads;
+            try {
+                quads = base.getQuads(state, side, rand, data, renderType);
+            } catch (Throwable t) {
+                return Collections.emptyList();
+            }
+            if (quads == null || quads.isEmpty() || state == null || data != ModelData.EMPTY) {
                 // Чужая ModelData может менять геометрию — кешировать по (block, side) нельзя.
-                return tinted(quads);
+                return quads == null ? Collections.emptyList() : tinted(quads);
             }
             ConcurrentHashMap<Long, List<BakedQuad>> bucket = cache.computeIfAbsent(
                     renderType == null ? NULL_RENDER_TYPE : renderType,
