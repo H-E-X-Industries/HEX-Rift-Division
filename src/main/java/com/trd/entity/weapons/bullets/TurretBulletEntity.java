@@ -935,6 +935,20 @@ public class TurretBulletEntity extends AbstractArrow {
                     ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "turret_bullet"));
 
     /**
+     * Тип урона зажигательной пули.
+     * <p>
+     * Отдельный от {@link #BULLET_DAMAGE}, чтобы он был огненным: помечен в
+     * {@code minecraft:is_fire} и несёт {@code effects: burning}. Тогда огнестойкие
+     * существа других модов получают от зажигательной пули повышенный урон (или полный
+     * иммунитет, если огню не подвержены) ровно как от огненной гранаты. В
+     * {@code bypasses_cooldown} он состоит наравне с обычным, иначе залп зажигательных
+     * пуль съедал бы сам себя блоком неуязвимости.
+     */
+    private static final ResourceKey<DamageType> FIRE_BULLET_DAMAGE =
+            ResourceKey.create(Registries.DAMAGE_TYPE,
+                    ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "fire_bullet"));
+
+    /**
      * Урон пули.
      * <p>
      * Наносится своим типом, который обходит блок неуязвимости, поэтому
@@ -942,10 +956,11 @@ public class TurretBulletEntity extends AbstractArrow {
      * цель не мешает второму попасть.
      */
     private DamageSource bulletDamageSource() {
+        ResourceKey<DamageType> type = getAmmoType() == AmmoType.INCENDIARY ? FIRE_BULLET_DAMAGE : BULLET_DAMAGE;
         Entity owner = this.getOwner();
         return owner instanceof LivingEntity livingOwner
-                ? this.damageSources().source(BULLET_DAMAGE, livingOwner, this)
-                : this.damageSources().source(BULLET_DAMAGE, null, this);
+                ? this.damageSources().source(type, livingOwner, this)
+                : this.damageSources().source(type, null, this);
     }
 
     private void handleEntityHit(Entity target) {

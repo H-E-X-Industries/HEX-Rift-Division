@@ -229,6 +229,8 @@
     "block.trd.wire_fence_alt":  "Thin Wire Fence",
     "block.trd.zinc_block":  "Цинковий блок",
     "death.attack.crusher":  "%1$s became minced meat",
+    "death.attack.fireBlast":  "%1$s burned to ash in the flames",
+    "death.attack.fireBullet":  "%1$s was burned down by %2$s",
     "entity.trd.depth_worm":  "Depth Worm",
     "entity.trd.grenade_if_fire_projectile":  "Incendiary Impact Grenade",
     "entity.trd.grenade_if_he_projectile":  "HE Impact Grenade",

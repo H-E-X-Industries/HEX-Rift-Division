@@ -5,12 +5,16 @@ import com.trd.block.basic.ModBlocks;
 import com.trd.block.basic.WasteGrassBlock;
 import com.trd.explosion.data.CraterTintData;
 import com.trd.explosion.data.CraterTintSync;
+import com.trd.main.MainRegistry;
 import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerLevel;
@@ -18,6 +22,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.block.Blocks;
@@ -70,6 +75,22 @@ import java.util.List;
  * не подгружаются принудительно.
  */
 public class ExplosionFire {
+
+    /**
+     * Тип урона огненного взрыва.
+     * <p>
+     * Раньше тут был обычный {@code minecraft:explosion}, и огонь был только визуальным:
+     * цель загоралась, но для чужого кода это выглядело как взрыв. Тип помечен в
+     * {@code minecraft:is_fire} и несёт {@code effects: burning}, поэтому поджигаемые
+     * и огнеустойчивые существа других модов (паразиты, грибки, some mobs) реагируют
+     * на огненную гранату как на огонь, а не как на взрыв.
+     * <p>
+     * Тег {@code minecraft:is_explosion} оставлен специально: очки гренadierщика режут
+     * урон именно по нему, и без него граната перестала бы защищать владельца.
+     */
+    public static final ResourceKey<DamageType> FIRE_DAMAGE =
+            ResourceKey.create(Registries.DAMAGE_TYPE,
+                    ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "fire_blast"));
 
     /** Максимальная дальность огненной волны от эпицентра. */
     public static float WAVE_RANGE = 20.0f;
@@ -849,7 +870,7 @@ public class ExplosionFire {
         synchronized (QUEUE_LOCK) {
             if (QUEUE.size() >= MAX_QUEUED_EXPLOSIONS) return;
         }
-        State state = new State(level, center, source, level.damageSources().explosion(source, source), radius, hurtSource);
+        State state = new State(level, center, source, level.damageSources().source(FIRE_DAMAGE, source, source), radius, hurtSource);
         collectEntities(state);
 
         synchronized (QUEUE_LOCK) {
