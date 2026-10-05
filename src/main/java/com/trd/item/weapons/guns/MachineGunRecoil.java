@@ -1,59 +1,56 @@
 package com.trd.item.weapons.guns;
 
+import com.trd.main.MainRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Mth;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.RenderFrameEvent;
 
 import java.util.Random;
 
 /**
- * Отдача пушки: разворот взгляда стрелка вверх и вбок на каждый выстрел.
+ * Отдача пушки: плавные подёргивания взгляда стрелка.
  *
- * <p>Отдача бьёт по <b>настоящему повороту игрока</b> ({@code setXRot} /
- * {@code setYRot}), а не по углам камеры в {@code ViewportEvent}, как было
- * раньше. Разница принципиальная: углы камеры серверу неизвестны, пуля летит
- * по настоящему повороту, поэтому смещение камеры всегда расходилось с
- * прицелом — игрок целился в одно место, а видел мушку в другом. Такое смещение
- * можно было сколько угодно усиливать и обязательно приходилось гасить: иначе
- * дёрганое изображение перестаёт читаться. Старое затухание за семь тиков и
- * было этим гашением — на автоматическом огне камера дрожала, а попасть можно
- * было туда же, куда и до начала очереди.
+ * <p>Отдача бьёт по настоящему повороту игрока ({@code setXRot} / {@code setYRot}),
+ * оставаясь в повороте без рассинхрона с пулей и прицелом.
  *
- * <p>Теперь увод остаётся в повороте, то есть одинаково в прицеле и в самой
- * пуле, и <b>не возвращается</b>: ствол уехал — уехал и прицел. Чтобы вести
- * очередь, придётся всё время тянуть мышь вниз и против угла вбок, и чем
- * очередь длиннее, тем сильнее увод (см. накопление огня в
- * {@link MachineGunItem#recoilScale}). Короткая очередь стоит почти ничего,
- * длинная без коррекции уходит в стену — ровно то, ради чего пушка и
- * управляется руками, а не прицелом.
+ * <p>Знак по обеим осям случаен (вверх/вниз и влево/вправо), создавая динамическое
+ * подёргивание оружия вокруг точки прицеливания без постоянного увода прицела в небо.
  *
- * <p>Поворот уезжает на сервер сам, из обычного пакета движения: клиент шлёт
- * {@code Rot}, как только угол отличается от последнего отправленного, поэтому
- * другие игроки видят, куда уводит стрелка. Вместе с текущим углом двигается и
- * предыдущий кадр ({@code xRotO} / {@code yRotO}) — иначе в третьем лице
- * модель игрока растянулась бы на все накопленные градусы, потому что между
- * кадрами она интерполируется между этими двумя величинами. Дельты, размеры и
- * клампинг взяты из {@code Entity#turn}, который делает ровно то же самое мыши:
- * отличаться от него нельзя, иначе камера и модель поедут по-разному.
- *
- * <p>Знак по обеим осям случаен: настоящая отдача автомата уводит ствол вверх
- * и вбок неравномерно, а ровное смещение в одну сторону читалось бы как
- * прилипание прицела к краю экрана.
+ * <p>Чтобы подёргивания не рябили и не стробили резкими скачками, каждый
+ * выстрел заносит импульсы в буфер ({@code pendingPitch} / {@code pendingYaw}),
+ * а рендер-обработчик {@link RenderFrameEvent.Pre} плавно переносит их в поворот
+ * игрока перед каждым кадром через экспоненциальное сглаживание по {@code deltaTime}.
  */
+@EventBusSubscriber(modid = MainRegistry.MOD_ID, value = Dist.CLIENT)
 public final class MachineGunRecoil {
 
     private static final Random RANDOM = new Random();
+
+    /** Скорость сглаживания подёргивания в секунду (экспоненциальный спад). */
+    private static final float SMOOTH_RATE = 26.0F;
+
+    private static float pendingPitch = 0.0F;
+    private static float pendingYaw = 0.0F;
+    private static long lastFrameNanos = 0L;
 
     private MachineGunRecoil() {
     }
 
     /**
-     * Уводит взгляд стрелка на выстрел.
-     * <p>
-     * Выстрел при этом уходит из пакета по <i>прошлому</i> углу: см. порядок
-     * вызовов в {@link MachineGunItem.ClientHandlers}. Иначе первый же выстрел
-     * летел бы уже сдвинутым прицелом, то есть отдача съедала бы всю точность
-     * первого выстрела.
+     * Сбрасывает накопленный импульс отдачи (при смене оружия или выходе).
+     */
+    public static void reset() {
+        pendingPitch = 0.0F;
+        pendingYaw = 0.0F;
+        lastFrameNanos = 0L;
+    }
+
+    /**
+     * Добавляет случайное подёргивание от выстрела в буфер плавного применения.
      *
      * @param scale множитель ослабления: броня, прицел, стойка и накопленный
      *              огонь, см. {@link MachineGunItem#recoilScale}
@@ -71,29 +68,68 @@ public final class MachineGunRecoil {
         float vertical = MachineGunItem.RECOIL_PITCH_DEGREES * scale;
         float horizontal = MachineGunItem.RECOIL_YAW_DEGREES * scale;
 
-        float pitchDelta = sign(vertical);
-        float yawDelta = sign(horizontal);
+        // Случайный знак по обеим осям (старая механика подёргивания),
+        // плюс органическая вариация силы импульса (90% .. 110%).
+        float pitchImpulse = sign(vertical);
+        float yawImpulse = sign(horizontal);
 
-        // Наклон клампится вручную: Entity#setXRot в 1.21.1 ничего не
-        // ограничивает, а за 90° взгляд переваливается через пол и картинка
-        // переворачивается.
-        //
-        // Yaw не заворачивается — так же, как в Entity#turn и в MouseHandler:
-        // клиент копит его без ограничения, и заворачивать здесь нельзя.
-        // Камера берёт угол как Mth.lerp(yRotO, yRot) и заворачивает уже итог,
-        // то есть если yRot прыгнул с +180 на -180, а yRotO остался на +179.4,
-        // то за один тик камера проезжает через весь оборот, и при резком
-        // повороте это читалось как выворот пушки на полкруга.
-        player.setXRot(Mth.clamp(player.getXRot() + pitchDelta, -90.0F, 90.0F));
-        player.setYRot(player.getYRot() + yawDelta);
+        pendingPitch += pitchImpulse;
+        pendingYaw += yawImpulse;
 
-        // Предыдущий кадр поворота едет на те же дельты — ровно как это делает
-        // Entity#turn, из которого взят и клампинг, и правка xRotO/yRotO.
-        player.xRotO = Mth.clamp(player.xRotO + pitchDelta, -90.0F, 90.0F);
-        player.yRotO += yawDelta;
+        // Защита от чрезмерного накопления при сильных лагах
+        pendingPitch = Mth.clamp(pendingPitch, -15.0F, 15.0F);
+        pendingYaw = Mth.clamp(pendingYaw, -15.0F, 15.0F);
     }
 
     private static float sign(float magnitude) {
-        return RANDOM.nextBoolean() ? magnitude : -magnitude;
+        float variation = 0.9F + RANDOM.nextFloat() * 0.2F;
+        return (RANDOM.nextBoolean() ? magnitude : -magnitude) * variation;
+    }
+
+    /**
+     * Плавное попиксельное применение подёргиваний перед каждым отрисовываемым кадром.
+     */
+    @SubscribeEvent
+    public static void onRenderFramePre(RenderFrameEvent.Pre event) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.level == null || mc.isPaused()) {
+            lastFrameNanos = 0L;
+            return;
+        }
+
+        long now = System.nanoTime();
+        if (lastFrameNanos == 0L) {
+            lastFrameNanos = now;
+            return;
+        }
+
+        float dt = (now - lastFrameNanos) * 1.0E-9F;
+        lastFrameNanos = now;
+
+        // Ограничиваем dt во избежание скачков при лагах/прогрузке мира
+        dt = Mth.clamp(dt, 0.0005F, 0.05F);
+
+        if (Math.abs(pendingPitch) < 0.0005F && Math.abs(pendingYaw) < 0.0005F) {
+            pendingPitch = 0.0F;
+            pendingYaw = 0.0F;
+            return;
+        }
+
+        float fraction = 1.0F - (float) Math.exp(-SMOOTH_RATE * dt);
+        float stepPitch = pendingPitch * fraction;
+        float stepYaw = pendingYaw * fraction;
+
+        LocalPlayer player = mc.player;
+
+        // Наклон клампится в [-90; 90], чтобы не перевернулась камера.
+        // Yaw не заворачивается — камера интерполирует yRotO и yRot без скачков через 360.
+        player.setXRot(Mth.clamp(player.getXRot() + stepPitch, -90.0F, 90.0F));
+        player.setYRot(player.getYRot() + stepYaw);
+
+        player.xRotO = Mth.clamp(player.xRotO + stepPitch, -90.0F, 90.0F);
+        player.yRotO += stepYaw;
+
+        pendingPitch -= stepPitch;
+        pendingYaw -= stepYaw;
     }
 }
