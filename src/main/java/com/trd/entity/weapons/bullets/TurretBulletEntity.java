@@ -486,15 +486,23 @@ public class TurretBulletEntity extends AbstractArrow {
         // пуля дёргалась на экране. Теперь клиент только принимает готовые
         // координаты и сглаживает их в рендере (см. flightDirection).
         if (this.level().isClientSide) {
-            // Позицию не двигаем и xOld не подменяем: рендер сглаживает её сам
-            // по двум точкам (serverPrev и текущей). Подменять xOld здесь было
-            // бессмысленно — тогда обе точки в смещении рендера совпадали и
-            // интерполяция давала ноль, то есть пуля шла дискретно.
+            this.tickCount++;
             expireRenderAnchor();
+            if (this.tickCount > 200 || !this.level().hasChunkAt(this.blockPosition())) {
+                this.discard();
+                return;
+            }
             return;
         }
 
         if (this.isRemoved() || this.inGround) {
+            this.discard();
+            return;
+        }
+
+        // Если пуля оказалась в непрогруженном чанке на сервере — сразу удаляем
+        BlockPos currentPos = this.blockPosition();
+        if (!this.level().hasChunkAt(currentPos)) {
             this.discard();
             return;
         }
@@ -592,6 +600,14 @@ public class TurretBulletEntity extends AbstractArrow {
                 detonate();
                 return;
             }
+        }
+
+        // Если чанк назначения не прогружен — сразу удаляем пулю,
+        // чтобы она не застывала в непрогруженной зоне
+        BlockPos nextPos = BlockPos.containing(endPos);
+        if (!this.level().hasChunkAt(nextPos)) {
+            this.discard();
+            return;
         }
 
         // Движение (только один раз)
