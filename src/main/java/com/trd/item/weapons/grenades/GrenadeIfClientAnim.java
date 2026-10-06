@@ -68,15 +68,17 @@ public final class GrenadeIfClientAnim {
     /**
      * Что было в руках на прошлом тике.
      * <p>
-     * Сравнивается только предмет, а не стопка и не её счёт. Счёт меняется при
-     * броске, и клипа броска больше нет — перезапускать по этому поводу
-     * выдергивание чеки было бы нелепо. Вторую гранату, подобранную в уже занятую
-     * руку, анимация тоже пропускает: рука не менялась, брать было нечего.
+     * Хранится предметом и его счётом, а не стопкой: сравнение стопок на каждый
+     * тик создавало бы мусор. Счёт важен не меньше предмета — у гранаты их в руке
+     * может быть сразу несколько, и каждая должна начать с новой выдернутой чекой.
+     * Смена счёта и есть бросок, так что и��ход счёт и есть «достать следующую».
      */
     @Nullable
     private static Item lastMain;
+    private static int lastMainCount;
     @Nullable
     private static Item lastOff;
+    private static int lastOffCount;
 
     private GrenadeIfClientAnim() {
     }
@@ -133,17 +135,40 @@ public final class GrenadeIfClientAnim {
         ItemStack off = player.getOffhandItem();
 
         if (main.getItem() instanceof GrenadeIfItem || off.getItem() instanceof GrenadeIfItem) {
-            if (main.getItem() != lastMain || off.getItem() != lastOff) {
+            if (handChanged(main, off)) {
                 triggerPull();
             }
             lastMain = main.getItem();
+            lastMainCount = main.getCount();
             lastOff = off.getItem();
+            lastOffCount = off.getCount();
         } else {
             reset();
             return;
         }
 
         advance();
+    }
+
+    /**
+     * Изменилось ли то, что в руках.
+     * <p>
+     * Ловится и смена слота, и подбор в руку, и <b>бросок</b>: у гранаты их в
+     * руке может быть несколько, и после броска счёт уменьшается — следующая
+     * выдергивает себе чеку сама. Без этого счёта многоствольная граната
+     * выдавала бы чеку только при первой выдаче, а дальше бросалась бы уже
+     * готовой, без звука и без жеста.
+     * <p>
+     * Клипа броска больше нет, поэтому ложных срабатываний на уменьшении стопки
+     * не случается: счёт меняется ровно один раз, и это ровно то, что нужно.
+     */
+    private static boolean handChanged(ItemStack main, ItemStack off) {
+        return changed(main.getItem(), main.getCount(), lastMain, lastMainCount)
+                || changed(off.getItem(), off.getCount(), lastOff, lastOffCount);
+    }
+
+    private static boolean changed(Item item, int count, @Nullable Item last, int lastCount) {
+        return item != last || count != lastCount;
     }
 
     /** Доводит клип до конца и проигрывает звуки, до которых дошла анимация. */
@@ -205,7 +230,9 @@ public final class GrenadeIfClientAnim {
         markers = List.of();
         markerCursor = 0;
         lastMain = null;
+        lastMainCount = 0;
         lastOff = null;
+        lastOffCount = 0;
     }
 
     /**

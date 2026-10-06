@@ -1,6 +1,7 @@
 package com.trd.client.gecko.item.grenades;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.trd.item.weapons.grenades.GrenadeIfAnimation;
 import com.trd.item.weapons.grenades.GrenadeIfClientAnim;
 import com.trd.item.weapons.grenades.GrenadeIfItem;
 import com.wf.gemrender.direct.ItemAppearance;
@@ -19,25 +20,23 @@ import javax.annotation.Nullable;
  * зашита анимация {@code pin_pull}. Какой кадр показывать — решает
  * {@link GrenadeIfClientAnim}.
  *
- * <p><b>Чека видна.</b> Именно её и выдёргивает {@code pin_pull}, так что предмет
- * показывает гранату собранной и готовую к броску. Прятать её надо не здесь, а у
- * летящей сущности — см. {@link com.trd.client.gecko.entity.grenades.GrenadeIfGltfRenderer}.
+ * <p><b>Чека видна</b>, и между анимациями предмет стоит на последнем кадре её
+ * выдергивания: возвращать его в исходную позу модели означало бы на глазах у
+ * игрока вдвигать чеку обратно. Отсюда клип уходит всегда, а не {@code null}:
+ * {@code null} у GemRender — это поза покоя, то есть ровно та, которой мы
+ * избегаем.
  *
- * <p><b>Пока анимация не идёт, клип не передаётся вовсе</b>: {@code null} у
- * GemRender означает позу покоя, а это ровно то, что нужно собранной гранате в руке.
- * Ставить рядом клип на нулевой секунде было бы тем же самым, только дороже.
- *
- * <p>Геометрия модели задана в единицах хитбокса предмета: корпус занимает
- * примерно 0.19 блока по ширину и 0.286 по высоте и стоит выше начала координат,
- * так что без {@link #MODEL_SCALE} граната выглядела бы втрое меньше обычного
- * спрайта, а с центрированием по нулю ещё и висела бы над серединой куба.
+ * <p>Центр смещения посчитан по вершинам модели в показываемой позе, а не
+ * подобран на глаз: на последнем кадре {@code pin_pull} он уезжает на -0.0134 по
+ * X и +0.1327 по Y. По исходной позе было бы 0 и +0.1414, то есть граната
+ * уходила бы вбок и вниз.
  */
 public class GrenadeIfGltfAppearance implements ItemAppearance {
 
     /**
      * Увеличение модели относительно её собственного размера.
      * <p>
-     * Два с половиной раза — это около 0.5 блока по ширине и 0.7 по высоте:
+     * Два с половиной раза — это около 0.5 блока по ширине и 0.75 по высоте:
      * граната уверенно читается в руке и от первого лица, но не занимает весь
      * куб, как это делает плоский спрайт. Число подбирается на глаз, единица —
      * модель в размере хитбокса.
@@ -45,21 +44,19 @@ public class GrenadeIfGltfAppearance implements ItemAppearance {
     private static final float MODEL_SCALE = 1F;
 
     /**
-     * Насколько корпус поднят над началом координат модели, в тех же единицах.
+     * Где в модели стоит её середина в показываемой позе, в единицах блока.
      * <p>
-     * Меш сидит на узле {@code main} со сдвигом 0.16 вверх, а вершины идут от
-     * -0.16 до +0.12, то есть в готовой модели корпус занимает Y от 0 до 0.284.
-     * Ровно его середина и сдвигается вниз, иначе граната висит над центром
-     * куба, куда её поставил рендерер GemRender.
+     * Меш сидит на узле {@code main} со сдвигом 0.1603 вверх, вершины идут от
+     * -0.1619 до +0.1241, и в готовой модели корпус занимает Y от -0.0016 до
+     * +0.2844. Последний кадр выдергивания чеки доверяет корпус на 10° вокруг
+     * шарнира у самого верха, и вместе с чекой смещение уезжает ещё и вбок.
      * <p>
-     * По X и Z смещения нет: узел сдвигает корпус на -0.0125, то есть ровно на
-     * половину его ширины, и по этим осям он уже симметричен.
-     * <p>
-     * Сдвиг задан <b>после</b> масштаба, поэтому остаётся в координатах модели и
-     * уезжает вместе с ней: PoseStack домножает матрицу справа, и translate
-     * до scale превратился бы в 0.355 блока вместо 0.142.
+     * Вычитается <b>после</b> масштаба: сдвиг остаётся в координатах модели и
+     * уезжает вместе с ней, потому что PoseStack домножает матрицу справа, и
+     * translate до scale превратился бы в 0.332 блока вместо 0.133.
      */
-    private static final float MODEL_CENTER_Y = 0.142F;
+    private static final float MODEL_CENTER_X = 0.0134F;
+    private static final float MODEL_CENTER_Y = 0.1327F;
 
     @Override
     public GemRenderGltfModel model(ItemStack stack, ItemDisplayContext context) {
@@ -72,17 +69,15 @@ public class GrenadeIfGltfAppearance implements ItemAppearance {
 
     @Override
     public @Nullable GltfAnimation clip(ItemStack stack, ItemDisplayContext context) {
-        String current = GrenadeIfClientAnim.current();
-        if (current == null) {
-            return null;
-        }
-        GemRenderGltfModel model = GrenadeIfVariants.model();
-        return model != null ? model.animation(current) : null;
+        return GrenadeIfVariants.poseClip(GrenadeIfAnimation.PIN_PULL);
     }
 
     @Override
     public float seconds(ItemStack stack, ItemDisplayContext context, float partialTick) {
-        return GrenadeIfClientAnim.current() == null ? 0.0F : GrenadeIfClientAnim.seconds(partialTick);
+        if (GrenadeIfClientAnim.current() != null) {
+            return GrenadeIfClientAnim.seconds(partialTick);
+        }
+        return GrenadeIfVariants.endSeconds(clip(stack, context));
     }
 
     @Override
@@ -95,6 +90,6 @@ public class GrenadeIfGltfAppearance implements ItemAppearance {
     @Override
     public void transform(ItemStack stack, ItemDisplayContext context, PoseStack poseStack) {
         poseStack.scale(MODEL_SCALE, MODEL_SCALE, MODEL_SCALE);
-        poseStack.translate(0.0F, -MODEL_CENTER_Y, 0.0F);
+        poseStack.translate(-MODEL_CENTER_X, -MODEL_CENTER_Y, 0.0F);
     }
 }

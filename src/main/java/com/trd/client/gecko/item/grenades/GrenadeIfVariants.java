@@ -1,17 +1,21 @@
 package com.trd.client.gecko.item.grenades;
 
+import com.mojang.logging.LogUtils;
 import com.trd.entity.weapons.grenades.GrenadeIfType;
 import com.trd.item.weapons.grenades.GrenadeIfAnimation;
 import com.trd.main.MainRegistry;
 import com.wf.gemrender.asset.GemRenderModels;
-import com.wf.gemrender.asset.ModelCache;
 import com.wf.gemrender.gltf.GemRenderGltfModel;
 import com.wf.gemrender.gltf.GltfAnimation;
 import com.wf.gemrender.gltf.NodeHide;
 import com.wf.gemrender.gltf.NodeTable;
+import com.wf.gemrender.gltf.PoseDriver;
 import com.wf.gemrender.texture.VariantUv;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import org.slf4j.Logger;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -40,16 +44,25 @@ import javax.annotation.Nullable;
  * появится, достаточно дописать её в {@link #TEXTURES}: ни список вариантов, ни
  * рендереры править не придётся.
  *
+ * <h2>Смещение корня в клипах</h2>
+ * Экспорт glTF из Blockbench кладёт <b>собственное смещение корневой кости</b> в
+ * каналы перемещения анимации — там, где в её же json стоит честный ноль. Смещение
+ * уже лежит в узле с мешем, так что в любой анимированной позе оно применяется
+ * дважды, и граната улетает на полблока вверх. {@link #poseClip} это снимает,
+ * поэтому правки не нужно повторять после каждого переэкспорта.
+ *
  * <h2>Чека</h2>
- * Чека на предмете есть — её видно, как её и выдёргивает клип {@code pin_pull}, —
- * и спрятана она только у летящей сущности, где уже нечего выдёргивать.
- * Скрыть кость иначе нельзя: её вершины остаются в скине, и «спрятать» их можно
- * только позой — {@link NodeHide} обнуляет масштаб кости, и всё, что к ней
- * привязано, схлопывается в точку. Подробности в {@link #hiddenPin}.
+ * У предмета чека есть — её видно, и её выдёргивает клип {@code pin_pull}. У
+ * летящей сущности её нет: чеку выдернули при броске, обратно она не вернётся.
+ * Прятать кость иначе нельзя — её вершины остаются в скине, и «убрать» их можно
+ * только позой: {@link NodeHide} обнуляет масштаб кости, и всё, что к ней
+ * привязано, схлопывается в точку.
  */
 public final class GrenadeIfVariants {
 
-    /** Модель ударной гранаты: геометрия и оба клипа анимаций общие для всех видов. */
+    private static final Logger LOGGER = LogUtils.getLogger();
+
+    /** Модель ударной гранаты: геометрия и клип анимации общие для всех видов. */
     private static final ResourceLocation MODEL =
             ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "models/item/grenade_if.gltf");
 
@@ -60,8 +73,8 @@ public final class GrenadeIfVariants {
     /** Имя кости чеки в модели. */
     private static final String PIN_BONE = "pin";
 
-    private static final org.slf4j.Logger LOGGER =
-            com.mojang.logging.LogUtils.getLogger();
+    /** Насколько анимированная поза расходится с покойной, если совпадений не нашлось. */
+    private static final float FLOAT_TOLERANCE = 1.0E-5F;
 
     /** Текстура на каждый вид гранаты. */
     private static final Map<GrenadeIfType, ResourceLocation> TEXTURES = new EnumMap<>(GrenadeIfType.class);
@@ -70,23 +83,31 @@ public final class GrenadeIfVariants {
     private static final List<Map<ResourceLocation, ResourceLocation>> VARIANTS;
 
     @Nullable
-    private static ModelCache.Handle<GemRenderGltfModel> handle;
+    private static com.wf.gemrender.asset.ModelCache.Handle<GemRenderGltfModel> handle;
 
-    /** Модель из кеша; нужна, чтобы строить клип со скрытой чекой. */
+    /** Модель из кеша; нужна, чтобы строить из неё клипы. */
     @Nullable
     private static GemRenderGltfModel model;
+
+    /** Смещение корневой кости, снятое с клипов; {@code null}, если снимать нечего. */
+    @Nullable
+    private static float[] rootOffset;
 
     /** Слот кости чеки; {@code -1}, если в модели такой кости нет или её нельзя двигать. */
     private static int pinSlot = -1;
 
-    /** Кеш клипа с прибитой чекой. Живёт до перезагрузки ресурсов. */
-    private static final Map<String, GltfAnimation> HIDDEN_PIN = new HashMap<>();
+    /** Кеш производных от модели. Живёт до перезагрузки ресурсов. */
+    private static final Map<String, GltfAnimation> CLIPS = new HashMap<>();
+
+    /** Клип покоя с прибитой чекой — то, чем рисуется летящая граната. */
+    @Nullable
+    private static GltfAnimation hiddenPin;
+
+    /** Поколение модели, под которым собраны производные выше. */
+    private static int cachedGeneration = -1;
 
     /** Виды, для которых уже пожаловались на отсутствие полосы в атласе. */
     private static final java.util.Set<GrenadeIfType> WARNED_BANDS = java.util.EnumSet.noneOf(GrenadeIfType.class);
-
-    /** Поколение модели, под которым собраны {@link #HIDDEN_PIN} и {@link #pinSlot}. */
-    private static int cachedGeneration = -1;
 
     static {
         TEXTURES.put(GrenadeIfType.GRENADE_IF, BASE_TEXTURE);
@@ -117,7 +138,7 @@ public final class GrenadeIfVariants {
      * нам нужна ровно одна: пока она грузится, гранаты просто не рисуются.
      * <p>
      * При перезагрузке ресурсов заново звать ничего не надо — ручка сама запроит
-     * модель у кеша GemRender, а производные от неё вещи пересоберутся в
+     * модель у кеша GemRender, а производные от неё пересоберутся в
      * {@link #model()} по смене поколения.
      */
     public static synchronized void load() {
@@ -132,33 +153,33 @@ public final class GrenadeIfVariants {
         load();
         GemRenderGltfModel loaded = handle != null ? handle.get() : null;
 
-        // Кеш производных живёт по поколению кеша GemRender, а не по ссылке на
-        // модель: после перезагрузки ресурсов та же самая модель приезжает
-        // заново с обновлёнными текстурами, и закешированные клипы обнулили бы
-        // масштаб кости по старой нумерации слотов.
+        // Производные живут по поколению кеша GemRender, а не по ссылке на модель:
+        // после перезагрузки ресурсов та же самая модель приезжает заново с
+        // обновлёнными текстурами, и закешированные клипы остались бы со старой
+        // нумерацией слотов.
         int generation = GemRenderModels.generation();
         if (loaded != model || generation != cachedGeneration) {
             model = loaded;
             cachedGeneration = generation;
-            HIDDEN_PIN.clear();
+            CLIPS.clear();
+            hiddenPin = null;
             WARNED_BANDS.clear();
             pinSlot = -1;
+            rootOffset = null;
 
             if (loaded != null) {
                 NodeTable table = loaded.layout().nodeTable();
                 int slot = table.slotOfName(PIN_BONE);
                 pinSlot = slot >= 0 && table.isPosable(slot) ? slot : -1;
+                rootOffset = rootTranslation(loaded);
 
                 // Полос в атласе должно быть ровно столько, сколько видов у
-                // гранаты: номер полосы задан ordinal'ом перечисления. Меньше —
-                // и часть видов молча нарисуется чужой текстурой, поэтому об этом
-                // стоит сказать в лог, а не полагаться на то, что заметят.
+                // гранаты: номер полосы задан ordinal'ом перечисления. Меньше — и
+                // часть видов молча нарисуется чужой текстурой.
                 if (loaded.variantCount() < GrenadeIfType.values().length) {
                     LOGGER.warn("Impact grenade atlas holds {} band(s) for {} type(s): {}",
                             loaded.variantCount(), GrenadeIfType.values().length,
-                            java.util.Arrays.stream(GrenadeIfType.values())
-                                    .map(t -> t.name() + "=" + t.ordinal())
-                                    .toList());
+                            Stream.of(GrenadeIfType.values()).map(t -> t.name() + "=" + t.ordinal()).toList());
                 }
             }
         }
@@ -166,16 +187,133 @@ public final class GrenadeIfVariants {
     }
 
     /**
+     * Смещение корневой кости — узла, на котором висит меш.
+     * <p>
+     * Оно нужно ровно одно: чтобы отличить «канал анимации честно двигает кость»
+     * от «канал анимации повторяет смещение корня».
+     */
+    @Nullable
+    private static float[] rootTranslation(GemRenderGltfModel loaded) {
+        for (var node : loaded.layout().nodes()) {
+            if (node.getMeshModels() != null && !node.getMeshModels().isEmpty()) {
+                float[] translation = node.getTranslation();
+                return translation == null || translation.length < 3 ? null : translation.clone();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Клип из модели, с которого снято смещение корня.
+     *
+     * @param clip имя клипа, как в glTF
+     */
+    @Nullable
+    public static synchronized GltfAnimation poseClip(String clip) {
+        GemRenderGltfModel loaded = model();
+        if (loaded == null) {
+            return null;
+        }
+
+        GltfAnimation cached = CLIPS.get(clip);
+        if (cached != null) {
+            return cached;
+        }
+
+        GltfAnimation source = loaded.animation(clip);
+        if (source == null) {
+            return null;
+        }
+
+        GltfAnimation fixed = stripRootOffset(loaded, source);
+        CLIPS.put(clip, fixed);
+        return fixed;
+    }
+
+    /**
+     * Убирает из клипа повтор смещения корневой кости.
+     * <p>
+     * Канал перемещения, который в любой свой кадр совпадает со смещением корня,
+     * не двигает кость, а дублирует то, что и так уже лежит в узле с мешем.
+     * Таких каналов в модели ровно один, и он записан экспортом Blockbench: в её
+     * же json на этом месте честный ноль.
+     * <p>
+     * Правка дописывается <b>после</b> всех драйверов клипа, а не вместо них:
+     * вычитать смещение нужно уже из того, что канал успел записать, иначе
+     * нулевой кадр перебил бы коррекцию.
+     */
+    private static GltfAnimation stripRootOffset(GemRenderGltfModel loaded, GltfAnimation clip) {
+        float[] root = rootOffset;
+        if (root == null) {
+            return clip;
+        }
+
+        NodeTable table = loaded.layout().nodeTable();
+        float[] state = table.newScratch();
+        table.resetToRest(state);
+        clip.apply(0.0F, state);
+
+        List<PoseDriver> drivers = null;
+        for (int slot = 0; slot < table.nodeCount(); slot++) {
+            int offset = table.offsetFor(slot, "translation");
+            if (offset < 0 || !table.isPosable(slot)) {
+                continue;
+            }
+
+            float dx = state[offset] - table.restTranslation(slot, 0);
+            float dy = state[offset + 1] - table.restTranslation(slot, 1);
+            float dz = state[offset + 2] - table.restTranslation(slot, 2);
+
+            boolean echoesRoot = Math.abs(dx - root[0]) < FLOAT_TOLERANCE
+                    && Math.abs(dy - root[1]) < FLOAT_TOLERANCE
+                    && Math.abs(dz - root[2]) < FLOAT_TOLERANCE;
+            if (!echoesRoot) {
+                continue;
+            }
+
+            if (drivers == null) {
+                drivers = new ArrayList<>(clip.drivers());
+            }
+            drivers.add(new TranslationFix(offset, -dx, -dy, -dz));
+            LOGGER.info("Impact grenade clip {}: dropped a duplicated root offset ({}, {}, {})",
+                    clip.name(), dx, dy, dz);
+        }
+
+        return drivers == null
+                ? clip
+                : GltfAnimation.procedural(clip.name(), clip.duration(), drivers.toArray(new PoseDriver[0]));
+    }
+
+    /** Вычитает из перемещения кости заранее найденную дельту. */
+    private record TranslationFix(int offset, float x, float y, float z) implements PoseDriver {
+        @Override
+        public void apply(float time, float[] state) {
+            state[offset] += x;
+            state[offset + 1] += y;
+            state[offset + 2] += z;
+        }
+
+        @Override
+        public float cycleSeconds() {
+            return 0.0F;
+        }
+
+        @Override
+        public int offset() {
+            return offset;
+        }
+    }
+
+    /**
      * Поза покоя модели с невидимой чекой — то, чем рисуется летящая граната.
      * <p>
-     * Клип нужен вместо {@code null}, хотя анимации не идёт: {@code null} у
+     * Клип нужен вместо {@code null}, хотя анимация не идёт: {@code null} у
      * GemRender означает исходные позы костей без драйверов, то есть с чекой на
      * месте, а спрятать её можно только драйвером.
      * <p>
      * Взятый на нулевой секунде {@link GrenadeIfAnimation#PIN_PULL}, он совпадает
      * с позой покоя во всём, кроме чеки: все ключи клипа на 0.0 — нули и единицы,
-     * то есть ровно исходные значения. Отдельный пустой клип ради этого не нужен,
-     * а время можно оставить нулевым.
+     * то есть ровно исходные значения.
      */
     @Nullable
     public static synchronized GltfAnimation hiddenPin() {
@@ -183,29 +321,38 @@ public final class GrenadeIfVariants {
         if (loaded == null) {
             return null;
         }
-
-        GltfAnimation cached = HIDDEN_PIN.get(PIN_BONE);
-        if (cached != null) {
-            return cached;
+        if (hiddenPin != null) {
+            return hiddenPin;
         }
 
-        GltfAnimation source = loaded.animation(GrenadeIfAnimation.PIN_PULL);
+        GltfAnimation source = poseClip(GrenadeIfAnimation.PIN_PULL);
         if (source == null) {
             return null;
         }
-
-        // Без кости чеки в модели прятать нечего, и клип отдаётся как есть.
         if (pinSlot < 0) {
-            HIDDEN_PIN.put(PIN_BONE, source);
+            // Кости чеки в модели нет — прятать нечего.
+            hiddenPin = source;
             return source;
         }
 
         // NodeHide ставится последним: драйверы клипа применяются по порядку, и
         // обнуление масштаба после них гарантирует, что чека не вернётся ни на
         // одном кадре — включая те, где анимация трогает её сама.
-        GltfAnimation hidden = source.with(NodeHide.of(loaded.layout().nodeTable(), pinSlot));
-        HIDDEN_PIN.put(PIN_BONE, hidden);
-        return hidden;
+        hiddenPin = source.with(NodeHide.of(loaded.layout().nodeTable(), pinSlot));
+        return hiddenPin;
+    }
+
+    /**
+     * Секунда последнего кадра клипа.
+     * <p>
+     * Нужна там, где предмет должен просто <b>стоять</b>: между анимациями это
+     * последний кадр выдергивания чеки, а возвращать гранату в исходную позу
+     * означало бы на глазах у игрока вдвигать чеку обратно. Передача времени
+     * {@code null}-ом здесь не годится: {@code null} у GemRender — это поза покоя,
+     * то есть ровно то, чего мы избегаем.
+     */
+    public static float endSeconds(@Nullable GltfAnimation clip) {
+        return clip == null ? 0.0F : Math.max(0.0F, clip.duration() - 1.0E-3F);
     }
 
     /**
@@ -225,9 +372,8 @@ public final class GrenadeIfVariants {
 
         int band = type.ordinal();
         if (band >= loaded.variantCount()) {
-            // Раз в кадр на каждый вид — это сотня строк в логе за секунду, а
-            // диагностика тут нужна один раз: молчащая оговорка «сломанные
-            // варианты» хуже, чем одна строка в лог.
+            // Раз в кадр на каждый вид — это сотня строк в лог за секунду, а
+            // диагностика нужна один раз.
             if (WARNED_BANDS.add(type)) {
                 LOGGER.warn("Impact grenade variant {} for {} is out of range: the atlas holds {} band(s), " +
                         "drawing the base one. Bands are GrenadeIfType ordinals.",
@@ -236,5 +382,10 @@ public final class GrenadeIfVariants {
             return VariantUv.NONE;
         }
         return loaded.variant(band);
+    }
+
+    /** Тип снаряда по сущности — на клиенте тип сущности известен наверняка. */
+    public static VariantUv variantOf(Entity entity) {
+        return variant(GrenadeIfType.typeOf(entity.getType()));
     }
 }

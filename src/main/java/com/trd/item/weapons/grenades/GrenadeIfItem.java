@@ -3,6 +3,7 @@ package com.trd.item.weapons.grenades;
 import com.trd.client.gecko.item.grenades.GrenadeIfRenderer;
 import com.trd.entity.weapons.grenades.GrenadeIfProjectileEntity;
 import com.trd.entity.weapons.grenades.GrenadeIfType;
+import com.mojang.logging.LogUtils;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.stats.Stats;
@@ -36,6 +37,8 @@ import java.util.function.Consumer;
  * он общий код, в отличие от клиентского автомата анимаций.
  */
 public class GrenadeIfItem extends ChargableGrenadeItem {
+
+    private static final org.slf4j.Logger LOGGER = LogUtils.getLogger();
 
     private final GrenadeIfType grenadeType;
     private final EntityType<? extends GrenadeIfProjectileEntity> entityType;
@@ -124,8 +127,19 @@ public class GrenadeIfItem extends ChargableGrenadeItem {
         level.addFreshEntity(grenade);
     }
 
+    /**
+     * Глифовский рендерер предмета.
+     * <p>
+     * Регистрируется ровно один раз на предмет, при первом обходе реестра
+     * клиентом, поэтому строка в лог — это ровно один раз на каждый вид гранаты.
+     * Если вида в логе не хватает, значит обход реестра оборвался на чужом
+     * предмете, и рендерер не был выдан вовсе: предмет тогда рисуется плоским
+     * спрайтом из {@code models/item}, потому что запасного пути у него нет.
+     */
     @Override
     public void initializeClient(Consumer<IClientItemExtensions> consumer) {
+        LOGGER.info("Impact grenade {}: registering the glTF item renderer", grenadeType);
+
         consumer.accept(new IClientItemExtensions() {
             private GrenadeIfRenderer renderer;
 
