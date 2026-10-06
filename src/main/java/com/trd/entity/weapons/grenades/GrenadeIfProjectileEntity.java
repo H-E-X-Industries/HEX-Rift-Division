@@ -16,7 +16,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.ThrowableItemProjectile;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -69,16 +68,33 @@ public class GrenadeIfProjectileEntity extends ThrowableItemProjectile {
         builder.define(STUCK_ENTITY_ID, -1);
     }
 
-    @Override
-    protected Item getDefaultItem() {
+    /**
+     * Тип ударной гранаты.
+     * <p>
+     * Поле {@link #grenadeType} есть только у той копии снаряда, что создана на
+     * сервере: на клиенте сущность поднимается фабрикой без типа, и он приезжает
+     * в синхронизированных данных. Поэтому значение читается оттуда и кэшируется
+     * — но только успешное: если тип ещё не приехал, кэшировать нечего, иначе
+     * первый же неудачный чих навсегда оставил бы рендер на базовой текстуре.
+     * <p>
+     * Рендеру вообще полагаться на это не стоит: у снаряда наверняка известен
+     * тип сущности, и по нему тип находится однозначно — см.
+     * {@link GrenadeIfType#typeOf}.
+     */
+    public GrenadeIfType getGrenadeType() {
         if (grenadeType == null) {
             try {
                 grenadeType = GrenadeIfType.valueOf(this.entityData.get(GRENADE_IF_TYPE_ID));
             } catch (Exception e) {
-                grenadeType = GrenadeIfType.GRENADE_IF;
+                return GrenadeIfType.GRENADE_IF;
             }
         }
-        return grenadeType != null ? grenadeType.getItem() : Items.SNOWBALL;
+        return grenadeType;
+    }
+
+    @Override
+    protected Item getDefaultItem() {
+        return getGrenadeType().getItem();
     }
 
     @Override
@@ -124,11 +140,7 @@ public class GrenadeIfProjectileEntity extends ThrowableItemProjectile {
 
         activateTimer();
 
-        if (grenadeType == null) {
-            grenadeType = GrenadeIfType.valueOf(this.entityData.get(GRENADE_IF_TYPE_ID));
-        }
-
-        if (grenadeType == GrenadeIfType.GRENADE_IF_SLIME) {
+        if (getGrenadeType() == GrenadeIfType.GRENADE_IF_SLIME) {
             super.onHitBlock(result); // слаймовую не трогаем, оставляем старую логику
             this.entityData.set(DATA_STUCK, true);
             this.setDeltaMovement(Vec3.ZERO);
@@ -146,11 +158,7 @@ public class GrenadeIfProjectileEntity extends ThrowableItemProjectile {
 
         activateTimer();
 
-        if (grenadeType == null) {
-            grenadeType = GrenadeIfType.valueOf(this.entityData.get(GRENADE_IF_TYPE_ID));
-        }
-
-        if (grenadeType == GrenadeIfType.GRENADE_IF_SLIME) {
+        if (getGrenadeType() == GrenadeIfType.GRENADE_IF_SLIME) {
             super.onHitEntity(result); // слаймовую не трогаем
             stickToEntity(result.getEntity());
         }
