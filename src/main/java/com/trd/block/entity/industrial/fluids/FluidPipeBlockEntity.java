@@ -96,9 +96,13 @@ public class FluidPipeBlockEntity extends BlockEntity {
     @Override
     protected void loadAdditional(net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider provider) {
         super.loadAdditional(tag, provider);
-        net.minecraft.resources.ResourceLocation fluidKey = net.minecraft.resources.ResourceLocation.parse(tag.getString("FilterFluid"));
-        this.filterFluid = net.minecraft.core.registries.BuiltInRegistries.FLUID.get(fluidKey);
-        if (this.filterFluid == null) this.filterFluid = net.minecraft.world.level.material.Fluids.EMPTY;
+        if (tag.contains("FilterFluid")) {
+            net.minecraft.resources.ResourceLocation fluidKey = net.minecraft.resources.ResourceLocation.tryParse(tag.getString("FilterFluid"));
+            this.filterFluid = fluidKey != null ? net.minecraft.core.registries.BuiltInRegistries.FLUID.get(fluidKey) : Fluids.EMPTY;
+            if (this.filterFluid == null) this.filterFluid = Fluids.EMPTY;
+        } else {
+            this.filterFluid = Fluids.EMPTY;
+        }
         this.hasFlowed = tag.getBoolean("HasFlowed");
         this.requestModelDataUpdate();
     }
@@ -118,10 +122,23 @@ public class FluidPipeBlockEntity extends BlockEntity {
     @Override
     public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt, net.minecraft.core.HolderLookup.Provider provider) {
         super.onDataPacket(net, pkt, provider);
-        // Принудительно заставляем клиент перерисовать точки при получении пакета
+        CompoundTag tag = pkt.getTag();
+        if (tag != null) {
+            loadAdditional(tag, provider);
+        }
         if (this.level != null && this.level.isClientSide) {
             this.requestModelDataUpdate();
-            this.level.sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), 3);
+            this.level.sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), 11);
+        }
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag, net.minecraft.core.HolderLookup.Provider provider) {
+        super.handleUpdateTag(tag, provider);
+        loadAdditional(tag, provider);
+        if (this.level != null && this.level.isClientSide) {
+            this.requestModelDataUpdate();
+            this.level.sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), 11);
         }
     }
 }

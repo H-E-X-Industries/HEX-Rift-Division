@@ -32,6 +32,23 @@ public class CentrifugeCylinderRenderer implements BlockEntityRenderer<Centrifug
 
     @Override
     public void render(CentrifugeCylinderBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
+        // Fallback рендер лопастей если Flywheel отключен
+        if (!com.trd.client.render.FlywheelFallbackHelper.isFlywheelActive(blockEntity.getLevel())) {
+            float timeInSeconds = blockEntity.getLevel() != null ? (blockEntity.getLevel().getGameTime() + partialTick) / 20.0f : 0f;
+            float currentAngle = 0f;
+            if (blockEntity.getProgress() > 0) {
+                currentAngle = (timeInSeconds * 120f * ((float) Math.PI / 30.0f)) % ((float) Math.PI * 2);
+            }
+            poseStack.pushPose();
+            poseStack.translate(0.5f, 0, 0.5f);
+            poseStack.mulPose(com.mojang.math.Axis.YP.rotation(currentAngle));
+            com.trd.client.render.FlywheelFallbackHelper.renderPartialModel(
+                    com.trd.client.render.flywheel.ModModels.CENTRIFUGE_CYLINDER_LOPASTI,
+                    poseStack, bufferSource, blockEntity.getBlockState(), packedLight, packedOverlay
+            );
+            poseStack.popPose();
+        }
+
         FluidStack fluidStack = blockEntity.getInputTank().getFluid();
         if (fluidStack.isEmpty()) return;
 
@@ -152,5 +169,15 @@ public class CentrifugeCylinderRenderer implements BlockEntityRenderer<Centrifug
         }
 
         poseStack.popPose();
+    }
+
+    @Override
+    public boolean shouldRenderOffScreen(CentrifugeCylinderBlockEntity be) {
+        return true;
+    }
+
+    @Override
+    public int getViewDistance() {
+        return 256;
     }
 }

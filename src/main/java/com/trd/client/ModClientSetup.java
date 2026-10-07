@@ -61,7 +61,19 @@ public class ModClientSetup {
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.CENTRIFUGE_CYLINDER_BE.get(), com.trd.client.render.ber.CentrifugeCylinderRenderer::new);
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.VISHELASHIVATEL_BE.get(), com.trd.client.render.ber.VishelachivatelRenderer::new);
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.STANOK_BE.get(), com.trd.client.render.StanokRenderer::new);
-        // event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.FUEL_TANK_SMALL_BE.get(), com.trd.client.render.ber.FuelTankRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.FUEL_TANK_SMALL_BE.get(), com.trd.client.render.ber.FuelTankSmallRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.BOILER_BE.get(), com.trd.client.render.ber.BoilerRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.STEAM_ENGINE_BE.get(), com.trd.client.render.ber.SteamEngineRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.MOTOR_ELECTRO_BE.get(), com.trd.client.render.ber.MotorElectroRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.WATER_PUMP_BE.get(), com.trd.client.render.ber.WaterPumpRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.MILLSTONE.get(), com.trd.client.render.ber.MillstoneRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.BEARING_BE.get(), com.trd.client.render.ber.BearingRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.CLUTCH_BE.get(), com.trd.client.render.ber.ClutchRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.HAND_CRANK_BE.get(), com.trd.client.render.ber.HandCrankRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.TACHOMETER_BE.get(), com.trd.client.render.ber.TachometerRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.STATOR_BE.get(), com.trd.client.render.ber.StatorRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.DROBITEL_BE.get(), com.trd.client.render.ber.DrobitelRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.SHAFT_BE.get(), com.trd.client.render.ber.ShaftRenderer::new);
 
         // Пять текстур пули сшиваются в один атлас вариантов. Звать надо до
         // первого выстрела, иначе первые пули просто не рисуются: модель
@@ -421,18 +433,19 @@ public class ModClientSetup {
                     net.minecraft.world.level.material.Fluid fluid = be.getFilterFluid();
                     if (fluid != null && fluid != net.minecraft.world.level.material.Fluids.EMPTY) {
                         if (fluid == net.minecraft.world.level.material.Fluids.LAVA || fluid == net.minecraft.world.level.material.Fluids.FLOWING_LAVA) {
-                            return 0xFF5500;
+                            return 0xFFFF5500;
                         }
                         if (fluid == net.minecraft.world.level.material.Fluids.WATER || fluid == net.minecraft.world.level.material.Fluids.FLOWING_WATER) {
-                            return 0x3F76E4;
+                            return 0xFF3F76E4;
                         }
-                        return net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions.of(fluid.getFluidType())
+                        int tint = net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions.of(fluid.getFluidType())
                                 .getTintColor(new net.neoforged.neoforge.fluids.FluidStack(fluid, 1000));
+                        return 0xFF000000 | tint;
                     }
                 }
             }
             return -1;
-        }, com.trd.block.basic.ModBlocks.BRONZE_FLUID_PIPE.get(), com.trd.block.basic.ModBlocks.STEEL_FLUID_PIPE.get(), com.trd.block.basic.ModBlocks.LEAD_FLUID_PIPE.get(), com.trd.block.basic.ModBlocks.TUNGSTEN_FLUID_PIPE.get());
+        }, com.trd.block.basic.ModBlocks.BRONZE_FLUID_PIPE.get(), com.trd.block.basic.ModBlocks.STEEL_FLUID_PIPE.get(), com.trd.block.basic.ModBlocks.LEAD_FLUID_PIPE.get(), com.trd.block.basic.ModBlocks.TUNGSTEN_FLUID_PIPE.get(), com.trd.block.basic.ModBlocks.PAINTABLE_PIPE.get(), com.trd.block.basic.ModBlocks.PIPE_SPOTS.get());
 
         // Кратерные блоки с собственным свойством DARKNESS (мягкий базальт + выжженная трава):
         // тёмный уровень живёт в BlockState, а не в позиционной базе, поэтому красим здесь.
@@ -600,6 +613,7 @@ public class ModClientSetup {
 
             @Override
             public boolean skipVanillaRender(com.trd.block.entity.industrial.rotation.ShaftBlockEntity be) {
+                if (com.wf.gemrender.direct.IrisDirectBridge.isRenderingShadows()) return false;
                 return true;
             }
         });
@@ -612,6 +626,7 @@ public class ModClientSetup {
 
             @Override
             public boolean skipVanillaRender(com.trd.block.entity.industrial.rotation.BearingBlockEntity be) {
+                if (com.wf.gemrender.direct.IrisDirectBridge.isRenderingShadows()) return false;
                 return true;
             }
         });
@@ -624,6 +639,7 @@ public class ModClientSetup {
 
             @Override
             public boolean skipVanillaRender(com.trd.block.entity.industrial.rotation.HandCrankBlockEntity be) {
+                if (com.wf.gemrender.direct.IrisDirectBridge.isRenderingShadows()) return false;
                 return true;
             }
         });
@@ -636,6 +652,7 @@ public class ModClientSetup {
 
             @Override
             public boolean skipVanillaRender(com.trd.block.entity.industrial.rotation.ClutchBlockEntity be) {
+                if (com.wf.gemrender.direct.IrisDirectBridge.isRenderingShadows()) return false;
                 return true;
             }
         });
@@ -648,6 +665,7 @@ public class ModClientSetup {
 
             @Override
             public boolean skipVanillaRender(com.trd.block.entity.industrial.rotation.MotorElectroBlockEntity be) {
+                if (com.wf.gemrender.direct.IrisDirectBridge.isRenderingShadows()) return false;
                 return true;
             }
         });
@@ -660,6 +678,7 @@ public class ModClientSetup {
 
             @Override
             public boolean skipVanillaRender(com.trd.block.entity.industrial.rotation.TachometerBlockEntity be) {
+                if (com.wf.gemrender.direct.IrisDirectBridge.isRenderingShadows()) return false;
                 return true;
             }
         });
@@ -672,6 +691,7 @@ public class ModClientSetup {
 
             @Override
             public boolean skipVanillaRender(com.trd.block.entity.industrial.fluids.WaterPumpBlockEntity be) {
+                if (com.wf.gemrender.direct.IrisDirectBridge.isRenderingShadows()) return false;
                 return true;
             }
         });
@@ -684,6 +704,7 @@ public class ModClientSetup {
 
             @Override
             public boolean skipVanillaRender(com.trd.multiblock.industrial.boiler.BoilerBlockEntity be) {
+                if (com.wf.gemrender.direct.IrisDirectBridge.isRenderingShadows()) return false;
                 return true;
             }
         });
@@ -696,6 +717,7 @@ public class ModClientSetup {
 
             @Override
             public boolean skipVanillaRender(com.trd.multiblock.industrial.steam_engine.SteamEngineBlockEntity be) {
+                if (com.wf.gemrender.direct.IrisDirectBridge.isRenderingShadows()) return false;
                 return true;
             }
         });
@@ -708,6 +730,7 @@ public class ModClientSetup {
 
             @Override
             public boolean skipVanillaRender(com.trd.block.entity.industrial.rotation.StatorBlockEntity be) {
+                if (com.wf.gemrender.direct.IrisDirectBridge.isRenderingShadows()) return false;
                 return true;
             }
         });

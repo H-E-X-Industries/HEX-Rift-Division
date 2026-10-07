@@ -53,7 +53,7 @@ public class PipeBakedModel implements IDynamicBakedModel {
 
                 for (BakedQuad quad : spotQuads) {
                     quads.add(new BakedQuad(
-                            quad.getVertices(),
+                            quad.getVertices().clone(),
                             1, // tintIndex
                             quad.getDirection(),
                             quad.getSprite(),
