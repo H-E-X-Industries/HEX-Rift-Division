@@ -376,6 +376,17 @@ public class ModItems {
             () -> new com.trd.item.weapons.grenades.GrenadeIfItem(new Item.Properties().stacksTo(16),
                     GrenadeIfType.GRENADE_IF_FIRE, ModEntities.GRENADE_IF_FIRE_PROJECTILE.get()));
 
+    /**
+     * Все ударные гранаты.
+     * <p>
+     * Список один на всех нужен клиентскому рендереру предмета: у них одна
+     * модель, один клип анимации и один набор вариантов текстуры, различается
+     * только вид. Объявляется после всех четырёх, иначе последние были бы ещё
+     * не инициализированы.
+     */
+    public static final java.util.List<DeferredItem<Item>> GRENADE_IF_ITEMS = java.util.List.of(
+            GRENADE_IF, GRENADE_IF_HE, GRENADE_IF_SLIME, GRENADE_IF_FIRE);
+
     public static final DeferredItem<Item> GRENADE_NUC = ITEMS.register("grenade_nuc",
             () -> new com.trd.item.weapons.grenades.GrenadeNucItem(new Item.Properties().stacksTo(16),
                     ModEntities.GRENADE_NUC_PROJECTILE.get()));

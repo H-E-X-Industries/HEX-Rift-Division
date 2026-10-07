@@ -1,10 +1,7 @@
 package com.trd.item.weapons.grenades;
 
-import com.trd.client.gecko.item.grenades.GrenadeIfRenderer;
 import com.trd.entity.weapons.grenades.GrenadeIfProjectileEntity;
 import com.trd.entity.weapons.grenades.GrenadeIfType;
-import com.mojang.logging.LogUtils;
-import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
@@ -15,9 +12,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
-
-import java.util.function.Consumer;
 
 /**
  * Ударная граната с инерционным взрывателем: взрывается по фиксированной задержке
@@ -35,10 +29,14 @@ import java.util.function.Consumer;
  * nearby-игрокам, потому что момент «взял в руку» на сервере не существует, а
  * бросок слышат все. Поэтому здесь вызывается только {@link GrenadeIfAnimation}:
  * он общий код, в отличие от клиентского автомата анимаций.
+ *
+ * <p><b>Клиентские расширения здесь не выдаются.</b> Старый способ с
+ * {@code Item#initializeClient} в NeoForge 21.1 не вызывается ниоткуда, поэтому
+ * рендерер предмета выдаётся подпиской на
+ * {@code RegisterClientExtensionsEvent} — см.
+ * {@code com.trd.client.gecko.item.grenades.GrenadeIfClientItem}.
  */
 public class GrenadeIfItem extends ChargableGrenadeItem {
-
-    private static final org.slf4j.Logger LOGGER = LogUtils.getLogger();
 
     private final GrenadeIfType grenadeType;
     private final EntityType<? extends GrenadeIfProjectileEntity> entityType;
@@ -93,6 +91,14 @@ public class GrenadeIfItem extends ChargableGrenadeItem {
             }
         }
 
+        // Клиенту счёт в стопке приходит отдельным пакетом и может не прийти в
+        // этом же тике, поэтому повод для анимации — сам факт броска, а не
+        // изменение счёта: следующая граната в руке обязана сама выдернуть себе
+        // чеку, иначе после кулдауна кидаешь уже готовую.
+        if (level.isClientSide) {
+            GrenadeIfClientAnim.onThrown(hand);
+        }
+
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
     }
 
@@ -125,36 +131,5 @@ public class GrenadeIfItem extends ChargableGrenadeItem {
         grenade.setItem(stack);
         grenade.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, velocity, 1.0F);
         level.addFreshEntity(grenade);
-    }
-
-    /**
-     * Глифовский рендерер предмета.
-     * <p>
-     * Регистрируется ровно один раз на предмет, при первом обходе реестра
-     * клиентом, поэтому строка в лог — это ровно один раз на каждый вид гранаты.
-     * Если вида в логе не хватает, значит обход реестра оборвался на чужом
-     * предмете, и рендерер не был выдан вовсе: предмет тогда рисуется плоским
-     * спрайтом из {@code models/item}, потому что запасного пути у него нет.
-     */
-    @Override
-    public void initializeClient(Consumer<IClientItemExtensions> consumer) {
-        LOGGER.info("Impact grenade {}: registering the glTF item renderer", grenadeType);
-
-        consumer.accept(new IClientItemExtensions() {
-            private GrenadeIfRenderer renderer;
-
-            @Override
-            public net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer getCustomRenderer() {
-                if (renderer == null) {
-                    renderer = new GrenadeIfRenderer();
-                }
-                return renderer;
-            }
-
-            @Override
-            public HumanoidModel.ArmPose getArmPose(LivingEntity entity, InteractionHand hand, ItemStack stack) {
-                return HumanoidModel.ArmPose.ITEM;
-            }
-        });
     }
 }

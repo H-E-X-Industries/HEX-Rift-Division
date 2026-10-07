@@ -32,37 +32,16 @@ import net.minecraft.resources.ResourceLocation;
  */
 public class GrenadeIfGltfRenderer extends EntityRenderer<GrenadeIfProjectileEntity> {
 
-    /**
- * Увеличение модели относительно её собственного размера.
- * <p>
-     * Единица — модель в размере хитбокса, но единая цифра здесь не годится:
-     * корпус в модели 0.286 блока в высоту, а хитбоксы у видов разные (0.25 у
-     * ударной и липучей, 0.5 у фугасной и зажигательной). При постоянном
-     * увеличении граната либо наполовину уходила в блок под собой, либо болталась
-     * в верхней половине хитбокса. Поэтому масштаб считается от хитбокса — см.
-     * {@link #scaleFor}.
+/**
+     * Увеличение модели относительно её собственного размера.
+     * <p>
+     * Единица — модель в размере хитбокса, и она же единственно верная. Считать
+     * масштаб от хитбокса, как было раньше, смысла не было: у видов разные
+     * хитбоксы (0.25 у ударной и липучей, 0.5 у фугасной и зажигательной), и одна
+     * и та же цифра либо уводила гранату наполовину в блок под собой, либо
+     * болтала её в верхней половине хитбокса. Размер теперь задаёт сама модель.
      */
     private static final float MODEL_SCALE = 1.0F;
-
-    /** Наибольший габарит корпуса в модели, в единицах блока. */
-    private static final float MODEL_EXTENT = 0.286F;
-
-    /** Какую долю хитбокса занимает корпус. */
-    private static final float HITBOX_FILL = 0.9F;
-
-    /**
-     * Масштаб, при котором корпус целиком помещается в хитбокс.
-     * <p>
-     * Модель рисуется от центра хитбокса, поэтому при {@link #MODEL_EXTENT}
-     * больше высоты хитбокса её нижняя четверть уезжает ниже нуля — то есть в
-     * блок, на котором граната лежит, и в блоки вокруг, когда она встаёт на
-     * ребро. Запас на {@link #HITBOX_FILL} оставлен на чеку с дужкой и на
-     * сглаживание: они вылезают за габарит корпуса.
-     */
-    private static float scaleFor(float bbHeight) {
-        float fit = bbHeight * HITBOX_FILL / MODEL_EXTENT;
-        return Math.min(MODEL_SCALE, Math.max(fit, 0.05F));
-    }
 
     /**
      * Где в модели стоит её середина, в единицах блока.
@@ -116,7 +95,8 @@ public class GrenadeIfGltfRenderer extends EntityRenderer<GrenadeIfProjectileEnt
             return;
         }
 
-        var model = GrenadeIfVariants.model();
+        var type = GrenadeIfVariants.typeOf(entity);
+        var model = GrenadeIfVariants.model(type);
         if (model == null) {
             return;
         }
@@ -125,8 +105,7 @@ public class GrenadeIfGltfRenderer extends EntityRenderer<GrenadeIfProjectileEnt
 
         // Центр хитбокса — до масштаба: перенос после scale домножается им же.
         poseStack.translate(0.0F, entity.getBbHeight() * 0.5F, 0.0F);
-        float scale = scaleFor(entity.getBbHeight());
-        poseStack.scale(scale, scale, scale);
+        poseStack.scale(MODEL_SCALE, MODEL_SCALE, MODEL_SCALE);
         poseStack.translate(0.0F, -MODEL_CENTER_Y, 0.0F);
 
         // Граната летит туда, куда смотрит бросивший, — углы приходят с сервера
@@ -144,9 +123,9 @@ public class GrenadeIfGltfRenderer extends EntityRenderer<GrenadeIfProjectileEnt
         // NodeHide не применится и чека останется видимой. Тип берётся из типа
         // сущности, а не из синхронизированных данных снаряда — см.
         // GrenadeIfType#typeOf.
-        DirectRenderer.submit(model, GrenadeIfVariants.hiddenPin(), 0.0F,
+        DirectRenderer.submit(model, GrenadeIfVariants.hiddenPin(type), 0.0F,
                 poseStack.last().pose(), packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFFFF,
-                DirectPass.LEVEL, GrenadeIfVariants.variantOf(entity));
+                DirectPass.LEVEL);
 
         poseStack.popPose();
     }

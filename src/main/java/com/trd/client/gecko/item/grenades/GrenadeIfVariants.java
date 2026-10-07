@@ -10,7 +10,6 @@ import com.wf.gemrender.gltf.GltfAnimation;
 import com.wf.gemrender.gltf.NodeHide;
 import com.wf.gemrender.gltf.NodeTable;
 import com.wf.gemrender.gltf.PoseDriver;
-import com.wf.gemrender.texture.VariantUv;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import org.slf4j.Logger;
@@ -20,36 +19,34 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
 /**
- * Модель ударной гранаты и её текстуры, разложенные по видам.
+ * Модели ударных гранаты: по одной на каждый вид, с текстурой в самой модели.
  *
- * <p>Геометрия у всех ударных одна: та же граната, различается только цвет
- * корпуса. Один набор текстур на четыре вида поэтому собирается не в четыре
- * модели, а в варианты: при загрузке GemRender сшивает их в общий атлас и
- * отдаёт по {@link VariantUv} на каждую. Смена вида стоит ноль перезагрузок
- * модели и ноль лишних draw call — та же геометрия, та же палитра, другая ячейка.
+ * <h2>Почему не варианты-атлас</h2>
+ * Раньше все четыре вида рисовались одной моделью, а различались полосой в
+ * атласе, который GemRender собирает при загрузке. На практике это вышло
+ * ненадёжно: базовая граната при этом брала нулевую полосу и была в порядке, а
+ * остальные виды не отличались от плоского спрайта — и починить это, не имея
+ * возможности проверить, что именно происходит внутри кеша, было нечем. Здесь у
+ * каждого вида своя модель со своей текстурой, зашитой в
+ * {@code images.extras.resourceLocation}, и грузится она обычным
+ * {@link GemRenderModels#get} — тем же путём, что и пуля и пушка, которые
+ * работают.
  *
- * <p>Номер полосы задан {@link GrenadeIfType#ordinal()} и жёстко зашит в модель:
- * обычная ударная — нулевая, дальше по одной на фугасную, липучку и зажигательную.
- * Список вариантов и карта текстур строятся из одного {@link #TEXTURES},
- * поэтому разъехаться они не могут; сверху стоит проверка по
- * {@link GemRenderGltfModel#variantCount()}.
- *
- * <p><b>Липучка.</b> Своей 128×128 текстуры у неё пока нет — старая осталась
- * 16×16 спрайтом, — поэтому она берёт полосу обычной ударной. Когда текстура
- * появится, достаточно дописать её в {@link #TEXTURES}: ни список вариантов, ни
- * рендереры править не придётся.
+ * <p>Геометрия у моделей одна и та же, и это осознанно: общего формата у
+ * GemRender нет, а различаются виды только цветом корпуса. Файлы отличаются
+ * одной строкой — путём к текстуре.
  *
  * <h2>Смещение корня в клипах</h2>
  * Экспорт glTF из Blockbench кладёт <b>собственное смещение корневой кости</b> в
  * каналы перемещения анимации — там, где в её же json стоит честный ноль. Смещение
  * уже лежит в узле с мешем, так что в любой анимированной позе оно применяется
- * дважды, и граната улетает на полблока вверх. {@link #poseClip} это снимает,
- * поэтому правки не нужно повторять после каждого переэкспорта.
+ * дважды, и граната улетает на полблока вверх, а к концу клипа падает обратно.
+ * {@link #poseClip} это снимает, поэтому правки не нужно повторять после каждого
+ * переэкспорта.
  *
  * <h2>Чека</h2>
  * У предмета чека есть — её видно, и её выдёргивает клип {@code pin_pull}. У
@@ -62,128 +59,96 @@ public final class GrenadeIfVariants {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    /** Модель ударной гранаты: геометрия и клип анимации общие для всех видов. */
-    private static final ResourceLocation MODEL =
-            ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "models/item/grenade_if.gltf");
-
-    /** Текстура, прописанная в самой модели; она же нулевая полоса атласа. */
-    private static final ResourceLocation BASE_TEXTURE =
-            ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "textures/item/grenade_if.png");
-
     /** Имя кости чеки в модели. */
     private static final String PIN_BONE = "pin";
 
     /** Насколько анимированная поза расходится с покойной, если совпадений не нашлось. */
     private static final float FLOAT_TOLERANCE = 1.0E-5F;
 
-    /** Текстура на каждый вид гранаты. */
-    private static final Map<GrenadeIfType, ResourceLocation> TEXTURES = new EnumMap<>(GrenadeIfType.class);
+    /** Модель на каждый вид. Геометрия общая, различается только зашитая текстура. */
+    private static final Map<GrenadeIfType, ResourceLocation> MODELS = new EnumMap<>(GrenadeIfType.class);
 
-    /** Варианты в порядке {@link GrenadeIfType#ordinal()}: индекс списка = полоса в атласе. */
-    private static final List<Map<ResourceLocation, ResourceLocation>> VARIANTS;
+    /** Клипы и поза покоя с прибитой чекой — по одному набору на модель. */
+    private static final Map<ResourceLocation, Derived> DERIVED = new HashMap<>();
 
-    @Nullable
-    private static com.wf.gemrender.asset.ModelCache.Handle<GemRenderGltfModel> handle;
+    /** Всё, что строится поверх модели и живёт до перезагрузки ресурсов. */
+    private static final class Derived {
 
-    /** Модель из кеша; нужна, чтобы строить из неё клипы. */
-    @Nullable
-    private static GemRenderGltfModel model;
+        @Nullable
+        GemRenderGltfModel model;
 
-    /** Смещение корневой кости, снятое с клипов; {@code null}, если снимать нечего. */
-    @Nullable
-    private static float[] rootOffset;
+        /** Поколение кеша, под которым собраны клипы и слот чеки. */
+        int generation = -1;
 
-    /** Слот кости чеки; {@code -1}, если в модели такой кости нет или её нельзя двигать. */
-    private static int pinSlot = -1;
+        /** Слот кости чеки; {@code -1}, если её нет в модели или она не двигается. */
+        int pinSlot = -1;
 
-    /** Кеш производных от модели. Живёт до перезагрузки ресурсов. */
-    private static final Map<String, GltfAnimation> CLIPS = new HashMap<>();
+        /** Смещение корневой кости, снятое с клипов; {@code null}, если снимать нечего. */
+        @Nullable
+        float[] rootOffset;
 
-    /** Клип покоя с прибитой чекой — то, чем рисуется летящая граната. */
-    @Nullable
-    private static GltfAnimation hiddenPin;
+        final Map<String, GltfAnimation> clips = new HashMap<>();
 
-    /** Поколение модели, под которым собраны производные выше. */
-    private static int cachedGeneration = -1;
-
-    /** Виды, для которых уже пожаловались на отсутствие полосы в атласе. */
-    private static final java.util.Set<GrenadeIfType> WARNED_BANDS = java.util.EnumSet.noneOf(GrenadeIfType.class);
+        @Nullable
+        GltfAnimation hiddenPin;
+    }
 
     static {
-        TEXTURES.put(GrenadeIfType.GRENADE_IF, BASE_TEXTURE);
-        TEXTURES.put(GrenadeIfType.GRENADE_IF_HE, texture("grenade_if_he"));
-        // Липучка: своей текстуры пока нет, см. javadoc класса.
-        TEXTURES.put(GrenadeIfType.GRENADE_IF_SLIME, BASE_TEXTURE);
-        TEXTURES.put(GrenadeIfType.GRENADE_IF_FIRE, texture("grenade_if_fire"));
-
-        VARIANTS = Stream.of(GrenadeIfType.values())
-                .map(TEXTURES::get)
-                .map(tex -> Map.of(BASE_TEXTURE, tex))
-                .toList();
+        for (GrenadeIfType type : GrenadeIfType.values()) {
+            MODELS.put(type, ResourceLocation.fromNamespaceAndPath(
+                    MainRegistry.MOD_ID, "models/item/" + textureName(type) + ".gltf"));
+        }
     }
 
     private GrenadeIfVariants() {
     }
 
-    private static ResourceLocation texture(String name) {
-        return ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "textures/item/" + name + ".png");
-    }
-
     /**
-     * Ставит модель в очередь на загрузку. Звать достаточно один раз, из
-     * клиентской регистрации рендереров.
+     * Имя вида без префикса {@code grenade_if_}.
      * <p>
-     * По одной модели {@code GemRenderModels.variants} кладёт билдер в общий
-     * словарь по {@code putIfAbsent}, но каждый вызов возвращает новую ручку, а
-     * нам нужна ровно одна: пока она грузится, гранаты просто не рисуются.
-     * <p>
-     * При перезагрузке ресурсов заново звать ничего не надо — ручка сама запроит
-     * модель у кеша GemRender, а производные от неё пересоберутся в
-     * {@link #model()} по смене поколения.
+     * Оно же имя текстуры и имя файла модели, поэтому расходиться им негде:
+     * текстуры приходят из этого же блока в Blockbench, и всё, что нужно поменять
+     * при появлении своей — одну строку в этом методе.
      */
-    public static synchronized void load() {
-        if (handle == null) {
-            handle = GemRenderModels.variants(MODEL, MODEL, VARIANTS);
-        }
+    private static String textureName(GrenadeIfType type) {
+        return switch (type) {
+            case GRENADE_IF -> "grenade_if";
+            case GRENADE_IF_HE -> "grenade_if_he";
+            case GRENADE_IF_SLIME -> "grenade_if_slime";
+            case GRENADE_IF_FIRE -> "grenade_if_fire";
+        };
     }
 
-    /** Модель со сшитыми вариантами либо {@code null}, пока она ещё грузится. */
+    /** Модель вида, либо {@code null}, пока она грузится. */
     @Nullable
-    public static synchronized GemRenderGltfModel model() {
-        load();
-        GemRenderGltfModel loaded = handle != null ? handle.get() : null;
+    public static synchronized GemRenderGltfModel model(@Nullable GrenadeIfType type) {
+        GrenadeIfType resolved = type != null ? type : GrenadeIfType.GRENADE_IF;
+        ResourceLocation id = MODELS.get(resolved);
 
-        // Производные живут по поколению кеша GemRender, а не по ссылке на модель:
-        // после перезагрузки ресурсов та же самая модель приезжает заново с
-        // обновлёнными текстурами, и закешированные клипы остались бы со старой
+        // Кеш производных живёт по поколению кеша GemRender, а не по ссылке на
+        // модель: после перезагрузки ресурсов модель приезжает заново с
+        // обновлённой текстурой, и закешированные клипы остались бы со старой
         // нумерацией слотов.
+        Derived derived = DERIVED.computeIfAbsent(id, key -> new Derived());
+        GemRenderGltfModel loaded = GemRenderModels.get(id);
         int generation = GemRenderModels.generation();
-        if (loaded != model || generation != cachedGeneration) {
-            model = loaded;
-            cachedGeneration = generation;
-            CLIPS.clear();
-            hiddenPin = null;
-            WARNED_BANDS.clear();
-            pinSlot = -1;
-            rootOffset = null;
+
+        if (loaded != derived.model || generation != derived.generation) {
+            derived.model = loaded;
+            derived.generation = generation;
+            derived.clips.clear();
+            derived.hiddenPin = null;
+            derived.pinSlot = -1;
+            derived.rootOffset = null;
 
             if (loaded != null) {
                 NodeTable table = loaded.layout().nodeTable();
                 int slot = table.slotOfName(PIN_BONE);
-                pinSlot = slot >= 0 && table.isPosable(slot) ? slot : -1;
-                rootOffset = rootTranslation(loaded);
-
-                // Полос в атласе должно быть ровно столько, сколько видов у
-                // гранаты: номер полосы задан ordinal'ом перечисления. Меньше — и
-                // часть видов молча нарисуется чужой текстурой.
-                if (loaded.variantCount() < GrenadeIfType.values().length) {
-                    LOGGER.warn("Impact grenade atlas holds {} band(s) for {} type(s): {}",
-                            loaded.variantCount(), GrenadeIfType.values().length,
-                            Stream.of(GrenadeIfType.values()).map(t -> t.name() + "=" + t.ordinal()).toList());
-                }
+                derived.pinSlot = slot >= 0 && table.isPosable(slot) ? slot : -1;
+                derived.rootOffset = rootTranslation(loaded);
             }
         }
-        return model;
+        return loaded;
     }
 
     /**
@@ -206,16 +171,22 @@ public final class GrenadeIfVariants {
     /**
      * Клип из модели, с которого снято смещение корня.
      *
+     * @param type вид гранаты
      * @param clip имя клипа, как в glTF
      */
     @Nullable
-    public static synchronized GltfAnimation poseClip(String clip) {
-        GemRenderGltfModel loaded = model();
+    public static synchronized GltfAnimation poseClip(@Nullable GrenadeIfType type, String clip) {
+        GemRenderGltfModel loaded = model(type);
         if (loaded == null) {
             return null;
         }
 
-        GltfAnimation cached = CLIPS.get(clip);
+        Derived derived = DERIVED.get(MODELS.get(type != null ? type : GrenadeIfType.GRENADE_IF));
+        if (derived == null) {
+            return loaded.animation(clip);
+        }
+
+        GltfAnimation cached = derived.clips.get(clip);
         if (cached != null) {
             return cached;
         }
@@ -225,8 +196,8 @@ public final class GrenadeIfVariants {
             return null;
         }
 
-        GltfAnimation fixed = stripRootOffset(loaded, source);
-        CLIPS.put(clip, fixed);
+        GltfAnimation fixed = stripRootOffset(loaded, derived, source);
+        derived.clips.put(clip, fixed);
         return fixed;
     }
 
@@ -236,14 +207,15 @@ public final class GrenadeIfVariants {
      * Канал перемещения, который в любой свой кадр совпадает со смещением корня,
      * не двигает кость, а дублирует то, что и так уже лежит в узле с мешем.
      * Таких каналов в модели ровно один, и он записан экспортом Blockbench: в её
-     * же json на этом месте честный ноль.
+     * же json на этом месте честный ноль. Из-за него анимация играла не на месте,
+     * а предмет на её конце сидел выше, чем в покое.
      * <p>
      * Правка дописывается <b>после</b> всех драйверов клипа, а не вместо них:
      * вычитать смещение нужно уже из того, что канал успел записать, иначе
      * нулевой кадр перебил бы коррекцию.
      */
-    private static GltfAnimation stripRootOffset(GemRenderGltfModel loaded, GltfAnimation clip) {
-        float[] root = rootOffset;
+    private static GltfAnimation stripRootOffset(GemRenderGltfModel loaded, Derived derived, GltfAnimation clip) {
+        float[] root = derived.rootOffset;
         if (root == null) {
             return clip;
         }
@@ -309,83 +281,52 @@ public final class GrenadeIfVariants {
      * <p>
      * Клип нужен вместо {@code null}, хотя анимация не идёт: {@code null} у
      * GemRender означает исходные позы костей без драйверов, то есть с чекой на
-     * месте, а спрятать её можно только драйвером.
-     * <p>
-     * Взятый на нулевой секунде {@link GrenadeIfAnimation#PIN_PULL}, он совпадает
-     * с позой покоя во всём, кроме чеки: все ключи клипа на 0.0 — нули и единицы,
-     * то есть ровно исходные значения.
+     * месте, а спрятать её можно только драйвером. Взятый на нулевой секунде
+     * {@code pin_pull}, он совпадает с позой покоя во всём, кроме чеки: все ключи
+     * клипа на 0.0 — нули и единицы, то есть ровно исходные значения.
      */
     @Nullable
-    public static synchronized GltfAnimation hiddenPin() {
-        GemRenderGltfModel loaded = model();
+    public static synchronized GltfAnimation hiddenPin(@Nullable GrenadeIfType type) {
+        GemRenderGltfModel loaded = model(type);
         if (loaded == null) {
             return null;
         }
-        if (hiddenPin != null) {
-            return hiddenPin;
+
+        Derived derived = DERIVED.get(MODELS.get(type != null ? type : GrenadeIfType.GRENADE_IF));
+        if (derived == null || derived.hiddenPin != null) {
+            return derived != null ? derived.hiddenPin : null;
         }
 
-        GltfAnimation source = poseClip(GrenadeIfAnimation.PIN_PULL);
+        GltfAnimation source = poseClip(type, GrenadeIfAnimation.PIN_PULL);
         if (source == null) {
             return null;
         }
-        if (pinSlot < 0) {
+        if (derived.pinSlot < 0) {
             // Кости чеки в модели нет — прятать нечего.
-            hiddenPin = source;
+            derived.hiddenPin = source;
             return source;
         }
 
         // NodeHide ставится последним: драйверы клипа применяются по порядку, и
         // обнуление масштаба после них гарантирует, что чека не вернётся ни на
         // одном кадре — включая те, где анимация трогает её сама.
-        hiddenPin = source.with(NodeHide.of(loaded.layout().nodeTable(), pinSlot));
-        return hiddenPin;
+        derived.hiddenPin = source.with(NodeHide.of(loaded.layout().nodeTable(), derived.pinSlot));
+        return derived.hiddenPin;
     }
 
     /**
      * Секунда последнего кадра клипа.
      * <p>
-     * Нужна там, где предмет должен просто <b>стоять</b>: между анимациями это
-     * последний кадр выдергивания чеки, а возвращать гранату в исходную позу
-     * означало бы на глазах у игрока вдвигать чеку обратно. Передача времени
+     * Нужна там, где предмет должен просто <b>стоять</b>. Передача времени
      * {@code null}-ом здесь не годится: {@code null} у GemRender — это поза покоя,
-     * то есть ровно то, чего мы избегаем.
+     * то есть ровно то, что нужно, когда анимации не идёт.
      */
     public static float endSeconds(@Nullable GltfAnimation clip) {
         return clip == null ? 0.0F : Math.max(0.0F, clip.duration() - 1.0E-3F);
     }
 
-    /**
-     * Полоса атласа конкретного вида гранаты.
-     * <p>
-     * Возвращает {@link VariantUv#NONE}, пока варианты не собрались или если
-     * полосы для этого вида нет: {@code NONE} — это нулевая полоса, то есть
-     * обычная ударная, и граната в худшем случае нарисуется не тем цветом.
-     * <p>
-     * Номер полосы берётся из {@link GrenadeIfType#ordinal()}, а не из позиции в
-     * списке текстур: так его задаёт и сборочный список вариантов, и эта проверка,
-     * и разъехаться они не могут.
-     */
-    public static VariantUv variant(@Nullable GrenadeIfType type) {
-        GemRenderGltfModel loaded = model();
-        if (loaded == null || type == null) return VariantUv.NONE;
-
-        int band = type.ordinal();
-        if (band >= loaded.variantCount()) {
-            // Раз в кадр на каждый вид — это сотня строк в лог за секунду, а
-            // диагностика нужна один раз.
-            if (WARNED_BANDS.add(type)) {
-                LOGGER.warn("Impact grenade variant {} for {} is out of range: the atlas holds {} band(s), " +
-                        "drawing the base one. Bands are GrenadeIfType ordinals.",
-                        band, type, loaded.variantCount());
-            }
-            return VariantUv.NONE;
-        }
-        return loaded.variant(band);
-    }
-
     /** Тип снаряда по сущности — на клиенте тип сущности известен наверняка. */
-    public static VariantUv variantOf(Entity entity) {
-        return variant(GrenadeIfType.typeOf(entity.getType()));
+    public static GrenadeIfType typeOf(Entity entity) {
+        return GrenadeIfType.typeOf(entity.getType());
     }
 }

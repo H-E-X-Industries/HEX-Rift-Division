@@ -101,11 +101,10 @@ public class ModClientSetup {
             event.registerEntityRenderer(grenade.get(), net.minecraft.client.renderer.entity.ThrownItemRenderer::new);
         }
 
-        // Ударные гранаты — на glTF, той же моделью, что и предмет в руке.
-        // Текстуры всех видов сшиваются в один атлас вариантов, а сама модель
-        // грузится асинхронно: пока она не готова, гранаты просто не рисуются.
-        com.trd.client.gecko.item.grenades.GrenadeIfVariants.load();
-
+        // Ударные гранаты — на glTF, той же моделью, что и предмет в руке, но у
+        // каждого вида своя: текстура зашита в саму модель, поэтому брать её надо
+        // по типу снаряда. Модели грузятся асинхронно, и пока нужная не готова,
+        // граната просто не рисуется.
         for (var grenadeIf : java.util.List.of(
                 com.trd.entity.ModEntities.GRENADE_IF_PROJECTILE,
                 com.trd.entity.ModEntities.GRENADE_IF_HE_PROJECTILE,
