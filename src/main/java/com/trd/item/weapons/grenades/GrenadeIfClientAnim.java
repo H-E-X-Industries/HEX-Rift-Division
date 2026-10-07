@@ -1,11 +1,9 @@
 package com.trd.item.weapons.grenades;
 
-import com.mojang.logging.LogUtils;
 import com.trd.main.MainRegistry;
 import com.wf.gemrender.gltf.GemRenderGltfModel;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.Item;
@@ -14,9 +12,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
-import org.slf4j.Logger;
 
-import java.lang.reflect.Field;
 import java.util.List;
 
 import javax.annotation.Nullable;
@@ -69,19 +65,17 @@ import javax.annotation.Nullable;
 @EventBusSubscriber(modid = MainRegistry.MOD_ID, value = Dist.CLIENT)
 public final class GrenadeIfClientAnim {
 
-    private static final Logger LOGGER = LogUtils.getLogger();
-
     /** Выдёргивание чеки: играет, когда граната взята в руку. */
     public static final String PIN_PULL = GrenadeIfAnimation.PIN_PULL;
 
-    /**
-     * Сколько тиков проходит между броском и выдёргиванием чеки.
+/**
+     * Форма жеста «взял предмет»: насколько глубоко предмет уходит вниз, по
+     * тикам от начала жеста.
      * <p>
-     * Ровно столько, сколько нужно руке, чтобы вернуться с предметом: она уходит
-     * вниз на 0.6 блока и поднимается обратно примерно за это время. Пока рука не
-     * вернулась, предмет в ней показан собранным — той самой новой гранатой.
+     * Треугольник: мимо, мимо, дно, мимо, мимо — предмет ныряет и возвращается.
+     * Ноль по краям обязателен: без него предмет застрял бы внизу навсегда.
      */
-    private static final int REQUIP_PULL_DELAY = 2;
+    private static final float[] REQUIP_FRAMES = {0.3F, 0.75F, 1.0F, 0.75F, 0.3F, 0.0F};
 
     /**
      * Длина клипа до первой загрузки модели.
@@ -93,37 +87,22 @@ public final class GrenadeIfClientAnim {
      */
     private static float pinPullDuration = 1.0833f;
 
+    /**
+     * Сколько тиков проходит между броском и выдёргиванием чеки.
+     * <p>
+     * Ровно столько, сколько нужно предмету, чтобы вернуться в руку: жест идёт
+     * {@link #REQUIP_FRAMES} тиков, и до последнего из них предмет ещё опущен.
+     * Пока он опущен, в нём показан собранная граната — та самая, новенькая.
+     */
+    private static final int REQUIP_PULL_DELAY = REQUIP_FRAMES.length;
+
     /** Состояние правой руки. */
     private static final Hand MAIN = new Hand();
 
     /** Состояние левой руки. */
     private static final Hand OFF = new Hand();
 
-    /**
-     * Высота руки, из которой считается увод предмета вниз, — у обеих рук.
-     * <p>
-     * Ищется один раз: поле приватное и не имеет геттера, а поднимать руку после
-     * броска нужно каждый раз. Если поля не нашлось, {@link #requip} откатится на
-     * ванильный {@code itemUsed}.
-     */
-    @Nullable
-    private static final Field mainHandHeight = handHeightField("mainHandHeight");
-    @Nullable
-    private static final Field offHandHeight = handHeightField("offHandHeight");
-
     private GrenadeIfClientAnim() {
-    }
-
-    @Nullable
-    private static Field handHeightField(String name) {
-        try {
-            Field field = ItemInHandRenderer.class.getDeclaredField(name);
-            field.setAccessible(true);
-            return field;
-        } catch (NoSuchFieldException | RuntimeException e) {
-            LOGGER.warn("ItemInHandRenderer.{} is gone; the grenade will be re-equipped the vanilla way", name, e);
-            return null;
-        }
     }
 
     /**
@@ -146,19 +125,33 @@ public final class GrenadeIfClientAnim {
     /**
      * Граната только что выброшена из этой руки: в руке осталась следующая.
      * <p>
-     * Здесь же проигрывается жест «взял новую гранату» — рука с предметом уходит
-     * вниз и возвращается, ровно как при подборе. Без него бросок читается как
-     * просто исчезновение предмета, а следующая граната выглядит той же самой,
-     * что и предыдущая: у неё уже выдернута чека.
+     * Здесь же запускается жест «взял новую гранату» — предмет уходит вниз и
+     * возвращается, ровно как при подборе. Без него бросок читается как просто
+     * исчезновение предмета, а следующая граната выглядит той же самой, что и
+     * предыдущая: у неё уже выдернута чека.
      * <p>
-     * Чека выдёргивается не сразу, а через {@link #REQUIP_PULL_DELAY} тика:
-     * сначала рука возвращается с предметом, и только потом на уже новой гранате
-     * разжимается чека. Иначе жест и анимация наезжают друг на друга, и предмет
-     * выглядит так, будто гранату не брали вовсе.
+     * Сам жест рисует рендер, а не поднимает руку: см. {@link #requip}.
      */
     public static void onThrown(InteractionHand hand) {
         stateOf(hand).pull();
-        requip(hand);
+    }
+
+    /**
+     * Насколько предмет в этой руке сейчас опущен — от 0 (в руке) до 1 (у рук).
+     * <p>
+     * Раньше для этого дёргали приватное поле {@code ItemInHandRenderer} — и
+     * это была неправильная затея: {@code ItemInHandRenderer#tick} каждый кадр
+     * пересчитывает высоту руки сам, по кубу силы удара, а у брошенной гранаты
+     * сила удара обнулена сервером, так что подъём растягивался на полсекунды и
+     * выглядел как «граната просто появилась». Теперь жест живёт в позе
+     * предмета и ни с чем не конкурирует: рендер кладёт трансляцию сам, а
+     * {@link #REQUIP_FRAMES} задаёт её форму.
+     * <p>
+     * Значение нужно только руке; в инвентаре и на земле предмета нет, поэтому
+     * там возвращается ноль.
+     */
+    public static float requip(@Nullable InteractionHand hand) {
+        return hand == null ? 0.0F : stateOf(hand).requip;
     }
 
     /**
@@ -212,51 +205,6 @@ public final class GrenadeIfClientAnim {
     }
 
     /**
-     * Жест «взял предмет»: рука с предметом уходит вниз и возвращается.
-     * <p>
-     * Уводить предмет вниз умеет {@code ItemInHandRenderer#itemUsed}, но
-     * возвращается рука сама — по кубу силы удара, а она у брошенной гранаты как
-     * раз обнулена: сервер сокращает счёт стопки, {@code Player#resetAttackStrengthTicker}
-     * обнуляет и силу удара, и подъём руки растягивается на полсекунды, чего не
-     * видно. Поэтому рука поднимается сразу, а уход вниз остаётся ванильным:
-     * получается ровно то короткое движение, которое игрок видит при подборе.
-     * <p>
-     * Поле {@code mainHandHeight} приватное, поэтому ставится рефлектом; если
-     * переименуют — останется ванильный жест, он тоже работает, просто мягче.
-     */
-    private static void requip(InteractionHand hand) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.gameRenderer == null) {
-            return;
-        }
-
-        ItemInHandRenderer renderer = mc.gameRenderer.itemInHandRenderer;
-        if (handHeight(hand) != null) {
-            setHandHeight(hand, 1.0F);
-        } else {
-            renderer.itemUsed(hand);
-        }
-    }
-
-    /** Поле высоты руки нужной руки, либо {@code null}, если поля больше нет. */
-    @Nullable
-    private static Field handHeight(InteractionHand hand) {
-        return hand == InteractionHand.OFF_HAND ? offHandHeight : mainHandHeight;
-    }
-
-    private static void setHandHeight(InteractionHand hand, float value) {
-        Field field = handHeight(hand);
-        if (field == null) {
-            return;
-        }
-        try {
-            field.setFloat(Minecraft.getInstance().gameRenderer.itemInHandRenderer, value);
-        } catch (IllegalAccessException e) {
-            LOGGER.warn("Could not raise the {} hand after the throw", hand, e);
-        }
-    }
-
-    /**
      * Насколько меньше длины клипа приходится отдавать в рендер.
      * <p>
      * Внутри {@code DirectRenderer.stagePalette} время прогоняется через
@@ -284,7 +232,7 @@ public final class GrenadeIfClientAnim {
         return seconds;
     }
 
-    /** Состояние одной руки: что в ней лежит и что в ней играет. */
+    /** Состояние одной руки: что в ней лежит, что в ней играет и как глубоко опущен предмет. */
     private static final class Hand {
 
         /**
@@ -316,6 +264,17 @@ public final class GrenadeIfClientAnim {
 
         /** Тиков, оставшихся до старта клипа; ненулевое — после броска. */
         private int delay;
+
+        /**
+         * Насколько предмет опущен жестом «взял новую гранату», от 0 до 1.
+         * <p>
+         * Это единственное, что нужно рисователю: он сдвигает предмет вниз ровно
+         * настолько и возвращает обратно по {@link #REQUIP_FRAMES}.
+         */
+        private float requip;
+
+        /** Индекс кадра жеста; равен длине, когда жеста нет. */
+        private int requipFrame;
 
         /** Прошло тиков с начала клипа. */
         private int age;
@@ -363,8 +322,8 @@ public final class GrenadeIfClientAnim {
         }
 
         /**
-         * Ставит клип на очередь: сначала рука возвращается с новой гранатой,
-         * потом у неё выдёргивается чека.
+         * Ставит клип на очередь: сначала предмет ныряет и возвращается, и только
+         * потом у новой гранаты выдёргивается чека.
          */
         private boolean pull() {
             if (pinPullDuration <= 0.0f) {
@@ -372,6 +331,7 @@ public final class GrenadeIfClientAnim {
             }
 
             stop();
+            requipFrame = 0;
             delay = REQUIP_PULL_DELAY;
             return true;
         }
@@ -387,6 +347,8 @@ public final class GrenadeIfClientAnim {
 
         /** Доводит клип до конца и проигрывает звуки, до которых дошла анимация. */
         private void advance() {
+            advanceRequip();
+
             if (delay > 0) {
                 if (--delay == 0) {
                     start();
@@ -411,6 +373,15 @@ public final class GrenadeIfClientAnim {
             playDueSounds();
         }
 
+        /** Идёт ли жест «взял предмет» и насколько глубоко сейчас опущен предмет. */
+        private void advanceRequip() {
+            if (requipFrame >= REQUIP_FRAMES.length) {
+                requip = 0.0F;
+                return;
+            }
+            requip = REQUIP_FRAMES[requipFrame++];
+        }
+
         /**
          * Отрывает клип, не забывая предмета.
          * <p>
@@ -422,6 +393,8 @@ public final class GrenadeIfClientAnim {
             current = null;
             finished = false;
             delay = 0;
+            requip = 0.0F;
+            requipFrame = REQUIP_FRAMES.length;
             age = 0;
             preciseAge = 0.0;
             markers = List.of();

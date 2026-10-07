@@ -80,6 +80,9 @@ public final class GrenadeIfVariants {
         /** Поколение кеша, под которым собраны клипы и слот чеки. */
         int generation = -1;
 
+        /** Загружалась ли модель хоть раз: нужно, чтобы отличить старт от провала. */
+        boolean seen;
+
         /** Слот кости чеки; {@code -1}, если её нет в модели или она не двигается. */
         int pinSlot = -1;
 
@@ -142,10 +145,20 @@ public final class GrenadeIfVariants {
             derived.rootOffset = null;
 
             if (loaded != null) {
+                derived.seen = true;
+
                 NodeTable table = loaded.layout().nodeTable();
                 int slot = table.slotOfName(PIN_BONE);
                 derived.pinSlot = slot >= 0 && table.isPosable(slot) ? slot : -1;
                 derived.rootOffset = rootTranslation(loaded);
+            } else if (derived.seen) {
+                // Модель грузится асинхронно, и к первому кадру её может ещё не
+                // быть — это молчание нормально. А вот пропажа модели, которая уже
+                // была загружена, — это провал кеша на перезагрузке ресурсов: сам
+                // он не рассосётся, и вид до следующего перезапуска молча рисуется
+                // плоским спрайтом из models/item. Поэтому такое уже не молчим.
+                LOGGER.error("Impact grenade {}: {} stopped loading after the resource reload;"
+                        + " it draws nothing until the game is restarted", resolved, id);
             }
         }
         return loaded;

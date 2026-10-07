@@ -49,23 +49,19 @@ public class GrenadeIfGltfAppearance implements ItemAppearance {
      */
     private static final float MODEL_SCALE = 1.0F;
 
-    /**
-     * Насколько корпус поднят над началом координат модели, в тех же единицах.
-     * <p>
-     * Меш сидит на узле {@code main} со сдвигом 0.1603 вверх, вершины идут от
-     * -0.1619 до +0.1241, и в готовой модели корпус занимает Y от -0.0016 до
-     * +0.2844 — ровно до 0.1414 над началом координат.
-     * <p>
-     * Вычитается <b>после</b> масштаба: сдвиг остаётся в координатах модели и
-     * уезжает вместе с ней, потому что PoseStack домножает матрицу справа, и
-     * translate до scale превратился бы в 0.354 блока вместо 0.141.
-     */
-    private static final float MODEL_CENTER_Y = 0.1414F;
-
     /** Вид гранаты по предмету: своей текстурой у каждого вида своя. */
     private static GrenadeIfType typeOf(ItemStack stack) {
         return stack.getItem() instanceof GrenadeIfItem item ? item.getGrenadeType() : GrenadeIfType.GRENADE_IF;
     }
+
+    /**
+     * Насколько предмет уходит вниз при жесте «взял новую гранату», в блоках.
+     * <p>
+     * Ровно на столько же, на сколько ванильный рендерер уводит предмет при
+     * смене слота, — так жест выглядит привычно и не выглядит как отдельное
+     * изобретение.
+     */
+    private static final float REQUIP_DROP = 0.6F;
 
     /**
      * Рука, в которой рисуется предмет, либо {@code null}, если это не рука.
@@ -123,7 +119,19 @@ public class GrenadeIfGltfAppearance implements ItemAppearance {
 
     @Override
     public void transform(ItemStack stack, ItemDisplayContext context, PoseStack poseStack) {
+        // Жест «взял новую гранату» — только в руке. Сдвиг идёт до всего остального:
+        // PoseStack домножает матрицу справа, и трансляция под масштабом съедается
+        // масштабом вместе с блоком display.
+        float requip = GrenadeIfClientAnim.requip(handOf(context));
+        if (requip > 0.0F) {
+            poseStack.translate(0.0F, -REQUIP_DROP * requip, 0.0F);
+        }
+
+        // Больше тут ничего: положение и размер предмета задаёт блок display в
+        // models/item/grenade_if.json, который ваниль применяет сама ещё до
+        // вызова рендерера. Своей центровки у предмета нет намеренно — модель
+        // стоит ровно там, куда её поставил Blockbench, и любой сдвиг здесь
+        // складывался бы с блоком display вместо того, чтобы его заменять.
         poseStack.scale(MODEL_SCALE, MODEL_SCALE, MODEL_SCALE);
-        poseStack.translate(0.0F, -MODEL_CENTER_Y, 0.0F);
     }
 }

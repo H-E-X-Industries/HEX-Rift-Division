@@ -6,16 +6,11 @@ import com.google.gson.JsonParser;
 import com.mojang.logging.LogUtils;
 import com.trd.main.MainRegistry;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import org.slf4j.Logger;
 
 import java.io.BufferedReader;
@@ -24,11 +19,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * Звуки ударной гранаты, размеченные прямо в её экспорте анимаций.
@@ -64,7 +57,6 @@ import java.util.UUID;
  * Единственная страховка — обрезка по длине клипа, и то на случай, если после
  * переэкспорта кадр окажется за концом анимации.
  */
-@EventBusSubscriber(modid = MainRegistry.MOD_ID)
 public final class GrenadeIfAnimation {
 
     private static final Logger LOG = LogUtils.getLogger();
@@ -94,16 +86,6 @@ public final class GrenadeIfAnimation {
     private static Map<String, List<Marker>> markers = Map.of();
 
     private static boolean loaded;
-
-    /**
-     * Звуки, ждущие своего тика на сервере: игрок → что и через сколько проиграть.
-     * <p>
-     * Живут в статике, а не в NBT стопки, потому что стопка после броска исчезает
-     * или меняет счёт — запись в ней пережила бы ровно один тик. Очередь держится
-     * меньше четверти секунды, так что её незачем делать переживающей перезагрузку
-     * мира.
-     */
-    private static final Map<UUID, List<Pending>> PENDING = new HashMap<>();
 
     private GrenadeIfAnimation() {
     }
@@ -135,96 +117,37 @@ public final class GrenadeIfAnimation {
     }
 
     /**
-     * Ставит звуки клипа в очередь на серверные тики.
+     * Проигрывает звуки клипа сразу, здесь и сейчас.
      * <p>
-     * В секундах маркера округление вверх, чтобы звук не ушёл на кадр раньше
-     * анимации: клип на клиенте идёт с точностью до кадра.
+     * Раньше звуки броска ставились в очередь на серверные тики, и очередь нужна
+     * была ровно для одного: попасть в ту же секунду клипа, в которую кадр
+     * помечен в разметке. Клипа броска у модели нет и не планируется — бросок
+     * мгновенный, граната исчезает из руки в тот же тик, — так что
+     * синхронизироваться больше не с чем, а очередь только теряла звук: она
+     * живёт в статике и целиком пропадала на перезагрузке ресурсов, ровно
+     * посреди броска.
+     * <p>
+     * Позиция берётся здесь же: за четверть секунды, которую звук ждал бы в
+     * очереди, игрок успевает уйти, и звук уехал бы вместе с ним — слышно было
+     * бы не оттуда, откуда бросили.
      *
      * @param level  мир, из которого будет проигран звук
      * @param player бросивший; по нему же берётся слышимость
      * @param clip   имя клипа, как в glTF
      */
-    public static void schedule(ServerLevel level, Player player, String clip) {
-        List<Marker> found = sounds(clip, Float.MAX_VALUE);
-        if (found.isEmpty()) {
-            return;
-        }
-
-        List<Pending> queue = PENDING.computeIfAbsent(player.getUUID(), id -> new ArrayList<>());
-        for (Marker marker : found) {
-            queue.add(new Pending(Math.max(1, (int) Math.ceil(marker.time() * 20.0D)), marker.id(),
-                    level.dimension(), player.getX(), player.getY(), player.getZ()));
+    public static void play(ServerLevel level, Player player, String clip) {
+        for (Marker marker : sounds(clip, Float.MAX_VALUE)) {
+            SoundEvent sound = sound(marker.id());
+            if (sound == null) {
+                continue;
+            }
+            level.playSound(null, player.getX(), player.getY(), player.getZ(), sound,
+                    SoundSource.PLAYERS, 1.0F, 0.9F + level.random.nextFloat() * 0.2F);
         }
     }
 
-    /**
-     * Проигрывает всё, что дозрело, и сдвигает остальное на тик.
-     * <p>
-     * Список каждый раз пересобирается заново: он длиной в единицы и живёт меньше
-     * четверти секунды, а возиться с отдельным обратным отсчётом ради этого
-     * невыгодно.
-     * <p>
-     * Позиция запоминается на момент броска, а не берётся у игрока в момент звука:
-     * за четверть секунды игрок успевает уйти, и звук уехал бы вместе с ним —
-     * слышно было бы не оттуда, откуда бросили.
-     */
-    public static void tickPending(ServerLevel level) {
-        if (PENDING.isEmpty()) {
-            return;
-        }
-
-        PENDING.entrySet().removeIf(entry -> {
-            List<Pending> queue = entry.getValue();
-
-            List<Pending> rest = null;
-            for (int i = 0; i < queue.size(); i++) {
-                Pending pending = queue.get(i);
-                int in = pending.in - 1;
-                if (in <= 0) {
-                    SoundEvent sound = sound(pending.id);
-                    if (sound != null && level.dimension() == pending.dimension) {
-                        level.playSound(null, pending.x, pending.y, pending.z, sound,
-                                SoundSource.PLAYERS, 1.0F, soundPitch(level));
-                    }
-                    continue;
-                }
-                if (rest == null) {
-                    rest = new ArrayList<>(queue.size());
-                }
-                rest.add(new Pending(in, pending.id, pending.dimension, pending.x, pending.y, pending.z));
-            }
-
-            if (rest != null && !rest.isEmpty()) {
-                queue.clear();
-                queue.addAll(rest);
-                return false;
-            }
-            return true;
-        });
-    }
-
-    private static float soundPitch(ServerLevel level) {
+private static float soundPitch(ServerLevel level) {
         return 0.9F + level.random.nextFloat() * 0.2F;
-    }
-
-    /**
-     /** Звук, отложенный на несколько серверных тиков. */
-    private record Pending(int in, String id, ResourceKey<Level> dimension,
-                           double x, double y, double z) {
-    }
-
-    /**
-     * Серверные тики: проигрывает всё, что дозрело.
-     * <p>
-     * Обход всех миров нужен потому, что {@code playSound} слышат только игроки
-     * своего измерения: очередь, поставленная в Нижнем мире, не должна
-     * проигрываться в Верхнем просто потому, что серверный тик у них общий.
-     */
-    @SubscribeEvent
-    public static void onServerTick(ServerTickEvent.Post event) {
-        for (ServerLevel level : event.getServer().getAllLevels()) {
-            tickPending(level);
-        }
     }
 
     /**
