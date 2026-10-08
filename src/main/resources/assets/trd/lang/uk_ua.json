@@ -991,5 +991,6 @@
     "tooltip.trd.gravity_grenade.desc":  "|\u00a75\u00a7lGravity| - an experimental weapon. Pulls everything within 15 blocks into a vortex, then launches it. Deals no damage, displacement only. |Delay: 4s|. |Hold RMB| to adjust throw impulse.",
     "tooltip.trd.grenade_nuc.desc":  "|\u00a74\u00a7lHydrogen Charge| - a tactical charge that punches through cover. Use with extreme caution. |Damage zone: 40| / |Damage: 500| / |Crater: 16| / |Delay: 7s|. |Hold RMB| to adjust throw impulse.",
   "subtitles.trd.grenade_pin":  "\u0427\u0435\u043a\u0430 \u0432\u0438\u0442\u044f\u0433\u043d\u0443\u0442\u0430",
-  "subtitles.trd.grenade_throw":  "\u041a\u0438\u0434\u0430\u043d\u043d\u044f \u0433\u0440\u0430\u043d\u0430\u0442\u0438"
+  "subtitles.trd.grenade_throw":  "\u041a\u0438\u0434\u0430\u043d\u043d\u044f \u0433\u0440\u0430\u043d\u0430\u0442\u0438",
+  "subtitles.trd.grenade_explosion":  "Вибух ударної гранати"
 }

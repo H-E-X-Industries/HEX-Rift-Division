@@ -234,5 +234,13 @@
         "name": "trd:grenade_throw"
       }
     ]
+  },
+  "grenade_explosion": {
+    "category": "block",
+    "subtitle": "subtitles.trd.grenade_explosion",
+    "sounds": [
+      "trd:grenade_explosion",
+      "trd:grenade_explosion2"
+    ]
   }
 }

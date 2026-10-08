@@ -1066,5 +1066,6 @@
     "tooltip.trd.grenade_nuc.desc":  "|\u00a74\u00a7lHydrogen Charge| - a tactical charge that punches through cover. Use with extreme caution. |Damage zone: 40| / |Damage: 500| / |Crater: 16| / |Delay: 7s|. |Hold RMB| to adjust throw impulse.",
     "sounds.trd.gilse_light": "Casing clinks",
   "subtitles.trd.grenade_pin":  "Pin pulled",
-  "subtitles.trd.grenade_throw":  "Grenade thrown"
+  "subtitles.trd.grenade_throw":  "Grenade thrown",
+  "subtitles.trd.grenade_explosion":  "Impact grenade detonates"
 }

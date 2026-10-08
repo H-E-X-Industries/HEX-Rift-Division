@@ -3,13 +3,16 @@ package com.trd.entity.weapons.grenades;
 import com.trd.explosion.logic.ExplosionFire;
 import com.trd.explosion.logic.ExplosionHE;
 import com.trd.explosion.logic.ExplosionStandard;
+import com.trd.explosion.logic.VanillaExplosionSound;
 import com.trd.sound.ModSounds;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -215,17 +218,28 @@ public class GrenadeIfProjectileEntity extends ThrowableItemProjectile {
         this.setPos(attachPos.x, attachPos.y - this.getBbHeight() * 0.5 + entity.getBbHeight() * 0.5, attachPos.z);
     }
 
+    /**
+     * Подрыв ударной гранаты.
+     * <p>
+     * Звук у всех четырёх видов один — свой, {@code trd:grenade_explosion}, вместо
+     * ванильного {@code entity.generic.explode}: ударная граната с инерционным
+     * взрывателем звучит иначе, чем обычная. У осколочной и фугасной он
+     * подставляется прямо в ванильный взрыв (см. {@link VanillaExplosionSound}),
+     * у зажигательной меняется в самой {@link ExplosionFire} — у неё звук
+     * играется явно, а не внутри ванильного взрыва.
+     */
     private void explode(BlockPos pos) {
         if (level().isClientSide || this.isRemoved() || exploded) return;
         exploded = true;
         Vec3 center = new Vec3(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
         Level level = level();
         float radius = grenadeType.getExplosionPower();
+        Holder<SoundEvent> sound = ModSounds.GRENADE_EXPLOSION.getDelegate();
         switch (grenadeType) {
-            case GRENADE_IF -> ExplosionStandard.explode(level, center, this.getOwner(), radius, grenadeType.getCustomDamage());
-            case GRENADE_IF_HE -> ExplosionHE.explode(level, center, this.getOwner(), radius, grenadeType.getCustomDamage());
+            case GRENADE_IF -> ExplosionStandard.explode(level, center, this.getOwner(), radius, grenadeType.getCustomDamage(), sound);
+            case GRENADE_IF_HE -> ExplosionHE.explode(level, center, this.getOwner(), radius, grenadeType.getCustomDamage(), sound);
             case GRENADE_IF_FIRE -> ExplosionFire.explode((ServerLevel) level, center, this.getOwner(), radius, true);
-            case GRENADE_IF_SLIME -> ExplosionStandard.explode(level, center, this.getOwner(), radius, grenadeType.getCustomDamage());
+            case GRENADE_IF_SLIME -> ExplosionStandard.explode(level, center, this.getOwner(), radius, grenadeType.getCustomDamage(), sound);
         }
         this.discard();
     }
