@@ -136,6 +136,9 @@ public abstract class KineticNodeBlockEntity extends BlockEntity implements Rota
     @Override
     public void onLoad() {
         super.onLoad();
+        if (level != null && level.isClientSide) {
+            com.trd.client.render.IrisShadowBridge.track(this);
+        }
         if (level != null && !level.isClientSide) {
             KineticNetworkManager manager = KineticNetworkManager.get((ServerLevel) level);
             KineticNetwork net = manager.getNetworkFor(worldPosition);
@@ -148,6 +151,14 @@ public abstract class KineticNodeBlockEntity extends BlockEntity implements Rota
                 this.speed = (long) (net.getSpeed() * this.networkScale);
                 this.lastSyncedSpeed = this.speed;
             }
+        }
+    }
+
+    @Override
+    public void setRemoved() {
+        super.setRemoved();
+        if (level != null && level.isClientSide) {
+            com.trd.client.render.IrisShadowBridge.untrack(this);
         }
     }
 

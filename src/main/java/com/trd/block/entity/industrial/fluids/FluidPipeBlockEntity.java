@@ -2,7 +2,9 @@ package com.trd.block.entity.industrial.fluids;
 
 import com.trd.api.fluids.system.FluidNetworkManager;
 import com.trd.block.entity.ModBlockEntities;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.Packet;
@@ -120,8 +122,8 @@ public class FluidPipeBlockEntity extends BlockEntity {
     }
 
     @Override
-    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt, net.minecraft.core.HolderLookup.Provider provider) {
-        super.onDataPacket(net, pkt, provider);
+    public void onDataPacket(Connection connection, ClientboundBlockEntityDataPacket pkt, net.minecraft.core.HolderLookup.Provider provider) {
+        super.onDataPacket(connection, pkt, provider);
         CompoundTag tag = pkt.getTag();
         if (tag != null) {
             loadAdditional(tag, provider);
@@ -129,6 +131,16 @@ public class FluidPipeBlockEntity extends BlockEntity {
         if (this.level != null && this.level.isClientSide) {
             this.requestModelDataUpdate();
             this.level.sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), 11);
+            try {
+                Minecraft mc = Minecraft.getInstance();
+                if (mc.levelRenderer != null) {
+                    mc.levelRenderer.setSectionDirtyWithNeighbors(
+                            SectionPos.blockToSectionCoord(getBlockPos().getX()),
+                            SectionPos.blockToSectionCoord(getBlockPos().getY()),
+                            SectionPos.blockToSectionCoord(getBlockPos().getZ())
+                    );
+                }
+            } catch (Throwable ignored) {}
         }
     }
 
@@ -139,6 +151,16 @@ public class FluidPipeBlockEntity extends BlockEntity {
         if (this.level != null && this.level.isClientSide) {
             this.requestModelDataUpdate();
             this.level.sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), 11);
+            try {
+                Minecraft mc = Minecraft.getInstance();
+                if (mc.levelRenderer != null) {
+                    mc.levelRenderer.setSectionDirtyWithNeighbors(
+                            SectionPos.blockToSectionCoord(getBlockPos().getX()),
+                            SectionPos.blockToSectionCoord(getBlockPos().getY()),
+                            SectionPos.blockToSectionCoord(getBlockPos().getZ())
+                    );
+                }
+            } catch (Throwable ignored) {}
         }
     }
 }

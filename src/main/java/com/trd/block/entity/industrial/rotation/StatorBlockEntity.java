@@ -40,6 +40,8 @@ public class StatorBlockEntity extends KineticNodeBlockEntity implements IEnergy
     private long energyStored = 0;
     private boolean wasFull = false;
     private long lastSyncedEnergy = -1;
+    private int activelyGeneratingTicks = 0;
+    private boolean wasGenerating = false;
 
     private final ItemStackHandler coilsInventory = new ItemStackHandler(12) {
         @Override
@@ -107,6 +109,13 @@ public class StatorBlockEntity extends KineticNodeBlockEntity implements IEnergy
         if (!simulate) {
             energyStored -= toExtract;
             setChanged();
+            if (toExtract > 0 && activelyGeneratingTicks <= 0) {
+                activelyGeneratingTicks = 20;
+                if (!wasGenerating) {
+                    wasGenerating = true;
+                    requestKineticRecalculation();
+                }
+            }
             checkFullStateChange();
         }
         return toExtract;
@@ -126,7 +135,6 @@ public class StatorBlockEntity extends KineticNodeBlockEntity implements IEnergy
 
     @Override
     public long getConsumedTorque() {
-        if (energyStored >= getMaxEnergyDynamic()) return 0L;
         if (!hasActiveRotor()) return 0L;
 
         long totalLoad = 0;
@@ -141,7 +149,15 @@ public class StatorBlockEntity extends KineticNodeBlockEntity implements IEnergy
                 totalLoad += load;
             }
         }
-        return totalLoad;
+        if (totalLoad == 0) return 0L;
+
+        // При выработке электричества или если буфер не заполнен — полная нагрузка на кинетическую сеть
+        if (energyStored < getMaxEnergyDynamic() || activelyGeneratingTicks > 0 || wasGenerating) {
+            return totalLoad;
+        }
+
+        // Вхолостую (буфер полон, энергия не вырабатывается) — минимальная нагрузка (10% трение)
+        return Math.max(1L, (long) (totalLoad * 0.1));
     }
 
     private boolean hasActiveRotor() {
@@ -233,6 +249,7 @@ public class StatorBlockEntity extends KineticNodeBlockEntity implements IEnergy
         BlockPos holeOffset = MultiblockStructureHelper.rotateStatorPos(new BlockPos(0, 1, 0), facing, axis);
         BlockPos shaftPos = worldPosition.offset(holeOffset);
 
+        boolean isGeneratingNow = false;
         if (level.getBlockEntity(shaftPos) instanceof ShaftBlockEntity shaft) {
             if (shaft.hasRotor()) {
                 long speed = Math.abs(shaft.getSpeed());
@@ -254,10 +271,22 @@ public class StatorBlockEntity extends KineticNodeBlockEntity implements IEnergy
                     if (generated > 0) {
                         energyStored = Math.min(maxEn, energyStored + generated);
                         setChanged();
+                        activelyGeneratingTicks = 20;
+                        isGeneratingNow = true;
                         checkFullStateChange();
                     }
                 }
             }
+        }
+
+        if (!isGeneratingNow && activelyGeneratingTicks > 0) {
+            activelyGeneratingTicks--;
+        }
+
+        boolean currentGenState = activelyGeneratingTicks > 0;
+        if (currentGenState != wasGenerating) {
+            wasGenerating = currentGenState;
+            requestKineticRecalculation();
         }
 
         if (energyStored != lastSyncedEnergy && level.getGameTime() % 10 == 0) {
@@ -308,6 +337,8 @@ public class StatorBlockEntity extends KineticNodeBlockEntity implements IEnergy
         super.saveAdditional(tag, provider);
         tag.putLong("EnergyStored", energyStored);
         tag.putBoolean("WasFull", wasFull);
+        tag.putInt("ActivelyGeneratingTicks", activelyGeneratingTicks);
+        tag.putBoolean("WasGenerating", wasGenerating);
         tag.put("CoilsInventory", coilsInventory.serializeNBT(provider));
     }
 
@@ -316,6 +347,8 @@ public class StatorBlockEntity extends KineticNodeBlockEntity implements IEnergy
         super.loadAdditional(tag, provider);
         energyStored = tag.getLong("EnergyStored");
         wasFull = tag.getBoolean("WasFull");
+        activelyGeneratingTicks = tag.getInt("ActivelyGeneratingTicks");
+        wasGenerating = tag.getBoolean("WasGenerating");
         if (tag.contains("CoilsInventory")) {
             coilsInventory.deserializeNBT(provider, tag.getCompound("CoilsInventory"));
         }
