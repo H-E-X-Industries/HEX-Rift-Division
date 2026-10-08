@@ -2,7 +2,9 @@ package com.trd.block.entity.industrial.fluids;
 
 import com.trd.api.fluids.system.FluidNetworkManager;
 import com.trd.block.entity.ModBlockEntities;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.Packet;
@@ -96,9 +98,13 @@ public class FluidPipeBlockEntity extends BlockEntity {
     @Override
     protected void loadAdditional(net.minecraft.nbt.CompoundTag tag, net.minecraft.core.HolderLookup.Provider provider) {
         super.loadAdditional(tag, provider);
-        net.minecraft.resources.ResourceLocation fluidKey = net.minecraft.resources.ResourceLocation.parse(tag.getString("FilterFluid"));
-        this.filterFluid = net.minecraft.core.registries.BuiltInRegistries.FLUID.get(fluidKey);
-        if (this.filterFluid == null) this.filterFluid = net.minecraft.world.level.material.Fluids.EMPTY;
+        if (tag.contains("FilterFluid")) {
+            net.minecraft.resources.ResourceLocation fluidKey = net.minecraft.resources.ResourceLocation.tryParse(tag.getString("FilterFluid"));
+            this.filterFluid = fluidKey != null ? net.minecraft.core.registries.BuiltInRegistries.FLUID.get(fluidKey) : Fluids.EMPTY;
+            if (this.filterFluid == null) this.filterFluid = Fluids.EMPTY;
+        } else {
+            this.filterFluid = Fluids.EMPTY;
+        }
         this.hasFlowed = tag.getBoolean("HasFlowed");
         this.requestModelDataUpdate();
     }
@@ -116,12 +122,45 @@ public class FluidPipeBlockEntity extends BlockEntity {
     }
 
     @Override
-    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt, net.minecraft.core.HolderLookup.Provider provider) {
-        super.onDataPacket(net, pkt, provider);
-        // Принудительно заставляем клиент перерисовать точки при получении пакета
+    public void onDataPacket(Connection connection, ClientboundBlockEntityDataPacket pkt, net.minecraft.core.HolderLookup.Provider provider) {
+        super.onDataPacket(connection, pkt, provider);
+        CompoundTag tag = pkt.getTag();
+        if (tag != null) {
+            loadAdditional(tag, provider);
+        }
         if (this.level != null && this.level.isClientSide) {
             this.requestModelDataUpdate();
-            this.level.sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), 3);
+            this.level.sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), 11);
+            try {
+                Minecraft mc = Minecraft.getInstance();
+                if (mc.levelRenderer != null) {
+                    mc.levelRenderer.setSectionDirtyWithNeighbors(
+                            SectionPos.blockToSectionCoord(getBlockPos().getX()),
+                            SectionPos.blockToSectionCoord(getBlockPos().getY()),
+                            SectionPos.blockToSectionCoord(getBlockPos().getZ())
+                    );
+                }
+            } catch (Throwable ignored) {}
+        }
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag, net.minecraft.core.HolderLookup.Provider provider) {
+        super.handleUpdateTag(tag, provider);
+        loadAdditional(tag, provider);
+        if (this.level != null && this.level.isClientSide) {
+            this.requestModelDataUpdate();
+            this.level.sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), 11);
+            try {
+                Minecraft mc = Minecraft.getInstance();
+                if (mc.levelRenderer != null) {
+                    mc.levelRenderer.setSectionDirtyWithNeighbors(
+                            SectionPos.blockToSectionCoord(getBlockPos().getX()),
+                            SectionPos.blockToSectionCoord(getBlockPos().getY()),
+                            SectionPos.blockToSectionCoord(getBlockPos().getZ())
+                    );
+                }
+            } catch (Throwable ignored) {}
         }
     }
 }

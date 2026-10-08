@@ -126,20 +126,36 @@ public class StatorBlock extends BaseEntityBlock implements IMultiblockControlle
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        Direction facing = context.getClickedFace().getOpposite();
+        Direction clickedFace = context.getClickedFace();
+        BlockPos clickedPos = context.getClickedPos();
+        // Блок, по которому кликнули (например, вал)
+        BlockPos targetPos = clickedPos.relative(clickedFace.getOpposite());
+        BlockState target = context.getLevel().getBlockState(targetPos);
+
+        Direction facing;
         Direction.Axis axis;
 
-        if (facing.getAxis() == Direction.Axis.Y) {
-            axis = context.getHorizontalDirection().getAxis();
-        } else {
-            axis = Direction.Axis.Y;
-        }
-
-        BlockPos clickedPos = context.getClickedPos();
-        BlockState target = context.getLevel().getBlockState(clickedPos.relative(facing));
-
         if (target.getBlock() instanceof ShaftBlock) {
+            // Игрок кликнул по валу: ось отверстия статора совпадает с осью вала
             axis = target.getValue(ShaftBlock.FACING).getAxis();
+            // Отверстие статора должно указывать ровно на вал (targetPos relative clickedPos)
+            // holeOffset = facing.getOpposite(), поэтому facing = clickedFace
+            facing = clickedFace;
+            // facing и axis никогда не должны быть параллельны (иначе cross-product даёт 0)
+            if (facing.getAxis() == axis) {
+                facing = (axis == Direction.Axis.Y) ? Direction.NORTH : Direction.DOWN;
+            }
+        } else {
+            // Обычная установка на твёрдый блок
+            facing = clickedFace.getOpposite();
+            if (facing.getAxis() == Direction.Axis.Y) {
+                axis = context.getHorizontalDirection().getAxis();
+            } else {
+                axis = Direction.Axis.Y;
+            }
+            if (facing.getAxis() == axis) {
+                axis = (facing.getAxis() == Direction.Axis.Y) ? Direction.Axis.Z : Direction.Axis.Y;
+            }
         }
 
         return this.defaultBlockState().setValue(FACING, facing).setValue(AXIS, axis);

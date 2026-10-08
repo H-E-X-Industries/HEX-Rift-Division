@@ -147,14 +147,37 @@ public class GUIFluidIdentifier extends Screen {
             displayList.add("none");
         }
 
+        List<String> ourFluids = new ArrayList<>();
+        List<String> otherFluids = new ArrayList<>();
+
         for (Fluid fluid : BuiltInRegistries.FLUID) {
             if (fluid == Fluids.EMPTY || !fluid.defaultFluidState().isSource()) continue;
-            String id = BuiltInRegistries.FLUID.getKey(fluid).toString();
+            ResourceLocation rl = BuiltInRegistries.FLUID.getKey(fluid);
+            if (rl == null) continue;
+            String id = rl.toString();
             if (displayList.contains(id)) continue;
             if (search.isEmpty() || getFluidSearchString(fluid).contains(search)) {
-                displayList.add(id);
+                if (rl.getNamespace().equals(MainRegistry.MOD_ID) || rl.getNamespace().equals("trd")) {
+                    ourFluids.add(id);
+                } else {
+                    otherFluids.add(id);
+                }
             }
         }
+
+        java.util.Comparator<String> nameComparator = (id1, id2) -> {
+            String name1 = getFluidDisplayName(id1).getString();
+            String name2 = getFluidDisplayName(id2).getString();
+            int cmp = name1.compareToIgnoreCase(name2);
+            if (cmp != 0) return cmp;
+            return id1.compareToIgnoreCase(id2);
+        };
+
+        ourFluids.sort(nameComparator);
+        otherFluids.sort(nameComparator);
+
+        displayList.addAll(ourFluids);
+        displayList.addAll(otherFluids);
     }
 
     @Override

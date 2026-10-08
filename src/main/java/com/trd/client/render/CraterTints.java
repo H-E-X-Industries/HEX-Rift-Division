@@ -293,6 +293,8 @@ public final class CraterTints {
             if (block.getStateDefinition().getPossibleStates().isEmpty()) continue;
             // Блоки с невидимой моделью (AIR, INVISIBLE) или рендерером сущности пропускаем
             if (block.defaultBlockState().getRenderShape() != net.minecraft.world.level.block.RenderShape.MODEL) continue;
+            // Жидкостные трубы красятся своим хендлером под цвет жидкости (tintIndex=1) — не оборачиваем
+            if (block instanceof com.trd.block.basic.industrial.fluids.FluidPipeBlock) continue;
 
             boolean existsTint = false;
             for (BlockState st : block.getStateDefinition().getPossibleStates()) {
@@ -344,6 +346,7 @@ public final class CraterTints {
 
     /** Есть ли уже зарегистрированный цвета для блока (штатный BlockColors-хендлер). */
     private static boolean hasExistingColorHandler(Block block) {
+        if (block instanceof com.trd.block.basic.industrial.fluids.FluidPipeBlock) return true;
         BlockColors colors = Minecraft.getInstance().getBlockColors();
         if (colors == null) return false;
         try {

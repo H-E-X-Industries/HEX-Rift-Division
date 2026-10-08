@@ -145,14 +145,15 @@ public class FluidPipeBlock extends Block implements EntityBlock, SimpleWaterlog
 
     @Override
     protected net.minecraft.world.ItemInteractionResult useItemOn(net.minecraft.world.item.ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
-        if (!level.isClientSide && stack.getItem() instanceof FluidIdentifierItem) {
-            ServerLevel serverLevel = (ServerLevel) level;
-            String selectedFluidId = FluidIdentifierItem.getSelectedFluid(stack);
-            Fluid fluidToSet = Fluids.EMPTY;
-            if (!selectedFluidId.equals("none")) {
-                fluidToSet = net.minecraft.core.registries.BuiltInRegistries.FLUID.get(net.minecraft.resources.ResourceLocation.parse(selectedFluidId));
-                if (fluidToSet == null) fluidToSet = Fluids.EMPTY;
-            }
+        if (stack.getItem() instanceof FluidIdentifierItem) {
+            if (!level.isClientSide) {
+                ServerLevel serverLevel = (ServerLevel) level;
+                String selectedFluidId = FluidIdentifierItem.getSelectedFluid(stack);
+                Fluid fluidToSet = Fluids.EMPTY;
+                if (!selectedFluidId.equals("none")) {
+                    fluidToSet = net.minecraft.core.registries.BuiltInRegistries.FLUID.get(net.minecraft.resources.ResourceLocation.parse(selectedFluidId));
+                    if (fluidToSet == null) fluidToSet = Fluids.EMPTY;
+                }
 
             if (player.isCrouching()) {
                 BlockEntity startBe = level.getBlockEntity(pos);
@@ -227,6 +228,7 @@ public class FluidPipeBlock extends Block implements EntityBlock, SimpleWaterlog
                         level.playSound(null, pos, SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.BLOCKS, 1.0F, 1.2F);
                     }
                 }
+            }
             }
             return net.minecraft.world.ItemInteractionResult.sidedSuccess(level.isClientSide);
         }

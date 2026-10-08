@@ -56,6 +56,12 @@ public class ShaftBlockEntity extends KineticNodeBlockEntity {
         this.setChanged();
         if (level != null && !level.isClientSide) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 2);
+            if (level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+                var net = com.trd.api.rotation.KineticNetworkManager.get(serverLevel).getNetworkFor(worldPosition);
+                if (net != null) {
+                    net.requestRecalculation();
+                }
+            }
         }
     }
 
@@ -286,6 +292,18 @@ public class ShaftBlockEntity extends KineticNodeBlockEntity {
 
         list.add(myPos.relative(facing));
         list.add(myPos.relative(facing.getOpposite()));
+
+        for (Direction dir : Direction.values()) {
+            BlockPos neighborPos = myPos.relative(dir);
+            if (level.isLoaded(neighborPos)) {
+                BlockEntity be = level.getBlockEntity(neighborPos);
+                if (be instanceof StatorBlockEntity stator) {
+                    if (stator.canConnectMechanically(neighborPos, myPos, this)) {
+                        list.add(neighborPos);
+                    }
+                }
+            }
+        }
 
         if (gearSize > 0) {
             for (BlockPos pos : BlockPos.betweenClosed(myPos.offset(-2, -2, -2), myPos.offset(2, 2, 2))) {
@@ -624,6 +642,9 @@ public class ShaftBlockEntity extends KineticNodeBlockEntity {
         }
         if (neighbor instanceof HandCrankBlockEntity) {
             return isCollinear && thisDiameter == ShaftDiameter.LIGHT;
+        }
+        if (neighbor instanceof StatorBlockEntity stator) {
+            return stator.canConnectMechanically(neighborPos, myPos, this);
         }
         return isCollinear;
     }

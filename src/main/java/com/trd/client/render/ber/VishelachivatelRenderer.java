@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
@@ -94,8 +95,35 @@ public class VishelachivatelRenderer implements BlockEntityRenderer<Vishelashiva
 
     @Override
     public void render(VishelashivatelBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
-        FluidStack fluidStack = blockEntity.getFluidTank().getFluid();
+        // Fallback рендер вала и лопастей если Flywheel отключен
+        if (!com.trd.client.render.FlywheelFallbackHelper.isFlywheelActive(blockEntity.getLevel())) {
+            float currentAngle = com.trd.client.rotation.ClientKineticAngleTracker.getAngle(blockEntity, Direction.UP, partialTick);
+            float bladeAngle = -(com.trd.client.rotation.ClientKineticAngleTracker.getAngle(blockEntity, null, partialTick) / 2.0f);
 
+            // Половинка вала на верхней грани
+            poseStack.pushPose();
+            poseStack.translate(0.5f, 0.5f, 0.5f);
+            poseStack.mulPose(com.mojang.math.Axis.XP.rotationDegrees(90));
+            poseStack.mulPose(com.mojang.math.Axis.ZP.rotation(currentAngle));
+            poseStack.translate(-0.5f, -0.5f, -0.5f);
+            com.trd.client.render.FlywheelFallbackHelper.renderPartialModel(
+                    com.trd.client.render.flywheel.ModModels.HALF_SHAFT,
+                    poseStack, bufferSource, blockEntity.getBlockState(), packedLight, packedOverlay
+            );
+            poseStack.popPose();
+
+            // Лопасти выщелачивателя
+            poseStack.pushPose();
+            poseStack.translate(0.5f, 0, 0.5f);
+            poseStack.mulPose(com.mojang.math.Axis.YP.rotation(bladeAngle));
+            com.trd.client.render.FlywheelFallbackHelper.renderPartialModel(
+                    com.trd.client.render.flywheel.ModModels.VISHELACHIVATEL_LOPASTI,
+                    poseStack, bufferSource, blockEntity.getBlockState(), packedLight, packedOverlay
+            );
+            poseStack.popPose();
+        }
+
+        FluidStack fluidStack = blockEntity.getFluidTank().getFluid();
         if (fluidStack.isEmpty()) return;
 
         float amount = fluidStack.getAmount();
@@ -153,5 +181,15 @@ public class VishelachivatelRenderer implements BlockEntityRenderer<Vishelashiva
                 .setOverlay(OverlayTexture.NO_OVERLAY)
                 .setLight(light)
                 .setNormal(pose, 0, 1, 0);
+    }
+
+    @Override
+    public boolean shouldRenderOffScreen(VishelashivatelBlockEntity be) {
+        return true;
+    }
+
+    @Override
+    public int getViewDistance() {
+        return 256;
     }
 }

@@ -2,6 +2,7 @@
   "flip_v": true,
   "loader": "neoforge:obj",
   "model": "trd:models/block/base_pipe.obj",
+  "render_type": "minecraft:cutout",
   "textures": {
     "particle": "trd:block/pipe_spots_pipe",
     "pipe_texture": "trd:block/pipe_spots_pipe"

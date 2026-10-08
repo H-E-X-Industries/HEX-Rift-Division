@@ -25,14 +25,33 @@ public class FuelTankRenderer implements BlockEntityRenderer<FuelTankBlockEntity
 
     @Override
     public void render(FuelTankBlockEntity be, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
+        BlockState state = be.getBlockState();
+        if (!state.hasProperty(FuelTankBlock.FACING)) return;
+        Direction facing = state.getValue(FuelTankBlock.FACING);
+
+        if (!com.trd.client.render.FlywheelFallbackHelper.isFlywheelActive(be.getLevel())) {
+            poseStack.pushPose();
+            poseStack.translate(0.5f, 0.5f, 0.5f);
+            if (facing == Direction.SOUTH) {
+                poseStack.mulPose(Axis.YP.rotationDegrees(180));
+            } else if (facing == Direction.WEST) {
+                poseStack.mulPose(Axis.YP.rotationDegrees(90));
+            } else if (facing == Direction.EAST) {
+                poseStack.mulPose(Axis.YP.rotationDegrees(270));
+            }
+            poseStack.translate(-0.5f, -0.5f, -0.5f);
+            poseStack.translate(-1.0f, 0.0f, -1.0f);
+            com.trd.client.render.FlywheelFallbackHelper.renderPartialModel(
+                    com.trd.client.render.flywheel.ModModels.FUEL_TANK_BIG,
+                    poseStack, bufferSource, state, packedLight, packedOverlay
+            );
+            poseStack.popPose();
+        }
+
         if (be.fluidFilter == null || be.fluidFilter.equals("none")) return;
 
         Fluid filterFluid = net.minecraft.core.registries.BuiltInRegistries.FLUID.get(ResourceLocation.parse(be.fluidFilter));
         if (filterFluid == null || filterFluid == Fluids.EMPTY) return;
-
-        BlockState state = be.getBlockState();
-        if (!state.hasProperty(FuelTankBlock.FACING)) return;
-        Direction facing = state.getValue(FuelTankBlock.FACING);
 
         Component fluidName = Component.translatable(filterFluid.getFluidType().getDescriptionId());
         int tintColor = IClientFluidTypeExtensions.of(filterFluid).getTintColor();

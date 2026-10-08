@@ -17,7 +17,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
 
-@EventBusSubscriber(modid = MainRegistry.MOD_ID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = MainRegistry.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public class ModClientSetup {
 
 @SubscribeEvent
@@ -61,7 +61,19 @@ public class ModClientSetup {
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.CENTRIFUGE_CYLINDER_BE.get(), com.trd.client.render.ber.CentrifugeCylinderRenderer::new);
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.VISHELASHIVATEL_BE.get(), com.trd.client.render.ber.VishelachivatelRenderer::new);
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.STANOK_BE.get(), com.trd.client.render.StanokRenderer::new);
-        // event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.FUEL_TANK_SMALL_BE.get(), com.trd.client.render.ber.FuelTankRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.FUEL_TANK_SMALL_BE.get(), com.trd.client.render.ber.FuelTankSmallRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.BOILER_BE.get(), com.trd.client.render.ber.BoilerRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.STEAM_ENGINE_BE.get(), com.trd.client.render.ber.SteamEngineRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.MOTOR_ELECTRO_BE.get(), com.trd.client.render.ber.MotorElectroRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.WATER_PUMP_BE.get(), com.trd.client.render.ber.WaterPumpRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.MILLSTONE.get(), com.trd.client.render.ber.MillstoneRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.BEARING_BE.get(), com.trd.client.render.ber.BearingRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.CLUTCH_BE.get(), com.trd.client.render.ber.ClutchRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.HAND_CRANK_BE.get(), com.trd.client.render.ber.HandCrankRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.TACHOMETER_BE.get(), com.trd.client.render.ber.TachometerRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.STATOR_BE.get(), com.trd.client.render.ber.StatorRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.DROBITEL_BE.get(), com.trd.client.render.ber.DrobitelRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.SHAFT_BE.get(), com.trd.client.render.ber.ShaftRenderer::new);
 
         // Пять текстур пули сшиваются в один атлас вариантов. Звать надо до
         // первого выстрела, иначе первые пули просто не рисуются: модель
@@ -421,18 +433,19 @@ public class ModClientSetup {
                     net.minecraft.world.level.material.Fluid fluid = be.getFilterFluid();
                     if (fluid != null && fluid != net.minecraft.world.level.material.Fluids.EMPTY) {
                         if (fluid == net.minecraft.world.level.material.Fluids.LAVA || fluid == net.minecraft.world.level.material.Fluids.FLOWING_LAVA) {
-                            return 0xFF5500;
+                            return 0xFFFF5500;
                         }
                         if (fluid == net.minecraft.world.level.material.Fluids.WATER || fluid == net.minecraft.world.level.material.Fluids.FLOWING_WATER) {
-                            return 0x3F76E4;
+                            return 0xFF3F76E4;
                         }
-                        return net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions.of(fluid.getFluidType())
+                        int tint = net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions.of(fluid.getFluidType())
                                 .getTintColor(new net.neoforged.neoforge.fluids.FluidStack(fluid, 1000));
+                        return 0xFF000000 | tint;
                     }
                 }
             }
             return -1;
-        }, com.trd.block.basic.ModBlocks.BRONZE_FLUID_PIPE.get(), com.trd.block.basic.ModBlocks.STEEL_FLUID_PIPE.get(), com.trd.block.basic.ModBlocks.LEAD_FLUID_PIPE.get(), com.trd.block.basic.ModBlocks.TUNGSTEN_FLUID_PIPE.get());
+        }, com.trd.block.basic.ModBlocks.BRONZE_FLUID_PIPE.get(), com.trd.block.basic.ModBlocks.STEEL_FLUID_PIPE.get(), com.trd.block.basic.ModBlocks.LEAD_FLUID_PIPE.get(), com.trd.block.basic.ModBlocks.TUNGSTEN_FLUID_PIPE.get(), com.trd.block.basic.ModBlocks.PAINTABLE_PIPE.get(), com.trd.block.basic.ModBlocks.PIPE_SPOTS.get());
 
         // Кратерные блоки с собственным свойством DARKNESS (мягкий базальт + выжженная трава):
         // тёмный уровень живёт в BlockState, а не в позиционной базе, поэтому красим здесь.
@@ -494,7 +507,8 @@ public class ModClientSetup {
                 com.trd.block.basic.ModBlocks.BRONZE_FLUID_PIPE.get(),
                 com.trd.block.basic.ModBlocks.STEEL_FLUID_PIPE.get(),
                 com.trd.block.basic.ModBlocks.LEAD_FLUID_PIPE.get(),
-                com.trd.block.basic.ModBlocks.TUNGSTEN_FLUID_PIPE.get()
+                com.trd.block.basic.ModBlocks.TUNGSTEN_FLUID_PIPE.get(),
+                com.trd.block.basic.ModBlocks.PAINTABLE_PIPE.get()
         };
         for (net.minecraft.world.level.block.Block pipe : pipes) {
             for (net.minecraft.world.level.block.state.BlockState state : pipe.getStateDefinition().getPossibleStates()) {
@@ -543,9 +557,11 @@ public class ModClientSetup {
         });
     }
 
+
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
         ModModels.init();
+        com.trd.client.render.IrisShadowBridge.init();
 
         net.minecraft.client.renderer.item.ItemProperties.register(com.trd.item.ModItems.PIPETTE.get(),
                 net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(com.trd.main.MainRegistry.MOD_ID, "filled"),
@@ -559,6 +575,7 @@ public class ModClientSetup {
         VisualizerRegistry.setVisualizer(ModBlockEntities.MILLSTONE.get(), new BlockEntityVisualizer<com.trd.block.entity.industrial.rotation.MillstoneBlockEntity>() {
             @Override
             public BlockEntityVisual<? super com.trd.block.entity.industrial.rotation.MillstoneBlockEntity> createVisual(VisualizationContext ctx, com.trd.block.entity.industrial.rotation.MillstoneBlockEntity be, float partialTick) {
+                com.trd.client.render.IrisShadowBridge.track(be);
                 return new MillstoneVisual(ctx, be, partialTick);
             }
 
@@ -571,6 +588,7 @@ public class ModClientSetup {
         VisualizerRegistry.setVisualizer(ModBlockEntities.FUEL_TANK_BE.get(), new BlockEntityVisualizer<com.trd.multiblock.industrial.fueltanks.FuelTankBlockEntity>() {
             @Override
             public BlockEntityVisual<? super com.trd.multiblock.industrial.fueltanks.FuelTankBlockEntity> createVisual(VisualizationContext ctx, com.trd.multiblock.industrial.fueltanks.FuelTankBlockEntity be, float partialTick) {
+                com.trd.client.render.IrisShadowBridge.track(be);
                 return new com.trd.client.render.flywheel.FuelTankVisual(ctx, be, partialTick);
             }
 
@@ -583,6 +601,7 @@ public class ModClientSetup {
         VisualizerRegistry.setVisualizer(ModBlockEntities.FUEL_TANK_SMALL_BE.get(), new BlockEntityVisualizer<com.trd.multiblock.industrial.fueltanks.small.FuelTankSmallBlockEntity>() {
             @Override
             public BlockEntityVisual<? super com.trd.multiblock.industrial.fueltanks.small.FuelTankSmallBlockEntity> createVisual(VisualizationContext ctx, com.trd.multiblock.industrial.fueltanks.small.FuelTankSmallBlockEntity be, float partialTick) {
+                com.trd.client.render.IrisShadowBridge.track(be);
                 return new com.trd.client.render.flywheel.FuelTankSmallVisual(ctx, be, partialTick);
             }
 
@@ -595,11 +614,13 @@ public class ModClientSetup {
         VisualizerRegistry.setVisualizer(ModBlockEntities.SHAFT_BE.get(), new BlockEntityVisualizer<com.trd.block.entity.industrial.rotation.ShaftBlockEntity>() {
             @Override
             public BlockEntityVisual<? super com.trd.block.entity.industrial.rotation.ShaftBlockEntity> createVisual(VisualizationContext ctx, com.trd.block.entity.industrial.rotation.ShaftBlockEntity be, float partialTick) {
+                com.trd.client.render.IrisShadowBridge.track(be);
                 return new com.trd.client.render.flywheel.ShaftVisual(ctx, be, partialTick);
             }
 
             @Override
             public boolean skipVanillaRender(com.trd.block.entity.industrial.rotation.ShaftBlockEntity be) {
+                if (com.wf.gemrender.direct.IrisDirectBridge.isRenderingShadows()) return false;
                 return true;
             }
         });
@@ -607,11 +628,13 @@ public class ModClientSetup {
         VisualizerRegistry.setVisualizer(ModBlockEntities.BEARING_BE.get(), new BlockEntityVisualizer<com.trd.block.entity.industrial.rotation.BearingBlockEntity>() {
             @Override
             public BlockEntityVisual<? super com.trd.block.entity.industrial.rotation.BearingBlockEntity> createVisual(VisualizationContext ctx, com.trd.block.entity.industrial.rotation.BearingBlockEntity be, float partialTick) {
+                com.trd.client.render.IrisShadowBridge.track(be);
                 return new com.trd.client.render.flywheel.BearingVisual(ctx, be, partialTick);
             }
 
             @Override
             public boolean skipVanillaRender(com.trd.block.entity.industrial.rotation.BearingBlockEntity be) {
+                if (com.wf.gemrender.direct.IrisDirectBridge.isRenderingShadows()) return false;
                 return true;
             }
         });
@@ -619,11 +642,13 @@ public class ModClientSetup {
         VisualizerRegistry.setVisualizer(ModBlockEntities.HAND_CRANK_BE.get(), new BlockEntityVisualizer<com.trd.block.entity.industrial.rotation.HandCrankBlockEntity>() {
             @Override
             public BlockEntityVisual<? super com.trd.block.entity.industrial.rotation.HandCrankBlockEntity> createVisual(VisualizationContext ctx, com.trd.block.entity.industrial.rotation.HandCrankBlockEntity be, float partialTick) {
+                com.trd.client.render.IrisShadowBridge.track(be);
                 return new com.trd.client.render.flywheel.HandCrankVisual(ctx, be, partialTick);
             }
 
             @Override
             public boolean skipVanillaRender(com.trd.block.entity.industrial.rotation.HandCrankBlockEntity be) {
+                if (com.wf.gemrender.direct.IrisDirectBridge.isRenderingShadows()) return false;
                 return true;
             }
         });
@@ -631,11 +656,13 @@ public class ModClientSetup {
         VisualizerRegistry.setVisualizer(ModBlockEntities.CLUTCH_BE.get(), new BlockEntityVisualizer<com.trd.block.entity.industrial.rotation.ClutchBlockEntity>() {
             @Override
             public BlockEntityVisual<? super com.trd.block.entity.industrial.rotation.ClutchBlockEntity> createVisual(VisualizationContext ctx, com.trd.block.entity.industrial.rotation.ClutchBlockEntity be, float partialTick) {
+                com.trd.client.render.IrisShadowBridge.track(be);
                 return new com.trd.client.render.flywheel.ClutchVisual(ctx, be, partialTick);
             }
 
             @Override
             public boolean skipVanillaRender(com.trd.block.entity.industrial.rotation.ClutchBlockEntity be) {
+                if (com.wf.gemrender.direct.IrisDirectBridge.isRenderingShadows()) return false;
                 return true;
             }
         });
@@ -643,11 +670,13 @@ public class ModClientSetup {
         VisualizerRegistry.setVisualizer(ModBlockEntities.MOTOR_ELECTRO_BE.get(), new BlockEntityVisualizer<com.trd.block.entity.industrial.rotation.MotorElectroBlockEntity>() {
             @Override
             public BlockEntityVisual<? super com.trd.block.entity.industrial.rotation.MotorElectroBlockEntity> createVisual(VisualizationContext ctx, com.trd.block.entity.industrial.rotation.MotorElectroBlockEntity be, float partialTick) {
+                com.trd.client.render.IrisShadowBridge.track(be);
                 return new com.trd.client.render.flywheel.MotorVisual(ctx, be, partialTick);
             }
 
             @Override
             public boolean skipVanillaRender(com.trd.block.entity.industrial.rotation.MotorElectroBlockEntity be) {
+                if (com.wf.gemrender.direct.IrisDirectBridge.isRenderingShadows()) return false;
                 return true;
             }
         });
@@ -655,11 +684,13 @@ public class ModClientSetup {
         VisualizerRegistry.setVisualizer(ModBlockEntities.TACHOMETER_BE.get(), new BlockEntityVisualizer<com.trd.block.entity.industrial.rotation.TachometerBlockEntity>() {
             @Override
             public BlockEntityVisual<? super com.trd.block.entity.industrial.rotation.TachometerBlockEntity> createVisual(VisualizationContext ctx, com.trd.block.entity.industrial.rotation.TachometerBlockEntity be, float partialTick) {
+                com.trd.client.render.IrisShadowBridge.track(be);
                 return new com.trd.client.render.flywheel.TachometerVisual(ctx, be, partialTick);
             }
 
             @Override
             public boolean skipVanillaRender(com.trd.block.entity.industrial.rotation.TachometerBlockEntity be) {
+                if (com.wf.gemrender.direct.IrisDirectBridge.isRenderingShadows()) return false;
                 return true;
             }
         });
@@ -667,11 +698,13 @@ public class ModClientSetup {
         VisualizerRegistry.setVisualizer(ModBlockEntities.WATER_PUMP_BE.get(), new BlockEntityVisualizer<com.trd.block.entity.industrial.fluids.WaterPumpBlockEntity>() {
             @Override
             public BlockEntityVisual<? super com.trd.block.entity.industrial.fluids.WaterPumpBlockEntity> createVisual(VisualizationContext ctx, com.trd.block.entity.industrial.fluids.WaterPumpBlockEntity be, float partialTick) {
+                com.trd.client.render.IrisShadowBridge.track(be);
                 return new com.trd.client.render.flywheel.WaterPumpVisual(ctx, be, partialTick);
             }
 
             @Override
             public boolean skipVanillaRender(com.trd.block.entity.industrial.fluids.WaterPumpBlockEntity be) {
+                if (com.wf.gemrender.direct.IrisDirectBridge.isRenderingShadows()) return false;
                 return true;
             }
         });
@@ -679,11 +712,13 @@ public class ModClientSetup {
         VisualizerRegistry.setVisualizer(ModBlockEntities.BOILER_BE.get(), new BlockEntityVisualizer<com.trd.multiblock.industrial.boiler.BoilerBlockEntity>() {
             @Override
             public BlockEntityVisual<? super com.trd.multiblock.industrial.boiler.BoilerBlockEntity> createVisual(VisualizationContext ctx, com.trd.multiblock.industrial.boiler.BoilerBlockEntity be, float partialTick) {
+                com.trd.client.render.IrisShadowBridge.track(be);
                 return new com.trd.client.render.flywheel.BoilerVisual(ctx, be, partialTick);
             }
 
             @Override
             public boolean skipVanillaRender(com.trd.multiblock.industrial.boiler.BoilerBlockEntity be) {
+                if (com.wf.gemrender.direct.IrisDirectBridge.isRenderingShadows()) return false;
                 return true;
             }
         });
@@ -691,11 +726,13 @@ public class ModClientSetup {
         VisualizerRegistry.setVisualizer(ModBlockEntities.STEAM_ENGINE_BE.get(), new BlockEntityVisualizer<com.trd.multiblock.industrial.steam_engine.SteamEngineBlockEntity>() {
             @Override
             public BlockEntityVisual<? super com.trd.multiblock.industrial.steam_engine.SteamEngineBlockEntity> createVisual(VisualizationContext ctx, com.trd.multiblock.industrial.steam_engine.SteamEngineBlockEntity be, float partialTick) {
+                com.trd.client.render.IrisShadowBridge.track(be);
                 return new com.trd.client.render.flywheel.SteamEngineVisual(ctx, be, partialTick);
             }
 
             @Override
             public boolean skipVanillaRender(com.trd.multiblock.industrial.steam_engine.SteamEngineBlockEntity be) {
+                if (com.wf.gemrender.direct.IrisDirectBridge.isRenderingShadows()) return false;
                 return true;
             }
         });
@@ -703,11 +740,13 @@ public class ModClientSetup {
         VisualizerRegistry.setVisualizer(ModBlockEntities.STATOR_BE.get(), new BlockEntityVisualizer<com.trd.block.entity.industrial.rotation.StatorBlockEntity>() {
             @Override
             public BlockEntityVisual<? super com.trd.block.entity.industrial.rotation.StatorBlockEntity> createVisual(VisualizationContext ctx, com.trd.block.entity.industrial.rotation.StatorBlockEntity be, float partialTick) {
+                com.trd.client.render.IrisShadowBridge.track(be);
                 return new com.trd.client.render.flywheel.StatorVisual(ctx, be, partialTick);
             }
 
             @Override
             public boolean skipVanillaRender(com.trd.block.entity.industrial.rotation.StatorBlockEntity be) {
+                if (com.wf.gemrender.direct.IrisDirectBridge.isRenderingShadows()) return false;
                 return true;
             }
         });
@@ -715,6 +754,7 @@ public class ModClientSetup {
         VisualizerRegistry.setVisualizer(ModBlockEntities.DROBITEL_BE.get(), new BlockEntityVisualizer<com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity>() {
             @Override
             public BlockEntityVisual<? super com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity> createVisual(VisualizationContext ctx, com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity be, float partialTick) {
+                com.trd.client.render.IrisShadowBridge.track(be);
                 return new com.trd.client.render.flywheel.DrobitelVisual(ctx, be, partialTick);
             }
 
@@ -727,6 +767,7 @@ public class ModClientSetup {
         VisualizerRegistry.setVisualizer(ModBlockEntities.CENTRIFUGE_CYLINDER_BE.get(), new BlockEntityVisualizer<com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderBlockEntity>() {
             @Override
             public BlockEntityVisual<? super com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderBlockEntity> createVisual(VisualizationContext ctx, com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderBlockEntity be, float partialTick) {
+                com.trd.client.render.IrisShadowBridge.track(be);
                 return new com.trd.client.render.flywheel.CentrifugeCylinderVisual(ctx, be, partialTick);
             }
 
@@ -739,6 +780,7 @@ public class ModClientSetup {
         VisualizerRegistry.setVisualizer(ModBlockEntities.VISHELASHIVATEL_BE.get(), new BlockEntityVisualizer<com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlockEntity>() {
             @Override
             public BlockEntityVisual<? super com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlockEntity> createVisual(VisualizationContext ctx, com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlockEntity be, float partialTick) {
+                com.trd.client.render.IrisShadowBridge.track(be);
                 return new com.trd.client.render.flywheel.VishelashivatelVisual(ctx, be, partialTick);
             }
 
@@ -751,6 +793,7 @@ public class ModClientSetup {
         VisualizerRegistry.setVisualizer(ModBlockEntities.STANOK_BE.get(), new BlockEntityVisualizer<com.trd.multiblock.industrial.stanok.StanokBlockEntity>() {
             @Override
             public BlockEntityVisual<? super com.trd.multiblock.industrial.stanok.StanokBlockEntity> createVisual(VisualizationContext ctx, com.trd.multiblock.industrial.stanok.StanokBlockEntity be, float partialTick) {
+                com.trd.client.render.IrisShadowBridge.track(be);
                 return new com.trd.client.render.flywheel.StanokVisual(ctx, be, partialTick);
             }
 

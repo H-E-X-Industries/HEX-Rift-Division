@@ -473,7 +473,7 @@ public class StanokVisual extends AbstractBlockEntityVisual<StanokBlockEntity> i
         }
     }
 
-    private static float[] computeTrdPath(float t) {
+    public static float[] computeTrdPath(float t) {
         if (TRD_TOTAL_LEN <= 0) return new float[]{0f, 0f, 0f};
         float speed  = TRD_TOTAL_LEN / 4.0f;
         float target = Math.min(t * speed, TRD_TOTAL_LEN);

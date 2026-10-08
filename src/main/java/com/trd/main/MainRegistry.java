@@ -37,6 +37,7 @@ public class MainRegistry {
 
     private void commonSetup(final FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
+            com.trd.api.fuel.ModFuels.init();
             com.trd.api.metallurgy.ModMetallurgy.init();
             com.trd.multiblock.industrial.drobitel.DrobitelRecipes.register();
             com.trd.multiblock.industrial.centrifuge.conus.CentrifugeRecipes.init();
