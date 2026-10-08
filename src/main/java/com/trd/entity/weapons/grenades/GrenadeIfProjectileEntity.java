@@ -24,6 +24,8 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 
+import javax.annotation.Nullable;
+
 /**
  * Ударная граната с инерционным взрывателем: после первого касания запускается
  * фиксированный таймер (4с), липучий тип прилипает к блоку/сущности.
@@ -40,6 +42,8 @@ public class GrenadeIfProjectileEntity extends ThrowableItemProjectile {
             SynchedEntityData.defineId(GrenadeIfProjectileEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> STUCK_ENTITY_ID =
             SynchedEntityData.defineId(GrenadeIfProjectileEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> STUCK_AT_TICK =
+            SynchedEntityData.defineId(GrenadeIfProjectileEntity.class, EntityDataSerializers.INT);
 
     private static final int FUSE_SECONDS = 4;
     private static final float MIN_BOUNCE_SPEED = 0.1f;
@@ -48,7 +52,17 @@ public class GrenadeIfProjectileEntity extends ThrowableItemProjectile {
     private GrenadeIfType grenadeType;
     private boolean exploded = false;
     private int stuckEntityId = -1;
-    private Vec3 stuckOffset = Vec3.ZERO;
+
+    /**
+     * Смещение относительно центра цели; {@code null}, пока граната ни к чему не
+     * прилипла.
+     * <p>
+     * Синхронизировать его не нужно: клиент берёт смещение из собственной позиции
+     * в тот тик, когда узнаёт о прилипании, — граната в этот момент стоит там
+     * же, где её поставил сервер.
+     */
+    @Nullable
+    private Vec3 stuckOffset;
 
     public GrenadeIfProjectileEntity(EntityType<? extends ThrowableItemProjectile> entityType, Level level) {
         super(entityType, level);
@@ -69,6 +83,7 @@ public class GrenadeIfProjectileEntity extends ThrowableItemProjectile {
         builder.define(GRENADE_IF_TYPE_ID, GrenadeIfType.GRENADE_IF.name());
         builder.define(DATA_STUCK, false);
         builder.define(STUCK_ENTITY_ID, -1);
+        builder.define(STUCK_AT_TICK, -1);
     }
 
     /**
@@ -100,30 +115,30 @@ public class GrenadeIfProjectileEntity extends ThrowableItemProjectile {
         return getGrenadeType().getItem();
     }
 
+    /**
+     * Скорость догоняния цели, доля расстояния за тик.
+     * <p>
+     * Половина — как у брутального червя: на такую скорость граната отстаёт от
+     * цели примерно на один тик, а глазом это не читается. Меньше — граната
+     * заметно отстаёт при резких поворотах, больше — дёргается на каждой
+     * смене направления у цели.
+     */
+    private static final double FOLLOW_SHARPNESS = 0.5D;
+
     @Override
     public void tick() {
         super.tick();
+
+        // Прилипание ведётся на ОБЕИХ сторонах — это и есть разница с прежним
+        // поведением. Раньше код стоял за `if (level().isClientSide) return`, и
+        // клиент про прилипание знал только из синхронизированных данных: ждал
+        // позицию от сервера, а сервер отправляет пакет перемещения не чаще
+        // раза в 20 тиков — граната дёргалась по цели раз в секунду.
+        // Теперь каждый кадр обе стороны считают точку сами, причём на клиенте по
+        // уже сглаженной позиции цели, и граната идёт за ней гладко.
+        followStuckTarget();
+
         if (level().isClientSide) return;
-
-        if (this.entityData.get(DATA_STUCK) && stuckEntityId != -1) {
-            Entity entity = level().getEntity(stuckEntityId);
-            if (entity != null && entity.isAlive()) {
-                Vec3 mobCenter = entity.getBoundingBox().getCenter();
-                Vec3 desiredPos = mobCenter.add(stuckOffset);
-
-                Vec3 currentPos = this.position();
-                double lerp = 0.5;
-                double newX = currentPos.x + (desiredPos.x - currentPos.x) * lerp;
-                double newY = currentPos.y + (desiredPos.y - currentPos.y) * lerp;
-                double newZ = currentPos.z + (desiredPos.z - currentPos.z) * lerp;
-
-                this.setPos(newX, newY, newZ);
-                this.setDeltaMovement(entity.getDeltaMovement());
-            } else {
-                explode(this.blockPosition());
-                return;
-            }
-        }
 
         if (this.entityData.get(DATA_STUCK) && stuckEntityId == -1) {
             this.setDeltaMovement(Vec3.ZERO);
@@ -133,6 +148,53 @@ public class GrenadeIfProjectileEntity extends ThrowableItemProjectile {
             if (this.tickCount >= this.entityData.get(DETONATION_TIME)) {
                 explode(this.blockPosition());
             }
+        }
+    }
+
+    /**
+     * Держит гранату на цели: тянет её к точке {@code центр цели + смещение}.
+     * <p>
+     * Целевой id берётся из синхронизированных данных, а не из поля: поле
+     * заполняется только на сервере, и на клиенте оно осталось бы равным -1 —
+     * тогда бы вся эта логика просто не выполнялась. Потерявшаяся цель взрывает
+     * гранату, но только на сервере: клиенту нечего решать, сервер всё равно
+     * снимет снаряд следующим же пакетом.
+     */
+    private void followStuckTarget() {
+        if (!this.entityData.get(DATA_STUCK)) return;
+
+        int targetId = this.entityData.get(STUCK_ENTITY_ID);
+        if (targetId <= 0) {
+            // Прилипла к блоку: следить не за чем, стоит на месте.
+            return;
+        }
+
+        Entity target = level().getEntity(targetId);
+        if (target == null || !target.isAlive()) {
+            if (!level().isClientSide) {
+                explode(this.blockPosition());
+            }
+            return;
+        }
+
+        Vec3 center = target.getBoundingBox().getCenter();
+
+        // Смещение запоминается один раз, на той стороне, с которой граната
+        // коснулась цели: пока оно неизвестно, тянуть не к чему.
+        if (stuckOffset == null) {
+            stuckOffset = this.position().subtract(center);
+        }
+
+        Vec3 current = this.position();
+        Vec3 next = current.lerp(center.add(stuckOffset), FOLLOW_SHARPNESS);
+        this.setPos(next.x, next.y, next.z);
+
+        // Скорость на сервере нужна ещё и трекеру: по ней он видит, что сущность
+        // движется, и шлёт позицию чаще, чем раз в 20 тиков. На клиенте она
+        // только мешает — следующий тик граната всё равно встаёт на расчётную
+        // точку, а лишнее движение сдвинуло бы её на кадр.
+        if (!level().isClientSide) {
+            this.setDeltaMovement(target.getDeltaMovement());
         }
     }
 
@@ -146,6 +208,7 @@ public class GrenadeIfProjectileEntity extends ThrowableItemProjectile {
         if (getGrenadeType() == GrenadeIfType.GRENADE_IF_SLIME) {
             super.onHitBlock(result); // слаймовую не трогаем, оставляем старую логику
             this.entityData.set(DATA_STUCK, true);
+            this.entityData.set(STUCK_AT_TICK, this.tickCount);
             this.setDeltaMovement(Vec3.ZERO);
             this.setNoGravity(true);
             Vec3 pos = result.getLocation();
@@ -179,8 +242,13 @@ public class GrenadeIfProjectileEntity extends ThrowableItemProjectile {
         float speed = (float) velocity.length();
 
         if (speed < MIN_BOUNCE_SPEED) {
+            // Отскакивать больше не от чего: горизонтальное движение гасится, и
+            // граната просто падает под тяжестью до самого подрыва.
+            // Раньше здесь стоял ещё и setNoGravity(true), и граната намертво
+            // зависала в воздухе, откуда её так и не сдвинуть — до самого таймера.
+            // Липучая сюда не доходит: у неё своя ветка выше, она прилипает и
+            // должна висеть.
             this.setDeltaMovement(Vec3.ZERO);
-            this.setNoGravity(true);
             return;
         }
 
@@ -194,28 +262,55 @@ public class GrenadeIfProjectileEntity extends ThrowableItemProjectile {
         this.hasImpulse = true;
     }
 
+    /**
+     * Прилипание к сущности: граната встаёт вплотную к телу снаружи и дальше
+     * едет вместе с ним.
+     * <p>
+     * Точка крепления — это ровно то смещение от центра цели, которое потом
+     * держит {@link #followStuckTarget()}. Расхождение между местом, куда граната
+     * реально встала, и точкой, к которой её затем тянут, читалось бы как рывок
+     * на первом же тике после касания — раньше именно это и было: смещение
+     * считалось от центра, а граната ставилась на {@code attachPos.y - высота
+     * гранаты / 2 + высота цели / 2}, то есть на другой высоте.
+     */
     private void stickToEntity(Entity entity) {
         this.entityData.set(DATA_STUCK, true);
+        this.entityData.set(STUCK_AT_TICK, this.tickCount);
         this.stuckEntityId = entity.getId();
         this.setNoGravity(true);
         this.entityData.set(STUCK_ENTITY_ID, entity.getId());
 
-        Vec3 mobCenter = entity.getBoundingBox().getCenter();
-        Vec3 toGrenade = this.position().subtract(mobCenter);
+        Vec3 center = entity.getBoundingBox().getCenter();
+        Vec3 toGrenade = this.position().subtract(center);
         double dist = toGrenade.length();
-        if (dist < 0.001) {
-            toGrenade = new Vec3(0, 1, 0);
-            dist = 1.0;
-        }
-        Vec3 dir = toGrenade.scale(1.0 / dist);
 
-        double desiredDist = entity.getBbWidth() * 0.5 + this.getBbWidth() * 0.5;
-        desiredDist = Math.max(desiredDist, dist);
+        Vec3 dir = dist < 1.0E-6
+                ? new Vec3(0.0, 1.0, 0.0)
+                : toGrenade.scale(1.0 / dist);
 
-        Vec3 attachPos = mobCenter.add(dir.scale(desiredDist));
-        this.stuckOffset = attachPos.subtract(mobCenter);
+        // Не ближе, чем полусумма ширин: вплотную к телу, но не внутри него.
+        double distance = Math.max(entity.getBbWidth() * 0.5 + this.getBbWidth() * 0.5, dist);
+        stuckOffset = dir.scale(distance);
 
-        this.setPos(attachPos.x, attachPos.y - this.getBbHeight() * 0.5 + entity.getBbHeight() * 0.5, attachPos.z);
+        this.setPos(center.x + stuckOffset.x, center.y + stuckOffset.y, center.z + stuckOffset.z);
+        this.setDeltaMovement(entity.getDeltaMovement());
+    }
+
+    /**
+     * Сколько секунд граната уже летит — по этому числу рендер крутит модель.
+     * <p>
+     * У прилипшей гранаты отсчёт останавливается на моменте касания: она больше
+     * не летит, и продолжать вращение вокруг оси на месте — это вертящийся
+     * снаряд, приклеенный к цели. Даже {@code partialTick} не добавляется, иначе
+     * в каждом кадре модель всё равно смещалась бы на долю оборота.
+     * <p>
+     * Тик заморозки синхронизирован, поэтому замерший угол переживает и
+     * перезагрузку чанка: без этого граната после перезагрузки дёрнулась бы на
+     * пол-оборота и поехала дальше крутиться.
+     */
+    public float flightSeconds(float partialTick) {
+        int stuckAt = this.entityData.get(STUCK_AT_TICK);
+        return (stuckAt >= 0 ? stuckAt : this.tickCount + partialTick) / 20.0F;
     }
 
     /**
@@ -253,6 +348,7 @@ public class GrenadeIfProjectileEntity extends ThrowableItemProjectile {
         tag.putBoolean("Exploded", exploded);
         tag.putBoolean("Stuck", this.entityData.get(DATA_STUCK));
         tag.putInt("StuckEntityId", stuckEntityId);
+        tag.putInt("StuckAtTick", this.entityData.get(STUCK_AT_TICK));
         if (stuckOffset != null) {
             tag.putDouble("StuckOffsetX", stuckOffset.x);
             tag.putDouble("StuckOffsetY", stuckOffset.y);
@@ -273,6 +369,7 @@ public class GrenadeIfProjectileEntity extends ThrowableItemProjectile {
         this.exploded = tag.getBoolean("Exploded");
         this.entityData.set(DATA_STUCK, tag.getBoolean("Stuck"));
         this.stuckEntityId = tag.getInt("StuckEntityId");
+        this.entityData.set(STUCK_AT_TICK, tag.getInt("StuckAtTick"));
         if (tag.contains("StuckOffsetX")) {
             this.stuckOffset = new Vec3(
                     tag.getDouble("StuckOffsetX"),

@@ -115,9 +115,9 @@ public class GrenadeIfGltfRenderer extends EntityRenderer<GrenadeIfProjectileEnt
         poseStack.mulPose(Axis.XP.rotationDegrees(entity.getXRot()));
 
         // Вращение вокруг оси полёта. Возраст берётся сглаженным, иначе на низком
-        // FPS граната дёргалась бы между тиками.
-        float spin = (entity.tickCount + partialTick) * SPIN_DEGREES_PER_SECOND * 0.05F;
-        poseStack.mulPose(Axis.ZP.rotationDegrees(spin));
+        // FPS граната дёргалась бы между тиками. У прилипшей гранаты возраст
+        // замерший — см. GrenadeIfProjectileEntity#flightSeconds.
+        poseStack.mulPose(Axis.ZP.rotationDegrees(entity.flightSeconds(partialTick) * SPIN_DEGREES_PER_SECOND));
 
         // Поза покоя модели, но с прибитой чекой: клип отдаётся обязательно, иначе
         // NodeHide не применится и чека останется видимой. Тип берётся из типа
