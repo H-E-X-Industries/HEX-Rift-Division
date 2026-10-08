@@ -109,12 +109,21 @@ public class ModClientSetup {
                 com.trd.entity.ModEntities.GRENADEFIRE_PROJECTILE,
                 com.trd.entity.ModEntities.GRENADESMART_PROJECTILE,
                 com.trd.entity.ModEntities.GRENADESLIME_PROJECTILE,
+                com.trd.entity.ModEntities.GRENADE_NUC_PROJECTILE)) {
+            event.registerEntityRenderer(grenade.get(), net.minecraft.client.renderer.entity.ThrownItemRenderer::new);
+        }
+
+        // Ударные гранаты — на glTF, той же моделью, что и предмет в руке, но у
+        // каждого вида своя: текстура зашита в саму модель, поэтому брать её надо
+        // по типу снаряда. Модели грузятся асинхронно, и пока нужная не готова,
+        // граната просто не рисуется.
+        for (var grenadeIf : java.util.List.of(
                 com.trd.entity.ModEntities.GRENADE_IF_PROJECTILE,
                 com.trd.entity.ModEntities.GRENADE_IF_HE_PROJECTILE,
                 com.trd.entity.ModEntities.GRENADE_IF_SLIME_PROJECTILE,
-                com.trd.entity.ModEntities.GRENADE_IF_FIRE_PROJECTILE,
-                com.trd.entity.ModEntities.GRENADE_NUC_PROJECTILE)) {
-            event.registerEntityRenderer(grenade.get(), net.minecraft.client.renderer.entity.ThrownItemRenderer::new);
+                com.trd.entity.ModEntities.GRENADE_IF_FIRE_PROJECTILE)) {
+            event.registerEntityRenderer(grenadeIf.get(),
+                    com.trd.client.gecko.entity.grenades.GrenadeIfGltfRenderer::new);
         }
     }
 
@@ -553,6 +562,11 @@ public class ModClientSetup {
                 // правится руками в Blockbench. Без сброса новые времена
                 // звуков подхватывались бы только после перезапуска игры.
                 com.trd.item.weapons.guns.MachineGunAnimation.invalidate();
+                // Ударные гранаты держат в том же файле разметку своих кадров
+                // со звуком, и он правится руками в Blockbench — без сброса новые
+                // времена щелчка чеки и броска подхватились бы только после
+                // перезапуска игры.
+                com.trd.item.weapons.grenades.GrenadeIfAnimation.invalidate();
             }
         });
     }

@@ -6,6 +6,7 @@ import com.trd.block.basic.WasteGrassBlock;
 import com.trd.explosion.data.CraterTintData;
 import com.trd.explosion.data.CraterTintSync;
 import com.trd.main.MainRegistry;
+import com.trd.sound.ModSounds;
 import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;

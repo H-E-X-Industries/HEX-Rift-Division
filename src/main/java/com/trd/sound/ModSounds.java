@@ -38,6 +38,23 @@ public class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> MOTOR_ELECTRO_LOOP = registerSoundEvents("motor_electro_loop");
     public static final DeferredHolder<SoundEvent, SoundEvent> GILSE_LIGHT = registerSoundEvents("gilse_light");
 
+    /** Щелчок чеки ударной гранаты: кадр 0.3333 с клипа {@code pin_pull}. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> GRENADE_PIN = registerSoundEvents("grenade_pin");
+    /** Выдергивание чеки при броске: кадр 0.2083 с клипа {@code throw}. */
+    public static final DeferredHolder<SoundEvent, SoundEvent> GRENADE_THROW = registerSoundEvents("grenade_throw");
+
+    /**
+     * Взрыв ударной гранаты вместо ванильного {@code entity.generic.explode}.
+     * <p>
+     * Оба файла ({@code grenade_explosion} и {@code grenade_explosion2}) сидят в
+     * одном событии, поэтому игра сама выбирает между ними при каждом взрыве и
+     * два одинаковых взрыва подряд не звучат одинаково.
+     * <p>
+     * Событие переменной дальности: громкость падает с расстоянием, как у
+     * любого взрыва, а не как у звука, играющего в одной точке.
+     */
+    public static final DeferredHolder<SoundEvent, SoundEvent> GRENADE_EXPLOSION = registerSoundEvents("grenade_explosion");
+
     private static DeferredHolder<SoundEvent, SoundEvent> registerSoundEvents(String name) {
         return SOUND_EVENTS.register(name, () -> SoundEvent.createVariableRangeEvent(ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, name)));
     }

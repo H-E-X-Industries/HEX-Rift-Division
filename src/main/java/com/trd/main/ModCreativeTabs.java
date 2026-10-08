@@ -318,11 +318,7 @@ public class ModCreativeTabs {
                         output.accept(ModItems.DETONATOR.get());
                         output.accept(ModItems.RANGE_DETONATOR.get());
 
-                        // Гранаты (порядок как в 1.20.1)
-                        output.accept(ModItems.GRENADE.get());
-                        output.accept(ModItems.GRENADEHE.get());
-                        output.accept(ModItems.GRENADEFIRE.get());
-                        output.accept(ModItems.GRENADESLIME.get());
+
                         output.accept(ModItems.GRENADE_IF.get());
                         output.accept(ModItems.GRENADE_IF_HE.get());
                         output.accept(ModItems.GRENADE_IF_SLIME.get());

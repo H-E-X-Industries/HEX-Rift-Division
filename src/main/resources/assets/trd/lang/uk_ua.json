@@ -984,10 +984,13 @@
     "tooltip.trd.grenade.fire.desc":  "|\u00a7cIncendiary| - sets everything caught in the blast on fire. Detonates on the third bounce. |Bounces: 3| / |Damage: 30| / |Burn: 15s|. |Hold RMB| to adjust throw impulse.",
     "tooltip.trd.grenade.slime.desc":  "|\u00a7aSticky| - sticks to the first block or entity it touches, then detonates after 2 seconds. |Radius: 3.5| / |Damage: 30|. |Hold RMB| to adjust throw impulse.",
     "tooltip.trd.grenade.smart.desc":  "|\u00a7eSmart| - detonates on contact with any entity, including the one who threw it. Otherwise detonates on the third bounce. |Bounces: 3| / |Radius: 3.5 / 7.0| / |Damage: 20 / 40|. |Hold RMB| to adjust throw impulse.",
-    "tooltip.trd.grenade_if.standard.desc":  "|\u00a76Fragmentation| - an impact grenade with an inertial fuze, 4 second delay. |Radius: 5.0| / |Damage: 45|. |Hold RMB| to adjust throw impulse.",
-    "tooltip.trd.grenade_if.he.desc":  "|\u00a7bHigh Explosive| - an impact grenade with an inertial fuze, 4 second delay. |Radius: 8.0| / |Damage: 80|. |Hold RMB| to adjust throw impulse.",
-    "tooltip.trd.grenade_if.fire.desc":  "|\u00a7cIncendiary| - an impact grenade with an inertial fuze, 4 second delay. Sets the whole area on fire. |Damage: 30| / |Burn: 15s|. |Hold RMB| to adjust throw impulse.",
-    "tooltip.trd.grenade_if.slime.desc":  "|\u00a7aSticky| - an impact grenade with an inertial fuze, 4 second delay. Sticks to the first block or entity it touches. |Radius: 6.0| / |Damage: 60|. |Hold RMB| to adjust throw impulse.",
+    "tooltip.trd.grenade_if.standard.desc":  "|\u00a76Fragmentation| - an impact grenade with an inertial fuze, 4 second delay. |Radius: 5.0| / |Damage: 45|.",
+    "tooltip.trd.grenade_if.he.desc":  "|\u00a7bHigh Explosive| - an impact grenade with an inertial fuze, 4 second delay. |Radius: 8.0| / |Damage: 80|.",
+    "tooltip.trd.grenade_if.fire.desc":  "|\u00a7cIncendiary| - an impact grenade with an inertial fuze, 4 second delay. Sets the whole area on fire. |Damage: 30| / |Burn: 15s|.",
+    "tooltip.trd.grenade_if.slime.desc":  "|\u00a7aSticky| - an impact grenade with an inertial fuze, 4 second delay. Sticks to the first block or entity it touches. |Radius: 6.0| / |Damage: 60|.",
     "tooltip.trd.gravity_grenade.desc":  "|\u00a75\u00a7lGravity| - an experimental weapon. Pulls everything within 15 blocks into a vortex, then launches it. Deals no damage, displacement only. |Delay: 4s|. |Hold RMB| to adjust throw impulse.",
-    "tooltip.trd.grenade_nuc.desc":  "|\u00a74\u00a7lHydrogen Charge| - a tactical charge that punches through cover. Use with extreme caution. |Damage zone: 40| / |Damage: 500| / |Crater: 16| / |Delay: 7s|. |Hold RMB| to adjust throw impulse."
+    "tooltip.trd.grenade_nuc.desc":  "|\u00a74\u00a7lHydrogen Charge| - a tactical charge that punches through cover. Use with extreme caution. |Damage zone: 40| / |Damage: 500| / |Crater: 16| / |Delay: 7s|. |Hold RMB| to adjust throw impulse.",
+  "subtitles.trd.grenade_pin":  "\u0427\u0435\u043a\u0430 \u0432\u0438\u0442\u044f\u0433\u043d\u0443\u0442\u0430",
+  "subtitles.trd.grenade_throw":  "\u041a\u0438\u0434\u0430\u043d\u043d\u044f \u0433\u0440\u0430\u043d\u0430\u0442\u0438",
+  "subtitles.trd.grenade_explosion":  "Вибух ударної гранати"
 }

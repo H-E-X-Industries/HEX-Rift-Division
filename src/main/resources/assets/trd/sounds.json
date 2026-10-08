@@ -216,5 +216,31 @@
         "name": "trd:gilse_light"
       }
     ]
+  },
+  "grenade_pin": {
+    "category": "player",
+    "subtitle": "subtitles.trd.grenade_pin",
+    "sounds": [
+      {
+        "name": "trd:grenade_pin"
+      }
+    ]
+  },
+  "grenade_throw": {
+    "category": "player",
+    "subtitle": "subtitles.trd.grenade_throw",
+    "sounds": [
+      {
+        "name": "trd:grenade_throw"
+      }
+    ]
+  },
+  "grenade_explosion": {
+    "category": "block",
+    "subtitle": "subtitles.trd.grenade_explosion",
+    "sounds": [
+      "trd:grenade_explosion",
+      "trd:grenade_explosion2"
+    ]
   }
 }
