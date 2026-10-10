@@ -8,11 +8,6 @@
       }
     ]
   },
-  "airstrike": {
-    "category": "player",
-    "subtitle": "trd.subtitle.airstrike",
-    "sounds": [ "trd:airstrike" ]
-  },
   "techbleep": {
     "category": "player",
     "subtitle": "trd.subtitle.techbleep",
@@ -111,13 +106,6 @@
     "sounds": [
       "trd:button1"
     ]
-  },
-  "dry_fire": {
-    "category": "player",
-    "sounds": [
-      "trd:dry_fire"
-    ],
-    "subtitle": "sounds.trd.dry_fire"
   },
   "bullet_ground": {
     "category": "block",

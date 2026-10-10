@@ -17,7 +17,6 @@ public class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> BULLET_IMPACT = registerSoundEvents("bullet_impact");
     public static final DeferredHolder<SoundEvent, SoundEvent> TURRET_FIRE = registerSoundEvents("turret_fire");
     public static final DeferredHolder<SoundEvent, SoundEvent> TURRET_LOCK = registerSoundEvents("turret_lock");
-    public static final DeferredHolder<SoundEvent, SoundEvent> DRY_FIRE = registerSoundEvents("dry_fire");
     public static final DeferredHolder<SoundEvent, SoundEvent> GUNPULL = registerSoundEvents("gunpull");
     public static final DeferredHolder<SoundEvent, SoundEvent> HEAVY_GUNCLICK = registerSoundEvents("heavy_gunclick");
     public static final DeferredHolder<SoundEvent, SoundEvent> GUNCLICK = registerSoundEvents("gunclick");
