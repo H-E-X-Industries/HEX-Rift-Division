@@ -4,14 +4,17 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
+import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Граната с зарядкой броска: чем дольше держишь ПКМ, тем сильнее бросок.
@@ -60,9 +63,19 @@ public abstract class ChargableGrenadeItem extends Item {
         return 72000;
     }
 
+    /**
+     * Ванильной анимации натяжения нет намеренно.
+     * <p>
+     * Здесь стоял {@link UseAnim#BOW}, и от первого лица граната при зарядке
+     * растягивалась по горизонтали почти в 1.75 раза и уезжала из руки — это
+     * выглядит так, будто модель раздувается резиновой, а не натягивается рукой.
+     * Заряд теперь показывает облик предмета сам: лёгкое качание вокруг
+     * собственного центра, растущее к полному заряду, — см.
+     * {@code GrenadeGltfAppearance#transform}. Позиция при этом не меняется.
+     */
     @Override
     public UseAnim getUseAnimation(ItemStack stack) {
-        return UseAnim.BOW; // ← анимация натягивания лука + покачивание от первого лица
+        return UseAnim.NONE;
     }
 
     @Override
@@ -103,9 +116,7 @@ public abstract class ChargableGrenadeItem extends Item {
         // готовой к броску.
         //
         // Только клиенту и только здесь: момент «взял в руку» на сервере не
-        // существует, а на клиенте повод тот же — сам факт броска. У ударной
-        // гранаты этого кода нет вовсе: она бросается из use, а не отпусканием,
-        // и свой вызов у неё свой.
+        // существует, а на клиенте повод тот же — сам факт броска.
         if (level.isClientSide) {
             GrenadeIfClientAnim.onThrown(player.getUsedItemHand());
         }
@@ -126,4 +137,56 @@ public abstract class ChargableGrenadeItem extends Item {
     }
 
     protected abstract void throwGrenade(ItemStack stack, Level level, Player player, float velocity, float chargePercent);
+
+    /**
+     * Ставит снаряд в вытянутую руку, а не в центр игрока.
+     * <p>
+     * Точка появления считается от руки: направление взгляда сдвинуто вперёд и
+     * вправо по нему. Так граната вылетает оттуда, куда игрок смотрит, и с
+     * вытянутой руки — ровно как любой брошенный предмет. Без этого она
+     * появлялась в груди, и бросок в упор выглядел так, будто граната выходит
+     * сквозь игрока.
+     * <p>
+     * Зовется <b>до</b> {@code shootFromRotation}: тот считает направление от
+     * позиции игрока и меняет скорость, а позицию снаряда не трогает, так что
+     * порядок неважен — важен лишь сам сдвиг.
+     */
+    protected static void placeFromHand(Entity grenade, Player player) {
+        Vec3 hand = handOrigin(player);
+        grenade.setPos(hand.x, hand.y, hand.z);
+    }
+
+    /**
+     * Точка, из которой вылетает граната: чуть впереди и правее глаз.
+     * <p>
+     * Вправо — это крест направления взгляда с вертикалью вверх: в системе
+     * координат Майнкрафта он уходит именно вправо от взгляда. Если взгляд
+     * смотрит строго вверх или вниз, крест вырождается в ноль, и тогда берётся
+     * фиксированное «вправо» от поворота по горизонтали — иначе граната
+     * появилась бы ровно в глазах.
+     */
+    private static Vec3 handOrigin(Player player) {
+        Vec3 look = player.getLookAngle();
+        Vec3 eye = player.getEyePosition(1.0F);
+
+        Vec3 right = look.cross(UP);
+        if (right.lengthSqr() < 1.0E-6) {
+            float yaw = player.getYRot() * ((float) Math.PI / 180.0F);
+            right = new Vec3(-Mth.sin(yaw), 0.0F, Mth.cos(yaw));
+        } else {
+            right = right.normalize();
+        }
+
+        return eye.add(look.scale(HAND_FORWARD)).add(right.scale(HAND_SIDE)).subtract(0.0, HAND_DOWN, 0.0);
+    }
+
+    /** Вверх по миру: крест направления взгляда с ним и даёт правый вектор. */
+    private static final Vec3 UP = new Vec3(0.0, 1.0, 0.0);
+
+    /** Насколько вылет вперёд от глаз, в блоках. */
+    private static final float HAND_FORWARD = 0.3F;
+    /** Насколько вылет вправо от линии взгляда, в блоках. */
+    private static final float HAND_SIDE = 0.4F;
+    /** Насколько вниз от глаз, в блоках: кисть ниже глаз на полметра. */
+    private static final float HAND_DOWN = 0.2F;
 }

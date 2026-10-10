@@ -26,6 +26,7 @@ public class GrenadeNucItem extends ChargableGrenadeItem implements PinnedGrenad
                 entityType, level, player
         );
         grenade.setItem(stack);
+        placeFromHand(grenade, player);
         grenade.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, velocity, 1.0F);
         level.addFreshEntity(grenade);
     }

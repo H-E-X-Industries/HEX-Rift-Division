@@ -1,12 +1,17 @@
 package com.trd.client.gecko.item.grenades;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
+import com.trd.item.weapons.grenades.ChargableGrenadeItem;
 import com.trd.item.weapons.grenades.GrenadeIfAnimation;
 import com.trd.item.weapons.grenades.GrenadeIfClientAnim;
 import com.wf.gemrender.direct.ItemAppearance;
 import com.wf.gemrender.gltf.GemRenderGltfModel;
 import com.wf.gemrender.gltf.GltfAnimation;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -62,6 +67,29 @@ public class GrenadeGltfAppearance implements ItemAppearance {
     private static final float MODEL_SCALE = 1.0F;
 
     /**
+     * Амплитуда качания при полном заряде, в градусах.
+     * <p>
+     * Качание вокруг собственного центра гранаты, а не натяжение. Ванильный
+     * {@code UseAnim.BOW} на зарядке растягивал модель по горизонтали почти в
+     * 1.75 раза и уводил её из руки — выглядело это так, будто граната раздувается
+     * резиновой. Здесь её только слегка покачивает, и чем ближе полный заряд, тем
+     * заметнее, так что стадия зарядки всё ещё читается по руке.
+     */
+    private static final float CHARGE_SWAY_DEGREES = 14.0F;
+
+    /**
+     * Насколько качание по главной оси слабее поперечного, в долях.
+     * <p>
+     * Две оси с разной частотой дают не колебание маятника, а именно дрожь: если
+     * бы они шли в такт, предмет просто наклонялся бы туда-обратно и выглядел бы
+     * маятником на ниточке.
+     */
+    private static final float CROSS_AXIS_RATIO = 0.45F;
+
+    /** Скорость качания, радиан на тик. */
+    private static final float CHARGE_FREQUENCY = 0.62F;
+
+    /**
      * Насколько предмет уходит вниз при жесте «взял новую гранату», в блоках.
      * <p>
      * Ровно на столько же, на сколько ванильный рендерер уводит предмет при
@@ -69,6 +97,35 @@ public class GrenadeGltfAppearance implements ItemAppearance {
      * изобретение.
      */
     private static final float REQUIP_DROP = 0.6F;
+
+    /**
+     * Степень заряда этой стопки, от 0 до 1, либо 0 если предмет сейчас не
+     * заряжается.
+     * <p>
+     * Считается по тому же, что и полоска заряда на экране, — из
+     * {@link ChargableGrenadeItem#MAX_CHARGE_TICKS} и времени удержания, а не из
+     * остатка использования: он считается от 72000 и для заряда бесполезен.
+     * <p>
+     * Предмет сверяется по типу, а не по самой стопке: рендер получает ту же
+     * стопку, но сравнение по ссылке на руке не годится — стопка в руке и
+     * отрисованная это разные объекты. Вне рук заряд не читается вовсе: там у
+     * предмета нет и не может быть заряда, а качание началось бы из инвентаря.
+     */
+    private static float chargeOf(ItemStack stack, @Nullable ItemDisplayContext context) {
+        if (handOf(context) == null) {
+            return 0.0F;
+        }
+
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null || !player.isUsingItem()) {
+            return 0.0F;
+        }
+        if (player.getUseItem().getItem() != stack.getItem()) {
+            return 0.0F;
+        }
+
+        return Math.min(1.0F, player.getTicksUsingItem() / (float) ChargableGrenadeItem.MAX_CHARGE_TICKS);
+    }
 
     /**
      * Рука, в которой рисуется предмет, либо {@code null}, если это не рука.
@@ -134,11 +191,18 @@ public class GrenadeGltfAppearance implements ItemAppearance {
             poseStack.translate(0.0F, -REQUIP_DROP * requip, 0.0F);
         }
 
-        // Больше тут ничего: положение и размер предмета задаёт блок display в
-        // models/item/<вид>.json, который ваниль применяет сама ещё до вызова
-        // рендерера. Своей центровки у предмета нет намеренно — модель стоит ровно
-        // там, куда её поставил Blockbench, и любой сдвиг здесь складывался бы с
-        // блоком display вместо того, чтобы его заменять.
         poseStack.scale(MODEL_SCALE, MODEL_SCALE, MODEL_SCALE);
+
+        // Зарядка: только качание вокруг собственного центра, без сдвига и без
+        // масштаба. Поворот стоит после scale, а не до, чтобы шатание шло вокруг
+        // центра модели, а не вокруг точки, от которой её двигает блок display.
+        float charge = chargeOf(stack, context);
+        if (charge > 0.0F) {
+            LocalPlayer player = Minecraft.getInstance().player;
+            float phase = player.getTicksUsingItem() * CHARGE_FREQUENCY;
+            float sway = CHARGE_SWAY_DEGREES * charge;
+            poseStack.mulPose(Axis.ZP.rotationDegrees(Mth.sin(phase) * sway));
+            poseStack.mulPose(Axis.XP.rotationDegrees(Mth.cos(phase * 1.6F) * sway * CROSS_AXIS_RATIO));
+        }
     }
 }

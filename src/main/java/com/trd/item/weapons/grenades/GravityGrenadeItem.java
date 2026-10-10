@@ -25,11 +25,12 @@ public class GravityGrenadeItem extends ChargableGrenadeItem implements PinnedGr
 
     @Override
     protected void throwGrenade(ItemStack stack, Level level, Player player, float velocity, float chargePercent) {
-        GravityGrenadeProjectileEntity grenade = new GravityGrenadeProjectileEntity(
+GravityGrenadeProjectileEntity grenade = new GravityGrenadeProjectileEntity(
                 entityType, level, player
         );
         grenade.setItem(stack);
-        grenade.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, velocity, 0.8F);
+        placeFromHand(grenade, player);
+        grenade.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, velocity, 0.8f);
         level.addFreshEntity(grenade);
     }
 }
