@@ -10,7 +10,6 @@ import com.trd.main.MainRegistry;
 import com.trd.network.packet.guns.PacketMachineGunAnim;
 import com.trd.network.packet.guns.PacketReloadGun;
 import com.trd.network.packet.guns.PacketShoot;
-import com.trd.sound.ModSounds;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
@@ -1117,9 +1116,12 @@ public class MachineGunItem extends Item {
 
         // Пустой выстрел (ammo == 0)
         if (ammo <= 0) {
-            SoundEvent drySound = ModSounds.DRY_FIRE.isBound() ? ModSounds.DRY_FIRE.get() : SoundEvents.DISPENSER_FAIL;
+            // Пустой выстрел: у мода не было файла dry_fire.ogg, поэтому
+            // берём ванильный щелчок раздаточной машины — он и раньше был
+            // фолбэком, просто условие isBound() всегда истинно и до него
+            // дошло только из-за отсутствующего файла.
             level.playSound(null, player.getX(), player.getY(), player.getZ(),
-                    drySound, SoundSource.PLAYERS, 1.0F, 1.0F);
+                    SoundEvents.DISPENSER_FAIL, SoundSource.PLAYERS, 1.0F, 1.0F);
 
             setShootDelay(stack, SHOT_ANIM_TICKS);
 
