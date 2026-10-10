@@ -12,7 +12,7 @@ import net.minecraft.world.level.Level;
  * Осколочная/фугасная/зажигательная/липучая/умная граната.
  * Взрыв и число отскоков берутся из {@link GrenadeType}.
  */
-public class GrenadeItem extends ChargableGrenadeItem {
+public class GrenadeItem extends ChargableGrenadeItem implements PinnedGrenadeItem {
 
     private final GrenadeType grenadeType;
     private final EntityType<? extends GrenadeProjectileEntity> entityType;

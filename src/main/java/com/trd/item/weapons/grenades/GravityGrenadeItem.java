@@ -9,7 +9,7 @@ import net.minecraft.world.level.Level;
 /**
  * Гравитационная граната: не взрывается, а закручивает всё в вихрь и разбрасывает.
  */
-public class GravityGrenadeItem extends ChargableGrenadeItem {
+public class GravityGrenadeItem extends ChargableGrenadeItem implements PinnedGrenadeItem {
 
     private final EntityType<? extends GravityGrenadeProjectileEntity> entityType;
 

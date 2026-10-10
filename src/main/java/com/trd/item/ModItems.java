@@ -391,6 +391,19 @@ public class ModItems {
             () -> new com.trd.item.weapons.grenades.GrenadeNucItem(new Item.Properties().stacksTo(16),
                     ModEntities.GRENADE_NUC_PROJECTILE.get()));
 
+    /**
+     * Все обычные гранаты — те семь, что рисуются на общей glTF-модели ударной.
+     * <p>
+     * Нужен клиентскому рендереру предмета: у них одна модель и один клип
+     * анимации, различаются только вид. Объявляется после всех семи, иначе
+     * последние были бы ещё не инициализированы.
+     * <p>
+     * Это временный набор — своей графики у них нет, см.
+     * {@code com.trd.client.gecko.item.grenades.ClassicGrenadeVariants}.
+     */
+    public static final java.util.List<DeferredItem<Item>> CLASSIC_GRENADE_ITEMS = java.util.List.of(
+            GRAVITY_GRENADE, GRENADE, GRENADEHE, GRENADEFIRE, GRENADESLIME, GRENADESMART, GRENADE_NUC);
+
     // ЯЙЦА ПРИЗЫВА
     public static final DeferredItem<Item> DEPTH_WORM_SPAWN_EGG = ITEMS.register("depth_worm_spawn_egg",
             () -> new com.trd.item.mobs.DepthWormSpawnEggItem(new Item.Properties()));

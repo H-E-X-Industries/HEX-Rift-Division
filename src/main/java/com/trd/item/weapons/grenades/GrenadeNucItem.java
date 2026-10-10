@@ -6,7 +6,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
-public class GrenadeNucItem extends ChargableGrenadeItem {
+public class GrenadeNucItem extends ChargableGrenadeItem implements PinnedGrenadeItem {
 
     private final EntityType<? extends GrenadeNucProjectileEntity> entityType;
 

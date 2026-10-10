@@ -1,5 +1,6 @@
 package com.trd.item.weapons.grenades;
 
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
@@ -38,6 +39,15 @@ public abstract class ChargableGrenadeItem extends Item {
 
     /** Громкость звука броска (переопредели в подклассе если нужно) */
     protected float getThrowSoundVolume() { return 0.5f; }
+
+    /**
+     * Звук броска.
+     * <p>
+     * Общий звук броска предмета — он и шёл до сих пор у всех заряжаемых гранат.
+     * Ударные гранаты радились с собственным звуком, и переводить их на общий
+     * было бы тихой регрессией, поэтому у них он переопределён.
+     */
+    protected SoundEvent getThrowSound() { return SoundEvents.SNOWBALL_THROW; }
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
@@ -82,8 +92,23 @@ public abstract class ChargableGrenadeItem extends Item {
         }
 
         level.playSound(null, player.getX(), player.getY(), player.getZ(),
-                SoundEvents.SNOWBALL_THROW, SoundSource.NEUTRAL,
+                getThrowSound(), SoundSource.NEUTRAL,
                 getThrowSoundVolume(), 0.4F / (level.getRandom().nextFloat() * 0.4F + 0.8F));
+
+        // Граната выброшена из этой руки, и в руке осталась следующая — той же
+        // самой. Повод для клипа чеки только один и точный, как раз бросок:
+        // счёт в стопке меняется и от подбора, и от серверной синхронизации, и по
+        // нему анимация заводилась бы сама собой. Без этого вызова следующая
+        // граната осталась бы с уже выдернутой чекой — то есть выглядела бы
+        // готовой к броску.
+        //
+        // Только клиенту и только здесь: момент «взял в руку» на сервере не
+        // существует, а на клиенте повод тот же — сам факт броска. У ударной
+        // гранаты этого кода нет вовсе: она бросается из use, а не отпусканием,
+        // и свой вызов у неё свой.
+        if (level.isClientSide) {
+            GrenadeIfClientAnim.onThrown(player.getUsedItemHand());
+        }
     }
 
     /** Ставит кулдаун на каждую гранату в инвентаре и оффхенде */

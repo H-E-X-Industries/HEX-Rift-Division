@@ -305,7 +305,7 @@ public class ModCreativeTabs {
     public static final Supplier<CreativeModeTab> trd_WEAPONS_TAB = CREATIVE_MODE_TABS.register("trd_weapons_tab",
             () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup." + MainRegistry.MOD_ID + ".trd_weapons_tab"))
-                    .icon(() -> new ItemStack(ModItems.GRENADE_NUC.get()))
+                    .icon(() -> new ItemStack(ModItems.MACHINEGUN.get()))
                     .withTabsBefore(id("trd_tech_tab"))
                     .displayItems((parameters, output) -> {
                         output.accept(ModItems.CAST_PICKAXE_IRON.get());
@@ -318,7 +318,10 @@ public class ModCreativeTabs {
                         output.accept(ModItems.DETONATOR.get());
                         output.accept(ModItems.RANGE_DETONATOR.get());
 
-
+                        output.accept(ModItems.GRENADE.get());
+                        output.accept(ModItems.GRENADEHE.get());
+                        output.accept(ModItems.GRENADESLIME.get());
+                        output.accept(ModItems.GRENADEFIRE.get());
                         output.accept(ModItems.GRENADE_IF.get());
                         output.accept(ModItems.GRENADE_IF_HE.get());
                         output.accept(ModItems.GRENADE_IF_SLIME.get());

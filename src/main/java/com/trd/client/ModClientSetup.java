@@ -100,8 +100,13 @@ public class ModClientSetup {
                 com.trd.client.gecko.block.turrets.TurretLightPlacerRenderer::new);
 
 
-        // Гранаты рисуются ванильным рендерером брошенного предмета (модель самого предмета).
-        // Без регистрации клиент рисует на их месте свинью.
+        // Обычные гранаты в полёте — на glTF, той же моделью, что и предмет в
+        // руке. Своей модели у них пока нет, и до её появления это подставка:
+        // см. ClassicGrenadeVariants. Вид берётся по типу снаряда, текстура
+        // зашита в саму модель, так что подменять рендерер на
+        // ThrownItemRenderer нельзя — тот рисует плоский спрайт из
+        // models/item. Модели грузятся асинхронно, и пока нужная не готова,
+        // граната просто не рисуется.
         for (var grenade : java.util.List.of(
                 com.trd.entity.ModEntities.GRAVITY_GRENADE_PROJECTILE,
                 com.trd.entity.ModEntities.GRENADE_PROJECTILE,
@@ -110,7 +115,8 @@ public class ModClientSetup {
                 com.trd.entity.ModEntities.GRENADESMART_PROJECTILE,
                 com.trd.entity.ModEntities.GRENADESLIME_PROJECTILE,
                 com.trd.entity.ModEntities.GRENADE_NUC_PROJECTILE)) {
-            event.registerEntityRenderer(grenade.get(), net.minecraft.client.renderer.entity.ThrownItemRenderer::new);
+            event.registerEntityRenderer(grenade.get(),
+                    com.trd.client.gecko.entity.grenades.ClassicGrenadeGltfRenderer::new);
         }
 
         // Ударные гранаты — на glTF, той же моделью, что и предмет в руке, но у

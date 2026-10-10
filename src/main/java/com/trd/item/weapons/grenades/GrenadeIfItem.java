@@ -2,16 +2,12 @@ package com.trd.item.weapons.grenades;
 
 import com.trd.entity.weapons.grenades.GrenadeIfProjectileEntity;
 import com.trd.entity.weapons.grenades.GrenadeIfType;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.stats.Stats;
+import com.trd.sound.ModSounds;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.Mth;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
@@ -19,18 +15,25 @@ import net.minecraft.world.phys.Vec3;
  * Ударная граната с инерционным взрывателем: взрывается по фиксированной задержке
  * после первого касания, отскок задаёт {@link GrenadeIfProjectileEntity}.
  *
- * <p><b>Зарядки нет.</b> Раньше предмет держал правую кнопку и бросал по силе
- * удержания; теперь он кидается сразу, на максимальной скорости. Анимации замаха
- * тоже нет: граната исчезает из руки в тот же тик, и половина жеста всё равно не
- * успела бы отрисоваться. Кулдаун после броска остался — без него правый клик
- * спамил бы гранатами двадцать раз в секунду. Остальные гранаты зарядку
- * сохраняют: она переопределена здесь, у них нет.
+ * <p><b>Зарядка броска такая же, как у обычных гранат.</b> Раньше предмет
+ * бросался сразу, на максимальной скорости, а {@link ChargableGrenadeItem} с
+ * зарядкой у него был перекрыт. Теперь эти три перекрытия убраны, и ударная
+ * граната заряжается удержанием ПКМ ровно так же, как осколочная: тот же
+ * {@link net.minecraft.world.item.UseAnim#BOW}, тот же разброс скорости от
+ * {@link #getMinVelocity()} до {@link #getMaxVelocity()}, тот же кулдаун и та же
+ * отмена при слишком коротком нажатии. Из своего осталось ровно то, что от
+ * зарядки не зависит: инерционный взрыватель, своя точка вылета из руки и
+ * собственный звук броска.
+ *
+ * <p>Зарядка меняет <b>только начальную скорость</b>. Ни разброса, ни вращения,
+ * ни отдачи у гранаты нет и не появилось: {@code shootFromRotation} получает
+ * скорость и <b>постоянный</b> разброс 1.0, поэтому сильный бросок летит так же
+ * ровно, как слабый, — просто дальше.
  *
  * <p><b>Куда играют звуки.</b> Щелчок чеки — только клиенту, у того, кто держит
- * гранату (см. {@link GrenadeIfClientAnim}). Звук броска — серверу и всем
- * nearby-игрокам, потому что момент «взял в руку» на сервере не существует, а
- * бросок слышат все. Поэтому здесь вызывается только {@link GrenadeIfAnimation}:
- * он общий код, в отличие от клиентского автомата анимаций.
+ * гранату (см. {@link GrenadeIfClientAnim}): он разыгрывается при взятии в руку.
+ * Звук броска — общий для всех гранат и уходит с сервера, потому что бросок слышат
+ * все вокруг, а момент «взял в руку» на сервере не существует.
  *
  * <p><b>Клиентские расширения здесь не выдаются.</b> Старый способ с
  * {@code Item#initializeClient} в NeoForge 21.1 не вызывается ниоткуда, поэтому
@@ -38,14 +41,15 @@ import net.minecraft.world.phys.Vec3;
  * {@code RegisterClientExtensionsEvent} — см.
  * {@code com.trd.client.gecko.item.grenades.GrenadeIfClientItem}.
  */
-public class GrenadeIfItem extends ChargableGrenadeItem {
+public class GrenadeIfItem extends ChargableGrenadeItem implements PinnedGrenadeItem {
 
     private final GrenadeIfType grenadeType;
     private final EntityType<? extends GrenadeIfProjectileEntity> entityType;
 
     public GrenadeIfItem(Properties properties, GrenadeIfType grenadeIf, EntityType<? extends GrenadeIfProjectileEntity> entityType) {
-        // Из этих двух чисел здесь нужен только верхний: бросок без зарядки идёт
-        // на максимуме, ровно как будто игрок дожал правую кнопку до конца.
+        // Тот же разброс, что у осколочной: минимум — короткий подброс, максимум —
+        // полный. Раньше верхняя граница была единственной, потому что зарядки
+        // не было вовсе.
         super(properties, 0.5f, 1.5f);
         this.grenadeType = grenadeIf;
         this.entityType = entityType;
@@ -57,72 +61,14 @@ public class GrenadeIfItem extends ChargableGrenadeItem {
     }
 
     /**
-     * Бросок без удержания.
+     * Собственный звук броска, а не общий звук брошенного предмета.
      * <p>
-     * Перекрывает зарядку {@link ChargableGrenadeItem#use}, который звал
-     * {@code startUsingItem} и ждал отпускания. Проверка кулдауна идёт на обеих
-     * сторонах и до всего остального: без неё на клиенте анимация броска
-     * начиналась бы в тик, когда сервер бросок отменил, и граната дёргалась бы в
-     * руке из ничего.
+     * У остальных гранат он общий, ударные же с самого начала играли
+     * {@code grenade_throw}, и менять это вместе с появлением зарядки незачем.
      */
     @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        ItemStack stack = player.getItemInHand(hand);
-
-        if (player.getCooldowns().isOnCooldown(this)) {
-            return InteractionResultHolder.pass(stack);
-        }
-
-        if (!level.isClientSide) {
-            throwGrenade(stack, level, player, getMaxVelocity(), 1.0f);
-
-            player.awardStat(Stats.ITEM_USED.get(this));
-            if (!player.getAbilities().instabuild) {
-                stack.shrink(1);
-            }
-
-            // Кулдаун на ВСЕ гранаты в инвентаре, как и у заряжаемых.
-            applyGlobalGrenadeCooldown(player);
-
-            // Звук броска слышат все вокруг, поэтому он уходит с сервера. Играет сразу,
-            // в момент броска: клипа броска у модели нет, синхронизироваться с
-            // ним не с чем, а ждать четверть секунды ради этого — значило терять
-            // звук на перезагрузке ресурсов.
-            if (level instanceof ServerLevel serverLevel) {
-                GrenadeIfAnimation.play(serverLevel, player, GrenadeIfAnimation.THROW);
-            }
-        }
-
-        // Клиенту счёт в стопке приходит отдельным пакетом и может не прийти в
-        // этом же тике, поэтому повод для анимации — сам факт броска, а не
-        // изменение счёта: следующая граната в руке обязана сама выдернуть себе
-        // чеку, иначе после кулдауна кидаешь уже готовую.
-        if (level.isClientSide) {
-            GrenadeIfClientAnim.onThrown(hand);
-        }
-
-        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
-    }
-
-    /**
-     * Броска здесь не бывает: {@link #use} не зовёт {@code startUsingItem}, и
-     * освобождать нечего. Оставлено явным пустым, чтобы у ребёнка в классе не
-     * осталось ничего от зарядки.
-     */
-    @Override
-    public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
-    }
-
-    /**
-     * Анимации натяжения не бывает — бросок мгновенный.
-     * <p>
-     * {@link UseAnim#BOW} у родителя рисовал натяжение и покачивание от первого
-     * лица; без удержания это выглядело бы как натянутый лук, который так и не
-     * выпустили.
-     */
-    @Override
-    public UseAnim getUseAnimation(ItemStack stack) {
-        return UseAnim.NONE;
+    protected SoundEvent getThrowSound() {
+        return ModSounds.GRENADE_THROW.get();
     }
 
     /**
@@ -133,6 +79,9 @@ public class GrenadeIfItem extends ChargableGrenadeItem {
      * вытянутой руки — ровно как любой брошенный предмет. Без этого она
      * появлялась в груди, и бросок в упор выглядел так, будто граната выходит
      * сквозь игрока.
+     * <p>
+     * Здесь {@code velocity} приходит уже пересчитанным зарядкой, а разброс
+     * остаётся постоянным — см. верхний комментарий класса.
      */
     @Override
     protected void throwGrenade(ItemStack stack, Level level, Player player, float velocity, float chargePercent) {
