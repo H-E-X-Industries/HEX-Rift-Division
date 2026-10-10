@@ -26,11 +26,36 @@ import net.minecraft.world.item.ItemStack;
  * <p>
  * При ходьбе и беге от первого лица пулемёт остаётся полностью неподвижным на экране
  * за счёт точной математической компенсации ванильного покачивания (bobView).
+ * <p>
+ * <b>Анимируется пушка только в руках.</b> Состояние у
+ * {@link MachineGunClientAnim} одно на весь клиент, и раньше клип отдавался всем
+ * контекстам отрисовки сразу: выстрел дёргал не только ствол в руке, но и значок
+ * в инвентаре, и в хотбаре, и на полке в рамке, и в голове. Вне рук возвращается
+ * исходная поза модели — см. {@link #isHand}.
  */
 public class MachineGunGltfAppearance implements ItemAppearance {
 
     private static final ResourceLocation MODEL =
             ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "models/item/ap_17.gltf");
+
+    /**
+     * Рисуется ли предмет в руке.
+     * <p>
+     * Только четыре контекста рук. Всё остальное — инвентарь, хотбар, полка,
+     * голова, брошенный предмет, значок в креативе — обязано стоять в исходной
+     * позе: это значок, а не оружие в руках, и жить анимацией выстрела он не
+     * должен.
+     * <p>
+     * Сравнения, а не {@code switch}: {@link ItemDisplayContext} у NeoForge
+     * расширяемый, и значения, добавленные чужим модом, попали бы в ветку
+     * «не рука» только при честном {@code default}.
+     */
+    private static boolean isHand(ItemDisplayContext context) {
+        return context == ItemDisplayContext.FIRST_PERSON_RIGHT_HAND
+                || context == ItemDisplayContext.FIRST_PERSON_LEFT_HAND
+                || context == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND
+                || context == ItemDisplayContext.THIRD_PERSON_LEFT_HAND;
+    }
 
     @Override
     public GemRenderGltfModel model(ItemStack stack, ItemDisplayContext context) {
@@ -49,6 +74,11 @@ public class MachineGunGltfAppearance implements ItemAppearance {
 
     @Override
     public GltfAnimation clip(ItemStack stack, ItemDisplayContext context) {
+        // Не в руке — исходная поза модели, без анимации.
+        if (!isHand(context)) {
+            return null;
+        }
+
         GemRenderGltfModel model = model(stack, context);
         if (model == null) return null;
 
@@ -60,6 +90,12 @@ public class MachineGunGltfAppearance implements ItemAppearance {
 
     @Override
     public float seconds(ItemStack stack, ItemDisplayContext context, float partialTick) {
+        // Вне рук клипа нет, поэтому и времени клипа не нужно: кадр и не должен
+        // ехать. Без этой проверки значок в инвентаре продолжал бы двигаться по
+        // анимации даже при null-клипе.
+        if (!isHand(context)) {
+            return 0.0F;
+        }
         return MachineGunClientAnim.seconds(partialTick);
     }
 
