@@ -1,7 +1,7 @@
 package com.trd.client;
 
 import com.trd.block.entity.ModBlockEntities;
-import com.trd.client.render.flywheel.MillstoneVisual;
+import com.trd.client.render.visual.MillstoneVisual;
 import com.trd.client.render.flywheel.ModModels;
 import com.trd.main.MainRegistry;
 import dev.engine_room.flywheel.api.visual.BlockEntityVisual;
@@ -50,7 +50,7 @@ public class ModClientSetup {
     @SubscribeEvent
     public static void registerRenderers(net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.MACHINE_BATTERY_BE.get(), com.trd.client.gecko.block.energy.MachineBatteryRenderer::new);
-        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.CONNECTOR_BE.get(), com.trd.client.render.ConnectorRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.CONNECTOR_BE.get(), com.trd.client.renderer.ConnectorRenderer::new);
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.FUEL_TANK_BE.get(), com.trd.client.render.ber.FuelTankRenderer::new);
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.PAINTABLE_PIPE_BE.get(), com.trd.client.render.ber.PaintableConduitRenderer::new);
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.PAINTABLE_WIRE_BE.get(), com.trd.client.render.ber.PaintableConduitRenderer::new);
@@ -78,12 +78,12 @@ public class ModClientSetup {
         // Пять текстур пули сшиваются в один атлас вариантов. Звать надо до
         // первого выстрела, иначе первые пули просто не рисуются: модель
         // грузится асинхронно, а рендерер на пустой модели выходит.
-        com.trd.client.gecko.entity.bullets.TurretBulletVariants.load();
+        com.trd.client.gltf.entity.bullets.TurretBulletVariants.load();
 
         event.registerEntityRenderer(com.trd.entity.ModEntities.TURRET_BULLET.get(),
-                com.trd.client.gecko.entity.bullets.TurretBulletGltfRenderer::new);
+                com.trd.client.gltf.entity.bullets.TurretBulletGltfRenderer::new);
         event.registerEntityRenderer(com.trd.entity.ModEntities.GILSE.get(),
-                com.trd.client.gecko.entity.bullets.GilseRenderer::new);
+                com.trd.client.gltf.entity.bullets.GilseRenderer::new);
         event.registerEntityRenderer(com.trd.entity.ModEntities.TURRET_LIGHT.get(),
                 com.trd.client.gecko.entity.turrets.TurretLightRenderer::new);
         event.registerEntityRenderer(com.trd.entity.ModEntities.TURRET_LIGHT_LINKED.get(),
@@ -116,7 +116,7 @@ public class ModClientSetup {
                 com.trd.entity.ModEntities.GRENADESLIME_PROJECTILE,
                 com.trd.entity.ModEntities.GRENADE_NUC_PROJECTILE)) {
             event.registerEntityRenderer(grenade.get(),
-                    com.trd.client.gecko.entity.grenades.ClassicGrenadeGltfRenderer::new);
+                    com.trd.client.gltf.entity.grenades.ClassicGrenadeGltfRenderer::new);
         }
 
         // Ударные гранаты — на glTF, той же моделью, что и предмет в руке, но у
@@ -129,7 +129,7 @@ public class ModClientSetup {
                 com.trd.entity.ModEntities.GRENADE_IF_SLIME_PROJECTILE,
                 com.trd.entity.ModEntities.GRENADE_IF_FIRE_PROJECTILE)) {
             event.registerEntityRenderer(grenadeIf.get(),
-                    com.trd.client.gecko.entity.grenades.GrenadeIfGltfRenderer::new);
+                    com.trd.client.gltf.entity.grenades.GrenadeIfGltfRenderer::new);
         }
     }
 
@@ -530,7 +530,7 @@ public class ModClientSetup {
                 net.minecraft.client.resources.model.ModelResourceLocation location = net.minecraft.client.renderer.block.BlockModelShaper.stateToModelLocation(state);
                 net.minecraft.client.resources.model.BakedModel original = event.getModels().get(location);
                 if (original != null) {
-                    event.getModels().put(location, new com.trd.client.render.PipeBakedModel(original));
+                    event.getModels().put(location, new com.trd.client.renderer.PipeBakedModel(original));
                 }
             }
         }
@@ -543,7 +543,7 @@ public class ModClientSetup {
             for (net.minecraft.world.level.block.state.BlockState state : com.trd.block.basic.ModBlocks.BEAM_COLLISION.get().getStateDefinition().getPossibleStates()) {
                 net.minecraft.client.resources.model.ModelResourceLocation location =
                         net.minecraft.client.renderer.block.BlockModelShaper.stateToModelLocation(state);
-                event.getModels().put(location, new com.trd.client.render.DynamicBeamModel(beamBaseModel));
+                event.getModels().put(location, new com.trd.client.renderer.DynamicBeamModel(beamBaseModel));
             }
         }
     }
@@ -563,7 +563,7 @@ public class ModClientSetup {
 
             @Override
             protected void apply(Void object, ResourceManager resourceManager, ProfilerFiller profiler) {
-                com.trd.client.gecko.item.guns.MachineGunModel.invalidate();
+                com.trd.client.gltf.item.guns.MachineGunModel.invalidate();
                 // Разметка кадров тоже кэшируется, а лежит в json, который
                 // правится руками в Blockbench. Без сброса новые времена
                 // звуков подхватывались бы только после перезапуска игры.
@@ -609,7 +609,7 @@ public class ModClientSetup {
             @Override
             public BlockEntityVisual<? super com.trd.multiblock.industrial.fueltanks.FuelTankBlockEntity> createVisual(VisualizationContext ctx, com.trd.multiblock.industrial.fueltanks.FuelTankBlockEntity be, float partialTick) {
                 com.trd.client.render.IrisShadowBridge.track(be);
-                return new com.trd.client.render.flywheel.FuelTankVisual(ctx, be, partialTick);
+                return new com.trd.client.render.visual.FuelTankVisual(ctx, be, partialTick);
             }
 
             @Override
@@ -622,7 +622,7 @@ public class ModClientSetup {
             @Override
             public BlockEntityVisual<? super com.trd.multiblock.industrial.fueltanks.small.FuelTankSmallBlockEntity> createVisual(VisualizationContext ctx, com.trd.multiblock.industrial.fueltanks.small.FuelTankSmallBlockEntity be, float partialTick) {
                 com.trd.client.render.IrisShadowBridge.track(be);
-                return new com.trd.client.render.flywheel.FuelTankSmallVisual(ctx, be, partialTick);
+                return new com.trd.client.render.visual.FuelTankSmallVisual(ctx, be, partialTick);
             }
 
             @Override
@@ -635,7 +635,7 @@ public class ModClientSetup {
             @Override
             public BlockEntityVisual<? super com.trd.block.entity.industrial.rotation.ShaftBlockEntity> createVisual(VisualizationContext ctx, com.trd.block.entity.industrial.rotation.ShaftBlockEntity be, float partialTick) {
                 com.trd.client.render.IrisShadowBridge.track(be);
-                return new com.trd.client.render.flywheel.ShaftVisual(ctx, be, partialTick);
+                return new com.trd.client.render.visual.ShaftVisual(ctx, be, partialTick);
             }
 
             @Override
@@ -649,7 +649,7 @@ public class ModClientSetup {
             @Override
             public BlockEntityVisual<? super com.trd.block.entity.industrial.rotation.BearingBlockEntity> createVisual(VisualizationContext ctx, com.trd.block.entity.industrial.rotation.BearingBlockEntity be, float partialTick) {
                 com.trd.client.render.IrisShadowBridge.track(be);
-                return new com.trd.client.render.flywheel.BearingVisual(ctx, be, partialTick);
+                return new com.trd.client.render.visual.BearingVisual(ctx, be, partialTick);
             }
 
             @Override
@@ -663,7 +663,7 @@ public class ModClientSetup {
             @Override
             public BlockEntityVisual<? super com.trd.block.entity.industrial.rotation.HandCrankBlockEntity> createVisual(VisualizationContext ctx, com.trd.block.entity.industrial.rotation.HandCrankBlockEntity be, float partialTick) {
                 com.trd.client.render.IrisShadowBridge.track(be);
-                return new com.trd.client.render.flywheel.HandCrankVisual(ctx, be, partialTick);
+                return new com.trd.client.render.visual.HandCrankVisual(ctx, be, partialTick);
             }
 
             @Override
@@ -677,7 +677,7 @@ public class ModClientSetup {
             @Override
             public BlockEntityVisual<? super com.trd.block.entity.industrial.rotation.ClutchBlockEntity> createVisual(VisualizationContext ctx, com.trd.block.entity.industrial.rotation.ClutchBlockEntity be, float partialTick) {
                 com.trd.client.render.IrisShadowBridge.track(be);
-                return new com.trd.client.render.flywheel.ClutchVisual(ctx, be, partialTick);
+                return new com.trd.client.render.visual.ClutchVisual(ctx, be, partialTick);
             }
 
             @Override
@@ -691,7 +691,7 @@ public class ModClientSetup {
             @Override
             public BlockEntityVisual<? super com.trd.block.entity.industrial.rotation.MotorElectroBlockEntity> createVisual(VisualizationContext ctx, com.trd.block.entity.industrial.rotation.MotorElectroBlockEntity be, float partialTick) {
                 com.trd.client.render.IrisShadowBridge.track(be);
-                return new com.trd.client.render.flywheel.MotorVisual(ctx, be, partialTick);
+                return new com.trd.client.render.visual.MotorVisual(ctx, be, partialTick);
             }
 
             @Override
@@ -705,7 +705,7 @@ public class ModClientSetup {
             @Override
             public BlockEntityVisual<? super com.trd.block.entity.industrial.rotation.TachometerBlockEntity> createVisual(VisualizationContext ctx, com.trd.block.entity.industrial.rotation.TachometerBlockEntity be, float partialTick) {
                 com.trd.client.render.IrisShadowBridge.track(be);
-                return new com.trd.client.render.flywheel.TachometerVisual(ctx, be, partialTick);
+                return new com.trd.client.render.visual.TachometerVisual(ctx, be, partialTick);
             }
 
             @Override
@@ -719,7 +719,7 @@ public class ModClientSetup {
             @Override
             public BlockEntityVisual<? super com.trd.block.entity.industrial.fluids.WaterPumpBlockEntity> createVisual(VisualizationContext ctx, com.trd.block.entity.industrial.fluids.WaterPumpBlockEntity be, float partialTick) {
                 com.trd.client.render.IrisShadowBridge.track(be);
-                return new com.trd.client.render.flywheel.WaterPumpVisual(ctx, be, partialTick);
+                return new com.trd.client.render.visual.WaterPumpVisual(ctx, be, partialTick);
             }
 
             @Override
@@ -733,7 +733,7 @@ public class ModClientSetup {
             @Override
             public BlockEntityVisual<? super com.trd.multiblock.industrial.boiler.BoilerBlockEntity> createVisual(VisualizationContext ctx, com.trd.multiblock.industrial.boiler.BoilerBlockEntity be, float partialTick) {
                 com.trd.client.render.IrisShadowBridge.track(be);
-                return new com.trd.client.render.flywheel.BoilerVisual(ctx, be, partialTick);
+                return new com.trd.client.render.visual.BoilerVisual(ctx, be, partialTick);
             }
 
             @Override
@@ -747,7 +747,7 @@ public class ModClientSetup {
             @Override
             public BlockEntityVisual<? super com.trd.multiblock.industrial.steam_engine.SteamEngineBlockEntity> createVisual(VisualizationContext ctx, com.trd.multiblock.industrial.steam_engine.SteamEngineBlockEntity be, float partialTick) {
                 com.trd.client.render.IrisShadowBridge.track(be);
-                return new com.trd.client.render.flywheel.SteamEngineVisual(ctx, be, partialTick);
+                return new com.trd.client.render.visual.SteamEngineVisual(ctx, be, partialTick);
             }
 
             @Override
@@ -761,7 +761,7 @@ public class ModClientSetup {
             @Override
             public BlockEntityVisual<? super com.trd.block.entity.industrial.rotation.StatorBlockEntity> createVisual(VisualizationContext ctx, com.trd.block.entity.industrial.rotation.StatorBlockEntity be, float partialTick) {
                 com.trd.client.render.IrisShadowBridge.track(be);
-                return new com.trd.client.render.flywheel.StatorVisual(ctx, be, partialTick);
+                return new com.trd.client.render.visual.StatorVisual(ctx, be, partialTick);
             }
 
             @Override
@@ -775,7 +775,7 @@ public class ModClientSetup {
             @Override
             public BlockEntityVisual<? super com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity> createVisual(VisualizationContext ctx, com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity be, float partialTick) {
                 com.trd.client.render.IrisShadowBridge.track(be);
-                return new com.trd.client.render.flywheel.DrobitelVisual(ctx, be, partialTick);
+                return new com.trd.client.render.visual.DrobitelVisual(ctx, be, partialTick);
             }
 
             @Override
@@ -788,7 +788,7 @@ public class ModClientSetup {
             @Override
             public BlockEntityVisual<? super com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderBlockEntity> createVisual(VisualizationContext ctx, com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderBlockEntity be, float partialTick) {
                 com.trd.client.render.IrisShadowBridge.track(be);
-                return new com.trd.client.render.flywheel.CentrifugeCylinderVisual(ctx, be, partialTick);
+                return new com.trd.client.render.visual.CentrifugeCylinderVisual(ctx, be, partialTick);
             }
 
             @Override
@@ -801,7 +801,7 @@ public class ModClientSetup {
             @Override
             public BlockEntityVisual<? super com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlockEntity> createVisual(VisualizationContext ctx, com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlockEntity be, float partialTick) {
                 com.trd.client.render.IrisShadowBridge.track(be);
-                return new com.trd.client.render.flywheel.VishelashivatelVisual(ctx, be, partialTick);
+                return new com.trd.client.render.visual.VishelashivatelVisual(ctx, be, partialTick);
             }
 
             @Override
@@ -814,7 +814,7 @@ public class ModClientSetup {
             @Override
             public BlockEntityVisual<? super com.trd.multiblock.industrial.stanok.StanokBlockEntity> createVisual(VisualizationContext ctx, com.trd.multiblock.industrial.stanok.StanokBlockEntity be, float partialTick) {
                 com.trd.client.render.IrisShadowBridge.track(be);
-                return new com.trd.client.render.flywheel.StanokVisual(ctx, be, partialTick);
+                return new com.trd.client.render.visual.StanokVisual(ctx, be, partialTick);
             }
 
             @Override

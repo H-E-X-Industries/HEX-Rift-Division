@@ -1,5 +1,6 @@
 package com.trd.block.basic.deco;
 
+import com.trd.block.basic.direction.FullOBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockGetter;

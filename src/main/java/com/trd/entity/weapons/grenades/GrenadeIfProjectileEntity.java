@@ -20,6 +20,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.ThrowableItemProjectile;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -52,6 +54,23 @@ public class GrenadeIfProjectileEntity extends ThrowableItemProjectile {
     private GrenadeIfType grenadeType;
     private boolean exploded = false;
     private int stuckEntityId = -1;
+
+    /**
+     * Блок, к которому прилипла граната: позиция и сам блок.
+     * <p>
+     * Опорой считается именно тот блок, в который ударились, а не тот, в
+     * который попадёт точка касания. Точка лежит на грани, и
+     * {@code BlockPos.containing()} от неё почти всегда уезжает в соседний блок
+     * — то есть в воздух. С таким якорем проверка опоры срабатывала бы в тот же
+     * тик, и граната рвалась бы сразу, не провисев и двух секунд.
+     * <p>
+     * Держатся только на сервере: клиенту они не нужны, он и так знает, что
+     * граната прилипла, из {@link #DATA_STUCK}.
+     */
+    @Nullable
+    private BlockPos stuckBlockPos;
+    @Nullable
+    private Block stuckBlock;
 
     /**
      * Смещение относительно центра цели; {@code null}, пока граната ни к чему не
@@ -142,6 +161,14 @@ public class GrenadeIfProjectileEntity extends ThrowableItemProjectile {
 
         if (this.entityData.get(DATA_STUCK) && stuckEntityId == -1) {
             this.setDeltaMovement(Vec3.ZERO);
+
+            // Прилипла к блоку: если опору снесли или перекрыли кратером от
+            // чужого взрыва, рвёмся раньше своего таймера. К мобам это не
+            // относится — за ними следит followStuckTarget().
+            if (supportGone()) {
+                explode(this.blockPosition());
+                return;
+            }
         }
 
         if (this.entityData.get(TIMER_ACTIVATED)) {
@@ -206,16 +233,53 @@ public class GrenadeIfProjectileEntity extends ThrowableItemProjectile {
         activateTimer();
 
         if (getGrenadeType() == GrenadeIfType.GRENADE_IF_SLIME) {
-            super.onHitBlock(result); // слаймовую не трогаем, оставляем старую логику
-            this.entityData.set(DATA_STUCK, true);
-            this.entityData.set(STUCK_AT_TICK, this.tickCount);
-            this.setDeltaMovement(Vec3.ZERO);
-            this.setNoGravity(true);
-            Vec3 pos = result.getLocation();
-            this.setPos(pos.x, pos.y, pos.z);
+            stickToBlock(result);
         } else {
             handleBounce(result);
         }
+    }
+
+    /**
+     * Прилипание к блоку: граната встаёт на точку касания и ждёт своего
+     * инерционного таймера либо рвётся раньше, если опора пропала.
+     * <p>
+     * Звук отскока играется здесь же, а не в {@link #handleBounce()}: липкая
+     * граната в отскок не ходит и в ту ветку не заходит, из-за чего прилипание
+     * было совершенно беззвучным. Набор параметров — тот же, что и у обычной
+     * гранаты в {@code GrenadeProjectileEntity#onHitBlock}.
+     */
+    private void stickToBlock(BlockHitResult result) {
+        super.onHitBlock(result); // слаймовую не трогаем, оставляем старую логику
+
+        BlockPos blockPos = result.getBlockPos();
+        level().playSound(null, blockPos, ModSounds.BOUNCE_RANDOM.get(), SoundSource.NEUTRAL, 2.1F, 1.0F);
+
+        this.entityData.set(DATA_STUCK, true);
+        this.entityData.set(STUCK_AT_TICK, this.tickCount);
+        this.setDeltaMovement(Vec3.ZERO);
+        this.setNoGravity(true);
+
+        Vec3 pos = result.getLocation();
+        this.setPos(pos.x, pos.y, pos.z);
+
+        this.stuckBlockPos = blockPos.immutable();
+        BlockState support = level().getBlockState(blockPos);
+        this.stuckBlock = support.isAir() ? null : support.getBlock();
+    }
+
+    /**
+     * Пропала ли опора, к которой прилипла граната.
+     * <p>
+     * Проверяется «на месте ли стоит тот самый блок». Отдельной проверки на
+     * воздух не нужно: воздух — это тоже «уже не тот блок». А когда опору
+     * записать не удалось, сравнивать не с чем, и граната просто доживает до
+     * таймера — иначе она рвалась бы в тот же тик.
+     */
+    private boolean supportGone() {
+        if (stuckBlockPos == null || stuckBlock == null) {
+            return false;
+        }
+        return !level().getBlockState(stuckBlockPos).is(stuckBlock);
     }
 
     @Override
@@ -348,6 +412,11 @@ public class GrenadeIfProjectileEntity extends ThrowableItemProjectile {
         tag.putBoolean("Exploded", exploded);
         tag.putBoolean("Stuck", this.entityData.get(DATA_STUCK));
         tag.putInt("StuckEntityId", stuckEntityId);
+        if (stuckBlockPos != null) {
+            tag.putInt("StuckBlockX", stuckBlockPos.getX());
+            tag.putInt("StuckBlockY", stuckBlockPos.getY());
+            tag.putInt("StuckBlockZ", stuckBlockPos.getZ());
+        }
         tag.putInt("StuckAtTick", this.entityData.get(STUCK_AT_TICK));
         if (stuckOffset != null) {
             tag.putDouble("StuckOffsetX", stuckOffset.x);
@@ -369,6 +438,12 @@ public class GrenadeIfProjectileEntity extends ThrowableItemProjectile {
         this.exploded = tag.getBoolean("Exploded");
         this.entityData.set(DATA_STUCK, tag.getBoolean("Stuck"));
         this.stuckEntityId = tag.getInt("StuckEntityId");
+        if (tag.contains("StuckBlockX")) {
+            this.stuckBlockPos = new BlockPos(
+                    tag.getInt("StuckBlockX"),
+                    tag.getInt("StuckBlockY"),
+                    tag.getInt("StuckBlockZ"));
+        }
         this.entityData.set(STUCK_AT_TICK, tag.getInt("StuckAtTick"));
         if (tag.contains("StuckOffsetX")) {
             this.stuckOffset = new Vec3(

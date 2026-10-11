@@ -37,7 +37,7 @@ import net.minecraft.world.level.Level;
  * {@code Item#initializeClient} в NeoForge 21.1 не вызывается ниоткуда, поэтому
  * рендерер предмета выдаётся подпиской на
  * {@code RegisterClientExtensionsEvent} — см.
- * {@code com.trd.client.gecko.item.grenades.GrenadeIfClientItem}.
+ * {@code com.trd.client.gltf.item.grenades.GrenadeIfClientItem}.
  */
 public class GrenadeIfItem extends ChargableGrenadeItem implements PinnedGrenadeItem {
 

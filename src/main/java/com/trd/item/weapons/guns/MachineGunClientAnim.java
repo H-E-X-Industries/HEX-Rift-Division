@@ -1,6 +1,6 @@
 package com.trd.item.weapons.guns;
 
-import com.trd.client.gecko.item.guns.MachineGunModel;
+import com.trd.client.gltf.item.guns.MachineGunModel;
 import com.trd.client.overlay.MachineGunScope;
 import com.wf.gemrender.gltf.GemRenderGltfModel;
 import com.wf.gemrender.gltf.GltfAnimation;
