@@ -4,7 +4,7 @@
   "cookingtime": 200,
   "experience": 0.3,
   "ingredient": {
-    "item": "trd:dolomite_smes"
+    "item": "trd:dolomite_mixture"
   },
   "result": {
     "count": 1,

@@ -91,7 +91,7 @@ public class ModBlockStateProvider extends BlockStateProvider {
         cubeAllWithItem(ModBlocks.CONCRETE_REINFORCED_HEAVY);
         cubeAllWithItem(ModBlocks.CONCRETE_MOSSY);
         cubeAllWithItem(ModBlocks.CONCRETE_OLD);
-        cubeAllWithItem(ModBlocks.CONCRETE_NET);
+        cubeAllWithItem(ModBlocks.CONCRETE_IMPACT_RESISTANT);
         cubeAllWithItem(ModBlocks.CONCRETE_REBAR);
         cubeAllWithItem(ModBlocks.CONCRETE_CONSTRUCT_BLOCK);
         cubeAllWithItem(ModBlocks.STEEL_CONSTRUCT_BLOCK);
@@ -107,7 +107,7 @@ public class ModBlockStateProvider extends BlockStateProvider {
         cubeAllWithItem(ModBlocks.MINERAL_BLOCK2);
         cubeAllWithItem(ModBlocks.MINERAL_TILE);
         cubeAllWithItem(ModBlocks.DOLOMITE_TILE);
-        cubeAllWithItem(ModBlocks.TILE_LIGHT);
+        cubeAllWithItem(ModBlocks.ASBESTOS_TILE);
         cubeAllWithItem(ModBlocks.SULFUR_TILE);
         cubeAllWithItem(ModBlocks.SULFUR_BRICKS);
 

@@ -357,19 +357,19 @@ public class TurretBulletEntity extends AbstractArrow {
      * {@code <вид>_<тип>_<признак>}, и разбирать их приходится по словам, а не
      * поиском подстроки: подстрока «ap» есть и в бронебойном, и в
      * {@code trd:turret_ammo}, а «piercing», по которому сортировали раньше, в
-     * новых id не встречается вовсе. Слово «tracer» выброшено наравне с
-     * «trasser» — в id оно именно в таком написании.
+     * новых id не встречается вовсе. Слово «tracer» в разборе не участвует —
+     * трассер приезжает из предмета, а не из id.
      * <p>
      * Малый заряд фугасного проверяется первым и отдельным образом: его id
-     * {@code turret_ammo_he_save} содержит в себе и «he», и без этой проверки он
-     * попал бы в обычный фугасный, а различаются они только разрушением блоков и
-     * размером взрыва.
+     * {@code turret_ammo_he_low_charge} содержит в себе и «he», и «charge», и без
+     * этой проверки он попал бы в обычный фугасный, а различаются они только
+     * разрушением блоков и размером взрыва.
      */
     private static AmmoType bulletTypeOf(String ammoId) {
         String path = ammoId.contains(":") ? ammoId.substring(ammoId.indexOf(':') + 1) : ammoId;
         List<String> words = Arrays.asList(path.split("_"));
 
-        if (words.contains("save") && words.contains("he")) {
+        if (words.contains("charge") && words.contains("he")) {
             return AmmoType.HE_SAVE;
         }
 

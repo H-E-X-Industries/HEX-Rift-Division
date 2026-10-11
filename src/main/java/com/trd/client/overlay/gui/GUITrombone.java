@@ -48,7 +48,7 @@ import java.util.List;
 public class GUITrombone extends AbstractContainerScreen<TromboneMenu> {
 
     private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(
-            MainRegistry.MOD_ID, "textures/gui/turret/trombone_gui.png");
+            MainRegistry.MOD_ID, "textures/gui/turret/stationary_rocket_launcher_gui.png");
 
     // --- СОСТОЯНИЯ GUI ---
     private static final int STATE_NORMAL = 0;

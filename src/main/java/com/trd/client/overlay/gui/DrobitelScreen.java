@@ -10,7 +10,7 @@ import net.minecraft.world.entity.player.Inventory;
 
 public class DrobitelScreen extends AbstractContainerScreen<DrobitelMenu> {
 
-    private static final ResourceLocation GUI = ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "textures/gui/machine/drobitel_gui.png");
+    private static final ResourceLocation GUI = ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "textures/gui/machine/ore_crusher_gui.png");
 
     public DrobitelScreen(DrobitelMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);

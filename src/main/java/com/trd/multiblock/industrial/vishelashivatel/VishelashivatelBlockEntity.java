@@ -564,7 +564,7 @@ public class VishelashivatelBlockEntity extends com.trd.block.entity.industrial.
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.trd.vishelashivatel");
+        return Component.translatable("block.trd.ore_leacher");
     }
 
     @Nullable

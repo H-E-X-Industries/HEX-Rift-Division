@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "down": "trd:block/conveyor_sorter_magenta",
+    "east": "trd:block/conveyor_sorter_cyan",
+    "north": "trd:block/conveyor_sorter_orange",
+    "particle": "trd:block/conveyor_sorter_red",
+    "south": "trd:block/conveyor_sorter_yellow",
+    "up": "trd:block/conveyor_sorter_red",
+    "west": "trd:block/conveyor_sorter_green"
+  }
+}

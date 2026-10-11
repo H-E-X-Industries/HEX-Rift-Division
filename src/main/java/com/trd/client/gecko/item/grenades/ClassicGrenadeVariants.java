@@ -48,22 +48,22 @@ public final class ClassicGrenadeVariants {
         STANDARD("grenade", ModItems.GRENADE::get, ModEntities.GRENADE_PROJECTILE::get),
 
         /** Фугасная. */
-        HE("grenadehe", ModItems.GRENADEHE::get, ModEntities.GRENADEHE_PROJECTILE::get),
+        HE("grenade_he", ModItems.GRENADEHE::get, ModEntities.GRENADEHE_PROJECTILE::get),
 
         /** Зажигательная. */
-        FIRE("grenadefire", ModItems.GRENADEFIRE::get, ModEntities.GRENADEFIRE_PROJECTILE::get),
+        FIRE("grenade_fire", ModItems.GRENADEFIRE::get, ModEntities.GRENADEFIRE_PROJECTILE::get),
 
         /** Липкая. */
-        SLIME("grenadeslime", ModItems.GRENADESLIME::get, ModEntities.GRENADESLIME_PROJECTILE::get),
+        SLIME("grenade_slime", ModItems.GRENADESLIME::get, ModEntities.GRENADESLIME_PROJECTILE::get),
 
         /** Умная. */
-        SMART("grenadesmart", ModItems.GRENADESMART::get, ModEntities.GRENADESMART_PROJECTILE::get),
+        SMART("grenade_smart", ModItems.GRENADESMART::get, ModEntities.GRENADESMART_PROJECTILE::get),
 
         /** Водород-кремирующая. */
         HYDROGEN("grenade_nuc", ModItems.GRENADE_NUC::get, ModEntities.GRENADE_NUC_PROJECTILE::get),
 
         /** Гравитационная. */
-        GRAVITY("gravity_grenade", ModItems.GRAVITY_GRENADE::get, ModEntities.GRAVITY_GRENADE_PROJECTILE::get);
+        GRAVITY("grenade_gravity", ModItems.GRAVITY_GRENADE::get, ModEntities.GRAVITY_GRENADE_PROJECTILE::get);
 
         private final String name;
         private final Supplier<Item> item;

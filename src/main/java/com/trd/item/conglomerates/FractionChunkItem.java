@@ -322,7 +322,7 @@ public class FractionChunkItem extends Item {
         FractionType fraction = getFraction(stack);
         String baseName = fraction != null
                 ? Component.translatable("vein.trd.fraction_name." + fraction.getName()).getString()
-                : Component.translatable("item.trd.fraction_chunk").getString();
+                : Component.translatable("item.trd.ore_fraction").getString();
         return Component.literal(baseName);
     }
 
@@ -336,13 +336,13 @@ public class FractionChunkItem extends Item {
         boolean washed = isWashed(stack);
         boolean roasted = isRoasted(stack);
         if (!washed && !roasted) {
-            return Component.translatable("tooltip.trd.fraction_chunk.state.raw").getString();
+            return Component.translatable("tooltip.trd.ore_fraction.state.raw").getString();
         }
         if (washed) {
-            parts.add(Component.translatable("tooltip.trd.fraction_chunk.state.clean").getString());
+            parts.add(Component.translatable("tooltip.trd.ore_fraction.state.clean").getString());
         }
         if (roasted) {
-            parts.add(Component.translatable("tooltip.trd.fraction_chunk.state.roasted").getString());
+            parts.add(Component.translatable("tooltip.trd.ore_fraction.state.roasted").getString());
         }
         return String.join(", ", parts);
     }
@@ -352,7 +352,7 @@ public class FractionChunkItem extends Item {
         boolean example = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getBoolean(TAG_EXAMPLE);
         FractionType fraction = getFraction(stack);
 
-        tooltip.add(Component.translatable("tooltip.trd.fraction_chunk.ou", example ? "X" : getRemainingOU(stack))
+        tooltip.add(Component.translatable("tooltip.trd.ore_fraction.ou", example ? "X" : getRemainingOU(stack))
                 .withStyle(ChatFormatting.WHITE));
 
         tooltip.add(Component.literal(getStateHistory(stack)).withStyle(ChatFormatting.GRAY));
@@ -360,7 +360,7 @@ public class FractionChunkItem extends Item {
         if (isAnalyzed(stack) && !example) {
             Map<Integer, Map<String, Integer>> layers = getLayerMap(stack);
             if (layers.isEmpty()) {
-                tooltip.add(Component.translatable("tooltip.trd.fraction_chunk.depleted")
+                tooltip.add(Component.translatable("tooltip.trd.ore_fraction.depleted")
                         .withStyle(ChatFormatting.RED));
             } else {
                 for (Map.Entry<Integer, Map<String, Integer>> e : layers.entrySet()) {
@@ -373,13 +373,13 @@ public class FractionChunkItem extends Item {
                         first = false;
                         metals.append(metalComponent(m.getKey()));
                     }
-                    tooltip.add(Component.translatable("tooltip.trd.fraction_chunk.layer",
+                    tooltip.add(Component.translatable("tooltip.trd.ore_fraction.layer",
                                     layer != null ? layer.index() + 1 : e.getKey() + 1, metals)
                             .withStyle(ChatFormatting.WHITE));
                 }
             }
         } else if (!isAnalyzed(stack)) {
-            tooltip.add(Component.translatable("tooltip.trd.fraction_chunk.requires_analysis")
+            tooltip.add(Component.translatable("tooltip.trd.ore_fraction.requires_analysis")
                     .withStyle(ChatFormatting.RED));
         }
     }

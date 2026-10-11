@@ -93,7 +93,7 @@ public class ModItems {
     public static final DeferredItem<Item> WIRE_COIL = ITEMS.register("wire_coil", () -> new com.trd.item.industrial.energy.WireCoilItem(new Item.Properties().stacksTo(1)));
     public static final DeferredItem<Item> PRESS_CARRIAGE = ITEMS.register("press_carriage", () -> new Item(new Item.Properties().stacksTo(1)));
     public static final DeferredItem<Item> WIRE_CARRIAGE = ITEMS.register("wire_carriage", () -> new Item(new Item.Properties().stacksTo(1)));
-    public static final DeferredItem<Item> FREZA_CARRIAGE = ITEMS.register("freza_carriage", () -> new Item(new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> FREZA_CARRIAGE = ITEMS.register("milling_carriage", () -> new Item(new Item.Properties().stacksTo(1)));
     public static final DeferredItem<Item> INDUSTRIAL_COPPER_WIRE = ITEMS.register("industrial_copper_wire", () -> new Item(new Item.Properties()));
     public static final DeferredItem<Item> GOLD_WIRE = ITEMS.register("gold_wire", () -> new Item(new Item.Properties()));
     public static final DeferredItem<Item> NEODYMIUM_WIRE = ITEMS.register("neodymium_wire", () -> new Item(new Item.Properties()));
@@ -105,13 +105,13 @@ public class ModItems {
     public static final DeferredItem<Item> CONGLOMERATE_POWDER = ITEMS.register("conglomerate_powder", () -> new Item(new Item.Properties()));
     
     public static final DeferredItem<Item> CONGLOMERATE_CHUNK = ITEMS.register("conglomerate_chunk", () -> new com.trd.item.conglomerates.ConglomerateItem(new Item.Properties()));
-    public static final DeferredItem<Item> FRACTION_CHUNK = ITEMS.register("fraction_chunk", () -> new com.trd.item.conglomerates.FractionChunkItem(new Item.Properties()));
+    public static final DeferredItem<Item> FRACTION_CHUNK = ITEMS.register("ore_fraction", () -> new com.trd.item.conglomerates.FractionChunkItem(new Item.Properties()));
     public static final DeferredItem<Item> METAL_PIECE = ITEMS.register("metal_piece", () -> new com.trd.item.conglomerates.MetalPieceItem(new Item.Properties()));
 
     // Fluid Containers
     public static final DeferredItem<Item> PIPETTE = ITEMS.register("pipette",
             () -> new com.trd.item.industrial.fluids.FluidContainerItem(new Item.Properties().stacksTo(1), 50, 80, 100));
-    public static final DeferredItem<Item> PIPETTE_IDUSTRIAL = ITEMS.register("pipette_idustrial",
+    public static final DeferredItem<Item> PIPETTE_IDUSTRIAL = ITEMS.register("pipette_industrial",
             () -> new com.trd.item.industrial.fluids.FluidContainerItem(new Item.Properties().stacksTo(1), 100, 240, 270));
 
     public static final DeferredItem<Item> HAMMER = ITEMS.register("hammer",
@@ -153,9 +153,9 @@ public class ModItems {
             () -> new com.trd.multiblock.system.MultiblockBlockItem(ModBlocks.SMELTER.get(), new Item.Properties()));
     public static final DeferredItem<Item> CC_MACHINE_ITEM = ITEMS.register("cc_machine",
             () -> new com.trd.multiblock.system.MultiblockBlockItem(ModBlocks.CC_MACHINE.get(), new Item.Properties()));
-    public static final DeferredItem<Item> DROBITEL_ITEM = ITEMS.register("drobitel",
+    public static final DeferredItem<Item> DROBITEL_ITEM = ITEMS.register("ore_crusher",
             () -> new com.trd.multiblock.system.MultiblockBlockItem(ModBlocks.DROBITEL.get(), new Item.Properties()));
-    public static final DeferredItem<Item> VISHELASHIVATEL_ITEM = ITEMS.register("vishelashivatel",
+    public static final DeferredItem<Item> VISHELASHIVATEL_ITEM = ITEMS.register("ore_leacher",
             () -> new com.trd.multiblock.system.MultiblockBlockItem(ModBlocks.VISHELASHIVATEL.get(), new Item.Properties()));
 
     public static final DeferredItem<Item> BLADE = ITEMS.register("blade",
@@ -179,10 +179,10 @@ public class ModItems {
     public static final DeferredItem<Item> BEVEL_GEAR = ITEMS.register("bevel_gear",
             () -> new com.trd.item.industrial.rotation.BevelGearItem(new Item.Properties(), com.trd.api.rotation.ShaftMaterial.STEEL));
 
-    public static final DeferredItem<Item> GEAR1_STEEL = ITEMS.register("gear1_steel",
+    public static final DeferredItem<Item> GEAR1_STEEL = ITEMS.register("steel_gear_small",
             () -> new com.trd.item.industrial.rotation.GearItem(new Item.Properties(), 1, com.trd.api.rotation.ShaftMaterial.STEEL));
 
-    public static final DeferredItem<Item> GEAR2_STEEL = ITEMS.register("gear2_steel",
+    public static final DeferredItem<Item> GEAR2_STEEL = ITEMS.register("steel_gear_medium",
             () -> new com.trd.item.industrial.rotation.GearItem(new Item.Properties(), 2, com.trd.api.rotation.ShaftMaterial.STEEL));
 
     public static final DeferredItem<Item> COPPER_COIL = ITEMS.register("copper_coil",
@@ -207,9 +207,9 @@ public class ModItems {
             () -> new Item(new Item.Properties()));
     public static final DeferredItem<Item> LIGNITE = ITEMS.register("lignite",
             () -> new Item(new Item.Properties()));
-    public static final DeferredItem<Item> FIRE_SMES = ITEMS.register("fire_smes",
+    public static final DeferredItem<Item> FIRE_SMES = ITEMS.register("fire_mixture",
             () -> new Item(new Item.Properties()));
-    public static final DeferredItem<Item> DOLOMITE_SMES = ITEMS.register("dolomite_smes",
+    public static final DeferredItem<Item> DOLOMITE_SMES = ITEMS.register("dolomite_mixture",
             () -> new Item(new Item.Properties()));
     public static final DeferredItem<Item> FIREBRICK = ITEMS.register("firebrick",
             () -> new Item(new Item.Properties()));
@@ -248,20 +248,19 @@ public class ModItems {
      * <b>Про id.</b> Раньше патроны назывались {@code ammo_turret},
      * {@code ammo_turret_piercing} и так далее. Теперь они называются как свои
      * иконки: {@code turret_ammo}, {@code turret_ammo_ap},
-     * {@code turret_ammo_trasser} и так далее. Это не косметика: патрон —
+     * {@code turret_ammo_tracer} и так далее. Это не косметика: патрон —
      * обычный предмет с двумерным спрайтом, и иконка обязана называться ровно
      * как его id ({@code models/item/<id>.json} →
      * {@code textures/item/ammo/<id>.png}), иначе нарисованные патроны остались
-     * бы пустыми. Слово «trasser» — с одной «с», какой его сделали в файлах
-     * иконок; правильное написание «tracer» разошлось бы с ними, а
-     * переименовывать иконки ради этого не стоит.
+     * бы пустыми. Поэтому переименование id патрона обязано идти парой с
+     * переименованием его иконки.
      * <p>
      * Фугасные патроны ({@code turret_ammo_he} и его трассирующая версия) идут
      * последней парой — см. ниже.
      */
     public static final DeferredItem<Item> TURRET_AMMO = ITEMS.register("turret_ammo",
             () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 8.0f, 3.0f, false, false));
-    public static final DeferredItem<Item> TURRET_AMMO_TRACER = ITEMS.register("turret_ammo_trasser",
+    public static final DeferredItem<Item> TURRET_AMMO_TRACER = ITEMS.register("turret_ammo_tracer",
             () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 8.0f, 3.0f, false, true));
     public static final DeferredItem<Item> TURRET_AMMO_AP = ITEMS.register("turret_ammo_ap",
             () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 12.0f, 3.0f, true, false));
@@ -283,9 +282,9 @@ public class ModItems {
             () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 25.0f, 3.0f, false, false));
     public static final DeferredItem<Item> TURRET_AMMO_HE_TRACER = ITEMS.register("turret_ammo_he_tracer",
             () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 25.0f, 3.0f, false, true));
-    public static final DeferredItem<Item> TURRET_AMMO_HE_SAVE = ITEMS.register("turret_ammo_he_save",
+    public static final DeferredItem<Item> TURRET_AMMO_HE_SAVE = ITEMS.register("turret_ammo_he_low_charge",
             () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 17.0f, 3.0f, false, false));
-    public static final DeferredItem<Item> TURRET_AMMO_HE_SAVE_TRACER = ITEMS.register("turret_ammo_he_save_tracer",
+    public static final DeferredItem<Item> TURRET_AMMO_HE_SAVE_TRACER = ITEMS.register("turret_ammo_he_low_charge_tracer",
             () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 17.0f, 3.0f, false, true));
 
     // ═══════════════════════════════════════════════════════
@@ -310,7 +309,7 @@ public class ModItems {
     // Предмет-форма блока-буфера (turret_light_placer) регистрируется в ModBlocks:
     // helper registerBlock всегда вешает обычный BlockItem, а нужен кастомный
     // TurretLightPlacerBlockItem (GeoItem). Вкладка берёт ModBlocks.TURRET_LIGHT_PLACER.get().
-    public static final DeferredItem<Item> TURRET_LIGHT_PORTATIVE_PLACER = ITEMS.register("turret_light_portative_placer",
+    public static final DeferredItem<Item> TURRET_LIGHT_PORTATIVE_PLACER = ITEMS.register("portable_turret_light_placer",
             () -> new com.trd.item.weapons.turrets.TurretLightPortativePlacer(new Item.Properties().stacksTo(1)));
 
     public static final DeferredItem<Item> PIG_TURRET_PLACER = ITEMS.register("pig_turret_placer",
@@ -325,7 +324,7 @@ public class ModItems {
         com.trd.api.tooltip.MachineTooltipRegistry.register(TURRET_CHIP, "tooltip.trd.machine.turret_chip.desc");
     }
 
-    public static final DeferredItem<Item> MISSILE_100MM = ITEMS.register("missile_100mm",
+    public static final DeferredItem<Item> MISSILE_100MM = ITEMS.register("missile_100mm_low_charge",
             () -> new com.trd.item.weapons.missiles.MissileItem(new Item.Properties(), "standard", 25.0f, 1.67f));
     public static final DeferredItem<Item> MISSILE_100MM_HE = ITEMS.register("missile_100mm_he",
             () -> new com.trd.item.weapons.missiles.MissileItem(new Item.Properties(), "he", 40.0f, 1.67f));
@@ -336,7 +335,7 @@ public class ModItems {
     // ГРАНАТЫ
     // ═══════════════════════════════════════════════════════
 
-    public static final DeferredItem<Item> GRAVITY_GRENADE = ITEMS.register("gravity_grenade",
+    public static final DeferredItem<Item> GRAVITY_GRENADE = ITEMS.register("grenade_gravity",
             () -> new com.trd.item.weapons.grenades.GravityGrenadeItem(
                     new Item.Properties().stacksTo(16), ModEntities.GRAVITY_GRENADE_PROJECTILE.get()));
 
@@ -344,19 +343,19 @@ public class ModItems {
             () -> new com.trd.item.weapons.grenades.GrenadeItem(new Item.Properties().stacksTo(16),
                     GrenadeType.STANDARD, ModEntities.GRENADE_PROJECTILE.get()));
 
-    public static final DeferredItem<Item> GRENADEHE = ITEMS.register("grenadehe",
+    public static final DeferredItem<Item> GRENADEHE = ITEMS.register("grenade_he",
             () -> new com.trd.item.weapons.grenades.GrenadeItem(new Item.Properties().stacksTo(16),
                     GrenadeType.HE, ModEntities.GRENADEHE_PROJECTILE.get()));
 
-    public static final DeferredItem<Item> GRENADEFIRE = ITEMS.register("grenadefire",
+    public static final DeferredItem<Item> GRENADEFIRE = ITEMS.register("grenade_fire",
             () -> new com.trd.item.weapons.grenades.GrenadeItem(new Item.Properties().stacksTo(16),
                     GrenadeType.FIRE, ModEntities.GRENADEFIRE_PROJECTILE.get()));
 
-    public static final DeferredItem<Item> GRENADESLIME = ITEMS.register("grenadeslime",
+    public static final DeferredItem<Item> GRENADESLIME = ITEMS.register("grenade_slime",
             () -> new com.trd.item.weapons.grenades.GrenadeItem(new Item.Properties().stacksTo(16),
                     GrenadeType.SLIME, ModEntities.GRENADESLIME_PROJECTILE.get()));
 
-    public static final DeferredItem<Item> GRENADESMART = ITEMS.register("grenadesmart",
+    public static final DeferredItem<Item> GRENADESMART = ITEMS.register("grenade_smart",
             () -> new com.trd.item.weapons.grenades.GrenadeItem(new Item.Properties().stacksTo(16),
                     GrenadeType.SMART, ModEntities.GRENADESMART_PROJECTILE.get()));
 
@@ -422,7 +421,7 @@ public class ModItems {
         com.trd.api.tooltip.MachineTooltipRegistry.register(GRENADE_IF_FIRE, "tooltip.trd.grenade_if.fire.desc");
         com.trd.api.tooltip.MachineTooltipRegistry.register(GRENADE_IF_SLIME, "tooltip.trd.grenade_if.slime.desc");
         com.trd.api.tooltip.MachineTooltipRegistry.register(GRENADE_NUC, "tooltip.trd.grenade_nuc.desc");
-        com.trd.api.tooltip.MachineTooltipRegistry.register(GRAVITY_GRENADE, "tooltip.trd.gravity_grenade.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.register(GRAVITY_GRENADE, "tooltip.trd.grenade_gravity.desc");
     }
 
     // ═══════════════════════════════════════════════════════

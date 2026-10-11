@@ -212,7 +212,7 @@ public class ConveyorBufferBlockEntity extends BlockEntity implements MenuProvid
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable(mode == Mode.EXTRACTOR ? "block.trd.conveyor_izvlekatel" : "block.trd.conveyor_vstavshik");
+        return Component.translatable(mode == Mode.EXTRACTOR ? "block.trd.conveyor_extractor" : "block.trd.conveyor_inserter");
     }
 
     @Nullable

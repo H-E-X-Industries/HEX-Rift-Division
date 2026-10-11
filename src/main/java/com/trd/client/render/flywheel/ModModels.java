@@ -41,15 +41,15 @@ public class ModModels {
     public static final PartialModel WATER_PUMP = PartialModel.of(ResourceLocation.fromNamespaceAndPath("trd", "block/water_pump"));
     public static final PartialModel HAND_CRANK = PartialModel.of(ResourceLocation.fromNamespaceAndPath("trd", "block/handle"));
     public static final PartialModel CRUSHER_BLADES = PartialModel.of(ResourceLocation.fromNamespaceAndPath("trd", "block/crusher_blades"));
-    public static final PartialModel VISHELACHIVATEL_LOPASTI = PartialModel.of(ResourceLocation.fromNamespaceAndPath("trd", "block/vishelashivatel_lopasti"));
+    public static final PartialModel VISHELACHIVATEL_LOPASTI = PartialModel.of(ResourceLocation.fromNamespaceAndPath("trd", "block/ore_leacher_lopasti"));
 
     // Станок
-    public static final PartialModel STANOK_BASE             = PartialModel.of(ResourceLocation.fromNamespaceAndPath("trd", "block/stanok"));
+    public static final PartialModel STANOK_BASE             = PartialModel.of(ResourceLocation.fromNamespaceAndPath("trd", "block/screw_lathe"));
     public static final PartialModel STANOK_PRESS_CARRIAGE   = PartialModel.of(ResourceLocation.fromNamespaceAndPath("trd", "block/press_carriage"));
     public static final PartialModel STANOK_PRESS_HEAD       = PartialModel.of(ResourceLocation.fromNamespaceAndPath("trd", "block/press_head"));
     public static final PartialModel STANOK_WIRE_CARRIAGE    = PartialModel.of(ResourceLocation.fromNamespaceAndPath("trd", "block/wire_carriage"));
     public static final PartialModel STANOK_WIRE_DRUM        = PartialModel.of(ResourceLocation.fromNamespaceAndPath("trd", "block/wire_drum"));
-    public static final PartialModel STANOK_FREZA_CARRIAGE   = PartialModel.of(ResourceLocation.fromNamespaceAndPath("trd", "block/freza_carriage"));
+    public static final PartialModel STANOK_FREZA_CARRIAGE   = PartialModel.of(ResourceLocation.fromNamespaceAndPath("trd", "block/milling_carriage"));
     public static final PartialModel STANOK_FREZA_ATTACHMENT = PartialModel.of(ResourceLocation.fromNamespaceAndPath("trd", "block/freza_attachment"));
     public static final PartialModel STANOK_FREZA            = PartialModel.of(ResourceLocation.fromNamespaceAndPath("trd", "block/freza"));
     

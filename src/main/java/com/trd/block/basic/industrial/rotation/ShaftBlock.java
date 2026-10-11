@@ -314,7 +314,7 @@ public class ShaftBlock extends BaseEntityBlock {
                     && part.getControllerPos() != null) {
                 BlockState ctrlState = level.getBlockState(part.getControllerPos());
                 String ctrlName = BuiltInRegistries.BLOCK.getKey(ctrlState.getBlock()).getPath();
-                if (ctrlName.contains("drobitel") && ctrlState.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
+                if (ctrlName.contains("ore_crusher") && ctrlState.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
                     Direction facing = ctrlState.getValue(BlockStateProperties.HORIZONTAL_FACING);
                     if (clickedFace.getAxis() != facing.getAxis()) {
                         return null;

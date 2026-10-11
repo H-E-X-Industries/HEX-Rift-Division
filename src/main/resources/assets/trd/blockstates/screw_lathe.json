@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "trd:block/screw_lathe" },
+    "facing=south": { "model": "trd:block/screw_lathe", "y": 180 },
+    "facing=west":  { "model": "trd:block/screw_lathe", "y": 270 },
+    "facing=east":  { "model": "trd:block/screw_lathe", "y": 90 }
+  }
+}

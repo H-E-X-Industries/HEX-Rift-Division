@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "trd:block/ore_crusher" },
+    "facing=south": { "model": "trd:block/ore_crusher", "y": 180 },
+    "facing=west":  { "model": "trd:block/ore_crusher", "y": 270 },
+    "facing=east":  { "model": "trd:block/ore_crusher", "y": 90 }
+  }
+}

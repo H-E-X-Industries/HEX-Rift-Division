@@ -388,7 +388,7 @@ public class CoccerOvenBlockEntity extends BlockEntity implements MenuProvider, 
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.trd.coccer_oven");
+        return Component.translatable("block.trd.coking_oven");
     }
 
     @Nullable

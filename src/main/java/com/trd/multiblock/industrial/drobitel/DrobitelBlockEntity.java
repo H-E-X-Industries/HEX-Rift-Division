@@ -703,7 +703,7 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.trd.drobitel");
+        return Component.translatable("block.trd.ore_crusher");
     }
 
     @Nullable

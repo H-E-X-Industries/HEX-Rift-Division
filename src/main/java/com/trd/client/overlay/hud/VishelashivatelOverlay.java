@@ -136,7 +136,7 @@ public class VishelashivatelOverlay {
                     maxW = Math.max(maxW, font.width(layerLine));
                 }
             } else {
-                String depleted = "  " + Component.translatable("tooltip.trd.fraction_chunk.depleted").getString();
+                String depleted = "  " + Component.translatable("tooltip.trd.ore_fraction.depleted").getString();
                 lines.add(depleted);
                 colors.add(0xFF5555);
                 maxW = Math.max(maxW, font.width(depleted));

@@ -1,0 +1,16 @@
+{
+  "loader": "neoforge:composite",
+  "textures": {
+    "particle": "trd:block/milling_carriage"
+  },
+  "children": {
+    "main": {
+      "loader": "neoforge:obj",
+      "model": "trd:models/block/milling_carriage.obj",
+      "flip_v": true,
+      "textures": {
+        "m_c74cd618-942f-752d-6f43-56687f5dac23": "trd:block/milling_carriage"
+      }
+    }
+  }
+}

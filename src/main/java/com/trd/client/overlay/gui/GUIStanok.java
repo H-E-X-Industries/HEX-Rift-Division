@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Основной GUI станка.
  *
- * Текстура: textures/gui/machine/stanok_gui.png (176×147 px atlas)
+ * Текстура: textures/gui/machine/screw_lathe_gui.png (176×147 px atlas)
  *
  * Светодиод:
  *   Зелёный (OK)  — u=178, v=0, 6×6
@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 public class GUIStanok extends AbstractContainerScreen<StanokMenu> {
 
     private static final ResourceLocation TEXTURE =
-            ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "textures/gui/machine/stanok_gui.png");
+            ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "textures/gui/machine/screw_lathe_gui.png");
 
     private static final int IMAGE_WIDTH  = 176;
     private static final int IMAGE_HEIGHT = 147;

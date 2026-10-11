@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "trd:block/concrete_textured_light_slab"
+    },
+    "type=double": {
+      "model": "trd:block/concrete_textured_light"
+    },
+    "type=top": {
+      "model": "trd:block/concrete_textured_light_slab_top"
+    }
+  }
+}

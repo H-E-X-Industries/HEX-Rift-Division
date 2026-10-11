@@ -99,7 +99,7 @@ public class trdJeiPlugin implements IModPlugin {
     };
 
     public static final RecipeType<DrobitelWrapper> DROBITEL_TYPE =
-            RecipeType.create(MainRegistry.MOD_ID, "drobitel", DrobitelWrapper.class);
+            RecipeType.create(MainRegistry.MOD_ID, "ore_crusher", DrobitelWrapper.class);
     public record DrobitelWrapper(Item input, List<ItemStack> outputs) {}
 
     /** Динамический рецепт дробления конгломерата → куски фракций. */
@@ -122,11 +122,11 @@ public class trdJeiPlugin implements IModPlugin {
     public static final RecipeType<CondensingWrapper> CONDENSING_TYPE =
             RecipeType.create(MainRegistry.MOD_ID, "condensing", CondensingWrapper.class);
     public static final RecipeType<CoccerOvenWrapper> COCCER_OVEN_TYPE =
-            RecipeType.create(MainRegistry.MOD_ID, "coccer_oven", CoccerOvenWrapper.class);
+            RecipeType.create(MainRegistry.MOD_ID, "coking_oven", CoccerOvenWrapper.class);
     public static final RecipeType<ChemicalPlantWrapper> CHEMICAL_PLANT_TYPE =
             RecipeType.create(MainRegistry.MOD_ID, "chemical_plant", ChemicalPlantWrapper.class);
     public static final RecipeType<VishelashivatelWrapper> VISHELASHIVATEL_TYPE =
-            RecipeType.create(MainRegistry.MOD_ID, "vishelashivatel", VishelashivatelWrapper.class);
+            RecipeType.create(MainRegistry.MOD_ID, "ore_leacher", VishelashivatelWrapper.class);
     public static final RecipeType<CentrifugeWrapper> CENTRIFUGE_TYPE =
             RecipeType.create(MainRegistry.MOD_ID, "centrifuge", CentrifugeWrapper.class);
     public static final RecipeType<CentrifugeCylinderWrapper> CENTRIFUGE_CYLINDER_TYPE =

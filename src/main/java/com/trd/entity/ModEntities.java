@@ -130,7 +130,7 @@ public class ModEntities {
 
 
     public static final DeferredHolder<EntityType<?>, EntityType<GravityGrenadeProjectileEntity>> GRAVITY_GRENADE_PROJECTILE =
-            ENTITY_TYPES.register("gravity_grenade_projectile", () -> EntityType.Builder
+            ENTITY_TYPES.register("grenade_gravity_projectile", () -> EntityType.Builder
                     .<GravityGrenadeProjectileEntity>of(GravityGrenadeProjectileEntity::new, MobCategory.MISC)
                     .sized(0.4F, 0.4F)
                     .clientTrackingRange(32)
@@ -144,25 +144,25 @@ public class ModEntities {
                     .build("trd:grenade_projectile"));
 
     public static final DeferredHolder<EntityType<?>, EntityType<GrenadeProjectileEntity>> GRENADEHE_PROJECTILE =
-            ENTITY_TYPES.register("grenadehe_projectile", () -> EntityType.Builder
+            ENTITY_TYPES.register("grenade_he_projectile", () -> EntityType.Builder
                     .<GrenadeProjectileEntity>of(GrenadeProjectileEntity::new, MobCategory.MISC)
                     .sized(0.5f, 0.5f)
                     .build("trd:grenadehe_projectile"));
 
     public static final DeferredHolder<EntityType<?>, EntityType<GrenadeProjectileEntity>> GRENADESMART_PROJECTILE =
-            ENTITY_TYPES.register("grenadesmart_projectile", () -> EntityType.Builder
+            ENTITY_TYPES.register("grenade_smart_projectile", () -> EntityType.Builder
                     .<GrenadeProjectileEntity>of(GrenadeProjectileEntity::new, MobCategory.MISC)
                     .sized(0.5f, 0.5f)
                     .build("trd:grenadesmart_projectile"));
 
     public static final DeferredHolder<EntityType<?>, EntityType<GrenadeProjectileEntity>> GRENADESLIME_PROJECTILE =
-            ENTITY_TYPES.register("grenadeslime_projectile", () -> EntityType.Builder
+            ENTITY_TYPES.register("grenade_slime_projectile", () -> EntityType.Builder
                     .<GrenadeProjectileEntity>of(GrenadeProjectileEntity::new, MobCategory.MISC)
                     .sized(0.5f, 0.5f)
                     .build("trd:grenadeslime_projectile"));
 
     public static final DeferredHolder<EntityType<?>, EntityType<GrenadeProjectileEntity>> GRENADEFIRE_PROJECTILE =
-            ENTITY_TYPES.register("grenadefire_projectile", () -> EntityType.Builder
+            ENTITY_TYPES.register("grenade_fire_projectile", () -> EntityType.Builder
                     .<GrenadeProjectileEntity>of(GrenadeProjectileEntity::new, MobCategory.MISC)
                     .sized(0.5f, 0.5f)
                     .build("trd:grenadefire_projectile"));

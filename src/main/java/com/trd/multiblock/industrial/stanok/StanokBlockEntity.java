@@ -610,7 +610,7 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.trd.stanok");
+        return Component.translatable("block.trd.screw_lathe");
     }
 
     @Nullable

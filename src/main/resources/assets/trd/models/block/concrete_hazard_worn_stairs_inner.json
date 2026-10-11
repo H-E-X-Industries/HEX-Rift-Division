@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/inner_stairs",
+  "textures": {
+    "bottom": "trd:block/concrete_hazard_worn",
+    "side": "trd:block/concrete_hazard_worn",
+    "top": "trd:block/concrete_hazard_worn"
+  }
+}
