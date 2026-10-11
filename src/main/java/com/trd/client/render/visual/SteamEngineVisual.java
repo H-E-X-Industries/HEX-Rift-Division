@@ -1,0 +1,144 @@
+package com.trd.client.render.visual;
+
+import com.trd.client.render.flywheel.ModModels;
+import com.trd.multiblock.industrial.steam_engine.SteamEngineBlock;
+import com.trd.multiblock.industrial.steam_engine.SteamEngineBlockEntity;
+import dev.engine_room.flywheel.api.instance.Instance;
+import dev.engine_room.flywheel.api.visualization.VisualizationContext;
+import dev.engine_room.flywheel.lib.instance.InstanceTypes;
+import dev.engine_room.flywheel.lib.instance.TransformedInstance;
+import dev.engine_room.flywheel.lib.model.Models;
+import dev.engine_room.flywheel.lib.visual.AbstractBlockEntityVisual;
+import dev.engine_room.flywheel.lib.visual.SimpleDynamicVisual;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Consumer;
+
+public class SteamEngineVisual extends AbstractBlockEntityVisual<SteamEngineBlockEntity> implements SimpleDynamicVisual {
+
+    private final TransformedInstance base;
+    private final TransformedInstance crankshaft;
+    private final TransformedInstance connectingRod;
+    
+    private final Direction facing;
+    private final Direction.Axis crankshaftAxis;
+
+    private final float localX;
+    private final float localY;
+    private final float localZ;
+
+    public SteamEngineVisual(VisualizationContext ctx, SteamEngineBlockEntity blockEntity, float partialTick) {
+        super(ctx, blockEntity, partialTick);
+
+        if (blockState.hasProperty(SteamEngineBlock.FACING)) {
+            this.facing = blockState.getValue(SteamEngineBlock.FACING);
+        } else {
+            this.facing = Direction.NORTH;
+        }
+        
+        this.crankshaftAxis = facing.getAxis() == Direction.Axis.X ? Direction.Axis.Z : Direction.Axis.X;
+
+        Vec3i origin = ctx.renderOrigin();
+        this.localX = pos.getX() - origin.getX();
+        this.localY = pos.getY() - origin.getY();
+        this.localZ = pos.getZ() - origin.getZ();
+
+        this.base = instancerProvider().instancer(InstanceTypes.TRANSFORMED, Models.partial(ModModels.STEAM_ENGINE_BASE)).createInstance();
+        this.crankshaft = instancerProvider().instancer(InstanceTypes.TRANSFORMED, Models.partial(ModModels.STEAM_ENGINE_CRANKSHAFT)).createInstance();
+        this.connectingRod = instancerProvider().instancer(InstanceTypes.TRANSFORMED, Models.partial(ModModels.STEAM_ENGINE_ROD)).createInstance();
+
+        setupStaticBase();
+        updateLight(partialTick);
+    }
+
+    private void setupStaticBase() {
+        base.setIdentityTransform()
+                .translate(localX, localY, localZ)
+                .translate(0.5f, 0.5f, 0.5f);
+
+        Direction.Axis axis = facing.getAxis();
+        if (axis == Direction.Axis.X) {
+            base.rotateY((float) Math.toRadians(facing == Direction.EAST ? 270 : 90));
+        } else if (facing == Direction.SOUTH) {
+            base.rotateY((float) Math.toRadians(180));
+        }
+
+        base.translate(0.0f, -0.5f, 0.0f);
+        base.setChanged();
+    }
+
+    private float smoothedSpeed = 0f;
+    private float currentAngle = 0f;
+    private float lastFrameTime = -1.0f;
+
+    @Override
+    public void beginFrame(Context ctx) {
+        float partialTick = ctx.partialTick();
+        float currentAngle = com.trd.client.rotation.ClientKineticAngleTracker.getAngle(blockEntity, facing, partialTick);
+
+        // --- АНИМАЦИЯ ---
+        crankshaft.setIdentityTransform()
+                .translate(localX, localY, localZ)
+                .translate(0.5f, 0.5f, 0.5f); 
+
+        Direction.Axis axis = facing.getAxis();
+        if (axis == Direction.Axis.X) {
+            crankshaft.rotateY((float) Math.toRadians(facing == Direction.EAST ? 270 : 90));
+        } else if (facing == Direction.SOUTH) {
+            crankshaft.rotateY((float) Math.toRadians(180));
+        }
+
+        // Вращаем коленвал
+        crankshaft.rotateZ(currentAngle); 
+        
+        // Сдвигаем модель в локальных осях
+        crankshaft.translate(0.0f, -0.5625f, 0.03125f);
+        crankshaft.setChanged();
+
+        // Математика поршня
+        float R = 0.41f;
+        float L = 1.225f;
+        
+        float xCrank = R * (float) Math.sin(currentAngle);
+        float yCrank = -R * (float) Math.cos(currentAngle);
+
+        float sinBeta = xCrank / L;
+        float beta = (float) Math.asin(sinBeta);
+
+        connectingRod.setIdentityTransform()
+                .translate(localX, localY, localZ)
+                .translate(0.5f, 0.5f, 0.5f);
+
+        if (axis == Direction.Axis.X) {
+            connectingRod.rotateY((float) Math.toRadians(facing == Direction.EAST ? 270 : 90));
+        } else if (facing == Direction.SOUTH) {
+            connectingRod.rotateY((float) Math.toRadians(180));
+        }
+
+        connectingRod.translate(0.0f, 0.0f, -0.0625f);
+        connectingRod.translate(xCrank, yCrank, 0);
+        connectingRod.rotateZ(beta);
+        connectingRod.setChanged();
+    }
+
+    @Override
+    public void updateLight(float partialTick) {
+        relight(pos, base, crankshaft, connectingRod);
+    }
+
+    @Override
+    protected void _delete() {
+        base.delete();
+        crankshaft.delete();
+        connectingRod.delete();
+    }
+
+    @Override
+    public void collectCrumblingInstances(Consumer<@Nullable Instance> consumer) {
+        consumer.accept(base);
+        consumer.accept(crankshaft);
+        consumer.accept(connectingRod);
+    }
+}

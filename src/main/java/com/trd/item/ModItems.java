@@ -398,7 +398,7 @@ public class ModItems {
      * последние были бы ещё не инициализированы.
      * <p>
      * Это временный набор — своей графики у них нет, см.
-     * {@code com.trd.client.gecko.item.grenades.ClassicGrenadeVariants}.
+     * {@code com.trd.client.gltf.item.grenades.ClassicGrenadeVariants}.
      */
     public static final java.util.List<DeferredItem<Item>> CLASSIC_GRENADE_ITEMS = java.util.List.of(
             GRAVITY_GRENADE, GRENADE, GRENADEHE, GRENADEFIRE, GRENADESLIME, GRENADESMART, GRENADE_NUC);

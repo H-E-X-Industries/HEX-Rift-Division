@@ -686,7 +686,7 @@ public class ModBlocks {
                             .sound(net.minecraft.world.level.block.SoundType.STONE)
                             .requiresCorrectToolForDrops()));
     public static final DeferredBlock<Block> AVIABOMB_MINE = registerBlock("aviabomb_mine",
-            () -> new com.trd.block.basic.weapons.explosives.SideOBlock(
+            () -> new com.trd.block.basic.direction.SideOBlock(
                     BlockBehaviour.Properties.of().strength(2.0F, 6.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
 
     // ═══════════════════════════════════════════════════════

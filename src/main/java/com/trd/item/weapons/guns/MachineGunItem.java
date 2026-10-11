@@ -1,7 +1,7 @@
 package com.trd.item.weapons.guns;
 
 import com.trd.client.config.ModKeyBindings;
-import com.trd.client.gecko.item.guns.MachineGunRenderer;
+import com.trd.client.gltf.item.guns.MachineGunRenderer;
 import com.trd.client.overlay.MachineGunScope;
 import com.trd.entity.weapons.bullets.GilseEntity;
 import com.trd.entity.weapons.bullets.TurretBulletEntity;

@@ -4,7 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.trd.client.render.flywheel.ModModels;
-import com.trd.client.render.flywheel.StanokVisual;
+import com.trd.client.render.visual.StanokVisual;
 import com.trd.multiblock.industrial.stanok.CarriageType;
 import com.trd.multiblock.industrial.stanok.StanokBlock;
 import com.trd.multiblock.industrial.stanok.StanokBlockEntity;
