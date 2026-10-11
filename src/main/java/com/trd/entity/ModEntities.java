@@ -198,7 +198,7 @@ public class ModEntities {
     public static final DeferredHolder<EntityType<?>, EntityType<GrenadeNucProjectileEntity>> GRENADE_NUC_PROJECTILE =
             ENTITY_TYPES.register("grenade_nuc_projectile", () -> EntityType.Builder
                     .<GrenadeNucProjectileEntity>of(GrenadeNucProjectileEntity::new, MobCategory.MISC)
-                    .sized(0.25F, 0.25F)
+                    .sized(0.2375F, 0.453125F)
                     .clientTrackingRange(64)
                     .updateInterval(2)
                     .build("trd:grenade_nuc_projectile"));

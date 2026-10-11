@@ -71,7 +71,7 @@ public class GrenadeProjectileEntity extends ThrowableItemProjectile {
      * убил. На двух секундах такая мина не успела бы дождаться ничего — цель
      * ушла бы раньше, чем что-то с ней случилось, и граната рванула бы впустую.
      */
-    private static final int ENTITY_STICK_FUSE_TICKS = 200;
+    private static final int ENTITY_STICK_FUSE_TICKS = 40;
 
     /** Радиус взрыва умной гранаты при детонации от контакта с сущностью. */
     private static final float SMART_CONTACT_RADIUS = 7.0f;
