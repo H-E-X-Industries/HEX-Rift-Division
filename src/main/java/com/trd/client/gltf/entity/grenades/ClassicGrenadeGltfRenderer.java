@@ -124,26 +124,32 @@ public class ClassicGrenadeGltfRenderer<T extends Entity> extends EntityRenderer
 
         poseStack.pushPose();
 
-        // Центр хитбокса — до масштаба: перенос после scale домножается им же.
+        // Центр хитбокса
         poseStack.translate(0.0F, entity.getBbHeight() * 0.5F, 0.0F);
         poseStack.scale(MODEL_SCALE, MODEL_SCALE, MODEL_SCALE);
-        poseStack.translate(0.0F, -modelCenterY(variant), 0.0F);
 
-        // Граната летит туда, куда смотрит бросивший, — углы приходят с сервера
-        // вместе с позицией, ровно как их использует ванильный рендерер брошенного
-        // предмета.
-        poseStack.mulPose(Axis.YP.rotationDegrees(-entity.getYRot()));
-        poseStack.mulPose(Axis.XP.rotationDegrees(entity.getXRot()));
+        // Плавная интерполяция поворотов (yaw, pitch, roll) от движения и отскоков
+        float renderYaw;
+        float renderPitch;
+        float renderRoll;
 
-        // Проворот вокруг оси полёта. У видов, которые его не крутят, поворота
-        // нет намеренно: проворот делался фиксированным, и на сильном броске
-        // граната крутилась как вертолёт, а на слабом — одинаково. Теперь эти
-        // гранаты летят стабильно, носом по вектору скорости, и зарядка влияет
-        // ровно на одно: на саму скорость.
-        if (spins(variant)) {
-            poseStack.mulPose(Axis.ZP.rotationDegrees(
-                    flightSeconds(entity, partialTick) * SPIN_DEGREES_PER_SECOND));
+        if (entity instanceof com.trd.entity.weapons.grenades.AbstractGrenadeEntity grenade) {
+            renderYaw = grenade.getInterpolatedYaw(partialTick);
+            renderPitch = grenade.getInterpolatedPitch(partialTick);
+            renderRoll = grenade.getInterpolatedRoll(partialTick);
+        } else {
+            renderYaw = net.minecraft.util.Mth.rotLerp(partialTick, entity.yRotO, entity.getYRot());
+            renderPitch = net.minecraft.util.Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
+            renderRoll = flightSeconds(entity, partialTick) * SPIN_DEGREES_PER_SECOND;
         }
+
+        poseStack.mulPose(Axis.YP.rotationDegrees(-renderYaw));
+        poseStack.mulPose(Axis.XP.rotationDegrees(renderPitch));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(renderRoll));
+
+        // Смещение центра вращения модели: применяется ПОСЛЕ вращения в PoseStack
+        // (то есть ДО вращения вершин модели), чтобы модель крутилась строго вокруг заданной оси.
+        poseStack.translate(0.0F, -modelCenterY(variant), 0.0F);
 
         // Поза покоя модели, но с прибитой чекой: клип отдаётся обязательно, иначе
         // NodeHide не применится и чека останется видимой. Вид берётся из типа

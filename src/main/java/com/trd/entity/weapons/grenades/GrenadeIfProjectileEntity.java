@@ -32,7 +32,7 @@ import javax.annotation.Nullable;
  * Ударная граната с инерционным взрывателем: после первого касания запускается
  * фиксированный таймер (4с), липучий тип прилипает к блоку/сущности.
  */
-public class GrenadeIfProjectileEntity extends ThrowableItemProjectile {
+public class GrenadeIfProjectileEntity extends AbstractGrenadeEntity {
 
     private static final EntityDataAccessor<Boolean> TIMER_ACTIVATED =
             SynchedEntityData.defineId(GrenadeIfProjectileEntity.class, EntityDataSerializers.BOOLEAN);
@@ -309,13 +309,9 @@ public class GrenadeIfProjectileEntity extends ThrowableItemProjectile {
         float speed = (float) velocity.length();
 
         if (speed < MIN_BOUNCE_SPEED) {
-            // Отскакивать больше не от чего: горизонтальное движение гасится, и
-            // граната просто падает под тяжестью до самого подрыва.
-            // Раньше здесь стоял ещё и setNoGravity(true), и граната намертво
-            // зависала в воздухе, откуда её так и не сдвинуть — до самого таймера.
-            // Липучая сюда не доходит: у неё своя ветка выше, она прилипает и
-            // должна висеть.
-            this.setDeltaMovement(Vec3.ZERO);
+            // Отскакивать больше не от чего: переходим в лежачее состояние.
+            // Больше не проваливается сквозь блоки и остаётся подверженной внешним воздействиям.
+            landOnBlock(result);
             return;
         }
 
@@ -327,6 +323,7 @@ public class GrenadeIfProjectileEntity extends ThrowableItemProjectile {
         Vec3 reflectedVelocity = currentVelocity.subtract(hitNormal.scale(2 * currentVelocity.dot(hitNormal)));
         this.setDeltaMovement(reflectedVelocity.scale(BOUNCE_MULTIPLIER));
         this.hasImpulse = true;
+        this.onBounceImpulse(speed);
     }
 
     /**

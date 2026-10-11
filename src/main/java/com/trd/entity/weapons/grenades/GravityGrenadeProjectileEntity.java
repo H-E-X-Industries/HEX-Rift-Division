@@ -31,7 +31,7 @@ import java.util.Random;
  * Гравитационная граната: вместо взрыва затягивает всё живое в вихрь, а на пике
  * разбрасывает. Урон не наносит, эффект полностью синхронизирован через entityData.
  */
-public class GravityGrenadeProjectileEntity extends ThrowableItemProjectile {
+public class GravityGrenadeProjectileEntity extends AbstractGrenadeEntity {
 
     private static final EntityDataAccessor<Boolean> EFFECT_ACTIVE =
             SynchedEntityData.defineId(GravityGrenadeProjectileEntity.class, EntityDataSerializers.BOOLEAN);
@@ -464,8 +464,7 @@ public class GravityGrenadeProjectileEntity extends ThrowableItemProjectile {
         float speed = (float) velocity.length();
 
         if (speed < MIN_BOUNCE_SPEED) {
-            this.setDeltaMovement(Vec3.ZERO);
-            this.setNoGravity(true);
+            landOnBlock(result);
             return;
         }
 
@@ -477,6 +476,7 @@ public class GravityGrenadeProjectileEntity extends ThrowableItemProjectile {
         Vec3 reflectedVelocity = currentVelocity.subtract(hitNormal.scale(2 * currentVelocity.dot(hitNormal)));
         this.setDeltaMovement(reflectedVelocity.scale(BOUNCE_MULTIPLIER));
         this.hasImpulse = true;
+        this.onBounceImpulse(speed);
     }
 
     private void activateEffect(Vec3 hitPos) {

@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 
-public class GrenadeNucProjectileEntity extends ThrowableItemProjectile {
+public class GrenadeNucProjectileEntity extends AbstractGrenadeEntity {
 
     private static final EntityDataAccessor<Boolean> TIMER_ACTIVATED = SynchedEntityData.defineId(GrenadeNucProjectileEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DETONATION_TIME = SynchedEntityData.defineId(GrenadeNucProjectileEntity.class, EntityDataSerializers.INT);
@@ -100,8 +100,7 @@ public class GrenadeNucProjectileEntity extends ThrowableItemProjectile {
         float speed = (float) velocity.length();
 
         if (speed < MIN_BOUNCE_SPEED) {
-            this.setDeltaMovement(Vec3.ZERO);
-            this.setNoGravity(true);
+            landOnBlock(result);
             return;
         }
 
@@ -112,6 +111,8 @@ public class GrenadeNucProjectileEntity extends ThrowableItemProjectile {
         Vec3 hitNormal = Vec3.atLowerCornerOf(result.getDirection().getNormal());
         Vec3 reflectedVelocity = currentVelocity.subtract(hitNormal.scale(2 * currentVelocity.dot(hitNormal)));
         this.setDeltaMovement(reflectedVelocity.scale(BOUNCE_MULTIPLIER));
+        this.hasImpulse = true;
+        this.onBounceImpulse(speed);
     }
 
     private void explode(BlockPos pos) {

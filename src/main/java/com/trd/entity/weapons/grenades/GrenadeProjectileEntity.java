@@ -38,7 +38,7 @@ import net.minecraft.world.phys.Vec3;
  * роняет её на месте последнего касания. Смысл один — липучка это мина, и она
  * срабатывает по событию, а не просто по таймеру.
  */
-public class GrenadeProjectileEntity extends ThrowableItemProjectile {
+public class GrenadeProjectileEntity extends AbstractGrenadeEntity {
 
     static final EntityDataAccessor<String> GRENADE_TYPE_ID =
             SynchedEntityData.defineId(GrenadeProjectileEntity.class, EntityDataSerializers.STRING);
@@ -150,6 +150,20 @@ public class GrenadeProjectileEntity extends ThrowableItemProjectile {
             if (stuckTimer <= 0) explode(false);
         }
 
+        // Умная граната на земле — проверка приближения сущностей (мина)
+        if (grenadeType == GrenadeType.SMART && !exploded) {
+            Vec3 pos = this.position();
+            net.minecraft.world.phys.AABB triggerArea = new net.minecraft.world.phys.AABB(
+                    pos.x - 1.2D, pos.y - 0.5D, pos.z - 1.2D,
+                    pos.x + 1.2D, pos.y + 1.5D, pos.z + 1.2D);
+            java.util.List<Entity> nearby = level().getEntities(this, triggerArea,
+                    e -> e.isAlive() && (this.tickCount > 20 || e != this.getOwner()));
+            if (!nearby.isEmpty()) {
+                explode(true);
+                return;
+            }
+        }
+
         // Страховка (10с). Осколочные/фугасные/зажигательные взрываются только по отскокам,
         // а липучка — по таймеру прилипания. Если граната так и не встретила блок (бросок
         // в пустоту, лава, застревание), она падала бы вечно и никогда не взорвалась.
@@ -174,18 +188,28 @@ public class GrenadeProjectileEntity extends ThrowableItemProjectile {
             // если опора под ней пропала (см. supportGone).
             stick(result.getBlockPos(), result.getLocation());
         } else if (grenadeType == GrenadeType.SMART) {
-            bounceCount++;
-            if (bounceCount >= grenadeType.getMaxBounces() || this.tickCount > 200) {
-                explode(false);
+            float speed = (float) this.getDeltaMovement().length();
+            if (speed < MIN_BOUNCE_SPEED) {
+                landOnBlock(result);
             } else {
-                bounce(result);
+                bounceCount++;
+                if (bounceCount >= grenadeType.getMaxBounces() || this.tickCount > 200) {
+                    landOnBlock(result);
+                } else {
+                    bounce(result);
+                }
             }
         } else {
-            this.bounceCount++;
-            if (this.bounceCount >= grenadeType.getMaxBounces()) {
-                explode(blockPos);
+            float speed = (float) this.getDeltaMovement().length();
+            if (speed < MIN_BOUNCE_SPEED) {
+                landOnBlock(result);
             } else {
-                bounce(result);
+                this.bounceCount++;
+                if (this.bounceCount >= grenadeType.getMaxBounces()) {
+                    explode(blockPos);
+                } else {
+                    bounce(result);
+                }
             }
         }
     }
@@ -208,10 +232,12 @@ public class GrenadeProjectileEntity extends ThrowableItemProjectile {
 
     private void bounce(BlockHitResult result) {
         Vec3 currentVelocity = this.getDeltaMovement();
+        float speed = (float) currentVelocity.length();
         Vec3 hitNormal = Vec3.atLowerCornerOf(result.getDirection().getNormal());
         Vec3 reflectedVelocity = currentVelocity.subtract(hitNormal.scale(2 * currentVelocity.dot(hitNormal)));
         this.setDeltaMovement(reflectedVelocity.scale(grenadeType.getBounceMultiplier()));
         this.hasImpulse = true;
+        this.onBounceImpulse(speed);
     }
 
     private void stick(BlockPos supportPos, Vec3 pos) {

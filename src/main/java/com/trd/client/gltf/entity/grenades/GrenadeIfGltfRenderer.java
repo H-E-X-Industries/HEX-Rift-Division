@@ -109,21 +109,22 @@ public class GrenadeIfGltfRenderer extends EntityRenderer<GrenadeIfProjectileEnt
 
         poseStack.pushPose();
 
-        // Центр хитбокса — до масштаба: перенос после scale домножается им же.
+        // Центр хитбокса
         poseStack.translate(0.0F, entity.getBbHeight() * 0.5F, 0.0F);
         poseStack.scale(MODEL_SCALE, MODEL_SCALE, MODEL_SCALE);
+
+        // Плавная интерполяция поворотов (yaw, pitch, roll) от движения и отскоков
+        float renderYaw = entity.getInterpolatedYaw(partialTick);
+        float renderPitch = entity.getInterpolatedPitch(partialTick);
+        float renderRoll = entity.getInterpolatedRoll(partialTick);
+
+        poseStack.mulPose(Axis.YP.rotationDegrees(-renderYaw));
+        poseStack.mulPose(Axis.XP.rotationDegrees(renderPitch));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(renderRoll));
+
+        // Смещение центра вращения модели: применяется ПОСЛЕ вращения в PoseStack
+        // (то есть ДО вращения вершин модели), чтобы модель крутилась строго вокруг заданной оси.
         poseStack.translate(0.0F, -MODEL_CENTER_Y, 0.0F);
-
-        // Граната летит туда, куда смотрит бросивший, — углы приходят с сервера
-        // вместе с позицией, ровно как их использует ванильный рендерер брошенного
-        // предмета.
-        poseStack.mulPose(Axis.YP.rotationDegrees(-entity.getYRot()));
-        poseStack.mulPose(Axis.XP.rotationDegrees(entity.getXRot()));
-
-        // Вращение вокруг оси полёта. Возраст берётся сглаженным, иначе на низком
-        // FPS граната дёргалась бы между тиками. У прилипшей гранаты возраст
-        // замерший — см. GrenadeIfProjectileEntity#flightSeconds.
-        poseStack.mulPose(Axis.ZP.rotationDegrees(entity.flightSeconds(partialTick) * SPIN_DEGREES_PER_SECOND));
 
         // Поза покоя модели, но с прибитой чекой: клип отдаётся обязательно, иначе
         // NodeHide не применится и чека останется видимой. Тип берётся из типа

@@ -162,8 +162,8 @@ public final class ClassicGrenadeVariants {
     /** Середина общей геометрии, которой рисуется всё, кроме водородной. */
     public static final float SHARED_CENTER_Y = 0.1414F;
 
-    /** Третий пиксель снизу: 3/16 блока. */
-    public static final float HYDROGEN_CENTER_Y = 0.1875F;
+    /** Третий пиксель снизу: 3/16 блока выше основания (0.1875 + 0.1875 = 0.375). */
+    public static final float HYDROGEN_CENTER_Y = 0.375F;
 
     /** Модель вида, либо {@code null}, пока она грузится. */
     @Nullable
