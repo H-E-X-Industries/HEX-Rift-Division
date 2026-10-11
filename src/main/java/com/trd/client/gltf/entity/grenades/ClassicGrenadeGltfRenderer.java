@@ -13,6 +13,8 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 
+import javax.annotation.Nullable;
+
 /**
  * Обычная граната в полёте на glTF через GemRender.
  *
@@ -42,17 +44,48 @@ public class ClassicGrenadeGltfRenderer<T extends Entity> extends EntityRenderer
      */
     private static final float MODEL_SCALE = 1.0F;
 
-    /**
+/**
      * Где в модели стоит её середина, в единицах блока.
      * <p>
-     * Меш сидит на узле {@code main} со сдвигом вверх, и в готовой модели корпус
-     * занимает Y примерно от -0.002 до +0.284. По X и Z корпус симметричен ровно,
-     * а вот вверх он смещён, и без этого граната висела бы над серединой хитбокса.
+     * Величина своя у каждого вида, потому что своя геометрия есть не у всех:
+     * шесть видов летят на общей и делят одну центровку, а у водородной модель
+     * отдельная. См. {@link ClassicGrenadeVariants#centerY}.
      * <p>
      * Вычитается <b>после</b> масштаба: сдвиг остаётся в координатах модели и
      * уезжает вместе с ней, потому что PoseStack домножает матрицу справа.
      */
-    private static final float MODEL_CENTER_Y = 0.1414F;
+    private static float modelCenterY(@Nullable ClassicGrenadeVariants.Variant variant) {
+        return ClassicGrenadeVariants.centerY(variant);
+    }
+
+    /**
+     * Оборотов в секунду вокруг оси полёта.
+     * <p>
+     * Взято у ударной гранаты — {@code GrenadeIfGltfRenderer#SPIN_DEGREES_PER_SECOND}
+     * — чтобы водородная проворачивалась ровно так же. Без вращения граната летит
+     * задом наперёд и не читается как летящая.
+     */
+    private static final float SPIN_DEGREES_PER_SECOND = 220.0F;
+
+    /**
+     * Проворачивается ли вид в полёте.
+     * <p>
+     * Только водородная: у неё своя геометрия, и она крупнее остальных, так что
+     * без проворота её силуэт скользит мимо цели, не показывая, куда она летит.
+     */
+    private static boolean spins(@Nullable ClassicGrenadeVariants.Variant variant) {
+        return variant == ClassicGrenadeVariants.Variant.HYDROGEN;
+    }
+
+    /**
+     * Сколько секунд граната уже летит, сглаженно.
+     * <p>
+     * Дробная часть кадра обязательна: на низком FPS целочисленный
+     * {@code tickCount} прыгал бы между тиками, и проворот шёл бы рывками.
+     */
+    private static float flightSeconds(Entity entity, float partialTick) {
+        return (entity.tickCount + partialTick) / 20.0F;
+    }
 
     public ClassicGrenadeGltfRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager);
@@ -91,19 +124,32 @@ public class ClassicGrenadeGltfRenderer<T extends Entity> extends EntityRenderer
 
         poseStack.pushPose();
 
-        // Центр хитбокса — до масштаба: перенос после scale домножается им же.
+        // Центр хитбокса
         poseStack.translate(0.0F, entity.getBbHeight() * 0.5F, 0.0F);
         poseStack.scale(MODEL_SCALE, MODEL_SCALE, MODEL_SCALE);
-        poseStack.translate(0.0F, -MODEL_CENTER_Y, 0.0F);
 
-        // Граната летит туда, куда смотрит бросивший, — углы приходят с сервера
-        // вместе с позицией, ровно как их использует ванильный рендерер брошенного
-        // предмета. Поворота вокруг оси полёта нет намеренно: проворот делался
-        // фиксированным, и на сильном броске граната крутилась как вертолёт, а
-        // на слабом — одинаково. Теперь она летит стабильно, носом по вектору
-        // скорости, и зарядка влияет ровно на одно: на саму скорость.
-        poseStack.mulPose(Axis.YP.rotationDegrees(-entity.getYRot()));
-        poseStack.mulPose(Axis.XP.rotationDegrees(entity.getXRot()));
+        // Плавная интерполяция поворотов (yaw, pitch, roll) от движения и отскоков
+        float renderYaw;
+        float renderPitch;
+        float renderRoll;
+
+        if (entity instanceof com.trd.entity.weapons.grenades.AbstractGrenadeEntity grenade) {
+            renderYaw = grenade.getInterpolatedYaw(partialTick);
+            renderPitch = grenade.getInterpolatedPitch(partialTick);
+            renderRoll = grenade.getInterpolatedRoll(partialTick);
+        } else {
+            renderYaw = net.minecraft.util.Mth.rotLerp(partialTick, entity.yRotO, entity.getYRot());
+            renderPitch = net.minecraft.util.Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
+            renderRoll = flightSeconds(entity, partialTick) * SPIN_DEGREES_PER_SECOND;
+        }
+
+        poseStack.mulPose(Axis.YP.rotationDegrees(-renderYaw));
+        poseStack.mulPose(Axis.XP.rotationDegrees(renderPitch));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(renderRoll));
+
+        // Смещение центра вращения модели: применяется ПОСЛЕ вращения в PoseStack
+        // (то есть ДО вращения вершин модели), чтобы модель крутилась строго вокруг заданной оси.
+        poseStack.translate(0.0F, -modelCenterY(variant), 0.0F);
 
         // Поза покоя модели, но с прибитой чекой: клип отдаётся обязательно, иначе
         // NodeHide не применится и чека останется видимой. Вид берётся из типа

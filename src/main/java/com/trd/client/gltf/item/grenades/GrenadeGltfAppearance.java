@@ -208,18 +208,13 @@ public class GrenadeGltfAppearance implements ItemAppearance {
 
         poseStack.scale(MODEL_SCALE, MODEL_SCALE, MODEL_SCALE);
 
-        // Зарядка: только качание вокруг собственного центра, без сдвига и без
-        // масштаба. Поворот стоит после scale, а не до, чтобы шатание шло вокруг
-        // центра модели, а не вокруг точки, от которой её двигает блок display.
+        // Зарядка: качание вокруг центра поворота модели (смещённого на 1.5/3 пикселя).
+        // Сначала переносим центр модели в начало координат, вращаем, и переносим обратно.
         float charge = chargeOf(stack, context);
         if (charge > 0.0F) {
             LocalPlayer player = Minecraft.getInstance().player;
 
-            // Фаза идёт от тика вместе с дробной частью кадра. Сам по себе
-            // getTicksUsingItem() — целое число, и оно меняется раз в 1/20 с, из-за
-            // чего качание прыгало ступеньками и выглядело как 20 fps, хотя частота
-            // кадров была обычной: между соседними кадрами угол не менялся, а потом
-            // менялся сразу на полный шаг.
+            // Фаза идёт от тика вместе с дробной частью кадра.
             float partialTick = Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false);
             float phase = (player.getTicksUsingItem() + partialTick) * CHARGE_FREQUENCY;
 
@@ -229,9 +224,22 @@ public class GrenadeGltfAppearance implements ItemAppearance {
 
             debugSway(player.getTicksUsingItem(), partialTick, charge, swayZ, swayX);
 
+            float pivotY = getPivotY(stack.getItem());
+            poseStack.translate(0.0F, pivotY, 0.0F);
             poseStack.mulPose(Axis.ZP.rotationDegrees(swayZ));
             poseStack.mulPose(Axis.XP.rotationDegrees(swayX));
+            poseStack.translate(0.0F, -pivotY, 0.0F);
         }
+    }
+
+    private static float getPivotY(Item item) {
+        if (item instanceof com.trd.item.weapons.grenades.GrenadeIfItem) {
+            return 0.23515F; // 1.5 пикселя выше середины
+        }
+        if (item instanceof com.trd.item.weapons.grenades.GrenadeNucItem) {
+            return ClassicGrenadeVariants.HYDROGEN_CENTER_Y; // 0.375F (3 пикселя выше основания)
+        }
+        return ClassicGrenadeVariants.SHARED_CENTER_Y;
     }
 
     /**

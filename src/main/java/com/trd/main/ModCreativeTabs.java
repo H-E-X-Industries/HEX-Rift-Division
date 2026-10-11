@@ -323,11 +323,11 @@ public class ModCreativeTabs {
                         output.accept(ModItems.GRENADESLIME.get());
                         output.accept(ModItems.GRENADEFIRE.get());
                         output.accept(ModItems.GRENADESMART.get());
+                        output.accept(ModItems.GRAVITY_GRENADE.get());
                         output.accept(ModItems.GRENADE_IF.get());
                         output.accept(ModItems.GRENADE_IF_HE.get());
                         output.accept(ModItems.GRENADE_IF_SLIME.get());
                         output.accept(ModItems.GRENADE_IF_FIRE.get());
-                        output.accept(ModItems.GRAVITY_GRENADE.get());
                         output.accept(ModItems.GRENADE_NUC.get());
 
                         output.accept(ModItems.MACHINEGUN.get());
