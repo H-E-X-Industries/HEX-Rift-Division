@@ -228,7 +228,7 @@ public class GrenadeIfProjectileEntity extends ThrowableItemProjectile {
     @Override
     protected void onHitBlock(BlockHitResult result) {
         // НЕ вызываем super.onHitBlock для неслаймовых, иначе граната удалится (discard)
-        if (level().isClientSide || exploded) return;
+        if (level().isClientSide || exploded || this.entityData.get(DATA_STUCK)) return;
 
         activateTimer();
 
@@ -249,8 +249,6 @@ public class GrenadeIfProjectileEntity extends ThrowableItemProjectile {
      * гранаты в {@code GrenadeProjectileEntity#onHitBlock}.
      */
     private void stickToBlock(BlockHitResult result) {
-        super.onHitBlock(result); // слаймовую не трогаем, оставляем старую логику
-
         BlockPos blockPos = result.getBlockPos();
         level().playSound(null, blockPos, ModSounds.BOUNCE_RANDOM.get(), SoundSource.NEUTRAL, 2.1F, 1.0F);
 
@@ -258,6 +256,11 @@ public class GrenadeIfProjectileEntity extends ThrowableItemProjectile {
         this.entityData.set(STUCK_AT_TICK, this.tickCount);
         this.setDeltaMovement(Vec3.ZERO);
         this.setNoGravity(true);
+
+        // Порядок важен: super зовётся уже ПОСЛЕ того, как граната встала и
+        // перестала падать. Раньше он звался первым, пока гравитация ещё была
+        // включена, и отскок от грани уводил гранату вниз от точки касания.
+        super.onHitBlock(result); // слаймовую не трогаем, оставляем старую логику
 
         Vec3 pos = result.getLocation();
         this.setPos(pos.x, pos.y, pos.z);
@@ -284,7 +287,7 @@ public class GrenadeIfProjectileEntity extends ThrowableItemProjectile {
 
     @Override
     protected void onHitEntity(EntityHitResult result) {
-        if (level().isClientSide || exploded) return;
+        if (level().isClientSide || exploded || this.entityData.get(DATA_STUCK)) return;
 
         activateTimer();
 
