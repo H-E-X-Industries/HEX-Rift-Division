@@ -114,7 +114,7 @@ public class ModBlockTagProvider extends BlockTagsProvider {
             ModBlocks.CONCRETE_REINFORCED_HEAVY.get(),
             ModBlocks.CONCRETE_REINFORCED_HEAVY_SLAB.get(),
             ModBlocks.CONCRETE_REINFORCED_HEAVY_STAIRS.get(),
-            ModBlocks.CONCRETE_NET.get(),
+            ModBlocks.CONCRETE_IMPACT_RESISTANT.get(),
             ModBlocks.CONCRETE_LINE.get(),
             ModBlocks.CONCRETE_CUT.get(),
             ModBlocks.CONCRETE_RAIL.get(),

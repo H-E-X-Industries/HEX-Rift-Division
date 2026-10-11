@@ -1,0 +1,20 @@
+{
+  "loader": "neoforge:composite",
+  "textures": {
+    "particle": "trd:block/screw_lathe"
+  },
+  "children": {
+    "main": {
+      "loader": "neoforge:obj",
+      "model": "trd:models/block/screw_lathe.obj",
+      "flip_v": true,
+      "textures": {
+        "m_c2326e86-99bb-72e2-1feb-877b29c193b6": "trd:block/screw_lathe"
+      },
+      "render_type": "minecraft:cutout"
+    }
+  },
+  "render_type": "minecraft:cutout",
+  "ambientocclusion": true,
+  "gui_light": "front"
+}

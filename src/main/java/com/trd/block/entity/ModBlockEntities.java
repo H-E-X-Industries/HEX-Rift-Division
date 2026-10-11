@@ -26,8 +26,7 @@ public class ModBlockEntities {
                     com.trd.block.basic.ModBlocks.LEAKING_BARREL.get(),
                     com.trd.block.basic.ModBlocks.IRON_BARREL.get(),
                     com.trd.block.basic.ModBlocks.STEEL_BARREL.get(),
-                    com.trd.block.basic.ModBlocks.LEAD_BARREL.get(),
-                    com.trd.block.basic.ModBlocks.DECO_BARREL.get()
+                    com.trd.block.basic.ModBlocks.LEAD_BARREL.get()
             ).build(null));
 
     public static final java.util.function.Supplier<net.minecraft.world.level.block.entity.BlockEntityType<com.trd.block.entity.industrial.fluids.ValveBlockEntity>> VALVE_BE =

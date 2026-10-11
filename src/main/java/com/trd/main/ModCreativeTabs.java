@@ -97,7 +97,7 @@ public class ModCreativeTabs {
                         output.accept(ModBlocks.CONCRETE_LINE.get());
                         output.accept(ModBlocks.CONCRETE_CUT.get());
                         output.accept(ModBlocks.CONCRETE_RAIL.get());
-                        output.accept(ModBlocks.CONCRETE_NET.get());
+                        output.accept(ModBlocks.CONCRETE_IMPACT_RESISTANT.get());
                         output.accept(ModBlocks.CONCRETE_REBAR.get());
                         output.accept(ModBlocks.CONCRETE_VENT.get());
                         output.accept(ModBlocks.ARMORED_GLASS.get());
@@ -108,7 +108,7 @@ public class ModCreativeTabs {
                         output.accept(ModBlocks.MINERAL_BLOCK2.get());
                         output.accept(ModBlocks.MINERAL_TILE.get());
                         output.accept(ModBlocks.DOLOMITE_TILE.get());
-                        output.accept(ModBlocks.TILE_LIGHT.get());
+                        output.accept(ModBlocks.ASBESTOS_TILE.get());
                         output.accept(ModBlocks.SULFUR_TILE.get());
                         output.accept(ModBlocks.SULFUR_BRICKS.get());
                         output.accept(ModBlocks.DECO_STEEL.get());

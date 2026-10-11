@@ -1,0 +1,27 @@
+{
+  "variants": {
+    "facing=down": {
+      "model": "trd:block/conveyor_inserter",
+      "x": 90
+    },
+    "facing=east": {
+      "model": "trd:block/conveyor_inserter",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "trd:block/conveyor_inserter"
+    },
+    "facing=south": {
+      "model": "trd:block/conveyor_inserter",
+      "y": 180
+    },
+    "facing=up": {
+      "model": "trd:block/conveyor_inserter",
+      "x": -90
+    },
+    "facing=west": {
+      "model": "trd:block/conveyor_inserter",
+      "y": 270
+    }
+  }
+}

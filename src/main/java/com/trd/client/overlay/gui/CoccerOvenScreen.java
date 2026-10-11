@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CoccerOvenScreen extends AbstractContainerScreen<CoccerOvenMenu> {
-    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "textures/gui/machine/coccer_oven_gui.png");
+    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "textures/gui/machine/coking_oven_gui.png");
 
     public CoccerOvenScreen(CoccerOvenMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);

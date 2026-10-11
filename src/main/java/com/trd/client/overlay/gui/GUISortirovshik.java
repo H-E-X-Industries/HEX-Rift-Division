@@ -34,7 +34,7 @@ import java.util.List;
 public class GUISortirovshik extends AbstractContainerScreen<SortirovshikMenu> {
 
     private static final ResourceLocation TEXTURE =
-            ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "textures/gui/storage/sortirovshik_gui.png");
+            ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "textures/gui/storage/conveyor_sorter_gui.png");
 
     private static final int IMAGE_WIDTH = 186;
     private static final int IMAGE_HEIGHT = 172;

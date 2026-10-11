@@ -25,7 +25,7 @@ import java.util.List;
 
 public class VishelashivatelScreen extends AbstractContainerScreen<VishelashivatelMenu> {
     private static final ResourceLocation TEXTURE =
-            ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "textures/gui/machine/vishelashivatel_gui.png");
+            ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "textures/gui/machine/ore_leacher_gui.png");
 
     // Зона рендера жидкости
     private static final int FLUID_X = 54, FLUID_Y = 11, FLUID_W = 50, FLUID_H = 26;

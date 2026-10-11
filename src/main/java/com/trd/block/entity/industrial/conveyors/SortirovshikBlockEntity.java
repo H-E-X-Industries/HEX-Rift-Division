@@ -312,7 +312,7 @@ public class SortirovshikBlockEntity extends BlockEntity implements MenuProvider
 
     @Override
     public Component getDisplayName() {
-        return Component.translatable("block.trd.sortirovshik");
+        return Component.translatable("block.trd.conveyor_sorter");
     }
 
     @Nullable
