@@ -1,9 +1,11 @@
 package com.trd.climate.event;
 
 import com.trd.climate.attachment.ModAttachments;
+import com.trd.climate.calculation.ShelterHelper;
 import com.trd.climate.calculation.TemperatureCalculator;
 import com.trd.climate.data.PlayerTemperatureData;
 import com.trd.climate.network.SyncTemperaturePayload;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
@@ -19,7 +21,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 @EventBusSubscriber(modid = "trd")
 public class PlayerTemperatureTickHandler {
 
-    private static final float ADAPTATION_SPEED = 0.025f; // Скорость адаптации температуры тела
+    private static final float ADAPTATION_SPEED = 0.1f; // Скорость адаптации температуры тела (ускорена в 4 раза)
 
     @SubscribeEvent
     public static void onPlayerTick(PlayerTickEvent.Post event) {
@@ -37,9 +39,14 @@ public class PlayerTemperatureTickHandler {
 
         // Получаем данные температуры игрока
         PlayerTemperatureData data = player.getData(ModAttachments.PLAYER_TEMPERATURE);
+        BlockPos pos = player.blockPosition();
         
-        // Рассчитываем целевую температуру окружающей среды
-        float targetEnv = TemperatureCalculator.calculateTargetEnvTemp(player, level);
+        // Рассчитываем уровень укрытия (пещеры + роза ветров)
+        float shelterLevel = ShelterHelper.calculateShelterLevel(level, pos);
+        data.setShelterLevel(shelterLevel);
+        
+        // Рассчитываем целевую температуру окружающей среды (с учетом укрытия и источников тепла)
+        float targetEnv = TemperatureCalculator.calculateTargetEnvTemp(player, level, shelterLevel);
         data.setTargetTemp(targetEnv);
 
         // Применяем тепловую инерцию (плавное изменение температуры тела)

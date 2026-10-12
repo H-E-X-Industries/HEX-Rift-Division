@@ -7,7 +7,7 @@ import net.minecraft.world.level.biome.Biome;
 
 /**
  * Калькулятор температуры окружающей среды для игрока.
- * Учитывает: биом, высоту, погоду, время суток, нахождение в воде.
+ * Учитывает: биом, высоту, погоду, время суток, нахождение в воде, укрытие и источники тепла.
  */
 public class TemperatureCalculator {
 
@@ -16,9 +16,10 @@ public class TemperatureCalculator {
      * 
      * @param player Игрок
      * @param level Мир сервера
+     * @param shelterLevel Уровень укрытия (передается извне для кэширования)
      * @return Температура в градусах Цельсия
      */
-    public static float calculateTargetEnvTemp(Player player, ServerLevel level) {
+    public static float calculateTargetEnvTemp(Player player, ServerLevel level, float shelterLevel) {
         BlockPos pos = player.blockPosition();
         
         // 1. Базовая температура биома
@@ -28,30 +29,58 @@ public class TemperatureCalculator {
         envTemp += getAltitudeEffect(pos.getY());
 
         // 3. Влияние погоды и времени суток
-        envTemp += getWeatherEffect(level, pos);
+        float weatherEffect = getWeatherEffect(level, pos);
+        
+        // 4. Применяем укрытие (смягчает негативные погодные эффекты)
+        envTemp += applyShelterToWeather(weatherEffect, shelterLevel);
 
-        // 4. Влияние воды
+        // 5. Влияние воды
         if (player.isInWater()) {
             envTemp += getWaterEffect(envTemp);
         }
 
+        // 6. Добавляем тепло от источников (костры, печи, лава)
+        envTemp += HeatSourceHelper.calculateTotalHeat(level, pos, shelterLevel);
+
         return envTemp;
+    }
+    
+    /**
+     * Применяет эффект укрытия к погодным условиям.
+     * Укрытие защищает от холода, но не от жары.
+     */
+    private static float applyShelterToWeather(float weatherEffect, float shelterLevel) {
+        if (weatherEffect < 0) {
+            // Негативный эффект (холод) смягчается укрытием
+            // При полном укрытии (1.0) холод блокируется на 80%
+            return weatherEffect * (1.0f - shelterLevel * 0.8f);
+        }
+        // Положительный эффект (тепло) не изменяется
+        return weatherEffect;
     }
 
     /**
      * Конвертирует ванильную температуру биома в градусы Цельсия.
-     * Формула: T = 20.0 + (vanillaTemp - 0.8) * 20.0
+     * Формула: T = 20.0 + (vanillaTemp - 0.8) * multiplier
+     * Холодные биомы усилены в 2 раза для более сурового выживания.
      * 
-     * Примеры:
-     * - Ice Spikes (-0.5) → -6°C
-     * - Snowy Plains (0.0) → 4°C
-     * - Plains (0.8) → 20°C
-     * - Desert (2.0) → 44°C
+     * Примеры после баланса:
+     * - Ice Spikes (-0.5) → -32°C (было -6°C)
+     * - Snowy Plains (0.0) → -12°C (было 4°C)
+     * - Plains (0.8) → 20°C (без изменений)
+     * - Desert (2.0) → 44°C (без изменений)
      */
     private static float getBiomeTemperature(ServerLevel level, BlockPos pos) {
         Biome biome = level.getBiome(pos).value();
         float vanillaTemp = biome.getBaseTemperature();
-        return 20.0f + (vanillaTemp - 0.8f) * 20.0f;
+        float delta = vanillaTemp - 0.8f;
+        
+        // Усиливаем холодные биомы в 2 раза
+        if (delta < 0) {
+            delta *= 2.0f; // Холод × 2
+        }
+        
+        return 20.0f + delta * 20.0f;
     }
 
     /**
@@ -74,13 +103,24 @@ public class TemperatureCalculator {
      * - Ясная ночь: -4°C
      * - Дождь: -6°C
      * - Гроза/Метель: -10°C
+     * - Снегопад (в холодном биоме): дополнительно -8°C
      */
     private static float getWeatherEffect(ServerLevel level, BlockPos pos) {
         boolean seesSky = level.canSeeSky(pos);
         
         if (level.isRainingAt(pos)) {
-            // Дождь или снег
-            return level.isThundering() ? -10.0f : -6.0f;
+            // Проверяем, идет ли снег (холодный биом)
+            Biome biome = level.getBiome(pos).value();
+            boolean isSnowing = biome.coldEnoughToSnow(pos);
+            
+            float weatherPenalty = level.isThundering() ? -10.0f : -6.0f;
+            
+            // Снегопад дает дополнительный штраф -8°C
+            if (isSnowing) {
+                weatherPenalty -= 8.0f;
+            }
+            
+            return weatherPenalty;
         } else if (seesSky) {
             // Влияние времени суток (только если видит небо)
             if (level.isDay()) {
