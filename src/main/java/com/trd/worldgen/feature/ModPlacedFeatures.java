@@ -86,7 +86,7 @@ public class ModPlacedFeatures {
         // === ГЛУБИННЫЕ ЧЕРВИ (УЛЬИ) ===
         register(context, DEPTH_WORM_HIVE_PLACED_KEY, configuredFeatures.getOrThrow(ModConfiguredFeatures.DEPTH_WORM_HIVE_KEY),
                 List.of(
-                        RarityFilter.onAverageOnceEvery(7),
+                        RarityFilter.onAverageOnceEvery(20),
                         InSquarePlacement.spread(),
                         HeightRangePlacement.uniform(
                                 VerticalAnchor.absolute(-60),

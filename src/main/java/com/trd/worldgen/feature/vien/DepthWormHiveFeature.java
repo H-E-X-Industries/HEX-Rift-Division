@@ -1,4 +1,4 @@
-package com.trd.worldgen.feature;
+package com.trd.worldgen.feature.vien;
 
 import com.mojang.serialization.Codec;
 import com.trd.api.hive.HiveNetwork;
@@ -6,12 +6,16 @@ import com.trd.api.hive.HiveNetworkManager;
 import com.trd.block.basic.ModBlocks;
 import com.trd.block.entity.hive.DepthWormNestBlockEntity;
 import com.trd.block.entity.hive.HiveSoilBlockEntity;
+import com.trd.main.MainRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.Feature;
@@ -27,6 +31,24 @@ import com.mojang.logging.LogUtils;
 public class DepthWormHiveFeature extends Feature<NoneFeatureConfiguration> {
     private static final Logger LOGGER = LogUtils.getLogger();
 
+    /**
+     * Блоки-маркеры «здесь идёт структура»: спавнер, рельсы, сундук, факел, паутина,
+     * замшелый булыжник, блоки крепостей, древних городов и триалов и т.п.
+     * Структуры других модов подключаются датапаком одной записью в этот тег,
+     * поэтому список лежит в теге, а не в коде.
+     */
+    public static final TagKey<Block> ANCHOR_TAG = TagKey.create(Registries.BLOCK,
+            ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "depth_worm_hive_anchors"));
+
+    private static final int MIN_Y = -60;
+    private static final int MAX_Y = -5;
+    /** Сколько колонн прочесать в поисках якоря (одна колонка = 56 чтений). */
+    private static final int ANCHOR_COLUMNS = 2;
+    /** Радиус кольца, в котором ищется пол улья вокруг якоря. */
+    private static final int FLOOR_SEARCH_RADIUS = 4;
+    private static final int FLOOR_SEARCH_UP = 3;
+    private static final int FLOOR_SEARCH_DOWN = 5;
+
     public DepthWormHiveFeature(Codec<NoneFeatureConfiguration> codec) {
         super(codec);
     }
@@ -37,38 +59,34 @@ public class DepthWormHiveFeature extends Feature<NoneFeatureConfiguration> {
         BlockPos origin = context.origin();
         RandomSource random = context.random();
 
-        // 1. Search for a valid cave floor position between Y = -60 and Y = -5
-        BlockPos validFloorPos = null;
-        for (int attempt = 0; attempt < 25; attempt++) {
-            // Check a 5x5 grid across the chunk (0, 3, 7, 11, 14) with small random jitter
-            int gridX = (attempt % 5) * 3 + random.nextInt(3);
-            int gridZ = (attempt / 5) * 3 + random.nextInt(3);
-            int cx = (origin.getX() & ~15) + gridX;
-            int cz = (origin.getZ() & ~15) + gridZ;
-
-            // Scan downwards from Y = -5 to Y = -60
-            for (int y = -5; y >= -60; y--) {
-                BlockPos checkPos = new BlockPos(cx, y, cz);
-                if (level.getBlockState(checkPos).isAir() && level.getFluidState(checkPos).isEmpty()) {
-                    BlockPos below = checkPos.below();
-                    BlockState belowState = level.getBlockState(below);
-                    if (!belowState.isAir() && belowState.getFluidState().isEmpty() && isReplaceableGround(belowState)) {
-                        // Ensure there is at least 2 blocks of air above the floor for worms and players
-                        if (level.getBlockState(checkPos.above()).isAir()) {
-                            validFloorPos = below;
-                            break;
-                        }
-                    }
+        // 1. Find a structure anchor. Without one there is no hive at all: this is what
+        //    keeps the feature from scanning an entire cave column per attempt, which is
+        //    what overloaded chunk loading.
+        BlockPos anchor = null;
+        for (int attempt = 0; attempt < ANCHOR_COLUMNS && anchor == null; attempt++) {
+            int cx = (origin.getX() & ~15) + random.nextInt(16);
+            int cz = (origin.getZ() & ~15) + random.nextInt(16);
+            for (int y = MAX_Y; y >= MIN_Y; y--) {
+                BlockState state = level.getBlockState(new BlockPos(cx, y, cz));
+                if (!state.isAir() && state.is(ANCHOR_TAG)) {
+                    anchor = new BlockPos(cx, y, cz);
+                    break;
                 }
             }
-            if (validFloorPos != null) break;
         }
 
+        if (anchor == null) {
+            return false;
+        }
+
+        // 2. Walk outwards from the anchor to the nearest valid hive floor.
+        //    Rings are visited in order, so the first hit is always the closest one.
+        BlockPos validFloorPos = findFloorNear(level, anchor);
         if (validFloorPos == null) {
             return false;
         }
 
-        // 2. Decide core count (1 to 2 cores)
+        // 3. Decide core count (1 to 2 cores)
         int coreCount = random.nextInt(2) + 1;
         BlockPos core1 = validFloorPos;
         BlockPos core2 = null;
@@ -93,7 +111,7 @@ public class DepthWormHiveFeature extends Feature<NoneFeatureConfiguration> {
         corePositions.add(core1);
         if (core2 != null) corePositions.add(core2);
 
-        // 3. Determine hive soil blocks:
+        // 4. Determine hive soil blocks:
         // Cores must always be surrounded by Hive Soil.
         // Every soil block MUST have solid ground beneath it (not air, not fluid).
         Set<BlockPos> soilPositions = new HashSet<>();
@@ -112,7 +130,7 @@ public class DepthWormHiveFeature extends Feature<NoneFeatureConfiguration> {
                     if (dx * dx + dz * dz > 5) continue;
                     // Find actual floor surface for this (dx, dz) within +/- 1 block of core level
                     BlockPos bestSurface = null;
-                    for (int dy = 1; dy >= -1; dy--) {
+                    for (int dy = 1; dy >= 0; dy--) {
                         BlockPos cand = c.offset(dx, dy, dz);
                         BlockState candState = level.getBlockState(cand);
                         BlockState candBelow = level.getBlockState(cand.below());
@@ -131,7 +149,7 @@ public class DepthWormHiveFeature extends Feature<NoneFeatureConfiguration> {
             }
         }
 
-        // 4. Validate conditions:
+        // 5. Validate conditions:
         // Condition A: NO AIR BELOW CORES OR SOIL!
         // "доступ воздуха снизу блокаем для того, чтобы ульи не спавнились на потолках."
         for (BlockPos c : corePositions) {
@@ -189,7 +207,7 @@ public class DepthWormHiveFeature extends Feature<NoneFeatureConfiguration> {
             }
         }
 
-        // 5. Generate blocks:
+        // 6. Generate blocks:
         UUID networkId = UUID.randomUUID();
         int points = random.nextInt(31) + 30; // 30 to 60 points
 
@@ -211,7 +229,7 @@ public class DepthWormHiveFeature extends Feature<NoneFeatureConfiguration> {
             }
         }
 
-        // 6. Register into HiveNetworkManager & assign 30-60 points (network spawns worms on its own)
+        // 7. Register into HiveNetworkManager & assign 30-60 points (network spawns worms on its own)
         ServerLevel serverLevel = level.getLevel();
         HiveNetworkManager manager = HiveNetworkManager.get(serverLevel);
         if (manager != null) {
@@ -228,8 +246,41 @@ public class DepthWormHiveFeature extends Feature<NoneFeatureConfiguration> {
             }
         }
 
-        LOGGER.info("[HEX-Rift-Division] Spawned Depth Worm Hive at {} (cores: {}, points: {})", core1, coreCount, points);
+        LOGGER.debug("[HEX-Rift-Division] Spawned Depth Worm Hive at {} (cores: {}, points: {})", core1, coreCount, points);
         return true;
+    }
+
+    private static BlockPos findFloorNear(WorldGenLevel level, BlockPos anchor) {
+        int ax = anchor.getX();
+        int ay = anchor.getY();
+        int az = anchor.getZ();
+
+        for (int r = 0; r <= FLOOR_SEARCH_RADIUS; r++) {
+            for (int dx = -r; dx <= r; dx++) {
+                for (int dz = -r; dz <= r; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != r) continue;
+                    int x = ax + dx;
+                    int z = az + dz;
+                    for (int y = ay + FLOOR_SEARCH_UP; y >= ay - FLOOR_SEARCH_DOWN; y--) {
+                        if (y < MIN_Y || y > MAX_Y) continue;
+                        BlockPos floor = new BlockPos(x, y, z);
+                        if (isValidFloor(level, floor)) {
+                            return floor;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private static boolean isValidFloor(WorldGenLevel level, BlockPos floor) {
+        if (!isReplaceableGround(level.getBlockState(floor))) return false;
+        BlockPos air = floor.above();
+        // At least 2 blocks of air above the floor for the worms and for the player to walk in.
+        if (!level.getBlockState(air).isAir()) return false;
+        if (!level.getBlockState(air.above()).isAir()) return false;
+        return level.getFluidState(air).isEmpty();
     }
 
     private static boolean isReplaceableGround(BlockState state) {

@@ -1,5 +1,7 @@
 package com.trd.worldgen.feature;
 
+import com.trd.worldgen.feature.vien.ConglomerateVeinConfiguration;
+import com.trd.worldgen.feature.vien.SpecialVeinConfiguration;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.resources.ResourceKey;
@@ -13,7 +15,7 @@ import com.trd.main.MainRegistry;
 import net.minecraft.world.level.levelgen.structure.templatesystem.TagMatchTest;
 
 import com.trd.block.basic.ModBlocks;
-import com.trd.worldgen.tree.custom.*;
+import com.trd.worldgen.biome.sequoia.*;
 import net.minecraft.util.valueproviders.ConstantInt;
 import net.minecraft.world.level.levelgen.feature.configurations.TreeConfiguration;
 import net.minecraft.world.level.levelgen.feature.featuresize.TwoLayersFeatureSize;

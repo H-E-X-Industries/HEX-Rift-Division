@@ -252,11 +252,52 @@ public class ModBlockTagProvider extends BlockTagsProvider {
                 .add(ModBlocks.WASTE_FENCE_GATE.get())
                 .add(ModBlocks.STEEL_PROPS.get());
 
-        tag(TagKey.create(Registries.BLOCK,
+tag(TagKey.create(Registries.BLOCK,
                 ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "wire_fence_alt_connections")))
                 .add(ModBlocks.WIRE_FENCE_ALT.get())
                 .add(ModBlocks.WIRE_FENCE.get())
-                .add(ModBlocks.WASTE_FENCE_GATE.get())
+                .add(ModBlocks.WASTE_PRESSURE_PLATE.get())
                 .add(ModBlocks.STEEL_PROPS.get());
+
+        // Маркеры «здесь идёт структура» для ульев глубинных червей. Фича ищет в колонке
+        // такой блок и строит улей только рядом с ним, поэтому ульи больше не появляются
+        // в произвольных пещерах. Структуры других модов добавляются датапаком в этот же тег.
+        tag(com.trd.worldgen.feature.vien.DepthWormHiveFeature.ANCHOR_TAG)
+                // спавнеры (крепости, древние города)
+                .add(net.minecraft.world.level.block.Blocks.SPAWNER)
+                // заброшенные шахты
+                .add(net.minecraft.world.level.block.Blocks.RAIL)
+                .add(net.minecraft.world.level.block.Blocks.POWERED_RAIL)
+                .add(net.minecraft.world.level.block.Blocks.DETECTOR_RAIL)
+                .add(net.minecraft.world.level.block.Blocks.SCAFFOLDING)
+                .add(net.minecraft.world.level.block.Blocks.LADDER)
+                .add(net.minecraft.world.level.block.Blocks.TORCH)
+                .add(net.minecraft.world.level.block.Blocks.SOUL_TORCH)
+                .add(net.minecraft.world.level.block.Blocks.MOSSY_COBBLESTONE)
+                .add(net.minecraft.world.level.block.Blocks.MOSSY_COBBLESTONE_STAIRS)
+                .add(net.minecraft.world.level.block.Blocks.MOSSY_COBBLESTONE_SLAB)
+                .add(net.minecraft.world.level.block.Blocks.COBWEB)
+
+                .add(net.minecraft.world.level.block.Blocks.CHEST)
+                .add(net.minecraft.world.level.block.Blocks.TRAPPED_CHEST)
+                .add(net.minecraft.world.level.block.Blocks.SCULK)
+                .add(net.minecraft.world.level.block.Blocks.CALCITE)
+                .add(net.minecraft.world.level.block.Blocks.TUFF)
+                .add(net.minecraft.world.level.block.Blocks.POLISHED_BLACKSTONE_BRICKS)
+                .add(net.minecraft.world.level.block.Blocks.BOOKSHELF)
+                // крепости
+                .add(net.minecraft.world.level.block.Blocks.CRACKED_STONE_BRICKS)
+                .add(net.minecraft.world.level.block.Blocks.INFESTED_STONE_BRICKS)
+                .add(net.minecraft.world.level.block.Blocks.INFESTED_CRACKED_STONE_BRICKS)
+                .add(net.minecraft.world.level.block.Blocks.LODESTONE)
+                // древние города
+                .add(net.minecraft.world.level.block.Blocks.DEEPSLATE_BRICKS)
+                .add(net.minecraft.world.level.block.Blocks.DEEPSLATE_TILES)
+                .add(net.minecraft.world.level.block.Blocks.CHISELED_DEEPSLATE)
+                .add(net.minecraft.world.level.block.Blocks.CRACKED_DEEPSLATE_BRICKS)
+                .add(net.minecraft.world.level.block.Blocks.CRACKED_DEEPSLATE_TILES)
+                // триальные залы
+                .add(net.minecraft.world.level.block.Blocks.CHISELED_TUFF_BRICKS)
+                .add(net.minecraft.world.level.block.Blocks.HEAVY_CORE);
     }
 }

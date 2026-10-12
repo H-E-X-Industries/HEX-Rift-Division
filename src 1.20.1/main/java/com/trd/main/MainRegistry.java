@@ -60,8 +60,8 @@ import com.trd.network.ModPacketHandler;
 import com.trd.sound.ModSounds;
 import com.trd.worldgen.biome.ModSurfaceRules;
 import com.trd.worldgen.biome.terrablender.ModOverworldRegion;
-import com.trd.worldgen.tree.custom.ModFoliagePlacerTypes;
-import com.trd.worldgen.tree.custom.ModTrunkPlacerTypes;
+import com.trd.worldgen.biome.sequoia.ModFoliagePlacerTypes;
+import com.trd.worldgen.biome.sequoia.ModTrunkPlacerTypes;
 import software.bernie.geckolib.GeckoLib;
 
 import com.trd.item.ModItems;

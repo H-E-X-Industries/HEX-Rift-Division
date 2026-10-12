@@ -1,6 +1,6 @@
 package com.trd.worldgen.feature;
 
-import com.trd.worldgen.tree.custom.*;
+import com.trd.worldgen.biome.sequoia.*;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstapContext; // В официальных маппингах может быть опечатка BootstapContext, проверь у себя!
 import net.minecraft.data.worldgen.features.FeatureUtils;

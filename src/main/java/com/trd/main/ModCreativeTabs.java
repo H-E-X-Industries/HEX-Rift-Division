@@ -130,7 +130,6 @@ public class ModCreativeTabs {
 
                         output.accept(ModBlocks.STEEL_DOOR.get());
                         output.accept(ModBlocks.SEQUOIA_DOOR.get());
-                        output.accept(ModBlocks.SEQUOIA_TRAPDOOR.get());
 
                     })
                     .build());
