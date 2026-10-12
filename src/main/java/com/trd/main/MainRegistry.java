@@ -32,7 +32,11 @@ public class MainRegistry {
         com.trd.worldgen.tree.custom.ModTrunkPlacerTypes.register(modEventBus);
         com.trd.worldgen.tree.custom.ModFoliagePlacerTypes.register(modEventBus);
         
+        // Регистрация климатической системы
+        com.trd.climate.attachment.ModAttachments.register(modEventBus);
+        
         modEventBus.addListener(this::commonSetup);
+        modEventBus.addListener(com.trd.climate.network.ClimateNetworking::registerPayloads);
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
