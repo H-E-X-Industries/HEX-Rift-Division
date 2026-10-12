@@ -42,7 +42,27 @@ public class TemperatureCalculator {
         // 6. Добавляем тепло от источников (костры, печи, лава)
         envTemp += HeatSourceHelper.calculateTotalHeat(level, pos, shelterLevel);
 
+        // 7. Тепло от факела в руке
+        envTemp += getTorchHeat(player);
+
+        // 8. Тепловая защита от брони
+        envTemp += ArmorInsulationHelper.calculateArmorInsulation(player);
+
         return envTemp;
+    }
+    
+    /**
+     * Рассчитывает тепло от факела в левой руке игрока.
+     * Факел дает +3°C, когда игрок держит его в левой руке (offhand).
+     */
+    private static float getTorchHeat(Player player) {
+        // Проверяем, держит ли игрок факел в левой руке
+        if (player.getOffhandItem().is(net.minecraft.world.level.block.Blocks.TORCH.asItem()) ||
+            player.getOffhandItem().is(net.minecraft.world.level.block.Blocks.SOUL_TORCH.asItem()) ||
+            player.getOffhandItem().is(net.minecraft.world.level.block.Blocks.REDSTONE_TORCH.asItem())) {
+            return 3.0f; // Факел согревает на 3°C
+        }
+        return 0.0f;
     }
     
     /**
@@ -86,14 +106,21 @@ public class TemperatureCalculator {
     /**
      * Расчет влияния высоты на температуру.
      * Уровень моря Y=64. Каждые 10 блоков вверх → -1°C
-     * Ниже уровня моря стабилизируется к +15°C
+     * Ниже уровня моря: баланс между холодом пещер и теплом недр
+     * - Эффект пещер: -0.5°C на каждые 10 блоков вниз
+     * - Эффект недр (в 2 раза слабее): +0.25°C на каждые 10 блоков вниз
+     * - Итого: -0.25°C на каждые 10 блоков вниз
      */
     private static float getAltitudeEffect(int y) {
         if (y > 64) {
+            // Высоко в горах холоднее
             return -((y - 64) / 10.0f);
         } else {
-            // Подземелья теплее
-            return (64 - y) / 40.0f;
+            // Баланс: холод пещер (-0.5) + тепло недр (+0.25) = -0.25°C на 10 блоков
+            // На Y=64: 0°C, на Y=44: -0.5°C, на Y=24: -1.0°C, на Y=0: -1.6°C
+            float caveEffect = -((64 - y) / 20.0f);    // Холод пещер
+            float depthEffect = ((64 - y) / 40.0f);    // Тепло недр (в 2 раза слабее)
+            return caveEffect + depthEffect;
         }
     }
 

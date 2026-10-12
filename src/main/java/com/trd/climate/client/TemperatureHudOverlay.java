@@ -47,12 +47,14 @@ public class TemperatureHudOverlay {
         // Форматируем температуру
         String tempText = String.format("%.1f°C", currentTemp);
 
-        // Позиция: слева от центра, над полоской здоровья
+        // Позиция: по центру между едой и здоровьем
         int screenWidth = mc.getWindow().getGuiScaledWidth();
         int screenHeight = mc.getWindow().getGuiScaledHeight();
         
-        int x = screenWidth / 2 - 91; // Выравнивание с левой стороны хотбара
-        int y = screenHeight - 49;     // Над полоской здоровья
+        // Рассчитываем ширину текста для центрирования
+        int textWidth = mc.font.width(tempText);
+        int x = (screenWidth / 2) - (textWidth / 2); // Центрируем текст
+        int y = screenHeight - 49;                    // Над полоской здоровья
 
         // Отрисовываем текст с тенью
         guiGraphics.drawString(mc.font, tempText, x, y, color, true);

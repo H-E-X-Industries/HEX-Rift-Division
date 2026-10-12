@@ -4,6 +4,7 @@ import com.trd.climate.attachment.ModAttachments;
 import com.trd.climate.calculation.ShelterHelper;
 import com.trd.climate.calculation.TemperatureCalculator;
 import com.trd.climate.data.PlayerTemperatureData;
+import com.trd.climate.effect.TemperatureEffectApplier;
 import com.trd.climate.network.SyncTemperaturePayload;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -53,6 +54,9 @@ public class PlayerTemperatureTickHandler {
         float current = data.getCurrentTemp();
         float newCurrent = TemperatureCalculator.applyThermalInertia(current, targetEnv, ADAPTATION_SPEED);
         data.setCurrentTemp(newCurrent);
+
+        // Применяем эффекты температуры (дебаффы, урон)
+        TemperatureEffectApplier.applyTemperatureEffects(player, data);
 
         // Отправляем синхронизационный пакет клиенту
         PacketDistributor.sendToPlayer(
