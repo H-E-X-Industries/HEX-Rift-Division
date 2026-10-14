@@ -1,6 +1,8 @@
 package com.trd.item.tools.cast_pickaxes;
 
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.item.Tier;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import java.util.ArrayList;
 import java.util.List;
@@ -59,23 +61,38 @@ public class CastPickaxeStats {
         List<PerkTooltip> perks = new ArrayList<>();
 
         // Железная: VeinMiner для руд (малый, 3 блока)
-        Predicate<BlockState> veinMinerPredicate = state -> {
-            return !state.is(net.minecraft.world.level.block.Blocks.STONE) &&
-                    !state.is(net.minecraft.world.level.block.Blocks.COBBLESTONE) &&
-                    !state.is(net.minecraft.world.level.block.Blocks.DIRT) &&
-                    !state.is(net.minecraft.world.level.block.Blocks.GRASS_BLOCK) &&
-                    !state.is(net.minecraft.world.level.block.Blocks.NETHERRACK) &&
-                    !state.is(net.minecraft.world.level.block.Blocks.END_STONE) &&
-                    !state.is(net.minecraft.world.level.block.Blocks.BASALT) &&
-                    !state.is(net.minecraft.world.level.block.Blocks.BLACKSTONE) &&
-                    !state.is(net.minecraft.world.level.block.Blocks.TUFF) &&
-                    !state.is(net.minecraft.world.level.block.Blocks.CALCITE) &&
-                    !state.is(net.minecraft.world.level.block.Blocks.DRIPSTONE_BLOCK) &&
-                    !state.is(net.minecraft.world.level.block.Blocks.SMOOTH_BASALT) &&
-                    !state.is(net.minecraft.world.level.block.Blocks.COBBLED_DEEPSLATE) &&
-                    !state.is(net.minecraft.world.level.block.Blocks.DEEPSLATE) &&
-                    !state.is(net.minecraft.tags.BlockTags.STONE_ORE_REPLACEABLES);
-        };
+        //
+        // Предикат — чёрный список: перечислено то, что жилковым майнером
+        // выбивать нельзя. Он не даёт замахнуться на камень и на рудную породу,
+        // потому что руда в них живёт: выбивая породу, майнер уносил бы на
+        // несколько блоков больше, чем рассчитывает лимит, и руды хватало бы там,
+        // где игрок её не видел.
+        //
+        // Поверх чёрного списка стоит условие по тегу: майнеру годятся только
+        // блоки, которые копаются именно киркой ({@code mineable/pickaxe}).
+        // Без него чёрный список молча пропускал древесину и всё, что не требует
+        // инструмента вовсе, и полностью заряженная кирка выбивала за один удар
+        // три бревна ствола подряд. Топорные блоки лежат в {@code mineable/axe},
+        // листва и трава — ни в одном из тегов добычи, так что и те, и другие
+        // отсеиваются одним условием. Модовные руды при этом проходят: тег
+        // открытый, и руда из модов попадает в него же через {@code pickaxes_efficient}
+        // либо напрямую.
+        Predicate<BlockState> veinMinerPredicate = state -> state.is(BlockTags.MINEABLE_WITH_PICKAXE)
+                && !state.is(Blocks.STONE)
+                && !state.is(Blocks.COBBLESTONE)
+                && !state.is(Blocks.DIRT)
+                && !state.is(Blocks.GRASS_BLOCK)
+                && !state.is(Blocks.NETHERRACK)
+                && !state.is(Blocks.END_STONE)
+                && !state.is(Blocks.BASALT)
+                && !state.is(Blocks.BLACKSTONE)
+                && !state.is(Blocks.TUFF)
+                && !state.is(Blocks.CALCITE)
+                && !state.is(Blocks.DRIPSTONE_BLOCK)
+                && !state.is(Blocks.SMOOTH_BASALT)
+                && !state.is(Blocks.COBBLED_DEEPSLATE)
+                && !state.is(Blocks.DEEPSLATE)
+                && !state.is(BlockTags.STONE_ORE_REPLACEABLES);
 
         return new CastPickaxeStats(
                 net.minecraft.world.item.Tiers.DIAMOND,

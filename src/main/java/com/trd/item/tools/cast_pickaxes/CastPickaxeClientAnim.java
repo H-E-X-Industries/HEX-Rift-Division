@@ -77,8 +77,15 @@ public final class CastPickaxeClientAnim {
     private static float chargingSeconds = 2.0F;
     private static float hitSeconds = 1.75F;
 
-    /** Длина клипа замаха в тиках, по ней он и доигрывается. */
-    private static float hitTicks = 35.0F;
+    /**
+     * Длина клипа замаха в тиках, по ней он и доигрывается.
+     *
+     * <p>Исходное значение берётся у предмета, а не выдумывается здесь: кулдаун
+     * между зарядами равен длине замаха, и числа обязаны совпадать, иначе либо
+     * кирку можно будет замахнуть поверх недоконченного удара, либо придётся ждать
+     * впустую. Настоящая длина потом подтягивается из самой модели.
+     */
+    private static float hitTicks = CastPickaxeItem.COOLDOWN_TICKS;
 
     /** Кто чем сейчас занят: по игроку и по руке. */
     private static final Map<Holder, State> HOLDERS = new HashMap<>();

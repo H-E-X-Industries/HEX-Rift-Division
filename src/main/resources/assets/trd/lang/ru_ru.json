@@ -579,7 +579,7 @@
     "item.trd.blade":  "Лезвия рудного дробителя",
     "item.trd.bronze_ingot":  "Бронзовый слиток",
     "item.trd.bronze_nugget":  "Бронзовый самородок",
-    "item.trd.cast_pickaxe.desc.charge":  "§7Зажмите ПКМ для мощного удара",
+    "item.trd.cast_pickaxe.desc.charge":  "§7Зажмите ЛКМ для удара",
     "item.trd.cast_pickaxe.desc.mining_power":  "§6Мощность: %s",
     "item.trd.cast_pickaxe.desc.tunnel_miner":  "Туннельный майнер: %s",
     "item.trd.cast_pickaxe.desc.vein_miner_info":  "Жильный майнер: %s",

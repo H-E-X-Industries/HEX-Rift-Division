@@ -536,7 +536,7 @@
     "item.trd.blade":  "Леза рудного подрібнювача",
     "item.trd.bronze_ingot":  "Бронзовий злиток",
     "item.trd.bronze_nugget":  "Бронзовий самородок",
-    "item.trd.cast_pickaxe.desc.charge":  "§7Hold RMB for a powerful strike",
+    "item.trd.cast_pickaxe.desc.charge":  "§7Hold LMB to charge a powerful strike",
     "item.trd.cast_pickaxe.desc.mining_power":  "§6Power: %s",
     "item.trd.cast_pickaxe.desc.tunnel_miner":  "Tunnel Miner: %s",
     "item.trd.cast_pickaxe.desc.vein_miner_info":  "Vein Miner: %s",

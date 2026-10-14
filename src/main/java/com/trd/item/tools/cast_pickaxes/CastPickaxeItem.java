@@ -26,7 +26,6 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
-import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -57,7 +56,22 @@ public class CastPickaxeItem extends PickaxeItem {
 
     private static final ResourceLocation ATTACK_DAMAGE_ID = ResourceLocation.fromNamespaceAndPath("trd", "cast_pickaxe_attack_damage");
     private static final ResourceLocation ATTACK_SPEED_ID = ResourceLocation.fromNamespaceAndPath("trd", "cast_pickaxe_attack_speed");
-    private static final int COOLDOWN_TICKS = 20;
+
+    /**
+     * Тиков кулдауна между зарядами.
+     *
+     * <p>Ровно длина клипа замаха: 1.75 с из
+     * {@code assets/trd/models/item/cast_pickaxe.gltf}, то есть 35 тиков. Раньше
+     * тут стояло 20, и замах успевал проиграть меньше половины — кирку можно было
+     * замахнуть снова, не дождавшись конца удара, и два замаха наезжали друг на
+     * друга.
+     *
+     * <p>Кулдаун считается от отпускания, ровно с которого клип и начинается, так
+     * что числа должны совпадать. Длину клипа на сервере узнать нельзя, поэтому
+     * источник истины здесь, а {@link CastPickaxeClientAnim} берёт это же число
+     * себе за исходное, пока не прочитает настоящую длину из модели.
+     */
+    public static final int COOLDOWN_TICKS = 35;
 
     public CastPickaxeItem(CastPickaxeStats stats, Properties properties) {
         // 1.21.1: PickaxeItem(Tier, Properties) - no attack damage/speed in constructor
@@ -71,11 +85,33 @@ public class CastPickaxeItem extends PickaxeItem {
         return player.getOffhandItem().isEmpty() && !player.getCooldowns().isOnCooldown(this);
     }
 
+    /**
+     * Метод намеренно не переопределён: ПКМ у кирки — это обычное взаимодействие с
+     * миром, а не заряд.
+     *
+     * <p>Порядок на сервере такой: сперва блок (дверь, сундук, верстак), и если он
+     * действие съел — до предмета дело не доходит. Если бы здесь стоял заряд, то
+     * либо сундук перестал бы открываться, либо нажатие на пустом блоке давало бы
+     * заряд вместо того, чтобы его не было. Заряд живёт в {@link #use}, куда
+     * приводит только ЛКМ через {@link CastPickaxeChargeInput}.
+     */
     @Override
-    public InteractionResult useOn(UseOnContext context) {
-        Player player = context.getPlayer();
-        if (player == null) return InteractionResult.PASS;
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        if (!beginCharge(player, hand).consumesAction()) {
+            return InteractionResultHolder.fail(player.getItemInHand(hand));
+        }
+        return InteractionResultHolder.consume(player.getItemInHand(hand));
+    }
 
+    /**
+     * Заговаривает кирку на заряд.
+     *
+     * <p>Единственный вход: {@link CastPickaxeChargeInput} перехватывает ЛКМ и
+     * приводит сюда, а ПКМ до предмета не доходит вовсе — её съедает либо блок,
+     * либо отмена нажатия. Ближе смотреть не надо: удар идёт по тому, что игрок
+     * видит, и в момент отпускания.
+     */
+    private InteractionResult beginCharge(Player player, InteractionHand hand) {
         if (!canUse(player)) {
             if (!player.level().isClientSide && player.getCooldowns().isOnCooldown(this)) {
                 player.displayClientMessage(Component.translatable("message.trd.cast_pickaxe.cooldown"), true);
@@ -87,23 +123,8 @@ public class CastPickaxeItem extends PickaxeItem {
             return InteractionResult.FAIL;
         }
 
-        player.startUsingItem(context.getHand());
-
-        return InteractionResult.CONSUME;
-    }
-
-    @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        if (!canUse(player)) {
-            if (!level.isClientSide && player.getCooldowns().isOnCooldown(this)) {
-                player.displayClientMessage(Component.translatable("message.trd.cast_pickaxe.cooldown"), true);
-            }
-            return InteractionResultHolder.fail(player.getItemInHand(hand));
-        }
-
         player.startUsingItem(hand);
-
-        return InteractionResultHolder.consume(player.getItemInHand(hand));
+        return InteractionResult.CONSUME;
     }
 
     @Override
@@ -116,6 +137,18 @@ public class CastPickaxeItem extends PickaxeItem {
         return UseAnim.NONE;
     }
 
+    /**
+     * Отпускание заряда: удар по тому, что видно.
+     *
+     * <p>Взмаха рукой здесь нет намеренно. Он шёл бы вразрез с замахом самой
+     * кирки: {@code ItemInHandLayer} дёргает предплечье по своей шкале, а модель
+     * в это время доворачивается по своему клипу, и вид разъезжался на два
+     * независимых движения. У кирки замах свой, телом его не дублируем.
+     *
+     * <p>Взмах остаётся только у совсем короткого нажатия, до 5% заряда: там удара
+     * нет и клип не показывается, так что без взмаха нажатие выглядело бы как
+     * ничего не сделавшее.
+     */
     @Override
     public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
         if (!(entity instanceof Player player)) return;
@@ -137,7 +170,6 @@ public class CastPickaxeItem extends PickaxeItem {
         }
 
         int attackResult = performAttack(stack, level, player, chargePercent, hand);
-        player.swing(hand, true);
 
         if (!level.isClientSide) {
             if (attackResult == 1) {
@@ -459,15 +491,6 @@ public class CastPickaxeItem extends PickaxeItem {
             return false;
         }
         return super.hurtEnemy(stack, target, attacker);
-    }
-
-    /**
-     * Пока идёт зарядка или стоит кулдаун — блоки нельзя ломать обычным ударом.
-     * В 1.20.1 это было переопределением {@code Item#onBlockStartBreak}; в 1.21.1
-     * метода больше нет, поэтому проверка живёт в {@link CastPickaxeBreakHandler}.
-     */
-    public boolean isLockedOut(Player player) {
-        return player.isUsingItem() || player.getCooldowns().isOnCooldown(this);
     }
 
     @Override
