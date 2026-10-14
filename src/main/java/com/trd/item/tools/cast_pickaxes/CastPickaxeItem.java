@@ -2,9 +2,7 @@ package com.trd.item.tools.cast_pickaxes;
 
 
 import com.trd.block.basic.conglomerate.ConglomerateBlock;
-import com.trd.client.gecko.item.tools.CastPickaxeItemRenderer;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -33,62 +31,41 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.*;
-import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
-import software.bernie.geckolib.animatable.GeoItem;
-import software.bernie.geckolib.animatable.SingletonGeoAnimatable;
-import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.*;
-import software.bernie.geckolib.util.GeckoLibUtil;
 
 import javax.annotation.Nullable;
 import java.util.*;
-import java.util.function.Consumer;
 
-public class CastPickaxeItem extends PickaxeItem implements GeoItem {
-    private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+/**
+ * Литая кирка: клинок и цепь вместо древка.
+ *
+ * <p>Бьёт не по месту под курсором, а по тому, что игрок видит: {@link
+ * #performAttack} бросает луч из глаз и ищет сперва живность на нём, и только
+ * потом — блок. Чем дольше держать, тем сильнее удар, а у полного заряда у
+ * кирки включается ещё и особый удар по конгломерату.
+ *
+ * <p><b>Модель рисуется на glTF, а не на геколибе.</b> Ни контроллера анимаций,
+ * ни триггеров здесь нет: состояние замаха держит
+ * {@link CastPickaxeClientAnim} на клиенте, а клипы лежат в самой модели
+ * {@code assets/trd/models/item/cast_pickaxe.gltf}. Пакет для этого не понадобился —
+ * см. разбор в {@link CastPickaxeClientAnim}.
+ *
+ * <p>Звуки, урон, прочность и особые удары остались ровно такими же, какими были
+ * на геколибе.
+ */
+public class CastPickaxeItem extends PickaxeItem {
     private final CastPickaxeStats stats;
 
-    private static final String TAG_ANIM_STATE = "CastAnimState";
-    private static final int ANIM_STATE_CHARGING = 1;
-    private static final int ANIM_STATE_HOLDING = 2;
     private static final ResourceLocation ATTACK_DAMAGE_ID = ResourceLocation.fromNamespaceAndPath("trd", "cast_pickaxe_attack_damage");
     private static final ResourceLocation ATTACK_SPEED_ID = ResourceLocation.fromNamespaceAndPath("trd", "cast_pickaxe_attack_speed");
     private static final int COOLDOWN_TICKS = 20;
-
-    // Анимации
-    private static final RawAnimation CHARGING_ANIM = RawAnimation.begin().thenPlay("charging");
-    private static final RawAnimation HOLDING_ANIM = RawAnimation.begin().thenPlay("holding");
-    private static final RawAnimation HIT_ANIM = RawAnimation.begin().thenPlay("hit");
 
     public CastPickaxeItem(CastPickaxeStats stats, Properties properties) {
         // 1.21.1: PickaxeItem(Tier, Properties) - no attack damage/speed in constructor
         super(stats.getTier(), properties.stacksTo(1));
         this.stats = stats;
-        SingletonGeoAnimatable.registerSyncedAnimatable(this);
     }
 
     public CastPickaxeStats getStats() { return stats; }
-
-    @Override
-    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>(this, "controller", 0, state -> PlayState.CONTINUE)
-                .triggerableAnim("charging", CHARGING_ANIM)
-                .triggerableAnim("holding", HOLDING_ANIM)
-                .triggerableAnim("hit", HIT_ANIM)
-        );
-    }
-
-    @Override
-    public AnimatableInstanceCache getAnimatableInstanceCache() {
-        return cache;
-    }
-
-    /**
-     * Рассчитывает скорость анимации на основе времени зарядки кирки.
-     */
-    public float getAnimationSpeed() {
-        return 40.0f / stats.getChargeTicks();
-    }
 
     private boolean canUse(Player player) {
         return player.getOffhandItem().isEmpty() && !player.getCooldowns().isOnCooldown(this);
@@ -112,12 +89,6 @@ public class CastPickaxeItem extends PickaxeItem implements GeoItem {
 
         player.startUsingItem(context.getHand());
 
-        if (!player.level().isClientSide) {
-            ItemStack stack = player.getItemInHand(context.getHand());
-            long instanceId = GeoItem.getOrAssignId(stack, (ServerLevel) player.level());
-            triggerAnim(player, instanceId, "controller", "charging");
-        }
-
         return InteractionResult.CONSUME;
     }
 
@@ -131,12 +102,6 @@ public class CastPickaxeItem extends PickaxeItem implements GeoItem {
         }
 
         player.startUsingItem(hand);
-
-        if (!level.isClientSide) {
-            ItemStack stack = player.getItemInHand(hand);
-            long instanceId = GeoItem.getOrAssignId(stack, (ServerLevel) level);
-            triggerAnim(player, instanceId, "controller", "charging");
-        }
 
         return InteractionResultHolder.consume(player.getItemInHand(hand));
     }
@@ -152,30 +117,12 @@ public class CastPickaxeItem extends PickaxeItem implements GeoItem {
     }
 
     @Override
-    public void onUseTick(Level level, LivingEntity entity, ItemStack stack, int remainingUseDuration) {
-        super.onUseTick(level, entity, stack, remainingUseDuration);
-
-        if (level.isClientSide || !(entity instanceof Player player)) return;
-
-        int chargeTime = 72000 - remainingUseDuration;
-        if (chargeTime == stats.getChargeTicks()) {
-            long instanceId = GeoItem.getOrAssignId(stack, (ServerLevel) level);
-            triggerAnim(player, instanceId, "controller", "holding");
-        }
-    }
-
-    @Override
     public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
         if (!(entity instanceof Player player)) return;
 
         int chargeTime = 72000 - timeLeft;
         InteractionHand hand = player.getUsedItemHand();
         float chargePercent = Math.min(1.0f, chargeTime / (float) stats.getChargeTicks());
-
-        if (!level.isClientSide) {
-            long instanceId = GeoItem.getOrAssignId(stack, (ServerLevel) level);
-            triggerAnim(player, instanceId, "controller", "hit");
-        }
 
         player.getCooldowns().addCooldown(this, COOLDOWN_TICKS);
 
@@ -568,18 +515,5 @@ public class CastPickaxeItem extends PickaxeItem implements GeoItem {
                             (int)(stats.getVeinMinerDurabilityCost() * 100))
                     .withStyle(ChatFormatting.GOLD));
         }
-    }
-
-    @Override
-    public void initializeClient(Consumer<IClientItemExtensions> consumer) {
-        consumer.accept(new IClientItemExtensions() {
-            private CastPickaxeItemRenderer renderer;
-
-            @Override
-            public BlockEntityWithoutLevelRenderer getCustomRenderer() {
-                if (renderer == null) renderer = new CastPickaxeItemRenderer();
-                return renderer;
-            }
-        });
     }
 }
