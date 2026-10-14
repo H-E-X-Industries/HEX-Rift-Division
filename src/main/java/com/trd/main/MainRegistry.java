@@ -35,9 +35,6 @@ public class MainRegistry {
         // Регистрация климатической системы
         com.trd.climate.attachment.ModAttachments.register(modEventBus);
         
-        // Регистрация климатической системы
-        com.trd.climate.attachment.ModAttachments.register(modEventBus);
-        
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(com.trd.climate.network.ClimateNetworking::registerPayloads);
     }
