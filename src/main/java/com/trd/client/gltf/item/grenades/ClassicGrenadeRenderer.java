@@ -1,6 +1,6 @@
 package com.trd.client.gltf.item.grenades;
 
-import com.wf.gemrender.direct.GemRenderItemRenderer;
+import com.hex.hexrender.direct.GemRenderItemRenderer;
 
 /**
  * Рендерер обычной гранаты в руке на glTF через GemRender.

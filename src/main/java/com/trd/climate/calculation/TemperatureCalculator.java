@@ -97,7 +97,10 @@ public class TemperatureCalculator {
 
     /**
      * Конвертирует ванильную температуру биома в градусы Цельсия.
-     * Формула: T = 20.0 + (vanillaTemp - 0.8) * multiplier
+     * Холодные биомы усилены для сурового выживания (до -30°C).
+     * Жаркие биомы сбалансированы так, чтобы в саванне и пустыне днем
+     * на солнце температура достигала 30-32°C (состояние "Жара"),
+     * вызывая повышенный расход сытости, но не убивая игрока.
      */
     private static float getBiomeTemperature(ServerLevel level, BlockPos pos) {
         Biome biome = level.getBiome(pos).value();
@@ -107,9 +110,11 @@ public class TemperatureCalculator {
         // Усиливаем суровость холодных биомов
         if (delta < 0) {
             delta *= 2.0f;
+            return 20.0f + delta * 20.0f;
+        } else {
+            // Жаркие биомы: при vanillaTemp=2.0 (Desert) базовая температура 29°C (на солнце максимум 32°C)
+            return 20.0f + delta * 7.5f;
         }
-        
-        return 20.0f + delta * 20.0f;
     }
 
     /**

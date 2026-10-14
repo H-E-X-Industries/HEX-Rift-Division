@@ -1,6 +1,6 @@
 package com.trd.client.gltf.item.guns;
 
-import com.wf.gemrender.direct.GemRenderItemRenderer;
+import com.hex.hexrender.direct.GemRenderItemRenderer;
 
 /**
  * Рендерер пушки на glTF через GemRender.

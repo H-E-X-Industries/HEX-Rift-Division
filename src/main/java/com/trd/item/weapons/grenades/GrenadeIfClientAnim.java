@@ -1,7 +1,7 @@
 package com.trd.item.weapons.grenades;
 
 import com.trd.main.MainRegistry;
-import com.wf.gemrender.gltf.GemRenderGltfModel;
+import com.hex.hexrender.gltf.GemRenderGltfModel;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.sounds.SoundEvent;
