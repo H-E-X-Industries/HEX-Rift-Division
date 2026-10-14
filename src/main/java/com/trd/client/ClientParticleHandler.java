@@ -1,5 +1,6 @@
 package com.trd.client;
 
+import com.trd.fx.particle.BreathParticle;
 import com.trd.fx.particle.DarkSmokeParticle;
 import com.trd.fx.particle.ExplosionSparkParticle;
 import com.trd.fx.particle.FireSparkParticle;
@@ -41,5 +42,9 @@ public class ClientParticleHandler {
         event.registerSpriteSet(
                 ModExplosionParticles.SHOT.get(),
                 ShotFlashParticle.Provider::new);
+
+        event.registerSpriteSet(
+                ModExplosionParticles.BREATH.get(),
+                BreathParticle.Provider::new);
     }
 }
