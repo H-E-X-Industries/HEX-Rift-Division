@@ -1,6 +1,5 @@
-package com.trd.worldgen.tree.custom;
+package com.trd.worldgen.biome.sequoia;
 
-import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;

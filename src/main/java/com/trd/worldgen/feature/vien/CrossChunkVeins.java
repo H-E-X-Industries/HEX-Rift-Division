@@ -1,4 +1,4 @@
-package com.trd.worldgen.feature;
+package com.trd.worldgen.feature.vien;
 
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;

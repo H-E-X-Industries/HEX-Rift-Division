@@ -1,5 +1,6 @@
-package com.trd.datagen.assets;
+package com.trd.datagen;
 
+import com.trd.datagen.assets.ModBlockStateProvider;
 import com.trd.main.MainRegistry;
 import com.trd.worldgen.feature.ModBiomeModifiers;
 import com.trd.worldgen.feature.ModConfiguredFeatures;

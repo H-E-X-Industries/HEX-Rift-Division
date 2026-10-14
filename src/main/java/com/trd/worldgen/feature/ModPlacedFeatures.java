@@ -84,9 +84,13 @@ public class ModPlacedFeatures {
                 VegetationPlacements.treePlacement(PlacementUtils.countExtra(0, 0.25f, 1), Blocks.SPRUCE_SAPLING));
 
         // === ГЛУБИННЫЕ ЧЕРВИ (УЛЬИ) ===
+        // Редкость здесь — только для обязательных якорей (рельсы/доски/кирпичи/сундуки/бочки):
+        // 1 улей на 4 чанка, в которых такой блок реально есть. Мягкие якоря дополнительно
+        // разрежаются внутри фичи (SOFT_ANCHOR_GATE), поэтому у одной шахты не садится
+        // тридцать ульев подряд, а в мягкой породе улей — редкость.
         register(context, DEPTH_WORM_HIVE_PLACED_KEY, configuredFeatures.getOrThrow(ModConfiguredFeatures.DEPTH_WORM_HIVE_KEY),
                 List.of(
-                        RarityFilter.onAverageOnceEvery(7),
+                        RarityFilter.onAverageOnceEvery(4),
                         InSquarePlacement.spread(),
                         HeightRangePlacement.uniform(
                                 VerticalAnchor.absolute(-60),

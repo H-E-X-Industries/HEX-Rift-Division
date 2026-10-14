@@ -1,70 +1,91 @@
-package com.trd.worldgen.feature;
+package com.trd.worldgen.hive;
 
-import com.mojang.serialization.Codec;
 import com.trd.api.hive.HiveNetwork;
 import com.trd.api.hive.HiveNetworkManager;
 import com.trd.block.basic.ModBlocks;
 import com.trd.block.entity.hive.DepthWormNestBlockEntity;
 import com.trd.block.entity.hive.HiveSoilBlockEntity;
+import com.trd.main.MainRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.levelgen.feature.Feature;
-import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
-import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-import org.slf4j.Logger;
-import com.mojang.logging.LogUtils;
 
-public class DepthWormHiveFeature extends Feature<NoneFeatureConfiguration> {
+import com.mojang.logging.LogUtils;
+import org.slf4j.Logger;
+
+/**
+ * Общая часть расстановки улья глубинных червей.
+ * <p>
+ * Вынесена отдельно от фичи, потому что улей строится двумя разными путями:
+ * мягкие породы видны ещё во время генерации чанка (фича {@code trd:depth_worm_hive}),
+ * а структуры появляются позже и обрабатываются отдельным пост-проходом
+ * {@link StructureHivePass}. Логика проверок и условий тут общая.
+ */
+public final class HivePlacer {
+
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    public DepthWormHiveFeature(Codec<NoneFeatureConfiguration> codec) {
-        super(codec);
+    public static final int MIN_Y = -60;
+    public static final int MAX_Y = -5;
+
+    /**
+     * Что улей вправе заместить: обычная порода, кирпичи из камня и дипслейта, земля,
+     * гравий. Список белый, поэтому руды, обсидиан, древний мусор, укреплённый дипслейт,
+     * спавнеры, сундуки и любые блоки других модов по умолчанию не трогаются — улей
+     * просто не построится на таком полу. Свои блоки мод может открыть датапаком.
+     */
+    public static final TagKey<Block> REPLACEABLE_TAG = TagKey.create(Registries.BLOCK,
+            ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "depth_worm_hive_replaceable"));
+
+    /** Радиус кольца, в котором ищется пол улья вокруг якоря. */
+    public static final int FLOOR_SEARCH_RADIUS = 4;
+    private static final int FLOOR_SEARCH_UP = 3;
+    private static final int FLOOR_SEARCH_DOWN = 5;
+
+    private HivePlacer() {
     }
 
-    @Override
-    public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
-        WorldGenLevel level = context.level();
-        BlockPos origin = context.origin();
-        RandomSource random = context.random();
-
-        // 1. Search for a valid cave floor position between Y = -60 and Y = -5
-        BlockPos validFloorPos = null;
-        for (int attempt = 0; attempt < 25; attempt++) {
-            // Check a 5x5 grid across the chunk (0, 3, 7, 11, 14) with small random jitter
-            int gridX = (attempt % 5) * 3 + random.nextInt(3);
-            int gridZ = (attempt / 5) * 3 + random.nextInt(3);
-            int cx = (origin.getX() & ~15) + gridX;
-            int cz = (origin.getZ() & ~15) + gridZ;
-
-            // Scan downwards from Y = -5 to Y = -60
-            for (int y = -5; y >= -60; y--) {
-                BlockPos checkPos = new BlockPos(cx, y, cz);
-                if (level.getBlockState(checkPos).isAir() && level.getFluidState(checkPos).isEmpty()) {
-                    BlockPos below = checkPos.below();
-                    BlockState belowState = level.getBlockState(below);
-                    if (!belowState.isAir() && belowState.getFluidState().isEmpty() && isReplaceableGround(belowState)) {
-                        // Ensure there is at least 2 blocks of air above the floor for worms and players
-                        if (level.getBlockState(checkPos.above()).isAir()) {
-                            validFloorPos = below;
-                            break;
-                        }
-                    }
-                }
+    /** Ищет первый блок нужного уровня в колонке сверху вниз. */
+    public static BlockPos findAnchor(LevelAccessor level, int cx, int cz, TagKey<Block> tier) {
+        for (int y = MAX_Y; y >= MIN_Y; y--) {
+            BlockPos pos = new BlockPos(cx, y, cz);
+            BlockState state = level.getBlockState(pos);
+            if (!state.isAir() && state.is(tier)) {
+                return pos;
             }
-            if (validFloorPos != null) break;
+        }
+        return null;
+    }
+
+    /**
+     * Строит улей вокруг якоря.
+     *
+     * @return true, если улей поставлен
+     */
+    public static boolean place(LevelAccessor level, ServerLevel serverLevel, BlockPos anchor, RandomSource random) {
+        // 1. Ближайший подходящий пол вокруг якоря. Кольца обходятся по порядку,
+        // поэтому первый результат — всегда самый близкий.
+        BlockPos validFloorPos = findFloorNear(level, anchor);
+        if (validFloorPos == null) {
+            return false;
         }
 
-        if (validFloorPos == null) {
+        // Мягкий якорь мог уже построить улей во время генерации чанка —
+        // второй раз поверх него строить нельзя.
+        if (hiveAlreadyThere(level, validFloorPos)) {
             return false;
         }
 
@@ -110,16 +131,16 @@ public class DepthWormHiveFeature extends Feature<NoneFeatureConfiguration> {
                 for (int dz = -2; dz <= 2; dz++) {
                     if (dx == 0 && dz == 0) continue;
                     if (dx * dx + dz * dz > 5) continue;
-                    // Find actual floor surface for this (dx, dz) within +/- 1 block of core level
+                    // Find actual floor surface for this (dx, dz) at or above core level
                     BlockPos bestSurface = null;
-                    for (int dy = 1; dy >= -1; dy--) {
+                    for (int dy = 1; dy >= 0; dy--) {
                         BlockPos cand = c.offset(dx, dy, dz);
                         BlockState candState = level.getBlockState(cand);
                         BlockState candBelow = level.getBlockState(cand.below());
                         if (isReplaceableGround(candState) &&
                             level.getBlockState(cand.above()).isAir() &&
                             !candBelow.isAir() && candBelow.getFluidState().isEmpty() &&
-                            !candState.is(net.minecraft.world.level.block.Blocks.BEDROCK)) {
+                            !candState.is(Blocks.BEDROCK)) {
                             bestSurface = cand;
                             break;
                         }
@@ -139,7 +160,7 @@ public class DepthWormHiveFeature extends Feature<NoneFeatureConfiguration> {
             if (belowState.isAir() || !belowState.getFluidState().isEmpty()) {
                 return false; // Core must not be on ceiling or in air!
             }
-            if (level.getBlockState(c).is(net.minecraft.world.level.block.Blocks.BEDROCK)) {
+            if (level.getBlockState(c).is(Blocks.BEDROCK)) {
                 return false;
             }
         }
@@ -212,7 +233,6 @@ public class DepthWormHiveFeature extends Feature<NoneFeatureConfiguration> {
         }
 
         // 6. Register into HiveNetworkManager & assign 30-60 points (network spawns worms on its own)
-        ServerLevel serverLevel = level.getLevel();
         HiveNetworkManager manager = HiveNetworkManager.get(serverLevel);
         if (manager != null) {
             for (BlockPos corePos : corePositions) {
@@ -228,14 +248,63 @@ public class DepthWormHiveFeature extends Feature<NoneFeatureConfiguration> {
             }
         }
 
-        LOGGER.info("[HEX-Rift-Division] Spawned Depth Worm Hive at {} (cores: {}, points: {})", core1, coreCount, points);
+        LOGGER.debug("[HEX-Rift-Division] Spawned Depth Worm Hive at {} (cores: {}, points: {})",
+                core1, coreCount, points);
         return true;
     }
 
-    private static boolean isReplaceableGround(BlockState state) {
+    private static BlockPos findFloorNear(LevelAccessor level, BlockPos anchor) {
+        int ax = anchor.getX();
+        int ay = anchor.getY();
+        int az = anchor.getZ();
+
+        for (int r = 0; r <= FLOOR_SEARCH_RADIUS; r++) {
+            for (int dx = -r; dx <= r; dx++) {
+                for (int dz = -r; dz <= r; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != r) continue;
+                    int x = ax + dx;
+                    int z = az + dz;
+                    for (int y = ay + FLOOR_SEARCH_UP; y >= ay - FLOOR_SEARCH_DOWN; y--) {
+                        if (y < MIN_Y || y > MAX_Y) continue;
+                        BlockPos floor = new BlockPos(x, y, z);
+                        if (isValidFloor(level, floor)) {
+                            return floor;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private static boolean isValidFloor(LevelAccessor level, BlockPos floor) {
+        if (!isReplaceableGround(level.getBlockState(floor))) return false;
+        BlockPos air = floor.above();
+        // At least 2 blocks of air above the floor for the worms and for the player to walk in.
+        if (!level.getBlockState(air).isAir()) return false;
+        if (!level.getBlockState(air.above()).isAir()) return false;
+        return level.getFluidState(air).isEmpty();
+    }
+
+    private static boolean hiveAlreadyThere(LevelAccessor level, BlockPos floor) {
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                for (int dy = -1; dy <= 1; dy++) {
+                    BlockState state = level.getBlockState(floor.offset(dx, dy, dz));
+                    if (state.is(ModBlocks.HIVE_SOIL.get()) || state.is(ModBlocks.DEPTH_WORM_NEST.get())) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    public static boolean isReplaceableGround(BlockState state) {
         if (state.isAir() || !state.getFluidState().isEmpty()) return false;
-        if (state.is(net.minecraft.world.level.block.Blocks.BEDROCK)) return false;
-        if (state.is(net.minecraft.world.level.block.Blocks.BARRIER)) return false;
-        return state.isSolid();
+        if (state.is(Blocks.BEDROCK)) return false;
+        if (state.is(Blocks.BARRIER)) return false;
+        // Белый список: крепкую добычу и блоки других модов улей не замещает.
+        return state.is(REPLACEABLE_TAG);
     }
 }
