@@ -6,6 +6,10 @@ import com.trd.entity.weapons.bullets.GilseEntity;
 import com.hex.hexrender.asset.GemRenderModels;
 import com.hex.hexrender.direct.DirectPass;
 import com.hex.hexrender.direct.DirectRenderer;
+import com.hex.hexrender.direct.GltfVanillaRenderer;
+import com.hex.hexrender.direct.IrisDirectBridge;
+import com.hex.hexrender.direct.TextureSlots;
+import com.hex.hexrender.texture.VariantUv;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
@@ -116,11 +120,25 @@ public class GilseRenderer extends EntityRenderer<GilseEntity> {
         poseStack.mulPose(Axis.XP.rotationDegrees(entity.getRenderPitch(partialTick)));
         poseStack.mulPose(Axis.ZP.rotationDegrees(entity.getRenderRoll(partialTick)));
 
-        var matrix = poseStack.last().pose();
-        DirectRenderer.submit(model, (com.hex.hexrender.gltf.GltfAnimation) null, 0.0f,
-                matrix, packedLight, net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY,
-                0xFFFFFFFF, DirectPass.LEVEL,
-                com.hex.hexrender.texture.VariantUv.NONE);
+        if (IrisDirectBridge.isShaderPackInUse()) {
+            GltfVanillaRenderer.render(
+                    model,
+                    (com.hex.hexrender.gltf.GltfAnimation) null,
+                    0.0f,
+                    poseStack,
+                    bufferSource,
+                    packedLight,
+                    net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY,
+                    0xFFFFFFFF,
+                    VariantUv.NONE,
+                    TextureSlots.NONE);
+        } else {
+            var matrix = poseStack.last().pose();
+            DirectRenderer.submit(model, (com.hex.hexrender.gltf.GltfAnimation) null, 0.0f,
+                    matrix, packedLight, net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY,
+                    0xFFFFFFFF, DirectPass.LEVEL,
+                    VariantUv.NONE);
+        }
 
         poseStack.popPose();
     }

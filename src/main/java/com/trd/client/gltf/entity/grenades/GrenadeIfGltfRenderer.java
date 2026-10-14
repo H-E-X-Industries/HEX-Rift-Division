@@ -126,13 +126,23 @@ public class GrenadeIfGltfRenderer extends EntityRenderer<GrenadeIfProjectileEnt
         // (то есть ДО вращения вершин модели), чтобы модель крутилась строго вокруг заданной оси.
         poseStack.translate(0.0F, -MODEL_CENTER_Y, 0.0F);
 
-        // Поза покоя модели, но с прибитой чекой: клип отдаётся обязательно, иначе
-        // NodeHide не применится и чека останется видимой. Тип берётся из типа
-        // сущности, а не из синхронизированных данных снаряда — см.
-        // GrenadeIfType#typeOf.
-        DirectRenderer.submit(model, GrenadeIfVariants.hiddenPin(type), 0.0F,
-                poseStack.last().pose(), packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFFFF,
-                DirectPass.LEVEL);
+        if (com.hex.hexrender.direct.IrisDirectBridge.isShaderPackInUse()) {
+            com.hex.hexrender.direct.GltfVanillaRenderer.render(
+                    model,
+                    GrenadeIfVariants.hiddenPin(type),
+                    0.0F,
+                    poseStack,
+                    bufferSource,
+                    packedLight,
+                    OverlayTexture.NO_OVERLAY,
+                    0xFFFFFFFF,
+                    com.hex.hexrender.texture.VariantUv.NONE,
+                    com.hex.hexrender.direct.TextureSlots.NONE);
+        } else {
+            DirectRenderer.submit(model, GrenadeIfVariants.hiddenPin(type), 0.0F,
+                    poseStack.last().pose(), packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFFFF,
+                    DirectPass.LEVEL);
+        }
 
         poseStack.popPose();
     }

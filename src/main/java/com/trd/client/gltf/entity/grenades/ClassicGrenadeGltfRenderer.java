@@ -151,13 +151,23 @@ public class ClassicGrenadeGltfRenderer<T extends Entity> extends EntityRenderer
         // (то есть ДО вращения вершин модели), чтобы модель крутилась строго вокруг заданной оси.
         poseStack.translate(0.0F, -modelCenterY(variant), 0.0F);
 
-        // Поза покоя модели, но с прибитой чекой: клип отдаётся обязательно, иначе
-        // NodeHide не применится и чека останется видимой. Вид берётся из типа
-        // сущности, а не из синхронизированных данных снаряда — см.
-        // ClassicGrenadeVariants#variantOf.
-        DirectRenderer.submit(model, ClassicGrenadeVariants.hiddenPin(variant), 0.0F,
-                poseStack.last().pose(), packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFFFF,
-                DirectPass.LEVEL);
+        if (com.hex.hexrender.direct.IrisDirectBridge.isShaderPackInUse()) {
+            com.hex.hexrender.direct.GltfVanillaRenderer.render(
+                    model,
+                    ClassicGrenadeVariants.hiddenPin(variant),
+                    0.0F,
+                    poseStack,
+                    bufferSource,
+                    packedLight,
+                    OverlayTexture.NO_OVERLAY,
+                    0xFFFFFFFF,
+                    com.hex.hexrender.texture.VariantUv.NONE,
+                    com.hex.hexrender.direct.TextureSlots.NONE);
+        } else {
+            DirectRenderer.submit(model, ClassicGrenadeVariants.hiddenPin(variant), 0.0F,
+                    poseStack.last().pose(), packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFFFF,
+                    DirectPass.LEVEL);
+        }
 
         poseStack.popPose();
     }

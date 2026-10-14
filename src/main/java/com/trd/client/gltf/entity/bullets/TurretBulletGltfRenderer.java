@@ -15,6 +15,9 @@ import com.trd.entity.weapons.bullets.TurretBulletEntity;
 import com.trd.main.MainRegistry;
 import com.hex.hexrender.direct.DirectPass;
 import com.hex.hexrender.direct.DirectRenderer;
+import com.hex.hexrender.direct.GltfVanillaRenderer;
+import com.hex.hexrender.direct.IrisDirectBridge;
+import com.hex.hexrender.direct.TextureSlots;
 import com.hex.hexrender.texture.VariantUv;
 import net.minecraft.client.Camera;
 import net.minecraft.client.CloudStatus;
@@ -363,10 +366,24 @@ public class TurretBulletGltfRenderer extends EntityRenderer<TurretBulletEntity>
                 : LightTexture.pack(Math.max(LightTexture.block(packedLight), 13), Math.max(LightTexture.sky(packedLight), 13));
         int bulletTint = tracer ? 0xFFFFFFFF : 0xFFFFAA77;
 
-        DirectRenderer.submit(model, (com.hex.hexrender.gltf.GltfAnimation) null, 0.0f,
-                poseStack.last().pose(), bulletLight,
-                OverlayTexture.NO_OVERLAY, bulletTint, DirectPass.LEVEL,
-                tracer ? TurretBulletVariants.tracerVariant(model, entity) : VariantUv.NONE);
+        if (IrisDirectBridge.isShaderPackInUse()) {
+            GltfVanillaRenderer.render(
+                    model,
+                    (com.hex.hexrender.gltf.GltfAnimation) null,
+                    0.0f,
+                    poseStack,
+                    bufferSource,
+                    bulletLight,
+                    OverlayTexture.NO_OVERLAY,
+                    bulletTint,
+                    tracer ? TurretBulletVariants.tracerVariant(model, entity) : VariantUv.NONE,
+                    TextureSlots.NONE);
+        } else {
+            DirectRenderer.submit(model, (com.hex.hexrender.gltf.GltfAnimation) null, 0.0f,
+                    poseStack.last().pose(), bulletLight,
+                    OverlayTexture.NO_OVERLAY, bulletTint, DirectPass.LEVEL,
+                    tracer ? TurretBulletVariants.tracerVariant(model, entity) : VariantUv.NONE);
+        }
 
         poseStack.popPose();
     }

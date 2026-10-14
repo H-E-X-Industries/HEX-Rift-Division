@@ -3,6 +3,8 @@ package com.trd.client.gltf.item.tools;
 import com.trd.item.tools.cast_pickaxes.CastPickaxeClientAnim;
 import com.hex.hexrender.direct.DirectPass;
 import com.hex.hexrender.direct.DirectRenderer;
+import com.hex.hexrender.direct.GltfVanillaRenderer;
+import com.hex.hexrender.direct.IrisDirectBridge;
 import com.hex.hexrender.direct.TextureSlots;
 import com.hex.hexrender.gltf.GemRenderGltfModel;
 import com.hex.hexrender.gltf.GltfAnimation;
@@ -73,17 +75,31 @@ public class CastPickaxeRenderer extends BlockEntityWithoutLevelRenderer {
             poseStack.translate(0.5F, 0.5F, 0.5F);
             appearance.transform(stack, displayContext, poseStack);
 
-            DirectRenderer.submit(
-                    model,
-                    appearance.clip(stack, displayContext),
-                    appearance.seconds(stack, displayContext, partialTick),
-                    poseStack.last().pose(),
-                    packedLight,
-                    packedOverlay,
-                    appearance.tint(stack, displayContext),
-                    passFor(displayContext),
-                    appearance.variant(stack, displayContext),
-                    slots);
+            if (IrisDirectBridge.isShaderPackInUse()) {
+                GltfVanillaRenderer.render(
+                        model,
+                        appearance.clip(stack, displayContext),
+                        appearance.seconds(stack, displayContext, partialTick),
+                        poseStack,
+                        bufferSource,
+                        packedLight,
+                        packedOverlay,
+                        appearance.tint(stack, displayContext),
+                        appearance.variant(stack, displayContext),
+                        slots);
+            } else {
+                DirectRenderer.submit(
+                        model,
+                        appearance.clip(stack, displayContext),
+                        appearance.seconds(stack, displayContext, partialTick),
+                        poseStack.last().pose(),
+                        packedLight,
+                        packedOverlay,
+                        appearance.tint(stack, displayContext),
+                        passFor(displayContext),
+                        appearance.variant(stack, displayContext),
+                        slots);
+            }
         } finally {
             poseStack.popPose();
         }
