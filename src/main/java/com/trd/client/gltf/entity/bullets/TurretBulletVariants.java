@@ -3,10 +3,10 @@ package com.trd.client.gltf.entity.bullets;
 import com.trd.entity.weapons.bullets.TurretBulletEntity;
 import com.trd.entity.weapons.bullets.TurretBulletEntity.AmmoType;
 import com.trd.main.MainRegistry;
-import com.wf.gemrender.asset.GemRenderModels;
-import com.wf.gemrender.asset.ModelCache;
-import com.wf.gemrender.gltf.GemRenderGltfModel;
-import com.wf.gemrender.texture.VariantUv;
+import com.hex.hexrender.asset.GemRenderModels;
+import com.hex.hexrender.asset.ModelCache;
+import com.hex.hexrender.gltf.GemRenderGltfModel;
+import com.hex.hexrender.texture.VariantUv;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.EnumMap;

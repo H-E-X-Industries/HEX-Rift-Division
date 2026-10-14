@@ -6,8 +6,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
-import com.wf.gemrender.gltf.GemRenderGltfModel;
-import com.wf.gemrender.gltf.GltfAnimation;
+import com.hex.hexrender.gltf.GemRenderGltfModel;
+import com.hex.hexrender.gltf.GltfAnimation;
 
 import javax.annotation.Nullable;
 import java.util.HashMap;
