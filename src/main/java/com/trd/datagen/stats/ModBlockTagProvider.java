@@ -259,16 +259,62 @@ tag(TagKey.create(Registries.BLOCK,
                 .add(ModBlocks.WASTE_PRESSURE_PLATE.get())
                 .add(ModBlocks.STEEL_PROPS.get());
 
-        // Маркеры «здесь идёт структура» для ульев глубинных червей. Фича ищет в колонке
-        // такой блок и строит улей только рядом с ним, поэтому ульи больше не появляются
-        // в произвольных пещерах. Структуры других модов добавляются датапаком в этот же тег.
-        tag(com.trd.worldgen.feature.vien.DepthWormHiveFeature.ANCHOR_TAG)
-                // спавнеры (крепости, древние города)
-                .add(net.minecraft.world.level.block.Blocks.SPAWNER)
-                // заброшенные шахты
+// === УЛЬЯ ГЛУБИННЫХ ЧЕРВЕЙ: ОБЯЗАТЕЛЬНЫЕ ЯКОРЯ ===
+        // Рельсы, доски, каменные кирпичи, сундуки, бочки, спавнеры. Возле такого
+        // блока улей строится на полной частоте (шанс 1 из 4 чанков, в которых
+        // блок реально есть), поэтому улей почти всегда рядом с шахтой/крепостью,
+        // но и не тридцать штук в одной шахте.
+        // Структуры других модов добавляются сюда датапаком одной записью.
+        tag(com.trd.worldgen.hive.StructureHivePass.REQUIRED_ANCHOR_TAG)
+                // рельсы — заброшенные шахты
                 .add(net.minecraft.world.level.block.Blocks.RAIL)
                 .add(net.minecraft.world.level.block.Blocks.POWERED_RAIL)
                 .add(net.minecraft.world.level.block.Blocks.DETECTOR_RAIL)
+                // доски — шахты, крепости, деревни
+                .add(net.minecraft.world.level.block.Blocks.OAK_PLANKS)
+                .add(net.minecraft.world.level.block.Blocks.SPRUCE_PLANKS)
+                .add(net.minecraft.world.level.block.Blocks.BIRCH_PLANKS)
+                .add(net.minecraft.world.level.block.Blocks.JUNGLE_PLANKS)
+                .add(net.minecraft.world.level.block.Blocks.ACACIA_PLANKS)
+                .add(net.minecraft.world.level.block.Blocks.DARK_OAK_PLANKS)
+                .add(net.minecraft.world.level.block.Blocks.MANGROVE_PLANKS)
+                .add(net.minecraft.world.level.block.Blocks.CHERRY_PLANKS)
+                .add(net.minecraft.world.level.block.Blocks.BAMBOO_PLANKS)
+                .add(net.minecraft.world.level.block.Blocks.CRIMSON_PLANKS)
+                .add(net.minecraft.world.level.block.Blocks.WARPED_PLANKS)
+                // каменные кирпичи — шахты, крепости, подземелья
+                .add(net.minecraft.world.level.block.Blocks.STONE_BRICKS)
+                .add(net.minecraft.world.level.block.Blocks.MOSSY_STONE_BRICKS)
+                .add(net.minecraft.world.level.block.Blocks.CRACKED_STONE_BRICKS)
+                .add(net.minecraft.world.level.block.Blocks.INFESTED_STONE_BRICKS)
+                .add(net.minecraft.world.level.block.Blocks.INFESTED_CRACKED_STONE_BRICKS)
+                // хранилища
+                .add(net.minecraft.world.level.block.Blocks.CHEST)
+                .add(net.minecraft.world.level.block.Blocks.TRAPPED_CHEST)
+                .add(net.minecraft.world.level.block.Blocks.BARREL)
+                // спавнеры — крепости, древние города
+                .add(net.minecraft.world.level.block.Blocks.SPAWNER);
+
+        // === УЛЬЯ ГЛУБИННЫХ ЧЕРВЕЙ: МЯГКИЕ ЯКОРЯ ===
+        // Порода и оформление, в которых черви селятся сами по себе. Улей здесь
+        // дополнительно разрежается в SOFT_ANCHOR_GATE раз, иначе мягкая порода,
+        // которой в пещерах полно, давала бы улей чуть ли не в каждом чанке.
+        // Скалк сюда намеренно НЕ входит: его слишком много в древних городах.
+        tag(com.trd.worldgen.feature.vien.DepthWormHiveFeature.ANCHOR_TAG)
+                // мягкие породы — в пещерах и копаных проходах
+                .add(net.minecraft.world.level.block.Blocks.GRANITE)
+                .add(net.minecraft.world.level.block.Blocks.POLISHED_GRANITE)
+                .add(net.minecraft.world.level.block.Blocks.ANDESITE)
+                .add(net.minecraft.world.level.block.Blocks.POLISHED_ANDESITE)
+                .add(net.minecraft.world.level.block.Blocks.DIORITE)
+                .add(net.minecraft.world.level.block.Blocks.POLISHED_DIORITE)
+                .add(net.minecraft.world.level.block.Blocks.DIRT)
+                .add(net.minecraft.world.level.block.Blocks.COARSE_DIRT)
+                .add(net.minecraft.world.level.block.Blocks.GRAVEL)
+                .add(net.minecraft.world.level.block.Blocks.TUFF)
+                .add(net.minecraft.world.level.block.Blocks.CALCITE)
+                .add(net.minecraft.world.level.block.Blocks.POLISHED_BLACKSTONE_BRICKS)
+                // оформление структур
                 .add(net.minecraft.world.level.block.Blocks.SCAFFOLDING)
                 .add(net.minecraft.world.level.block.Blocks.LADDER)
                 .add(net.minecraft.world.level.block.Blocks.TORCH)
@@ -277,18 +323,7 @@ tag(TagKey.create(Registries.BLOCK,
                 .add(net.minecraft.world.level.block.Blocks.MOSSY_COBBLESTONE_STAIRS)
                 .add(net.minecraft.world.level.block.Blocks.MOSSY_COBBLESTONE_SLAB)
                 .add(net.minecraft.world.level.block.Blocks.COBWEB)
-
-                .add(net.minecraft.world.level.block.Blocks.CHEST)
-                .add(net.minecraft.world.level.block.Blocks.TRAPPED_CHEST)
-                .add(net.minecraft.world.level.block.Blocks.SCULK)
-                .add(net.minecraft.world.level.block.Blocks.CALCITE)
-                .add(net.minecraft.world.level.block.Blocks.TUFF)
-                .add(net.minecraft.world.level.block.Blocks.POLISHED_BLACKSTONE_BRICKS)
                 .add(net.minecraft.world.level.block.Blocks.BOOKSHELF)
-                // крепости
-                .add(net.minecraft.world.level.block.Blocks.CRACKED_STONE_BRICKS)
-                .add(net.minecraft.world.level.block.Blocks.INFESTED_STONE_BRICKS)
-                .add(net.minecraft.world.level.block.Blocks.INFESTED_CRACKED_STONE_BRICKS)
                 .add(net.minecraft.world.level.block.Blocks.LODESTONE)
                 // древние города
                 .add(net.minecraft.world.level.block.Blocks.DEEPSLATE_BRICKS)
@@ -296,8 +331,76 @@ tag(TagKey.create(Registries.BLOCK,
                 .add(net.minecraft.world.level.block.Blocks.CHISELED_DEEPSLATE)
                 .add(net.minecraft.world.level.block.Blocks.CRACKED_DEEPSLATE_BRICKS)
                 .add(net.minecraft.world.level.block.Blocks.CRACKED_DEEPSLATE_TILES)
-                // триальные залы
+// триальные залы
                 .add(net.minecraft.world.level.block.Blocks.CHISELED_TUFF_BRICKS)
                 .add(net.minecraft.world.level.block.Blocks.HEAVY_CORE);
+
+        // === УЛЬЯ ГЛУБИННЫХ ЧЕРВЕЙ: ЧТО УЛЕЙ ВПРАВЕ ЗАМЕНИТЬ ===
+        // Белый список, потолок прочности — дипслейт и кирпичи из него. Руды, обсидиан,
+        // древний мусор, укреплённый дипслейт, спавнеры, сундуки и любые блоки других
+        // модов сюда НЕ входят: улей на таком полу просто не построится.
+        // Свои блоки мод открывает сюда датапаком.
+        tag(com.trd.worldgen.hive.HivePlacer.REPLACEABLE_TAG)
+                // камень и интрузивные породы
+                .add(net.minecraft.world.level.block.Blocks.STONE)
+                .add(net.minecraft.world.level.block.Blocks.GRANITE)
+                .add(net.minecraft.world.level.block.Blocks.ANDESITE)
+                .add(net.minecraft.world.level.block.Blocks.DIORITE)
+                .add(net.minecraft.world.level.block.Blocks.POLISHED_GRANITE)
+                .add(net.minecraft.world.level.block.Blocks.POLISHED_ANDESITE)
+                .add(net.minecraft.world.level.block.Blocks.POLISHED_DIORITE)
+                .add(net.minecraft.world.level.block.Blocks.SMOOTH_STONE)
+                .add(net.minecraft.world.level.block.Blocks.COBBLESTONE)
+                .add(net.minecraft.world.level.block.Blocks.MOSSY_COBBLESTONE)
+                // каменные кирпичи — в том числе заражённые: они выглядят как камень
+                // и ничего ценного не содержат
+                .add(net.minecraft.world.level.block.Blocks.STONE_BRICKS)
+                .add(net.minecraft.world.level.block.Blocks.MOSSY_STONE_BRICKS)
+                .add(net.minecraft.world.level.block.Blocks.CRACKED_STONE_BRICKS)
+                .add(net.minecraft.world.level.block.Blocks.CHISELED_STONE_BRICKS)
+                .add(net.minecraft.world.level.block.Blocks.INFESTED_STONE_BRICKS)
+                .add(net.minecraft.world.level.block.Blocks.INFESTED_MOSSY_STONE_BRICKS)
+                .add(net.minecraft.world.level.block.Blocks.INFESTED_CRACKED_STONE_BRICKS)
+                .add(net.minecraft.world.level.block.Blocks.INFESTED_CHISELED_STONE_BRICKS)
+                // дипслейт и кирпичи из него — верхняя граница прочности
+                .add(net.minecraft.world.level.block.Blocks.DEEPSLATE)
+                .add(net.minecraft.world.level.block.Blocks.COBBLED_DEEPSLATE)
+                .add(net.minecraft.world.level.block.Blocks.POLISHED_DEEPSLATE)
+                .add(net.minecraft.world.level.block.Blocks.DEEPSLATE_BRICKS)
+                .add(net.minecraft.world.level.block.Blocks.CRACKED_DEEPSLATE_BRICKS)
+                .add(net.minecraft.world.level.block.Blocks.DEEPSLATE_TILES)
+                .add(net.minecraft.world.level.block.Blocks.CRACKED_DEEPSLATE_TILES)
+                .add(net.minecraft.world.level.block.Blocks.CHISELED_DEEPSLATE)
+                .add(net.minecraft.world.level.block.Blocks.INFESTED_DEEPSLATE)
+                // туф, кальцит, грязь
+                .add(net.minecraft.world.level.block.Blocks.TUFF)
+                .add(net.minecraft.world.level.block.Blocks.POLISHED_TUFF)
+                .add(net.minecraft.world.level.block.Blocks.TUFF_BRICKS)
+                .add(net.minecraft.world.level.block.Blocks.CHISELED_TUFF_BRICKS)
+                .add(net.minecraft.world.level.block.Blocks.CALCITE)
+                .add(net.minecraft.world.level.block.Blocks.MOSS_BLOCK)
+                .add(net.minecraft.world.level.block.Blocks.DIRT)
+                .add(net.minecraft.world.level.block.Blocks.COARSE_DIRT)
+                .add(net.minecraft.world.level.block.Blocks.ROOTED_DIRT)
+                .add(net.minecraft.world.level.block.Blocks.GRAVEL)
+                .add(net.minecraft.world.level.block.Blocks.CLAY)
+                .add(net.minecraft.world.level.block.Blocks.MUD)
+                .add(net.minecraft.world.level.block.Blocks.PACKED_MUD)
+                // чёрный камень и базальт — бастионы оверворлда, мягкие
+                .add(net.minecraft.world.level.block.Blocks.BLACKSTONE)
+                .add(net.minecraft.world.level.block.Blocks.POLISHED_BLACKSTONE)
+                .add(net.minecraft.world.level.block.Blocks.POLISHED_BLACKSTONE_BRICKS)
+                .add(net.minecraft.world.level.block.Blocks.CRACKED_POLISHED_BLACKSTONE_BRICKS)
+                .add(net.minecraft.world.level.block.Blocks.CHISELED_POLISHED_BLACKSTONE)
+                .add(net.minecraft.world.level.block.Blocks.BASALT)
+                .add(net.minecraft.world.level.block.Blocks.SMOOTH_BASALT)
+                .add(net.minecraft.world.level.block.Blocks.POLISHED_BASALT)
+                .add(net.minecraft.world.level.block.Blocks.NETHERRACK)
+                // песок (подземелья в засушливых биомах)
+                .add(net.minecraft.world.level.block.Blocks.SAND)
+                .add(net.minecraft.world.level.block.Blocks.RED_SAND)
+                .add(net.minecraft.world.level.block.Blocks.SANDSTONE)
+                .add(net.minecraft.world.level.block.Blocks.SMOOTH_SANDSTONE)
+                .add(net.minecraft.world.level.block.Blocks.CHISELED_SANDSTONE);
     }
 }
