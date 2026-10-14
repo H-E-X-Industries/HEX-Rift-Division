@@ -1,6 +1,5 @@
 package com.trd.climate.client;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -12,8 +11,11 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 
+import java.util.Locale;
+
 /**
  * HUD overlay для отображения температуры игрока на экране.
+ * Расположен строго по центру между шкалой еды и здоровья.
  */
 @EventBusSubscriber(modid = "trd", bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class TemperatureHudOverlay {
@@ -35,8 +37,8 @@ public class TemperatureHudOverlay {
     private static void renderTemperatureHud(GuiGraphics guiGraphics) {
         Minecraft mc = Minecraft.getInstance();
         
-        // Не отображать если GUI скрыт или игрок в режиме наблюдателя
-        if (mc.player == null || mc.options.hideGui) {
+        // Не отображать если GUI скрыт, мир не загружен или игрок в режиме наблюдателя
+        if (mc.player == null || mc.options.hideGui || mc.player.isSpectator()) {
             return;
         }
 
@@ -44,17 +46,27 @@ public class TemperatureHudOverlay {
         float currentTemp = ClientTemperatureHandler.getCurrentTemp();
         int color = ClientTemperatureHandler.getTemperatureColor();
 
-        // Форматируем температуру
-        String tempText = String.format("%.1f°C", currentTemp);
+        // Форматируем температуру с точкой независимо от локали ОС
+        String tempText = String.format(Locale.ROOT, "%.1f°C", currentTemp);
 
-        // Позиция: по центру между едой и здоровьем
+        // Расчет позиции по центру экрана между шкалой здоровья (слева) и еды (справа)
         int screenWidth = mc.getWindow().getGuiScaledWidth();
         int screenHeight = mc.getWindow().getGuiScaledHeight();
-        
-        // Рассчитываем ширину текста для центрирования
+        int centerX = screenWidth / 2;
+
         int textWidth = mc.font.width(tempText);
-        int x = (screenWidth / 2) - (textWidth / 2); // Центрируем текст
-        int y = screenHeight - 49;                    // Над полоской здоровья
+        int x = centerX - (textWidth / 2);
+
+        // По вертикали: шкала здоровья и еды на высоте screenHeight - 39.
+        // Если надета броня (слева) или игрок под водой (справа, пузыри),
+        // размещаем на screenHeight - 52, чтобы не налезать на значки.
+        // Без брони - компактно на screenHeight - 49 прямо над сердечками и едой.
+        int y;
+        if (mc.player.getArmorValue() > 0 || mc.player.getAirSupply() < mc.player.getMaxAirSupply()) {
+            y = screenHeight - 52;
+        } else {
+            y = screenHeight - 49;
+        }
 
         // Отрисовываем текст с тенью
         guiGraphics.drawString(mc.font, tempText, x, y, color, true);

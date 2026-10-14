@@ -109,11 +109,11 @@ public class HeatSourceHelper {
             // Проверяем прямую видимость (рейкаст)
             Vec3 sourcePos = new Vec3(source.pos.getX() + 0.5, source.pos.getY() + 0.5, source.pos.getZ() + 0.5);
             
-            // Используем конструктор с CollisionContext
+            // Проверяем прямую видимость (пропускает прозрачные преграды вроде решеток каминов)
             ClipContext context = new ClipContext(
                 playerEyePos,
                 sourcePos,
-                ClipContext.Block.COLLIDER,
+                ClipContext.Block.VISUAL,
                 ClipContext.Fluid.NONE,
                 net.minecraft.world.phys.shapes.CollisionContext.empty()
             );

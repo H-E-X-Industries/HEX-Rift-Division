@@ -1,81 +1,72 @@
 package com.trd.climate.client;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 /**
- * Визуальные эффекты температуры:
- * - Оранжевая виньетка при перегреве
- * - Тряска камеры при замерзании (уже есть в ванильном freeze эффекте)
+ * Визуальные эффекты температуры на клиенте:
+ * - Управление замерзанием игрока (ticksFrozen) на стороне клиента:
+ *   1. При температуре ниже 0°C сердечки здоровья становятся морозными (Gui.HeartType.FROZEN)
+ *      со снежинками и текстурой льда, как при полном замерзании.
+ *   2. По бокам экрана отображается ванильная морозная виньетка рыхлого снега (powder_snow_outline).
+ *   3. Включается характерное покачивание и дрожание персонажа/камеры от холода.
+ * - При переохлаждении (0°C .. 10°C) виньетка плавно нарастает по мере приближения к 0°C.
+ * - При комфортной температуре (> 10°C) игрок естественным образом оттаивает.
  */
 @EventBusSubscriber(modid = "trd", value = Dist.CLIENT)
 public class TemperatureVisualEffects {
 
     @SubscribeEvent
-    public static void onRenderGuiLayer(RenderGuiLayerEvent.Post event) {
+    public static void onClientPlayerTick(PlayerTickEvent.Post event) {
+        Player player = event.getEntity();
         Minecraft mc = Minecraft.getInstance();
-        
-        if (mc.player == null || mc.options.hideGui) {
+
+        // Проверяем, что событие выполняется на клиенте для локального игрока
+        if (!player.level().isClientSide() || player != mc.player) {
+            return;
+        }
+
+        // В креативе или режиме наблюдателя эффекты холода отключены
+        if (player.isCreative() || player.isSpectator()) {
+            if (player.getTicksFrozen() > 0) {
+                player.setTicksFrozen(0);
+            }
             return;
         }
 
         float temp = ClientTemperatureHandler.getCurrentTemp();
-        
-        // Оранжевая виньетка при сильном перегреве (> 32°C)
-        if (temp > 32.0f) {
-            renderHeatVignette(event.getGuiGraphics(), temp);
-        }
-    }
+        int maxFreeze = player.getTicksRequiredToFreeze(); // Ванильные 140 тиков
 
-    /**
-     * Рендерит оранжевую виньетку перегрева (только по краям экрана).
-     * Интенсивность зависит от температуры.
-     */
-    private static void renderHeatVignette(GuiGraphics guiGraphics, float temp) {
-        Minecraft mc = Minecraft.getInstance();
-        int screenWidth = mc.getWindow().getGuiScaledWidth();
-        int screenHeight = mc.getWindow().getGuiScaledHeight();
-        
-        // Рассчитываем интенсивность
-        // 32°C → 0.0 (начало эффекта)
-        // 40°C → 0.2 (средняя интенсивность)
-        // 50°C+ → 0.25 (максимум 25% прозрачности)
-        float intensity = Math.min((temp - 32.0f) / 72.0f, 0.25f); // Делитель увеличен до 72
-        
-        if (intensity <= 0.0f) return;
-        
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        
-        // Оранжево-красный цвет (RGB: 255, 80, 0)
-        int baseAlpha = (int) (intensity * 255); // Максимум 25% от 255 = ~64
-        
-        // Размер виньетки (отступ от краев)
-        int vignetteSize = Math.min(screenWidth, screenHeight) / 4; // Меньше размер
-        
-        // Рисуем виньетку с градиентом от краев к центру (4 стороны)
-        for (int i = 0; i < vignetteSize; i++) {
-            float fade = (float) i / vignetteSize;
-            int alpha = (int) (baseAlpha * (1.0f - fade));
-            int color = (alpha << 24) | (255 << 16) | (80 << 8) | 0;
-            
-            // Верхняя полоса
-            guiGraphics.fill(0, i, screenWidth, i + 1, color);
-            // Нижняя полоса
-            guiGraphics.fill(0, screenHeight - i - 1, screenWidth, screenHeight - i, color);
-            // Левая полоса
-            guiGraphics.fill(i, 0, i + 1, screenHeight, color);
-            // Правая полоса
-            guiGraphics.fill(screenWidth - i - 1, 0, screenWidth - i, screenHeight, color);
+        if (temp < 0.0f) {
+            // Обледенение (< 0°C):
+            // Поддерживаем максимальный уровень заморозки ticksFrozen = 140 каждый клиентский такт.
+            // Это предотвращает ванильный сброс в LocalPlayer.baseTick() и заставляет ванильный рендерер:
+            // 1. Сделать сердечки морозными (player.isFullyFrozen() == true -> HeartType.FROZEN)
+            // 2. Отобразить виньетку рыхлого снега по бокам экрана (player.getPercentFrozen() == 1.0F)
+            // 3. Запустить тряску персонажа и прицела от озноба
+            player.setTicksFrozen(maxFreeze);
+        } else if (temp < 10.0f) {
+            // Сильное переохлаждение (0°C .. 10°C):
+            // Плавное появление морозной виньетки рыхлого снега по бокам экрана
+            float coldProgress = (10.0f - temp) / 10.0f; // 0.0 при 10°C -> 1.0 при 0°C
+            int targetFreeze = (int) (coldProgress * (maxFreeze - 1)); // До 139 тиков (сердечки замерзают при < 0°C)
+            int currentFreeze = player.getTicksFrozen();
+
+            if (currentFreeze < targetFreeze) {
+                player.setTicksFrozen(Math.min(targetFreeze, currentFreeze + 3));
+            } else if (currentFreeze > targetFreeze && !player.isInPowderSnow) {
+                player.setTicksFrozen(Math.max(targetFreeze, currentFreeze - 1));
+            }
+        } else {
+            // Зона комфорта и тепла (> 10°C):
+            // Если игрок не стоит внутри блока рыхлого снега, плавно убираем заморозку
+            if (!player.isInPowderSnow && player.getTicksFrozen() > 0) {
+                player.setTicksFrozen(Math.max(0, player.getTicksFrozen() - 2));
+            }
         }
-        
-        RenderSystem.disableBlend();
     }
 }

@@ -32,16 +32,23 @@ public class ClientTemperatureHandler {
     }
 
     /**
-     * Получить цвет для отображения температуры в HUD.
-     * Синий - холодно, белый - нормально, красный - жарко.
+     * Получить цвет для отображения температуры в HUD в зависимости от состояния.
      */
     public static int getTemperatureColor() {
-        if (currentTemp < 15.0f) {
-            return 0x55AAFF; // Холод - синий
-        } else if (currentTemp > 25.0f) {
-            return 0xFF5555; // Жара - красный
+        if (currentTemp < 0.0f) {
+            return 0x55FFFF; // Обледенение - ледяной аквамарин
+        } else if (currentTemp < 10.0f) {
+            return 0x55AAFF; // Сильное переохлаждение - синий
+        } else if (currentTemp < 15.0f) {
+            return 0x88CCFF; // Легкий холод - светло-синий
+        } else if (currentTemp <= 25.0f) {
+            return 0xFFFFFF; // Зона комфорта - белый
+        } else if (currentTemp <= 32.0f) {
+            return 0xFFEE66; // Тепло - янтарно-желтый
+        } else if (currentTemp <= 40.0f) {
+            return 0xFFAA33; // Жара / тепловой удар - оранжевый
         } else {
-            return 0xFFFFFF; // Комфорт - белый
+            return 0xFF4444; // Критический перегрев - алый
         }
     }
 }

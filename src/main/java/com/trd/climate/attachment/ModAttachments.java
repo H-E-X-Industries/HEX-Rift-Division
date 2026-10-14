@@ -17,11 +17,13 @@ public class ModAttachments {
 
     /**
      * Attachment для хранения температурных данных игрока.
+     * copyOnDeath() сохраняет состояние при телепортациях и переходах измерений.
      */
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<PlayerTemperatureData>> PLAYER_TEMPERATURE =
             ATTACHMENT_TYPES.register("player_temperature", () ->
                     AttachmentType.builder(() -> new PlayerTemperatureData())
                             .serialize(PlayerTemperatureData.CODEC)
+                            .copyOnDeath()
                             .build()
             );
 

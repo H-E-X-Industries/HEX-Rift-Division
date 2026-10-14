@@ -36,4 +36,10 @@ public class ModExplosionParticles {
      */
     public static final DeferredHolder<ParticleType<?>, SimpleParticleType> SHOT =
             PARTICLE_TYPES.register("shot", () -> new SimpleParticleType(true));
+
+    /**
+     * Пар изо рта на холоде: полупрозрачный, не падает, замедляется и плавно исчезает.
+     */
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> BREATH =
+            PARTICLE_TYPES.register("breath", () -> new SimpleParticleType(true));
 }
