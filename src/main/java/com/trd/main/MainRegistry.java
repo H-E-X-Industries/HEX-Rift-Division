@@ -29,8 +29,11 @@ public class MainRegistry {
         com.trd.menu.ModMenuTypes.register(modEventBus);
         com.trd.sound.ModSounds.register(modEventBus);
         com.trd.worldgen.feature.ModFeatures.FEATURES.register(modEventBus);
-        com.trd.worldgen.tree.custom.ModTrunkPlacerTypes.register(modEventBus);
-        com.trd.worldgen.tree.custom.ModFoliagePlacerTypes.register(modEventBus);
+        com.trd.worldgen.biome.sequoia.ModTrunkPlacerTypes.register(modEventBus);
+        com.trd.worldgen.biome.sequoia.ModFoliagePlacerTypes.register(modEventBus);
+        
+        // Регистрация климатической системы
+        com.trd.climate.attachment.ModAttachments.register(modEventBus);
         
         // Регистрация климатической системы
         com.trd.climate.attachment.ModAttachments.register(modEventBus);

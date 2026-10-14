@@ -2,9 +2,7 @@ package com.trd.item.tools.cast_pickaxes;
 
 
 import com.trd.block.basic.conglomerate.ConglomerateBlock;
-import com.trd.client.gecko.item.tools.CastPickaxeItemRenderer;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
@@ -28,77 +26,92 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
-import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.*;
-import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
-import software.bernie.geckolib.animatable.GeoItem;
-import software.bernie.geckolib.animatable.SingletonGeoAnimatable;
-import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.*;
-import software.bernie.geckolib.util.GeckoLibUtil;
 
 import javax.annotation.Nullable;
 import java.util.*;
-import java.util.function.Consumer;
 
-public class CastPickaxeItem extends PickaxeItem implements GeoItem {
-    private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+/**
+ * Литая кирка: клинок и цепь вместо древка.
+ *
+ * <p>Бьёт не по месту под курсором, а по тому, что игрок видит: {@link
+ * #performAttack} бросает луч из глаз и ищет сперва живность на нём, и только
+ * потом — блок. Чем дольше держать, тем сильнее удар, а у полного заряда у
+ * кирки включается ещё и особый удар по конгломерату.
+ *
+ * <p><b>Модель рисуется на glTF, а не на геколибе.</b> Ни контроллера анимаций,
+ * ни триггеров здесь нет: состояние замаха держит
+ * {@link CastPickaxeClientAnim} на клиенте, а клипы лежат в самой модели
+ * {@code assets/trd/models/item/cast_pickaxe.gltf}. Пакет для этого не понадобился —
+ * см. разбор в {@link CastPickaxeClientAnim}.
+ *
+ * <p>Звуки, урон, прочность и особые удары остались ровно такими же, какими были
+ * на геколибе.
+ */
+public class CastPickaxeItem extends PickaxeItem {
     private final CastPickaxeStats stats;
 
-    private static final String TAG_ANIM_STATE = "CastAnimState";
-    private static final int ANIM_STATE_CHARGING = 1;
-    private static final int ANIM_STATE_HOLDING = 2;
     private static final ResourceLocation ATTACK_DAMAGE_ID = ResourceLocation.fromNamespaceAndPath("trd", "cast_pickaxe_attack_damage");
     private static final ResourceLocation ATTACK_SPEED_ID = ResourceLocation.fromNamespaceAndPath("trd", "cast_pickaxe_attack_speed");
-    private static final int COOLDOWN_TICKS = 20;
 
-    // Анимации
-    private static final RawAnimation CHARGING_ANIM = RawAnimation.begin().thenPlay("charging");
-    private static final RawAnimation HOLDING_ANIM = RawAnimation.begin().thenPlay("holding");
-    private static final RawAnimation HIT_ANIM = RawAnimation.begin().thenPlay("hit");
+    /**
+     * Тиков кулдауна между зарядами.
+     *
+     * <p>Ровно длина клипа замаха: 1.75 с из
+     * {@code assets/trd/models/item/cast_pickaxe.gltf}, то есть 35 тиков. Раньше
+     * тут стояло 20, и замах успевал проиграть меньше половины — кирку можно было
+     * замахнуть снова, не дождавшись конца удара, и два замаха наезжали друг на
+     * друга.
+     *
+     * <p>Кулдаун считается от отпускания, ровно с которого клип и начинается, так
+     * что числа должны совпадать. Длину клипа на сервере узнать нельзя, поэтому
+     * источник истины здесь, а {@link CastPickaxeClientAnim} берёт это же число
+     * себе за исходное, пока не прочитает настоящую длину из модели.
+     */
+    public static final int COOLDOWN_TICKS = 35;
 
     public CastPickaxeItem(CastPickaxeStats stats, Properties properties) {
         // 1.21.1: PickaxeItem(Tier, Properties) - no attack damage/speed in constructor
         super(stats.getTier(), properties.stacksTo(1));
         this.stats = stats;
-        SingletonGeoAnimatable.registerSyncedAnimatable(this);
     }
 
     public CastPickaxeStats getStats() { return stats; }
-
-    @Override
-    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>(this, "controller", 0, state -> PlayState.CONTINUE)
-                .triggerableAnim("charging", CHARGING_ANIM)
-                .triggerableAnim("holding", HOLDING_ANIM)
-                .triggerableAnim("hit", HIT_ANIM)
-        );
-    }
-
-    @Override
-    public AnimatableInstanceCache getAnimatableInstanceCache() {
-        return cache;
-    }
-
-    /**
-     * Рассчитывает скорость анимации на основе времени зарядки кирки.
-     */
-    public float getAnimationSpeed() {
-        return 40.0f / stats.getChargeTicks();
-    }
 
     private boolean canUse(Player player) {
         return player.getOffhandItem().isEmpty() && !player.getCooldowns().isOnCooldown(this);
     }
 
+    /**
+     * Метод намеренно не переопределён: ПКМ у кирки — это обычное взаимодействие с
+     * миром, а не заряд.
+     *
+     * <p>Порядок на сервере такой: сперва блок (дверь, сундук, верстак), и если он
+     * действие съел — до предмета дело не доходит. Если бы здесь стоял заряд, то
+     * либо сундук перестал бы открываться, либо нажатие на пустом блоке давало бы
+     * заряд вместо того, чтобы его не было. Заряд живёт в {@link #use}, куда
+     * приводит только ЛКМ через {@link CastPickaxeChargeInput}.
+     */
     @Override
-    public InteractionResult useOn(UseOnContext context) {
-        Player player = context.getPlayer();
-        if (player == null) return InteractionResult.PASS;
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        if (!beginCharge(player, hand).consumesAction()) {
+            return InteractionResultHolder.fail(player.getItemInHand(hand));
+        }
+        return InteractionResultHolder.consume(player.getItemInHand(hand));
+    }
 
+    /**
+     * Заговаривает кирку на заряд.
+     *
+     * <p>Единственный вход: {@link CastPickaxeChargeInput} перехватывает ЛКМ и
+     * приводит сюда, а ПКМ до предмета не доходит вовсе — её съедает либо блок,
+     * либо отмена нажатия. Ближе смотреть не надо: удар идёт по тому, что игрок
+     * видит, и в момент отпускания.
+     */
+    private InteractionResult beginCharge(Player player, InteractionHand hand) {
         if (!canUse(player)) {
             if (!player.level().isClientSide && player.getCooldowns().isOnCooldown(this)) {
                 player.displayClientMessage(Component.translatable("message.trd.cast_pickaxe.cooldown"), true);
@@ -110,35 +123,8 @@ public class CastPickaxeItem extends PickaxeItem implements GeoItem {
             return InteractionResult.FAIL;
         }
 
-        player.startUsingItem(context.getHand());
-
-        if (!player.level().isClientSide) {
-            ItemStack stack = player.getItemInHand(context.getHand());
-            long instanceId = GeoItem.getOrAssignId(stack, (ServerLevel) player.level());
-            triggerAnim(player, instanceId, "controller", "charging");
-        }
-
-        return InteractionResult.CONSUME;
-    }
-
-    @Override
-    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        if (!canUse(player)) {
-            if (!level.isClientSide && player.getCooldowns().isOnCooldown(this)) {
-                player.displayClientMessage(Component.translatable("message.trd.cast_pickaxe.cooldown"), true);
-            }
-            return InteractionResultHolder.fail(player.getItemInHand(hand));
-        }
-
         player.startUsingItem(hand);
-
-        if (!level.isClientSide) {
-            ItemStack stack = player.getItemInHand(hand);
-            long instanceId = GeoItem.getOrAssignId(stack, (ServerLevel) level);
-            triggerAnim(player, instanceId, "controller", "charging");
-        }
-
-        return InteractionResultHolder.consume(player.getItemInHand(hand));
+        return InteractionResult.CONSUME;
     }
 
     @Override
@@ -151,19 +137,18 @@ public class CastPickaxeItem extends PickaxeItem implements GeoItem {
         return UseAnim.NONE;
     }
 
-    @Override
-    public void onUseTick(Level level, LivingEntity entity, ItemStack stack, int remainingUseDuration) {
-        super.onUseTick(level, entity, stack, remainingUseDuration);
-
-        if (level.isClientSide || !(entity instanceof Player player)) return;
-
-        int chargeTime = 72000 - remainingUseDuration;
-        if (chargeTime == stats.getChargeTicks()) {
-            long instanceId = GeoItem.getOrAssignId(stack, (ServerLevel) level);
-            triggerAnim(player, instanceId, "controller", "holding");
-        }
-    }
-
+    /**
+     * Отпускание заряда: удар по тому, что видно.
+     *
+     * <p>Взмаха рукой здесь нет намеренно. Он шёл бы вразрез с замахом самой
+     * кирки: {@code ItemInHandLayer} дёргает предплечье по своей шкале, а модель
+     * в это время доворачивается по своему клипу, и вид разъезжался на два
+     * независимых движения. У кирки замах свой, телом его не дублируем.
+     *
+     * <p>Взмах остаётся только у совсем короткого нажатия, до 5% заряда: там удара
+     * нет и клип не показывается, так что без взмаха нажатие выглядело бы как
+     * ничего не сделавшее.
+     */
     @Override
     public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeLeft) {
         if (!(entity instanceof Player player)) return;
@@ -171,11 +156,6 @@ public class CastPickaxeItem extends PickaxeItem implements GeoItem {
         int chargeTime = 72000 - timeLeft;
         InteractionHand hand = player.getUsedItemHand();
         float chargePercent = Math.min(1.0f, chargeTime / (float) stats.getChargeTicks());
-
-        if (!level.isClientSide) {
-            long instanceId = GeoItem.getOrAssignId(stack, (ServerLevel) level);
-            triggerAnim(player, instanceId, "controller", "hit");
-        }
 
         player.getCooldowns().addCooldown(this, COOLDOWN_TICKS);
 
@@ -190,7 +170,6 @@ public class CastPickaxeItem extends PickaxeItem implements GeoItem {
         }
 
         int attackResult = performAttack(stack, level, player, chargePercent, hand);
-        player.swing(hand, true);
 
         if (!level.isClientSide) {
             if (attackResult == 1) {
@@ -514,15 +493,6 @@ public class CastPickaxeItem extends PickaxeItem implements GeoItem {
         return super.hurtEnemy(stack, target, attacker);
     }
 
-    /**
-     * Пока идёт зарядка или стоит кулдаун — блоки нельзя ломать обычным ударом.
-     * В 1.20.1 это было переопределением {@code Item#onBlockStartBreak}; в 1.21.1
-     * метода больше нет, поэтому проверка живёт в {@link CastPickaxeBreakHandler}.
-     */
-    public boolean isLockedOut(Player player) {
-        return player.isUsingItem() || player.getCooldowns().isOnCooldown(this);
-    }
-
     @Override
     public ItemAttributeModifiers getDefaultAttributeModifiers() {
         return ItemAttributeModifiers.builder()
@@ -568,18 +538,5 @@ public class CastPickaxeItem extends PickaxeItem implements GeoItem {
                             (int)(stats.getVeinMinerDurabilityCost() * 100))
                     .withStyle(ChatFormatting.GOLD));
         }
-    }
-
-    @Override
-    public void initializeClient(Consumer<IClientItemExtensions> consumer) {
-        consumer.accept(new IClientItemExtensions() {
-            private CastPickaxeItemRenderer renderer;
-
-            @Override
-            public BlockEntityWithoutLevelRenderer getCustomRenderer() {
-                if (renderer == null) renderer = new CastPickaxeItemRenderer();
-                return renderer;
-            }
-        });
     }
 }

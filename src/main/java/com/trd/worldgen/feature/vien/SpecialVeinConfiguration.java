@@ -1,4 +1,4 @@
-package com.trd.worldgen.feature;
+package com.trd.worldgen.feature.vien;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;

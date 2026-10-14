@@ -1,4 +1,4 @@
-package com.trd.worldgen.feature;
+package com.trd.worldgen.feature.vien;
 
 import com.trd.api.vein.VeinBiomeResolver;
 import com.trd.api.vein.VeinCompositionGenerator;

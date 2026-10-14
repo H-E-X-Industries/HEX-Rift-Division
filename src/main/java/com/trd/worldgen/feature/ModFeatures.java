@@ -1,6 +1,7 @@
 package com.trd.worldgen.feature;
 
 import com.trd.main.MainRegistry;
+import com.trd.worldgen.feature.vien.*;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.neoforged.neoforge.registries.DeferredRegister;

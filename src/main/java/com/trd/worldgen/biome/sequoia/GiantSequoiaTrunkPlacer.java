@@ -1,4 +1,4 @@
-package com.trd.worldgen.tree.custom;
+package com.trd.worldgen.biome.sequoia;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;

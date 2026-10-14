@@ -1,4 +1,4 @@
-package com.trd.worldgen.tree.custom;
+package com.trd.worldgen.biome.sequoia;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.levelgen.feature.foliageplacers.FoliagePlacerType;
