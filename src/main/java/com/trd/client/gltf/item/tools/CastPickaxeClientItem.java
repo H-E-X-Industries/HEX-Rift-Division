@@ -65,11 +65,12 @@ public final class CastPickaxeClientItem {
 
         @Override
         public HumanoidModel.ArmPose getArmPose(LivingEntity entity, InteractionHand hand, ItemStack stack) {
-            // Обычная поза предмета в руке — ровно то, что отдавал ванильный
-            // Item#getArmPose до появления расширения. Кирка двуручная, и вид от
-            // третьего лица должен остаться прежним: натяжение при зарядке рисует
-            // не поза руки, а клип модели.
-            return HumanoidModel.ArmPose.ITEM;
+            // Поза лука, как у автопушки: кирка двуручная и от третьего лица
+            // держится обеими руками перед собой, а не болтается в одной.
+            //
+            // На вид от первого лица поза не влияет — там ракурс задаёт
+            // ItemInHandRenderer, и он смотрит на UseAnim, а не на ArmPose.
+            return HumanoidModel.ArmPose.CROSSBOW_HOLD;
         }
     }
 }
