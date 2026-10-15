@@ -2,8 +2,8 @@ package com.trd.client.render;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.trd.main.MainRegistry;
-import com.hex.hexrender.direct.DirectPass;
-import com.hex.hexrender.direct.DirectRenderer;
+import com.wf.gemrender.direct.DirectPass;
+import com.wf.gemrender.direct.DirectRenderer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;

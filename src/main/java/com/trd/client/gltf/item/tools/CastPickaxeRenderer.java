@@ -1,14 +1,14 @@
 package com.trd.client.gltf.item.tools;
 
 import com.trd.item.tools.cast_pickaxes.CastPickaxeClientAnim;
-import com.hex.hexrender.direct.DirectPass;
-import com.hex.hexrender.direct.DirectRenderer;
-import com.hex.hexrender.direct.GltfVanillaRenderer;
-import com.hex.hexrender.direct.IrisDirectBridge;
-import com.hex.hexrender.direct.TextureSlots;
-import com.hex.hexrender.gltf.GemRenderGltfModel;
-import com.hex.hexrender.gltf.GltfAnimation;
-import com.hex.hexrender.render.Vanilla;
+import com.wf.gemrender.direct.DirectPass;
+import com.wf.gemrender.direct.DirectRenderer;
+import com.wf.gemrender.direct.GltfVanillaRenderer;
+import com.wf.gemrender.direct.IrisDirectBridge;
+import com.wf.gemrender.direct.TextureSlots;
+import com.wf.gemrender.gltf.GemRenderGltfModel;
+import com.wf.gemrender.gltf.GltfAnimation;
+import com.wf.gemrender.render.Vanilla;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;

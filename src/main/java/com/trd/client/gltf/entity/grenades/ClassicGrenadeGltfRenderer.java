@@ -3,8 +3,8 @@ package com.trd.client.gltf.entity.grenades;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.trd.client.gltf.item.grenades.ClassicGrenadeVariants;
-import com.hex.hexrender.direct.DirectPass;
-import com.hex.hexrender.direct.DirectRenderer;
+import com.wf.gemrender.direct.DirectPass;
+import com.wf.gemrender.direct.DirectRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -151,8 +151,8 @@ public class ClassicGrenadeGltfRenderer<T extends Entity> extends EntityRenderer
         // (то есть ДО вращения вершин модели), чтобы модель крутилась строго вокруг заданной оси.
         poseStack.translate(0.0F, -modelCenterY(variant), 0.0F);
 
-        if (com.hex.hexrender.direct.IrisDirectBridge.isShaderPackInUse()) {
-            com.hex.hexrender.direct.GltfVanillaRenderer.render(
+        if (com.wf.gemrender.direct.IrisDirectBridge.isShaderPackInUse()) {
+            com.wf.gemrender.direct.GltfVanillaRenderer.render(
                     model,
                     ClassicGrenadeVariants.hiddenPin(variant),
                     0.0F,
@@ -161,8 +161,8 @@ public class ClassicGrenadeGltfRenderer<T extends Entity> extends EntityRenderer
                     packedLight,
                     OverlayTexture.NO_OVERLAY,
                     0xFFFFFFFF,
-                    com.hex.hexrender.texture.VariantUv.NONE,
-                    com.hex.hexrender.direct.TextureSlots.NONE);
+                    com.wf.gemrender.texture.VariantUv.NONE,
+                    com.wf.gemrender.direct.TextureSlots.NONE);
         } else {
             DirectRenderer.submit(model, ClassicGrenadeVariants.hiddenPin(variant), 0.0F,
                     poseStack.last().pose(), packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFFFF,

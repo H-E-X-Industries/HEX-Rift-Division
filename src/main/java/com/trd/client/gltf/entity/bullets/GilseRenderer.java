@@ -3,13 +3,13 @@ package com.trd.client.gltf.entity.bullets;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.trd.entity.weapons.bullets.GilseEntity;
-import com.hex.hexrender.asset.GemRenderModels;
-import com.hex.hexrender.direct.DirectPass;
-import com.hex.hexrender.direct.DirectRenderer;
-import com.hex.hexrender.direct.GltfVanillaRenderer;
-import com.hex.hexrender.direct.IrisDirectBridge;
-import com.hex.hexrender.direct.TextureSlots;
-import com.hex.hexrender.texture.VariantUv;
+import com.wf.gemrender.asset.GemRenderModels;
+import com.wf.gemrender.direct.DirectPass;
+import com.wf.gemrender.direct.DirectRenderer;
+import com.wf.gemrender.direct.GltfVanillaRenderer;
+import com.wf.gemrender.direct.IrisDirectBridge;
+import com.wf.gemrender.direct.TextureSlots;
+import com.wf.gemrender.texture.VariantUv;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
@@ -123,7 +123,7 @@ public class GilseRenderer extends EntityRenderer<GilseEntity> {
         if (IrisDirectBridge.isShaderPackInUse()) {
             GltfVanillaRenderer.render(
                     model,
-                    (com.hex.hexrender.gltf.GltfAnimation) null,
+                    (com.wf.gemrender.gltf.GltfAnimation) null,
                     0.0f,
                     poseStack,
                     bufferSource,
@@ -134,7 +134,7 @@ public class GilseRenderer extends EntityRenderer<GilseEntity> {
                     TextureSlots.NONE);
         } else {
             var matrix = poseStack.last().pose();
-            DirectRenderer.submit(model, (com.hex.hexrender.gltf.GltfAnimation) null, 0.0f,
+            DirectRenderer.submit(model, (com.wf.gemrender.gltf.GltfAnimation) null, 0.0f,
                     matrix, packedLight, net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY,
                     0xFFFFFFFF, DirectPass.LEVEL,
                     VariantUv.NONE);

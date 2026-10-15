@@ -2,11 +2,11 @@ package com.trd.client.gltf.item.tools;
 
 import com.mojang.logging.LogUtils;
 import com.trd.main.MainRegistry;
-import com.hex.hexrender.asset.GemRenderModels;
-import com.hex.hexrender.gltf.GemRenderGltfModel;
-import com.hex.hexrender.gltf.GltfAnimation;
-import com.hex.hexrender.gltf.NodeTable;
-import com.hex.hexrender.gltf.PoseDriver;
+import com.wf.gemrender.asset.GemRenderModels;
+import com.wf.gemrender.gltf.GemRenderGltfModel;
+import com.wf.gemrender.gltf.GltfAnimation;
+import com.wf.gemrender.gltf.NodeTable;
+import com.wf.gemrender.gltf.PoseDriver;
 import net.minecraft.resources.ResourceLocation;
 import org.slf4j.Logger;
 

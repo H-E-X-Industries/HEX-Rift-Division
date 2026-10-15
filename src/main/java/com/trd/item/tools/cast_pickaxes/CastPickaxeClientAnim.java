@@ -1,8 +1,8 @@
 package com.trd.item.tools.cast_pickaxes;
 
 import com.trd.main.MainRegistry;
-import com.hex.hexrender.gltf.GemRenderGltfModel;
-import com.hex.hexrender.gltf.GltfAnimation;
+import com.wf.gemrender.gltf.GemRenderGltfModel;
+import com.wf.gemrender.gltf.GltfAnimation;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;

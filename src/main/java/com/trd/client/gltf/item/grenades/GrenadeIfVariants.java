@@ -9,8 +9,8 @@ import javax.annotation.Nullable;
 import java.util.EnumMap;
 import java.util.Map;
 
-import com.hex.hexrender.gltf.GemRenderGltfModel;
-import com.hex.hexrender.gltf.GltfAnimation;
+import com.wf.gemrender.gltf.GemRenderGltfModel;
+import com.wf.gemrender.gltf.GltfAnimation;
 
 /**
  * Выбор модели ударной гранаты по её виду.

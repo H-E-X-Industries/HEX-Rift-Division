@@ -2,8 +2,8 @@ package com.trd.item.weapons.guns;
 
 import com.trd.client.gltf.item.guns.MachineGunModel;
 import com.trd.client.overlay.MachineGunScope;
-import com.hex.hexrender.gltf.GemRenderGltfModel;
-import com.hex.hexrender.gltf.GltfAnimation;
+import com.wf.gemrender.gltf.GemRenderGltfModel;
+import com.wf.gemrender.gltf.GltfAnimation;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;

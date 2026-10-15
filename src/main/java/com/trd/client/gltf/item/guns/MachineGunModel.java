@@ -4,10 +4,10 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.logging.LogUtils;
-import com.hex.hexrender.gltf.GemRenderGltfModel;
-import com.hex.hexrender.gltf.GltfAnimation;
-import com.hex.hexrender.gltf.GltfPose;
-import com.hex.hexrender.gltf.NodeTable;
+import com.wf.gemrender.gltf.GemRenderGltfModel;
+import com.wf.gemrender.gltf.GltfAnimation;
+import com.wf.gemrender.gltf.GltfPose;
+import com.wf.gemrender.gltf.NodeTable;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
@@ -193,7 +193,7 @@ public final class MachineGunModel {
      */
     public static void captureItemMatrix(net.minecraft.world.item.ItemDisplayContext context,
                                          Matrix4f modelToWorld) {
-        if (com.hex.hexrender.direct.IrisDirectBridge.isRenderingShadows()) {
+        if (com.wf.gemrender.direct.IrisDirectBridge.isRenderingShadows()) {
             return;
         }
         if (!isHandContext(context)) {

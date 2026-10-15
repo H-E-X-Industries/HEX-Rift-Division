@@ -88,13 +88,13 @@ Example mod description.
     ordering="NONE"
     side="BOTH"
 
-# glTF-модели (в том числе пушка) рисуются через HexRender. Он же тянет за собой
+# glTF-модели (в том числе пушка) рисуются через GemRender. Он же тянет за собой
 # Flywheel, поэтому AFTER: наш рендерер должен создаваться после его бэкендов.
-# CLIENT: на сервере HexRender не нужен, и ставить его не требуется.
+# CLIENT: на сервере GemRender не нужен, и ставить его не требуется.
 [[dependencies.${mod_id}]]
-    modId="hexrender"
+    modId="gemrender"
     type="required"
-    versionRange="[0.1.6,1.0.0)"
+    versionRange="[0.1.17,1.0.0)"
     ordering="AFTER"
     side="CLIENT"
 # TerraBlender
