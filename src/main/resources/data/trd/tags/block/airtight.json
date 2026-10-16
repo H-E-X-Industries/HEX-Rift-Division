@@ -3,9 +3,19 @@
   "values": [
     "trd:insulation_controller",
     "trd:armored_glass",
+    "trd:concrete_armored_glass",
     "trd:steel_door",
     "minecraft:glass",
     "minecraft:tinted_glass",
-    "minecraft:iron_door"
+    "minecraft:glass_pane",
+    "minecraft:iron_door",
+    {
+      "id": "#c:glass_panes",
+      "required": false
+    },
+    {
+      "id": "#c:glass_blocks",
+      "required": false
+    }
   ]
 }

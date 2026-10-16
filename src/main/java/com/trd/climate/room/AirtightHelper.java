@@ -12,16 +12,18 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.TrapDoorBlock;
 import net.minecraft.world.level.block.StainedGlassBlock;
+import net.minecraft.world.level.block.StainedGlassPaneBlock;
 import net.minecraft.world.level.block.TintedGlassBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.common.Tags;
 
 /**
  * Проверка блоков на герметичность (airtight).
  * Герметичными считаются:
  * - Блоки с тегом #trd:airtight
  * - Контроллер термоизоляции
- * - Любые закрытые двери (включая железные и стальные)
- * - Стекла (ванильное, цветное, тонированное, бронированное)
+ * - Любые закрытые двери и люки (включая железные и стальные)
+ * - Остекление (блоки стекла и стеклянные панели: обычные, цветные, тонированные, бронированные)
  * - Полнотелые непрозрачные блоки (камень, бетон, кирпичи, дерево, металлы и др.)
  */
 public final class AirtightHelper {
@@ -58,10 +60,17 @@ public final class AirtightHelper {
             return !state.getValue(TrapDoorBlock.OPEN);
         }
 
-        // 4. Остекление
-        if (state.is(Blocks.GLASS) || state.is(Blocks.TINTED_GLASS)
+        // 4. Остекление (блоки стекла и стеклянные панели)
+        if (state.is(Tags.Blocks.GLASS_PANES)
+                || state.is(Tags.Blocks.GLASS_BLOCKS)
+                || state.is(Blocks.GLASS_PANE)
+                || state.getBlock() instanceof StainedGlassPaneBlock
+                || state.is(Blocks.GLASS)
+                || state.is(Blocks.TINTED_GLASS)
                 || state.getBlock() instanceof StainedGlassBlock
-                || state.is(ModBlocks.ARMORED_GLASS.get())) {
+                || state.getBlock() instanceof TintedGlassBlock
+                || state.is(ModBlocks.ARMORED_GLASS.get())
+                || state.is(ModBlocks.CONCRETE_ARMED_GLASS.get())) {
             return true;
         }
 

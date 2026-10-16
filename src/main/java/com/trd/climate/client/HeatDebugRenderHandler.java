@@ -7,8 +7,10 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import com.trd.client.config.ModKeyBindings;
 import com.trd.main.MainRegistry;
 import net.minecraft.client.Camera;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -28,8 +30,10 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.joml.Matrix4f;
+import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 
 import java.util.ArrayList;
@@ -58,18 +62,55 @@ public class HeatDebugRenderHandler {
         float maxHeatScale = 1.0f;
     }
 
+    public static boolean heatDebugEnabled = false;
+
+    @SubscribeEvent
+    public static void onClientTick(ClientTickEvent.Post event) {
+        if (!ModKeyBindings.HEAT_DEBUG_KEY.consumeClick()) {
+            return;
+        }
+        if (isAnyOtherKeyPressed(ModKeyBindings.HEAT_DEBUG_KEY)) {
+            return;
+        }
+        heatDebugEnabled = !heatDebugEnabled;
+    }
+
+    /** Проверяет, что не зажата ни одна другая клавиша — защита от комбинаций вида F3+H, если забинден F3. */
+    private static boolean isAnyOtherKeyPressed(KeyMapping keyMapping) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc == null || mc.getWindow() == null) {
+            return false;
+        }
+        long window = mc.getWindow().getWindow();
+        if (window == 0L) {
+            return false;
+        }
+        int boundKey = keyMapping.getKey().getValue();
+        if (boundKey == GLFW.GLFW_KEY_F3) {
+            for (int key = GLFW.GLFW_KEY_SPACE; key <= GLFW.GLFW_KEY_MENU; key++) {
+                if (key == boundKey) {
+                    continue;
+                }
+                if (GLFW.glfwGetKey(window, key) == GLFW.GLFW_PRESS) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     @SubscribeEvent
     public static void onRenderLevelStage(RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
             return;
         }
 
-        Minecraft mc = Minecraft.getInstance();
-        // Включается только когда нажат экран отладки F3
-        if (!mc.gui.getDebugOverlay().showDebugScreen()) {
+        // Проверяем флаг включения отладки (управляется переназначаемой клавишей HEAT_DEBUG_KEY)
+        if (!heatDebugEnabled) {
             return;
         }
 
+        Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null) {
             return;
         }
