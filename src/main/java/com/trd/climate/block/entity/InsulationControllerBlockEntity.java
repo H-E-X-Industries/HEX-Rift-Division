@@ -55,6 +55,7 @@ public class InsulationControllerBlockEntity extends BlockEntity implements Seal
     // Кеш позиций источников тепла/холода внутри комнаты для оптимизации тика
     private final Set<BlockPos> cachedThermalSources = new HashSet<>();
     private int scanCooldown = 0;
+    private boolean lastLeakIsDoor = false;
 
     public InsulationControllerBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.INSULATION_CONTROLLER_BE.get(), pos, state);
@@ -83,6 +84,42 @@ public class InsulationControllerBlockEntity extends BlockEntity implements Seal
     @Override
     public boolean isSealed() {
         return this.isSealed;
+    }
+
+    @Override
+    public boolean isStructureValid() {
+        return this.isSealed || (this.cornerA != null && this.cornerB != null && this.volume > 0);
+    }
+
+    @Override
+    public boolean hasLeak() {
+        return !this.isSealed && this.cornerA != null && this.cornerB != null;
+    }
+
+    @Override
+    public boolean isBoundary(BlockPos pos) {
+        if (cornerA == null || cornerB == null) return false;
+        int minX = Math.min(cornerA.getX(), cornerB.getX());
+        int minY = Math.min(cornerA.getY(), cornerB.getY());
+        int minZ = Math.min(cornerA.getZ(), cornerB.getZ());
+        int maxX = Math.max(cornerA.getX(), cornerB.getX());
+        int maxY = Math.max(cornerA.getY(), cornerB.getY());
+        int maxZ = Math.max(cornerA.getZ(), cornerB.getZ());
+
+        int px = pos.getX();
+        int py = pos.getY();
+        int pz = pos.getZ();
+
+        boolean inShellX = px >= minX - 1 && px <= maxX + 1;
+        boolean inShellY = py >= minY - 1 && py <= maxY + 1;
+        boolean inShellZ = pz >= minZ - 1 && pz <= maxZ + 1;
+
+        if (!inShellX || !inShellY || !inShellZ) return false;
+
+        // Находится на одной из 6 граней
+        return px == minX - 1 || px == maxX + 1 ||
+               py == minY - 1 || py == maxY + 1 ||
+               pz == minZ - 1 || pz == maxZ + 1;
     }
 
     /**
@@ -121,6 +158,9 @@ public class InsulationControllerBlockEntity extends BlockEntity implements Seal
         }
 
         // Все грани оболочки герметичны!
+        if (!this.isSealed) {
+            this.roomTemperature = com.trd.climate.calculation.TemperatureCalculator.calculateOutdoorAmbient(level, worldPosition);
+        }
         this.isSealed = true;
         this.volume = dx * dy * dz;
         this.interiorBox = new AABB(minX, minY, minZ, maxX + 1, maxY + 1, maxZ + 1);
@@ -322,7 +362,8 @@ public class InsulationControllerBlockEntity extends BlockEntity implements Seal
         if (!this.isSealed) return;
         this.isSealed = false;
         level.setBlock(worldPosition, getBlockState().setValue(InsulationControllerBlock.SEALED, false), 3);
-        SealedRoomManager.unregister(level, worldPosition);
+        // Сохраняем комнату в менеджере: статус разгерметизации с медленным остыванием
+        SealedRoomManager.register(level, worldPosition, this);
         setChanged();
         level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
     }
@@ -375,13 +416,17 @@ public class InsulationControllerBlockEntity extends BlockEntity implements Seal
      */
     private float calculateHeatBalance(ServerLevel level) {
         float totalQ = 0.0f;
+        boolean isLargeRoom = this.volume > 500;
+
         for (BlockPos pos : cachedThermalSources) {
             BlockState state = level.getBlockState(pos);
-            // Костры
+            // Костры и факелы не имеют импакта в комнатах больше 500 блоков!
             if (state.is(Blocks.CAMPFIRE) && state.getValue(CampfireBlock.LIT)) {
-                totalQ += 15.0f;
+                if (!isLargeRoom) totalQ += 15.0f;
             } else if (state.is(Blocks.SOUL_CAMPFIRE) && state.getValue(CampfireBlock.LIT)) {
-                totalQ += 10.5f;
+                if (!isLargeRoom) totalQ += 10.5f;
+            } else if (state.is(Blocks.TORCH) || state.is(Blocks.WALL_TORCH)) {
+                if (!isLargeRoom) totalQ += 0.5f;
             }
             // Печи
             else if ((state.is(Blocks.FURNACE) || state.is(Blocks.BLAST_FURNACE) || state.is(Blocks.SMOKER))
@@ -393,10 +438,6 @@ public class InsulationControllerBlockEntity extends BlockEntity implements Seal
                 totalQ += 20.0f;
             } else if (state.is(Blocks.FIRE)) {
                 totalQ += 10.0f;
-            }
-            // Факелы
-            else if (state.is(Blocks.TORCH) || state.is(Blocks.WALL_TORCH)) {
-                totalQ += 0.5f;
             }
             // Охладители (лед)
             else if (state.is(Blocks.BLUE_ICE)) {
@@ -424,35 +465,43 @@ public class InsulationControllerBlockEntity extends BlockEntity implements Seal
                 if (be.isSealed) {
                     LeakInfo leak = be.findFirstLeak(serverLevel);
                     if (leak != null) {
+                        be.lastLeakIsDoor = leak.isDoor();
                         be.breakSeal(serverLevel);
                     }
                 } else {
                     LeakInfo leak = be.findFirstLeak(serverLevel);
                     if (leak == null) {
                         be.reseal(serverLevel);
+                    } else {
+                        be.lastLeakIsDoor = leak.isDoor();
                     }
                 }
             }
 
-            if (be.isSealed) {
+            if (be.isStructureValid()) {
                 // Убеждаемся, что комната зарегистрирована в менеджере (например, после прогрузки чанка)
                 SealedRoomManager.register(level, be.worldPosition, be);
 
-                // Каждые 60 тиков обновляем кеш источников внутри комнаты
-                if (be.scanCooldown++ > 3) {
-                    be.scanCooldown = 0;
-                    be.rescanInteriorThermalSources(serverLevel);
+                // Физика климата с учетом теплоемкости объема воздуха и пассивного микроклимата (10-500 бл)
+                float ambientTemp = com.trd.climate.calculation.TemperatureCalculator.calculateOutdoorAmbient(serverLevel, be.worldPosition);
+
+                if (be.isSealed) {
+                    // Каждые 60 тиков обновляем кеш источников внутри комнаты
+                    if (be.scanCooldown++ > 3) {
+                        be.scanCooldown = 0;
+                        be.rescanInteriorThermalSources(serverLevel);
+                    }
+
+                    be.roomTemperature = com.trd.climate.room.RoomClimateHelper.updateRoomTemperature(
+                            be.roomTemperature, ambientTemp, be.volume, serverLevel, be.cachedThermalSources
+                    );
+                } else {
+                    // Разгерметизация: утечка тепла в окружающую среду с учетом сквозняка через открытую дверь
+                    be.roomTemperature = com.trd.climate.room.RoomClimateHelper.updateBreachedRoomTemperature(
+                            be.roomTemperature, ambientTemp, be.volume, be.lastLeakIsDoor
+                    );
                 }
 
-                // Расчет температуры по формуле: ΔT = ΣQ / (V * C_air)
-                float heatQ = be.calculateHeatBalance(serverLevel);
-                float deltaT = heatQ / Math.max(1.0f, be.volume * AIR_HEAT_CAPACITY);
-                // Ограничиваем максимальный нагрев/охлаждение воздуха
-                deltaT = Math.max(-25.0f, Math.min(60.0f, deltaT));
-
-                float targetTemp = BASELINE_TEMP + deltaT;
-                // Плавная адаптация температуры воздуха в помещении
-                be.roomTemperature += (targetTemp - be.roomTemperature) * 0.1f;
                 be.setChanged();
                 level.sendBlockUpdated(be.worldPosition, be.getBlockState(), be.getBlockState(), 3);
             }
@@ -474,7 +523,7 @@ public class InsulationControllerBlockEntity extends BlockEntity implements Seal
     @Override
     public void onLoad() {
         super.onLoad();
-        if (level != null && !level.isClientSide() && isSealed && interiorBox != null) {
+        if (level != null && !level.isClientSide() && isStructureValid() && interiorBox != null) {
             SealedRoomManager.register(level, worldPosition, this);
         }
     }

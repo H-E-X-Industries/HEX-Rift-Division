@@ -64,8 +64,41 @@ public final class SealedRoomManager {
         double z = pos.getZ() + 0.5;
 
         for (SealedRoom room : levelRooms.values()) {
-            if (room.isSealed() && room.contains(pos)) {
+            if (room.isStructureValid() && room.contains(pos)) {
                 return room;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Находит герметичную комнату, если точка находится внутри, на границе оболочки
+     * или в непосредственной близости (до 2 блоков от внешнего AABB).
+     * Используется для перехвата событий разрушения/установки блоков и запуска дебаунс-пересчета.
+     */
+    @Nullable
+    public static SealedRoom findRoomAtOrNear(Level level, BlockPos pos) {
+        if (level == null || pos == null) {
+            return null;
+        }
+        Map<BlockPos, SealedRoom> levelRooms = ACTIVE_ROOMS.get(level.dimension());
+        if (levelRooms == null || levelRooms.isEmpty()) {
+            return null;
+        }
+
+        double x = pos.getX() + 0.5;
+        double y = pos.getY() + 0.5;
+        double z = pos.getZ() + 0.5;
+
+        for (SealedRoom room : levelRooms.values()) {
+            if (room.isStructureValid() || room.isDirty()) {
+                if (room.contains(pos) || room.isBoundary(pos)) {
+                    return room;
+                }
+                if (room.getInteriorBox() != null && room.getInteriorBox().inflate(2.0).contains(x, y, z)) {
+                    return room;
+                }
             }
         }
 

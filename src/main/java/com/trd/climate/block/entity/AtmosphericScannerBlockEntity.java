@@ -57,6 +57,7 @@ public class AtmosphericScannerBlockEntity extends BlockEntity implements Sealed
     public static final int MAX_VOLUME = 3000;
     private static final float AIR_HEAT_CAPACITY = 0.04f;
     private static final float BASELINE_TEMP = 20.0f;
+    private static final int DIRTY_DEBOUNCE_TICKS = 60; // 3 секунды дебаунса для пересчета геометрии
 
     private boolean isSealed = false;
     private boolean wasSuccessfullySealed = false;
@@ -65,6 +66,10 @@ public class AtmosphericScannerBlockEntity extends BlockEntity implements Sealed
     private AABB interiorBox = null;
     private int tickCounter = 0;
     private int scanCooldown = 0;
+
+    /** Флаг и таймер дебаунса при разрушении/установке блоков стен (пересчет раз в 3 сек) */
+    private boolean isDirty = false;
+    private int dirtyTimer = 0;
 
     /** Кластер сканеров: хранит координаты всех связанных контроллеров в помещении */
     private final Set<BlockPos> clusterScanners = new HashSet<>();
@@ -130,7 +135,7 @@ public class AtmosphericScannerBlockEntity extends BlockEntity implements Sealed
      */
     @Override
     public boolean contains(BlockPos pos) {
-        if (!this.isSealed || this.interiorBox == null) {
+        if (!isStructureValid() || this.interiorBox == null) {
             return false;
         }
         if (!this.interiorBox.contains(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5)) {
@@ -139,12 +144,48 @@ public class AtmosphericScannerBlockEntity extends BlockEntity implements Sealed
         return this.interiorPositions.contains(pos.asLong());
     }
 
+    @Override
+    public boolean isStructureValid() {
+        return this.isSealed || (this.wasSuccessfullySealed && !this.interiorPositions.isEmpty());
+    }
+
+    @Override
+    public boolean hasLeak() {
+        return !this.isSealed && this.wasSuccessfullySealed;
+    }
+
+    @Override
+    public boolean isBoundary(BlockPos pos) {
+        return this.boundaryPositions.contains(pos.asLong());
+    }
+
+    @Override
+    public void markDirty() {
+        if (!this.isDirty) {
+            this.isDirty = true;
+            this.dirtyTimer = DIRTY_DEBOUNCE_TICKS;
+        }
+    }
+
+    @Override
+    public boolean isDirty() {
+        return this.isDirty;
+    }
+
     public record LeakInfo(BlockPos pos, boolean isDoor, String blockName) {}
 
     /**
      * Запуск волнового сканирования (BFS) и кластеризации сканеров для больших помещений.
      */
     public ValidationResult scanAndSeal(ServerLevel level, @Nullable Player player) {
+        // Резервная копия геометрии: если попытка расширения выйдет в бесконечную пещеру,
+        // мы сохраняем комнату в статусе утечки, а не уничтожаем ее!
+        LongSet backupInterior = new LongOpenHashSet(this.interiorPositions);
+        LongSet backupBoundary = new LongOpenHashSet(this.boundaryPositions);
+        Set<BlockPos> backupCluster = new java.util.HashSet<>(this.clusterScanners);
+        int backupVolume = this.volume;
+        AABB backupBox = this.interiorBox;
+
         interiorPositions.clear();
         boundaryPositions.clear();
         cachedThermalSources.clear();
@@ -238,6 +279,9 @@ public class AtmosphericScannerBlockEntity extends BlockEntity implements Sealed
         }
 
         if (interiorPositions.isEmpty()) {
+            if (this.wasSuccessfullySealed && !backupInterior.isEmpty()) {
+                return handleBreachFallback(level, origin, false, backupInterior, backupBoundary, backupCluster, backupVolume, backupBox);
+            }
             resetScanFailure(level, player, this.interiorPositions.toLongArray());
             return ValidationResult.fail("Сканер заблокирован со всех сторон! Обеспечьте доступ к воздуху помещения.");
         }
@@ -308,6 +352,9 @@ public class AtmosphericScannerBlockEntity extends BlockEntity implements Sealed
                 }
 
                 if (!withinClusterRange) {
+                    if (this.wasSuccessfullySealed && !backupInterior.isEmpty()) {
+                        return handleBreachFallback(level, (doorLeakPos != null) ? doorLeakPos : next, (doorLeakPos != null), backupInterior, backupBoundary, backupCluster, backupVolume, backupBox);
+                    }
                     long[] scanned = interiorPositions.toLongArray();
                     resetScanFailure(level, player, scanned);
                     if (doorLeakPos != null) {
@@ -323,6 +370,9 @@ public class AtmosphericScannerBlockEntity extends BlockEntity implements Sealed
                 // Проверка максимального объема с учетом суммирования мощности всех сканеров кластера
                 int maxClusterVolume = clusterScanners.size() * MAX_VOLUME;
                 if (interiorPositions.size() >= maxClusterVolume) {
+                    if (this.wasSuccessfullySealed && !backupInterior.isEmpty()) {
+                        return handleBreachFallback(level, (doorLeakPos != null) ? doorLeakPos : next, (doorLeakPos != null), backupInterior, backupBoundary, backupCluster, backupVolume, backupBox);
+                    }
                     long[] scanned = interiorPositions.toLongArray();
                     resetScanFailure(level, player, scanned);
                     if (doorLeakPos != null) {
@@ -349,6 +399,9 @@ public class AtmosphericScannerBlockEntity extends BlockEntity implements Sealed
         }
 
         // Сканирование успешно завершено — помещение полностью герметично!
+        if (!this.wasSuccessfullySealed) {
+            this.roomTemperature = com.trd.climate.calculation.TemperatureCalculator.calculateOutdoorAmbient(level, worldPosition);
+        }
         this.isSealed = true;
         this.wasSuccessfullySealed = true;
         this.volume = interiorPositions.size();
@@ -386,6 +439,72 @@ public class AtmosphericScannerBlockEntity extends BlockEntity implements Sealed
         sendVisualScan(level, player, true, this.interiorPositions.toLongArray());
 
         return ValidationResult.success(this.volume);
+    }
+
+    /**
+     * Обработка разгерметизации ранее изолированного помещения (пробоина в стене в соседнюю пещеру или открыта дверь).
+     * Комната НЕ уничтожается: восстанавливается исходная геометрия, комната остается зарегистрированной,
+     * а температура начинает медленно утекать пропорционально объему пещеры.
+     */
+    private ValidationResult handleBreachFallback(
+            ServerLevel level,
+            BlockPos leakPos,
+            boolean isDoor,
+            LongSet backupInterior,
+            LongSet backupBoundary,
+            Set<BlockPos> backupCluster,
+            int backupVolume,
+            AABB backupBox
+    ) {
+        this.interiorPositions.clear();
+        this.interiorPositions.addAll(backupInterior);
+        this.boundaryPositions.clear();
+        this.boundaryPositions.addAll(backupBoundary);
+        this.clusterScanners.clear();
+        this.clusterScanners.addAll(backupCluster);
+        this.volume = backupVolume;
+        this.interiorBox = backupBox;
+
+        // Определяем точную координату утечки на границе комнаты
+        LeakInfo exactLeak = findFirstBoundaryLeak(level);
+        if (exactLeak != null) {
+            leakPos = exactLeak.pos();
+            isDoor = exactLeak.isDoor();
+        }
+
+        this.isSealed = false;
+        this.lastLeakPos = leakPos;
+        this.lastLeakIsDoor = isDoor;
+
+        level.setBlock(worldPosition, getBlockState().setValue(AtmosphericScannerBlock.SEALED, false), 3);
+        SealedRoomManager.register(level, worldPosition, this);
+
+        level.sendParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE,
+                leakPos.getX() + 0.5, leakPos.getY() + 0.5, leakPos.getZ() + 0.5,
+                15, 0.25, 0.25, 0.25, 0.05);
+
+        for (BlockPos sPos : clusterScanners) {
+            if (!sPos.equals(this.worldPosition)) {
+                BlockEntity otherBe = level.getBlockEntity(sPos);
+                if (otherBe instanceof AtmosphericScannerBlockEntity otherScanner) {
+                    otherScanner.isSealed = false;
+                    otherScanner.lastLeakPos = leakPos;
+                    otherScanner.lastLeakIsDoor = isDoor;
+                    otherScanner.volume = this.volume;
+                    otherScanner.clusterScanners.clear();
+                    otherScanner.clusterScanners.addAll(this.clusterScanners);
+                    otherScanner.setChanged();
+                    level.setBlock(sPos, otherScanner.getBlockState().setValue(AtmosphericScannerBlock.SEALED, false), 3);
+                    level.sendBlockUpdated(sPos, otherScanner.getBlockState(), otherScanner.getBlockState(), 3);
+                }
+            }
+        }
+
+        setChanged();
+        level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+
+        BlockState leakState = level.getBlockState(leakPos);
+        return ValidationResult.leak(leakPos, leakState);
     }
 
     /**
@@ -543,7 +662,8 @@ public class AtmosphericScannerBlockEntity extends BlockEntity implements Sealed
         this.lastLeakPos = leakPos;
         this.lastLeakIsDoor = isDoor;
         level.setBlock(worldPosition, getBlockState().setValue(AtmosphericScannerBlock.SEALED, false), 3);
-        SealedRoomManager.unregister(level, worldPosition);
+        // Сохраняем комнату в менеджере: она переходит в статус разгерметизации с медленной утечкой
+        SealedRoomManager.register(level, worldPosition, this);
 
         for (BlockPos sPos : clusterScanners) {
             if (!sPos.equals(this.worldPosition)) {
@@ -649,29 +769,36 @@ public class AtmosphericScannerBlockEntity extends BlockEntity implements Sealed
      * Формирует лаконичный статус герметичности для HUD и сообщений.
      */
     public Component getStatusComponent(Level level) {
-        if (!isSealed && boundaryPositions.isEmpty()) {
-            return Component.literal("§eПомещение не герметично. Нажмите ПКМ по сканеру для сканирования.");
+        if (isDirty) {
+            return Component.literal(String.format(
+                    Locale.ROOT,
+                    "§eАдаптация геометрии... Объем: %d бл. Темп: %.1f°C",
+                    this.volume, this.roomTemperature
+            ));
         }
 
-        LeakInfo leak = findFirstBoundaryLeak(level);
-        if (leak != null) {
-            if (leak.isDoor()) {
+        if (!isSealed && wasSuccessfullySealed && !boundaryPositions.isEmpty()) {
+            LeakInfo leak = findFirstBoundaryLeak(level);
+            BlockPos lPos = (leak != null) ? leak.pos() : (lastLeakPos != null ? lastLeakPos : worldPosition);
+            boolean isDoor = (leak != null) ? leak.isDoor() : lastLeakIsDoor;
+            String name = (leak != null) ? leak.blockName() : (level.getBlockState(lPos).isAir() ? "Air" : level.getBlockState(lPos).getBlock().getName().getString());
+            if (isDoor) {
                 return Component.literal(String.format(
                         Locale.ROOT,
-                        "§cПомещение не герметично! Открыта дверь в [%d, %d, %d]",
-                        leak.pos().getX(), leak.pos().getY(), leak.pos().getZ()
+                        "§cРазгерметизация! Открыта дверь в [%d, %d, %d]. Объем: %d бл. Темп: %.1f°C",
+                        lPos.getX(), lPos.getY(), lPos.getZ(), this.volume, this.roomTemperature
                 ));
             } else {
                 return Component.literal(String.format(
                         Locale.ROOT,
-                        "§cПомещение не герметично! Разгерметизация в [%d, %d, %d] (%s)",
-                        leak.pos().getX(), leak.pos().getY(), leak.pos().getZ(), leak.blockName()
+                        "§cРазгерметизация! Утечка в [%d, %d, %d] (%s). Объем: %d бл. Темп: %.1f°C",
+                        lPos.getX(), lPos.getY(), lPos.getZ(), name, this.volume, this.roomTemperature
                 ));
             }
         }
 
         if (!isSealed) {
-            return Component.literal("§eПомещение не герметично. Нажмите ПКМ по сканеру для сканирования.");
+            return Component.literal("§eПомещение не изолировано. Нажмите ПКМ по сканеру для сканирования.");
         }
 
         if (this.clusterScanners.size() > 1) {
@@ -684,8 +811,8 @@ public class AtmosphericScannerBlockEntity extends BlockEntity implements Sealed
 
         return Component.literal(String.format(
                 Locale.ROOT,
-                "§aПомещение герметично (Сканер). Объем: %d / 3000 бл. Темп: %.1f°C",
-                this.volume, this.roomTemperature
+                "§aПомещение герметично (Сканер). Объем: %d / %d бл. Темп: %.1f°C",
+                this.volume, MAX_VOLUME, this.roomTemperature
         ));
     }
 
@@ -724,12 +851,23 @@ public class AtmosphericScannerBlockEntity extends BlockEntity implements Sealed
      */
     private float calculateHeatBalance(ServerLevel level) {
         float totalQ = 0.0f;
+        boolean isLargeRoom = this.volume > 500;
+
         for (BlockPos pos : cachedThermalSources) {
             BlockState state = level.getBlockState(pos);
+            // Костры и факелы не имеют импакта в комнатах больше 500 блоков!
             if (state.is(Blocks.CAMPFIRE) && state.getValue(CampfireBlock.LIT)) {
-                totalQ += 15.0f;
+                if (!isLargeRoom) {
+                    totalQ += 15.0f;
+                }
             } else if (state.is(Blocks.SOUL_CAMPFIRE) && state.getValue(CampfireBlock.LIT)) {
-                totalQ += 10.5f;
+                if (!isLargeRoom) {
+                    totalQ += 10.5f;
+                }
+            } else if (state.is(Blocks.TORCH) || state.is(Blocks.WALL_TORCH)) {
+                if (!isLargeRoom) {
+                    totalQ += 0.5f;
+                }
             } else if ((state.is(Blocks.FURNACE) || state.is(Blocks.BLAST_FURNACE) || state.is(Blocks.SMOKER))
                     && state.getValue(AbstractFurnaceBlock.LIT)) {
                 totalQ += 12.0f;
@@ -737,8 +875,6 @@ public class AtmosphericScannerBlockEntity extends BlockEntity implements Sealed
                 totalQ += 20.0f;
             } else if (state.is(Blocks.FIRE)) {
                 totalQ += 10.0f;
-            } else if (state.is(Blocks.TORCH) || state.is(Blocks.WALL_TORCH)) {
-                totalQ += 0.5f;
             } else if (state.is(Blocks.BLUE_ICE)) {
                 totalQ -= 10.0f;
             } else if (state.is(Blocks.PACKED_ICE)) {
@@ -766,39 +902,78 @@ public class AtmosphericScannerBlockEntity extends BlockEntity implements Sealed
 
         be.tickCounter++;
 
+        // Обработка 3-секундного дебаунса изменения геометрии
+        if (be.isDirty) {
+            be.dirtyTimer--;
+            if (be.dirtyTimer <= 0) {
+                be.isDirty = false;
+                // Запускаем пересчет геометрии (BFS) под новую форму пещеры/комнаты
+                ValidationResult result = be.scanAndSeal(serverLevel, null);
+                if (!result.isSuccess()) {
+                    // Сканер физически не смог заполнить пространство (пробили стену в мир / превышен объем)
+                    be.breakSeal(serverLevel, result.leakPos(), result.isDoor());
+                }
+            }
+        }
+
         // 1 раз в секунду (каждые 20 тиков)
         if (be.tickCounter % 20 == 0) {
             if (be.isSealed) {
-                LeakInfo leak = be.findFirstBoundaryLeak(serverLevel);
-                if (leak != null) {
-                    be.breakSeal(serverLevel, leak.pos(), leak.isDoor());
+                // Если таймер dirty активен, мы ждем завершения 3 секунд и не разгерметизируем комнату
+                if (!be.isDirty) {
+                    LeakInfo leak = be.findFirstBoundaryLeak(serverLevel);
+                    if (leak != null) {
+                        if (leak.isDoor()) {
+                            be.breakSeal(serverLevel, leak.pos(), true);
+                        } else {
+                            // Обнаружен сломанный блок стены/породы, запускаем дебаунс-пересчет
+                            be.markDirty();
+                        }
+                    }
                 }
             } else if (be.wasSuccessfullySealed && !be.boundaryPositions.isEmpty() && !be.interiorPositions.isEmpty()) {
+                // Комната в статусе разгерметизации (утечка):
                 LeakInfo leak = be.findFirstBoundaryLeak(serverLevel);
                 if (leak == null) {
+                    // Утечка устранена (игрок закрыл пробоину блоком)!
                     be.reseal(serverLevel);
+                } else {
+                    be.lastLeakPos = leak.pos();
+                    be.lastLeakIsDoor = leak.isDoor();
+                    serverLevel.sendParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE,
+                            leak.pos().getX() + 0.5, leak.pos().getY() + 0.5, leak.pos().getZ() + 0.5,
+                            4, 0.2, 0.2, 0.2, 0.04);
                 }
             }
 
-            if (be.isSealed) {
+            // РАСЧЕТ ТЕМПЕРАТУРЫ:
+            // Работает и для полностью герметичной комнаты, и для комнаты в статусе разгерметизации!
+            if (be.isStructureValid()) {
                 SealedRoomManager.register(level, be.worldPosition, be);
 
-                if (be.scanCooldown++ > 3) {
-                    be.scanCooldown = 0;
-                    be.rescanInteriorThermalSources(serverLevel);
+                // 1. Физика климата: расчет естественной температуры среды снаружи
+                float ambientTemp = com.trd.climate.calculation.TemperatureCalculator.calculateOutdoorAmbient(serverLevel, be.worldPosition);
+
+                if (be.isSealed) {
+                    if (be.scanCooldown++ > 3) {
+                        be.scanCooldown = 0;
+                        be.rescanInteriorThermalSources(serverLevel);
+                    }
+
+                    // 2. Обновление температуры с учетом объема воздуха, термоинерции, буста малых баз и потолка каждого источника
+                    be.roomTemperature = com.trd.climate.room.RoomClimateHelper.updateRoomTemperature(
+                            be.roomTemperature, ambientTemp, be.volume, serverLevel, be.cachedThermalSources
+                    );
+                } else {
+                    // 3. При разгерметизации: утечка тепла в окружающую среду с учетом открытой двери
+                    be.roomTemperature = com.trd.climate.room.RoomClimateHelper.updateBreachedRoomTemperature(
+                            be.roomTemperature, ambientTemp, be.volume, be.lastLeakIsDoor
+                    );
                 }
 
-                // Физика климата: ΔT = ΣQ / (V * C_air)
-                float heatQ = be.calculateHeatBalance(serverLevel);
-                float deltaT = heatQ / Math.max(1.0f, be.volume * AIR_HEAT_CAPACITY);
-                deltaT = Math.max(-25.0f, Math.min(60.0f, deltaT));
-
-                float targetTemp = BASELINE_TEMP + deltaT;
-                be.roomTemperature += (targetTemp - be.roomTemperature) * 0.1f;
                 be.setChanged();
                 level.sendBlockUpdated(be.worldPosition, be.getBlockState(), be.getBlockState(), 3);
 
-                // Синхронизируем температуру ведомым сканерам в кластере
                 for (BlockPos sPos : be.clusterScanners) {
                     if (!sPos.equals(be.worldPosition)) {
                         BlockEntity otherBe = serverLevel.getBlockEntity(sPos);
@@ -813,6 +988,7 @@ public class AtmosphericScannerBlockEntity extends BlockEntity implements Sealed
             }
         }
     }
+
 
     @Override
     public Packet<ClientGamePacketListener> getUpdatePacket() {
@@ -829,7 +1005,7 @@ public class AtmosphericScannerBlockEntity extends BlockEntity implements Sealed
     @Override
     public void onLoad() {
         super.onLoad();
-        if (level != null && !level.isClientSide() && isSealed && isMaster) {
+        if (level != null && !level.isClientSide() && isStructureValid() && isMaster) {
             SealedRoomManager.register(level, worldPosition, this);
         }
     }
