@@ -1,9 +1,0 @@
-{
-  "loader": "forge:obj",
-  "model": "trd:models/block/clutch.obj",
-  "flip_v": true,
-  "textures": {
-    "clutch_texture": "trd:block/clutch",
-    "particle": "trd:block/clutch"
-  }
-}

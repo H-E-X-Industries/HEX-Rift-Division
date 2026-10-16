@@ -1,8 +1,0 @@
-{
-  "variants": {
-    "facing=north": { "model": "trd:block/barbed_wire" },
-    "facing=east":  { "model": "trd:block/barbed_wire", "y": 90 },
-    "facing=south": { "model": "trd:block/barbed_wire", "y": 180 },
-    "facing=west":  { "model": "trd:block/barbed_wire", "y": 270 }
-  }
-}

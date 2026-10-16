@@ -1,9 +1,0 @@
-{
-  "shading": true,
-  "loader": "forge:obj",
-  "model": "trd:models/block/crankshaft.obj",
-  "flip_v": true,
-  "textures": {
-    "default": "trd:block/crankshaft"
-  }
-}
