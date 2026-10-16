@@ -64,7 +64,7 @@ public final class SealedRoomManager {
         double z = pos.getZ() + 0.5;
 
         for (SealedRoom room : levelRooms.values()) {
-            if (room.isSealed() && room.getInteriorBox() != null && room.getInteriorBox().contains(x, y, z)) {
+            if (room.isSealed() && room.contains(pos)) {
                 return room;
             }
         }

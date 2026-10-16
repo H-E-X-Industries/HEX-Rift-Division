@@ -97,7 +97,18 @@ public class ScrewdriverItem extends Item {
             return InteractionResult.sidedSuccess(level.isClientSide());
         }
 
-        // 2. Клик по контроллеру термоизоляции — запоминаем первую точку куба
+        // 2. Клик по атмосферному сканеру (Tier 2) — запуск сканирования произвольной формы
+        if (state.is(ModBlocks.ATMOSPHERIC_SCANNER.get())) {
+            if (!level.isClientSide() && level instanceof ServerLevel serverLevel) {
+                BlockEntity be = serverLevel.getBlockEntity(pos);
+                if (be instanceof com.trd.climate.block.entity.AtmosphericScannerBlockEntity scanner) {
+                    scanner.triggerScan(serverLevel, player);
+                }
+            }
+            return InteractionResult.sidedSuccess(level.isClientSide());
+        }
+
+        // 3. Клик по контроллеру термоизоляции — запоминаем первую точку куба
         if (state.is(ModBlocks.INSULATION_CONTROLLER.get())) {
             BlockPos currentLinked = getLinkedPos(stack);
             if (currentLinked != null && currentLinked.equals(pos)) {

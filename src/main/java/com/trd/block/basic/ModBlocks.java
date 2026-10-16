@@ -825,6 +825,12 @@ public class ModBlocks {
                     () -> new com.trd.climate.block.InsulationControllerBlock(
                             BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).strength(3.5f).requiresCorrectToolForDrops()));
 
+    // Климатическая система: атмосферный сканер герметичности помещений произвольной формы (Tier 2)
+    public static final DeferredBlock<com.trd.climate.block.AtmosphericScannerBlock> ATMOSPHERIC_SCANNER =
+            registerBlock("atmospheric_scanner",
+                    () -> new com.trd.climate.block.AtmosphericScannerBlock(
+                            BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).strength(3.5f).requiresCorrectToolForDrops()));
+
     public static void register(net.neoforged.bus.api.IEventBus eventBus) {
         BLOCKS.register(eventBus);
 
@@ -832,5 +838,6 @@ public class ModBlocks {
         ModItems.ITEMS.register("fuel_tank_small", () -> new com.trd.multiblock.system.FuelTankBlockItem(FUEL_TANK_SMALL.get(), 288000, new net.minecraft.world.item.Item.Properties()));
 
         com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(TROMBONE, "tooltip.trd.machine.trombone.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(ATMOSPHERIC_SCANNER, "tooltip.trd.atmospheric_scanner.desc");
     }
 }

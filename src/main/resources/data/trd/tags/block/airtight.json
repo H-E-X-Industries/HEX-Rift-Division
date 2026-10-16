@@ -2,6 +2,7 @@
   "replace": false,
   "values": [
     "trd:insulation_controller",
+    "trd:atmospheric_scanner",
     "trd:armored_glass",
     "trd:concrete_armored_glass",
     "trd:steel_door",

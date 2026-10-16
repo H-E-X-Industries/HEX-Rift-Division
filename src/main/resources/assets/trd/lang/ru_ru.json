@@ -1,7 +1,10 @@
 {
     "block.trd.insulation_controller": "Контроллер термоизоляции",
+    "block.trd.atmospheric_scanner": "Атмосферный сканер",
     "message.trd.insulation.controller_selected": "Контроллер термоизоляции выбран на [%d, %d, %d]! Нажмите отверткой на противоположный угол куба для герметизации.",
     "message.trd.insulation.sealed_success": "Помещение успешно герметизировано! Внутренний объем: %d блоков.",
+    "message.trd.insulation.scanner_sealed_success": "Помещение сложной формы успешно герметизировано! Внутренний объем: %d блоков.",
+    "message.trd.insulation.scanner_unsealed_manual": "Герметизация помещения отключена вручную.",
     "message.trd.insulation.sealed_failed_leak": "Ошибка герметизации! Обнаружена утечка на [%d, %d, %d] (%s). Устраните отверстие.",
     "message.trd.insulation.selection_cancelled": "Разметка термоизоляции отменена.",
     "message.trd.insulation.controller_missing": "Контроллер термоизоляции не найден или был удален.",
@@ -9,6 +12,7 @@
     "message.trd.insulation.status_unsealed": "Помещение не герметично. Используйте отвертку для настройки кубической изоляции.",
     "tooltip.trd.screwdriver.linking": "Привязан контроллер изоляции: [%d, %d, %d]",
     "tooltip.trd.screwdriver.cancel_hint": "Shift + ПКМ для отмены разметки",
+    "tooltip.trd.atmospheric_scanner.desc": "Атмосферный сканер (Tier 2). Герметизирует помещения сложной и произвольной формы сферическим волновым сканированием (до R=32, до V=3000 блоков). Огибает внутренние колонны и мебель.",
     "block.trd.aluminum_block":  "Алюминиевый блок",
     "block.trd.anton_chigur_block":  "Блок Антона Чигура",
     "block.trd.armored_glass":  "Ударостойкое стекло",

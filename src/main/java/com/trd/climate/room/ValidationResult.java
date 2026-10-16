@@ -21,9 +21,17 @@ public record ValidationResult(
     }
 
     public static ValidationResult leak(BlockPos pos, BlockState state) {
-        boolean isDoor = state.getBlock() instanceof net.minecraft.world.level.block.DoorBlock;
+        boolean isDoor = state.getBlock() instanceof net.minecraft.world.level.block.DoorBlock
+                || state.getBlock() instanceof net.minecraft.world.level.block.TrapDoorBlock;
         String name = state.isAir() ? "Air" : state.getBlock().getName().getString();
         return new ValidationResult(false, 0, pos, name, isDoor, "Обнаружена утечка в оболочке комнаты");
+    }
+
+    public static ValidationResult leak(BlockPos pos, BlockState state, String message) {
+        boolean isDoor = state.getBlock() instanceof net.minecraft.world.level.block.DoorBlock
+                || state.getBlock() instanceof net.minecraft.world.level.block.TrapDoorBlock;
+        String name = state.isAir() ? "Air" : state.getBlock().getName().getString();
+        return new ValidationResult(false, 0, pos, name, isDoor, message);
     }
 
     public static ValidationResult fail(String message) {

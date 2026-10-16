@@ -275,6 +275,11 @@ public class ModBlockEntities {
                     com.trd.climate.block.entity.InsulationControllerBlockEntity::new,
                     ModBlocks.INSULATION_CONTROLLER.get()).build(null));
 
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.climate.block.entity.AtmosphericScannerBlockEntity>> ATMOSPHERIC_SCANNER_BE =
+            BLOCK_ENTITIES.register("atmospheric_scanner", () -> BlockEntityType.Builder.of(
+                    com.trd.climate.block.entity.AtmosphericScannerBlockEntity::new,
+                    ModBlocks.ATMOSPHERIC_SCANNER.get()).build(null));
+
     public static void register(IEventBus eventBus) {
         BLOCK_ENTITIES.register(eventBus);
     }

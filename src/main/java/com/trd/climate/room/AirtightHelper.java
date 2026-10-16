@@ -31,6 +31,9 @@ public final class AirtightHelper {
     public static final TagKey<Block> AIRTIGHT_TAG =
             TagKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath("trd", "airtight"));
 
+    public static final TagKey<Block> INTERIOR_EQUIPMENT_TAG =
+            TagKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath("trd", "interior_equipment"));
+
     private AirtightHelper() {
     }
 
@@ -47,8 +50,8 @@ public final class AirtightHelper {
             return true;
         }
 
-        // 2. Контроллер термоизоляции всегда герметичен
-        if (state.is(ModBlocks.INSULATION_CONTROLLER.get())) {
+        // 2. Контроллеры термоизоляции и атмосферные сканеры всегда герметичны
+        if (state.is(ModBlocks.INSULATION_CONTROLLER.get()) || state.is(ModBlocks.ATMOSPHERIC_SCANNER.get())) {
             return true;
         }
 
@@ -81,5 +84,22 @@ public final class AirtightHelper {
 
         // 6. Обычная проверка непрозрачности
         return state.isSolidRender(level, pos);
+    }
+
+    /**
+     * Проверяет, является ли блок внутренним оборудованием помещения (#trd:interior_equipment).
+     * Сканер атмосферы огибает и проходит сквозь такое оборудование, не считая его внешней стеной.
+     */
+    public static boolean isInteriorEquipment(BlockState state) {
+        if (state.isAir()) {
+            return false;
+        }
+        if (state.is(ModBlocks.INSULATION_CONTROLLER.get()) || state.is(ModBlocks.ATMOSPHERIC_SCANNER.get())) {
+            return false;
+        }
+        if (state.is(INTERIOR_EQUIPMENT_TAG)) {
+            return true;
+        }
+        return state.hasBlockEntity();
     }
 }

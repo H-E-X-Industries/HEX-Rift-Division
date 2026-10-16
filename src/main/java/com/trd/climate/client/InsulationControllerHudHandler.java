@@ -31,10 +31,19 @@ public class InsulationControllerHudHandler {
         HitResult hit = mc.hitResult;
         if (hit instanceof BlockHitResult bhr && bhr.getType() == HitResult.Type.BLOCK) {
             BlockPos pos = bhr.getBlockPos();
-            if (mc.level.getBlockState(pos).is(ModBlocks.INSULATION_CONTROLLER.get())) {
+            net.minecraft.world.level.block.state.BlockState hitState = mc.level.getBlockState(pos);
+            if (hitState.is(ModBlocks.INSULATION_CONTROLLER.get())) {
                 BlockEntity be = mc.level.getBlockEntity(pos);
                 if (be instanceof InsulationControllerBlockEntity controller) {
                     Component status = controller.getStatusComponent(mc.level);
+                    if (status != null) {
+                        mc.player.displayClientMessage(status, true);
+                    }
+                }
+            } else if (hitState.is(ModBlocks.ATMOSPHERIC_SCANNER.get())) {
+                BlockEntity be = mc.level.getBlockEntity(pos);
+                if (be instanceof com.trd.climate.block.entity.AtmosphericScannerBlockEntity scanner) {
+                    Component status = scanner.getStatusComponent(mc.level);
                     if (status != null) {
                         mc.player.displayClientMessage(status, true);
                     }
