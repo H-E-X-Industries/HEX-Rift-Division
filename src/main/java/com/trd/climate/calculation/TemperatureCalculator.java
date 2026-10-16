@@ -15,6 +15,21 @@ import net.minecraft.world.level.biome.Biome;
 public class TemperatureCalculator {
 
     /**
+     * Рассчитывает естественную температуру окружающей среды снаружи для указанных координат.
+     * Используется контроллерами герметичных помещений для расчета теплообмена с внешней средой.
+     */
+    public static float calculateOutdoorAmbient(ServerLevel level, BlockPos pos) {
+        float envTemp = getBiomeTemperature(level, pos);
+        envTemp += getAltitudeEffect(pos.getY());
+        if (pos.getY() < 64) {
+            float depthFactor = Math.min(1.0f, (64 - pos.getY()) / 80.0f);
+            envTemp = envTemp + (15.0f - envTemp) * depthFactor * 0.75f;
+        }
+        envTemp += getWeatherEffect(level, pos);
+        return envTemp;
+    }
+
+    /**
      * Рассчитывает целевую температуру окружающей среды для игрока.
      * 
      * @param player Игрок
@@ -25,6 +40,43 @@ public class TemperatureCalculator {
     public static float calculateTargetEnvTemp(Player player, ServerLevel level, float shelterLevel) {
         BlockPos pos = player.blockPosition();
         
+        // 0. Проверяем, находится ли игрок в изолированном помещении (Tier 1 или Tier 2)
+        com.trd.climate.room.SealedRoom room = com.trd.climate.room.SealedRoomManager.findRoomAt(level, pos);
+        if (room != null && room.isStructureValid()) {
+            float envTemp = room.getRoomTemperature();
+
+            if (!room.isSealed()) {
+                // Если дверь открыта или есть пробоина:
+                // Сквозняк! Игрок сразу ощущает уличный холод (35% примесь уличного воздуха)
+                float outdoorAmbient = calculateOutdoorAmbient(level, pos);
+                envTemp = net.minecraft.util.Mth.lerp(0.35f, envTemp, outdoorAmbient);
+            }
+
+            // Влияние воды (если внутри комнаты есть бассейн)
+            if (player.isInWater()) {
+                envTemp += getWaterEffect(envTemp);
+            }
+
+            // Дополнительное локальное лучистое тепло в упор к источникам внутри комнаты
+            // (ощутимый уютный жар около огня до +26°C, согревающий в упор)
+            float radiant = HeatSourceHelper.calculateTotalHeat(level, pos, 1.0f);
+            if (radiant > 0.0f) {
+                float roomTargetWithRadiant = Math.min(26.0f, envTemp + radiant * 0.5f);
+                envTemp = Math.max(envTemp, roomTargetWithRadiant);
+            }
+
+            // Тепло от факела в руке
+            envTemp += getTorchHeat(player, envTemp);
+
+            // Тепловая изоляция брони (если в комнате прохладно)
+            if (envTemp < 20.0f) {
+                float insulation = ArmorInsulationHelper.calculateArmorInsulation(player);
+                envTemp = Math.min(20.0f, envTemp + insulation);
+            }
+
+            return envTemp;
+        }
+
         // 1. Базовая температура биома
         float envTemp = getBiomeTemperature(level, pos);
 

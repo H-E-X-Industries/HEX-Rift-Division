@@ -27,5 +27,12 @@ public class ClimateNetworking {
             SyncTemperaturePayload.STREAM_CODEC,
             SyncTemperaturePayload::handle
         );
+
+        // Регистрация пакета визуализации объема сканирования (Сервер -> Клиент)
+        registrar.playToClient(
+            ScannerVisualScanPayload.TYPE,
+            ScannerVisualScanPayload.STREAM_CODEC,
+            ScannerVisualScanPayload::handle
+        );
     }
 }
