@@ -819,6 +819,12 @@ public class ModBlocks {
             () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.STONE)
                     .strength(5.0f, 30.0f).noOcclusion().requiresCorrectToolForDrops()));
 
+    // Климатическая система: контроллер термоизоляции помещений (Tier 1)
+    public static final DeferredBlock<com.trd.climate.block.InsulationControllerBlock> INSULATION_CONTROLLER =
+            registerBlock("insulation_controller",
+                    () -> new com.trd.climate.block.InsulationControllerBlock(
+                            BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).strength(3.5f).requiresCorrectToolForDrops()));
+
     public static void register(net.neoforged.bus.api.IEventBus eventBus) {
         BLOCKS.register(eventBus);
 

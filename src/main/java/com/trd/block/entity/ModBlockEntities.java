@@ -266,6 +266,15 @@ public class ModBlockEntities {
                     com.trd.block.entity.redstone.RedstoneRadioReceiverBlockEntity::new,
                     ModBlocks.REDSTONE_RADIO_RECEIVER.get()).build(null));
 
+    // ═══════════════════════════════════════════════════════
+    // КЛИМАТИЧЕСКАЯ СИСТЕМА
+    // ═══════════════════════════════════════════════════════
+
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.climate.block.entity.InsulationControllerBlockEntity>> INSULATION_CONTROLLER_BE =
+            BLOCK_ENTITIES.register("insulation_controller", () -> BlockEntityType.Builder.of(
+                    com.trd.climate.block.entity.InsulationControllerBlockEntity::new,
+                    ModBlocks.INSULATION_CONTROLLER.get()).build(null));
+
     public static void register(IEventBus eventBus) {
         BLOCK_ENTITIES.register(eventBus);
     }

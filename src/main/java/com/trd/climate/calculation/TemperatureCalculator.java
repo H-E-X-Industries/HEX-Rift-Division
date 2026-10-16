@@ -25,6 +25,33 @@ public class TemperatureCalculator {
     public static float calculateTargetEnvTemp(Player player, ServerLevel level, float shelterLevel) {
         BlockPos pos = player.blockPosition();
         
+        // 0. Проверяем, находится ли игрок в герметичном помещении (Tier 1 Bounding Box)
+        com.trd.climate.room.SealedRoom room = com.trd.climate.room.SealedRoomManager.findRoomAt(level, pos);
+        if (room != null && room.isSealed()) {
+            // Внутри герметичного помещения:
+            // Внешний биом, погода, ветер, высота и солнце полностью изолированы.
+            float envTemp = room.getRoomTemperature();
+
+            // Влияние воды (если внутри комнаты есть бассейн)
+            if (player.isInWater()) {
+                envTemp += getWaterEffect(envTemp);
+            }
+
+            // Дополнительное локальное лучистое тепло в упор к источникам внутри комнаты
+            envTemp += HeatSourceHelper.calculateTotalHeat(level, pos, 1.0f);
+
+            // Тепло от факела в руке
+            envTemp += getTorchHeat(player, envTemp);
+
+            // Тепловая изоляция брони (если в комнате прохладно)
+            if (envTemp < 20.0f) {
+                float insulation = ArmorInsulationHelper.calculateArmorInsulation(player);
+                envTemp = Math.min(20.0f, envTemp + insulation);
+            }
+
+            return envTemp;
+        }
+
         // 1. Базовая температура биома
         float envTemp = getBiomeTemperature(level, pos);
 

@@ -75,8 +75,13 @@ public class PlayerTemperatureTickHandler {
 
         BlockPos pos = player.blockPosition();
         
-        // 1. Расчет уровня укрытия (пещеры + роза ветров)
-        float shelterLevel = ShelterHelper.calculateShelterLevel(level, pos);
+        // 1. Расчет уровня укрытия (пещеры + роза ветров или герметичная комната)
+        float shelterLevel;
+        if (com.trd.climate.room.SealedRoomManager.findRoomAt(level, pos) != null) {
+            shelterLevel = 1.0f;
+        } else {
+            shelterLevel = ShelterHelper.calculateShelterLevel(level, pos);
+        }
         data.setShelterLevel(shelterLevel);
         
         // 2. Расчет целевой температуры среды

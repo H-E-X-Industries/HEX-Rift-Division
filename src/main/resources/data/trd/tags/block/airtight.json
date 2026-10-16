@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    "trd:insulation_controller",
+    "trd:armored_glass",
+    "trd:steel_door",
+    "minecraft:glass",
+    "minecraft:tinted_glass",
+    "minecraft:iron_door"
+  ]
+}
