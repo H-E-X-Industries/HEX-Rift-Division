@@ -445,6 +445,56 @@ public class ModItems {
                     new Item.Properties().stacksTo(1).durability(
                             com.trd.item.armor.GrenadierArmorMaterial.DURABILITY)));
 
+    // ═══════════════════════════════════════════════════════
+    // ИНТЕРАКТИВНЫЕ ТУЛТИПЫ (Shift — подробное описание)
+    // ═══════════════════════════════════════════════════════
+
+    /**
+     * Подробные описания предметов. Без записи здесь
+     * {@link com.trd.client.MachineTooltipHandler} не знает ключ перевода и
+     * предмет не показывает подсказку «Зажми Shift».
+     *
+     * <p>Блоки регистрируются отдельно в {@link com.trd.block.basic.ModBlocks},
+     * потому что часть из них заводится как отдельный {@code DeferredItem} блока,
+     * а не как предмет из этого класса.
+     *
+     * <p>Сама функция {@code MachineTooltipRegistry.register} резолвит предмет
+     * лениво, так что статический инициализатор не зависит от порядка регистрации.
+     */
+    static {
+        // Металлургия и переработка
+        com.trd.api.tooltip.MachineTooltipRegistry.register(SMELTER_ITEM, "tooltip.trd.machine.smelter.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.register(DROBITEL_ITEM, "tooltip.trd.machine.drobitel.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.register(BLADE, "tooltip.trd.machine.blade.desc");
+
+        // Статор
+        com.trd.api.tooltip.MachineTooltipRegistry.register(STATOR_ITEM, "tooltip.trd.machine.stator.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.register(COPPER_ROTOR, "tooltip.trd.machine.rotor.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.register(COPPER_COIL, "tooltip.trd.machine.stator_coil.desc");
+
+        // Передаточные механизмы
+        com.trd.api.tooltip.MachineTooltipRegistry.register(BEAM_PLACER, "tooltip.trd.machine.beam_placer.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.register(BELT, "tooltip.trd.machine.belt.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.register(FLYWHEEL_LIGHT, "tooltip.trd.machine.flywheel.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.register(PULLEY, "tooltip.trd.machine.pulley.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.register(GEAR1_STEEL, "tooltip.trd.machine.gear.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.register(GEAR2_STEEL, "tooltip.trd.machine.gear.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.register(BEVEL_GEAR, "tooltip.trd.machine.bevel_gear.desc");
+
+        // Электричество и жидкости
+        com.trd.api.tooltip.MachineTooltipRegistry.register(ENERGY_CELL, "tooltip.trd.machine.energy_cell.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.register(WIRE_COIL, "tooltip.trd.machine.wire_coil.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.register(FLUID_IDENTIFIER, "tooltip.trd.machine.fluid_identifier.desc");
+
+        // Инструменты и броня
+        com.trd.api.tooltip.MachineTooltipRegistry.register(SCREWDRIVER, "tooltip.trd.machine.screwdriver.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.register(HAMMER, "tooltip.trd.machine.hammer.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.register(POKER, "tooltip.trd.machine.poker.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.register(PROTECTOR_STEEL, "tooltip.trd.machine.protector.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.register(PROTECTOR_LEAD, "tooltip.trd.machine.protector.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.register(PROTECTOR_TUNGSTEN, "tooltip.trd.machine.protector.desc");
+    }
+
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);
     }
