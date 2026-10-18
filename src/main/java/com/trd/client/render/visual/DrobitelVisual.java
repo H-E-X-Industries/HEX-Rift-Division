@@ -255,11 +255,13 @@ public class DrobitelVisual extends AbstractBlockEntityVisual<DrobitelBlockEntit
         shaft.translate(0.5f, 0.5f, 0.5f);
 
         Direction.Axis axis = facing.getAxis();
-        if (axis == Direction.Axis.Z) {
-            shaft.rotateY((float) Math.toRadians(90));
+        if (axis == Direction.Axis.X) {
+            shaft.rotateY((float) Math.toRadians(facing == Direction.EAST ? 270 : 90));
+        } else if (facing == Direction.SOUTH) {
+            shaft.rotateY((float) Math.toRadians(180));
         }
 
-        shaft.rotateX(angle);
+        shaft.rotateZ(angle);
         shaft.translate(-0.5f, -0.5f, -0.5f);
         shaft.translate(dx, dy, dz);
         shaft.setChanged();
@@ -267,7 +269,8 @@ public class DrobitelVisual extends AbstractBlockEntityVisual<DrobitelBlockEntit
 
     @Override
     public void updateLight(float partialTick) {
-        relight(pos, shaftFront, shaftBack);
+        relight(pos.relative(facing), shaftFront);
+        relight(pos.relative(facing.getOpposite()), shaftBack);
         if (leftBlade != null) relight(pos, leftBlade);
         if (rightBlade != null) relight(pos, rightBlade);
         if (leftShaft1 != null) relight(pos, leftShaft1);
