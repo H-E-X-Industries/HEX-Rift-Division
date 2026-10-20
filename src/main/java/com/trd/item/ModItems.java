@@ -97,6 +97,40 @@ public class ModItems {
     public static final DeferredItem<Item> INDUSTRIAL_COPPER_WIRE = ITEMS.register("industrial_copper_wire", () -> new Item(new Item.Properties()));
     public static final DeferredItem<Item> GOLD_WIRE = ITEMS.register("gold_wire", () -> new Item(new Item.Properties()));
     public static final DeferredItem<Item> NEODYMIUM_WIRE = ITEMS.register("neodymium_wire", () -> new Item(new Item.Properties()));
+    // =======================================================
+    // LIGHTING SYSTEM
+    // =======================================================
+    public static final DeferredItem<net.minecraft.world.item.BlockItem> EMPTY_SOCKET =
+            ITEMS.register("empty_socket", () -> new net.minecraft.world.item.BlockItem(
+                    com.trd.block.basic.ModBlocks.EMPTY_SOCKET.get(), new Item.Properties()));
+
+    public static final DeferredItem<com.trd.item.industrial.lighting.LampItem> CARBON_LAMP =
+            ITEMS.register("carbon_lamp", () -> new com.trd.item.industrial.lighting.LampItem(
+                    com.trd.block.basic.ModBlocks.CARBON_LAMP.get(), new Item.Properties().stacksTo(16)));
+
+    public static final DeferredItem<com.trd.item.industrial.lighting.LampItem> TUNGSTEN_LAMP =
+            ITEMS.register("tungsten_lamp", () -> new com.trd.item.industrial.lighting.LampItem(
+                    com.trd.block.basic.ModBlocks.TUNGSTEN_LAMP.get(), new Item.Properties().stacksTo(16)));
+
+    public static final DeferredItem<com.trd.item.industrial.lighting.LampItem> FLUORESCENT_LAMP =
+            ITEMS.register("fluorescent_lamp", () -> new com.trd.item.industrial.lighting.LampItem(
+                    com.trd.block.basic.ModBlocks.FLUORESCENT_LAMP.get(), new Item.Properties().stacksTo(16)));
+
+    public static final DeferredItem<com.trd.item.industrial.lighting.LampItem> LED_LAMP =
+            ITEMS.register("led_lamp", () -> new com.trd.item.industrial.lighting.LampItem(
+                    com.trd.block.basic.ModBlocks.LED_LAMP.get(), new Item.Properties().stacksTo(16)));
+
+    public static final DeferredItem<net.minecraft.world.item.BlockItem> FLOODLIGHT =
+            ITEMS.register("floodlight", () -> new net.minecraft.world.item.BlockItem(
+                    com.trd.block.basic.ModBlocks.FLOODLIGHT.get(), new Item.Properties()));
+
+    public static final DeferredItem<net.minecraft.world.item.StandingAndWallBlockItem> UNLIT_TORCH =
+            ITEMS.register("unlit_torch", () -> new net.minecraft.world.item.StandingAndWallBlockItem(
+                    com.trd.block.basic.ModBlocks.UNLIT_TORCH.get(),
+                    com.trd.block.basic.ModBlocks.UNLIT_WALL_TORCH.get(),
+                    new Item.Properties(),
+                    net.minecraft.core.Direction.DOWN));
+
     public static final DeferredItem<Item> SCREWDRIVER = ITEMS.register("screwdriver", () -> new com.trd.item.tools.ScrewdriverItem(new Item.Properties().stacksTo(1)));
 
     // New items
@@ -219,9 +253,9 @@ public class ModItems {
     public static final DeferredItem<Item> BEAM_PLACER = ITEMS.register("beam_placer",
             () -> new com.trd.item.tools.BeamPlacerItem(new Item.Properties().stacksTo(1)));
 
-    // ═══════════════════════════════════════════════════════
+    // =======================================================
     // ВЗРЫВЧАТКА
-    // ═══════════════════════════════════════════════════════
+    // =======================================================
 
     public static final DeferredItem<Item> DETONATOR = ITEMS.register("detonator",
             () -> new com.trd.item.weapons.activators.DetonatorItem(new Item.Properties()));
@@ -233,9 +267,9 @@ public class ModItems {
         com.trd.api.tooltip.MachineTooltipRegistry.register(RANGE_DETONATOR, "tooltip.trd.machine.range_detonator.desc");
     }
 
-    // ═══════════════════════════════════════════════════════
+    // =======================================================
     // ПАТРОНЫ
-    // ═══════════════════════════════════════════════════════
+    // =======================================================
 
     /**
      * Патроны 20 мм, трассирующие и обычные.
@@ -287,13 +321,13 @@ public class ModItems {
     public static final DeferredItem<Item> TURRET_AMMO_HE_SAVE_TRACER = ITEMS.register("turret_ammo_he_low_charge_tracer",
             () -> new com.trd.item.weapons.ammo.AmmoTurretItem(new Item.Properties(), 17.0f, 3.0f, false, true));
 
-    // ═══════════════════════════════════════════════════════
+    // =======================================================
     // СНАРЯДЫ
-    // ═══════════════════════════════════════════════════════
+    // =======================================================
 
-    // ═══════════════════════════════════════════════════════
+    // =======================================================
     // ПУШКА
-    // ═══════════════════════════════════════════════════════
+    // =======================================================
 
     public static final DeferredItem<Item> MACHINEGUN = ITEMS.register("machinegun",
             () -> new com.trd.item.weapons.guns.MachineGunItem(new Item.Properties().stacksTo(1)));
@@ -302,9 +336,9 @@ public class ModItems {
         com.trd.api.tooltip.MachineTooltipRegistry.register(MACHINEGUN, "tooltip.trd.machine.machinegun.desc");
     }
 
-    // ═══════════════════════════════════════════════════════
+    // =======================================================
     // ТУРЕЛИ
-    // ═══════════════════════════════════════════════════════
+    // =======================================================
 
     // Предмет-форма блока-буфера (turret_light_placer) регистрируется в ModBlocks:
     // helper registerBlock всегда вешает обычный BlockItem, а нужен кастомный
@@ -331,9 +365,9 @@ public class ModItems {
     public static final DeferredItem<Item> MISSILE_100MM_FIRE = ITEMS.register("missile_100mm_fire",
             () -> new com.trd.item.weapons.missiles.MissileItem(new Item.Properties(), "fire", 20.0f, 1.67f));
 
-    // ═══════════════════════════════════════════════════════
+    // =======================================================
     // ГРАНАТЫ
-    // ═══════════════════════════════════════════════════════
+    // =======================================================
 
     public static final DeferredItem<Item> GRAVITY_GRENADE = ITEMS.register("grenade_gravity",
             () -> new com.trd.item.weapons.grenades.GravityGrenadeItem(
@@ -424,17 +458,17 @@ public class ModItems {
         com.trd.api.tooltip.MachineTooltipRegistry.register(GRAVITY_GRENADE, "tooltip.trd.grenade_gravity.desc");
     }
 
-    // ═══════════════════════════════════════════════════════
+    // =======================================================
     // МОБЫ
-    // ═══════════════════════════════════════════════════════
+    // =======================================================
 
     public static final DeferredItem<Item> GRENADIER_ZOMBIE_SPAWN_EGG = ITEMS.register("grenadier_zombie_spawn_egg",
             () -> new net.minecraft.world.item.SpawnEggItem(ModEntities.GRENADIER_ZOMBIE.get(), 0x4C7F52, 0x8B0000,
                     new Item.Properties()));
 
-    // ═══════════════════════════════════════════════════════
+    // =======================================================
     // БРОНЯ
-    // ═══════════════════════════════════════════════════════
+    // =======================================================
 
     // 1.21.1: прочность больше не берётся из материала, её задаёт Item.Properties.
     // В 1.20.1 было 13 (слот HEAD) * 15 (durabilityMultiplier) = 195.

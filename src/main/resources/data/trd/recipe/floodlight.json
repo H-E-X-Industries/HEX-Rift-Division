@@ -1,0 +1,64 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "A": [
+      {
+        "item": "trd:aluminum_plate"
+      },
+      {
+        "item": "minecraft:iron_ingot"
+      }
+    ],
+    "G": [
+      {
+        "item": "trd:armored_glass"
+      },
+      {
+        "item": "minecraft:tinted_glass"
+      },
+      {
+        "item": "minecraft:glass"
+      }
+    ],
+    "L": [
+      {
+        "item": "trd:tungsten_lamp"
+      },
+      {
+        "item": "trd:led_lamp"
+      }
+    ],
+    "S": [
+      {
+        "item": "trd:steel_plate"
+      },
+      {
+        "item": "trd:iron_plate"
+      },
+      {
+        "item": "minecraft:iron_ingot"
+      }
+    ],
+    "W": [
+      {
+        "item": "trd:wire_coil"
+      },
+      {
+        "item": "trd:industrial_copper_wire"
+      },
+      {
+        "item": "minecraft:copper_ingot"
+      }
+    ]
+  },
+  "pattern": [
+    "SGS",
+    "ALA",
+    "SWS"
+  ],
+  "result": {
+    "count": 1,
+    "id": "trd:floodlight"
+  }
+}

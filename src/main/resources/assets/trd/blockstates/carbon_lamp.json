@@ -1,0 +1,28 @@
+{
+  "variants": {
+    "broken=false,facing=up,lit=false": { "model": "trd:block/carbon_lamp" },
+    "broken=false,facing=up,lit=true": { "model": "trd:block/carbon_lamp_lit" },
+    "broken=false,facing=down,lit=false": { "model": "trd:block/carbon_lamp", "x": 180 },
+    "broken=false,facing=down,lit=true": { "model": "trd:block/carbon_lamp_lit", "x": 180 },
+    "broken=false,facing=north,lit=false": { "model": "trd:block/carbon_lamp", "x": 90 },
+    "broken=false,facing=north,lit=true": { "model": "trd:block/carbon_lamp_lit", "x": 90 },
+    "broken=false,facing=south,lit=false": { "model": "trd:block/carbon_lamp", "x": 90, "y": 180 },
+    "broken=false,facing=south,lit=true": { "model": "trd:block/carbon_lamp_lit", "x": 90, "y": 180 },
+    "broken=false,facing=west,lit=false": { "model": "trd:block/carbon_lamp", "x": 90, "y": 270 },
+    "broken=false,facing=west,lit=true": { "model": "trd:block/carbon_lamp_lit", "x": 90, "y": 270 },
+    "broken=false,facing=east,lit=false": { "model": "trd:block/carbon_lamp", "x": 90, "y": 90 },
+    "broken=false,facing=east,lit=true": { "model": "trd:block/carbon_lamp_lit", "x": 90, "y": 90 },
+    "broken=true,facing=up,lit=false": { "model": "trd:block/carbon_lamp_broken" },
+    "broken=true,facing=up,lit=true": { "model": "trd:block/carbon_lamp_broken" },
+    "broken=true,facing=down,lit=false": { "model": "trd:block/carbon_lamp_broken", "x": 180 },
+    "broken=true,facing=down,lit=true": { "model": "trd:block/carbon_lamp_broken", "x": 180 },
+    "broken=true,facing=north,lit=false": { "model": "trd:block/carbon_lamp_broken", "x": 90 },
+    "broken=true,facing=north,lit=true": { "model": "trd:block/carbon_lamp_broken", "x": 90 },
+    "broken=true,facing=south,lit=false": { "model": "trd:block/carbon_lamp_broken", "x": 90, "y": 180 },
+    "broken=true,facing=south,lit=true": { "model": "trd:block/carbon_lamp_broken", "x": 90, "y": 180 },
+    "broken=true,facing=west,lit=false": { "model": "trd:block/carbon_lamp_broken", "x": 90, "y": 270 },
+    "broken=true,facing=west,lit=true": { "model": "trd:block/carbon_lamp_broken", "x": 90, "y": 270 },
+    "broken=true,facing=east,lit=false": { "model": "trd:block/carbon_lamp_broken", "x": 90, "y": 90 },
+    "broken=true,facing=east,lit=true": { "model": "trd:block/carbon_lamp_broken", "x": 90, "y": 90 }
+  }
+}

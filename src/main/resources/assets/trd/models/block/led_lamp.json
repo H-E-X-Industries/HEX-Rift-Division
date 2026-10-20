@@ -1,0 +1,62 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "flange": "trd:block/deco_steel",
+    "heatsink": "trd:block/deco_steel_dark",
+    "diffuser": "minecraft:block/smooth_quartz",
+    "particle": "trd:block/deco_steel"
+  },
+  "elements": [
+    {
+      "name": "flange",
+      "from": [2, 0, 2],
+      "to": [14, 2, 14],
+      "faces": {
+        "down":  { "uv": [2, 2, 14, 14], "texture": "#flange", "cullface": "down" },
+        "up":    { "uv": [2, 2, 14, 14], "texture": "#flange" },
+        "north": { "uv": [2, 14, 14, 16], "texture": "#flange" },
+        "south": { "uv": [2, 14, 14, 16], "texture": "#flange" },
+        "west":  { "uv": [2, 14, 14, 16], "texture": "#flange" },
+        "east":  { "uv": [2, 14, 14, 16], "texture": "#flange" }
+      }
+    },
+    {
+      "name": "heatsink_base",
+      "from": [4, 2, 4],
+      "to": [12, 3.5, 12],
+      "faces": {
+        "up":    { "uv": [4, 4, 12, 12], "texture": "#heatsink" },
+        "north": { "uv": [4, 12, 12, 13.5], "texture": "#heatsink" },
+        "south": { "uv": [4, 12, 12, 13.5], "texture": "#heatsink" },
+        "west":  { "uv": [4, 12, 12, 13.5], "texture": "#heatsink" },
+        "east":  { "uv": [4, 12, 12, 13.5], "texture": "#heatsink" }
+      }
+    },
+    {
+      "name": "heatsink_fin",
+      "from": [3.5, 3.5, 3.5],
+      "to": [12.5, 5, 12.5],
+      "faces": {
+        "down":  { "uv": [3.5, 3.5, 12.5, 12.5], "texture": "#heatsink" },
+        "up":    { "uv": [3.5, 3.5, 12.5, 12.5], "texture": "#heatsink" },
+        "north": { "uv": [3.5, 11, 12.5, 12.5], "texture": "#heatsink" },
+        "south": { "uv": [3.5, 11, 12.5, 12.5], "texture": "#heatsink" },
+        "west":  { "uv": [3.5, 11, 12.5, 12.5], "texture": "#heatsink" },
+        "east":  { "uv": [3.5, 11, 12.5, 12.5], "texture": "#heatsink" }
+      }
+    },
+    {
+      "name": "led_diffuser",
+      "from": [5, 5, 5],
+      "to": [11, 8.5, 11],
+      "faces": {
+        "up":    { "uv": [5, 5, 11, 11], "texture": "#diffuser" },
+        "north": { "uv": [5, 6, 11, 9.5], "texture": "#diffuser" },
+        "south": { "uv": [5, 6, 11, 9.5], "texture": "#diffuser" },
+        "west":  { "uv": [5, 6, 11, 9.5], "texture": "#diffuser" },
+        "east":  { "uv": [5, 6, 11, 9.5], "texture": "#diffuser" }
+      }
+    }
+  ]
+}

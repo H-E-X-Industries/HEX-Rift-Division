@@ -1,0 +1,62 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:translucent",
+  "textures": {
+    "flange": "trd:block/deco_steel",
+    "socket": "trd:block/industrial_copper_block",
+    "glass": "minecraft:block/glass",
+    "filament": "minecraft:block/black_concrete",
+    "particle": "trd:block/deco_steel"
+  },
+  "elements": [
+    {
+      "name": "flange",
+      "from": [2, 0, 2],
+      "to": [14, 2, 14],
+      "faces": {
+        "down":  { "uv": [2, 2, 14, 14], "texture": "#flange", "cullface": "down" },
+        "up":    { "uv": [2, 2, 14, 14], "texture": "#flange" },
+        "north": { "uv": [2, 14, 14, 16], "texture": "#flange" },
+        "south": { "uv": [2, 14, 14, 16], "texture": "#flange" },
+        "west":  { "uv": [2, 14, 14, 16], "texture": "#flange" },
+        "east":  { "uv": [2, 14, 14, 16], "texture": "#flange" }
+      }
+    },
+    {
+      "name": "socket_collar",
+      "from": [5, 2, 5],
+      "to": [11, 4, 11],
+      "faces": {
+        "up":    { "uv": [5, 5, 11, 11], "texture": "#socket" },
+        "north": { "uv": [5, 12, 11, 14], "texture": "#socket" },
+        "south": { "uv": [5, 12, 11, 14], "texture": "#socket" },
+        "west":  { "uv": [5, 12, 11, 14], "texture": "#socket" },
+        "east":  { "uv": [5, 12, 11, 14], "texture": "#socket" }
+      }
+    },
+    {
+      "name": "carbon_filament",
+      "from": [7.5, 4, 7.5],
+      "to": [8.5, 8.5, 8.5],
+      "faces": {
+        "up":    { "uv": [7, 7, 9, 9], "texture": "#filament" },
+        "north": { "uv": [7, 4, 9, 13], "texture": "#filament" },
+        "south": { "uv": [7, 4, 9, 13], "texture": "#filament" },
+        "west":  { "uv": [7, 4, 9, 13], "texture": "#filament" },
+        "east":  { "uv": [7, 4, 9, 13], "texture": "#filament" }
+      }
+    },
+    {
+      "name": "glass_bulb",
+      "from": [5, 4, 5],
+      "to": [11, 10, 11],
+      "faces": {
+        "up":    { "uv": [5, 5, 11, 11], "texture": "#glass" },
+        "north": { "uv": [5, 5, 11, 11], "texture": "#glass" },
+        "south": { "uv": [5, 5, 11, 11], "texture": "#glass" },
+        "west":  { "uv": [5, 5, 11, 11], "texture": "#glass" },
+        "east":  { "uv": [5, 5, 11, 11], "texture": "#glass" }
+      }
+    }
+  ]
+}

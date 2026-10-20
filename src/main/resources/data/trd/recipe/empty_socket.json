@@ -1,0 +1,48 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "P": [
+      {
+        "item": "trd:iron_plate"
+      },
+      {
+        "item": "trd:industrial_copper_plate"
+      },
+      {
+        "item": "minecraft:iron_ingot"
+      },
+      {
+        "item": "minecraft:copper_ingot"
+      }
+    ],
+    "R": [
+      {
+        "item": "trd:industrial_copper_wire"
+      },
+      {
+        "item": "minecraft:redstone"
+      }
+    ],
+    "T": [
+      {
+        "item": "minecraft:terracotta"
+      },
+      {
+        "item": "minecraft:smooth_stone"
+      },
+      {
+        "item": "minecraft:clay_ball"
+      }
+    ]
+  },
+  "pattern": [
+    " P ",
+    " T ",
+    " R "
+  ],
+  "result": {
+    "count": 4,
+    "id": "trd:empty_socket"
+  }
+}

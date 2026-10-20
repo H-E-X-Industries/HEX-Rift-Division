@@ -9,6 +9,7 @@ import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.ItemTags;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.block.Blocks;
@@ -307,5 +308,79 @@ public class ModRecipeProvider extends RecipeProvider {
                         ModBlocks.REINFORCEDBRICK_STAIRS.get(), 1)
                 .unlockedBy("has_reinforcedbrick_block", has(ModBlocks.REINFORCEDBRICK_BLOCK.get()))
                 .save(writer, ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "reinforcedbrick_stairs_from_stonecutting"));
+
+        // --- ПІДСИСТЕМА ІНДУСТРІАЛЬНОГО ОСВІТЛЕННЯ ---
+        // Патрон (Empty Socket)
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, ModBlocks.EMPTY_SOCKET.get(), 4)
+                .pattern(" P ")
+                .pattern(" T ")
+                .pattern(" R ")
+                .define('P', Ingredient.of(ModItems.IRON_PLATE.get(), ModItems.INDUSTRIAL_COPPER_PLATE.get(), Items.IRON_INGOT, Items.COPPER_INGOT))
+                .define('T', Ingredient.of(Blocks.TERRACOTTA, Blocks.SMOOTH_STONE, Items.CLAY_BALL))
+                .define('R', Ingredient.of(ModItems.INDUSTRIAL_COPPER_WIRE.get(), Items.REDSTONE))
+                .unlockedBy("has_iron", has(Items.IRON_INGOT))
+                .save(writer, ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "empty_socket"));
+
+        // Вугільна лампа розжарювання (Carbon Lamp)
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.CARBON_LAMP.get(), 1)
+                .pattern(" G ")
+                .pattern(" C ")
+                .pattern(" I ")
+                .define('G', Ingredient.of(Blocks.GLASS, Items.GLASS_BOTTLE))
+                .define('C', Ingredient.of(Items.CHARCOAL, Items.COAL))
+                .define('I', Ingredient.of(ModItems.INDUSTRIAL_COPPER_WIRE.get(), Items.COPPER_INGOT, Items.IRON_NUGGET))
+                .unlockedBy("has_glass", has(Blocks.GLASS))
+                .save(writer, ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "carbon_lamp"));
+
+        // Вольфрамова лампа розжарювання (Tungsten Lamp)
+        Item tungstenSmall = ResourceRegistry.getSmallUnit("tungsten");
+        Item tungstenMain = ResourceRegistry.getMainUnit("tungsten");
+        Ingredient tungstenIngredient = tungstenSmall != null
+                ? (tungstenMain != null ? Ingredient.of(tungstenSmall, tungstenMain, ModItems.TUNGSTEN_PLATE.get()) : Ingredient.of(tungstenSmall, ModItems.TUNGSTEN_PLATE.get()))
+                : Ingredient.of(ModItems.TUNGSTEN_PLATE.get());
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.TUNGSTEN_LAMP.get(), 1)
+                .pattern(" G ")
+                .pattern(" W ")
+                .pattern(" I ")
+                .define('G', Ingredient.of(Blocks.GLASS, Items.GLASS_BOTTLE))
+                .define('W', tungstenIngredient)
+                .define('I', Ingredient.of(ModItems.INDUSTRIAL_COPPER_WIRE.get(), Items.COPPER_INGOT, Items.IRON_NUGGET))
+                .unlockedBy("has_tungsten", has(ModItems.TUNGSTEN_PLATE.get()))
+                .save(writer, ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "tungsten_lamp"));
+
+        // Люмінесцентна лампа (Fluorescent Lamp)
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.FLUORESCENT_LAMP.get(), 1)
+                .pattern(" G ")
+                .pattern(" L ")
+                .pattern(" I ")
+                .define('G', Ingredient.of(Blocks.GLASS, Blocks.GLASS_PANE))
+                .define('L', Ingredient.of(Items.GLOWSTONE_DUST, Items.QUARTZ))
+                .define('I', Ingredient.of(ModItems.IRON_PLATE.get(), Items.IRON_INGOT))
+                .unlockedBy("has_glowstone", has(Items.GLOWSTONE_DUST))
+                .save(writer, ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "fluorescent_lamp"));
+
+        // Світлодіодна лампа (LED Lamp)
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ModItems.LED_LAMP.get(), 1)
+                .pattern(" G ")
+                .pattern(" T ")
+                .pattern(" R ")
+                .define('G', Blocks.GLASS)
+                .define('T', ModItems.TURRET_CHIP.get())
+                .define('R', Ingredient.of(ModItems.GOLD_WIRE.get(), ModItems.INDUSTRIAL_COPPER_WIRE.get(), Items.REDSTONE))
+                .unlockedBy("has_chip", has(ModItems.TURRET_CHIP.get()))
+                .save(writer, ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "led_lamp"));
+
+        // Промисловий прожектор (Floodlight)
+        ShapedRecipeBuilder.shaped(RecipeCategory.BUILDING_BLOCKS, ModBlocks.FLOODLIGHT.get(), 1)
+                .pattern("SGS")
+                .pattern("ALA")
+                .pattern("SWS")
+                .define('S', Ingredient.of(ModItems.STEEL_PLATE.get(), ModItems.IRON_PLATE.get(), Items.IRON_INGOT))
+                .define('G', Ingredient.of(ModBlocks.ARMORED_GLASS.get(), Blocks.TINTED_GLASS, Blocks.GLASS))
+                .define('A', Ingredient.of(ModItems.ALUMINUM_PLATE.get(), Items.IRON_INGOT))
+                .define('L', Ingredient.of(ModItems.TUNGSTEN_LAMP.get(), ModItems.LED_LAMP.get()))
+                .define('W', Ingredient.of(ModItems.WIRE_COIL.get(), ModItems.INDUSTRIAL_COPPER_WIRE.get(), Items.COPPER_INGOT))
+                .unlockedBy("has_steel_plate", has(ModItems.STEEL_PLATE.get()))
+                .save(writer, ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "floodlight"));
     }
 }

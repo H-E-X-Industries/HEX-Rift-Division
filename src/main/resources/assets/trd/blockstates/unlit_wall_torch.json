@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "trd:block/unlit_wall_torch",
+      "y": 270
+    },
+    "facing=north": {
+      "model": "trd:block/unlit_wall_torch",
+      "y": 180
+    },
+    "facing=south": {
+      "model": "trd:block/unlit_wall_torch"
+    },
+    "facing=west": {
+      "model": "trd:block/unlit_wall_torch",
+      "y": 90
+    }
+  }
+}

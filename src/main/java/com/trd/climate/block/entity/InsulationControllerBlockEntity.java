@@ -408,7 +408,10 @@ public class InsulationControllerBlockEntity extends BlockEntity implements Seal
                 || state.is(Blocks.WALL_TORCH)
                 || state.is(Blocks.PACKED_ICE)
                 || state.is(Blocks.BLUE_ICE)
-                || state.is(Blocks.ICE);
+                || state.is(Blocks.ICE)
+                || (state.is(com.trd.block.basic.ModBlocks.CARBON_LAMP.get())
+                        && state.getValue(com.trd.block.basic.industrial.lighting.ElectricLampBlock.LIT)
+                        && !state.getValue(com.trd.block.basic.industrial.lighting.ElectricLampBlock.BROKEN));
     }
 
     /**
@@ -427,6 +430,10 @@ public class InsulationControllerBlockEntity extends BlockEntity implements Seal
                 if (!isLargeRoom) totalQ += 10.5f;
             } else if (state.is(Blocks.TORCH) || state.is(Blocks.WALL_TORCH)) {
                 if (!isLargeRoom) totalQ += 0.5f;
+            } else if (state.is(com.trd.block.basic.ModBlocks.CARBON_LAMP.get())
+                    && state.getValue(com.trd.block.basic.industrial.lighting.ElectricLampBlock.LIT)
+                    && !state.getValue(com.trd.block.basic.industrial.lighting.ElectricLampBlock.BROKEN)) {
+                if (!isLargeRoom) totalQ += 0.6f;
             }
             // Печи
             else if ((state.is(Blocks.FURNACE) || state.is(Blocks.BLAST_FURNACE) || state.is(Blocks.SMOKER))

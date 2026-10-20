@@ -132,6 +132,17 @@ public class ModCapabilities {
                 (be, side) -> be.getEnergyReceiver(side)
         );
 
+        event.registerBlockEntity(
+                ENERGY_RECEIVER,
+                com.trd.block.entity.ModBlockEntities.SOCKET_BE.get(),
+                (be, side) -> be.getEnergyReceiver(side)
+        );
+        event.registerBlockEntity(
+                ENERGY_RECEIVER,
+                com.trd.block.entity.ModBlockEntities.FLOODLIGHT_BE.get(),
+                (be, side) -> be.getEnergyReceiver(side)
+        );
+
         // IEnergyConnector
         event.registerBlockEntity(
                 ENERGY_CONNECTOR,
@@ -225,6 +236,17 @@ public class ModCapabilities {
         event.registerBlockEntity(
                 ENERGY_CONNECTOR,
                 com.trd.block.entity.ModBlockEntities.CHEMICAL_PLANT_HEATER_BE.get(),
+                (be, side) -> be.getEnergyConnector(side)
+        );
+
+        event.registerBlockEntity(
+                ENERGY_CONNECTOR,
+                com.trd.block.entity.ModBlockEntities.SOCKET_BE.get(),
+                (be, side) -> be.getEnergyConnector(side)
+        );
+        event.registerBlockEntity(
+                ENERGY_CONNECTOR,
+                com.trd.block.entity.ModBlockEntities.FLOODLIGHT_BE.get(),
                 (be, side) -> be.getEnergyConnector(side)
         );
 

@@ -1,0 +1,45 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "G": [
+      {
+        "item": "minecraft:glass"
+      },
+      {
+        "item": "minecraft:glass_bottle"
+      }
+    ],
+    "I": [
+      {
+        "item": "trd:industrial_copper_wire"
+      },
+      {
+        "item": "minecraft:copper_ingot"
+      },
+      {
+        "item": "minecraft:iron_nugget"
+      }
+    ],
+    "W": [
+      {
+        "item": "trd:tungsten_nugget"
+      },
+      {
+        "item": "trd:tungsten_ingot"
+      },
+      {
+        "item": "trd:tungsten_plate"
+      }
+    ]
+  },
+  "pattern": [
+    " G ",
+    " W ",
+    " I "
+  ],
+  "result": {
+    "count": 1,
+    "id": "trd:tungsten_lamp"
+  }
+}

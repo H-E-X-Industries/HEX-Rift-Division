@@ -1,0 +1,85 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:translucent",
+  "textures": {
+    "flange": "trd:block/deco_steel",
+    "socket": "trd:block/industrial_copper_block",
+    "glass": "minecraft:block/glass",
+    "filament": "minecraft:block/iron_block",
+    "particle": "trd:block/deco_steel"
+  },
+  "elements": [
+    {
+      "name": "flange",
+      "from": [2, 0, 2],
+      "to": [14, 2, 14],
+      "faces": {
+        "down":  { "uv": [2, 2, 14, 14], "texture": "#flange", "cullface": "down" },
+        "up":    { "uv": [2, 2, 14, 14], "texture": "#flange" },
+        "north": { "uv": [2, 14, 14, 16], "texture": "#flange" },
+        "south": { "uv": [2, 14, 14, 16], "texture": "#flange" },
+        "west":  { "uv": [2, 14, 14, 16], "texture": "#flange" },
+        "east":  { "uv": [2, 14, 14, 16], "texture": "#flange" }
+      }
+    },
+    {
+      "name": "socket_collar",
+      "from": [5, 2, 5],
+      "to": [11, 4, 11],
+      "faces": {
+        "up":    { "uv": [5, 5, 11, 11], "texture": "#socket" },
+        "north": { "uv": [5, 12, 11, 14], "texture": "#socket" },
+        "south": { "uv": [5, 12, 11, 14], "texture": "#socket" },
+        "west":  { "uv": [5, 12, 11, 14], "texture": "#socket" },
+        "east":  { "uv": [5, 12, 11, 14], "texture": "#socket" }
+      }
+    },
+    {
+      "name": "tungsten_filament_left",
+      "from": [6.75, 4, 7.5],
+      "to": [7.5, 9, 8.5],
+      "faces": {
+        "up":    { "uv": [6, 6, 8, 8], "texture": "#filament" },
+        "north": { "uv": [6, 4, 8, 14], "texture": "#filament" },
+        "south": { "uv": [6, 4, 8, 14], "texture": "#filament" },
+        "west":  { "uv": [6, 4, 8, 14], "texture": "#filament" },
+        "east":  { "uv": [6, 4, 8, 14], "texture": "#filament" }
+      }
+    },
+    {
+      "name": "tungsten_filament_right",
+      "from": [8.5, 4, 7.5],
+      "to": [9.25, 9, 8.5],
+      "faces": {
+        "up":    { "uv": [8, 6, 10, 8], "texture": "#filament" },
+        "north": { "uv": [8, 4, 10, 14], "texture": "#filament" },
+        "south": { "uv": [8, 4, 10, 14], "texture": "#filament" },
+        "west":  { "uv": [8, 4, 10, 14], "texture": "#filament" },
+        "east":  { "uv": [8, 4, 10, 14], "texture": "#filament" }
+      }
+    },
+    {
+      "name": "tungsten_filament_bridge",
+      "from": [6.75, 8.5, 7.5],
+      "to": [9.25, 9.25, 8.5],
+      "faces": {
+        "up":    { "uv": [6, 7, 10, 9], "texture": "#filament" },
+        "down":  { "uv": [6, 7, 10, 9], "texture": "#filament" },
+        "north": { "uv": [6, 7, 10, 9], "texture": "#filament" },
+        "south": { "uv": [6, 7, 10, 9], "texture": "#filament" }
+      }
+    },
+    {
+      "name": "glass_bulb",
+      "from": [5, 4, 5],
+      "to": [11, 10.5, 11],
+      "faces": {
+        "up":    { "uv": [5, 5, 11, 11], "texture": "#glass" },
+        "north": { "uv": [5, 4.5, 11, 11], "texture": "#glass" },
+        "south": { "uv": [5, 4.5, 11, 11], "texture": "#glass" },
+        "west":  { "uv": [5, 4.5, 11, 11], "texture": "#glass" },
+        "east":  { "uv": [5, 4.5, 11, 11], "texture": "#glass" }
+      }
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.trd.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "refmap": "trd.refmap.json",
+  "mixins": [
+    "TorchBlockMixin",
+    "WallTorchBlockMixin",
+    "BlockStateBaseMixin"
+  ],
+  "client": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -1,6 +1,15 @@
 {
   "replace": false,
   "values": [
+    "trd:empty_socket",
+    "trd:carbon_lamp",
+    "trd:tungsten_lamp",
+    "trd:fluorescent_lamp",
+    "trd:led_lamp",
+    "trd:floodlight",
+    "trd:unlit_torch",
+    "trd:unlit_wall_torch",
+    "trd:round_lamp",
     "trd:hand_crank",
     "trd:bearing",
     "trd:motor_electro",

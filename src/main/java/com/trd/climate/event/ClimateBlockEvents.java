@@ -33,6 +33,14 @@ public class ClimateBlockEvents {
         BlockPos pos = event.getPos();
         BlockState state = event.getState();
 
+        // Пропускаємо дроти, патрони та лампи для запобігання зайвих сканувань кімнат при маніпуляціях з освітленням
+        if (state.getBlock() instanceof com.trd.block.basic.industrial.energy.WireBlock
+                || state.getBlock() instanceof com.trd.block.basic.industrial.lighting.ElectricLampBlock
+                || state.getBlock() instanceof com.trd.block.basic.industrial.lighting.EmptySocketBlock
+                || state.getBlock() instanceof com.trd.block.basic.industrial.lighting.FloodlightBlock) {
+            return;
+        }
+
         // Игнорируем блоки без коллизии (трава, факелы и т.д.)
         if (!state.isSolidRender(level, pos) && !AirtightHelper.isAirtight(state, level, pos)) {
             return;

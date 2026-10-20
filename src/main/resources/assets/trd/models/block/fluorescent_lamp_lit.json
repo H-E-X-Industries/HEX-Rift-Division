@@ -1,0 +1,105 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "flange": "trd:block/deco_steel",
+    "base": "trd:block/steel_block",
+    "tube": "minecraft:block/sea_lantern",
+    "particle": "minecraft:block/sea_lantern"
+  },
+  "elements": [
+    {
+      "name": "flange",
+      "from": [2, 0, 2],
+      "to": [14, 2, 14],
+      "faces": {
+        "down":  { "uv": [2, 2, 14, 14], "texture": "#flange", "cullface": "down" },
+        "up":    { "uv": [2, 2, 14, 14], "texture": "#flange" },
+        "north": { "uv": [2, 14, 14, 16], "texture": "#flange" },
+        "south": { "uv": [2, 14, 14, 16], "texture": "#flange" },
+        "west":  { "uv": [2, 14, 14, 16], "texture": "#flange" },
+        "east":  { "uv": [2, 14, 14, 16], "texture": "#flange" }
+      }
+    },
+    {
+      "name": "ballast_housing",
+      "from": [4, 2, 4],
+      "to": [12, 3.5, 12],
+      "faces": {
+        "up":    { "uv": [4, 4, 12, 12], "texture": "#base" },
+        "north": { "uv": [4, 12.5, 12, 14], "texture": "#base" },
+        "south": { "uv": [4, 12.5, 12, 14], "texture": "#base" },
+        "west":  { "uv": [4, 12.5, 12, 14], "texture": "#base" },
+        "east":  { "uv": [4, 12.5, 12, 14], "texture": "#base" }
+      }
+    },
+    {
+      "name": "tube1_leg_a",
+      "from": [5, 3.5, 5.5],
+      "to": [7, 10, 7.5],
+      "faces": {
+        "north": { "uv": [5, 4, 7, 10.5], "texture": "#tube" },
+        "south": { "uv": [5, 4, 7, 10.5], "texture": "#tube" },
+        "west":  { "uv": [5, 4, 7, 10.5], "texture": "#tube" },
+        "east":  { "uv": [5, 4, 7, 10.5], "texture": "#tube" }
+      }
+    },
+    {
+      "name": "tube1_leg_b",
+      "from": [5, 3.5, 8.5],
+      "to": [7, 10, 10.5],
+      "faces": {
+        "north": { "uv": [5, 4, 7, 10.5], "texture": "#tube" },
+        "south": { "uv": [5, 4, 7, 10.5], "texture": "#tube" },
+        "west":  { "uv": [5, 4, 7, 10.5], "texture": "#tube" },
+        "east":  { "uv": [5, 4, 7, 10.5], "texture": "#tube" }
+      }
+    },
+    {
+      "name": "tube1_bridge",
+      "from": [5, 9, 6.5],
+      "to": [7, 10.5, 9.5],
+      "faces": {
+        "up":    { "uv": [5, 6, 7, 9], "texture": "#tube" },
+        "north": { "uv": [5, 9, 7, 10.5], "texture": "#tube" },
+        "south": { "uv": [5, 9, 7, 10.5], "texture": "#tube" },
+        "west":  { "uv": [6.5, 9, 9.5, 10.5], "texture": "#tube" },
+        "east":  { "uv": [6.5, 9, 9.5, 10.5], "texture": "#tube" }
+      }
+    },
+    {
+      "name": "tube2_leg_a",
+      "from": [9, 3.5, 5.5],
+      "to": [11, 10, 7.5],
+      "faces": {
+        "north": { "uv": [9, 4, 11, 10.5], "texture": "#tube" },
+        "south": { "uv": [9, 4, 11, 10.5], "texture": "#tube" },
+        "west":  { "uv": [9, 4, 11, 10.5], "texture": "#tube" },
+        "east":  { "uv": [9, 4, 11, 10.5], "texture": "#tube" }
+      }
+    },
+    {
+      "name": "tube2_leg_b",
+      "from": [9, 3.5, 8.5],
+      "to": [11, 10, 10.5],
+      "faces": {
+        "north": { "uv": [9, 4, 11, 10.5], "texture": "#tube" },
+        "south": { "uv": [9, 4, 11, 10.5], "texture": "#tube" },
+        "west":  { "uv": [9, 4, 11, 10.5], "texture": "#tube" },
+        "east":  { "uv": [9, 4, 11, 10.5], "texture": "#tube" }
+      }
+    },
+    {
+      "name": "tube2_bridge",
+      "from": [9, 9, 6.5],
+      "to": [11, 10.5, 9.5],
+      "faces": {
+        "up":    { "uv": [9, 6, 11, 9], "texture": "#tube" },
+        "north": { "uv": [9, 9, 11, 10.5], "texture": "#tube" },
+        "south": { "uv": [9, 9, 11, 10.5], "texture": "#tube" },
+        "west":  { "uv": [6.5, 9, 9.5, 10.5], "texture": "#tube" },
+        "east":  { "uv": [6.5, 9, 9.5, 10.5], "texture": "#tube" }
+      }
+    }
+  ]
+}

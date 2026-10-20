@@ -148,11 +148,13 @@ public class EnergyNetworkManager extends SavedData {
      */
     private void addNode(BlockPos pos, @Nullable EnergyNetwork networkToAvoid) {
         Queue<AddNodeRequest> pendingNodes = new LinkedList<>();
+        Set<Long> visited = new HashSet<>();
         pendingNodes.add(new AddNodeRequest(pos, networkToAvoid));
+        visited.add(pos.asLong());
 
         while (!pendingNodes.isEmpty()) {
             AddNodeRequest request = pendingNodes.poll();
-            addNodeInternal(request.pos, request.networkToAvoid, pendingNodes);
+            addNodeInternal(request.pos, request.networkToAvoid, pendingNodes, visited);
         }
     }
 
@@ -165,7 +167,7 @@ public class EnergyNetworkManager extends SavedData {
      * Найденных "потерянных" соседей складывает в pendingNodes вместо рекурсии.
      */
     private void addNodeInternal(BlockPos pos, @Nullable EnergyNetwork networkToAvoid,
-                                 Queue<AddNodeRequest> pendingNodes) {
+                                 Queue<AddNodeRequest> pendingNodes, Set<Long> visited) {
         long posLong = pos.asLong();
 
         // 1. Защита от дубликатов и проверка существования
@@ -205,7 +207,9 @@ public class EnergyNetworkManager extends SavedData {
                         level.getCapability(ModCapabilities.ENERGY_CONNECTOR, neighborPos, null) != null;
 
                 if (isEnergyBlock) {
-                    pendingNodes.add(new AddNodeRequest(neighborPos, null));
+                    if (visited.add(neighborLong)) {
+                        pendingNodes.add(new AddNodeRequest(neighborPos, null));
+                    }
                     continue;
                 }
             }
@@ -233,7 +237,9 @@ public class EnergyNetworkManager extends SavedData {
                             if (level.isLoaded(linkedPos)) {
                                 BlockEntity linkedBe = level.getBlockEntity(linkedPos);
                                 if (linkedBe instanceof ConnectorBlockEntity) {
-                                    pendingNodes.add(new AddNodeRequest(linkedPos, null));
+                                    if (visited.add(linkedLong)) {
+                                        pendingNodes.add(new AddNodeRequest(linkedPos, null));
+                                    }
                                 }
                             }
                         } else if (linkedNeighbor.getNetwork() != null) {

@@ -280,6 +280,26 @@ public class ModBlockEntities {
                     com.trd.climate.block.entity.AtmosphericScannerBlockEntity::new,
                     ModBlocks.ATMOSPHERIC_SCANNER.get()).build(null));
 
+    // ═══════════════════════════════════════════════════════
+    // СИСТЕМА ОСВІТЛЕННЯ (LIGHTING SYSTEM)
+    // ═══════════════════════════════════════════════════════
+
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.industrial.lighting.SocketBlockEntity>> SOCKET_BE =
+            BLOCK_ENTITIES.register("socket_be", () -> BlockEntityType.Builder.of(
+                    com.trd.block.entity.industrial.lighting.SocketBlockEntity::new,
+                    ModBlocks.EMPTY_SOCKET.get(),
+                    ModBlocks.CARBON_LAMP.get(),
+                    ModBlocks.TUNGSTEN_LAMP.get(),
+                    ModBlocks.FLUORESCENT_LAMP.get(),
+                    ModBlocks.LED_LAMP.get()
+            ).build(null));
+
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.industrial.lighting.FloodlightBlockEntity>> FLOODLIGHT_BE =
+            BLOCK_ENTITIES.register("floodlight_be", () -> BlockEntityType.Builder.of(
+                    com.trd.block.entity.industrial.lighting.FloodlightBlockEntity::new,
+                    ModBlocks.FLOODLIGHT.get()
+            ).build(null));
+
     public static void register(IEventBus eventBus) {
         BLOCK_ENTITIES.register(eventBus);
     }

@@ -1,0 +1,49 @@
+{
+  "parent": "minecraft:block/block",
+  "render_type": "minecraft:cutout",
+  "textures": {
+    "flange": "trd:block/deco_steel",
+    "socket": "trd:block/industrial_copper_block",
+    "inner": "trd:block/deco_steel_dark",
+    "particle": "trd:block/deco_steel"
+  },
+  "elements": [
+    {
+      "name": "flange",
+      "from": [2, 0, 2],
+      "to": [14, 2, 14],
+      "faces": {
+        "down":  { "uv": [2, 2, 14, 14], "texture": "#flange", "cullface": "down" },
+        "up":    { "uv": [2, 2, 14, 14], "texture": "#flange" },
+        "north": { "uv": [2, 14, 14, 16], "texture": "#flange" },
+        "south": { "uv": [2, 14, 14, 16], "texture": "#flange" },
+        "west":  { "uv": [2, 14, 14, 16], "texture": "#flange" },
+        "east":  { "uv": [2, 14, 14, 16], "texture": "#flange" }
+      }
+    },
+    {
+      "name": "socket_collar",
+      "from": [5, 2, 5],
+      "to": [11, 4, 11],
+      "faces": {
+        "up":    { "uv": [5, 5, 11, 11], "texture": "#socket" },
+        "north": { "uv": [5, 12, 11, 14], "texture": "#socket" },
+        "south": { "uv": [5, 12, 11, 14], "texture": "#socket" },
+        "west":  { "uv": [5, 12, 11, 14], "texture": "#socket" },
+        "east":  { "uv": [5, 12, 11, 14], "texture": "#socket" }
+      }
+    },
+    {
+      "name": "socket_inner",
+      "from": [6, 3, 6],
+      "to": [10, 4.25, 10],
+      "faces": {
+        "up":    { "uv": [6, 6, 10, 10], "texture": "#inner" },
+        "north": { "uv": [6, 14, 10, 15.25], "texture": "#inner" },
+        "south": { "uv": [6, 14, 10, 15.25], "texture": "#inner" },
+        "west":  { "uv": [6, 14, 10, 15.25], "texture": "#inner" },
+        "east":  { "uv": [6, 14, 10, 15.25], "texture": "#inner" }
+      }
+    }
+  ]
+}

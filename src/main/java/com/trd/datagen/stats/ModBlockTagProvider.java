@@ -175,6 +175,10 @@ public class ModBlockTagProvider extends BlockTagsProvider {
                 return;
             }
 
+            if (block instanceof net.minecraft.world.level.block.TorchBlock) {
+                return;
+            }
+
             if (AXE_BLOCKS.contains(block)) {
                 axeTag.add(block);
                 return;
@@ -194,6 +198,14 @@ public class ModBlockTagProvider extends BlockTagsProvider {
                 ironTag.add(block);
                 return;
             }
+
+            // Освітлення: патрони та світильники добуваються будь-яким кайлом
+            if (block instanceof com.trd.block.basic.industrial.lighting.EmptySocketBlock
+                    || block instanceof com.trd.block.basic.industrial.lighting.ElectricLampBlock) {
+                pickaxeTag.add(block);
+                return;
+            }
+
             // каменная кирка
             pickaxeTag.add(block);
             stoneTag.add(block);
@@ -252,14 +264,14 @@ public class ModBlockTagProvider extends BlockTagsProvider {
                 .add(ModBlocks.WASTE_FENCE_GATE.get())
                 .add(ModBlocks.STEEL_PROPS.get());
 
-tag(TagKey.create(Registries.BLOCK,
+        tag(TagKey.create(Registries.BLOCK,
                 ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "wire_fence_alt_connections")))
                 .add(ModBlocks.WIRE_FENCE_ALT.get())
                 .add(ModBlocks.WIRE_FENCE.get())
                 .add(ModBlocks.WASTE_PRESSURE_PLATE.get())
                 .add(ModBlocks.STEEL_PROPS.get());
 
-// === УЛЬЯ ГЛУБИННЫХ ЧЕРВЕЙ: ОБЯЗАТЕЛЬНЫЕ ЯКОРЯ ===
+        // === УЛЬЯ ГЛУБИННЫХ ЧЕРВЕЙ: ОБЯЗАТЕЛЬНЫЕ ЯКОРЯ ===
         // Рельсы, доски, каменные кирпичи, сундуки, бочки, спавнеры. Возле такого
         // блока улей строится на полной частоте (шанс 1 из 4 чанков, в которых
         // блок реально есть), поэтому улей почти всегда рядом с шахтой/крепостью,
@@ -331,7 +343,7 @@ tag(TagKey.create(Registries.BLOCK,
                 .add(net.minecraft.world.level.block.Blocks.CHISELED_DEEPSLATE)
                 .add(net.minecraft.world.level.block.Blocks.CRACKED_DEEPSLATE_BRICKS)
                 .add(net.minecraft.world.level.block.Blocks.CRACKED_DEEPSLATE_TILES)
-// триальные залы
+                // триальные залы
                 .add(net.minecraft.world.level.block.Blocks.CHISELED_TUFF_BRICKS)
                 .add(net.minecraft.world.level.block.Blocks.HEAVY_CORE);
 
