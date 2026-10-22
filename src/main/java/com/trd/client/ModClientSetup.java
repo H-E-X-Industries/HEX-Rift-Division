@@ -587,8 +587,8 @@ public class ModClientSetup {
             net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(com.trd.block.basic.ModBlocks.UNLIT_TORCH.get(), net.minecraft.client.renderer.RenderType.cutout());
             net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(com.trd.block.basic.ModBlocks.UNLIT_WALL_TORCH.get(), net.minecraft.client.renderer.RenderType.cutout());
             net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(com.trd.block.basic.ModBlocks.EMPTY_SOCKET.get(), net.minecraft.client.renderer.RenderType.cutout());
-            net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(com.trd.block.basic.ModBlocks.CARBON_LAMP.get(), net.minecraft.client.renderer.RenderType.translucent());
-            net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(com.trd.block.basic.ModBlocks.TUNGSTEN_LAMP.get(), net.minecraft.client.renderer.RenderType.translucent());
+            net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(com.trd.block.basic.ModBlocks.CARBON_LAMP.get(), net.minecraft.client.renderer.RenderType.cutout());
+            net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(com.trd.block.basic.ModBlocks.TUNGSTEN_LAMP.get(), net.minecraft.client.renderer.RenderType.cutout());
             net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(com.trd.block.basic.ModBlocks.FLUORESCENT_LAMP.get(), net.minecraft.client.renderer.RenderType.cutout());
             net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(com.trd.block.basic.ModBlocks.LED_LAMP.get(), net.minecraft.client.renderer.RenderType.cutout());
             net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(com.trd.block.basic.ModBlocks.FLOODLIGHT.get(), net.minecraft.client.renderer.RenderType.cutout());

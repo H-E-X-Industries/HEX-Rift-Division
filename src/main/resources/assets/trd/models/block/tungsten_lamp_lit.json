@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:block/block",
-  "render_type": "minecraft:translucent",
+  "render_type": "minecraft:cutout",
   "textures": {
     "flange": "trd:block/deco_steel",
     "socket": "trd:block/industrial_copper_block",
