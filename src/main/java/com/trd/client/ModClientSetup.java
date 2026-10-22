@@ -48,6 +48,13 @@ public class ModClientSetup {
     }
 
     @SubscribeEvent
+    public static void onRegisterAdditional(net.neoforged.neoforge.client.event.ModelEvent.RegisterAdditional event) {
+        event.register(net.minecraft.client.resources.model.ModelResourceLocation.standalone(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("trd", "block/floodlight_base")));
+        event.register(net.minecraft.client.resources.model.ModelResourceLocation.standalone(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("trd", "block/floodlight_yoke")));
+        event.register(net.minecraft.client.resources.model.ModelResourceLocation.standalone(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("trd", "block/floodlight_drum")));
+        event.register(net.minecraft.client.resources.model.ModelResourceLocation.standalone(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("trd", "block/floodlight_drum_lit")));
+    }
+    @SubscribeEvent
     public static void registerRenderers(net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.MACHINE_BATTERY_BE.get(), com.trd.client.gecko.block.energy.MachineBatteryRenderer::new);
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.CONNECTOR_BE.get(), com.trd.client.renderer.ConnectorRenderer::new);
@@ -74,6 +81,7 @@ public class ModClientSetup {
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.STATOR_BE.get(), com.trd.client.render.ber.StatorRenderer::new);
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.DROBITEL_BE.get(), com.trd.client.render.ber.DrobitelRenderer::new);
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.SHAFT_BE.get(), com.trd.client.render.ber.ShaftRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.FLOODLIGHT_BE.get(), com.trd.client.render.ber.FloodlightBlockEntityRenderer::new);
 
         // Пять текстур пули сшиваются в один атлас вариантов. Звать надо до
         // первого выстрела, иначе первые пули просто не рисуются: модель

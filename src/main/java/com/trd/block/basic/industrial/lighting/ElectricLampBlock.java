@@ -8,6 +8,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
@@ -27,11 +28,14 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -44,15 +48,16 @@ public abstract class ElectricLampBlock extends Block implements EntityBlock {
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
     public static final BooleanProperty BROKEN = BooleanProperty.create("broken");
+    public static final IntegerProperty LIGHT_LEVEL = IntegerProperty.create("light_level", 0, 15);
 
-    // Форми світильника з колбою, орієнтовані на 6 сторін (основа + виліт до 10 пікселів)
+    // Форми світильника з колбою, орієнтовані на 6 сторін (база 6x6, висота до 11 пікселів)
     private static final Map<Direction, VoxelShape> SHAPES = ImmutableMap.<Direction, VoxelShape>builder()
-            .put(Direction.UP, Block.box(3.0, 0.0, 3.0, 13.0, 10.0, 13.0))
-            .put(Direction.DOWN, Block.box(3.0, 6.0, 3.0, 13.0, 16.0, 13.0))
-            .put(Direction.NORTH, Block.box(3.0, 3.0, 6.0, 13.0, 13.0, 16.0))
-            .put(Direction.SOUTH, Block.box(3.0, 3.0, 0.0, 13.0, 13.0, 10.0))
-            .put(Direction.WEST, Block.box(6.0, 3.0, 3.0, 16.0, 13.0, 13.0))
-            .put(Direction.EAST, Block.box(0.0, 3.0, 3.0, 10.0, 13.0, 13.0))
+            .put(Direction.UP, Block.box(5.0, 0.0, 5.0, 11.0, 11.0, 11.0))
+            .put(Direction.DOWN, Block.box(5.0, 5.0, 5.0, 11.0, 16.0, 11.0))
+            .put(Direction.NORTH, Block.box(5.0, 5.0, 5.0, 11.0, 11.0, 16.0))
+            .put(Direction.SOUTH, Block.box(5.0, 5.0, 0.0, 11.0, 11.0, 11.0))
+            .put(Direction.WEST, Block.box(5.0, 5.0, 5.0, 16.0, 11.0, 11.0))
+            .put(Direction.EAST, Block.box(0.0, 5.0, 5.0, 11.0, 11.0, 11.0))
             .build();
 
     private final int maxLightLevel;
@@ -62,14 +67,18 @@ public abstract class ElectricLampBlock extends Block implements EntityBlock {
     public ElectricLampBlock(Properties properties, int maxLightLevel,
                              Supplier<? extends Item> lampItemSupplier,
                              Supplier<? extends Block> socketBlockSupplier) {
-        super(properties.randomTicks());
+        super(properties.lightLevel(state -> {
+            if (state.hasProperty(BROKEN) && state.getValue(BROKEN)) return 0;
+            return state.hasProperty(LIGHT_LEVEL) ? state.getValue(LIGHT_LEVEL) : (state.getValue(LIT) ? maxLightLevel : 0);
+        }).randomTicks());
         this.maxLightLevel = maxLightLevel;
         this.lampItemSupplier = lampItemSupplier;
         this.socketBlockSupplier = socketBlockSupplier;
         this.registerDefaultState(this.stateDefinition.any()
                 .setValue(FACING, Direction.NORTH)
                 .setValue(LIT, false)
-                .setValue(BROKEN, false));
+                .setValue(BROKEN, false)
+                .setValue(LIGHT_LEVEL, 0));
     }
 
     public abstract long getConsumptionPerTick();
@@ -96,7 +105,7 @@ public abstract class ElectricLampBlock extends Block implements EntityBlock {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, LIT, BROKEN);
+        builder.add(FACING, LIT, BROKEN, LIGHT_LEVEL);
     }
 
     @Override
@@ -110,7 +119,19 @@ public abstract class ElectricLampBlock extends Block implements EntityBlock {
         return this.defaultBlockState()
                 .setValue(FACING, facing)
                 .setValue(LIT, false)
-                .setValue(BROKEN, false);
+                .setValue(BROKEN, false)
+                .setValue(LIGHT_LEVEL, 0);
+    }
+
+    @Nullable
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
+        if (level.isClientSide) return null;
+        return (lvl, pos, st, be) -> {
+            if (be instanceof SocketBlockEntity socketBE) {
+                socketBE.serverTick((ServerLevel) lvl, pos, st);
+            }
+        };
     }
 
     @Override
@@ -131,14 +152,38 @@ public abstract class ElectricLampBlock extends Block implements EntityBlock {
     }
 
     @Override
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        super.onPlace(state, level, pos, oldState, isMoving);
+        if (!state.is(oldState.getBlock()) && !level.isClientSide) {
+            PowerPortHelper.tryAutoConnect(level, pos, state, null);
+        }
+    }
+
+    @Override
     protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
         super.neighborChanged(state, level, pos, block, fromPos, isMoving);
         if (!level.isClientSide) {
             if (!state.canSurvive(level, pos)) {
                 dropResources(state, level, pos, level.getBlockEntity(pos));
                 level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                return;
             }
+            PowerPortHelper.tryAutoConnect(level, pos, state, fromPos);
         }
+    }
+
+    @Override
+    protected void attack(BlockState state, Level level, BlockPos pos, Player player) {
+        if (PowerPortHelper.isHoldingWire(player)) {
+            net.minecraft.world.phys.HitResult hit = player.pick(5.0D, 0.0F, false);
+            Direction targetFace = null;
+            if (hit instanceof BlockHitResult bhr && bhr.getBlockPos().equals(pos)) {
+                targetFace = bhr.getDirection();
+            }
+            PowerPortHelper.handlePortSwitch(level, pos, state, player, targetFace);
+            return;
+        }
+        super.attack(state, level, pos, player);
     }
 
     @Override
@@ -182,6 +227,15 @@ public abstract class ElectricLampBlock extends Block implements EntityBlock {
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                              Player player, InteractionHand hand, BlockHitResult hitResult) {
+        Direction clickedFace = hitResult.getDirection();
+
+        // Якщо тримає дріт — налаштовуємо порт підключення
+        if (PowerPortHelper.isHoldingWire(player)) {
+            PowerPortHelper.handlePortSwitch(level, pos, state, player, clickedFace);
+            return ItemInteractionResult.sidedSuccess(level.isClientSide);
+        }
+
+        // Якщо колба розбита або гравець з Shift — викручуємо лампу
         if (state.getValue(BROKEN) || player.isShiftKeyDown()) {
             unscrewLamp(state, level, pos, player);
             return ItemInteractionResult.sidedSuccess(level.isClientSide);
@@ -192,6 +246,12 @@ public abstract class ElectricLampBlock extends Block implements EntityBlock {
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos,
                                               Player player, BlockHitResult hitResult) {
+        Direction clickedFace = hitResult.getDirection();
+        if (PowerPortHelper.isHoldingWire(player)) {
+            PowerPortHelper.handlePortSwitch(level, pos, state, player, clickedFace);
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
+
         if (state.getValue(BROKEN) || player.isShiftKeyDown()) {
             unscrewLamp(state, level, pos, player);
             return InteractionResult.sidedSuccess(level.isClientSide);
@@ -205,15 +265,26 @@ public abstract class ElectricLampBlock extends Block implements EntityBlock {
 
             float durability = 1.0f;
             boolean isBroken = state.getValue(BROKEN);
+            Direction savedPort = null;
+            long savedEnergy = 0L;
 
             if (level.getBlockEntity(pos) instanceof SocketBlockEntity socketBE) {
                 durability = socketBE.getDurability();
                 isBroken = socketBE.isBroken() || isBroken;
+                savedPort = socketBE.getActiveConnectionSide();
+                savedEnergy = socketBE.getEnergyStored();
             }
 
             // Повернення патрона у вихідний стан
             BlockState socketState = getSocketBlock().defaultBlockState().setValue(EmptySocketBlock.FACING, facing);
             level.setBlock(pos, socketState, Block.UPDATE_ALL);
+
+            if (level.getBlockEntity(pos) instanceof SocketBlockEntity newSocketBE) {
+                if (savedPort != null) {
+                    newSocketBE.setActiveConnectionSide(savedPort);
+                }
+                newSocketBE.setEnergyStored(savedEnergy);
+            }
 
             // Звук викручування або тріснутого скла
             if (isBroken) {

@@ -8,6 +8,7 @@ import com.trd.block.entity.industrial.lighting.SocketBlockEntity;
 import com.trd.item.industrial.lighting.LampItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -40,14 +41,14 @@ public class EmptySocketBlock extends Block implements EntityBlock {
     public static final MapCodec<EmptySocketBlock> CODEC = simpleCodec(EmptySocketBlock::new);
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
 
-    // Геометричні колізії для компактного патрона на поверхнях (12x12 основа, товщина 4px)
+    // Геометричні колізії для компактного восьмигранного патрона E27 (габарити 6x4x6 на 6 сторін)
     private static final Map<Direction, VoxelShape> SHAPES = ImmutableMap.<Direction, VoxelShape>builder()
-            .put(Direction.UP, Block.box(2.0, 0.0, 2.0, 14.0, 4.0, 14.0))
-            .put(Direction.DOWN, Block.box(2.0, 12.0, 2.0, 14.0, 16.0, 14.0))
-            .put(Direction.NORTH, Block.box(2.0, 2.0, 12.0, 14.0, 14.0, 16.0))
-            .put(Direction.SOUTH, Block.box(2.0, 2.0, 0.0, 14.0, 14.0, 4.0))
-            .put(Direction.WEST, Block.box(12.0, 2.0, 2.0, 16.0, 14.0, 14.0))
-            .put(Direction.EAST, Block.box(0.0, 2.0, 2.0, 4.0, 14.0, 14.0))
+            .put(Direction.UP, Block.box(5.0, 0.0, 5.0, 11.0, 4.0, 11.0))
+            .put(Direction.DOWN, Block.box(5.0, 12.0, 5.0, 11.0, 16.0, 11.0))
+            .put(Direction.NORTH, Block.box(5.0, 5.0, 12.0, 11.0, 11.0, 16.0))
+            .put(Direction.SOUTH, Block.box(5.0, 5.0, 0.0, 11.0, 11.0, 4.0))
+            .put(Direction.WEST, Block.box(12.0, 5.0, 5.0, 16.0, 11.0, 11.0))
+            .put(Direction.EAST, Block.box(0.0, 5.0, 5.0, 4.0, 11.0, 11.0))
             .build();
 
     public EmptySocketBlock(Properties properties) {
@@ -100,19 +101,45 @@ public class EmptySocketBlock extends Block implements EntityBlock {
     }
 
     @Override
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        super.onPlace(state, level, pos, oldState, isMoving);
+        if (!state.is(oldState.getBlock()) && !level.isClientSide) {
+            PowerPortHelper.tryAutoConnect(level, pos, state, null);
+        }
+    }
+
+    @Override
     protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
         super.neighborChanged(state, level, pos, block, fromPos, isMoving);
         if (!level.isClientSide) {
             if (!state.canSurvive(level, pos)) {
                 dropResources(state, level, pos, level.getBlockEntity(pos));
                 level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                return;
             }
+            PowerPortHelper.tryAutoConnect(level, pos, state, fromPos);
         }
+    }
+
+    @Override
+    protected void attack(BlockState state, Level level, BlockPos pos, Player player) {
+        if (PowerPortHelper.isHoldingWire(player)) {
+            net.minecraft.world.phys.HitResult hit = player.pick(5.0D, 0.0F, false);
+            Direction targetFace = null;
+            if (hit instanceof BlockHitResult bhr && bhr.getBlockPos().equals(pos)) {
+                targetFace = bhr.getDirection();
+            }
+            PowerPortHelper.handlePortSwitch(level, pos, state, player, targetFace);
+            return;
+        }
+        super.attack(state, level, pos, player);
     }
 
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                              Player player, InteractionHand hand, BlockHitResult hitResult) {
+        Direction clickedFace = hitResult.getDirection();
+
         if (stack.getItem() instanceof LampItem lampItem) {
             if (!level.isClientSide) {
                 ElectricLampBlock targetBlock = lampItem.getLampBlock();
@@ -122,14 +149,26 @@ public class EmptySocketBlock extends Block implements EntityBlock {
                     float durability = component.durability();
                     Direction facing = state.getValue(FACING);
 
+                    Direction savedPort = null;
+                    long savedEnergy = 0L;
+                    if (level.getBlockEntity(pos) instanceof SocketBlockEntity oldBE) {
+                        savedPort = oldBE.getActiveConnectionSide();
+                        savedEnergy = oldBE.getEnergyStored();
+                    }
+
                     BlockState newLampState = targetBlock.defaultBlockState()
                             .setValue(ElectricLampBlock.FACING, facing)
                             .setValue(ElectricLampBlock.LIT, false)
-                            .setValue(ElectricLampBlock.BROKEN, isBroken);
+                            .setValue(ElectricLampBlock.BROKEN, isBroken)
+                            .setValue(ElectricLampBlock.LIGHT_LEVEL, 0);
 
                     level.setBlock(pos, newLampState, Block.UPDATE_ALL);
 
                     if (level.getBlockEntity(pos) instanceof SocketBlockEntity socketBE) {
+                        if (savedPort != null) {
+                            socketBE.setActiveConnectionSide(savedPort);
+                        }
+                        socketBE.setEnergyStored(savedEnergy);
                         socketBE.setDurability(durability);
                         socketBE.setBroken(isBroken);
                         socketBE.updateLitState();
@@ -146,11 +185,22 @@ public class EmptySocketBlock extends Block implements EntityBlock {
             }
             return ItemInteractionResult.sidedSuccess(level.isClientSide);
         }
+
+        // Перемикання порту живлення дротом або інструментом
+        if (PowerPortHelper.isHoldingWire(player)) {
+            PowerPortHelper.handlePortSwitch(level, pos, state, player, clickedFace);
+            return ItemInteractionResult.sidedSuccess(level.isClientSide);
+        }
+
         return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+        if (PowerPortHelper.isHoldingWire(player)) {
+            PowerPortHelper.handlePortSwitch(level, pos, state, player, hitResult.getDirection());
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
         return InteractionResult.PASS;
     }
 

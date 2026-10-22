@@ -11,7 +11,8 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.ClipContext;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LightBlock;
@@ -19,31 +20,55 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
+
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 /**
- * Промисловий прожектор (Floodlight).
+ * Промисловий поворотний прожектор (Floodlight).
  * Споживання: 40 од./такт.
- * Буфер: 1500 од.
- * Пріоритет: NORMAL.
- * Raycast виконується 1 раз на 20 тактів або миттєво при зміні сусідніх блоків.
+ * Буфер: 40 од. (миттєва реакція на розрив мережі).
+ * Двоосьовий шарнір: плавний поворот 360° Yaw та нахил Pitch від -75° до +90°.
+ * Підтримує 6-стороннє кріплення (підлога, стеля, 4 стіни).
  */
 public class FloodlightBlockEntity extends BlockEntity implements IEnergyReceiver, IEnergyConnector {
 
     public static final long CONSUMPTION = 40L;
-    public static final long MAX_ENERGY = 1500L;
-    public static final long RECEIVE_SPEED = 80L;
-    public static final int MAX_DISTANCE = 32;
+    public static final long MAX_ENERGY = 40L;
+    public static final long RECEIVE_SPEED = 40L;
+    public static final int MAX_DISTANCE = 36;
+
+    public static final float MAX_YAW_SPEED = 6.0f;   // градусів за тік
+    public static final float MAX_PITCH_SPEED = 5.0f; // градусів за тік
 
     private long energyStored = 0L;
+
     @Nullable
-    private BlockPos targetLightPos = null;
+    private Direction activeConnectionSide = null;
+
+    private final Set<BlockPos> activeLightPositions = new HashSet<>();
+    private int currentLightLevel = 0;
+    private float beamDistance = 36.0f;
+    private int warmupTicks = 0;
+    private int cooldownTicks = 0;
     private boolean raycastDirty = true;
-    private int tickCounter = 0;
+    private int raycastCheckCounter = 0;
+
+    // Плавна орієнтація прожектора (градуси)
+    public float yaw = 0.0f;
+    public float prevYaw = 0.0f;
+    public float targetYaw = 0.0f;
+
+    public float pitch = 0.0f;
+    public float prevPitch = 0.0f;
+    public float targetPitch = 0.0f;
+
+    private float lastRaycastYaw = -999.0f;
+    private float lastRaycastPitch = -999.0f;
 
     public FloodlightBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.FLOODLIGHT_BE.get(), pos, state);
@@ -53,127 +78,326 @@ public class FloodlightBlockEntity extends BlockEntity implements IEnergyReceive
         this.raycastDirty = true;
     }
 
-    // ==================== TICKER ====================
+    public float getBeamDistance() {
+        return beamDistance;
+    }
+
+    public int getCurrentLightLevel() {
+        return currentLightLevel;
+    }
+
+    public int getEffectiveLightLevel() {
+        if (currentLightLevel > 0) return currentLightLevel;
+        BlockState state = getBlockState();
+        return (state.hasProperty(FloodlightBlock.LIT) && state.getValue(FloodlightBlock.LIT)) ? 15 : 0;
+    }
+
+    // ==================== ORIENTATION CONTROL ====================
+
+    public void setTargetOrientation(float targetYaw, float targetPitch) {
+        this.targetYaw = Mth.wrapDegrees(targetYaw);
+        this.targetPitch = Mth.clamp(targetPitch, -75.0f, 90.0f);
+        this.raycastDirty = true;
+        setChanged();
+        if (level != null && !level.isClientSide) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        }
+    }
+
+    public void tickRotation() {
+        this.prevYaw = this.yaw;
+        this.prevPitch = this.pitch;
+
+        // Плавне доведення yaw по найкоротшій дузі
+        float yawDiff = Mth.wrapDegrees(this.targetYaw - this.yaw);
+        if (Math.abs(yawDiff) > 0.01f) {
+            float step = Mth.clamp(yawDiff, -MAX_YAW_SPEED, MAX_YAW_SPEED);
+            this.yaw = Mth.wrapDegrees(this.yaw + step);
+        } else {
+            this.yaw = this.targetYaw;
+        }
+
+        // Плавне доведення pitch
+        float pitchDiff = this.targetPitch - this.pitch;
+        if (Math.abs(pitchDiff) > 0.01f) {
+            float step = Mth.clamp(pitchDiff, -MAX_PITCH_SPEED, MAX_PITCH_SPEED);
+            this.pitch = Mth.clamp(this.pitch + step, -75.0f, 90.0f);
+        } else {
+            this.pitch = this.targetPitch;
+        }
+    }
+
+    public void clientTick(Level level, BlockPos pos, BlockState state) {
+        tickRotation();
+    }
+
+    // ==================== SINGLE PORT CONNECTION ====================
+
+    public Direction getActiveConnectionSide() {
+        if (activeConnectionSide != null) {
+            return activeConnectionSide;
+        }
+        BlockState state = getBlockState();
+        if (state.hasProperty(FloodlightBlock.MOUNT_FACE)) {
+            return state.getValue(FloodlightBlock.MOUNT_FACE).getOpposite();
+        }
+        return Direction.DOWN;
+    }
+
+    public void setActiveConnectionSide(Direction side) {
+        if (this.activeConnectionSide != side) {
+            this.activeConnectionSide = side;
+            setChanged();
+            if (level instanceof ServerLevel sl) {
+                EnergyNetworkManager.get(sl).removeNode(worldPosition);
+                EnergyNetworkManager.get(sl).addNode(worldPosition);
+                sl.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            }
+        }
+    }
+
+    // ==================== TICKER & THERMAL INERTIA ====================
 
     public void serverTick(ServerLevel level, BlockPos pos, BlockState state) {
-        if (this.energyStored >= CONSUMPTION) {
-            this.energyStored -= CONSUMPTION;
-            setChanged();
+        tickRotation();
 
-            if (!state.getValue(FloodlightBlock.LIT)) {
-                level.setBlock(pos, state.setValue(FloodlightBlock.LIT, true), Block.UPDATE_CLIENTS);
-                this.raycastDirty = true;
+        boolean hasPower = this.energyStored >= CONSUMPTION;
+        this.energyStored = 0L;
+        setChanged();
+
+        int prevLightLevel = this.currentLightLevel;
+        if (hasPower) {
+            this.cooldownTicks = 0;
+            this.warmupTicks++;
+            if (this.warmupTicks == 1) {
+                this.currentLightLevel = 5;
+            } else if (this.warmupTicks == 2) {
+                this.currentLightLevel = 10;
+            } else {
+                this.currentLightLevel = 15;
             }
+        } else {
+            this.warmupTicks = 0;
+            if (this.currentLightLevel > 0) {
+                this.cooldownTicks++;
+                if (this.cooldownTicks % 2 == 0) {
+                    this.currentLightLevel = Math.max(0, this.currentLightLevel - 5);
+                }
+                if (this.cooldownTicks >= 6) {
+                    this.currentLightLevel = 0;
+                }
+            } else {
+                this.cooldownTicks = 0;
+            }
+        }
 
-            this.tickCounter++;
-            if (this.raycastDirty || this.tickCounter >= 20) {
-                this.tickCounter = 0;
+        boolean lightLevelChanged = (prevLightLevel != this.currentLightLevel);
+        if (lightLevelChanged) {
+            this.raycastDirty = true;
+        }
+
+        boolean shouldBeLit = this.currentLightLevel > 0;
+        boolean wasLit = state.getValue(FloodlightBlock.LIT);
+
+        if (wasLit != shouldBeLit) {
+            level.setBlock(pos, state.setValue(FloodlightBlock.LIT, shouldBeLit), Block.UPDATE_CLIENTS);
+            this.raycastDirty = true;
+        }
+
+        boolean rotChanged = Math.abs(this.yaw - this.lastRaycastYaw) > 3.0f
+                || Math.abs(this.pitch - this.lastRaycastPitch) > 3.0f;
+
+        if (shouldBeLit) {
+            this.raycastCheckCounter++;
+            if (this.raycastDirty || rotChanged || this.raycastCheckCounter >= 20) {
+                this.raycastCheckCounter = 0;
                 this.raycastDirty = false;
-                updateRaycast(level, pos, state);
+                this.lastRaycastYaw = this.yaw;
+                this.lastRaycastPitch = this.pitch;
+                updateBeam(level, pos, state);
             }
         } else {
-            if (state.getValue(FloodlightBlock.LIT)) {
-                level.setBlock(pos, state.setValue(FloodlightBlock.LIT, false), Block.UPDATE_CLIENTS);
-            }
-            cleanupLightBlock();
+            cleanupAllLightBlocks(level);
+        }
+
+        if (lightLevelChanged || Math.abs(this.prevYaw - this.yaw) > 0.05f || Math.abs(this.prevPitch - this.pitch) > 0.05f) {
+            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
         }
     }
 
-    // ==================== RAYCAST & LIGHT PLACEMENT ====================
+    // ==================== 3D SPHERICAL RAYCAST SYSTEM ====================
 
-    private void updateRaycast(ServerLevel level, BlockPos pos, BlockState state) {
-        if (!state.hasProperty(FloodlightBlock.FACING)) return;
-        Direction facing = state.getValue(FloodlightBlock.FACING);
+    private void updateBeam(ServerLevel level, BlockPos pos, BlockState state) {
+        Direction mountFace = state.hasProperty(FloodlightBlock.MOUNT_FACE)
+                ? state.getValue(FloodlightBlock.MOUNT_FACE)
+                : Direction.UP;
 
-        Vec3 startVec = Vec3.atCenterOf(pos).add(
-                facing.getStepX() * 0.55,
-                facing.getStepY() * 0.55,
-                facing.getStepZ() * 0.55
-        );
+        // 3D-вектор променя в локальній системі координат прожектора
+        float yawRad = (float) Math.toRadians(this.yaw);
+        float pitchRad = (float) Math.toRadians(this.pitch);
+        float cosP = Mth.cos(pitchRad);
+        Vec3 localBeamDir = new Vec3(-Mth.sin(yawRad) * cosP, Mth.sin(pitchRad), Mth.cos(yawRad) * cosP).normalize();
 
-        Vec3 endVec = startVec.add(
-                facing.getStepX() * (double) MAX_DISTANCE,
-                facing.getStepY() * (double) MAX_DISTANCE,
-                facing.getStepZ() * (double) MAX_DISTANCE
-        );
-
-        BlockHitResult hit = level.clip(new ClipContext(
-                startVec,
-                endVec,
-                ClipContext.Block.COLLIDER,
-                ClipContext.Fluid.NONE,
-                CollisionContext.empty()
-        ));
-
-        BlockPos newTargetPos = null;
-
-        if (hit.getType() == HitResult.Type.BLOCK) {
-            BlockPos hitPos = hit.getBlockPos();
-            BlockPos lightPos = hitPos.relative(hit.getDirection());
-
-            if (!lightPos.equals(pos) && level.isLoaded(lightPos)) {
-                newTargetPos = lightPos;
+        // Поворот вектора під орієнтацію монтажної бази MOUNT_FACE
+        Vector3f dirVec = localBeamDir.toVector3f();
+        switch (mountFace) {
+            case DOWN -> dirVec.rotateX((float) Math.toRadians(180));
+            case NORTH -> dirVec.rotateX((float) Math.toRadians(90));
+            case SOUTH -> {
+                dirVec.rotateX((float) Math.toRadians(90));
+                dirVec.rotateY((float) Math.toRadians(180));
             }
+            case WEST -> {
+                dirVec.rotateX((float) Math.toRadians(90));
+                dirVec.rotateY((float) Math.toRadians(270));
+            }
+            case EAST -> {
+                dirVec.rotateX((float) Math.toRadians(90));
+                dirVec.rotateY((float) Math.toRadians(90));
+            }
+            case UP -> {}
+        }
+        Vec3 beamDir = new Vec3(dirVec.x(), dirVec.y(), dirVec.z()).normalize();
+
+        // Зміщення центру обертання шарнірів барабана відносно центру блоку
+        Vector3f pivotOffset = new Vector3f(0.0f, 0.0625f, 0.0f);
+        switch (mountFace) {
+            case DOWN -> pivotOffset.rotateX((float) Math.toRadians(180));
+            case NORTH -> pivotOffset.rotateX((float) Math.toRadians(90));
+            case SOUTH -> {
+                pivotOffset.rotateX((float) Math.toRadians(90));
+                pivotOffset.rotateY((float) Math.toRadians(180));
+            }
+            case WEST -> {
+                pivotOffset.rotateX((float) Math.toRadians(90));
+                pivotOffset.rotateY((float) Math.toRadians(270));
+            }
+            case EAST -> {
+                pivotOffset.rotateX((float) Math.toRadians(90));
+                pivotOffset.rotateY((float) Math.toRadians(90));
+            }
+            case UP -> {}
+        }
+        Vec3 pivot = Vec3.atCenterOf(worldPosition).add(pivotOffset.x(), pivotOffset.y(), pivotOffset.z());
+
+        java.util.Map<BlockPos, Integer> desiredLights = new java.util.LinkedHashMap<>();
+        float detectedDistance = MAX_DISTANCE;
+
+        for (int dist = 1; dist <= MAX_DISTANCE; dist++) {
+            Vec3 currentPoint = pivot.add(beamDir.scale(dist));
+            BlockPos checkPos = BlockPos.containing(currentPoint);
+
+            if (!level.isLoaded(checkPos)) {
+                detectedDistance = dist;
+                break;
+            }
+
+            if (checkPos.equals(pos)) {
+                continue;
+            }
+
+            BlockState bs = level.getBlockState(checkPos);
+            boolean isAirOrPassable = bs.isAir() || bs.is(Blocks.LIGHT) || bs.canBeReplaced()
+                    || bs.getCollisionShape(level, checkPos).isEmpty();
+
+            if (isAirOrPassable) {
+                int baseLevel = calculateBaseLightLevel(dist);
+                float fadeRatio = this.currentLightLevel / 15.0f;
+                int finalLevel = Math.max(1, (int) Math.round(baseLevel * fadeRatio));
+
+                desiredLights.put(checkPos.immutable(), Math.max(desiredLights.getOrDefault(checkPos, 0), finalLevel));
+            } else {
+                detectedDistance = (float) dist;
+                break;
+            }
+        }
+
+        boolean distChanged = Math.abs(this.beamDistance - detectedDistance) > 0.05f;
+        this.beamDistance = detectedDistance;
+
+        Iterator<BlockPos> it = activeLightPositions.iterator();
+        while (it.hasNext()) {
+            BlockPos oldPos = it.next();
+            if (!desiredLights.containsKey(oldPos)) {
+                removeLightAt(level, oldPos);
+                it.remove();
+            }
+        }
+
+        for (java.util.Map.Entry<BlockPos, Integer> entry : desiredLights.entrySet()) {
+            placeOrUpdateLight(level, entry.getKey(), entry.getValue());
+            activeLightPositions.add(entry.getKey());
+        }
+        setChanged();
+
+        if (distChanged) {
+            level.sendBlockUpdated(pos, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        }
+    }
+
+    private int calculateBaseLightLevel(int dist) {
+        if (dist <= 6) {
+            return dist * 2 + 2; // 4, 6, 8, 10, 12, 14
+        } else if (dist <= 28) {
+            return 15;
+        } else if (dist <= 30) {
+            return 14;
+        } else if (dist <= 32) {
+            return 12;
+        } else if (dist <= 34) {
+            return 9;
+        } else if (dist <= 35) {
+            return 6;
         } else {
-            // У відкритому просторі знаходимо найвіддаленішу позицію
-            BlockPos candidate = pos.relative(facing, MAX_DISTANCE);
-            for (int i = MAX_DISTANCE; i >= 1; i--) {
-                BlockPos checkPos = pos.relative(facing, i);
-                if (level.isLoaded(checkPos)) {
-                    BlockState bs = level.getBlockState(checkPos);
-                    if (bs.isAir() || bs.is(Blocks.LIGHT) || bs.canBeReplaced()) {
-                        candidate = checkPos;
-                        break;
-                    }
-                }
-            }
-            if (!candidate.equals(pos) && level.isLoaded(candidate)) {
-                newTargetPos = candidate;
-            }
+            return 3;
         }
+    }
 
-        // Якщо точка проекції змінилась — очищаємо стару
-        if (targetLightPos != null && !targetLightPos.equals(newTargetPos)) {
-            cleanupLightBlockAt(targetLightPos);
-            targetLightPos = null;
-        }
-
-        // Встановлюємо віртуальний блок світла
-        if (newTargetPos != null && level.isLoaded(newTargetPos)) {
-            BlockState targetBs = level.getBlockState(newTargetPos);
-            if (targetBs.isAir() || targetBs.is(Blocks.LIGHT) || targetBs.canBeReplaced()) {
-                boolean isWater = level.getFluidState(newTargetPos).getType() == Fluids.WATER;
+    private void placeOrUpdateLight(ServerLevel level, BlockPos p, int lightLevel) {
+        if (level.isLoaded(p)) {
+            BlockState bs = level.getBlockState(p);
+            if (bs.isAir() || bs.is(Blocks.LIGHT) || (bs.canBeReplaced() && !bs.is(Blocks.WATER))) {
+                boolean isWater = level.getFluidState(p).getType() == Fluids.WATER;
                 BlockState desiredLight = Blocks.LIGHT.defaultBlockState()
-                        .setValue(LightBlock.LEVEL, 15)
+                        .setValue(LightBlock.LEVEL, lightLevel)
                         .setValue(BlockStateProperties.WATERLOGGED, isWater);
-
-                if (!targetBs.equals(desiredLight)) {
-                    level.setBlock(newTargetPos, desiredLight, Block.UPDATE_CLIENTS);
+                if (!bs.equals(desiredLight)) {
+                    level.setBlock(p, desiredLight, Block.UPDATE_CLIENTS);
                 }
-                this.targetLightPos = newTargetPos;
-                setChanged();
             }
         }
     }
 
-    private void cleanupLightBlockAt(BlockPos pos) {
-        if (level != null && !level.isClientSide && pos != null && level.isLoaded(pos)) {
-            BlockState bs = level.getBlockState(pos);
+    private void removeLightAt(ServerLevel level, BlockPos p) {
+        if (level.isLoaded(p)) {
+            BlockState bs = level.getBlockState(p);
             if (bs.is(Blocks.LIGHT)) {
                 if (bs.hasProperty(BlockStateProperties.WATERLOGGED) && bs.getValue(BlockStateProperties.WATERLOGGED)) {
-                    level.setBlock(pos, Blocks.WATER.defaultBlockState(), Block.UPDATE_CLIENTS);
+                    level.setBlock(p, Blocks.WATER.defaultBlockState(), Block.UPDATE_CLIENTS);
                 } else {
-                    level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                    level.setBlock(p, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
                 }
             }
         }
     }
 
-    public void cleanupLightBlock() {
-        if (targetLightPos != null) {
-            cleanupLightBlockAt(targetLightPos);
-            targetLightPos = null;
+    public void cleanupAllLightBlocks(ServerLevel level) {
+        if (!activeLightPositions.isEmpty()) {
+            for (BlockPos p : activeLightPositions) {
+                removeLightAt(level, p);
+            }
+            activeLightPositions.clear();
             setChanged();
+        }
+        if (this.beamDistance != 0.0f) {
+            this.beamDistance = 0.0f;
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        }
+    }
+
+    public void cleanupLightBlocks() {
+        if (level instanceof ServerLevel sl) {
+            cleanupAllLightBlocks(sl);
         }
     }
 
@@ -227,12 +451,7 @@ public class FloodlightBlockEntity extends BlockEntity implements IEnergyReceive
         if (side == null) {
             return true;
         }
-        BlockState state = getBlockState();
-        if (state.hasProperty(FloodlightBlock.FACING)) {
-            // Лицьова сторона прожектора (скло/промінь) не приймає дроти
-            return side != state.getValue(FloodlightBlock.FACING);
-        }
-        return true;
+        return side == getActiveConnectionSide();
     }
 
     @Nullable
@@ -259,7 +478,7 @@ public class FloodlightBlockEntity extends BlockEntity implements IEnergyReceive
     @Override
     public void setRemoved() {
         super.setRemoved();
-        cleanupLightBlock();
+        cleanupLightBlocks();
         if (level instanceof ServerLevel serverLevel) {
             EnergyNetworkManager.get(serverLevel).removeNode(worldPosition);
         }
@@ -268,7 +487,7 @@ public class FloodlightBlockEntity extends BlockEntity implements IEnergyReceive
     @Override
     public void onChunkUnloaded() {
         super.onChunkUnloaded();
-        cleanupLightBlock();
+        cleanupLightBlocks();
         if (level instanceof ServerLevel serverLevel) {
             EnergyNetworkManager.get(serverLevel).removeNode(worldPosition);
         }
@@ -280,19 +499,53 @@ public class FloodlightBlockEntity extends BlockEntity implements IEnergyReceive
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider provider) {
         super.saveAdditional(tag, provider);
         tag.putLong("Energy", energyStored);
-        if (targetLightPos != null) {
-            tag.putLong("TargetLightPos", targetLightPos.asLong());
+        if (activeConnectionSide != null) {
+            tag.putString("ActiveConnectionSide", activeConnectionSide.getName());
         }
+        tag.putInt("LightLevel", currentLightLevel);
+        tag.putFloat("BeamDistance", beamDistance);
+        tag.putInt("WarmupTicks", warmupTicks);
+        tag.putInt("CooldownTicks", cooldownTicks);
+
+        tag.putFloat("Yaw", yaw);
+        tag.putFloat("Pitch", pitch);
+        tag.putFloat("TargetYaw", targetYaw);
+        tag.putFloat("TargetPitch", targetPitch);
+
+        long[] positions = activeLightPositions.stream().mapToLong(BlockPos::asLong).toArray();
+        tag.putLongArray("LightPositions", positions);
     }
 
     @Override
     public void loadAdditional(CompoundTag tag, HolderLookup.Provider provider) {
         super.loadAdditional(tag, provider);
         energyStored = tag.getLong("Energy");
-        if (tag.contains("TargetLightPos")) {
-            targetLightPos = BlockPos.of(tag.getLong("TargetLightPos"));
+        if (tag.contains("ActiveConnectionSide")) {
+            activeConnectionSide = Direction.byName(tag.getString("ActiveConnectionSide"));
         } else {
-            targetLightPos = null;
+            activeConnectionSide = null;
+        }
+        currentLightLevel = tag.getInt("LightLevel");
+        if (tag.contains("BeamDistance")) {
+            beamDistance = tag.getFloat("BeamDistance");
+        } else {
+            beamDistance = 36.0f;
+        }
+        warmupTicks = tag.getInt("WarmupTicks");
+        cooldownTicks = tag.getInt("CooldownTicks");
+
+        if (tag.contains("Yaw")) yaw = tag.getFloat("Yaw");
+        if (tag.contains("Pitch")) pitch = tag.getFloat("Pitch");
+        if (tag.contains("TargetYaw")) targetYaw = tag.getFloat("TargetYaw");
+        if (tag.contains("TargetPitch")) targetPitch = tag.getFloat("TargetPitch");
+        prevYaw = yaw;
+        prevPitch = pitch;
+
+        activeLightPositions.clear();
+        if (tag.contains("LightPositions")) {
+            for (long posLong : tag.getLongArray("LightPositions")) {
+                activeLightPositions.add(BlockPos.of(posLong));
+            }
         }
         raycastDirty = true;
     }
@@ -307,5 +560,19 @@ public class FloodlightBlockEntity extends BlockEntity implements IEnergyReceive
         CompoundTag tag = new CompoundTag();
         saveAdditional(tag, provider);
         return tag;
+    }
+
+    @Override
+    public void onDataPacket(net.minecraft.network.Connection net, ClientboundBlockEntityDataPacket pkt, HolderLookup.Provider lookupProvider) {
+        CompoundTag tag = pkt.getTag();
+        if (tag != null) {
+            loadAdditional(tag, lookupProvider);
+        }
+    }
+
+    @Override
+    public void handleUpdateTag(CompoundTag tag, HolderLookup.Provider lookupProvider) {
+        super.handleUpdateTag(tag, lookupProvider);
+        loadAdditional(tag, lookupProvider);
     }
 }

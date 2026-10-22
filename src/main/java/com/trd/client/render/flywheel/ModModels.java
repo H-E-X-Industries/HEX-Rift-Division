@@ -55,6 +55,12 @@ public class ModModels {
     
     public static final PartialModel CENTRIFUGE_CYLINDER_LOPASTI = PartialModel.of(ResourceLocation.fromNamespaceAndPath("trd", "block/centrifuge_cylinder_lopasti"));
 
+    // Промисловий прожектор (шарнірні частини)
+    public static final PartialModel FLOODLIGHT_BASE     = PartialModel.of(ResourceLocation.fromNamespaceAndPath("trd", "block/floodlight_base"));
+    public static final PartialModel FLOODLIGHT_YOKE     = PartialModel.of(ResourceLocation.fromNamespaceAndPath("trd", "block/floodlight_yoke"));
+    public static final PartialModel FLOODLIGHT_DRUM     = PartialModel.of(ResourceLocation.fromNamespaceAndPath("trd", "block/floodlight_drum"));
+    public static final PartialModel FLOODLIGHT_DRUM_LIT = PartialModel.of(ResourceLocation.fromNamespaceAndPath("trd", "block/floodlight_drum_lit"));
+
     static {
         String[] materials = {"iron", "duralumin", "steel", "titanium", "tungsten_carbide"};
         int[] gearSizes = {1, 2, 3};

@@ -1,16 +1,16 @@
 {
-  "variants": {
-    "facing=up,lit=false":    { "model": "trd:block/floodlight" },
-    "facing=up,lit=true":     { "model": "trd:block/floodlight_lit" },
-    "facing=down,lit=false":  { "model": "trd:block/floodlight", "x": 180 },
-    "facing=down,lit=true":   { "model": "trd:block/floodlight_lit", "x": 180 },
-    "facing=north,lit=false": { "model": "trd:block/floodlight", "x": 90 },
-    "facing=north,lit=true":  { "model": "trd:block/floodlight_lit", "x": 90 },
-    "facing=south,lit=false": { "model": "trd:block/floodlight", "x": 90, "y": 180 },
-    "facing=south,lit=true":  { "model": "trd:block/floodlight_lit", "x": 90, "y": 180 },
-    "facing=west,lit=false":  { "model": "trd:block/floodlight", "x": 90, "y": 270 },
-    "facing=west,lit=true":   { "model": "trd:block/floodlight_lit", "x": 90, "y": 270 },
-    "facing=east,lit=false":  { "model": "trd:block/floodlight", "x": 90, "y": 90 },
-    "facing=east,lit=true":   { "model": "trd:block/floodlight_lit", "x": 90, "y": 90 }
-  }
+    "variants": {
+        "facing=up,lit=false":    { "model": "trd:block/floodlight_base" },
+        "facing=up,lit=true":     { "model": "trd:block/floodlight_base" },
+        "facing=down,lit=false":  { "model": "trd:block/floodlight_base", "x": 180 },
+        "facing=down,lit=true":   { "model": "trd:block/floodlight_base", "x": 180 },
+        "facing=north,lit=false": { "model": "trd:block/floodlight_base", "x": 90 },
+        "facing=north,lit=true":  { "model": "trd:block/floodlight_base", "x": 90 },
+        "facing=south,lit=false": { "model": "trd:block/floodlight_base", "x": 90, "y": 180 },
+        "facing=south,lit=true":  { "model": "trd:block/floodlight_base", "x": 90, "y": 180 },
+        "facing=west,lit=false":  { "model": "trd:block/floodlight_base", "x": 90, "y": 270 },
+        "facing=west,lit=true":   { "model": "trd:block/floodlight_base", "x": 90, "y": 270 },
+        "facing=east,lit=false":  { "model": "trd:block/floodlight_base", "x": 90, "y": 90 },
+        "facing=east,lit=true":   { "model": "trd:block/floodlight_base", "x": 90, "y": 90 }
+    }
 }
