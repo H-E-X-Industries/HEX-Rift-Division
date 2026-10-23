@@ -212,7 +212,8 @@
           ],
           "texture": "#0"
         }
-      }
+      },
+      "shade": false
     },
     {
       "name": "smd_chip_n",
@@ -281,7 +282,8 @@
           ],
           "texture": "#0"
         }
-      }
+      },
+      "shade": false
     },
     {
       "name": "smd_chip_s",
@@ -350,7 +352,8 @@
           ],
           "texture": "#0"
         }
-      }
+      },
+      "shade": false
     },
     {
       "name": "diffuser_dome_main",

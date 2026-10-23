@@ -263,7 +263,8 @@
           ],
           "texture": "#0"
         }
-      }
+      },
+      "shade": false
     },
     {
       "name": "spiral_turn_2",
@@ -341,7 +342,8 @@
           ],
           "texture": "#0"
         }
-      }
+      },
+      "shade": false
     },
     {
       "name": "spiral_turn_3",
@@ -419,7 +421,8 @@
           ],
           "texture": "#0"
         }
-      }
+      },
+      "shade": false
     },
     {
       "name": "spiral_turn_4",
@@ -497,7 +500,8 @@
           ],
           "texture": "#0"
         }
-      }
+      },
+      "shade": false
     },
     {
       "name": "spiral_top_bridge",
@@ -566,7 +570,8 @@
           ],
           "texture": "#0"
         }
-      }
+      },
+      "shade": false
     }
   ],
   "texture_size": [

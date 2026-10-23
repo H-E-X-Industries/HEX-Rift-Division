@@ -497,7 +497,8 @@
           ],
           "texture": "#0"
         }
-      }
+      },
+      "shade": false
     },
     {
       "name": "glass_neck",

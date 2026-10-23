@@ -1085,7 +1085,8 @@
           ],
           "texture": "#0"
         }
-      }
+      },
+      "shade": false
     },
     {
       "name": "arc_focal_core",
@@ -1154,7 +1155,8 @@
           ],
           "texture": "#0"
         }
-      }
+      },
+      "shade": false
     },
     {
       "name": "front_glass_ring_0",

@@ -82,6 +82,7 @@ public class ModClientSetup {
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.DROBITEL_BE.get(), com.trd.client.render.ber.DrobitelRenderer::new);
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.SHAFT_BE.get(), com.trd.client.render.ber.ShaftRenderer::new);
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.FLOODLIGHT_BE.get(), com.trd.client.render.ber.FloodlightBlockEntityRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.SOCKET_BE.get(), com.trd.client.render.ber.SocketBlockEntityRenderer::new);
 
         // Пять текстур пули сшиваются в один атлас вариантов. Звать надо до
         // первого выстрела, иначе первые пули просто не рисуются: модель

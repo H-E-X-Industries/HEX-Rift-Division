@@ -102,6 +102,11 @@ public class FloodlightBlockEntityRenderer implements BlockEntityRenderer<Floodl
         BakedModel drumModel = isLit ? ModModels.FLOODLIGHT_DRUM_LIT.get() : ModModels.FLOODLIGHT_DRUM.get();
         FlywheelFallbackHelper.renderBakedModel(drumModel, poseStack, bufferSource, state, packedLight, packedOverlay);
 
+        // Жива електрична дуга у фокусі барабана між вугільними електродами
+        if (isLit) {
+            renderElectricArc(poseStack, bufferSource, be);
+        }
+
         // Крок В (Гауссів об'ємний промінь): рендериться безпосередньо в системі координат нахиленого барабана!
         int lightLevel = be.getEffectiveLightLevel();
         if (isLit && lightLevel > 0) {
@@ -177,6 +182,98 @@ public class FloodlightBlockEntityRenderer implements BlockEntityRenderer<Floodl
                 }
             }
         }
+    }
+
+    /**
+     * Жива електрична плазмова дуга у фокусі барабана між вугільними електродами.
+     * Працює на високій частоті мерехтіння (High-Voltage Carbon Arc Flickering)
+     * із багатошаровим аддитивним світінням RenderType.lightning():
+     * - Сліпуче біле ядро (#FFFFFF)
+     * - Електрично-блакитна плазмова оболонка (#88EEFF)
+     * - Фіолетово-синє гало (#5577FF)
+     * - Глибока синьо-фіолетова корона (#3344DD)
+     */
+    private void renderElectricArc(PoseStack poseStack, MultiBufferSource bufferSource, FloodlightBlockEntity be) {
+        long time = System.currentTimeMillis();
+        // Псевдовипадкове мерехтіння високої частоти (~25-30 Гц)
+        long seed = be.getBlockPos().asLong() ^ (time / 35L);
+        java.util.Random rand = new java.util.Random(seed);
+
+        float flickerScale = 1.0f + (rand.nextFloat() - 0.5f) * 0.08f;
+        float flickerAlpha = Mth.clamp(1.0f + (rand.nextFloat() - 0.5f) * 0.12f, 0.7f, 1.2f);
+
+        // Мікро-дрейф фокальної точки дуги
+        float jx = (rand.nextFloat() - 0.5f) * 0.002f;
+        float jy = (rand.nextFloat() - 0.5f) * 0.002f;
+        float jz = (rand.nextFloat() - 0.5f) * 0.002f;
+
+        float cx = 0.50f + jx;
+        float cy = 0.5625f + jy;
+        float cz = 0.60f + jz;
+
+        VertexConsumer consumer = bufferSource.getBuffer(RenderType.lightning());
+        Matrix4f mat = poseStack.last().pose();
+
+        // 1. Біле розжарене ядро (#FFFFFF)
+        float s1 = 0.015f * flickerScale;
+        int a1 = Mth.clamp(Math.round(255 * flickerAlpha), 0, 255);
+        renderArcBox(consumer, mat, cx - s1, cy - s1 * 1.2f, cz - s1 * 1.4f, cx + s1, cy + s1 * 1.2f, cz + s1 * 1.4f, 255, 255, 255, a1);
+
+        // 2. Електрично-блакитна плазмова оболонка (#88EEFF)
+        float s2 = 0.030f * flickerScale;
+        int a2 = Mth.clamp(Math.round(190 * flickerAlpha), 0, 255);
+        renderArcBox(consumer, mat, cx - s2, cy - s2 * 1.2f, cz - s2 * 1.3f, cx + s2, cy + s2 * 1.2f, cz + s2 * 1.3f, 136, 238, 255, a2);
+
+        // 3. Фіолетово-синє гало (#5577FF)
+        float s3 = 0.052f * flickerScale;
+        int a3 = Mth.clamp(Math.round(100 * flickerAlpha), 0, 255);
+        renderArcBox(consumer, mat, cx - s3, cy - s3 * 1.15f, cz - s3 * 1.2f, cx + s3, cy + s3 * 1.15f, cz + s3 * 1.2f, 85, 119, 255, a3);
+
+        // 4. Глибока синьо-фіолетова корона (#3344DD)
+        float s4 = 0.078f * flickerScale;
+        int a4 = Mth.clamp(Math.round(45 * flickerAlpha), 0, 255);
+        renderArcBox(consumer, mat, cx - s4, cy - s4 * 1.1f, cz - s4 * 1.15f, cx + s4, cy + s4 * 1.1f, cz + s4 * 1.15f, 51, 68, 221, a4);
+    }
+
+    private void renderArcBox(VertexConsumer consumer, Matrix4f mat,
+                              float minX, float minY, float minZ,
+                              float maxX, float maxY, float maxZ,
+                              int r, int g, int b, int a) {
+        // North (Z-)
+        consumer.addVertex(mat, minX, minY, minZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, minX, maxY, minZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, maxX, maxY, minZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, maxX, minY, minZ).setColor(r, g, b, a);
+
+        // South (Z+)
+        consumer.addVertex(mat, maxX, minY, maxZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, maxX, maxY, maxZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, minX, maxY, maxZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, minX, minY, maxZ).setColor(r, g, b, a);
+
+        // East (X+)
+        consumer.addVertex(mat, maxX, minY, minZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, maxX, maxY, minZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, maxX, maxY, maxZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, maxX, minY, maxZ).setColor(r, g, b, a);
+
+        // West (X-)
+        consumer.addVertex(mat, minX, minY, maxZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, minX, maxY, maxZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, minX, maxY, minZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, minX, minY, minZ).setColor(r, g, b, a);
+
+        // Up (Y+)
+        consumer.addVertex(mat, minX, maxY, minZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, minX, maxY, maxZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, maxX, maxY, maxZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, maxX, maxY, minZ).setColor(r, g, b, a);
+
+        // Down (Y-)
+        consumer.addVertex(mat, minX, minY, maxZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, minX, minY, minZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, maxX, minY, minZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, maxX, minY, maxZ).setColor(r, g, b, a);
     }
 
     @Override
