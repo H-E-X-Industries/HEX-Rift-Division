@@ -49,9 +49,6 @@ public class FloodlightBlockEntity extends BlockEntity implements IEnergyReceive
 
     private long energyStored = 0L;
 
-    @Nullable
-    private Direction activeConnectionSide = null;
-
     private final Set<BlockPos> activeLightPositions = new HashSet<>();
     private int currentLightLevel = 0;
     private float beamDistance = 50.0f;
@@ -133,12 +130,12 @@ public class FloodlightBlockEntity extends BlockEntity implements IEnergyReceive
         tickRotation();
     }
 
-    // ==================== SINGLE PORT CONNECTION ====================
+    // ==================== BASE PORT CONNECTION ====================
 
-    public Direction getActiveConnectionSide() {
-        if (activeConnectionSide != null) {
-            return activeConnectionSide;
-        }
+    /**
+     * Повертає сторону підключення проводу — СУВОРО з боку монтажної підошви (основи) прожектора.
+     */
+    public Direction getConnectionSide() {
         BlockState state = getBlockState();
         if (state.hasProperty(FloodlightBlock.MOUNT_FACE)) {
             return state.getValue(FloodlightBlock.MOUNT_FACE).getOpposite();
@@ -146,16 +143,8 @@ public class FloodlightBlockEntity extends BlockEntity implements IEnergyReceive
         return Direction.DOWN;
     }
 
-    public void setActiveConnectionSide(Direction side) {
-        if (this.activeConnectionSide != side) {
-            this.activeConnectionSide = side;
-            setChanged();
-            if (level instanceof ServerLevel sl) {
-                EnergyNetworkManager.get(sl).removeNode(worldPosition);
-                EnergyNetworkManager.get(sl).addNode(worldPosition);
-                sl.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
-            }
-        }
+    public Direction getActiveConnectionSide() {
+        return getConnectionSide();
     }
 
     // ==================== TICKER & THERMAL INERTIA ====================
@@ -472,6 +461,11 @@ public class FloodlightBlockEntity extends BlockEntity implements IEnergyReceive
         return canConnectEnergy(side) ? this : null;
     }
 
+    @Nullable
+    public net.neoforged.neoforge.energy.IEnergyStorage getEnergyStorage(@Nullable Direction side) {
+        return canConnectEnergy(side) ? new com.trd.api.energy.LightEnergyStorage(this) : null;
+    }
+
     // ==================== LIFECYCLE & NETWORK ====================
 
     @Override
@@ -507,9 +501,6 @@ public class FloodlightBlockEntity extends BlockEntity implements IEnergyReceive
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider provider) {
         super.saveAdditional(tag, provider);
         tag.putLong("Energy", energyStored);
-        if (activeConnectionSide != null) {
-            tag.putString("ActiveConnectionSide", activeConnectionSide.getName());
-        }
         tag.putInt("LightLevel", currentLightLevel);
         tag.putFloat("BeamDistance", beamDistance);
         tag.putInt("WarmupTicks", warmupTicks);
@@ -528,11 +519,6 @@ public class FloodlightBlockEntity extends BlockEntity implements IEnergyReceive
     public void loadAdditional(CompoundTag tag, HolderLookup.Provider provider) {
         super.loadAdditional(tag, provider);
         energyStored = tag.getLong("Energy");
-        if (tag.contains("ActiveConnectionSide")) {
-            activeConnectionSide = Direction.byName(tag.getString("ActiveConnectionSide"));
-        } else {
-            activeConnectionSide = null;
-        }
         currentLightLevel = tag.getInt("LightLevel");
         if (tag.contains("BeamDistance")) {
             beamDistance = tag.getFloat("BeamDistance");

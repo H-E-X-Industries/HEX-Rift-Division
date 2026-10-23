@@ -5,6 +5,7 @@ import com.trd.api.components.ModDataComponents;
 import com.trd.api.energy.EnergyNetworkManager;
 import com.trd.api.energy.IEnergyConnector;
 import com.trd.api.energy.IEnergyReceiver;
+import com.trd.api.energy.LightEnergyStorage;
 import com.trd.block.basic.industrial.lighting.ElectricLampBlock;
 import com.trd.block.basic.industrial.lighting.FluorescentLampBlock;
 import com.trd.block.basic.industrial.lighting.LedLampBlock;
@@ -26,8 +27,9 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Енергетичний BlockEntity для патронів та світильників.
- * Підтримує фіксацію єдиного порту живлення, повну відсутність буфера накопичення
- * (миттєва реакція на розрив мережі) та швидке динамічне згасання (4–6 тіків).
+ * Підтримує підключення живлення ВИКЛЮЧНО з боку цоколя (основи),
+ * повну відсутність буфера накопичення (миттєва реакція на розрив мережі)
+ * та плавне динамічне згасання (4–6 тіків).
  */
 public class SocketBlockEntity extends BlockEntity implements IEnergyReceiver, IEnergyConnector {
 
@@ -35,9 +37,6 @@ public class SocketBlockEntity extends BlockEntity implements IEnergyReceiver, I
     private long lastReceivedTick = -1L;
     private float durability = 1.0f;
     private boolean broken = false;
-
-    @Nullable
-    private Direction activeConnectionSide = null;
 
     private int currentLightLevel = 0;
     private int warmupTicks = 0;
@@ -78,34 +77,21 @@ public class SocketBlockEntity extends BlockEntity implements IEnergyReceiver, I
         return currentLightLevel;
     }
 
-    // ==================== SINGLE PORT CONNECTION ====================
+    // ==================== BASE PORT CONNECTION ====================
 
-    public Direction getActiveConnectionSide() {
-        if (activeConnectionSide != null) {
-            return activeConnectionSide;
-        }
+    /**
+     * Повертає сторону підключення проводу — СУВОРО з боку підошви/цоколя світильника.
+     */
+    public Direction getConnectionSide() {
         BlockState state = getBlockState();
-        Direction facing = state.hasProperty(BlockStateProperties.FACING)
-                ? state.getValue(BlockStateProperties.FACING)
-                : Direction.UP;
-
-        if (facing != Direction.DOWN) {
-            return Direction.DOWN;
-        } else {
-            return Direction.UP;
+        if (state.hasProperty(BlockStateProperties.FACING)) {
+            return state.getValue(BlockStateProperties.FACING).getOpposite();
         }
+        return Direction.DOWN;
     }
 
-    public void setActiveConnectionSide(Direction side) {
-        if (this.activeConnectionSide != side) {
-            this.activeConnectionSide = side;
-            setChanged();
-            if (level instanceof ServerLevel serverLevel) {
-                EnergyNetworkManager.get(serverLevel).removeNode(worldPosition);
-                EnergyNetworkManager.get(serverLevel).addNode(worldPosition);
-                serverLevel.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
-            }
-        }
+    public Direction getActiveConnectionSide() {
+        return getConnectionSide();
     }
 
     // ==================== IEnergyReceiver ====================
@@ -117,7 +103,6 @@ public class SocketBlockEntity extends BlockEntity implements IEnergyReceiver, I
 
     @Override
     public long getMaxEnergyStored() {
-        // Ємність буфера суворо дорівнює споживанню за 1 такт (без акумуляції батареї)
         return Math.max(1L, getConsumption());
     }
 
@@ -172,13 +157,7 @@ public class SocketBlockEntity extends BlockEntity implements IEnergyReceiver, I
         if (side == null) {
             return true;
         }
-        BlockState state = getBlockState();
-        if (state.hasProperty(BlockStateProperties.FACING)) {
-            if (side == state.getValue(BlockStateProperties.FACING)) {
-                return false;
-            }
-        }
-        return side == getActiveConnectionSide();
+        return side == getConnectionSide();
     }
 
     @Nullable
@@ -189,6 +168,11 @@ public class SocketBlockEntity extends BlockEntity implements IEnergyReceiver, I
     @Nullable
     public IEnergyConnector getEnergyConnector(@Nullable Direction side) {
         return canConnectEnergy(side) ? this : null;
+    }
+
+    @Nullable
+    public net.neoforged.neoforge.energy.IEnergyStorage getEnergyStorage(@Nullable Direction side) {
+        return canConnectEnergy(side) ? new LightEnergyStorage(this) : null;
     }
 
     // ==================== TICKER & THERMAL INERTIA ====================
@@ -202,8 +186,6 @@ public class SocketBlockEntity extends BlockEntity implements IEnergyReceiver, I
         boolean isBrokenState = this.broken || (state.hasProperty(ElectricLampBlock.BROKEN) && state.getValue(ElectricLampBlock.BROKEN));
         boolean hasPower = !isBrokenState && consumption > 0L && this.energyStored >= consumption;
 
-        // Повне видалення накопичувального буфера:
-        // Енергія скидається щотакту, тому розрив дроту відразу припиняє живлення без затримки
         this.energyStored = 0L;
         setChanged();
 
@@ -211,93 +193,93 @@ public class SocketBlockEntity extends BlockEntity implements IEnergyReceiver, I
         int targetLight = 0;
 
         if (state.getBlock() instanceof LedLampBlock) {
-            // Світлодіодна (LED): миттєве включення та вимкнення (0 <-> 15)
             targetLight = hasPower ? maxLight : 0;
             this.warmupTicks = 0;
             this.cooldownTicks = 0;
             this.flickerTicks = 0;
             this.currentLightLevel = targetLight;
         } else if (state.getBlock() instanceof FluorescentLampBlock) {
-            // Люмінесцентна (Fluorescent / CFL): стартерне мерехтіння на 1-му та 3-му тіках, миттєве вимкнення
             if (hasPower) {
                 this.cooldownTicks = 0;
-                this.warmupTicks = 0;
-                this.flickerTicks++;
-                if (this.flickerTicks == 1) {
-                    targetLight = maxLight;
-                    level.playSound(null, pos, SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.BLOCKS, 0.4f, 1.8f);
-                } else if (this.flickerTicks == 2) {
-                    targetLight = 0;
-                } else if (this.flickerTicks == 3) {
-                    targetLight = maxLight;
-                    level.playSound(null, pos, SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.BLOCKS, 0.4f, 1.9f);
-                } else if (this.flickerTicks == 4) {
-                    targetLight = 0;
+                if (this.warmupTicks < 8) {
+                    this.warmupTicks++;
+                    if (this.flickerTicks <= 0) {
+                        this.flickerTicks = 1 + level.random.nextInt(2);
+                        targetLight = level.random.nextBoolean() ? maxLight : 0;
+                        if (targetLight > 0) {
+                            level.playSound(null, pos, SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.BLOCKS, 0.25f, 1.8f);
+                        }
+                    } else {
+                        this.flickerTicks--;
+                        targetLight = this.currentLightLevel;
+                    }
                 } else {
                     targetLight = maxLight;
                 }
-                this.currentLightLevel = targetLight;
             } else {
-                this.flickerTicks = 0;
                 this.warmupTicks = 0;
-                this.cooldownTicks = 0;
-                this.currentLightLevel = 0;
+                this.flickerTicks = 0;
+                targetLight = 0;
             }
+            this.currentLightLevel = targetLight;
         } else {
-            // Лампи розжарення (Carbon, Tungsten): розпал 2-3 тіки, динамічне остигання 4–6 тіків
-            // (15 -> 10 -> 5 -> 0, вольфрамова: 12 -> 8 -> 4 -> 0, вугільна: 8 -> 5 -> 2 -> 0)
+            // Лампи розжарення (Tungsten, Carbon): теплова інерція
             if (hasPower) {
                 this.cooldownTicks = 0;
-                this.flickerTicks = 0;
-                this.warmupTicks++;
-                if (this.warmupTicks == 1) {
-                    this.currentLightLevel = Math.max(1, (maxLight + 1) / 3);
-                } else if (this.warmupTicks == 2) {
-                    this.currentLightLevel = Math.max(1, (maxLight * 2) / 3);
+                if (this.warmupTicks < 2) {
+                    this.warmupTicks++;
+                    float factor = this.warmupTicks / 2.0f;
+                    targetLight = Math.round(maxLight * factor);
                 } else {
-                    this.currentLightLevel = maxLight;
+                    targetLight = maxLight;
                 }
             } else {
                 this.warmupTicks = 0;
-                this.flickerTicks = 0;
                 if (this.currentLightLevel > 0) {
                     this.cooldownTicks++;
-                    if (this.cooldownTicks % 2 == 0) {
-                        int step = Math.max(1, (maxLight + 2) / 3);
-                        this.currentLightLevel = Math.max(0, this.currentLightLevel - step);
-                    }
-                    if (this.cooldownTicks >= 6) {
-                        this.currentLightLevel = 0;
-                    }
+                    int cooldownDuration = (lampBlock instanceof com.trd.block.basic.industrial.lighting.TungstenLampBlock) ? 4 : 5;
+                    float remaining = Math.max(0.0f, 1.0f - (float) this.cooldownTicks / cooldownDuration);
+                    targetLight = Math.round(maxLight * remaining);
                 } else {
+                    targetLight = 0;
                     this.cooldownTicks = 0;
                 }
             }
+            this.currentLightLevel = targetLight;
         }
 
-        // Оновлення BlockState (LIT і LIGHT_LEVEL) лише за реальної зміни значень
-        boolean shouldBeLit = this.currentLightLevel > 0;
-        boolean wasLit = state.getValue(ElectricLampBlock.LIT);
-        int curLevel = state.hasProperty(ElectricLampBlock.LIGHT_LEVEL) ? state.getValue(ElectricLampBlock.LIGHT_LEVEL) : 0;
-
-        if (wasLit != shouldBeLit || curLevel != this.currentLightLevel) {
-            level.setBlock(pos, state.setValue(ElectricLampBlock.LIT, shouldBeLit)
-                            .setValue(ElectricLampBlock.LIGHT_LEVEL, this.currentLightLevel),
-                    Block.UPDATE_CLIENTS);
-        }
+        applyLightState(level, pos, state, targetLight);
     }
 
-    public void updateLitState() {
-        if (level instanceof ServerLevel serverLevel) {
-            serverTick(serverLevel, worldPosition, getBlockState());
+    private void applyLightState(ServerLevel level, BlockPos pos, BlockState state, int targetLight) {
+        boolean shouldBeLit = targetLight > 0;
+        int currentBlockLight = state.hasProperty(ElectricLampBlock.LIGHT_LEVEL)
+                ? state.getValue(ElectricLampBlock.LIGHT_LEVEL)
+                : (state.getValue(ElectricLampBlock.LIT) ? ((ElectricLampBlock) state.getBlock()).getMaxLightLevel() : 0);
+
+        boolean currentLit = state.getValue(ElectricLampBlock.LIT);
+
+        if (currentLit != shouldBeLit || currentBlockLight != targetLight) {
+            BlockState newState = state.setValue(ElectricLampBlock.LIT, shouldBeLit)
+                    .setValue(ElectricLampBlock.LIGHT_LEVEL, targetLight);
+            level.setBlock(pos, newState, Block.UPDATE_ALL);
+            setChanged();
         }
     }
 
     public void onScheduledTick(ServerLevel level, BlockPos pos, BlockState state) {
-        serverTick(level, pos, state);
+        if (state.getBlock() instanceof ElectricLampBlock) {
+            serverTick(level, pos, state);
+        }
     }
 
-    // ==================== LIFECYCLE & NETWORK ====================
+    public void updateLitState() {
+        if (level instanceof ServerLevel sl) {
+            serverTick(sl, worldPosition, getBlockState());
+        }
+    }
+
+    // ==================== LIFECYCLE ====================
 
     @Override
     public void onLoad() {
@@ -332,9 +314,6 @@ public class SocketBlockEntity extends BlockEntity implements IEnergyReceiver, I
         tag.putLong("LastReceivedTick", lastReceivedTick);
         tag.putFloat("Durability", durability);
         tag.putBoolean("Broken", broken);
-        if (activeConnectionSide != null) {
-            tag.putString("ActiveConnectionSide", activeConnectionSide.getName());
-        }
         tag.putInt("LightLevel", currentLightLevel);
         tag.putInt("WarmupTicks", warmupTicks);
         tag.putInt("CooldownTicks", cooldownTicks);
@@ -348,11 +327,6 @@ public class SocketBlockEntity extends BlockEntity implements IEnergyReceiver, I
         lastReceivedTick = tag.getLong("LastReceivedTick");
         durability = tag.contains("Durability") ? tag.getFloat("Durability") : 1.0f;
         broken = tag.getBoolean("Broken");
-        if (tag.contains("ActiveConnectionSide")) {
-            activeConnectionSide = Direction.byName(tag.getString("ActiveConnectionSide"));
-        } else {
-            activeConnectionSide = null;
-        }
         currentLightLevel = tag.getInt("LightLevel");
         warmupTicks = tag.getInt("WarmupTicks");
         cooldownTicks = tag.getInt("CooldownTicks");

@@ -4,11 +4,13 @@ import com.google.common.collect.ImmutableMap;
 import com.mojang.serialization.MapCodec;
 import com.trd.api.components.LampComponent;
 import com.trd.api.components.ModDataComponents;
+import com.trd.api.energy.EnergyNetworkManager;
+import com.trd.block.basic.industrial.energy.WireBlock;
 import com.trd.block.entity.industrial.lighting.SocketBlockEntity;
 import com.trd.item.industrial.lighting.LampItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -37,11 +39,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
+/**
+ * Промисловий патрон E27.
+ * Підтримує кріплення на будь-які грані блоків та кабелів/проводів WireBlock (ефект гірлянди).
+ * Провід підключається ВИКЛЮЧНО з боку цоколя (основи).
+ */
 public class EmptySocketBlock extends Block implements EntityBlock {
     public static final MapCodec<EmptySocketBlock> CODEC = simpleCodec(EmptySocketBlock::new);
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
 
-    // Геометричні колізії для компактного восьмигранного патрона E27 (габарити 6x4x6 на 6 сторін)
+    // Геометричні колізії для компактного патрона E27 (габарити 6x4x6 на 6 сторін)
     private static final Map<Direction, VoxelShape> SHAPES = ImmutableMap.<Direction, VoxelShape>builder()
             .put(Direction.UP, Block.box(5.0, 0.0, 5.0, 11.0, 4.0, 11.0))
             .put(Direction.DOWN, Block.box(5.0, 12.0, 5.0, 11.0, 16.0, 11.0))
@@ -77,10 +84,15 @@ public class EmptySocketBlock extends Block implements EntityBlock {
         return SHAPES.getOrDefault(state.getValue(FACING), SHAPES.get(Direction.UP));
     }
 
+    @Nullable
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         Direction facing = context.getClickedFace();
-        return this.defaultBlockState().setValue(FACING, facing);
+        BlockState state = this.defaultBlockState().setValue(FACING, facing);
+        if (state.canSurvive(context.getLevel(), context.getClickedPos())) {
+            return state;
+        }
+        return null;
     }
 
     @Override
@@ -88,7 +100,11 @@ public class EmptySocketBlock extends Block implements EntityBlock {
         Direction facing = state.getValue(FACING);
         BlockPos supportPos = pos.relative(facing.getOpposite());
         BlockState support = level.getBlockState(supportPos);
-        return support.isFaceSturdy(level, supportPos, facing) || !support.isAir();
+        // Дозволяємо монтаж на кабелі (ефект гірлянди) та тверді грані
+        if (support.getBlock() instanceof WireBlock) {
+            return true;
+        }
+        return support.isFaceSturdy(level, supportPos, facing);
     }
 
     @Override
@@ -103,45 +119,44 @@ public class EmptySocketBlock extends Block implements EntityBlock {
     @Override
     protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
         super.onPlace(state, level, pos, oldState, isMoving);
-        if (!state.is(oldState.getBlock()) && !level.isClientSide) {
-            PowerPortHelper.tryAutoConnect(level, pos, state, null);
+        if (!state.is(oldState.getBlock()) && !level.isClientSide()) {
+            Direction connectionSide = state.getValue(FACING).getOpposite();
+            BlockPos wirePos = pos.relative(connectionSide);
+            level.neighborChanged(wirePos, state.getBlock(), pos);
+            level.updateNeighborsAt(pos, state.getBlock());
+            if (level instanceof ServerLevel serverLevel) {
+                EnergyNetworkManager.get(serverLevel).addNode(pos);
+            }
         }
     }
 
     @Override
     protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
         super.neighborChanged(state, level, pos, block, fromPos, isMoving);
-        if (!level.isClientSide) {
+        if (!level.isClientSide()) {
             if (!state.canSurvive(level, pos)) {
                 dropResources(state, level, pos, level.getBlockEntity(pos));
                 level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
-                return;
             }
-            PowerPortHelper.tryAutoConnect(level, pos, state, fromPos);
         }
     }
 
     @Override
-    protected void attack(BlockState state, Level level, BlockPos pos, Player player) {
-        if (PowerPortHelper.isHoldingWire(player)) {
-            net.minecraft.world.phys.HitResult hit = player.pick(5.0D, 0.0F, false);
-            Direction targetFace = null;
-            if (hit instanceof BlockHitResult bhr && bhr.getBlockPos().equals(pos)) {
-                targetFace = bhr.getDirection();
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!state.is(newState.getBlock())) {
+            if (!level.isClientSide() && level instanceof ServerLevel serverLevel) {
+                EnergyNetworkManager.get(serverLevel).removeNode(pos);
             }
-            PowerPortHelper.handlePortSwitch(level, pos, state, player, targetFace);
-            return;
+            super.onRemove(state, level, pos, newState, isMoving);
+            level.updateNeighborsAt(pos, state.getBlock());
         }
-        super.attack(state, level, pos, player);
     }
 
     @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                              Player player, InteractionHand hand, BlockHitResult hitResult) {
-        Direction clickedFace = hitResult.getDirection();
-
         if (stack.getItem() instanceof LampItem lampItem) {
-            if (!level.isClientSide) {
+            if (!level.isClientSide()) {
                 ElectricLampBlock targetBlock = lampItem.getLampBlock();
                 if (targetBlock != null) {
                     LampComponent component = stack.getOrDefault(ModDataComponents.LAMP_DATA.get(), LampComponent.DEFAULT);
@@ -149,10 +164,8 @@ public class EmptySocketBlock extends Block implements EntityBlock {
                     float durability = component.durability();
                     Direction facing = state.getValue(FACING);
 
-                    Direction savedPort = null;
                     long savedEnergy = 0L;
                     if (level.getBlockEntity(pos) instanceof SocketBlockEntity oldBE) {
-                        savedPort = oldBE.getActiveConnectionSide();
                         savedEnergy = oldBE.getEnergyStored();
                     }
 
@@ -165,16 +178,12 @@ public class EmptySocketBlock extends Block implements EntityBlock {
                     level.setBlock(pos, newLampState, Block.UPDATE_ALL);
 
                     if (level.getBlockEntity(pos) instanceof SocketBlockEntity socketBE) {
-                        if (savedPort != null) {
-                            socketBE.setActiveConnectionSide(savedPort);
-                        }
                         socketBE.setEnergyStored(savedEnergy);
                         socketBE.setDurability(durability);
                         socketBE.setBroken(isBroken);
                         socketBE.updateLitState();
                     }
 
-                    // Звуки вкручування лампи
                     level.playSound(null, pos, SoundEvents.LANTERN_PLACE, SoundSource.BLOCKS, 0.9f, 1.2f);
                     level.playSound(null, pos, SoundEvents.LEVER_CLICK, SoundSource.BLOCKS, 0.5f, 1.4f);
 
@@ -183,13 +192,7 @@ public class EmptySocketBlock extends Block implements EntityBlock {
                     }
                 }
             }
-            return ItemInteractionResult.sidedSuccess(level.isClientSide);
-        }
-
-        // Перемикання порту живлення дротом або інструментом
-        if (PowerPortHelper.isHoldingWire(player)) {
-            PowerPortHelper.handlePortSwitch(level, pos, state, player, clickedFace);
-            return ItemInteractionResult.sidedSuccess(level.isClientSide);
+            return ItemInteractionResult.sidedSuccess(level.isClientSide());
         }
 
         return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
@@ -197,10 +200,6 @@ public class EmptySocketBlock extends Block implements EntityBlock {
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
-        if (PowerPortHelper.isHoldingWire(player)) {
-            PowerPortHelper.handlePortSwitch(level, pos, state, player, hitResult.getDirection());
-            return InteractionResult.sidedSuccess(level.isClientSide);
-        }
         return InteractionResult.PASS;
     }
 

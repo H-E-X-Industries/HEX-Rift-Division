@@ -1,6 +1,8 @@
 package com.trd.block.basic.industrial.lighting;
 
 import com.mojang.serialization.MapCodec;
+import com.trd.api.energy.EnergyNetworkManager;
+import com.trd.block.basic.industrial.energy.WireBlock;
 import com.trd.block.entity.industrial.lighting.FloodlightBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -17,8 +19,11 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
@@ -37,7 +42,8 @@ import java.util.Map;
 
 /**
  * Промисловий поворотний прожектор (Floodlight).
- * Підтримує 6-стороннє кріплення (підлога, стеля, 4 стіни)
+ * Підтримує 6-стороннє кріплення до блоків та кабелів WireBlock (підлога, стеля, 4 стіни, ефект гірлянди),
+ * підключення живлення ВИКЛЮЧНО до монтажної основи (підошви)
  * та динамічне 3D наведення за поглядом гравця (Yaw + Pitch).
  */
 public class FloodlightBlock extends BaseEntityBlock {
@@ -57,7 +63,6 @@ public class FloodlightBlock extends BaseEntityBlock {
     );
 
     public FloodlightBlock(Properties properties) {
-        // Базове світло блоку 0 (нульовий задній засвіт), світло випромінює виключно спрямований промінь
         super(properties.lightLevel(state -> 0));
         this.registerDefaultState(this.stateDefinition.any()
                 .setValue(MOUNT_FACE, Direction.UP)
@@ -83,9 +88,34 @@ public class FloodlightBlock extends BaseEntityBlock {
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         Direction clickedFace = context.getClickedFace();
-        return this.defaultBlockState()
+        BlockState state = this.defaultBlockState()
                 .setValue(MOUNT_FACE, clickedFace)
                 .setValue(LIT, false);
+        if (state.canSurvive(context.getLevel(), context.getClickedPos())) {
+            return state;
+        }
+        return null;
+    }
+
+    @Override
+    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        Direction mountFace = state.getValue(MOUNT_FACE);
+        BlockPos supportPos = pos.relative(mountFace.getOpposite());
+        BlockState support = level.getBlockState(supportPos);
+        // Дозволяємо монтаж на кабелі (ефект гірлянди) та тверді грані
+        if (support.getBlock() instanceof WireBlock) {
+            return true;
+        }
+        return support.isFaceSturdy(level, supportPos, mountFace);
+    }
+
+    @Override
+    public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState,
+                                  LevelAccessor level, BlockPos currentPos, BlockPos neighborPos) {
+        if (direction == state.getValue(MOUNT_FACE).getOpposite() && !state.canSurvive(level, currentPos)) {
+            return Blocks.AIR.defaultBlockState();
+        }
+        return super.updateShape(state, direction, neighborState, level, currentPos, neighborPos);
     }
 
     @Nullable
@@ -111,16 +141,26 @@ public class FloodlightBlock extends BaseEntityBlock {
     @Override
     protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
         super.onPlace(state, level, pos, oldState, isMoving);
-        if (!state.is(oldState.getBlock()) && !level.isClientSide) {
-            PowerPortHelper.tryAutoConnect(level, pos, state, null);
+        if (!state.is(oldState.getBlock()) && !level.isClientSide()) {
+            Direction connectionSide = state.getValue(MOUNT_FACE).getOpposite();
+            BlockPos wirePos = pos.relative(connectionSide);
+            level.neighborChanged(wirePos, state.getBlock(), pos);
+            level.updateNeighborsAt(pos, state.getBlock());
+            if (level instanceof ServerLevel serverLevel) {
+                EnergyNetworkManager.get(serverLevel).addNode(pos);
+            }
         }
     }
 
     @Override
     protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
         super.neighborChanged(state, level, pos, block, fromPos, isMoving);
-        if (!level.isClientSide) {
-            PowerPortHelper.tryAutoConnect(level, pos, state, fromPos);
+        if (!level.isClientSide()) {
+            if (!state.canSurvive(level, pos)) {
+                dropResources(state, level, pos, level.getBlockEntity(pos));
+                level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
+                return;
+            }
             if (level.getBlockEntity(pos) instanceof FloodlightBlockEntity floodlightBE) {
                 floodlightBE.markRaycastDirty();
             }
@@ -128,39 +168,14 @@ public class FloodlightBlock extends BaseEntityBlock {
     }
 
     @Override
-    protected void attack(BlockState state, Level level, BlockPos pos, Player player) {
-        if (PowerPortHelper.isHoldingWire(player)) {
-            net.minecraft.world.phys.HitResult hit = player.pick(5.0D, 0.0F, false);
-            Direction targetFace = null;
-            if (hit instanceof BlockHitResult bhr && bhr.getBlockPos().equals(pos)) {
-                targetFace = bhr.getDirection();
-            }
-            PowerPortHelper.handlePortSwitch(level, pos, state, player, targetFace);
-            return;
-        }
-        super.attack(state, level, pos, player);
-    }
-
-    @Override
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos,
                                               Player player, InteractionHand hand, BlockHitResult hitResult) {
-        // Якщо гравець тримає дріт або кабель — налаштування порту живлення без обертання
-        if (PowerPortHelper.isHoldingWire(player)) {
-            PowerPortHelper.handlePortSwitch(level, pos, state, player, hitResult.getDirection());
-            return ItemInteractionResult.sidedSuccess(level.isClientSide);
-        }
-
-        // Aim-to-Look наведення або скидання положення (тільки коли в руці НЕ дріт)
         return handleAimInteraction(state, level, pos, player);
     }
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos,
                                                Player player, BlockHitResult hitResult) {
-        if (PowerPortHelper.isHoldingWire(player)) {
-            PowerPortHelper.handlePortSwitch(level, pos, state, player, hitResult.getDirection());
-            return InteractionResult.sidedSuccess(level.isClientSide);
-        }
         ItemInteractionResult res = handleAimInteraction(state, level, pos, player);
         return res.result();
     }
@@ -168,7 +183,6 @@ public class FloodlightBlock extends BaseEntityBlock {
     private ItemInteractionResult handleAimInteraction(BlockState state, Level level, BlockPos pos, Player player) {
         if (level.getBlockEntity(pos) instanceof FloodlightBlockEntity floodlightBE) {
             if (player.isShiftKeyDown()) {
-                // Shift+ПКМ: скидання кутів у рівне положення за замовчуванням
                 Direction mount = state.getValue(MOUNT_FACE);
                 float defYaw = switch (mount) {
                     case NORTH -> 180.0f;
@@ -186,7 +200,6 @@ public class FloodlightBlock extends BaseEntityBlock {
                     );
                 }
             } else {
-                // Aim-to-Look: наведення за поглядом гравця
                 float targetYaw = player.getYRot();
                 float targetPitch = Mth.clamp(-player.getXRot(), -75.0f, 90.0f);
                 floodlightBE.setTargetOrientation(targetYaw, targetPitch);
@@ -198,14 +211,14 @@ public class FloodlightBlock extends BaseEntityBlock {
                     );
                 }
             }
-            return ItemInteractionResult.sidedSuccess(level.isClientSide);
+            return ItemInteractionResult.sidedSuccess(level.isClientSide());
         }
         return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }
 
     @Override
     public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
-        if (!level.isClientSide) {
+        if (!level.isClientSide()) {
             if (level.getBlockEntity(pos) instanceof FloodlightBlockEntity floodlightBE) {
                 floodlightBE.cleanupLightBlocks();
             }
@@ -216,10 +229,16 @@ public class FloodlightBlock extends BaseEntityBlock {
     @Override
     protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         if (!state.is(newState.getBlock())) {
-            if (!level.isClientSide && level.getBlockEntity(pos) instanceof FloodlightBlockEntity floodlightBE) {
-                floodlightBE.cleanupLightBlocks();
+            if (!level.isClientSide()) {
+                if (level instanceof ServerLevel serverLevel) {
+                    EnergyNetworkManager.get(serverLevel).removeNode(pos);
+                }
+                if (level.getBlockEntity(pos) instanceof FloodlightBlockEntity floodlightBE) {
+                    floodlightBE.cleanupLightBlocks();
+                }
             }
             super.onRemove(state, level, pos, newState, isMoving);
+            level.updateNeighborsAt(pos, state.getBlock());
         }
     }
 
