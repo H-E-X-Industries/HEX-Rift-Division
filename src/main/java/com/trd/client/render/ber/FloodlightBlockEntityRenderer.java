@@ -32,7 +32,7 @@ public class FloodlightBlockEntityRenderer implements BlockEntityRenderer<Floodl
     private static final int COLOR_B = 225;
 
     private static final int SIDES = 32;
-    private static final int RINGS = 10;
+    private static final int RINGS = 14;
     private static final int SHELLS = 6;
 
     private static final double[] COS_TABLE = new double[SIDES];
@@ -127,7 +127,7 @@ public class FloodlightBlockEntityRenderer implements BlockEntityRenderer<Floodl
         Matrix4f mat = poseStack.last().pose();
         VertexConsumer consumer = bufferSource.getBuffer(RenderType.lightning());
 
-        float lengthRatio = (float) Math.min(1.0, coneLength / 35.4);
+        float lengthRatio = (float) Math.min(1.0, coneLength / 49.7375);
 
         Vec3[][] ringVertices = new Vec3[RINGS + 1][SIDES];
         int[] ringAlphas = new int[RINGS + 1];
@@ -143,7 +143,7 @@ public class FloodlightBlockEntityRenderer implements BlockEntityRenderer<Floodl
                 float alpha = baseAlpha * axialFade;
                 ringAlphas[k] = Mth.clamp(Math.round(255.0f * alpha), 0, 255);
 
-                float ringRadius = (0.28f + t * 2.1f * lengthRatio) * (0.4f + 0.6f * uNorm);
+                float ringRadius = (0.28f + t * 2.32f * lengthRatio) * (0.4f + 0.6f * uNorm);
                 double rz = start.z - t * coneLength;
 
                 for (int i = 0; i < SIDES; i++) {
@@ -186,11 +186,11 @@ public class FloodlightBlockEntityRenderer implements BlockEntityRenderer<Floodl
 
     @Override
     public int getViewDistance() {
-        return 128;
+        return 160;
     }
 
     @Override
     public AABB getRenderBoundingBox(FloodlightBlockEntity be) {
-        return new AABB(be.getBlockPos()).inflate(40.0);
+        return be.getRenderBoundingBox();
     }
 }

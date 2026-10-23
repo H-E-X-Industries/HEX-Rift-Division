@@ -20,6 +20,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
@@ -40,7 +41,8 @@ public class FloodlightBlockEntity extends BlockEntity implements IEnergyReceive
     public static final long CONSUMPTION = 40L;
     public static final long MAX_ENERGY = 40L;
     public static final long RECEIVE_SPEED = 40L;
-    public static final int MAX_DISTANCE = 36;
+    public static final int MAX_BEAM_DISTANCE = 50;
+    public static final int MAX_DISTANCE = MAX_BEAM_DISTANCE;
 
     public static final float MAX_YAW_SPEED = 6.0f;   // градусів за тік
     public static final float MAX_PITCH_SPEED = 5.0f; // градусів за тік
@@ -52,7 +54,7 @@ public class FloodlightBlockEntity extends BlockEntity implements IEnergyReceive
 
     private final Set<BlockPos> activeLightPositions = new HashSet<>();
     private int currentLightLevel = 0;
-    private float beamDistance = 36.0f;
+    private float beamDistance = 50.0f;
     private int warmupTicks = 0;
     private int cooldownTicks = 0;
     private boolean raycastDirty = true;
@@ -338,18 +340,24 @@ public class FloodlightBlockEntity extends BlockEntity implements IEnergyReceive
     private int calculateBaseLightLevel(int dist) {
         if (dist <= 6) {
             return dist * 2 + 2; // 4, 6, 8, 10, 12, 14
-        } else if (dist <= 28) {
+        } else if (dist <= 42) {
             return 15;
-        } else if (dist <= 30) {
+        } else if (dist == 43) {
             return 14;
-        } else if (dist <= 32) {
+        } else if (dist == 44) {
             return 12;
-        } else if (dist <= 34) {
-            return 9;
-        } else if (dist <= 35) {
+        } else if (dist == 45) {
+            return 10;
+        } else if (dist == 46) {
+            return 8;
+        } else if (dist == 47) {
             return 6;
-        } else {
+        } else if (dist == 48) {
+            return 4;
+        } else if (dist == 49) {
             return 3;
+        } else {
+            return 2; // d >= 50
         }
     }
 
@@ -529,7 +537,7 @@ public class FloodlightBlockEntity extends BlockEntity implements IEnergyReceive
         if (tag.contains("BeamDistance")) {
             beamDistance = tag.getFloat("BeamDistance");
         } else {
-            beamDistance = 36.0f;
+            beamDistance = 50.0f;
         }
         warmupTicks = tag.getInt("WarmupTicks");
         cooldownTicks = tag.getInt("CooldownTicks");
@@ -574,5 +582,9 @@ public class FloodlightBlockEntity extends BlockEntity implements IEnergyReceive
     public void handleUpdateTag(CompoundTag tag, HolderLookup.Provider lookupProvider) {
         super.handleUpdateTag(tag, lookupProvider);
         loadAdditional(tag, lookupProvider);
+    }
+
+    public AABB getRenderBoundingBox() {
+        return new AABB(worldPosition).inflate(52.0);
     }
 }
