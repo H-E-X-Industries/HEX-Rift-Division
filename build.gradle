@@ -126,7 +126,7 @@ dependencies {
     compileOnly "dev.engine-room.flywheel:flywheel-neoforge-1.21.1:1.0.6-44"
 
     // 4. HexRender (bundled via Jar-in-Jar)
-    implementation name: 'hexrender', version: '0.1.6'
+    implementation name: 'hexrender', version: '0.1.7'
     jarJar(name: 'hexrender') {
         version {
             strictly '[0.1.0, 1.0.0)'
