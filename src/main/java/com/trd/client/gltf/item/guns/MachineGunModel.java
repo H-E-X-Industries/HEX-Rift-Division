@@ -193,7 +193,7 @@ public final class MachineGunModel {
      */
     public static void captureItemMatrix(net.minecraft.world.item.ItemDisplayContext context,
                                          Matrix4f modelToWorld) {
-        if (com.hex.hexrender.direct.HexIrisBridge.isRenderingShadows()) {
+        if (com.hex.hexrender.direct.HexIrisBridge.isShadowPassActive()) {
             return;
         }
         if (!isHandContext(context)) {

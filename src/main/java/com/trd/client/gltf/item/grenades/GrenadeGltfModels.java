@@ -112,8 +112,8 @@ public final class GrenadeGltfModels {
     @Nullable
     public static synchronized HexGltfModel model(ResourceLocation id) {
         Derived derived = DERIVED.computeIfAbsent(id, key -> new Derived());
-        HexGltfModel loaded = HexModels.get(id);
-        int generation = HexModels.generation();
+        HexGltfModel loaded = HexModels.fetch(id);
+        int generation = HexModels.cacheGeneration();
 
         if (loaded != derived.model || generation != derived.generation) {
             derived.model = loaded;

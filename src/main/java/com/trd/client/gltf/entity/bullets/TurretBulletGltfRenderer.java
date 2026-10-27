@@ -366,8 +366,8 @@ public class TurretBulletGltfRenderer extends EntityRenderer<TurretBulletEntity>
                 : LightTexture.pack(Math.max(LightTexture.block(packedLight), 13), Math.max(LightTexture.sky(packedLight), 13));
         int bulletTint = tracer ? 0xFFFFFFFF : 0xFFFFAA77;
 
-        if (HexIrisBridge.isShaderPackInUse()) {
-            HexVanillaRenderer.render(
+        if (HexIrisBridge.hasActiveShaders()) {
+            HexVanillaRenderer.renderVanilla(
                     model,
                     (com.hex.hexrender.gltf.GltfAnimation) null,
                     0.0f,
@@ -379,7 +379,7 @@ public class TurretBulletGltfRenderer extends EntityRenderer<TurretBulletEntity>
                     tracer ? TurretBulletVariants.tracerVariant(model, entity) : VariantUv.NONE,
                     TextureSlots.NONE);
         } else {
-            HexDirectRenderer.submit(model, (com.hex.hexrender.gltf.GltfAnimation) null, 0.0f,
+            HexDirectRenderer.renderModel(model, (com.hex.hexrender.gltf.GltfAnimation) null, 0.0f,
                     poseStack.last().pose(), bulletLight,
                     OverlayTexture.NO_OVERLAY, bulletTint, DirectPass.LEVEL,
                     tracer ? TurretBulletVariants.tracerVariant(model, entity) : VariantUv.NONE);

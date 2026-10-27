@@ -65,7 +65,7 @@ public class MachineGunGltfAppearance implements ItemAppearance {
             return null;
         }
 
-        HexGltfModel model = HexModels.get(MODEL);
+        HexGltfModel model = HexModels.fetch(MODEL);
         if (model != null) {
             MachineGunClientAnim.syncDurations(model);
         }

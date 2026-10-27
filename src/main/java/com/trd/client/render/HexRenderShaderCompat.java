@@ -98,7 +98,7 @@ public final class HexRenderShaderCompat {
                 if (PRIME_UNITS) {
                     primeTextureUnitCache();
                 }
-                HexDirectRenderer.flush(DirectPass.LEVEL);
+                HexDirectRenderer.flushBatches(DirectPass.LEVEL);
             }
             if (DEBUG_GL && dumpsLeft > 0) {
                 dumpsLeft--;

@@ -151,8 +151,8 @@ public class ClassicGrenadeGltfRenderer<T extends Entity> extends EntityRenderer
         // (то есть ДО вращения вершин модели), чтобы модель крутилась строго вокруг заданной оси.
         poseStack.translate(0.0F, -modelCenterY(variant), 0.0F);
 
-        if (com.hex.hexrender.direct.HexIrisBridge.isShaderPackInUse()) {
-            com.hex.hexrender.direct.HexVanillaRenderer.render(
+        if (com.hex.hexrender.direct.HexIrisBridge.hasActiveShaders()) {
+            com.hex.hexrender.direct.HexVanillaRenderer.renderVanilla(
                     model,
                     ClassicGrenadeVariants.hiddenPin(variant),
                     0.0F,
@@ -164,7 +164,7 @@ public class ClassicGrenadeGltfRenderer<T extends Entity> extends EntityRenderer
                     com.hex.hexrender.texture.VariantUv.NONE,
                     com.hex.hexrender.direct.TextureSlots.NONE);
         } else {
-            HexDirectRenderer.submit(model, ClassicGrenadeVariants.hiddenPin(variant), 0.0F,
+            HexDirectRenderer.renderModel(model, ClassicGrenadeVariants.hiddenPin(variant), 0.0F,
                     poseStack.last().pose(), packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFFFF,
                     DirectPass.LEVEL);
         }

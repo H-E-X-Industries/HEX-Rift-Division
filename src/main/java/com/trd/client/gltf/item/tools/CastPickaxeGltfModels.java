@@ -71,8 +71,8 @@ public final class CastPickaxeGltfModels {
     @Nullable
     public static synchronized HexGltfModel model() {
         Derived derived = DERIVED.computeIfAbsent(MODEL, key -> new Derived());
-        HexGltfModel loaded = HexModels.get(MODEL);
-        int generation = HexModels.generation();
+        HexGltfModel loaded = HexModels.fetch(MODEL);
+        int generation = HexModels.cacheGeneration();
 
         if (loaded != derived.model || generation != derived.generation) {
             derived.model = loaded;

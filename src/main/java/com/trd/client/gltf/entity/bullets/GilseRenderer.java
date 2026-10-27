@@ -90,7 +90,7 @@ public class GilseRenderer extends EntityRenderer<GilseEntity> {
     @Override
     public void render(GilseEntity entity, float yaw, float partialTick, PoseStack poseStack,
                        net.minecraft.client.renderer.MultiBufferSource bufferSource, int packedLight) {
-        var model = HexModels.get(MODEL);
+        var model = HexModels.fetch(MODEL);
         if (model == null) {
             return;
         }
@@ -120,8 +120,8 @@ public class GilseRenderer extends EntityRenderer<GilseEntity> {
         poseStack.mulPose(Axis.XP.rotationDegrees(entity.getRenderPitch(partialTick)));
         poseStack.mulPose(Axis.ZP.rotationDegrees(entity.getRenderRoll(partialTick)));
 
-        if (HexIrisBridge.isShaderPackInUse()) {
-            HexVanillaRenderer.render(
+        if (HexIrisBridge.hasActiveShaders()) {
+            HexVanillaRenderer.renderVanilla(
                     model,
                     (com.hex.hexrender.gltf.GltfAnimation) null,
                     0.0f,
@@ -134,7 +134,7 @@ public class GilseRenderer extends EntityRenderer<GilseEntity> {
                     TextureSlots.NONE);
         } else {
             var matrix = poseStack.last().pose();
-            HexDirectRenderer.submit(model, (com.hex.hexrender.gltf.GltfAnimation) null, 0.0f,
+            HexDirectRenderer.renderModel(model, (com.hex.hexrender.gltf.GltfAnimation) null, 0.0f,
                     matrix, packedLight, net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY,
                     0xFFFFFFFF, DirectPass.LEVEL,
                     VariantUv.NONE);

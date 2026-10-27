@@ -75,8 +75,8 @@ public class CastPickaxeRenderer extends BlockEntityWithoutLevelRenderer {
             poseStack.translate(0.5F, 0.5F, 0.5F);
             appearance.transform(stack, displayContext, poseStack);
 
-            if (HexIrisBridge.isShaderPackInUse()) {
-                HexVanillaRenderer.render(
+            if (HexIrisBridge.hasActiveShaders()) {
+                HexVanillaRenderer.renderVanilla(
                         model,
                         appearance.clip(stack, displayContext),
                         appearance.seconds(stack, displayContext, partialTick),
@@ -88,7 +88,7 @@ public class CastPickaxeRenderer extends BlockEntityWithoutLevelRenderer {
                         appearance.variant(stack, displayContext),
                         slots);
             } else {
-                HexDirectRenderer.submit(
+                HexDirectRenderer.renderModel(
                         model,
                         appearance.clip(stack, displayContext),
                         appearance.seconds(stack, displayContext, partialTick),

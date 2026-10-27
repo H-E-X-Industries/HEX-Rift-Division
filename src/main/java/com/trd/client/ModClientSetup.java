@@ -641,7 +641,7 @@ public class ModClientSetup {
 
             @Override
             public boolean skipVanillaRender(com.trd.block.entity.industrial.rotation.ShaftBlockEntity be) {
-                if (com.hex.hexrender.direct.HexIrisBridge.isRenderingShadows()) return false;
+                if (com.hex.hexrender.direct.HexIrisBridge.isShadowPassActive()) return false;
                 return true;
             }
         });
@@ -655,7 +655,7 @@ public class ModClientSetup {
 
             @Override
             public boolean skipVanillaRender(com.trd.block.entity.industrial.rotation.BearingBlockEntity be) {
-                if (com.hex.hexrender.direct.HexIrisBridge.isRenderingShadows()) return false;
+                if (com.hex.hexrender.direct.HexIrisBridge.isShadowPassActive()) return false;
                 return true;
             }
         });
@@ -669,7 +669,7 @@ public class ModClientSetup {
 
             @Override
             public boolean skipVanillaRender(com.trd.block.entity.industrial.rotation.HandCrankBlockEntity be) {
-                if (com.hex.hexrender.direct.HexIrisBridge.isRenderingShadows()) return false;
+                if (com.hex.hexrender.direct.HexIrisBridge.isShadowPassActive()) return false;
                 return true;
             }
         });
@@ -683,7 +683,7 @@ public class ModClientSetup {
 
             @Override
             public boolean skipVanillaRender(com.trd.block.entity.industrial.rotation.ClutchBlockEntity be) {
-                if (com.hex.hexrender.direct.HexIrisBridge.isRenderingShadows()) return false;
+                if (com.hex.hexrender.direct.HexIrisBridge.isShadowPassActive()) return false;
                 return true;
             }
         });
@@ -697,7 +697,7 @@ public class ModClientSetup {
 
             @Override
             public boolean skipVanillaRender(com.trd.block.entity.industrial.rotation.MotorElectroBlockEntity be) {
-                if (com.hex.hexrender.direct.HexIrisBridge.isRenderingShadows()) return false;
+                if (com.hex.hexrender.direct.HexIrisBridge.isShadowPassActive()) return false;
                 return true;
             }
         });
@@ -711,7 +711,7 @@ public class ModClientSetup {
 
             @Override
             public boolean skipVanillaRender(com.trd.block.entity.industrial.rotation.TachometerBlockEntity be) {
-                if (com.hex.hexrender.direct.HexIrisBridge.isRenderingShadows()) return false;
+                if (com.hex.hexrender.direct.HexIrisBridge.isShadowPassActive()) return false;
                 return true;
             }
         });
@@ -725,7 +725,7 @@ public class ModClientSetup {
 
             @Override
             public boolean skipVanillaRender(com.trd.block.entity.industrial.fluids.WaterPumpBlockEntity be) {
-                if (com.hex.hexrender.direct.HexIrisBridge.isRenderingShadows()) return false;
+                if (com.hex.hexrender.direct.HexIrisBridge.isShadowPassActive()) return false;
                 return true;
             }
         });
@@ -739,7 +739,7 @@ public class ModClientSetup {
 
             @Override
             public boolean skipVanillaRender(com.trd.multiblock.industrial.boiler.BoilerBlockEntity be) {
-                if (com.hex.hexrender.direct.HexIrisBridge.isRenderingShadows()) return false;
+                if (com.hex.hexrender.direct.HexIrisBridge.isShadowPassActive()) return false;
                 return true;
             }
         });
@@ -753,7 +753,7 @@ public class ModClientSetup {
 
             @Override
             public boolean skipVanillaRender(com.trd.multiblock.industrial.steam_engine.SteamEngineBlockEntity be) {
-                if (com.hex.hexrender.direct.HexIrisBridge.isRenderingShadows()) return false;
+                if (com.hex.hexrender.direct.HexIrisBridge.isShadowPassActive()) return false;
                 return true;
             }
         });
@@ -767,7 +767,7 @@ public class ModClientSetup {
 
             @Override
             public boolean skipVanillaRender(com.trd.block.entity.industrial.rotation.StatorBlockEntity be) {
-                if (com.hex.hexrender.direct.HexIrisBridge.isRenderingShadows()) return false;
+                if (com.hex.hexrender.direct.HexIrisBridge.isShadowPassActive()) return false;
                 return true;
             }
         });

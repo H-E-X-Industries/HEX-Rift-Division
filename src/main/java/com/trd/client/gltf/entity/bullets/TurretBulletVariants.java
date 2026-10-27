@@ -120,7 +120,7 @@ public final class TurretBulletVariants {
      */
     public static synchronized void load() {
         if (tracerHandle == null) {
-            tracerHandle = HexModels.variants(TRACER_MODEL, TRACER_MODEL, TRACER_VARIANTS);
+            tracerHandle = HexModels.createVariants(TRACER_MODEL, TRACER_MODEL, TRACER_VARIANTS);
         }
     }
 
@@ -140,7 +140,7 @@ public final class TurretBulletVariants {
      */
     @Nullable
     public static HexGltfModel plainModel() {
-        return HexModels.get(PLAIN_MODEL);
+        return HexModels.fetch(PLAIN_MODEL);
     }
 
     /**
