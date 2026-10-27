@@ -2,7 +2,7 @@ package com.trd.item.weapons.guns;
 
 import com.trd.client.gltf.item.guns.MachineGunModel;
 import com.trd.client.overlay.MachineGunScope;
-import com.hex.hexrender.gltf.GemRenderGltfModel;
+import com.hex.hexrender.gltf.HexGltfModel;
 import com.hex.hexrender.gltf.GltfAnimation;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.particles.ParticleOptions;
@@ -22,7 +22,7 @@ import javax.annotation.Nullable;
  * Раньше состояние анимаций держал геколибовский {@code AnimationController}:
  * предикат выбирал клип, а {@code SoundKeyframeHandler} проигрывал звуки в
  * keyframe-точках. С переходом на glTF тикать контроллеры больше некому —
- * рендерером стал GemRender, который про геколиб ничего не знает. Поэтому
+ * рендерером стал HEX Render, который про геколиб ничего не знает. Поэтому
  * автомат держит своё состояние сам.
  * <p>
  * <b>Правило автомата: один клип за раз.</b> Клип, начавшись, доигрывается
@@ -97,7 +97,7 @@ public final class MachineGunClientAnim {
 
     /** Модель, из которой берётся локатор. */
     @Nullable
-    private static GemRenderGltfModel cachedModel;
+    private static HexGltfModel cachedModel;
 
     /**
      * Дробный возраст клипа. Растёт на {@link #tick}, но рендер читает его же с
@@ -121,10 +121,10 @@ public final class MachineGunClientAnim {
     /**
      * Подтягивает реальные длины клипов из загруженной модели.
      * <p>
-     * Должны вызываться только с клиента: {@link GemRenderGltfModel} живёт в
-     * GemRender, а на сервере той нет.
+     * Должны вызываться только с клиента: {@link HexGltfModel} живёт в
+     * HEX Render, а на сервере той нет.
      */
-    public static void syncDurations(GemRenderGltfModel model) {
+    public static void syncDurations(HexGltfModel model) {
         cachedModel = model;
 
         GltfAnimation shot = model.animation(SHOT);
@@ -244,7 +244,7 @@ public final class MachineGunClientAnim {
     }
 
     /**
-     * Время клипа в секундах — GemRender ждёт именно секунды.
+     * Время клипа в секундах — HEX Render ждёт именно секунды.
      * <p>
      * {@code partialTick} (0..1) добавляется к накопленному возрасту, поэтому
      * между тиками кадр всё равно сдвигается — на высоком FPS анимация идёт
@@ -254,7 +254,7 @@ public final class MachineGunClientAnim {
         float seconds = (float) ((preciseAge + partialTick) / 20.0);
 
         // Время обрезаем по длине клипа, а не пропускаем через него.
-        // GemRender внутри DirectRenderer.stagePalette зовёт GltfAnimation.loop(),
+        // HEX Render внутри HexDirectRenderer.stagePalette зовёт GltfAnimation.loop(),
         // а это остаток от деления на длину: любое время сверх конца клипа
         // заворачивается в начало. Для shot (0.3333 с) последний кадр выдавал
         // ~0.35 с, который превращался в ~0.017 с — удар в пик отдачи, и ствол
@@ -312,13 +312,13 @@ public final class MachineGunClientAnim {
 
     @Nullable
     public static GltfAnimation currentClip() {
-        GemRenderGltfModel model = cachedModel;
+        HexGltfModel model = cachedModel;
         return model != null && current != null ? model.animation(current) : null;
     }
 
     /** Модель, из которой берётся локатор. */
     @Nullable
-    public static GemRenderGltfModel model() {
+    public static HexGltfModel model() {
         return cachedModel;
     }
 

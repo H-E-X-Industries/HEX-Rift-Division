@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 public class FlywheelFallbackHelper {
 
     public static boolean isFlywheelActive(@Nullable Level level) {
-        if (com.hex.hexrender.direct.IrisDirectBridge.isRenderingShadows()) {
+        if (com.hex.hexrender.direct.HexIrisBridge.isRenderingShadows()) {
             return false;
         }
         try {

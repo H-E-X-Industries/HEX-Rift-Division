@@ -2,8 +2,8 @@ package com.trd.client.gltf.item.tools;
 
 import com.mojang.logging.LogUtils;
 import com.trd.main.MainRegistry;
-import com.hex.hexrender.asset.GemRenderModels;
-import com.hex.hexrender.gltf.GemRenderGltfModel;
+import com.hex.hexrender.asset.HexModels;
+import com.hex.hexrender.gltf.HexGltfModel;
 import com.hex.hexrender.gltf.GltfAnimation;
 import com.hex.hexrender.gltf.NodeTable;
 import com.hex.hexrender.gltf.PoseDriver;
@@ -30,7 +30,7 @@ import java.util.Map;
  * Кэш keyed по {@link ResourceLocation}, а не по самой модели: после перезагрузки
  * ресурсов модель приезжает заново, и клипы, сохранённые при старой, держали бы
  * в себе индексы костей из прошлой генерации. Пересбор кэша ловится по
- * {@link GemRenderModels#generation()}.
+ * {@link HexModels#generation()}.
  */
 public final class CastPickaxeGltfModels {
 
@@ -49,7 +49,7 @@ public final class CastPickaxeGltfModels {
     /** Вытащенное из модели: клипы, из которых убран сдвиг корня. */
     private static final class Derived {
         @Nullable
-        GemRenderGltfModel model;
+        HexGltfModel model;
         int generation = -1;
         boolean seen;
         @Nullable
@@ -69,10 +69,10 @@ public final class CastPickaxeGltfModels {
      * первых кадрах после входа в мир, а не поломка.
      */
     @Nullable
-    public static synchronized GemRenderGltfModel model() {
+    public static synchronized HexGltfModel model() {
         Derived derived = DERIVED.computeIfAbsent(MODEL, key -> new Derived());
-        GemRenderGltfModel loaded = GemRenderModels.get(MODEL);
-        int generation = GemRenderModels.generation();
+        HexGltfModel loaded = HexModels.get(MODEL);
+        int generation = HexModels.generation();
 
         if (loaded != derived.model || generation != derived.generation) {
             derived.model = loaded;
@@ -100,7 +100,7 @@ public final class CastPickaxeGltfModels {
      * собственного сдвига.
      */
     @Nullable
-    private static float[] rootTranslation(GemRenderGltfModel loaded) {
+    private static float[] rootTranslation(HexGltfModel loaded) {
         for (var node : loaded.layout().nodes()) {
             if (node.getMeshModels() != null && !node.getMeshModels().isEmpty()) {
                 float[] translation = node.getTranslation();
@@ -117,7 +117,7 @@ public final class CastPickaxeGltfModels {
      */
     @Nullable
     public static synchronized GltfAnimation clip(String name) {
-        GemRenderGltfModel loaded = model();
+        HexGltfModel loaded = model();
         if (loaded == null) return null;
 
         Derived derived = DERIVED.get(MODEL);
@@ -151,7 +151,7 @@ public final class CastPickaxeGltfModels {
      * остаётся как есть: у {@code holding} поверх сдвига есть ещё лёгкое
      * покачивание почти в пиксель, и оно нужно.
      */
-    private static GltfAnimation stripRootOffset(GemRenderGltfModel loaded, Derived derived, GltfAnimation clip) {
+    private static GltfAnimation stripRootOffset(HexGltfModel loaded, Derived derived, GltfAnimation clip) {
         float[] root = derived.rootOffset;
         if (root == null) return clip;
 

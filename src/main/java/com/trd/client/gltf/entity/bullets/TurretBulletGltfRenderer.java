@@ -14,9 +14,9 @@ import com.mojang.math.Axis;
 import com.trd.entity.weapons.bullets.TurretBulletEntity;
 import com.trd.main.MainRegistry;
 import com.hex.hexrender.direct.DirectPass;
-import com.hex.hexrender.direct.DirectRenderer;
-import com.hex.hexrender.direct.GltfVanillaRenderer;
-import com.hex.hexrender.direct.IrisDirectBridge;
+import com.hex.hexrender.direct.HexDirectRenderer;
+import com.hex.hexrender.direct.HexVanillaRenderer;
+import com.hex.hexrender.direct.HexIrisBridge;
 import com.hex.hexrender.direct.TextureSlots;
 import com.hex.hexrender.texture.VariantUv;
 import net.minecraft.client.Camera;
@@ -44,7 +44,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Пуля на glTF через GemRender с эффектами свечения в темноте, ореолом и трассирующим хвостом.
+ * Пуля на glTF через HEX Render с эффектами свечения в темноте, ореолом и трассирующим хвостом.
  * Ореол и хвост рендерятся поверх облаков через прямой аддитивный проход (AFTER_WEATHER).
  */
 @EventBusSubscriber(modid = MainRegistry.MOD_ID, value = Dist.CLIENT)
@@ -366,8 +366,8 @@ public class TurretBulletGltfRenderer extends EntityRenderer<TurretBulletEntity>
                 : LightTexture.pack(Math.max(LightTexture.block(packedLight), 13), Math.max(LightTexture.sky(packedLight), 13));
         int bulletTint = tracer ? 0xFFFFFFFF : 0xFFFFAA77;
 
-        if (IrisDirectBridge.isShaderPackInUse()) {
-            GltfVanillaRenderer.render(
+        if (HexIrisBridge.isShaderPackInUse()) {
+            HexVanillaRenderer.render(
                     model,
                     (com.hex.hexrender.gltf.GltfAnimation) null,
                     0.0f,
@@ -379,7 +379,7 @@ public class TurretBulletGltfRenderer extends EntityRenderer<TurretBulletEntity>
                     tracer ? TurretBulletVariants.tracerVariant(model, entity) : VariantUv.NONE,
                     TextureSlots.NONE);
         } else {
-            DirectRenderer.submit(model, (com.hex.hexrender.gltf.GltfAnimation) null, 0.0f,
+            HexDirectRenderer.submit(model, (com.hex.hexrender.gltf.GltfAnimation) null, 0.0f,
                     poseStack.last().pose(), bulletLight,
                     OverlayTexture.NO_OVERLAY, bulletTint, DirectPass.LEVEL,
                     tracer ? TurretBulletVariants.tracerVariant(model, entity) : VariantUv.NONE);

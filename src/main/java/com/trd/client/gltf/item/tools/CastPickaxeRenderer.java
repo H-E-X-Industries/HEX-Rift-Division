@@ -2,11 +2,11 @@ package com.trd.client.gltf.item.tools;
 
 import com.trd.item.tools.cast_pickaxes.CastPickaxeClientAnim;
 import com.hex.hexrender.direct.DirectPass;
-import com.hex.hexrender.direct.DirectRenderer;
-import com.hex.hexrender.direct.GltfVanillaRenderer;
-import com.hex.hexrender.direct.IrisDirectBridge;
+import com.hex.hexrender.direct.HexDirectRenderer;
+import com.hex.hexrender.direct.HexVanillaRenderer;
+import com.hex.hexrender.direct.HexIrisBridge;
 import com.hex.hexrender.direct.TextureSlots;
-import com.hex.hexrender.gltf.GemRenderGltfModel;
+import com.hex.hexrender.gltf.HexGltfModel;
 import com.hex.hexrender.gltf.GltfAnimation;
 import com.hex.hexrender.render.Vanilla;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -22,10 +22,10 @@ import javax.annotation.Nullable;
 /**
  * Рендерер литой кирки на glTF.
  *
- * <h2>Зачем он свой, а не {@code GemRenderItemRenderer}</h2>
+ * <h2>Зачем он свой, а не {@code HexItemRenderer}</h2>
  * Обе кирки рисуются одной моделью и различаются только текстурой, а
- * {@code GemRenderItemRenderer} текстуру предмету подменить не умеет: у него нет
- * такого обратного хода, он зовёт {@code DirectRenderer#submit} без слотов.
+ * {@code HexItemRenderer} текстуру предмету подменить не умеет: у него нет
+ * такого обратного хода, он зовёт {@code HexDirectRenderer#submit} без слотов.
  *
  * <p>Слоты для этого и сделаны: если в материале модели стоит метка
  * {@value CastPickaxeGltfAppearance#TEXTURE_SLOT}, то такая часть рисуется
@@ -33,7 +33,7 @@ import javax.annotation.Nullable;
  * подставляется — та, что выбрал облик по предмету.
  *
  * <p>Остальное — сдвиг на пол-пикселя, трансформация облика, выбор клипа и
- * времени, проход отрисовки — повторяет {@code GemRenderItemRenderer#draw}.
+ * времени, проход отрисовки — повторяет {@code HexItemRenderer#draw}.
  * Смешивания между клипами здесь нет и не предвидится: облик его не включает, а
  * клипы у кирки не пересекаются, потому что автомат держит ровно один активный.
  */
@@ -61,7 +61,7 @@ public class CastPickaxeRenderer extends BlockEntityWithoutLevelRenderer {
     @Override
     public void renderByItem(ItemStack stack, ItemDisplayContext displayContext, PoseStack poseStack,
                              MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
-        GemRenderGltfModel model = appearance.model(stack, displayContext);
+        HexGltfModel model = appearance.model(stack, displayContext);
         if (model == null) {
             return;
         }
@@ -75,8 +75,8 @@ public class CastPickaxeRenderer extends BlockEntityWithoutLevelRenderer {
             poseStack.translate(0.5F, 0.5F, 0.5F);
             appearance.transform(stack, displayContext, poseStack);
 
-            if (IrisDirectBridge.isShaderPackInUse()) {
-                GltfVanillaRenderer.render(
+            if (HexIrisBridge.isShaderPackInUse()) {
+                HexVanillaRenderer.render(
                         model,
                         appearance.clip(stack, displayContext),
                         appearance.seconds(stack, displayContext, partialTick),
@@ -88,7 +88,7 @@ public class CastPickaxeRenderer extends BlockEntityWithoutLevelRenderer {
                         appearance.variant(stack, displayContext),
                         slots);
             } else {
-                DirectRenderer.submit(
+                HexDirectRenderer.submit(
                         model,
                         appearance.clip(stack, displayContext),
                         appearance.seconds(stack, displayContext, partialTick),
@@ -108,7 +108,7 @@ public class CastPickaxeRenderer extends BlockEntityWithoutLevelRenderer {
     /**
      * Проход отрисовки по контексту.
      *
-     * <p>Тот же расклад, что у {@code GemRenderItemRenderer}: в окне интерфейса —
+     * <p>Тот же расклад, что у {@code HexItemRenderer}: в окне интерфейса —
      * {@link DirectPass#GUI}, в руке от первого лица — {@link DirectPass#HAND},
      * всё остальное — {@link DirectPass#LEVEL}. Руки от третьего лица тоже идут
      * по мировому проходу: они рисуются вместе с сущностью в мире.

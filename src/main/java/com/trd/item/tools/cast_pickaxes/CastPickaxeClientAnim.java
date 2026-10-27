@@ -1,7 +1,7 @@
 package com.trd.item.tools.cast_pickaxes;
 
 import com.trd.main.MainRegistry;
-import com.hex.hexrender.gltf.GemRenderGltfModel;
+import com.hex.hexrender.gltf.HexGltfModel;
 import com.hex.hexrender.gltf.GltfAnimation;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
@@ -23,7 +23,7 @@ import java.util.Map;
  * Раньше состояние анимаций держал геколибовский {@code AnimationController}:
  * сервер дёргал триггеры {@code charging}, {@code holding} и {@code hit}.
  * С переходом на glTF тикать контроллеры больше некому — рендерером стал
- * GemRender, который про геколиб ничего не знает, и синхронизировать анимацию
+ * HEX Render, который про геколиб ничего не знает, и синхронизировать анимацию
  * предмета через {@code GeoItem.getOrAssignId} больше нечем.
  *
  * <p>Пакет при этом не понадобился: {@code LivingEntity#isUsingItem} читает бит
@@ -139,10 +139,10 @@ public final class CastPickaxeClientAnim {
     /**
      * Подтягивает реальные длины клипов из загруженной модели.
      *
-     * <p>Только с клиента: {@link GemRenderGltfModel} живёт в GemRender, на
+     * <p>Только с клиента: {@link HexGltfModel} живёт в HEX Render, на
      * сервере той нет.
      */
-    public static void syncDurations(@Nullable GemRenderGltfModel model) {
+    public static void syncDurations(@Nullable HexGltfModel model) {
         if (model == null) return;
 
         GltfAnimation charging = model.animation(CHARGING);
@@ -165,14 +165,14 @@ public final class CastPickaxeClientAnim {
     }
 
     /**
-     * Время клипа в секундах — GemRender ждёт именно секунды.
+     * Время клипа в секундах — HEX Render ждёт именно секунды.
      *
      * <p>{@code partialTick} добавляется к накопленному возрасту, поэтому между
      * тиками кадр всё равно сдвигается: на высоком FPS анимация идёт плавно, а не
      * ступеньками по двадцать раз в секунду.
      *
      * <p>Время обрезается по длине клипа, а не пропускается через него.
-     * {@code GemRender} внутри отрисовки зовёт {@code GltfAnimation#loop()}, а
+     * {@code HEX Render} внутри отрисовки зовёт {@code GltfAnimation#loop()}, а
      * это остаток от деления на длину: любое время сверх конца клипа
      * заворачивается в начало. У чужого игрока счётчик использования предмета
      * может на тик отставать, и без обрезки кирка в последнем кадре замаха

@@ -2,8 +2,8 @@ package com.trd.client.gltf.item.grenades;
 
 import com.mojang.logging.LogUtils;
 import com.trd.main.MainRegistry;
-import com.hex.hexrender.asset.GemRenderModels;
-import com.hex.hexrender.gltf.GemRenderGltfModel;
+import com.hex.hexrender.asset.HexModels;
+import com.hex.hexrender.gltf.HexGltfModel;
 import com.hex.hexrender.gltf.GltfAnimation;
 import com.hex.hexrender.gltf.NodeHide;
 import com.hex.hexrender.gltf.NodeTable;
@@ -29,11 +29,11 @@ import java.util.Map;
  * сам путь к модели, а перечис остаётся на стороне выбора: что за вид пришёл.
  *
  * <p><b>Почему у каждого вида свой файл.</b> У всех семи видов классических гранат
- * геометрия одна, и отличать их можно было бы полосой в атласе, который GemRender
+ * геометрия одна, и отличать их можно было бы полосой в атласе, который HEX Render
  * собирает при загрузке. На практике это вышло ненадёжно: базовая граната брала
  * нулевую полосу и была в порядке, а остальные виды не отличались от плоского
  * спрайта. Поэтому у каждого вида свой файл, а текстура в нём прописана явно — в
- * {@code images.extras.resourceLocation}, то есть обычным путём, которым GemRender
+ * {@code images.extras.resourceLocation}, то есть обычным путём, которым HEX Render
  * ищет текстуру без всякой сборки атласа. Геометрия у файлов одна, и отличаются
  * они одной строкой — путём к текстуре.
  *
@@ -64,7 +64,7 @@ public final class GrenadeGltfModels {
     private static final class Derived {
 
         @Nullable
-        GemRenderGltfModel model;
+        HexGltfModel model;
 
         /** Поколение кеша, под которым собраны клипы и слот чеки. */
         int generation = -1;
@@ -110,10 +110,10 @@ public final class GrenadeGltfModels {
 
     /** Модель по пути, либо {@code null}, пока она грузится. */
     @Nullable
-    public static synchronized GemRenderGltfModel model(ResourceLocation id) {
+    public static synchronized HexGltfModel model(ResourceLocation id) {
         Derived derived = DERIVED.computeIfAbsent(id, key -> new Derived());
-        GemRenderGltfModel loaded = GemRenderModels.get(id);
-        int generation = GemRenderModels.generation();
+        HexGltfModel loaded = HexModels.get(id);
+        int generation = HexModels.generation();
 
         if (loaded != derived.model || generation != derived.generation) {
             derived.model = loaded;
@@ -150,7 +150,7 @@ public final class GrenadeGltfModels {
      * от «канал анимации повторяет смещение корня».
      */
     @Nullable
-    private static float[] rootTranslation(GemRenderGltfModel loaded) {
+    private static float[] rootTranslation(HexGltfModel loaded) {
         for (var node : loaded.layout().nodes()) {
             if (node.getMeshModels() != null && !node.getMeshModels().isEmpty()) {
                 float[] translation = node.getTranslation();
@@ -168,7 +168,7 @@ public final class GrenadeGltfModels {
      */
     @Nullable
     public static synchronized GltfAnimation poseClip(ResourceLocation id, String clip) {
-        GemRenderGltfModel loaded = model(id);
+        HexGltfModel loaded = model(id);
         if (loaded == null) {
             return null;
         }
@@ -206,7 +206,7 @@ public final class GrenadeGltfModels {
      * вычитать смещение нужно уже из того, что канал успел записать, иначе
      * нулевой кадр перебил бы коррекцию.
      */
-    private static GltfAnimation stripRootOffset(GemRenderGltfModel loaded, Derived derived, GltfAnimation clip) {
+    private static GltfAnimation stripRootOffset(HexGltfModel loaded, Derived derived, GltfAnimation clip) {
         float[] root = derived.rootOffset;
         if (root == null) {
             return clip;
@@ -272,7 +272,7 @@ public final class GrenadeGltfModels {
      * Поза покоя модели с невидимой чекой — то, чем рисуется летящая граната.
      * <p>
      * Клип нужен вместо {@code null}, хотя анимация не идёт: {@code null} у
-     * GemRender означает исходные позы костей без драйверов, то есть с чекой на
+     * HEX Render означает исходные позы костей без драйверов, то есть с чекой на
      * месте, а спрятать её можно только драйвером. Взятый на нулевой секунде
      * клипе выдёргивания он совпадает с позой покоя во всём, кроме чеки: все ключи
      * такого клипа на 0.0 — нули и единицы, то есть ровно исходные значения.
@@ -282,7 +282,7 @@ public final class GrenadeGltfModels {
      */
     @Nullable
     public static synchronized GltfAnimation hiddenPin(ResourceLocation id, String pinClip) {
-        GemRenderGltfModel loaded = model(id);
+        HexGltfModel loaded = model(id);
         if (loaded == null) {
             return null;
         }
@@ -313,7 +313,7 @@ public final class GrenadeGltfModels {
      * Секунда последнего кадра клипа.
      * <p>
      * Нужна там, где предмет должен просто <b>стоять</b>. Передача времени
-     * {@code null}-ом здесь не годится: {@code null} у GemRender — это поза покоя,
+     * {@code null}-ом здесь не годится: {@code null} у HEX Render — это поза покоя,
      * то есть ровно то, что нужно, когда анимации не идёт.
      */
     public static float endSeconds(@Nullable GltfAnimation clip) {

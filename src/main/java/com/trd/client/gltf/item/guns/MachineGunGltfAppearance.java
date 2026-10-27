@@ -5,9 +5,9 @@ import com.mojang.math.Axis;
 import com.trd.client.overlay.MachineGunScope;
 import com.trd.item.weapons.guns.MachineGunClientAnim;
 import com.trd.main.MainRegistry;
-import com.hex.hexrender.asset.GemRenderModels;
+import com.hex.hexrender.asset.HexModels;
 import com.hex.hexrender.direct.ItemAppearance;
-import com.hex.hexrender.gltf.GemRenderGltfModel;
+import com.hex.hexrender.gltf.HexGltfModel;
 import com.hex.hexrender.gltf.GltfAnimation;
 import com.hex.hexrender.render.Vanilla;
 import net.minecraft.client.Minecraft;
@@ -58,14 +58,14 @@ public class MachineGunGltfAppearance implements ItemAppearance {
     }
 
     @Override
-    public GemRenderGltfModel model(ItemStack stack, ItemDisplayContext context) {
+    public HexGltfModel model(ItemStack stack, ItemDisplayContext context) {
         // Пока открыт прицел, оружие от первого лица не рисуется: в круге
         // оптики видна только мушка, а ствол и лента закрывали бы обзор.
         if (context.firstPerson() && MachineGunScope.isScoped()) {
             return null;
         }
 
-        GemRenderGltfModel model = GemRenderModels.get(MODEL);
+        HexGltfModel model = HexModels.get(MODEL);
         if (model != null) {
             MachineGunClientAnim.syncDurations(model);
         }
@@ -79,7 +79,7 @@ public class MachineGunGltfAppearance implements ItemAppearance {
             return null;
         }
 
-        GemRenderGltfModel model = model(stack, context);
+        HexGltfModel model = model(stack, context);
         if (model == null) return null;
 
         String current = MachineGunClientAnim.current();
