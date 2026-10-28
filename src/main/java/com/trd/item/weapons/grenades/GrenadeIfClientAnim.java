@@ -1,7 +1,7 @@
 package com.trd.item.weapons.grenades;
 
 import com.trd.main.MainRegistry;
-import com.hex.hexrender.gltf.HexGltfModel;
+import com.hex.hexrender.loader.GltfModelAsset;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.sounds.SoundEvent;
@@ -118,7 +118,7 @@ public final class GrenadeIfClientAnim {
      * Должна вызываться только с клиента: {@link HexGltfModel} живёт в
      * HEX Render, а на сервере той нет.
      */
-    public static void syncDurations(@Nullable HexGltfModel model) {
+    public static void syncDurations(@Nullable GltfModelAsset model) {
         if (model == null) {
             return;
         }

@@ -2,8 +2,8 @@ package com.trd.item.weapons.guns;
 
 import com.trd.client.gltf.item.guns.MachineGunModel;
 import com.trd.client.overlay.MachineGunScope;
-import com.hex.hexrender.gltf.HexGltfModel;
-import com.hex.hexrender.gltf.GltfAnimation;
+import com.hex.hexrender.loader.GltfModelAsset;
+import com.hex.hexrender.motion.SkeletalAnimation;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
@@ -92,12 +92,12 @@ public final class MachineGunClientAnim {
      * к следующему тику анимация уже уехала вперёд.
      */
     @Nullable
-    private static GltfAnimation markerClip;
+    private static SkeletalAnimation markerClip;
     private static float markerSeconds;
 
     /** Модель, из которой берётся локатор. */
     @Nullable
-    private static HexGltfModel cachedModel;
+    private static GltfModelAsset cachedModel;
 
     /**
      * Дробный возраст клипа. Растёт на {@link #tick}, но рендер читает его же с
@@ -124,20 +124,20 @@ public final class MachineGunClientAnim {
      * Должны вызываться только с клиента: {@link HexGltfModel} живёт в
      * HEX Render, а на сервере той нет.
      */
-    public static void syncDurations(HexGltfModel model) {
+    public static void syncDurations(GltfModelAsset model) {
         cachedModel = model;
 
-        GltfAnimation shot = model.animation(SHOT);
+        SkeletalAnimation shot = model.animation(SHOT);
         if (shot != null) {
             shotDuration = shot.duration();
         }
 
-        GltfAnimation reload = model.animation(RELOAD);
+        SkeletalAnimation reload = model.animation(RELOAD);
         if (reload != null) {
             reloadDuration = reload.duration();
         }
 
-        GltfAnimation flip = model.animation(FLIP);
+        SkeletalAnimation flip = model.animation(FLIP);
         if (flip != null) {
             flipDuration = flip.duration();
         }
@@ -311,14 +311,14 @@ public final class MachineGunClientAnim {
     }
 
     @Nullable
-    public static GltfAnimation currentClip() {
-        HexGltfModel model = cachedModel;
+    public static SkeletalAnimation currentClip() {
+        GltfModelAsset model = cachedModel;
         return model != null && current != null ? model.animation(current) : null;
     }
 
     /** Модель, из которой берётся локатор. */
     @Nullable
-    public static HexGltfModel model() {
+    public static GltfModelAsset model() {
         return cachedModel;
     }
 

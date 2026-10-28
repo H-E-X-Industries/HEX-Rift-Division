@@ -1,10 +1,11 @@
 package com.trd.client.gltf.entity.grenades;
 
+import com.hex.hexrender.core.ModelRegistry;
+import com.hex.hexrender.loader.GltfModelAsset;
+import com.hex.hexrender.render.ModelSkinningRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.trd.client.gltf.item.grenades.ClassicGrenadeVariants;
-import com.hex.hexrender.direct.DirectPass;
-import com.hex.hexrender.direct.HexDirectRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -12,77 +13,32 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
+import org.joml.Matrix4f;
 
 import javax.annotation.Nullable;
 
 /**
  * Обычная граната в полёте на glTF через HexRender.
+ * <p>
+ * Чека скрывается автоматически через обнуление масштаба кости "pin".
+ * Рендерится напрямую в MultiBufferSource через чистый ModelSkinningRenderer.
  *
- * <p>Та же модель и та же текстура, что и у предмета в руке, но с одной поправкой:
- * <b>чеки здесь нет</b>. Летящей гранате она уже не нужна — чеку выдернули при
- * броске, и обратно она не вернётся. Прячется кость через
- * {@link ClassicGrenadeVariants#hiddenPin}.
- *
- * <p>Рендер идёт через {@link DirectPass#LEVEL} — тот же путь, что у ударной
- * гранаты, пули и гильзы.
- *
- * <p><b>Временная мера.</b> Все семь обычных гранат летят на геометрии ударной,
- * пока у них не будет своих моделей. См. {@link ClassicGrenadeVariants}.
- *
- * @param <T> тип снаряда: обычная, водородная и гравитационная гранаты — разные
- *            классы, но рисуются одинаково
+ * @param <T> тип снаряда
  */
 public class ClassicGrenadeGltfRenderer<T extends Entity> extends EntityRenderer<T> {
 
-    /**
-     * Увеличение модели относительно её собственного размера.
-     * <p>
-     * Единица — модель в размере хитбокса, и она же единственно верная: считать
-     * масштаб от хитбокса нельзя, у снарядов разные размеры (0.25 у водородной и
-     * 0.5 у остальных), и одна и та же цифра либо уводила бы гранату наполовину
-     * в блок под собой, либо болтала её в верхней половине хитбокса.
-     */
     private static final float MODEL_SCALE = 1.0F;
 
-/**
-     * Где в модели стоит её середина, в единицах блока.
-     * <p>
-     * Величина своя у каждого вида, потому что своя геометрия есть не у всех:
-     * шесть видов летят на общей и делят одну центровку, а у водородной модель
-     * отдельная. См. {@link ClassicGrenadeVariants#centerY}.
-     * <p>
-     * Вычитается <b>после</b> масштаба: сдвиг остаётся в координатах модели и
-     * уезжает вместе с ней, потому что PoseStack домножает матрицу справа.
-     */
     private static float modelCenterY(@Nullable ClassicGrenadeVariants.Variant variant) {
         return ClassicGrenadeVariants.centerY(variant);
     }
 
-    /**
-     * Оборотов в секунду вокруг оси полёта.
-     * <p>
-     * Взято у ударной гранаты — {@code GrenadeIfGltfRenderer#SPIN_DEGREES_PER_SECOND}
-     * — чтобы водородная проворачивалась ровно так же. Без вращения граната летит
-     * задом наперёд и не читается как летящая.
-     */
     private static final float SPIN_DEGREES_PER_SECOND = 220.0F;
 
-    /**
-     * Проворачивается ли вид в полёте.
-     * <p>
-     * Только водородная: у неё своя геометрия, и она крупнее остальных, так что
-     * без проворота её силуэт скользит мимо цели, не показывая, куда она летит.
-     */
     private static boolean spins(@Nullable ClassicGrenadeVariants.Variant variant) {
         return variant == ClassicGrenadeVariants.Variant.HYDROGEN;
     }
 
-    /**
-     * Сколько секунд граната уже летит, сглаженно.
-     * <p>
-     * Дробная часть кадра обязательна: на низком FPS целочисленный
-     * {@code tickCount} прыгал бы между тиками, и проворот шёл бы рывками.
-     */
     private static float flightSeconds(Entity entity, float partialTick) {
         return (entity.tickCount + partialTick) / 20.0F;
     }
@@ -94,8 +50,6 @@ public class ClassicGrenadeGltfRenderer<T extends Entity> extends EntityRenderer
 
     @Override
     public ResourceLocation getTextureLocation(T entity) {
-        // Текстура живёт внутри glTF, и её HEX Render достаёт из файла модели по
-        // виду гранаты. Своей у рендерера нет.
         return ResourceLocation.withDefaultNamespace("missingno");
     }
 
@@ -117,7 +71,7 @@ public class ClassicGrenadeGltfRenderer<T extends Entity> extends EntityRenderer
         }
 
         var variant = ClassicGrenadeVariants.variantOf(entity);
-        var model = ClassicGrenadeVariants.model(variant);
+        GltfModelAsset model = ModelRegistry.fetch(ClassicGrenadeVariants.modelIdOf(variant));
         if (model == null) {
             return;
         }
@@ -147,27 +101,26 @@ public class ClassicGrenadeGltfRenderer<T extends Entity> extends EntityRenderer
         poseStack.mulPose(Axis.XP.rotationDegrees(renderPitch));
         poseStack.mulPose(Axis.ZP.rotationDegrees(renderRoll));
 
-        // Смещение центра вращения модели: применяется ПОСЛЕ вращения в PoseStack
-        // (то есть ДО вращения вершин модели), чтобы модель крутилась строго вокруг заданной оси.
+        // Смещение центра вращения модели
         poseStack.translate(0.0F, -modelCenterY(variant), 0.0F);
 
-        if (com.hex.hexrender.direct.HexIrisBridge.hasActiveShaders()) {
-            com.hex.hexrender.direct.HexVanillaRenderer.renderVanilla(
-                    model,
-                    ClassicGrenadeVariants.hiddenPin(variant),
-                    0.0F,
-                    poseStack,
-                    bufferSource,
-                    packedLight,
-                    OverlayTexture.NO_OVERLAY,
-                    0xFFFFFFFF,
-                    com.hex.hexrender.texture.VariantUv.NONE,
-                    com.hex.hexrender.direct.TextureSlots.NONE);
-        } else {
-            HexDirectRenderer.renderModel(model, ClassicGrenadeVariants.hiddenPin(variant), 0.0F,
-                    poseStack.last().pose(), packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFFFF,
-                    DirectPass.LEVEL);
+        Matrix4f[] palette = null;
+        if (model.jointCount() > 0) {
+            palette = model.newPalette();
+            // Скрываем кость чеки "pin"
+            model.evaluatePose(null, 0.0F, palette, "pin");
         }
+
+        ModelSkinningRenderer.renderModel(
+                model,
+                palette,
+                poseStack,
+                bufferSource,
+                packedLight,
+                OverlayTexture.NO_OVERLAY,
+                0xFFFFFFFF,
+                null
+        );
 
         poseStack.popPose();
     }

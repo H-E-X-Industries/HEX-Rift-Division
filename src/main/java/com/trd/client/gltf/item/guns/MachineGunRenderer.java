@@ -1,6 +1,6 @@
 package com.trd.client.gltf.item.guns;
 
-import com.hex.hexrender.direct.HexItemRenderer;
+import com.hex.hexrender.client.GltfItemRenderer;
 
 /**
  * Рендерер пушки на glTF через HexRender.
@@ -10,7 +10,7 @@ import com.hex.hexrender.direct.HexItemRenderer;
  * модели ни того, ни другого нет — лента внутри ствола, а текстура одна, —
  * так что класс свёлся к обёртке над {@link MachineGunGltfAppearance}.
  */
-public class MachineGunRenderer extends HexItemRenderer {
+public class MachineGunRenderer extends GltfItemRenderer {
 
     public MachineGunRenderer() {
         super(new MachineGunGltfAppearance());
