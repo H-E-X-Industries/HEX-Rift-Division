@@ -9,7 +9,7 @@ import javax.annotation.Nullable;
 import java.util.EnumMap;
 import java.util.Map;
 
-import com.hex.hexrender.gltf.GemRenderGltfModel;
+import com.hex.hexrender.gltf.HexGltfModel;
 import com.hex.hexrender.gltf.GltfAnimation;
 
 /**
@@ -59,7 +59,7 @@ public final class GrenadeIfVariants {
 
     /** Модель вида, либо {@code null}, пока она грузится. */
     @Nullable
-    public static GemRenderGltfModel model(@Nullable GrenadeIfType type) {
+    public static HexGltfModel model(@Nullable GrenadeIfType type) {
         return GrenadeGltfModels.model(modelIdOf(type));
     }
 

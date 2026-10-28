@@ -21,12 +21,34 @@ public class TemperatureCalculator {
     public static float calculateOutdoorAmbient(ServerLevel level, BlockPos pos) {
         float envTemp = getBiomeTemperature(level, pos);
         envTemp += getAltitudeEffect(pos.getY());
-        if (pos.getY() < 64) {
-            float depthFactor = Math.min(1.0f, (64 - pos.getY()) / 80.0f);
-            envTemp = envTemp + (15.0f - envTemp) * depthFactor * 0.75f;
-        }
+        envTemp = applySubterraneanStabilization(level, pos, envTemp);
         envTemp += getWeatherEffect(level, pos);
         return envTemp;
+    }
+
+    /**
+     * Стабилизация в недрах земли и толще гор (подтягивание к геотермальной нейтрали +15°C).
+     * Учитывает как глубину ниже уровня моря (Y < 64), так и толщу породы над головой (пещеры и норы в горах).
+     */
+    public static float applySubterraneanStabilization(ServerLevel level, BlockPos pos, float currentTemp) {
+        boolean underCeiling = !level.canSeeSky(pos);
+        int surfaceY = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, pos.getX(), pos.getZ());
+        int depthFromSurface = surfaceY - pos.getY();
+
+        float depthFactor = 0.0f;
+        // 1. Глубина под уровнем моря (шахты, глубокие пещеры Y < 64)
+        if (pos.getY() < 64) {
+            depthFactor = Math.max(depthFactor, Math.min(1.0f, (64 - pos.getY()) / 60.0f));
+        }
+        // 2. Толща породы над головой в горах и холмах (горные пещеры, норы, штольни)
+        if (underCeiling && depthFromSurface >= 4) {
+            depthFactor = Math.max(depthFactor, Math.min(1.0f, (depthFromSurface - 3) / 10.0f));
+        }
+
+        if (depthFactor > 0.0f) {
+            return currentTemp + (15.0f - currentTemp) * depthFactor * 0.75f;
+        }
+        return currentTemp;
     }
 
     /**
@@ -61,7 +83,7 @@ public class TemperatureCalculator {
             // (ощутимый уютный жар около огня до +26°C, согревающий в упор)
             float radiant = HeatSourceHelper.calculateTotalHeat(level, pos, 1.0f);
             if (radiant > 0.0f) {
-                float roomTargetWithRadiant = Math.min(26.0f, envTemp + radiant * 0.5f);
+                float roomTargetWithRadiant = Math.min(26.0f, envTemp + radiant * 0.65f);
                 envTemp = Math.max(envTemp, roomTargetWithRadiant);
             }
 
@@ -83,17 +105,26 @@ public class TemperatureCalculator {
         // 2. Влияние высоты в горах (Y > 64)
         envTemp += getAltitudeEffect(pos.getY());
 
-        // 3. Стабилизация в недрах земли (Y < 64 подтягивается к +15°C)
-        if (pos.getY() < 64) {
-            float depthFactor = Math.min(1.0f, (64 - pos.getY()) / 80.0f);
-            envTemp = envTemp + (15.0f - envTemp) * depthFactor * 0.75f;
-        }
+        // 3. Стабилизация в недрах земли и толще гор (подтягивание к геотермальной нейтрали +15°C)
+        envTemp = applySubterraneanStabilization(level, pos, envTemp);
 
         // 4. Влияние погоды и времени суток
         float weatherEffect = getWeatherEffect(level, pos);
-        
-        // 5. Применяем укрытие (смягчает негативные погодные эффекты)
         envTemp += applyShelterToWeather(weatherEffect, shelterLevel);
+
+        // 5. Защита базового укрытия (норы в горе/земле, шалаши, землянки, неутепленные дома)
+        // Стены и крыша блокируют морозный ветер биома и палящее солнце
+        if (shelterLevel > 0.05f) {
+            if (envTemp < 15.0f) {
+                // Защита от холода: укрытие согревает до 55% от разницы с нейтралью +15°C
+                float shelterProtection = (15.0f - envTemp) * shelterLevel * 0.55f;
+                envTemp += shelterProtection;
+            } else if (envTemp > 25.0f) {
+                // Защита от жары: тень от навеса блокирует перегрев
+                float shelterProtection = (envTemp - 25.0f) * shelterLevel * 0.40f;
+                envTemp -= shelterProtection;
+            }
+        }
 
         // 6. Влияние воды (быстрое переохлаждение на холоде, приятное охлаждение в жару)
         if (player.isInWater()) {
@@ -101,7 +132,16 @@ public class TemperatureCalculator {
         }
 
         // 7. Добавляем лучистое тепло от источников (костры, печи, лава)
-        envTemp += HeatSourceHelper.calculateTotalHeat(level, pos, shelterLevel);
+        float radiantHeat = HeatSourceHelper.calculateTotalHeat(level, pos, shelterLevel);
+        if (radiantHeat > 0.0f) {
+            float maxComfortFromFire = 26.0f;
+            if (envTemp < maxComfortFromFire) {
+                envTemp = Math.min(maxComfortFromFire, envTemp + radiantHeat);
+            } else if (radiantHeat > 25.0f) {
+                // Экстремальные источники (лава в упор)
+                envTemp += (radiantHeat - 25.0f) * 0.5f;
+            }
+        }
 
         // 8. Тепло от факела в руке (согревает при холоде)
         envTemp += getTorchHeat(player, envTemp);

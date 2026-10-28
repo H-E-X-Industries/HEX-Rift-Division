@@ -4,7 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.logging.LogUtils;
-import com.hex.hexrender.gltf.GemRenderGltfModel;
+import com.hex.hexrender.gltf.HexGltfModel;
 import com.hex.hexrender.gltf.GltfAnimation;
 import com.hex.hexrender.gltf.GltfPose;
 import com.hex.hexrender.gltf.NodeTable;
@@ -28,7 +28,7 @@ import javax.annotation.Nullable;
  * позиции игрока: та не смотрит ни на поворот кисти, ни на покачивание камеры,
  * ни на отдачу ствола. {@link #worldMuzzle} берёт кость из модели, прогоняет
  * через неё текущий клип ({@link GltfPose}) и домножает на матрицу, которой
- * GemRender рисует предмет в руке. Дальше вспышка едет вместе со стволом.
+ * HEX Render рисует предмет в руке. Дальше вспышка едет вместе со стволом.
  *
  * <h2>Где что лежит</h2>
  * Помеченные кадры — времена, локаторы и пути эффектов — живут не здесь, а в
@@ -64,10 +64,10 @@ public final class MachineGunModel {
     private static Vector3f muzzleOffset = new Vector3f();
 
     /**
-     * Матрица, которой GemRender рисует пушку в руке.
+     * Матрица, которой HEX Render рисует пушку в руке.
      * <p>
      * Снимается в {@code MachineGunGltfAppearance#transform}: он зовётся
-     * последним перед {@code DirectRenderer.submit}, так что матрица внутри уже
+     * последним перед {@code HexDirectRenderer.submit}, так что матрица внутри уже
      * содержит все повороты и сдвиги предметного контекста. Без неё кость из
      * модели живёт в системе координат модели, а не мира, и вспышка уезжает от
      * ствола.
@@ -193,7 +193,7 @@ public final class MachineGunModel {
      */
     public static void captureItemMatrix(net.minecraft.world.item.ItemDisplayContext context,
                                          Matrix4f modelToWorld) {
-        if (com.hex.hexrender.direct.IrisDirectBridge.isRenderingShadows()) {
+        if (com.hex.hexrender.direct.HexIrisBridge.isShadowPassActive()) {
             return;
         }
         if (!isHandContext(context)) {
@@ -240,7 +240,7 @@ public final class MachineGunModel {
      *                нет, берётся {@link #DEFAULT_MUZZLE_BONE}
      * @return мировая точка дула либо {@code null}, если кость не нашлась
      */
-    public static Vec3 worldMuzzle(GemRenderGltfModel model, @Nullable GltfAnimation clip, float seconds,
+    public static Vec3 worldMuzzle(HexGltfModel model, @Nullable GltfAnimation clip, float seconds,
                                    @Nullable String locator, Camera camera) {
         if (model == null || camera == null || !itemMatrixSeen) return null;
 
@@ -262,7 +262,7 @@ public final class MachineGunModel {
     private static boolean warned;
 
     @Nullable
-    private static Vec3 computeMuzzle(GemRenderGltfModel model, GltfAnimation clip, float seconds,
+    private static Vec3 computeMuzzle(HexGltfModel model, GltfAnimation clip, float seconds,
                                       @Nullable String locator, Camera camera) {
         int slot = slotOf(model, locator);
         if (slot < 0) {
@@ -324,7 +324,7 @@ public final class MachineGunModel {
      * Локатор в Blockbench — пустая кость, и в glTF она попадает не всегда.
      * Без цепочки вспышка просто не появилась бы там, где локатор не доехал.
      */
-    private static int slotOf(GemRenderGltfModel model, @Nullable String locator) {
+    private static int slotOf(HexGltfModel model, @Nullable String locator) {
         NodeTable table = model.layout().nodeTable();
         int size = model.layout().size();
 

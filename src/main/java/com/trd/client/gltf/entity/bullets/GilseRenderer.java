@@ -3,11 +3,11 @@ package com.trd.client.gltf.entity.bullets;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.trd.entity.weapons.bullets.GilseEntity;
-import com.hex.hexrender.asset.GemRenderModels;
+import com.hex.hexrender.asset.HexModels;
 import com.hex.hexrender.direct.DirectPass;
-import com.hex.hexrender.direct.DirectRenderer;
-import com.hex.hexrender.direct.GltfVanillaRenderer;
-import com.hex.hexrender.direct.IrisDirectBridge;
+import com.hex.hexrender.direct.HexDirectRenderer;
+import com.hex.hexrender.direct.HexVanillaRenderer;
+import com.hex.hexrender.direct.HexIrisBridge;
 import com.hex.hexrender.direct.TextureSlots;
 import com.hex.hexrender.texture.VariantUv;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -15,9 +15,9 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * Гильза на glTF через GemRender.
+ * Гильза на glTF через HexRender.
  * <p>
- * Модель статичная, поэтому клипов нет и передаём {@code null}: GemRender
+ * Модель статичная, поэтому клипов нет и передаём {@code null}: HEX Render
  * берёт позу покоя. Рендер идёт через {@link DirectPass#LEVEL}, тот же путь,
  * что и у пули.
  */
@@ -57,7 +57,7 @@ public class GilseRenderer extends EntityRenderer<GilseEntity> {
 
     @Override
     public ResourceLocation getTextureLocation(GilseEntity entity) {
-        // Текстура живёт внутри glTF и подставляется GemRender'ом.
+        // Текстура живёт внутри glTF и подставляется HEX Render'ом.
         return ResourceLocation.withDefaultNamespace("missingno");
     }
 
@@ -90,7 +90,7 @@ public class GilseRenderer extends EntityRenderer<GilseEntity> {
     @Override
     public void render(GilseEntity entity, float yaw, float partialTick, PoseStack poseStack,
                        net.minecraft.client.renderer.MultiBufferSource bufferSource, int packedLight) {
-        var model = GemRenderModels.get(MODEL);
+        var model = HexModels.fetch(MODEL);
         if (model == null) {
             return;
         }
@@ -120,8 +120,8 @@ public class GilseRenderer extends EntityRenderer<GilseEntity> {
         poseStack.mulPose(Axis.XP.rotationDegrees(entity.getRenderPitch(partialTick)));
         poseStack.mulPose(Axis.ZP.rotationDegrees(entity.getRenderRoll(partialTick)));
 
-        if (IrisDirectBridge.isShaderPackInUse()) {
-            GltfVanillaRenderer.render(
+        if (HexIrisBridge.hasActiveShaders()) {
+            HexVanillaRenderer.renderVanilla(
                     model,
                     (com.hex.hexrender.gltf.GltfAnimation) null,
                     0.0f,
@@ -134,7 +134,7 @@ public class GilseRenderer extends EntityRenderer<GilseEntity> {
                     TextureSlots.NONE);
         } else {
             var matrix = poseStack.last().pose();
-            DirectRenderer.submit(model, (com.hex.hexrender.gltf.GltfAnimation) null, 0.0f,
+            HexDirectRenderer.renderModel(model, (com.hex.hexrender.gltf.GltfAnimation) null, 0.0f,
                     matrix, packedLight, net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY,
                     0xFFFFFFFF, DirectPass.LEVEL,
                     VariantUv.NONE);
