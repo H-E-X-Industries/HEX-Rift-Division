@@ -14,7 +14,7 @@ import net.minecraft.resources.ResourceLocation;
  * Гильза на glTF через HexRender.
  * <p>
  * Модель статичная, поэтому клипов нет и передаём null: HEX Render
- * берёт позу покоя. Рендерится через чистый ModelSkinningRenderer прямо в MultiBufferSource.
+ * берёт позу покоя. Рендерится через ModelSkinningRenderer прямо в MultiBufferSource.
  */
 public class GilseRenderer extends EntityRenderer<GilseEntity> {
 

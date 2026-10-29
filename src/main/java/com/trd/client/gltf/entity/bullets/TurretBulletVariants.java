@@ -12,7 +12,7 @@ import java.util.EnumMap;
 import java.util.Map;
 
 /**
- * Модели и текстуры пули через чистый HexRender ModelRegistry.
+ * Модели и текстуры пули через HexRender ModelRegistry.
  */
 public final class TurretBulletVariants {
 

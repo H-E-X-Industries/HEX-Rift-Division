@@ -21,7 +21,7 @@ import javax.annotation.Nullable;
  * Обычная граната в полёте на glTF через HexRender.
  * <p>
  * Чека скрывается автоматически через обнуление масштаба кости "pin".
- * Рендерится напрямую в MultiBufferSource через чистый ModelSkinningRenderer.
+ * Рендерится напрямую в MultiBufferSource через ModelSkinningRenderer.
  *
  * @param <T> тип снаряда
  */
