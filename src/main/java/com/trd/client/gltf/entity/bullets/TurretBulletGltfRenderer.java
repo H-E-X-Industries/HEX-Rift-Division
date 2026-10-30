@@ -13,9 +13,12 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.math.Axis;
 import com.trd.entity.weapons.bullets.TurretBulletEntity;
 import com.trd.main.MainRegistry;
-import com.wf.gemrender.direct.DirectPass;
-import com.wf.gemrender.direct.DirectRenderer;
-import com.wf.gemrender.texture.VariantUv;
+import com.hex.hexrender.direct.DirectPass;
+import com.hex.hexrender.direct.HexDirectRenderer;
+import com.hex.hexrender.direct.HexVanillaRenderer;
+import com.hex.hexrender.direct.HexIrisBridge;
+import com.hex.hexrender.direct.TextureSlots;
+import com.hex.hexrender.texture.VariantUv;
 import net.minecraft.client.Camera;
 import net.minecraft.client.CloudStatus;
 import net.minecraft.client.Minecraft;
@@ -41,7 +44,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Пуля на glTF через GemRender с эффектами свечения в темноте, ореолом и трассирующим хвостом.
+ * Пуля на glTF через HEX Render с эффектами свечения в темноте, ореолом и трассирующим хвостом.
  * Ореол и хвост рендерятся поверх облаков через прямой аддитивный проход (AFTER_WEATHER).
  */
 @EventBusSubscriber(modid = MainRegistry.MOD_ID, value = Dist.CLIENT)
@@ -363,10 +366,24 @@ public class TurretBulletGltfRenderer extends EntityRenderer<TurretBulletEntity>
                 : LightTexture.pack(Math.max(LightTexture.block(packedLight), 13), Math.max(LightTexture.sky(packedLight), 13));
         int bulletTint = tracer ? 0xFFFFFFFF : 0xFFFFAA77;
 
-        DirectRenderer.submit(model, (com.wf.gemrender.gltf.GltfAnimation) null, 0.0f,
-                poseStack.last().pose(), bulletLight,
-                OverlayTexture.NO_OVERLAY, bulletTint, DirectPass.LEVEL,
-                tracer ? TurretBulletVariants.tracerVariant(model, entity) : VariantUv.NONE);
+        if (HexIrisBridge.hasActiveShaders()) {
+            HexVanillaRenderer.renderVanilla(
+                    model,
+                    (com.hex.hexrender.gltf.GltfAnimation) null,
+                    0.0f,
+                    poseStack,
+                    bufferSource,
+                    bulletLight,
+                    OverlayTexture.NO_OVERLAY,
+                    bulletTint,
+                    tracer ? TurretBulletVariants.tracerVariant(model, entity) : VariantUv.NONE,
+                    TextureSlots.NONE);
+        } else {
+            HexDirectRenderer.renderModel(model, (com.hex.hexrender.gltf.GltfAnimation) null, 0.0f,
+                    poseStack.last().pose(), bulletLight,
+                    OverlayTexture.NO_OVERLAY, bulletTint, DirectPass.LEVEL,
+                    tracer ? TurretBulletVariants.tracerVariant(model, entity) : VariantUv.NONE);
+        }
 
         poseStack.popPose();
     }

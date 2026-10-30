@@ -59,7 +59,7 @@ import javax.annotation.Nullable;
  * принимает сервер.
  * <p>
  * Модель и анимации живут в glTF ({@code models/item/ap_17.gltf}) и рисуются
- * через GemRender, поэтому класс больше не {@code GeoItem}. Клиентское состояние
+ * через HEX Render, поэтому класс больше не {@code GeoItem}. Клиентское состояние
  * анимаций держит {@link MachineGunClientAnim}, а сервер сообщает о разовых
  * клипах пакетом {@link PacketMachineGunAnim}.
  */

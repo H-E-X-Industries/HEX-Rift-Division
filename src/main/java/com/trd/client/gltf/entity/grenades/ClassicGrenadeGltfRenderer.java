@@ -3,8 +3,8 @@ package com.trd.client.gltf.entity.grenades;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.trd.client.gltf.item.grenades.ClassicGrenadeVariants;
-import com.wf.gemrender.direct.DirectPass;
-import com.wf.gemrender.direct.DirectRenderer;
+import com.hex.hexrender.direct.DirectPass;
+import com.hex.hexrender.direct.HexDirectRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -16,7 +16,7 @@ import net.minecraft.world.entity.Entity;
 import javax.annotation.Nullable;
 
 /**
- * Обычная граната в полёте на glTF через GemRender.
+ * Обычная граната в полёте на glTF через HexRender.
  *
  * <p>Та же модель и та же текстура, что и у предмета в руке, но с одной поправкой:
  * <b>чеки здесь нет</b>. Летящей гранате она уже не нужна — чеку выдернули при
@@ -94,7 +94,7 @@ public class ClassicGrenadeGltfRenderer<T extends Entity> extends EntityRenderer
 
     @Override
     public ResourceLocation getTextureLocation(T entity) {
-        // Текстура живёт внутри glTF, и её GemRender достаёт из файла модели по
+        // Текстура живёт внутри glTF, и её HEX Render достаёт из файла модели по
         // виду гранаты. Своей у рендерера нет.
         return ResourceLocation.withDefaultNamespace("missingno");
     }
@@ -151,13 +151,23 @@ public class ClassicGrenadeGltfRenderer<T extends Entity> extends EntityRenderer
         // (то есть ДО вращения вершин модели), чтобы модель крутилась строго вокруг заданной оси.
         poseStack.translate(0.0F, -modelCenterY(variant), 0.0F);
 
-        // Поза покоя модели, но с прибитой чекой: клип отдаётся обязательно, иначе
-        // NodeHide не применится и чека останется видимой. Вид берётся из типа
-        // сущности, а не из синхронизированных данных снаряда — см.
-        // ClassicGrenadeVariants#variantOf.
-        DirectRenderer.submit(model, ClassicGrenadeVariants.hiddenPin(variant), 0.0F,
-                poseStack.last().pose(), packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFFFF,
-                DirectPass.LEVEL);
+        if (com.hex.hexrender.direct.HexIrisBridge.hasActiveShaders()) {
+            com.hex.hexrender.direct.HexVanillaRenderer.renderVanilla(
+                    model,
+                    ClassicGrenadeVariants.hiddenPin(variant),
+                    0.0F,
+                    poseStack,
+                    bufferSource,
+                    packedLight,
+                    OverlayTexture.NO_OVERLAY,
+                    0xFFFFFFFF,
+                    com.hex.hexrender.texture.VariantUv.NONE,
+                    com.hex.hexrender.direct.TextureSlots.NONE);
+        } else {
+            HexDirectRenderer.renderModel(model, ClassicGrenadeVariants.hiddenPin(variant), 0.0F,
+                    poseStack.last().pose(), packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFFFF,
+                    DirectPass.LEVEL);
+        }
 
         poseStack.popPose();
     }

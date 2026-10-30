@@ -21,16 +21,16 @@ import java.util.List;
 public class HeatSourceHelper {
 
     // Радиус излучения тепла для различных источников
-    private static final double CAMPFIRE_RADIUS = 5.0;
-    private static final double FURNACE_RADIUS = 3.0;
-    private static final double LAVA_RADIUS = 4.0;
-    private static final double FIRE_RADIUS = 2.5;
+    private static final double CAMPFIRE_RADIUS = 6.0;
+    private static final double FURNACE_RADIUS = 4.0;
+    private static final double LAVA_RADIUS = 5.0;
+    private static final double FIRE_RADIUS = 3.5;
 
-    // Максимальная температура от источников
-    private static final float CAMPFIRE_MAX_HEAT = 15.0f; // +15°C в упор к костру
-    private static final float FURNACE_MAX_HEAT = 12.0f;  // +12°C у работающей печи
-    private static final float LAVA_MAX_HEAT = 20.0f;     // +20°C у лавы
-    private static final float FIRE_MAX_HEAT = 10.0f;     // +10°C у огня
+    // Максимальная температура от источников (лучистый жар в упор к огню)
+    private static final float CAMPFIRE_MAX_HEAT = 28.0f; // +28°C в упор к костру
+    private static final float FURNACE_MAX_HEAT = 20.0f;  // +20°C у работающей печи
+    private static final float LAVA_MAX_HEAT = 35.0f;     // +35°C у лавы
+    private static final float FIRE_MAX_HEAT = 22.0f;     // +22°C у огня
 
     /**
      * Сканирует окружающие блоки на наличие источников тепла.
@@ -66,7 +66,7 @@ public class HeatSourceHelper {
                     else if (state.is(Blocks.SOUL_CAMPFIRE) && distance <= CAMPFIRE_RADIUS) {
                         if (state.getValue(net.minecraft.world.level.block.CampfireBlock.LIT)) {
                             sources.add(new HeatSource(checkPos.immutable(), distance, 
-                                       CAMPFIRE_MAX_HEAT * 0.7f, CAMPFIRE_RADIUS, HeatSourceType.SOUL_CAMPFIRE));
+                                       CAMPFIRE_MAX_HEAT * 0.75f, CAMPFIRE_RADIUS, HeatSourceType.SOUL_CAMPFIRE));
                         }
                     }
                     // Проверяем печки и коптильни
@@ -128,17 +128,17 @@ public class HeatSourceHelper {
                 }
             }
             
-            // Рассчитываем тепло от источника с учетом расстояния (обратный квадрат)
+            // Рассчитываем тепло от источника с мягким спадом (тепло распространяется на 3-4 блока)
             float distanceFactor = (float) (1.0 - (source.distance / source.radius));
-            distanceFactor = Math.max(0.0f, distanceFactor); // Клампим к [0, 1]
-            distanceFactor = distanceFactor * distanceFactor; // Квадратичный спад
+            distanceFactor = Math.max(0.0f, distanceFactor);
+            float falloff = (float) Math.pow(distanceFactor, 1.3);
             
-            float heat = source.maxHeat * distanceFactor;
+            float heat = source.maxHeat * falloff;
             
-            // Применяем модификатор укрытия
-            // На открытом воздухе (shelterLevel = 0) тепло сдувается ветром (30% эффективности)
-            // В укрытии (shelterLevel = 1) тепло работает на 100%
-            float shelterBonus = 0.3f + 0.7f * shelterLevel;
+            // Применяем модификатор укрытия:
+            // На открытом воздухе (shelterLevel = 0) ветер сдувает часть тепла (45% эффективности)
+            // В укрытии (норе, пещере, шалаше) тепло задерживается на 100%
+            float shelterBonus = 0.45f + 0.55f * shelterLevel;
             heat *= shelterBonus;
             
             totalHeat += heat;

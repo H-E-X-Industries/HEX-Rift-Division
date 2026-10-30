@@ -6,8 +6,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
-import com.wf.gemrender.gltf.GemRenderGltfModel;
-import com.wf.gemrender.gltf.GltfAnimation;
+import com.hex.hexrender.gltf.HexGltfModel;
+import com.hex.hexrender.gltf.GltfAnimation;
 
 import javax.annotation.Nullable;
 import java.util.HashMap;
@@ -167,7 +167,7 @@ public final class ClassicGrenadeVariants {
 
     /** Модель вида, либо {@code null}, пока она грузится. */
     @Nullable
-    public static GemRenderGltfModel model(@Nullable Variant variant) {
+    public static HexGltfModel model(@Nullable Variant variant) {
         return GrenadeGltfModels.model(modelIdOf(variant));
     }
 

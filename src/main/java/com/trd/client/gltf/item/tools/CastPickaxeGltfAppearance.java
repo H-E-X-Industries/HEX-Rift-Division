@@ -4,9 +4,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.trd.item.tools.cast_pickaxes.CastPickaxeClientAnim;
 import com.trd.item.tools.cast_pickaxes.CastPickaxeItem;
 import com.trd.item.tools.cast_pickaxes.materials.CastPickaxeSteelItem;
-import com.wf.gemrender.direct.ItemAppearance;
-import com.wf.gemrender.gltf.GemRenderGltfModel;
-import com.wf.gemrender.gltf.GltfAnimation;
+import com.hex.hexrender.direct.ItemAppearance;
+import com.hex.hexrender.gltf.HexGltfModel;
+import com.hex.hexrender.gltf.GltfAnimation;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
@@ -111,10 +111,10 @@ public class CastPickaxeGltfAppearance implements ItemAppearance {
     }
 
     @Override
-    public GemRenderGltfModel model(ItemStack stack, ItemDisplayContext context) {
+    public HexGltfModel model(ItemStack stack, ItemDisplayContext context) {
         currentTexture = stack.getItem() instanceof CastPickaxeSteelItem ? STEEL_TEXTURE : IRON_TEXTURE;
 
-        GemRenderGltfModel model = CastPickaxeGltfModels.model();
+        HexGltfModel model = CastPickaxeGltfModels.model();
         if (model != null) {
             CastPickaxeClientAnim.syncDurations(model);
         }

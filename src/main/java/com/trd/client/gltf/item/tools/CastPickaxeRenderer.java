@@ -1,12 +1,14 @@
 package com.trd.client.gltf.item.tools;
 
 import com.trd.item.tools.cast_pickaxes.CastPickaxeClientAnim;
-import com.wf.gemrender.direct.DirectPass;
-import com.wf.gemrender.direct.DirectRenderer;
-import com.wf.gemrender.direct.TextureSlots;
-import com.wf.gemrender.gltf.GemRenderGltfModel;
-import com.wf.gemrender.gltf.GltfAnimation;
-import com.wf.gemrender.render.Vanilla;
+import com.hex.hexrender.direct.DirectPass;
+import com.hex.hexrender.direct.HexDirectRenderer;
+import com.hex.hexrender.direct.HexVanillaRenderer;
+import com.hex.hexrender.direct.HexIrisBridge;
+import com.hex.hexrender.direct.TextureSlots;
+import com.hex.hexrender.gltf.HexGltfModel;
+import com.hex.hexrender.gltf.GltfAnimation;
+import com.hex.hexrender.render.Vanilla;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
@@ -20,10 +22,10 @@ import javax.annotation.Nullable;
 /**
  * Рендерер литой кирки на glTF.
  *
- * <h2>Зачем он свой, а не {@code GemRenderItemRenderer}</h2>
+ * <h2>Зачем он свой, а не {@code HexItemRenderer}</h2>
  * Обе кирки рисуются одной моделью и различаются только текстурой, а
- * {@code GemRenderItemRenderer} текстуру предмету подменить не умеет: у него нет
- * такого обратного хода, он зовёт {@code DirectRenderer#submit} без слотов.
+ * {@code HexItemRenderer} текстуру предмету подменить не умеет: у него нет
+ * такого обратного хода, он зовёт {@code HexDirectRenderer#submit} без слотов.
  *
  * <p>Слоты для этого и сделаны: если в материале модели стоит метка
  * {@value CastPickaxeGltfAppearance#TEXTURE_SLOT}, то такая часть рисуется
@@ -31,7 +33,7 @@ import javax.annotation.Nullable;
  * подставляется — та, что выбрал облик по предмету.
  *
  * <p>Остальное — сдвиг на пол-пикселя, трансформация облика, выбор клипа и
- * времени, проход отрисовки — повторяет {@code GemRenderItemRenderer#draw}.
+ * времени, проход отрисовки — повторяет {@code HexItemRenderer#draw}.
  * Смешивания между клипами здесь нет и не предвидится: облик его не включает, а
  * клипы у кирки не пересекаются, потому что автомат держит ровно один активный.
  */
@@ -59,7 +61,7 @@ public class CastPickaxeRenderer extends BlockEntityWithoutLevelRenderer {
     @Override
     public void renderByItem(ItemStack stack, ItemDisplayContext displayContext, PoseStack poseStack,
                              MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
-        GemRenderGltfModel model = appearance.model(stack, displayContext);
+        HexGltfModel model = appearance.model(stack, displayContext);
         if (model == null) {
             return;
         }
@@ -73,17 +75,31 @@ public class CastPickaxeRenderer extends BlockEntityWithoutLevelRenderer {
             poseStack.translate(0.5F, 0.5F, 0.5F);
             appearance.transform(stack, displayContext, poseStack);
 
-            DirectRenderer.submit(
-                    model,
-                    appearance.clip(stack, displayContext),
-                    appearance.seconds(stack, displayContext, partialTick),
-                    poseStack.last().pose(),
-                    packedLight,
-                    packedOverlay,
-                    appearance.tint(stack, displayContext),
-                    passFor(displayContext),
-                    appearance.variant(stack, displayContext),
-                    slots);
+            if (HexIrisBridge.hasActiveShaders()) {
+                HexVanillaRenderer.renderVanilla(
+                        model,
+                        appearance.clip(stack, displayContext),
+                        appearance.seconds(stack, displayContext, partialTick),
+                        poseStack,
+                        bufferSource,
+                        packedLight,
+                        packedOverlay,
+                        appearance.tint(stack, displayContext),
+                        appearance.variant(stack, displayContext),
+                        slots);
+            } else {
+                HexDirectRenderer.renderModel(
+                        model,
+                        appearance.clip(stack, displayContext),
+                        appearance.seconds(stack, displayContext, partialTick),
+                        poseStack.last().pose(),
+                        packedLight,
+                        packedOverlay,
+                        appearance.tint(stack, displayContext),
+                        passFor(displayContext),
+                        appearance.variant(stack, displayContext),
+                        slots);
+            }
         } finally {
             poseStack.popPose();
         }
@@ -92,7 +108,7 @@ public class CastPickaxeRenderer extends BlockEntityWithoutLevelRenderer {
     /**
      * Проход отрисовки по контексту.
      *
-     * <p>Тот же расклад, что у {@code GemRenderItemRenderer}: в окне интерфейса —
+     * <p>Тот же расклад, что у {@code HexItemRenderer}: в окне интерфейса —
      * {@link DirectPass#GUI}, в руке от первого лица — {@link DirectPass#HAND},
      * всё остальное — {@link DirectPass#LEVEL}. Руки от третьего лица тоже идут
      * по мировому проходу: они рисуются вместе с сущностью в мире.

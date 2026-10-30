@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "sealed=false": {
+      "model": "trd:block/atmospheric_scanner"
+    },
+    "sealed=true": {
+      "model": "trd:block/atmospheric_scanner_sealed"
+    }
+  }
+}

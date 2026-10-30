@@ -6,9 +6,9 @@ import com.mojang.math.Axis;
 import com.trd.item.weapons.grenades.ChargableGrenadeItem;
 import com.trd.item.weapons.grenades.GrenadeIfAnimation;
 import com.trd.item.weapons.grenades.GrenadeIfClientAnim;
-import com.wf.gemrender.direct.ItemAppearance;
-import com.wf.gemrender.gltf.GemRenderGltfModel;
-import com.wf.gemrender.gltf.GltfAnimation;
+import com.hex.hexrender.direct.ItemAppearance;
+import com.hex.hexrender.gltf.HexGltfModel;
+import com.hex.hexrender.gltf.GltfAnimation;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
@@ -169,8 +169,8 @@ public class GrenadeGltfAppearance implements ItemAppearance {
     }
 
     @Override
-    public GemRenderGltfModel model(ItemStack stack, ItemDisplayContext context) {
-        GemRenderGltfModel model = GrenadeGltfModels.model(modelId.apply(stack.getItem()));
+    public HexGltfModel model(ItemStack stack, ItemDisplayContext context) {
+        HexGltfModel model = GrenadeGltfModels.model(modelId.apply(stack.getItem()));
         if (model != null) {
             GrenadeIfClientAnim.syncDurations(model);
         }

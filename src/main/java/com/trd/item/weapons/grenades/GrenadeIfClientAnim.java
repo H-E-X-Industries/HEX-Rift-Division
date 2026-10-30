@@ -1,7 +1,7 @@
 package com.trd.item.weapons.grenades;
 
 import com.trd.main.MainRegistry;
-import com.wf.gemrender.gltf.GemRenderGltfModel;
+import com.hex.hexrender.gltf.HexGltfModel;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.sounds.SoundEvent;
@@ -22,7 +22,7 @@ import javax.annotation.Nullable;
  *
  * <p>Клип у предмета один — {@link #PIN_PULL}, он играет каждый раз, когда граната
  * оказывается в руке. Геколибовских контроллеров в проекте нет (рендер ушёл на
- * GemRender), поэтому состояние держит автомат: ровно так же, как это делает
+ * HEX Render), поэтому состояние держит автомат: ровно так же, как это делает
  * {@code MachineGunClientAnim} у пушки.
  *
  * <p><b>Обслуживает не только ударные гранаты.</b> Имя класса осталось от
@@ -115,10 +115,10 @@ public final class GrenadeIfClientAnim {
     /**
      * Подтягивает реальную длину клипа из загруженной модели.
      * <p>
-     * Должна вызываться только с клиента: {@link GemRenderGltfModel} живёт в
-     * GemRender, а на сервере той нет.
+     * Должна вызываться только с клиента: {@link HexGltfModel} живёт в
+     * HEX Render, а на сервере той нет.
      */
-    public static void syncDurations(@Nullable GemRenderGltfModel model) {
+    public static void syncDurations(@Nullable HexGltfModel model) {
         if (model == null) {
             return;
         }
@@ -164,7 +164,7 @@ public final class GrenadeIfClientAnim {
     /**
      * Имя клипа для рендера либо {@code null}, если в этой руке граната в покое.
      * <p>
-     * Рукой, а не «чем угодно», потому что у GemRender один и тот же рендерер
+     * Рукой, а не «чем угодно», потому что у HEX Render один и тот же рендерер
      * обслуживает и руку, и инвентарь, и хотбар: клип должен попадать только в
      * руку, иначе значок гранаты в панели дёргал бы чеку вместе с ней.
      * {@code null} означает «не в руке» — рисуется исходная поза модели.
@@ -221,7 +221,7 @@ public final class GrenadeIfClientAnim {
     /**
      * Насколько меньше длины клипа приходится отдавать в рендер.
      * <p>
-     * Внутри {@code DirectRenderer.stagePalette} время прогоняется через
+     * Внутри {@code HexDirectRenderer.stagePalette} время прогоняется через
      * {@code GltfAnimation.loop()}, а это остаток от деления на длину. Ровно на
      * длине остаток нулевой, то есть {@code duration} тихо превращается в позу
      * покоя. Отдаём на миллисекунду меньше: попадаем ровно на последний ключ, а
@@ -230,7 +230,7 @@ public final class GrenadeIfClientAnim {
     private static final float CLIP_EPSILON = 1.0E-3F;
 
     /**
-     * Время клипа в секундах — GemRender ждёт именно секунды.
+     * Время клипа в секундах — HEX Render ждёт именно секунды.
      * <p>
      * {@code partialTick} (0..1) добавляется к накопленному возрасту, поэтому
      * между тиками кадр всё равно сдвигается — на высоком FPS анимация идёт

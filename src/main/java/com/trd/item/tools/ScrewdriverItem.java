@@ -1,21 +1,79 @@
 package com.trd.item.tools;
 
-
+import com.trd.block.basic.ModBlocks;
+import com.trd.climate.block.entity.InsulationControllerBlockEntity;
+import com.trd.climate.room.ValidationResult;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
+import javax.annotation.Nullable;
+import java.util.List;
+
 public class ScrewdriverItem extends Item {
 
     public ScrewdriverItem(Properties properties) {
         super(properties);
+    }
+
+    @Nullable
+    public static BlockPos getLinkedPos(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return null;
+        CompoundTag tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        if (tag.getBoolean("linking") && tag.contains("ctrl_x")) {
+            return new BlockPos(tag.getInt("ctrl_x"), tag.getInt("ctrl_y"), tag.getInt("ctrl_z"));
+        }
+        return null;
+    }
+
+    public static void setLinkedPos(ItemStack stack, BlockPos pos) {
+        CompoundTag tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        tag.putBoolean("linking", true);
+        tag.putInt("ctrl_x", pos.getX());
+        tag.putInt("ctrl_y", pos.getY());
+        tag.putInt("ctrl_z", pos.getZ());
+        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+    }
+
+    public static void clearLinking(ItemStack stack) {
+        CompoundTag tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        tag.remove("linking");
+        tag.remove("ctrl_x");
+        tag.remove("ctrl_y");
+        tag.remove("ctrl_z");
+        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+    }
+
+    /**
+     * Преобразует позицию клика по внешней грани оболочки (полу, потолку, стене)
+     * во внутреннюю координату комнаты (Interior Bounds).
+     */
+    public static BlockPos resolveInnerCorner(BlockPos clickedPos, Direction clickedFace, BlockPos ctrlPos) {
+        if (clickedPos == null || ctrlPos == null || clickedFace == null) return clickedPos;
+        int x = clickedPos.getX(), y = clickedPos.getY(), z = clickedPos.getZ();
+        if (clickedFace == Direction.UP && y < ctrlPos.getY()) y++;
+        else if (clickedFace == Direction.DOWN && y > ctrlPos.getY()) y--;
+        else if (clickedFace == Direction.WEST && x > ctrlPos.getX()) x--;
+        else if (clickedFace == Direction.EAST && x < ctrlPos.getX()) x++;
+        else if (clickedFace == Direction.NORTH && z > ctrlPos.getZ()) z--;
+        else if (clickedFace == Direction.SOUTH && z < ctrlPos.getZ()) z++;
+        return new BlockPos(x, y, z);
     }
 
     @Override
@@ -26,64 +84,116 @@ public class ScrewdriverItem extends Item {
         Player player = context.getPlayer();
         if (player == null) return InteractionResult.PASS;
 
+        ItemStack stack = context.getItemInHand();
         boolean isSneaking = player.isShiftKeyDown();
 
-        // Обработка вала
-//        if (state.getBlock() instanceof ShaftBlock) {
-//            Direction currentFacing = state.getValue(ShaftBlock.FACING);
-//            Direction newFacing;
-//
-//            if (isSneaking) {
-//                newFacing = currentFacing.getOpposite();
-//            } else {
-//                Direction lookDir = getLookDirection(player);
-//                newFacing = rotate90(currentFacing, lookDir);
-//            }
-//
-//            BlockState newState = state.setValue(ShaftBlock.FACING, newFacing);
-//            level.setBlock(pos, newState, 3);
-//            syncWithNeighbors(level, pos, newState);
-//
-//            return InteractionResult.sidedSuccess(level.isClientSide);
-//        }
-//
-//        // Обработка порта
-//        else if (state.getBlock() instanceof GearPortBlock) {
-//            if (!level.isClientSide) {
-//                BlockEntity be = level.getBlockEntity(pos);
-//                if (be instanceof GearPortBlockEntity gear) {
-//                    Direction face = context.getClickedFace();
-//                    String message = gear.handleScrewdriverClick(face, isSneaking);
-//                    if (message != null) {
-//                        player.displayClientMessage(Component.literal(message), false);
-//                    }
-//                }
-//            }
-//            return InteractionResult.sidedSuccess(level.isClientSide);
-//        }// Обработка тахометра
-//        else if (state.getBlock() instanceof TachometerBlock) {
-//            if (!level.isClientSide) {
-//                BlockEntity be = level.getBlockEntity(pos);
-//                if (be instanceof TachometerBlockEntity tach) {
-//                    if (isSneaking) {
-//                        // Shift+click: переключить режим
-//                        Mode currentMode = state.getValue(TachometerBlock.MODE);
-//                        Mode newMode = (currentMode == Mode.SPEED) ? Mode.TORQUE : Mode.SPEED;
-//                        level.setBlock(pos, state.setValue(TachometerBlock.MODE, newMode), 3);
-//                        player.displayClientMessage(Component.literal("Mode switched to " + newMode.getSerializedName()), false);
-//                    } else {
-//                        // Обычный клик: изменить множитель
-//                        int newMult = tach.getMultiplier() + 1;
-//                        if (newMult > 3) newMult = 1;
-//                        tach.setMultiplier(newMult);
-//                        player.displayClientMessage(Component.literal("Multiplier set to " + newMult), false);
-//                    }
-//                }
-//            }
-//            return InteractionResult.sidedSuccess(level.isClientSide);
-//        }
+        // 1. Shift+ПКМ сбрасывает разметку куба
+        if (isSneaking && getLinkedPos(stack) != null) {
+            clearLinking(stack);
+            if (!level.isClientSide()) {
+                player.displayClientMessage(Component.translatable("message.trd.insulation.selection_cancelled"), true);
+                level.playSound(null, pos, SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.PLAYERS, 0.8f, 1.2f);
+            }
+            return InteractionResult.sidedSuccess(level.isClientSide());
+        }
+
+        // 2. Клик по атмосферному сканеру (Tier 2) — запуск сканирования произвольной формы
+        if (state.is(ModBlocks.ATMOSPHERIC_SCANNER.get())) {
+            if (!level.isClientSide() && level instanceof ServerLevel serverLevel) {
+                BlockEntity be = serverLevel.getBlockEntity(pos);
+                if (be instanceof com.trd.climate.block.entity.AtmosphericScannerBlockEntity scanner) {
+                    scanner.triggerScan(serverLevel, player);
+                }
+            }
+            return InteractionResult.sidedSuccess(level.isClientSide());
+        }
+
+        // 3. Клик по контроллеру термоизоляции — запоминаем первую точку куба
+        if (state.is(ModBlocks.INSULATION_CONTROLLER.get())) {
+            BlockPos currentLinked = getLinkedPos(stack);
+            if (currentLinked != null && currentLinked.equals(pos)) {
+                // Повторный клик по контроллеру отменяет режим
+                clearLinking(stack);
+                if (!level.isClientSide()) {
+                    player.displayClientMessage(Component.translatable("message.trd.insulation.selection_cancelled"), true);
+                    level.playSound(null, pos, SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.PLAYERS, 0.8f, 1.2f);
+                }
+                return InteractionResult.sidedSuccess(level.isClientSide());
+            }
+
+            setLinkedPos(stack, pos);
+            if (!level.isClientSide()) {
+                player.displayClientMessage(Component.translatable(
+                        "message.trd.insulation.controller_selected",
+                        pos.getX(), pos.getY(), pos.getZ()
+                ), false);
+                level.playSound(null, pos, SoundEvents.DISPENSER_DISPENSE, SoundSource.BLOCKS, 1.0f, 1.5f);
+            }
+            return InteractionResult.sidedSuccess(level.isClientSide());
+        }
+
+        // 3. Если уже привязан контроллер — клик по противоположному углу куба
+        BlockPos ctrlPos = getLinkedPos(stack);
+        if (ctrlPos != null) {
+            BlockPos targetPos = resolveInnerCorner(pos, context.getClickedFace(), ctrlPos);
+            // Валидация помещения на сервере
+            if (!level.isClientSide() && level instanceof ServerLevel serverLevel) {
+                BlockEntity be = serverLevel.getBlockEntity(ctrlPos);
+                if (be instanceof InsulationControllerBlockEntity controller) {
+                    ValidationResult result = controller.validateAndSeal(serverLevel, targetPos, player);
+                    if (result.isSuccess()) {
+                        clearLinking(stack);
+                        player.displayClientMessage(Component.translatable(
+                                "message.trd.insulation.sealed_success", result.volume()
+                        ), false);
+                        serverLevel.playSound(null, targetPos, SoundEvents.IRON_DOOR_CLOSE, SoundSource.BLOCKS, 1.0f, 1.0f);
+                    } else {
+                        BlockPos leak = result.leakPos();
+                        if (leak != null) {
+                            if (result.isDoor()) {
+                                player.displayClientMessage(Component.literal(String.format(
+                                        java.util.Locale.ROOT,
+                                        "§cПомещение не герметично! Открыта дверь в [%d, %d, %d]",
+                                        leak.getX(), leak.getY(), leak.getZ()
+                                        )), false);
+                            } else {
+                                player.displayClientMessage(Component.literal(String.format(
+                                        java.util.Locale.ROOT,
+                                        "§cПомещение не герметично! Разгерметизация в [%d, %d, %d]",
+                                        leak.getX(), leak.getY(), leak.getZ()
+                                )), false);
+                            }
+                        } else {
+                            player.displayClientMessage(Component.literal(
+                                    result.errorMessage() != null ? "§c" + result.errorMessage() : "§cОшибка герметизации!"
+                            ), false);
+                        }
+                        serverLevel.playSound(null, targetPos, SoundEvents.SHIELD_BLOCK, SoundSource.BLOCKS, 1.0f, 0.8f);
+                    }
+                } else {
+                    clearLinking(stack);
+                    player.displayClientMessage(Component.translatable("message.trd.insulation.controller_missing"), false);
+                }
+            }
+            return InteractionResult.sidedSuccess(level.isClientSide());
+        }
 
         return InteractionResult.PASS;
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
+        super.appendHoverText(stack, context, tooltipComponents, tooltipFlag);
+        BlockPos linked = getLinkedPos(stack);
+        if (linked != null) {
+            tooltipComponents.add(Component.translatable(
+                    "tooltip.trd.screwdriver.linking",
+                    linked.getX(), linked.getY(), linked.getZ()
+            ).withStyle(ChatFormatting.GREEN));
+            tooltipComponents.add(Component.translatable(
+                    "tooltip.trd.screwdriver.cancel_hint"
+            ).withStyle(ChatFormatting.DARK_GRAY));
+        }
     }
 
     /**

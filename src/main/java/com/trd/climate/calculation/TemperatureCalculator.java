@@ -15,6 +15,43 @@ import net.minecraft.world.level.biome.Biome;
 public class TemperatureCalculator {
 
     /**
+     * Рассчитывает естественную температуру окружающей среды снаружи для указанных координат.
+     * Используется контроллерами герметичных помещений для расчета теплообмена с внешней средой.
+     */
+    public static float calculateOutdoorAmbient(ServerLevel level, BlockPos pos) {
+        float envTemp = getBiomeTemperature(level, pos);
+        envTemp += getAltitudeEffect(pos.getY());
+        envTemp = applySubterraneanStabilization(level, pos, envTemp);
+        envTemp += getWeatherEffect(level, pos);
+        return envTemp;
+    }
+
+    /**
+     * Стабилизация в недрах земли и толще гор (подтягивание к геотермальной нейтрали +15°C).
+     * Учитывает как глубину ниже уровня моря (Y < 64), так и толщу породы над головой (пещеры и норы в горах).
+     */
+    public static float applySubterraneanStabilization(ServerLevel level, BlockPos pos, float currentTemp) {
+        boolean underCeiling = !level.canSeeSky(pos);
+        int surfaceY = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE, pos.getX(), pos.getZ());
+        int depthFromSurface = surfaceY - pos.getY();
+
+        float depthFactor = 0.0f;
+        // 1. Глубина под уровнем моря (шахты, глубокие пещеры Y < 64)
+        if (pos.getY() < 64) {
+            depthFactor = Math.max(depthFactor, Math.min(1.0f, (64 - pos.getY()) / 60.0f));
+        }
+        // 2. Толща породы над головой в горах и холмах (горные пещеры, норы, штольни)
+        if (underCeiling && depthFromSurface >= 4) {
+            depthFactor = Math.max(depthFactor, Math.min(1.0f, (depthFromSurface - 3) / 10.0f));
+        }
+
+        if (depthFactor > 0.0f) {
+            return currentTemp + (15.0f - currentTemp) * depthFactor * 0.75f;
+        }
+        return currentTemp;
+    }
+
+    /**
      * Рассчитывает целевую температуру окружающей среды для игрока.
      * 
      * @param player Игрок
@@ -25,23 +62,69 @@ public class TemperatureCalculator {
     public static float calculateTargetEnvTemp(Player player, ServerLevel level, float shelterLevel) {
         BlockPos pos = player.blockPosition();
         
+        // 0. Проверяем, находится ли игрок в изолированном помещении (Tier 1 или Tier 2)
+        com.trd.climate.room.SealedRoom room = com.trd.climate.room.SealedRoomManager.findRoomAt(level, pos);
+        if (room != null && room.isStructureValid()) {
+            float envTemp = room.getRoomTemperature();
+
+            if (!room.isSealed()) {
+                // Если дверь открыта или есть пробоина:
+                // Сквозняк! Игрок сразу ощущает уличный холод (35% примесь уличного воздуха)
+                float outdoorAmbient = calculateOutdoorAmbient(level, pos);
+                envTemp = net.minecraft.util.Mth.lerp(0.35f, envTemp, outdoorAmbient);
+            }
+
+            // Влияние воды (если внутри комнаты есть бассейн)
+            if (player.isInWater()) {
+                envTemp += getWaterEffect(envTemp);
+            }
+
+            // Дополнительное локальное лучистое тепло в упор к источникам внутри комнаты
+            // (ощутимый уютный жар около огня до +26°C, согревающий в упор)
+            float radiant = HeatSourceHelper.calculateTotalHeat(level, pos, 1.0f);
+            if (radiant > 0.0f) {
+                float roomTargetWithRadiant = Math.min(26.0f, envTemp + radiant * 0.65f);
+                envTemp = Math.max(envTemp, roomTargetWithRadiant);
+            }
+
+            // Тепло от факела в руке
+            envTemp += getTorchHeat(player, envTemp);
+
+            // Тепловая изоляция брони (если в комнате прохладно)
+            if (envTemp < 20.0f) {
+                float insulation = ArmorInsulationHelper.calculateArmorInsulation(player);
+                envTemp = Math.min(20.0f, envTemp + insulation);
+            }
+
+            return envTemp;
+        }
+
         // 1. Базовая температура биома
         float envTemp = getBiomeTemperature(level, pos);
 
         // 2. Влияние высоты в горах (Y > 64)
         envTemp += getAltitudeEffect(pos.getY());
 
-        // 3. Стабилизация в недрах земли (Y < 64 подтягивается к +15°C)
-        if (pos.getY() < 64) {
-            float depthFactor = Math.min(1.0f, (64 - pos.getY()) / 80.0f);
-            envTemp = envTemp + (15.0f - envTemp) * depthFactor * 0.75f;
-        }
+        // 3. Стабилизация в недрах земли и толще гор (подтягивание к геотермальной нейтрали +15°C)
+        envTemp = applySubterraneanStabilization(level, pos, envTemp);
 
         // 4. Влияние погоды и времени суток
         float weatherEffect = getWeatherEffect(level, pos);
-        
-        // 5. Применяем укрытие (смягчает негативные погодные эффекты)
         envTemp += applyShelterToWeather(weatherEffect, shelterLevel);
+
+        // 5. Защита базового укрытия (норы в горе/земле, шалаши, землянки, неутепленные дома)
+        // Стены и крыша блокируют морозный ветер биома и палящее солнце
+        if (shelterLevel > 0.05f) {
+            if (envTemp < 15.0f) {
+                // Защита от холода: укрытие согревает до 55% от разницы с нейтралью +15°C
+                float shelterProtection = (15.0f - envTemp) * shelterLevel * 0.55f;
+                envTemp += shelterProtection;
+            } else if (envTemp > 25.0f) {
+                // Защита от жары: тень от навеса блокирует перегрев
+                float shelterProtection = (envTemp - 25.0f) * shelterLevel * 0.40f;
+                envTemp -= shelterProtection;
+            }
+        }
 
         // 6. Влияние воды (быстрое переохлаждение на холоде, приятное охлаждение в жару)
         if (player.isInWater()) {
@@ -49,7 +132,16 @@ public class TemperatureCalculator {
         }
 
         // 7. Добавляем лучистое тепло от источников (костры, печи, лава)
-        envTemp += HeatSourceHelper.calculateTotalHeat(level, pos, shelterLevel);
+        float radiantHeat = HeatSourceHelper.calculateTotalHeat(level, pos, shelterLevel);
+        if (radiantHeat > 0.0f) {
+            float maxComfortFromFire = 26.0f;
+            if (envTemp < maxComfortFromFire) {
+                envTemp = Math.min(maxComfortFromFire, envTemp + radiantHeat);
+            } else if (radiantHeat > 25.0f) {
+                // Экстремальные источники (лава в упор)
+                envTemp += (radiantHeat - 25.0f) * 0.5f;
+            }
+        }
 
         // 8. Тепло от факела в руке (согревает при холоде)
         envTemp += getTorchHeat(player, envTemp);
@@ -97,7 +189,10 @@ public class TemperatureCalculator {
 
     /**
      * Конвертирует ванильную температуру биома в градусы Цельсия.
-     * Формула: T = 20.0 + (vanillaTemp - 0.8) * multiplier
+     * Холодные биомы усилены для сурового выживания (до -30°C).
+     * Жаркие биомы сбалансированы так, чтобы в саванне и пустыне днем
+     * на солнце температура достигала 30-32°C (состояние "Жара"),
+     * вызывая повышенный расход сытости, но не убивая игрока.
      */
     private static float getBiomeTemperature(ServerLevel level, BlockPos pos) {
         Biome biome = level.getBiome(pos).value();
@@ -107,9 +202,11 @@ public class TemperatureCalculator {
         // Усиливаем суровость холодных биомов
         if (delta < 0) {
             delta *= 2.0f;
+            return 20.0f + delta * 20.0f;
+        } else {
+            // Жаркие биомы: при vanillaTemp=2.0 (Desert) базовая температура 29°C (на солнце максимум 32°C)
+            return 20.0f + delta * 7.5f;
         }
-        
-        return 20.0f + delta * 20.0f;
     }
 
     /**

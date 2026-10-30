@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/cube_bottom_top",
+  "textures": {
+    "top": "trd:block/concrete_vent_panel",
+    "bottom": "trd:block/asbestos_tile",
+    "side": "trd:block/concrete_panel"
+  }
+}

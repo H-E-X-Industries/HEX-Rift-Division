@@ -5,8 +5,8 @@ import com.mojang.math.Axis;
 import com.trd.client.gltf.item.grenades.GrenadeIfVariants;
 import com.trd.entity.weapons.grenades.GrenadeIfProjectileEntity;
 import com.trd.entity.weapons.grenades.GrenadeIfType;
-import com.wf.gemrender.direct.DirectPass;
-import com.wf.gemrender.direct.DirectRenderer;
+import com.hex.hexrender.direct.DirectPass;
+import com.hex.hexrender.direct.HexDirectRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -15,7 +15,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * Ударная граната в полёте на glTF через GemRender.
+ * Ударная граната в полёте на glTF через HexRender.
  *
  * <p>Та же модель и та же текстура, что и у предмета в руке, но с одной
  * поправкой: <b>чеки здесь нет</b>. Летящей гранате она уже не нужна — чеку
@@ -79,7 +79,7 @@ public class GrenadeIfGltfRenderer extends EntityRenderer<GrenadeIfProjectileEnt
 
     @Override
     public ResourceLocation getTextureLocation(GrenadeIfProjectileEntity entity) {
-        // Текстура живёт внутри glTF и подставляется GemRender'ом из атласа
+        // Текстура живёт внутри glTF и подставляется HEX Render'ом из атласа
         // вариантов по типу гранаты.
         return ResourceLocation.withDefaultNamespace("missingno");
     }
@@ -126,13 +126,23 @@ public class GrenadeIfGltfRenderer extends EntityRenderer<GrenadeIfProjectileEnt
         // (то есть ДО вращения вершин модели), чтобы модель крутилась строго вокруг заданной оси.
         poseStack.translate(0.0F, -MODEL_CENTER_Y, 0.0F);
 
-        // Поза покоя модели, но с прибитой чекой: клип отдаётся обязательно, иначе
-        // NodeHide не применится и чека останется видимой. Тип берётся из типа
-        // сущности, а не из синхронизированных данных снаряда — см.
-        // GrenadeIfType#typeOf.
-        DirectRenderer.submit(model, GrenadeIfVariants.hiddenPin(type), 0.0F,
-                poseStack.last().pose(), packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFFFF,
-                DirectPass.LEVEL);
+        if (com.hex.hexrender.direct.HexIrisBridge.hasActiveShaders()) {
+            com.hex.hexrender.direct.HexVanillaRenderer.renderVanilla(
+                    model,
+                    GrenadeIfVariants.hiddenPin(type),
+                    0.0F,
+                    poseStack,
+                    bufferSource,
+                    packedLight,
+                    OverlayTexture.NO_OVERLAY,
+                    0xFFFFFFFF,
+                    com.hex.hexrender.texture.VariantUv.NONE,
+                    com.hex.hexrender.direct.TextureSlots.NONE);
+        } else {
+            HexDirectRenderer.renderModel(model, GrenadeIfVariants.hiddenPin(type), 0.0F,
+                    poseStack.last().pose(), packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFFFF,
+                    DirectPass.LEVEL);
+        }
 
         poseStack.popPose();
     }
