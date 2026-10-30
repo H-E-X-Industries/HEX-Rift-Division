@@ -57,11 +57,13 @@ public class DrobitelRenderer implements BlockEntityRenderer<DrobitelBlockEntity
         poseStack.translate(offsetX, 0, offsetZ);
         poseStack.translate(0.5f, 0.5f, 0.5f);
 
-        if (facing.getAxis() == Direction.Axis.Z) {
-            poseStack.mulPose(Axis.YP.rotationDegrees(90));
+        if (facing.getAxis() == Direction.Axis.X) {
+            poseStack.mulPose(Axis.YP.rotationDegrees(facing == Direction.EAST ? 270 : 90));
+        } else if (facing == Direction.SOUTH) {
+            poseStack.mulPose(Axis.YP.rotationDegrees(180));
         }
 
-        poseStack.mulPose(Axis.XP.rotation(angle));
+        poseStack.mulPose(Axis.ZP.rotation(angle));
         poseStack.translate(-0.5f, -0.5f, -0.5f);
 
         FlywheelFallbackHelper.renderPartialModel(model, poseStack, buffer, state, light, overlay);

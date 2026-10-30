@@ -819,6 +819,77 @@ public class ModBlocks {
             () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.STONE)
                     .strength(5.0f, 30.0f).noOcclusion().requiresCorrectToolForDrops()));
 
+    // ═══════════════════════════════════════════════════════
+    // ИНТЕРАКТИВНЫЕ ТУЛТИПЫ (Shift — подробное описание)
+    // ═══════════════════════════════════════════════════════
+
+    /**
+     * Подробные описания блоков. Список повторяет 1.20.1: без записи здесь
+     * {@link com.trd.client.MachineTooltipHandler} не знает ключ перевода и
+     * предмет-форма блока не показывает подсказку «Зажми Shift».
+     *
+     * <p>Блок, у которого есть отдельный предмет в {@link ModItems}, тоже
+     * регистрируется тут — {@code registerBlock} сам подхватит {@code asItem()}.
+     *
+     * <p>Резолв предмета ленивый, поэтому статический инициализатор не зависит
+     * от порядка регистрации блоков.
+     */
+    static {
+        // Металлургия
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(SMALL_SMELTER, "tooltip.trd.machine.small_smelter.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(BOILER, "tooltip.trd.machine.boiler.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(STEAM_ENGINE, "tooltip.trd.machine.steam_engine.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(MILLSTONE, "tooltip.trd.machine.millstone.desc");
+
+        // Обогащение
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(VISHELASHIVATEL, "tooltip.trd.machine.vishelashivatel.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(CASTING_POT, "tooltip.trd.machine.casting_pot.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(CASTING_DESCENT, "tooltip.trd.machine.casting_descent.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(CENTRIFUGE_MOTOR, "tooltip.trd.machine.centrifuge.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(CENTRIFUGE_CONUS, "tooltip.trd.machine.centrifuge.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(CENTRIFUGE_CYLINDER, "tooltip.trd.machine.centrifuge.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(STEEL_STORAGE, "tooltip.trd.machine.steel_storage.desc");
+
+        // Химия
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(CHEMICAL_PLANT_REACTION_CHAMBER, "tooltip.trd.machine.reaction_chamber.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(CHEMICAL_PLANT_PORT, "tooltip.trd.machine.chem_port.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(CHEMICAL_PLANT_HEATER, "tooltip.trd.machine.chem_heater.desc");
+
+        // Кинетика
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(HAND_CRANK_BLOCK, "tooltip.trd.machine.hand_crank.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(BEARING_BLOCK, "tooltip.trd.machine.bearing.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(TACHOMETER, "tooltip.trd.machine.tachometer.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(CLUTCH, "tooltip.trd.machine.clutch.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(MOTOR_ELECTRO, "tooltip.trd.machine.motor_electro.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(STANOK, "tooltip.trd.machine.stanok.desc");
+
+        // Электричество
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(MACHINE_BATTERY, "tooltip.trd.machine.machine_battery.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(SWITCH, "tooltip.trd.machine.switch.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(CONVERTER_BLOCK, "tooltip.trd.machine.converter.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(LOW_PRESSURE_STEAM_CONDENSER, "tooltip.trd.machine.condenser.desc");
+
+        // Жидкости и топливо
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(WATER_PUMP, "tooltip.trd.machine.water_pump.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(VALVE, "tooltip.trd.machine.valve.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(FUEL_TANK_SMALL, "tooltip.trd.machine.fuel_tank.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(FUEL_TANK_BIG, "tooltip.trd.machine.fuel_tank.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(CORRUPTED_BARREL, "tooltip.trd.machine.fluid_barrel.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(LEAKING_BARREL, "tooltip.trd.machine.fluid_barrel.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(IRON_BARREL, "tooltip.trd.machine.fluid_barrel.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(STEEL_BARREL, "tooltip.trd.machine.fluid_barrel.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(LEAD_BARREL, "tooltip.trd.machine.fluid_barrel.desc");
+
+        // Соединители и кабель
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(CONNECTOR, "tooltip.trd.machine.connector.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(MEDIUM_CONNECTOR, "tooltip.trd.machine.connector.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(LARGE_CONNECTOR, "tooltip.trd.machine.connector.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(PAINTABLE_WIRE, "tooltip.trd.machine.paintable_wire.desc");
+
+        // Прочее
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(ELECTRO_FURNACE, "tooltip.trd.machine.electro_furnace.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(COCCER_OVEN, "tooltip.trd.machine.coccer_oven.desc");
+    }
     // Климатическая система: контроллер термоизоляции помещений (Tier 1)
     public static final DeferredBlock<com.trd.climate.block.InsulationControllerBlock> INSULATION_CONTROLLER =
             registerBlock("insulation_controller",
