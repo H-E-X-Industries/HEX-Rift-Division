@@ -588,10 +588,20 @@ public class ModClientSetup {
                 net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(com.trd.main.MainRegistry.MOD_ID, "filled"),
                 (pStack, pLevel, pEntity, pSeed) ->
                         com.trd.item.industrial.fluids.FluidContainerItem.isFilled(pStack) ? 1.0f : 0.0f);
+        net.minecraft.client.renderer.item.ItemProperties.register(com.trd.item.ModItems.PIPETTE_IDUSTRIAL.get(),
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(com.trd.main.MainRegistry.MOD_ID, "filled"),
+                (pStack, pLevel, pEntity, pSeed) ->
+                        com.trd.item.industrial.fluids.FluidContainerItem.isFilled(pStack) ? 1.0f : 0.0f);
         net.minecraft.client.renderer.item.ItemProperties.register(com.trd.item.ModItems.FLUID_TANK_IRON.get(),
                 net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(com.trd.main.MainRegistry.MOD_ID, "filled"),
                 (pStack, pLevel, pEntity, pSeed) ->
                         com.trd.item.industrial.fluids.FluidContainerItem.isFilled(pStack) ? 1.0f : 0.0f);
+
+        // Катушка провода: модель переключается при наличии провода на катушке
+        net.minecraft.client.renderer.item.ItemProperties.register(com.trd.item.ModItems.WIRE_COIL.get(),
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(com.trd.main.MainRegistry.MOD_ID, "wires"),
+                (pStack, pLevel, pEntity, pSeed) ->
+                        com.trd.item.industrial.energy.WireCoilItem.getWires(pStack) > 0 ? 1.0f : 0.0f);
 
         VisualizerRegistry.setVisualizer(ModBlockEntities.MILLSTONE.get(), new BlockEntityVisualizer<com.trd.block.entity.industrial.rotation.MillstoneBlockEntity>() {
             @Override
