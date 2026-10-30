@@ -6,8 +6,10 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
-import com.hex.hexrender.gltf.HexGltfModel;
-import com.hex.hexrender.gltf.GltfAnimation;
+import com.hex.hexrender.loader.GltfModelAsset;
+import com.hex.hexrender.core.ModelRegistry;
+import com.trd.main.MainRegistry;
+
 
 import javax.annotation.Nullable;
 import java.util.HashMap;
@@ -133,9 +135,13 @@ public final class ClassicGrenadeVariants {
         return Tables.BY_ENTITY.getOrDefault(entity.getType(), Variant.STANDARD);
     }
 
+    public static ResourceLocation modelId(String name) {
+        return ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "models/item/" + name + ".gltf");
+    }
+
     /** Файл модели вида. */
     public static ResourceLocation modelIdOf(@Nullable Variant variant) {
-        return GrenadeGltfModels.modelId((variant != null ? variant : Variant.STANDARD).modelName());
+        return modelId((variant != null ? variant : Variant.STANDARD).modelName());
     }
 
     /** Файл модели по предмету — то, что нужно облику предмета. */
@@ -145,15 +151,6 @@ public final class ClassicGrenadeVariants {
 
     /**
      * Где в модели вида стоит её середина по вертикали, в единицах блока.
-     *
-     * <p>У общей геометрии корпус занимает Y примерно от -0.0016 до +0.2844, откуда
-     * и берутся {@value #SHARED_CENTER_Y}. Меш сидит на узле {@code main} со сдвигом
-     * вверх, и без этого граната висела бы над серединой хитбокса.
-     *
-     * <p>У водородной геометрия своя, и ось вращения выставлена не по геометрической
-     * середине, а по третьему пикселю снизу, то есть {@code (0, 3, 0)}. Считать
-     * строго середину меша нельзя: ось идёт через узел {@code main} со сдвигом
-     * 0.1875, и визуально граната при провороте гуляла бы по высоте.
      */
     public static float centerY(@Nullable Variant variant) {
         return variant == Variant.HYDROGEN ? HYDROGEN_CENTER_Y : SHARED_CENTER_Y;
@@ -167,20 +164,7 @@ public final class ClassicGrenadeVariants {
 
     /** Модель вида, либо {@code null}, пока она грузится. */
     @Nullable
-    public static HexGltfModel model(@Nullable Variant variant) {
-        return GrenadeGltfModels.model(modelIdOf(variant));
-    }
-
-    /** Клип снятой с корня поправкой, либо {@code null}, пока модели нет. */
-    @Nullable
-    public static GltfAnimation poseClip(@Nullable Variant variant, String clip) {
-        return GrenadeGltfModels.poseClip(modelIdOf(variant), clip);
-    }
-
-    /** Поза покоя с невидимой чекой — то, чем рисуется летящая граната. */
-    @Nullable
-    public static GltfAnimation hiddenPin(@Nullable Variant variant) {
-        return GrenadeGltfModels.hiddenPin(modelIdOf(variant),
-                com.trd.item.weapons.grenades.GrenadeIfAnimation.PIN_PULL);
+    public static GltfModelAsset model(@Nullable Variant variant) {
+        return ModelRegistry.fetch(modelIdOf(variant));
     }
 }

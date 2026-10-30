@@ -1,75 +1,30 @@
 package com.trd.client.gltf.entity.grenades;
 
+import com.hex.hexrender.core.ModelRegistry;
+import com.hex.hexrender.loader.GltfModelAsset;
+import com.hex.hexrender.render.ModelSkinningRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.trd.client.gltf.item.grenades.GrenadeIfVariants;
 import com.trd.entity.weapons.grenades.GrenadeIfProjectileEntity;
-import com.trd.entity.weapons.grenades.GrenadeIfType;
-import com.hex.hexrender.direct.DirectPass;
-import com.hex.hexrender.direct.HexDirectRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
+import org.joml.Matrix4f;
 
 /**
  * Ударная граната в полёте на glTF через HexRender.
- *
- * <p>Та же модель и та же текстура, что и у предмета в руке, но с одной
- * поправкой: <b>чеки здесь нет</b>. Летящей гранате она уже не нужна — чеку
- * выдернули при броске, и обратно она не вернётся. Прячется кость через
- * {@link GrenadeIfVariants#hiddenPin}.
- *
- * <p>Поза — исходная, а не последний кадр {@code pin_pull}: в конце клипа у кости
- * {@code pin} стоит ключ {@code scale = [0, 1, 0]}, то есть чека сплющивается
- * сама, и летящая граната всё равно осталась бы с видимой чекой на месте. Исходная
- * поза к тому же единственная симметричная — в конце клипа корпус довёрнут на 10°
- * вокруг шарнира у самого верха, и центрировать пришлось бы по наклонному силуэту.
- *
- * <p>Рендер идёт через {@link DirectPass#LEVEL} — тот же путь, что у пули и гильзы.
+ * <p>
+ * Чека скрывается автоматически через обнуление масштаба кости "pin".
+ * Рендерится напрямую в MultiBufferSource через ModelSkinningRenderer.
  */
 public class GrenadeIfGltfRenderer extends EntityRenderer<GrenadeIfProjectileEntity> {
 
-/**
-     * Увеличение модели относительно её собственного размера.
-     * <p>
-     * Единица — модель в размере хитбокса, и она же единственно верная. Считать
-     * масштаб от хитбокса, как было раньше, смысла не было: у видов разные
-     * хитбоксы (0.25 у ударной и липучей, 0.5 у фугасной и зажигательной), и одна
-     * и та же цифра либо уводила гранату наполовину в блок под собой, либо
-     * болтала её в верхней половине хитбокса. Размер теперь задаёт сама модель.
-     */
     private static final float MODEL_SCALE = 1.0F;
-
-    /**
-     * Где в модели стоит ось вращения, в единицах блока.
-     * <p>
-     * Меш сидит на узле {@code main} со сдвигом 0.1603 вверх, вершины идут от
-     * -0.1619 до +0.1241, и в готовой модели корпус занимает Y от -0.0016 до
-     * +0.2844 — по X и Z он симметричен ровно, узел сдвигает его на половину
-     * ширины. Геометрическая середина отсюда — 0.1414, и именно она стояла здесь
-     * раньше.
-     * <p>
-     * Но визуально граната при полёте крутилась вокруг точки заметно ниже
-     * середины, из-за чего подпрыгивала на обороте и дёргалась. Ось поднята на
-     * 1.5 пикселя, то есть на 1.5/16 = 0.09375 блока, и теперь стоит выше
-     * геометрической середины намеренно.
-     * <p>
-     * Вычитается <b>после</b> масштаба: сдвиг остаётся в координатах модели и
-     * уезжает вместе с ней, потому что PoseStack домножает матрицу справа.
-     */
     private static final float MODEL_CENTER_Y = 0.23515F;
-
-    /**
-     * Оборотов в секунду вокруг собственной оси.
-     * <p>
-     * Граната в полёте крутится, и без этого она летела бы задом наперёд и не
-     * читалась бы как летящая. Точная физика вращения из броска не
-     * восстанавливается, да и не нужна: у ударной гранаты форма почти
-     * осесимметричная, важно лишь что кадр меняется.
-     */
     private static final float SPIN_DEGREES_PER_SECOND = 220.0F;
 
     public GrenadeIfGltfRenderer(EntityRendererProvider.Context renderManager) {
@@ -79,8 +34,6 @@ public class GrenadeIfGltfRenderer extends EntityRenderer<GrenadeIfProjectileEnt
 
     @Override
     public ResourceLocation getTextureLocation(GrenadeIfProjectileEntity entity) {
-        // Текстура живёт внутри glTF и подставляется HEX Render'ом из атласа
-        // вариантов по типу гранаты.
         return ResourceLocation.withDefaultNamespace("missingno");
     }
 
@@ -102,7 +55,7 @@ public class GrenadeIfGltfRenderer extends EntityRenderer<GrenadeIfProjectileEnt
         }
 
         var type = GrenadeIfVariants.typeOf(entity);
-        var model = GrenadeIfVariants.model(type);
+        GltfModelAsset model = ModelRegistry.fetch(GrenadeIfVariants.modelIdOf(type));
         if (model == null) {
             return;
         }
@@ -122,27 +75,26 @@ public class GrenadeIfGltfRenderer extends EntityRenderer<GrenadeIfProjectileEnt
         poseStack.mulPose(Axis.XP.rotationDegrees(renderPitch));
         poseStack.mulPose(Axis.ZP.rotationDegrees(renderRoll));
 
-        // Смещение центра вращения модели: применяется ПОСЛЕ вращения в PoseStack
-        // (то есть ДО вращения вершин модели), чтобы модель крутилась строго вокруг заданной оси.
+        // Смещение центра вращения модели
         poseStack.translate(0.0F, -MODEL_CENTER_Y, 0.0F);
 
-        if (com.hex.hexrender.direct.HexIrisBridge.hasActiveShaders()) {
-            com.hex.hexrender.direct.HexVanillaRenderer.renderVanilla(
-                    model,
-                    GrenadeIfVariants.hiddenPin(type),
-                    0.0F,
-                    poseStack,
-                    bufferSource,
-                    packedLight,
-                    OverlayTexture.NO_OVERLAY,
-                    0xFFFFFFFF,
-                    com.hex.hexrender.texture.VariantUv.NONE,
-                    com.hex.hexrender.direct.TextureSlots.NONE);
-        } else {
-            HexDirectRenderer.renderModel(model, GrenadeIfVariants.hiddenPin(type), 0.0F,
-                    poseStack.last().pose(), packedLight, OverlayTexture.NO_OVERLAY, 0xFFFFFFFF,
-                    DirectPass.LEVEL);
+        Matrix4f[] palette = null;
+        if (model.jointCount() > 0) {
+            palette = model.newPalette();
+            // Скрываем кость чеки "pin"
+            model.evaluatePose(null, 0.0F, palette, "pin");
         }
+
+        ModelSkinningRenderer.renderModel(
+                model,
+                palette,
+                poseStack,
+                bufferSource,
+                packedLight,
+                OverlayTexture.NO_OVERLAY,
+                0xFFFFFFFF,
+                null
+        );
 
         poseStack.popPose();
     }

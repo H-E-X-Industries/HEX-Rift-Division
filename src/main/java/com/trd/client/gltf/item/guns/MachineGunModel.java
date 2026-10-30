@@ -4,10 +4,10 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.logging.LogUtils;
-import com.hex.hexrender.gltf.HexGltfModel;
-import com.hex.hexrender.gltf.GltfAnimation;
-import com.hex.hexrender.gltf.GltfPose;
-import com.hex.hexrender.gltf.NodeTable;
+import com.hex.hexrender.loader.GltfModelAsset;
+import com.hex.hexrender.motion.SkeletalAnimation;
+import com.hex.hexrender.skeleton.SocketLocator;
+
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
@@ -240,7 +240,7 @@ public final class MachineGunModel {
      *                нет, берётся {@link #DEFAULT_MUZZLE_BONE}
      * @return мировая точка дула либо {@code null}, если кость не нашлась
      */
-    public static Vec3 worldMuzzle(HexGltfModel model, @Nullable GltfAnimation clip, float seconds,
+    public static Vec3 worldMuzzle(GltfModelAsset model, @Nullable SkeletalAnimation clip, float seconds,
                                    @Nullable String locator, Camera camera) {
         if (model == null || camera == null || !itemMatrixSeen) return null;
 
@@ -262,78 +262,33 @@ public final class MachineGunModel {
     private static boolean warned;
 
     @Nullable
-    private static Vec3 computeMuzzle(HexGltfModel model, GltfAnimation clip, float seconds,
+    private static Vec3 computeMuzzle(GltfModelAsset model, @Nullable SkeletalAnimation clip, float seconds,
                                       @Nullable String locator, Camera camera) {
-        int slot = slotOf(model, locator);
-        if (slot < 0) {
-            return null;
+        String targetBone = locator != null && !locator.isEmpty() ? locator : muzzleBone();
+        int node = model.skeleton().findNodeIndex(targetBone);
+        if (node < 0) {
+            node = model.skeleton().findNodeIndex(DEFAULT_MUZZLE_BONE);
         }
 
-        // Палитра заполняется матрицами нод в системе координат модели: compose
-        // проходит по evaluationOrder() и домножает родителей, то есть на выходе
-        // мировая матрица ноды, а не её локальная.
-        //
-        // Элементы массива обязаны существовать. compose пишет в них через
-        // NodeTable#localTransform(node, out), и в массиве из null он падает на
-        // первой же кости с NullPointerException — а worldMuzzle глотает
-        // исключение и отдаёт null. Так локатор дула не работал никогда: точка
-        // вылета молча уезжала на серверную формулу.
-        //
-        // Клип может быть null — это не поломка, а поза покоя, и evaluate её
-        // обрабатывает сам (просто не применяет анимацию). Покой нужен не
-        // реже, чем клип: анимация выстрела живёт доли секунды, а выстрел
-        // клиент шлёт каждый тик, и в паузах между клипами точка вылета была бы
-        // недоступна. Именно из-за этого пушка при вертикальном выстреле
-        // вылетала из блока, в котором стоит игрок.
-        //
-        // Размер — именно layout().size(), а НЕ model.newPalette(): последний
-        // sized по jointCount(), то есть по числу суставов скина. У пушки с
-        // четырьмя суставами и пятью костями он на кость короче, и GltfPose при
-        // записи в палитру уходил за её конец.
-        Matrix4f[] palette = new Matrix4f[model.layout().size()];
-        for (int i = 0; i < palette.length; i++) {
-            palette[i] = new Matrix4f();
-        }
-        GltfPose.evaluate(model.layout(), clip, seconds, palette);
-
-        if (slot >= palette.length) {
-            return null;
+        Matrix4f boneGlobal = new Matrix4f();
+        if (node >= 0) {
+            model.computeNodeGlobal(node, clip, seconds, boneGlobal);
         }
 
-        Vector4f modelSpace = new Vector4f(muzzleOffset.x(), muzzleOffset.y(), muzzleOffset.z(), 1.0F);
-        modelSpace.mul(palette[slot]);
-
-        Vector4f world = modelSpace.mul(ITEM_MATRIX);
-        if (world.w() == 0.0F) {
-            return null;
+        Vector3f offset = model.socket(MUZZLE_KEY);
+        if (offset == null) {
+            offset = muzzleOffset;
         }
 
-        // Матрица предметного рендера уже повёрнута камерой, но не сдвинута на
-        // её позицию: координаты в ней камеро-относительные.
-        return new Vec3(
-                world.x() / world.w() + camera.getPosition().x,
-                world.y() / world.w() + camera.getPosition().y,
-                world.z() / world.w() + camera.getPosition().z
-        );
+        return SocketLocator.computeWorldPositionWithCamera(ITEM_MATRIX, boneGlobal, offset, camera.getPosition());
     }
 
-    /**
-     * Ищет кость локатора: сперва имя из блокбенчовского локатора, потом
-     * заданное в {@code trd_muzzle}, потом ствол по умолчанию.
-     * <p>
-     * Локатор в Blockbench — пустая кость, и в glTF она попадает не всегда.
-     * Без цепочки вспышка просто не появилась бы там, где локатор не доехал.
-     */
-    private static int slotOf(HexGltfModel model, @Nullable String locator) {
-        NodeTable table = model.layout().nodeTable();
-        int size = model.layout().size();
-
+    private static int slotOf(GltfModelAsset model, @Nullable String locator) {
         if (locator != null && !locator.isEmpty()) {
-            int slot = table.slotOfName(locator);
-            if (slot >= 0 && slot < size) return slot;
+            int slot = model.skeleton().findNodeIndex(locator);
+            if (slot >= 0) return slot;
         }
-
-        int slot = table.slotOfName(muzzleBone());
-        return slot >= 0 && slot < size ? slot : -1;
+        int slot = model.skeleton().findNodeIndex(muzzleBone());
+        return slot >= 0 ? slot : -1;
     }
 }

@@ -122,8 +122,11 @@ dependencies {
     // 2. TerraBlender (NeoForge 1.21.1)
     implementation "com.github.glitchfiend:TerraBlender-neoforge:1.21.1-4.1.0.8"
 
-    // 3. Flywheel (NeoForge 1.21.1) - compileOnly as HexRender provides it via jarJar
-    compileOnly "dev.engine-room.flywheel:flywheel-neoforge-1.21.1:1.0.6-44"
+    // 3. Flywheel (NeoForge 1.21.1)
+    implementation "dev.engine-room.flywheel:flywheel-neoforge-1.21.1:1.0.6-44"
+    jarJar("dev.engine-room.flywheel:flywheel-neoforge-1.21.1:1.0.6-44") {
+        transitive = false
+    }
 
     // 4. HexRender (bundled via Jar-in-Jar)
     implementation name: 'hexrender', version: '1.0.0'

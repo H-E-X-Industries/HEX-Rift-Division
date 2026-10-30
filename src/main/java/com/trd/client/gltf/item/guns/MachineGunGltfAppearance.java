@@ -1,15 +1,14 @@
 package com.trd.client.gltf.item.guns;
 
+import com.hex.hexrender.client.ItemModelDescriptor;
+import com.hex.hexrender.loader.GltfModelAsset;
+import com.hex.hexrender.core.ModelRegistry;
+import com.hex.hexrender.motion.SkeletalAnimation;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.trd.client.overlay.MachineGunScope;
 import com.trd.item.weapons.guns.MachineGunClientAnim;
 import com.trd.main.MainRegistry;
-import com.hex.hexrender.asset.HexModels;
-import com.hex.hexrender.direct.ItemAppearance;
-import com.hex.hexrender.gltf.HexGltfModel;
-import com.hex.hexrender.gltf.GltfAnimation;
-import com.hex.hexrender.render.Vanilla;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
@@ -33,7 +32,7 @@ import net.minecraft.world.item.ItemStack;
  * в инвентаре, и в хотбаре, и на полке в рамке, и в голове. Вне рук возвращается
  * исходная поза модели — см. {@link #isHand}.
  */
-public class MachineGunGltfAppearance implements ItemAppearance {
+public class MachineGunGltfAppearance implements ItemModelDescriptor {
 
     private static final ResourceLocation MODEL =
             ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "models/item/ap_17.gltf");
@@ -58,14 +57,14 @@ public class MachineGunGltfAppearance implements ItemAppearance {
     }
 
     @Override
-    public HexGltfModel model(ItemStack stack, ItemDisplayContext context) {
+    public GltfModelAsset model(ItemStack stack, ItemDisplayContext context) {
         // Пока открыт прицел, оружие от первого лица не рисуется: в круге
         // оптики видна только мушка, а ствол и лента закрывали бы обзор.
         if (context.firstPerson() && MachineGunScope.isScoped()) {
             return null;
         }
 
-        HexGltfModel model = HexModels.fetch(MODEL);
+        GltfModelAsset model = ModelRegistry.fetch(MODEL);
         if (model != null) {
             MachineGunClientAnim.syncDurations(model);
         }
@@ -73,13 +72,13 @@ public class MachineGunGltfAppearance implements ItemAppearance {
     }
 
     @Override
-    public GltfAnimation clip(ItemStack stack, ItemDisplayContext context) {
+    public SkeletalAnimation clip(ItemStack stack, ItemDisplayContext context) {
         // Не в руке — исходная поза модели, без анимации.
         if (!isHand(context)) {
             return null;
         }
 
-        HexGltfModel model = model(stack, context);
+        GltfModelAsset model = model(stack, context);
         if (model == null) return null;
 
         String current = MachineGunClientAnim.current();
@@ -125,7 +124,7 @@ public class MachineGunGltfAppearance implements ItemAppearance {
             return;
         }
 
-        float partialTick = Vanilla.partialTick();
+        float partialTick = mc.getTimer().getGameTimeDeltaPartialTick(false);
         float f = player.walkDist - player.walkDistO;
         float f1 = -(player.walkDist + f * partialTick);
         float f2 = Mth.lerp(partialTick, player.oBob, player.bob);

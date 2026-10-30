@@ -1,8 +1,8 @@
 package com.trd.item.tools.cast_pickaxes;
 
 import com.trd.main.MainRegistry;
-import com.hex.hexrender.gltf.HexGltfModel;
-import com.hex.hexrender.gltf.GltfAnimation;
+import com.hex.hexrender.loader.GltfModelAsset;
+import com.hex.hexrender.motion.SkeletalAnimation;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
@@ -142,14 +142,14 @@ public final class CastPickaxeClientAnim {
      * <p>Только с клиента: {@link HexGltfModel} живёт в HEX Render, на
      * сервере той нет.
      */
-    public static void syncDurations(@Nullable HexGltfModel model) {
+    public static void syncDurations(@Nullable GltfModelAsset model) {
         if (model == null) return;
 
-        GltfAnimation charging = model.animation(CHARGING);
+        SkeletalAnimation charging = model.animation(CHARGING);
         if (charging != null && charging.duration() > 0.0F) {
             chargingSeconds = charging.duration();
         }
-        GltfAnimation hit = model.animation(HIT);
+        SkeletalAnimation hit = model.animation(HIT);
         if (hit != null && hit.duration() > 0.0F) {
             hitSeconds = hit.duration();
             hitTicks = hit.duration() * 20.0F;
