@@ -1,0 +1,7 @@
+{
+    "parent": "trd:block/fluorescent_lamp",
+    "textures": {
+        "0": "trd:block/fluorescent_lamp_broken",
+        "particle": "trd:block/fluorescent_lamp_broken"
+    }
+}

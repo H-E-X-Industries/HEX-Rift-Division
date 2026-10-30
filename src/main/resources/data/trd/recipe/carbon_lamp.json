@@ -1,0 +1,42 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "C": [
+      {
+        "item": "minecraft:charcoal"
+      },
+      {
+        "item": "minecraft:coal"
+      }
+    ],
+    "G": [
+      {
+        "item": "minecraft:glass"
+      },
+      {
+        "item": "minecraft:glass_bottle"
+      }
+    ],
+    "I": [
+      {
+        "item": "trd:industrial_copper_wire"
+      },
+      {
+        "item": "minecraft:copper_ingot"
+      },
+      {
+        "item": "minecraft:iron_nugget"
+      }
+    ]
+  },
+  "pattern": [
+    " G ",
+    " C ",
+    " I "
+  ],
+  "result": {
+    "count": 1,
+    "id": "trd:carbon_lamp"
+  }
+}

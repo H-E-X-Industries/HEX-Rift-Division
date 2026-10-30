@@ -13,6 +13,7 @@ import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
 import net.minecraft.world.level.storage.loot.functions.ApplyBonusCount;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
@@ -85,22 +86,20 @@ public class ModBlockLootTableProvider extends net.minecraft.data.loot.BlockLoot
         registerOreWithMultipleDrops(ModBlocks.DOLOMITE, ModItems.DOLOMITE_CHUNK, fortune);
         registerOreWithMultipleDrops(ModBlocks.SULFUR_CLUSTER, ModItems.SULFUR, fortune);
 
-        // Обугленное бревно: в 1.20.1 провайдер содержал charcoal+Silk Touch, НО закоммиченный
-        // вывод датагена был простым dropSelf, и ForgeGradle 1.20.1 по умолчанию включал
-        // src/generated/resources в ресурсы — то есть в игре отдавался именно простой дроп.
-        // Поэтому WASTE_LOG НЕ добавляется в exceptions и уходит в общий dropSelf ниже:
-        // так датаген даёт ровно ту таблицу, которую 1.20.1 реально отдавал в игре.
-        // Чтобы вернуть charcoal-поведение из исходника провайдера 1.20.1, раскомментируй блок
-        // ниже — тогда бревно начнёт рассыпаться в 1-3 угля (с Silk Touch — само бревно).
-        /*
-        this.add(ModBlocks.WASTE_LOG.get(), createSilkTouchDispatchTable(ModBlocks.WASTE_LOG.get(),
-                this.applyExplosionDecay(ModBlocks.WASTE_LOG.get(),
-                        LootItem.lootTableItem(Items.CHARCOAL)
-                                .apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 3.0F)))
-                                .apply(ApplyBonusCount.addOreBonusCount(fortune)))));
-        exceptions.add(ModBlocks.WASTE_LOG.get());
-        */
+        // --- ПІДСИСТЕМА ОСВІТЛЕННЯ ---
+        // Згаслий настінний факел дропає предмет згаслого факела
+        this.add(ModBlocks.UNLIT_WALL_TORCH.get(), this.createSingleItemTable(ModItems.UNLIT_TORCH.get()));
+        exceptions.add(ModBlocks.UNLIT_WALL_TORCH.get());
 
+        // Світильники мають динамічний дроп (патрон + лампа з актуальним LampComponent) через getDrops()
+        this.add(ModBlocks.CARBON_LAMP.get(), LootTable.lootTable());
+        this.add(ModBlocks.TUNGSTEN_LAMP.get(), LootTable.lootTable());
+        this.add(ModBlocks.FLUORESCENT_LAMP.get(), LootTable.lootTable());
+        this.add(ModBlocks.LED_LAMP.get(), LootTable.lootTable());
+        exceptions.add(ModBlocks.CARBON_LAMP.get());
+        exceptions.add(ModBlocks.TUNGSTEN_LAMP.get());
+        exceptions.add(ModBlocks.FLUORESCENT_LAMP.get());
+        exceptions.add(ModBlocks.LED_LAMP.get());
 
         // --- ДЕФОЛТ ДЛЯ ВСЕХ ОСТАЛЬНЫХ БЛОКОВ ---
         for (DeferredHolder<Block, ? extends Block> entry : ModBlocks.BLOCKS.getEntries()) {

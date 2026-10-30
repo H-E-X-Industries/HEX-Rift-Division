@@ -132,6 +132,17 @@ public class ModCapabilities {
                 (be, side) -> be.getEnergyReceiver(side)
         );
 
+        event.registerBlockEntity(
+                ENERGY_RECEIVER,
+                com.trd.block.entity.ModBlockEntities.SOCKET_BE.get(),
+                (be, side) -> be.getEnergyReceiver(side)
+        );
+        event.registerBlockEntity(
+                ENERGY_RECEIVER,
+                com.trd.block.entity.ModBlockEntities.FLOODLIGHT_BE.get(),
+                (be, side) -> be.getEnergyReceiver(side)
+        );
+
         // IEnergyConnector
         event.registerBlockEntity(
                 ENERGY_CONNECTOR,
@@ -228,6 +239,17 @@ public class ModCapabilities {
                 (be, side) -> be.getEnergyConnector(side)
         );
 
+        event.registerBlockEntity(
+                ENERGY_CONNECTOR,
+                com.trd.block.entity.ModBlockEntities.SOCKET_BE.get(),
+                (be, side) -> be.getEnergyConnector(side)
+        );
+        event.registerBlockEntity(
+                ENERGY_CONNECTOR,
+                com.trd.block.entity.ModBlockEntities.FLOODLIGHT_BE.get(),
+                (be, side) -> be.getEnergyConnector(side)
+        );
+
         // Forge Energy Block Capability
         event.registerBlockEntity(
                 net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.BLOCK,
@@ -238,6 +260,16 @@ public class ModCapabilities {
                 net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.BLOCK,
                 com.trd.block.entity.ModBlockEntities.CONVERTER_BE.get(),
                 (be, side) -> be.getFeCapabilityProvider().getCapability(side)
+        );
+        event.registerBlockEntity(
+                net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.BLOCK,
+                com.trd.block.entity.ModBlockEntities.SOCKET_BE.get(),
+                (be, side) -> be.getEnergyStorage(side)
+        );
+        event.registerBlockEntity(
+                net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.BLOCK,
+                com.trd.block.entity.ModBlockEntities.FLOODLIGHT_BE.get(),
+                (be, side) -> be.getEnergyStorage(side)
         );
 
         // Forge Item Handler Block Capability

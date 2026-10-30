@@ -48,6 +48,13 @@ public class ModClientSetup {
     }
 
     @SubscribeEvent
+    public static void onRegisterAdditional(net.neoforged.neoforge.client.event.ModelEvent.RegisterAdditional event) {
+        event.register(net.minecraft.client.resources.model.ModelResourceLocation.standalone(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("trd", "block/floodlight_base")));
+        event.register(net.minecraft.client.resources.model.ModelResourceLocation.standalone(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("trd", "block/floodlight_yoke")));
+        event.register(net.minecraft.client.resources.model.ModelResourceLocation.standalone(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("trd", "block/floodlight_drum")));
+        event.register(net.minecraft.client.resources.model.ModelResourceLocation.standalone(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("trd", "block/floodlight_drum_lit")));
+    }
+    @SubscribeEvent
     public static void registerRenderers(net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.MACHINE_BATTERY_BE.get(), com.trd.client.gecko.block.energy.MachineBatteryRenderer::new);
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.CONNECTOR_BE.get(), com.trd.client.renderer.ConnectorRenderer::new);
@@ -74,6 +81,8 @@ public class ModClientSetup {
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.STATOR_BE.get(), com.trd.client.render.ber.StatorRenderer::new);
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.DROBITEL_BE.get(), com.trd.client.render.ber.DrobitelRenderer::new);
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.SHAFT_BE.get(), com.trd.client.render.ber.ShaftRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.FLOODLIGHT_BE.get(), com.trd.client.render.ber.FloodlightBlockEntityRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.SOCKET_BE.get(), com.trd.client.render.ber.SocketBlockEntityRenderer::new);
 
         // Пять текстур пули сшиваются в один атлас вариантов. Звать надо до
         // первого выстрела, иначе первые пули просто не рисуются: модель
@@ -583,6 +592,16 @@ public class ModClientSetup {
     public static void onClientSetup(FMLClientSetupEvent event) {
         ModModels.init();
         com.trd.client.render.IrisShadowBridge.init();
+        event.enqueueWork(() -> {
+            net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(com.trd.block.basic.ModBlocks.UNLIT_TORCH.get(), net.minecraft.client.renderer.RenderType.cutout());
+            net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(com.trd.block.basic.ModBlocks.UNLIT_WALL_TORCH.get(), net.minecraft.client.renderer.RenderType.cutout());
+            net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(com.trd.block.basic.ModBlocks.EMPTY_SOCKET.get(), net.minecraft.client.renderer.RenderType.cutout());
+            net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(com.trd.block.basic.ModBlocks.CARBON_LAMP.get(), net.minecraft.client.renderer.RenderType.cutout());
+            net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(com.trd.block.basic.ModBlocks.TUNGSTEN_LAMP.get(), net.minecraft.client.renderer.RenderType.cutout());
+            net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(com.trd.block.basic.ModBlocks.FLUORESCENT_LAMP.get(), net.minecraft.client.renderer.RenderType.cutout());
+            net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(com.trd.block.basic.ModBlocks.LED_LAMP.get(), net.minecraft.client.renderer.RenderType.cutout());
+            net.minecraft.client.renderer.ItemBlockRenderTypes.setRenderLayer(com.trd.block.basic.ModBlocks.FLOODLIGHT.get(), net.minecraft.client.renderer.RenderType.cutout());
+        });
 
         net.minecraft.client.renderer.item.ItemProperties.register(com.trd.item.ModItems.PIPETTE.get(),
                 net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(com.trd.main.MainRegistry.MOD_ID, "filled"),

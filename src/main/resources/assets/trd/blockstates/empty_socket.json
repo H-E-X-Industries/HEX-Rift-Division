@@ -1,0 +1,30 @@
+{
+    "variants":  {
+                     "facing=up":  {
+                                       "model":  "trd:block/empty_socket"
+                                   },
+                     "facing=down":  {
+                                         "model":  "trd:block/empty_socket",
+                                         "x":  180
+                                     },
+                     "facing=north":  {
+                                          "model":  "trd:block/empty_socket",
+                                          "x":  90
+                                      },
+                     "facing=south":  {
+                                          "model":  "trd:block/empty_socket",
+                                          "x":  90,
+                                          "y":  180
+                                      },
+                     "facing=west":  {
+                                         "model":  "trd:block/empty_socket",
+                                         "x":  90,
+                                         "y":  270
+                                     },
+                     "facing=east":  {
+                                         "model":  "trd:block/empty_socket",
+                                         "x":  90,
+                                         "y":  90
+                                     }
+                 }
+}

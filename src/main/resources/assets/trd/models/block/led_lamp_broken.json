@@ -1,0 +1,7 @@
+{
+    "parent": "trd:block/led_lamp",
+    "textures": {
+        "0": "trd:block/led_lamp_broken",
+        "particle": "trd:block/led_lamp_broken"
+    }
+}

@@ -61,6 +61,12 @@ public final class RoomClimateHelper {
             if (isLargeRoom) return null;
             return new ThermalSourceInfo(18.0f, 0.4f, false);
         }
+        if (state.is(com.trd.block.basic.ModBlocks.CARBON_LAMP.get())
+                && state.getValue(com.trd.block.basic.industrial.lighting.ElectricLampBlock.LIT)
+                && !state.getValue(com.trd.block.basic.industrial.lighting.ElectricLampBlock.BROKEN)) {
+            if (isLargeRoom) return null;
+            return new ThermalSourceInfo(21.0f, 0.5f, false);
+        }
         if (state.is(Blocks.BLAST_FURNACE) && state.getValue(AbstractFurnaceBlock.LIT)) {
             return new ThermalSourceInfo(45.0f, 5.0f, false);
         }

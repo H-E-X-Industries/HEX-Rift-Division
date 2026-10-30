@@ -1,0 +1,7 @@
+{
+    "parent": "trd:block/tungsten_lamp",
+    "textures": {
+        "0": "trd:block/tungsten_lamp_broken",
+        "particle": "trd:block/tungsten_lamp_broken"
+    }
+}

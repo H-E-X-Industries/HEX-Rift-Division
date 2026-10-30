@@ -279,9 +279,9 @@ public class ModBlocks {
             () -> new Block(BlockBehaviour.Properties.of()
                     .strength(4.0F, 54.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
 
-    // ═══════════════════════════════════════════════════════
+    // =======================================================
     // БЕТОННАЯ ЛИНЕЙКА (строительные блоки)
-    // ═══════════════════════════════════════════════════════
+    // =======================================================
 
     public static final DeferredBlock<Block> CONCRETE_LINE = registerBlock("concrete_panel",
             () -> new Block(BlockBehaviour.Properties.of()
@@ -425,9 +425,9 @@ public class ModBlocks {
     public static final DeferredBlock<net.minecraft.world.level.block.SlabBlock> CONCRETE_REINFORCED_HEAVY_SLAB = registerBlock("concrete_textured_dark_slab",
             () -> new net.minecraft.world.level.block.SlabBlock(BlockBehaviour.Properties.ofFullCopy(CONCRETE_REINFORCED_HEAVY.get())));
 
-    // ═══════════════════════════════════════════════════════
+    // =======================================================
     // СБОРНЫЕ / АРМИРОВАННЫЕ БЛОКИ
-    // ═══════════════════════════════════════════════════════
+    // =======================================================
 
     public static final DeferredBlock<Block> CONCRETE_CONSTRUCT_BLOCK = registerBlock("concrete_reinforced_block",
             () -> new Block(BlockBehaviour.Properties.of()
@@ -456,9 +456,9 @@ public class ModBlocks {
     public static final DeferredBlock<net.minecraft.world.level.block.SlabBlock> STEEL_CONSTRUCT_BLOCK_REINFORCED_SLAB = registerBlock("steel_construct_block_reinforced_slab",
             () -> new net.minecraft.world.level.block.SlabBlock(BlockBehaviour.Properties.ofFullCopy(STEEL_CONSTRUCT_BLOCK_REINFORCED.get())));
 
-    // ═══════════════════════════════════════════════════════
+    // =======================================================
     // МИНЕРАЛЫ / КАМНИ / ПЛИТКА
-    // ═══════════════════════════════════════════════════════
+    // =======================================================
 
     public static final DeferredBlock<Block> MINERAL_BLOCK2 = registerBlock("deep_sapphire_block",
             () -> new Block(BlockBehaviour.Properties.of()
@@ -484,9 +484,9 @@ public class ModBlocks {
             () -> new Block(BlockBehaviour.Properties.of()
                     .strength(2.5F, 7.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
 
-    // ═══════════════════════════════════════════════════════
+    // =======================================================
     // МЕТАЛЛЫ / СТАЛЬ / БАЛКИ
-    // ═══════════════════════════════════════════════════════
+    // =======================================================
 
     public static final DeferredBlock<Block> DECO_STEEL = registerBlock("deco_steel",
             () -> new Block(BlockBehaviour.Properties.of()
@@ -528,6 +528,85 @@ public class ModBlocks {
             () -> new com.trd.block.basic.deco.WireFenceAltBlock(BlockBehaviour.Properties.of()
                     .strength(2F, 6.0F).sound(net.minecraft.world.level.block.SoundType.METAL).requiresCorrectToolForDrops().noOcclusion().forceSolidOn()));
 
+    // =======================================================
+    // LIGHTING SYSTEM
+    // =======================================================
+    public static final DeferredBlock<com.trd.block.basic.industrial.lighting.EmptySocketBlock> EMPTY_SOCKET =
+            BLOCKS.register("empty_socket", () -> new com.trd.block.basic.industrial.lighting.EmptySocketBlock(
+                    BlockBehaviour.Properties.of()
+                            .strength(1.5f, 4.0f)
+                            .sound(net.minecraft.world.level.block.SoundType.COPPER)
+                            .noOcclusion()
+                            .requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<com.trd.block.basic.industrial.lighting.CarbonLampBlock> CARBON_LAMP =
+            BLOCKS.register("carbon_lamp", () -> new com.trd.block.basic.industrial.lighting.CarbonLampBlock(
+                    BlockBehaviour.Properties.of()
+                            .strength(1.0f, 2.0f)
+                            .sound(net.minecraft.world.level.block.SoundType.GLASS)
+                            .noOcclusion()
+                            .randomTicks()
+                            .requiresCorrectToolForDrops(),
+                    () -> com.trd.item.ModItems.CARBON_LAMP.get(),
+                    () -> EMPTY_SOCKET.get()));
+
+    public static final DeferredBlock<com.trd.block.basic.industrial.lighting.TungstenLampBlock> TUNGSTEN_LAMP =
+            BLOCKS.register("tungsten_lamp", () -> new com.trd.block.basic.industrial.lighting.TungstenLampBlock(
+                    BlockBehaviour.Properties.of()
+                            .strength(1.0f, 2.0f)
+                            .sound(net.minecraft.world.level.block.SoundType.GLASS)
+                            .noOcclusion()
+                            .randomTicks()
+                            .requiresCorrectToolForDrops(),
+                    () -> com.trd.item.ModItems.TUNGSTEN_LAMP.get(),
+                    () -> EMPTY_SOCKET.get()));
+
+    public static final DeferredBlock<com.trd.block.basic.industrial.lighting.FluorescentLampBlock> FLUORESCENT_LAMP =
+            BLOCKS.register("fluorescent_lamp", () -> new com.trd.block.basic.industrial.lighting.FluorescentLampBlock(
+                    BlockBehaviour.Properties.of()
+                            .strength(1.0f, 2.0f)
+                            .sound(net.minecraft.world.level.block.SoundType.GLASS)
+                            .noOcclusion()
+                            .randomTicks()
+                            .requiresCorrectToolForDrops(),
+                    () -> com.trd.item.ModItems.FLUORESCENT_LAMP.get(),
+                    () -> EMPTY_SOCKET.get()));
+
+    public static final DeferredBlock<com.trd.block.basic.industrial.lighting.LedLampBlock> LED_LAMP =
+            BLOCKS.register("led_lamp", () -> new com.trd.block.basic.industrial.lighting.LedLampBlock(
+                    BlockBehaviour.Properties.of()
+                            .strength(1.0f, 2.0f)
+                            .sound(net.minecraft.world.level.block.SoundType.GLASS)
+                            .noOcclusion()
+                            .randomTicks()
+                            .requiresCorrectToolForDrops(),
+                    () -> com.trd.item.ModItems.LED_LAMP.get(),
+                    () -> EMPTY_SOCKET.get()));
+
+    public static final DeferredBlock<com.trd.block.basic.industrial.lighting.FloodlightBlock> FLOODLIGHT =
+            BLOCKS.register("floodlight", () -> new com.trd.block.basic.industrial.lighting.FloodlightBlock(
+                    BlockBehaviour.Properties.of()
+                            .strength(3.0f, 6.0f)
+                            .sound(net.minecraft.world.level.block.SoundType.METAL)
+                            .requiresCorrectToolForDrops()));
+
+    public static final DeferredBlock<com.trd.block.basic.industrial.lighting.UnlitTorchBlock> UNLIT_TORCH =
+            BLOCKS.register("unlit_torch", () -> new com.trd.block.basic.industrial.lighting.UnlitTorchBlock(
+                    BlockBehaviour.Properties.of()
+                            .noCollission()
+                            .instabreak()
+                            .sound(net.minecraft.world.level.block.SoundType.WOOD)
+                            .pushReaction(net.minecraft.world.level.material.PushReaction.DESTROY)));
+
+    public static final DeferredBlock<com.trd.block.basic.industrial.lighting.UnlitWallTorchBlock> UNLIT_WALL_TORCH =
+            BLOCKS.register("unlit_wall_torch", () -> new com.trd.block.basic.industrial.lighting.UnlitWallTorchBlock(
+                    BlockBehaviour.Properties.of()
+                            .noCollission()
+                            .instabreak()
+                            .sound(net.minecraft.world.level.block.SoundType.WOOD)
+                            .dropsLike(UNLIT_TORCH.get())
+                            .pushReaction(net.minecraft.world.level.material.PushReaction.DESTROY)));
+
     public static final DeferredBlock<com.trd.block.basic.deco.LampBlock> ROUND_LAMP = registerBlock("round_lamp",
             () -> new com.trd.block.basic.deco.LampBlock(BlockBehaviour.Properties.of()
                     .strength(6F, 60F)
@@ -543,9 +622,9 @@ public class ModBlocks {
                     .noOcclusion()
                     .noLootTable()));
 
-    // ═══════════════════════════════════════════════════════
+    // =======================================================
     // ДЕРЕВО
-    // ═══════════════════════════════════════════════════════
+    // =======================================================
 
     public static final DeferredBlock<Block> SEQUOIA_PLANKS = registerBlock("sequoia_planks",
             () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_PLANKS)
@@ -572,9 +651,9 @@ public class ModBlocks {
             () -> new net.minecraft.world.level.block.PressurePlateBlock(net.minecraft.world.level.block.state.properties.BlockSetType.DARK_OAK,
                     BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_PRESSURE_PLATE)));
 
-    // ═══════════════════════════════════════════════════════
+    // =======================================================
     // ВОРОНКА ВОДОРОДНОЙ ГРАНАТЫ И КОПОТЬ-ТИНТЫ (ExplosionHydrogen / ExplosionFire)
-    // ═══════════════════════════════════════════════════════
+    // =======================================================
 
     public static final DeferredBlock<net.minecraft.world.level.block.RotatedPillarBlock> WASTE_LOG = registerBlock("waste_log",
             () -> new net.minecraft.world.level.block.RotatedPillarBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.OAK_WOOD)
@@ -689,9 +768,9 @@ public class ModBlocks {
             () -> new com.trd.block.basic.direction.SideOBlock(
                     BlockBehaviour.Properties.of().strength(2.0F, 6.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
 
-    // ═══════════════════════════════════════════════════════
+    // =======================================================
     // РЕДСТОУН-РАДИО
-    // ═══════════════════════════════════════════════════════
+    // =======================================================
 
     public static final DeferredBlock<Block> REDSTONE_RADIO_TRANSMITTER = registerBlock("redstone_radio_transmitter",
             () -> new com.trd.block.basic.redstone.RedstoneRadioBlock(
@@ -748,9 +827,9 @@ public class ModBlocks {
     }
 
     static {
-        // ═══════════════════════════════════════════════════════
+        // =======================================================
         // БЕТОННАЯ ЛИНЕЙКА
-        // ═══════════════════════════════════════════════════════
+        // =======================================================
         registerExplosionTooltip(
                 CONCRETE, CONCRETE_STAIRS, CONCRETE_SLAB,
                 CONCRETE_MOSSY, CONCRETE_MOSSY_STAIRS, CONCRETE_MOSSY_SLAB,
@@ -768,9 +847,9 @@ public class ModBlocks {
                 STEEL_CONSTRUCT_BLOCK_REINFORCED, STEEL_CONSTRUCT_BLOCK_REINFORCED_SLAB, STEEL_CONSTRUCT_BLOCK_REINFORCED_STAIRS,
                 CONCRETE_IMPACT_RESISTANT);
 
-        // ═══════════════════════════════════════════════════════
+        // =======================================================
         // КИРПИЧИ / ПРОЧЕЕ
-        // ═══════════════════════════════════════════════════════
+        // =======================================================
         registerExplosionTooltip(
                 FIREBRICK_BLOCK, FIREBRICK_STAIRS, FIREBRICK_SLAB,
                 REINFORCEDBRICK_BLOCK, REINFORCEDBRICK_STAIRS, REINFORCEDBRICK_SLAB,

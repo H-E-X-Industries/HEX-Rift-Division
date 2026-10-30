@@ -1,0 +1,39 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "G": [
+      {
+        "item": "minecraft:glass"
+      },
+      {
+        "item": "minecraft:glass_pane"
+      }
+    ],
+    "I": [
+      {
+        "item": "trd:iron_plate"
+      },
+      {
+        "item": "minecraft:iron_ingot"
+      }
+    ],
+    "L": [
+      {
+        "item": "minecraft:glowstone_dust"
+      },
+      {
+        "item": "minecraft:quartz"
+      }
+    ]
+  },
+  "pattern": [
+    " G ",
+    " L ",
+    " I "
+  ],
+  "result": {
+    "count": 1,
+    "id": "trd:fluorescent_lamp"
+  }
+}

@@ -127,6 +127,13 @@ public class ModCreativeTabs {
                         output.accept(ModBlocks.WIRE_FENCE.get());
                         output.accept(ModBlocks.WIRE_FENCE_ALT.get());
                         output.accept(ModBlocks.ROUND_LAMP.get());
+                        output.accept(ModBlocks.EMPTY_SOCKET.get());
+                        output.accept(ModItems.CARBON_LAMP.get());
+                        output.accept(ModItems.TUNGSTEN_LAMP.get());
+                        output.accept(ModItems.FLUORESCENT_LAMP.get());
+                        output.accept(ModItems.LED_LAMP.get());
+                        output.accept(ModBlocks.FLOODLIGHT.get());
+                        output.accept(ModItems.UNLIT_TORCH.get());
 
                         output.accept(ModBlocks.STEEL_DOOR.get());
                         output.accept(ModBlocks.SEQUOIA_DOOR.get());
@@ -237,6 +244,15 @@ public class ModCreativeTabs {
                         output.accept(ModBlocks.CENTRIFUGE_CYLINDER.get());
 
                         //ЖИДКОСТИ
+                        // Lighting
+                        output.accept(ModBlocks.EMPTY_SOCKET.get());
+                        output.accept(ModItems.CARBON_LAMP.get());
+                        output.accept(ModItems.TUNGSTEN_LAMP.get());
+                        output.accept(ModItems.FLUORESCENT_LAMP.get());
+                        output.accept(ModItems.LED_LAMP.get());
+                        output.accept(ModBlocks.FLOODLIGHT.get());
+                        output.accept(ModItems.UNLIT_TORCH.get());
+                        
                         output.accept(ModBlocks.CORRUPTED_BARREL.get());
                         output.accept(ModBlocks.LEAKING_BARREL.get());
                         output.accept(ModBlocks.IRON_BARREL.get());

@@ -1,0 +1,32 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "G": {
+      "item": "minecraft:glass"
+    },
+    "R": [
+      {
+        "item": "trd:gold_wire"
+      },
+      {
+        "item": "trd:industrial_copper_wire"
+      },
+      {
+        "item": "minecraft:redstone"
+      }
+    ],
+    "T": {
+      "item": "trd:turret_chip"
+    }
+  },
+  "pattern": [
+    " G ",
+    " T ",
+    " R "
+  ],
+  "result": {
+    "count": 1,
+    "id": "trd:led_lamp"
+  }
+}

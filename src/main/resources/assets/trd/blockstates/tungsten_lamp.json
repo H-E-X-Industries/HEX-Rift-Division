@@ -1,0 +1,258 @@
+{
+    "multipart":  [
+                      {
+                          "when":  {
+                                       "facing":  "up"
+                                   },
+                          "apply":  {
+                                        "model":  "trd:block/empty_socket"
+                                    }
+                      },
+                      {
+                          "when":  {
+                                       "facing":  "down"
+                                   },
+                          "apply":  {
+                                        "model":  "trd:block/empty_socket",
+                                        "x":  180
+                                    }
+                      },
+                      {
+                          "when":  {
+                                       "facing":  "north"
+                                   },
+                          "apply":  {
+                                        "model":  "trd:block/empty_socket",
+                                        "x":  90
+                                    }
+                      },
+                      {
+                          "when":  {
+                                       "facing":  "south"
+                                   },
+                          "apply":  {
+                                        "model":  "trd:block/empty_socket",
+                                        "x":  90,
+                                        "y":  180
+                                    }
+                      },
+                      {
+                          "when":  {
+                                       "facing":  "west"
+                                   },
+                          "apply":  {
+                                        "model":  "trd:block/empty_socket",
+                                        "x":  90,
+                                        "y":  270
+                                    }
+                      },
+                      {
+                          "when":  {
+                                       "facing":  "east"
+                                   },
+                          "apply":  {
+                                        "model":  "trd:block/empty_socket",
+                                        "x":  90,
+                                        "y":  90
+                                    }
+                      },
+                      {
+                          "when":  {
+                                       "facing":  "up",
+                                       "broken":  "false",
+                                       "lit":  "false"
+                                   },
+                          "apply":  {
+                                        "model":  "trd:block/tungsten_lamp"
+                                    }
+                      },
+                      {
+                          "when":  {
+                                       "facing":  "down",
+                                       "broken":  "false",
+                                       "lit":  "false"
+                                   },
+                          "apply":  {
+                                        "model":  "trd:block/tungsten_lamp",
+                                        "x":  180
+                                    }
+                      },
+                      {
+                          "when":  {
+                                       "facing":  "north",
+                                       "broken":  "false",
+                                       "lit":  "false"
+                                   },
+                          "apply":  {
+                                        "model":  "trd:block/tungsten_lamp",
+                                        "x":  90
+                                    }
+                      },
+                      {
+                          "when":  {
+                                       "facing":  "south",
+                                       "broken":  "false",
+                                       "lit":  "false"
+                                   },
+                          "apply":  {
+                                        "model":  "trd:block/tungsten_lamp",
+                                        "x":  90,
+                                        "y":  180
+                                    }
+                      },
+                      {
+                          "when":  {
+                                       "facing":  "west",
+                                       "broken":  "false",
+                                       "lit":  "false"
+                                   },
+                          "apply":  {
+                                        "model":  "trd:block/tungsten_lamp",
+                                        "x":  90,
+                                        "y":  270
+                                    }
+                      },
+                      {
+                          "when":  {
+                                       "facing":  "east",
+                                       "broken":  "false",
+                                       "lit":  "false"
+                                   },
+                          "apply":  {
+                                        "model":  "trd:block/tungsten_lamp",
+                                        "x":  90,
+                                        "y":  90
+                                    }
+                      },
+                      {
+                          "when":  {
+                                       "facing":  "up",
+                                       "broken":  "false",
+                                       "lit":  "true"
+                                   },
+                          "apply":  {
+                                        "model":  "trd:block/tungsten_lamp_lit"
+                                    }
+                      },
+                      {
+                          "when":  {
+                                       "facing":  "down",
+                                       "broken":  "false",
+                                       "lit":  "true"
+                                   },
+                          "apply":  {
+                                        "model":  "trd:block/tungsten_lamp_lit",
+                                        "x":  180
+                                    }
+                      },
+                      {
+                          "when":  {
+                                       "facing":  "north",
+                                       "broken":  "false",
+                                       "lit":  "true"
+                                   },
+                          "apply":  {
+                                        "model":  "trd:block/tungsten_lamp_lit",
+                                        "x":  90
+                                    }
+                      },
+                      {
+                          "when":  {
+                                       "facing":  "south",
+                                       "broken":  "false",
+                                       "lit":  "true"
+                                   },
+                          "apply":  {
+                                        "model":  "trd:block/tungsten_lamp_lit",
+                                        "x":  90,
+                                        "y":  180
+                                    }
+                      },
+                      {
+                          "when":  {
+                                       "facing":  "west",
+                                       "broken":  "false",
+                                       "lit":  "true"
+                                   },
+                          "apply":  {
+                                        "model":  "trd:block/tungsten_lamp_lit",
+                                        "x":  90,
+                                        "y":  270
+                                    }
+                      },
+                      {
+                          "when":  {
+                                       "facing":  "east",
+                                       "broken":  "false",
+                                       "lit":  "true"
+                                   },
+                          "apply":  {
+                                        "model":  "trd:block/tungsten_lamp_lit",
+                                        "x":  90,
+                                        "y":  90
+                                    }
+                      },
+                      {
+                          "when":  {
+                                       "facing":  "up",
+                                       "broken":  "true"
+                                   },
+                          "apply":  {
+                                        "model":  "trd:block/tungsten_lamp_broken"
+                                    }
+                      },
+                      {
+                          "when":  {
+                                       "facing":  "down",
+                                       "broken":  "true"
+                                   },
+                          "apply":  {
+                                        "model":  "trd:block/tungsten_lamp_broken",
+                                        "x":  180
+                                    }
+                      },
+                      {
+                          "when":  {
+                                       "facing":  "north",
+                                       "broken":  "true"
+                                   },
+                          "apply":  {
+                                        "model":  "trd:block/tungsten_lamp_broken",
+                                        "x":  90
+                                    }
+                      },
+                      {
+                          "when":  {
+                                       "facing":  "south",
+                                       "broken":  "true"
+                                   },
+                          "apply":  {
+                                        "model":  "trd:block/tungsten_lamp_broken",
+                                        "x":  90,
+                                        "y":  180
+                                    }
+                      },
+                      {
+                          "when":  {
+                                       "facing":  "west",
+                                       "broken":  "true"
+                                   },
+                          "apply":  {
+                                        "model":  "trd:block/tungsten_lamp_broken",
+                                        "x":  90,
+                                        "y":  270
+                                    }
+                      },
+                      {
+                          "when":  {
+                                       "facing":  "east",
+                                       "broken":  "true"
+                                   },
+                          "apply":  {
+                                        "model":  "trd:block/tungsten_lamp_broken",
+                                        "x":  90,
+                                        "y":  90
+                                    }
+                      }
+                  ]
+}

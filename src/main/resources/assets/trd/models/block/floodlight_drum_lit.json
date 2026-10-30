@@ -1,0 +1,7 @@
+{
+    "parent": "trd:block/floodlight_drum",
+    "textures": {
+        "0": "trd:block/floodlight_lit",
+        "particle": "trd:block/floodlight_lit"
+    }
+}

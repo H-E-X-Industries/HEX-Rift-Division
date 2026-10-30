@@ -26,6 +26,9 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.slf4j.Logger;
 import com.trd.api.energy.EnergyNetworkManager;
 import com.trd.api.energy.IEnergyConnector;
+import com.trd.block.basic.industrial.lighting.ElectricLampBlock;
+import com.trd.block.basic.industrial.lighting.EmptySocketBlock;
+import com.trd.block.basic.industrial.lighting.FloodlightBlock;
 import com.trd.block.entity.industrial.energy.WireBlockEntity;
 import com.trd.capability.ModCapabilities;
 
@@ -73,7 +76,6 @@ public class WireBlock extends BaseEntityBlock {
     @Override
     public VoxelShape getShape(BlockState pState, BlockGetter pLevel, BlockPos pPos, CollisionContext pContext) {
         VoxelShape shape = CORE_SHAPE;
-        // Мы используем PROPERTIES_MAP, который добавили выше
         for (Direction dir : Direction.values()) {
             if (pState.getValue(PROPERTIES_MAP.get(dir))) {
                 shape = Shapes.or(shape, ARM_SHAPES.get(dir));
@@ -84,10 +86,7 @@ public class WireBlock extends BaseEntityBlock {
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        // [🔥 БЫЛО: this.getConnectionState(context.getLevel(),
-        // context.getClickedPos())]
-        return this.getConnectionState(context.getLevel(), context.getClickedPos()); // [ОСТАВЬ КАК ЕСТЬ, мы меняем
-                                                                                     // getConnectionState]
+        return this.getConnectionState(context.getLevel(), context.getClickedPos());
     }
 
     @Override
@@ -96,10 +95,6 @@ public class WireBlock extends BaseEntityBlock {
         BooleanProperty property = getProperty(facing);
         boolean canConnect = canVisuallyConnectTo(level, facingPos, facing.getOpposite(), facingState);
 
-        // [🔥 УМНАЯ РЕАКЦИЯ НА СОСЕДЕЙ]
-        // Если визуально мы соединились (например, рядом только что поставили
-        // генератор),
-        // заставляем сеть немедленно проверить этот новый блок!
         if (!level.isClientSide() && !state.getValue(property) && canConnect) {
             EnergyNetworkManager.get((ServerLevel) level).addNode(facingPos);
             EnergyNetworkManager.get((ServerLevel) level).addNode(pos);
@@ -109,7 +104,6 @@ public class WireBlock extends BaseEntityBlock {
     }
 
     private BlockState getConnectionState(LevelAccessor level, BlockPos pos) {
-        // [🔥 ИЗМЕНЕНО: Мы также получаем и передаем BlockState соседа]
         return this.defaultBlockState()
                 .setValue(DOWN,
                         canVisuallyConnectTo(level, pos.relative(Direction.DOWN), Direction.UP,
@@ -156,7 +150,19 @@ public class WireBlock extends BaseEntityBlock {
             return sideFromNeighbor == facing.getOpposite();
         }
 
-        // 4.
+        // 4. Light fixtures and sockets (string-light effect): wire connects strictly to the base mount face
+        if (block instanceof EmptySocketBlock || block instanceof ElectricLampBlock) {
+            Direction facing = neighborState.getValue(EmptySocketBlock.FACING);
+            return sideFromNeighbor == facing.getOpposite();
+        }
+
+        // 5. Floodlight: wire connects strictly to the stationary mounting base face
+        if (block instanceof FloodlightBlock) {
+            Direction mountFace = neighborState.getValue(FloodlightBlock.MOUNT_FACE);
+            return sideFromNeighbor == mountFace.getOpposite();
+        }
+
+        // 6. Generic energy receivers and block entities
         BlockEntity be = world.getBlockEntity(neighborPos);
         if (be == null) {
             return false;

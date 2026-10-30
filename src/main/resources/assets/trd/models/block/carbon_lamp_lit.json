@@ -1,0 +1,7 @@
+{
+    "parent": "trd:block/carbon_lamp",
+    "textures": {
+        "0": "trd:block/carbon_lamp_lit",
+        "particle": "trd:block/carbon_lamp_lit"
+    }
+}

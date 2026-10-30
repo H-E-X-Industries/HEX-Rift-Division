@@ -1,0 +1,372 @@
+package com.trd.block.entity.industrial.lighting;
+
+import com.trd.api.components.LampComponent;
+import com.trd.api.components.ModDataComponents;
+import com.trd.api.energy.EnergyNetworkManager;
+import com.trd.api.energy.IEnergyConnector;
+import com.trd.api.energy.IEnergyReceiver;
+import com.trd.api.energy.LightEnergyStorage;
+import com.trd.block.basic.industrial.lighting.ElectricLampBlock;
+import com.trd.block.basic.industrial.lighting.FluorescentLampBlock;
+import com.trd.block.basic.industrial.lighting.LedLampBlock;
+import com.trd.block.basic.industrial.lighting.TungstenLampBlock;
+import com.trd.block.entity.ModBlockEntities;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * Energy block entity for lamp sockets and light fixtures.
+ * Handles single-face base port wire connections, zero internal storage accumulation
+ * (immediate reaction to power cutoffs), and realistic thermal inertia / starter flicker physics.
+ */
+public class SocketBlockEntity extends BlockEntity implements IEnergyReceiver, IEnergyConnector {
+
+    private long energyStored = 0L;
+    private long lastReceivedTick = -1L;
+    private float durability = 1.0f;
+    private boolean broken = false;
+
+    private int currentLightLevel = 0;
+    private int warmupTicks = 0;
+    private int cooldownTicks = 0;
+    private int flickerTicks = 0;
+
+    public SocketBlockEntity(BlockPos pos, BlockState state) {
+        super(ModBlockEntities.SOCKET_BE.get(), pos, state);
+    }
+
+    public float getDurability() {
+        return durability;
+    }
+
+    public void setDurability(float durability) {
+        this.durability = Math.max(0.0f, Math.min(1.0f, durability));
+        setChanged();
+    }
+
+    public boolean isBroken() {
+        return broken;
+    }
+
+    public void setBroken(boolean broken) {
+        this.broken = broken;
+        setChanged();
+    }
+
+    public long getConsumption() {
+        BlockState state = getBlockState();
+        if (state.getBlock() instanceof ElectricLampBlock lamp) {
+            return lamp.getConsumptionPerTick();
+        }
+        return 0L;
+    }
+
+    public int getCurrentLightLevel() {
+        return currentLightLevel;
+    }
+
+    // ==================== BASE PORT CONNECTION ====================
+
+    /**
+     * Returns the allowed wire connection side, locked strictly to the fixture's mounting base/socket face.
+     */
+    public Direction getConnectionSide() {
+        BlockState state = getBlockState();
+        if (state.hasProperty(BlockStateProperties.FACING)) {
+            return state.getValue(BlockStateProperties.FACING).getOpposite();
+        }
+        return Direction.DOWN;
+    }
+
+    public Direction getActiveConnectionSide() {
+        return getConnectionSide();
+    }
+
+    // ==================== IEnergyReceiver ====================
+
+    @Override
+    public long getEnergyStored() {
+        return energyStored;
+    }
+
+    @Override
+    public long getMaxEnergyStored() {
+        return Math.max(1L, getConsumption());
+    }
+
+    @Override
+    public void setEnergyStored(long energy) {
+        this.energyStored = Math.max(0L, Math.min(energy, getMaxEnergyStored()));
+        setChanged();
+    }
+
+    @Override
+    public long getReceiveSpeed() {
+        return Math.max(1L, getConsumption());
+    }
+
+    @Override
+    public Priority getPriority() {
+        return Priority.LOW;
+    }
+
+    @Override
+    public boolean canReceive() {
+        long consumption = getConsumption();
+        return consumption > 0L && !isBroken() && energyStored < getMaxEnergyStored();
+    }
+
+    @Override
+    public long receiveEnergy(long maxReceive, boolean simulate) {
+        if (!canReceive()) {
+            return 0L;
+        }
+
+        long maxEnergy = getMaxEnergyStored();
+        long canAccept = Math.min(maxEnergy - energyStored, Math.min(maxReceive, getReceiveSpeed()));
+
+        if (canAccept <= 0L) {
+            return 0L;
+        }
+
+        if (!simulate) {
+            energyStored = Math.min(maxEnergy, energyStored + canAccept);
+            lastReceivedTick = level != null ? level.getGameTime() : -1L;
+            setChanged();
+        }
+
+        return canAccept;
+    }
+
+    // ==================== IEnergyConnector ====================
+
+    @Override
+    public boolean canConnectEnergy(@Nullable Direction side) {
+        if (side == null) {
+            return true;
+        }
+        return side == getConnectionSide();
+    }
+
+    @Nullable
+    public IEnergyReceiver getEnergyReceiver(@Nullable Direction side) {
+        return canConnectEnergy(side) ? this : null;
+    }
+
+    @Nullable
+    public IEnergyConnector getEnergyConnector(@Nullable Direction side) {
+        return canConnectEnergy(side) ? this : null;
+    }
+
+    @Nullable
+    public net.neoforged.neoforge.energy.IEnergyStorage getEnergyStorage(@Nullable Direction side) {
+        return canConnectEnergy(side) ? new LightEnergyStorage(this) : null;
+    }
+
+    // ==================== TICKER & THERMAL INERTIA ====================
+
+    public void serverTick(ServerLevel level, BlockPos pos, BlockState state) {
+        if (!(state.getBlock() instanceof ElectricLampBlock lampBlock)) {
+            return;
+        }
+
+        long consumption = lampBlock.getConsumptionPerTick();
+        boolean isBrokenState = this.broken || (state.hasProperty(ElectricLampBlock.BROKEN) && state.getValue(ElectricLampBlock.BROKEN));
+        boolean hasPower = !isBrokenState && consumption > 0L && this.energyStored >= consumption;
+
+        // Discard consumed energy immediately: light fixtures must not hoard battery energy
+        this.energyStored = 0L;
+        setChanged();
+
+        int maxLight = lampBlock.getMaxLightLevel();
+        int targetLight;
+
+        if (state.getBlock() instanceof LedLampBlock) {
+            // LED: Instantaneous step response without thermal inertia
+            targetLight = hasPower ? maxLight : 0;
+            this.warmupTicks = 0;
+            this.cooldownTicks = 0;
+            this.flickerTicks = 0;
+            this.currentLightLevel = targetLight;
+        } else if (state.getBlock() instanceof FluorescentLampBlock) {
+            // Fluorescent (CFL): Realistic gas discharge starter ignition cycle (5 rhythmic flashes over 28 ticks)
+            if (hasPower) {
+                this.cooldownTicks = 0;
+                if (this.warmupTicks < 28) {
+                    this.warmupTicks++;
+                    boolean isFlickerOn = (this.warmupTicks >= 1 && this.warmupTicks <= 2)
+                            || (this.warmupTicks >= 6 && this.warmupTicks <= 7)
+                            || (this.warmupTicks >= 12 && this.warmupTicks <= 14)
+                            || (this.warmupTicks >= 18 && this.warmupTicks <= 19)
+                            || (this.warmupTicks >= 23 && this.warmupTicks <= 25);
+
+                    targetLight = isFlickerOn ? maxLight : 0;
+
+                    // Play bimetallic starter click sound at the leading edge of each ignition attempt
+                    if (this.warmupTicks == 1 || this.warmupTicks == 6 || this.warmupTicks == 12 || this.warmupTicks == 18 || this.warmupTicks == 23) {
+                        level.playSound(null, pos, SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.BLOCKS, 0.35f, 1.8f + level.random.nextFloat() * 0.3f);
+                    }
+                } else {
+                    if (this.warmupTicks == 28) {
+                        level.playSound(null, pos, SoundEvents.LEVER_CLICK, SoundSource.BLOCKS, 0.4f, 1.5f);
+                        this.warmupTicks = 29;
+                    }
+                    targetLight = maxLight;
+                }
+            } else {
+                this.warmupTicks = 0;
+                this.flickerTicks = 0;
+                targetLight = 0;
+            }
+            this.currentLightLevel = targetLight;
+        } else {
+            // Incandescent bulbs (Tungsten, Carbon): Gradual thermal heating and cooling
+            if (hasPower) {
+                this.cooldownTicks = 0;
+                if (this.warmupTicks < 2) {
+                    this.warmupTicks++;
+                    float factor = this.warmupTicks / 2.0f;
+                    targetLight = Math.round(maxLight * factor);
+                } else {
+                    targetLight = maxLight;
+                }
+            } else {
+                this.warmupTicks = 0;
+                if (this.currentLightLevel > 0) {
+                    this.cooldownTicks++;
+                    int cooldownDuration = (lampBlock instanceof TungstenLampBlock) ? 4 : 5;
+                    float remaining = Math.max(0.0f, 1.0f - (float) this.cooldownTicks / cooldownDuration);
+                    targetLight = Math.round(maxLight * remaining);
+                } else {
+                    targetLight = 0;
+                    this.cooldownTicks = 0;
+                }
+            }
+            this.currentLightLevel = targetLight;
+        }
+
+        applyLightState(level, pos, state, targetLight);
+    }
+
+    private void applyLightState(ServerLevel level, BlockPos pos, BlockState state, int targetLight) {
+        boolean shouldBeLit = targetLight > 0;
+        int currentBlockLight = state.hasProperty(ElectricLampBlock.LIGHT_LEVEL)
+                ? state.getValue(ElectricLampBlock.LIGHT_LEVEL)
+                : (state.getValue(ElectricLampBlock.LIT) ? ((ElectricLampBlock) state.getBlock()).getMaxLightLevel() : 0);
+
+        boolean currentLit = state.getValue(ElectricLampBlock.LIT);
+
+        if (currentLit != shouldBeLit || currentBlockLight != targetLight) {
+            BlockState newState = state.setValue(ElectricLampBlock.LIT, shouldBeLit)
+                    .setValue(ElectricLampBlock.LIGHT_LEVEL, targetLight);
+            level.setBlock(pos, newState, Block.UPDATE_ALL);
+            setChanged();
+        }
+    }
+
+    public void onScheduledTick(ServerLevel level, BlockPos pos, BlockState state) {
+        if (state.getBlock() instanceof ElectricLampBlock) {
+            serverTick(level, pos, state);
+        }
+    }
+
+    public void updateLitState() {
+        if (level instanceof ServerLevel sl) {
+            serverTick(sl, worldPosition, getBlockState());
+        }
+    }
+
+    // ==================== LIFECYCLE ====================
+
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level instanceof ServerLevel serverLevel) {
+            EnergyNetworkManager.get(serverLevel).addNode(worldPosition);
+        }
+    }
+
+    @Override
+    public void setRemoved() {
+        super.setRemoved();
+        if (level instanceof ServerLevel serverLevel) {
+            EnergyNetworkManager.get(serverLevel).removeNode(worldPosition);
+        }
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        super.onChunkUnloaded();
+        if (level instanceof ServerLevel serverLevel) {
+            EnergyNetworkManager.get(serverLevel).removeNode(worldPosition);
+        }
+    }
+
+    // ==================== NBT PERSISTENCE ====================
+
+    @Override
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider provider) {
+        super.saveAdditional(tag, provider);
+        tag.putLong("Energy", energyStored);
+        tag.putLong("LastReceivedTick", lastReceivedTick);
+        tag.putFloat("Durability", durability);
+        tag.putBoolean("Broken", broken);
+        tag.putInt("LightLevel", currentLightLevel);
+        tag.putInt("WarmupTicks", warmupTicks);
+        tag.putInt("CooldownTicks", cooldownTicks);
+        tag.putInt("FlickerTicks", flickerTicks);
+    }
+
+    @Override
+    public void loadAdditional(CompoundTag tag, HolderLookup.Provider provider) {
+        super.loadAdditional(tag, provider);
+        energyStored = tag.getLong("Energy");
+        lastReceivedTick = tag.getLong("LastReceivedTick");
+        durability = tag.contains("Durability") ? tag.getFloat("Durability") : 1.0f;
+        broken = tag.getBoolean("Broken");
+        currentLightLevel = tag.getInt("LightLevel");
+        warmupTicks = tag.getInt("WarmupTicks");
+        cooldownTicks = tag.getInt("CooldownTicks");
+        flickerTicks = tag.getInt("FlickerTicks");
+    }
+
+    @Override
+    protected void applyImplicitComponents(BlockEntity.DataComponentInput input) {
+        super.applyImplicitComponents(input);
+        LampComponent comp = input.get(ModDataComponents.LAMP_DATA.get());
+        if (comp != null) {
+            this.durability = comp.durability();
+            this.broken = comp.broken();
+        }
+    }
+
+    @Override
+    protected void collectImplicitComponents(DataComponentMap.Builder builder) {
+        super.collectImplicitComponents(builder);
+        builder.set(ModDataComponents.LAMP_DATA.get(), new LampComponent(this.durability, this.broken));
+    }
+
+    @Override
+    public ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override
+    public CompoundTag getUpdateTag(HolderLookup.Provider provider) {
+        CompoundTag tag = new CompoundTag();
+        saveAdditional(tag, provider);
+        return tag;
+    }
+}
