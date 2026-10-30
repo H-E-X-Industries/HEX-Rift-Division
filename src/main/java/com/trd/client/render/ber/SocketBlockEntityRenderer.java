@@ -15,9 +15,9 @@ import net.minecraft.world.phys.AABB;
 import org.joml.Matrix4f;
 
 /**
- * 3D-рендер теплового світлового ореолу (Emissive Glow / Halo Effect) для ламп розжарення.
- * Формує сліпучо-біле розпечене ядро (#FFFDF0) та аддитивний тепловий ореол
- * із градієнтом від гарячого оранжевого (#FF7700) до темно-вишневого (#AA1100).
+ * 3D Block Entity Renderer rendering emissive multi-layered filament glow and halo effects for lamps.
+ * Renders high-temperature incandescent filaments (white core fading to golden orange and cherry red)
+ * or cool gas/SMD diffuse halos using unshaded additive vertex passes.
  */
 public class SocketBlockEntityRenderer implements BlockEntityRenderer<SocketBlockEntity> {
 
@@ -44,7 +44,7 @@ public class SocketBlockEntityRenderer implements BlockEntityRenderer<SocketBloc
 
         poseStack.pushPose();
 
-        // Орієнтація за напрямком кріплення патрона FACING
+        // Rotate fixture model to match block FACING property
         poseStack.translate(0.5f, 0.5f, 0.5f);
         switch (facing) {
             case DOWN -> poseStack.mulPose(Axis.XP.rotationDegrees(180));
@@ -81,31 +81,31 @@ public class SocketBlockEntityRenderer implements BlockEntityRenderer<SocketBloc
     }
 
     /**
-     * Вольфрамова лампа: горизонтальна спіраль розжарення з гарячим сліпучим ядром
-     * та 4-шаровим аддитивним ореолом (Core -> Golden -> Hot Orange -> Dark Cherry).
+     * Tungsten filament glow: 4 concentric thermal gradient shells
+     * (White-hot core -> Golden yellow -> Radiant orange -> Deep cherry red).
      */
     private void renderTungstenGlow(PoseStack poseStack, VertexConsumer consumer) {
-        // Нитка: X=0.40..0.60, Y=0.534..0.553, Z=0.489..0.511
+        // Filament coordinates: X=0.40..0.60, Y=0.534..0.553, Z=0.489..0.511
 
-        // 1. Сліпуче біле ядро (#FFFDF0)
+        // 1. Incandescent core (#FFFDF0)
         renderGlowingBox(poseStack, consumer,
                 0.400f, 0.534f, 0.489f,
                 0.600f, 0.553f, 0.511f,
                 255, 253, 240, 255);
 
-        // 2. Золотисто-жовтий перехідний шар (+0.15 px)
+        // 2. Inner golden halo (+0.15 px)
         renderGlowingBox(poseStack, consumer,
                 0.390f, 0.525f, 0.480f,
                 0.610f, 0.562f, 0.520f,
                 255, 210, 40, 180);
 
-        // 3. Гарячий оранжевий ореол #FF7700 (+0.35 px)
+        // 3. Middle radiant orange halo (#FF7700, +0.35 px)
         renderGlowingBox(poseStack, consumer,
                 0.378f, 0.512f, 0.467f,
                 0.622f, 0.575f, 0.533f,
                 255, 119, 0, 120);
 
-        // 4. Темно-вишневий зовнішній контур #AA1100 (+0.55 px)
+        // 4. Outer deep cherry halo (#AA1100, +0.55 px)
         renderGlowingBox(poseStack, consumer,
                 0.366f, 0.500f, 0.455f,
                 0.634f, 0.587f, 0.545f,
@@ -113,40 +113,40 @@ public class SocketBlockEntityRenderer implements BlockEntityRenderer<SocketBloc
     }
 
     /**
-     * Вугільна лампа: висока аркова нитка з насиченим бурштиново-вишневим ореолом.
+     * Carbon filament glow: hairpin loop segments with warm amber thermal gradient.
      */
     private void renderCarbonGlow(PoseStack poseStack, VertexConsumer consumer) {
-        // Ліва стійка: X=0.438..0.456, Y=0.412..0.556, Z=0.490..0.510
+        // Left hairpin leg: X=0.438..0.456, Y=0.412..0.556, Z=0.490..0.510
         renderCarbonSegment(poseStack, consumer, 0.438f, 0.412f, 0.490f, 0.456f, 0.556f, 0.510f);
 
-        // Права стійка: X=0.544..0.562, Y=0.412..0.556, Z=0.490..0.510
+        // Right hairpin leg: X=0.544..0.562, Y=0.412..0.556, Z=0.490..0.510
         renderCarbonSegment(poseStack, consumer, 0.544f, 0.412f, 0.490f, 0.562f, 0.556f, 0.510f);
 
-        // Верхня перемичка арки: X=0.447..0.553, Y=0.550..0.572, Z=0.490..0.510
+        // Top bridging arch: X=0.447..0.553, Y=0.550..0.572, Z=0.490..0.510
         renderCarbonSegment(poseStack, consumer, 0.447f, 0.550f, 0.490f, 0.553f, 0.572f, 0.510f);
     }
 
     private void renderCarbonSegment(PoseStack poseStack, VertexConsumer consumer,
                                      float minX, float minY, float minZ,
                                      float maxX, float maxY, float maxZ) {
-        // 1. Гаряче ядро
+        // 1. Core filament line
         renderGlowingBox(poseStack, consumer,
                 minX, minY, minZ, maxX, maxY, maxZ,
                 255, 248, 224, 255);
 
-        // 2. Золотавий перехід (+0.15 px = 0.0094)
+        // 2. Warm golden halo
         renderGlowingBox(poseStack, consumer,
                 minX - 0.0094f, minY - 0.0094f, minZ - 0.0094f,
                 maxX + 0.0094f, maxY + 0.0094f, maxZ + 0.0094f,
                 255, 170, 16, 170);
 
-        // 3. Гарячий оранжевий ореол (+0.35 px = 0.022)
+        // 3. Middle radiant orange halo
         renderGlowingBox(poseStack, consumer,
                 minX - 0.022f, minY - 0.022f, minZ - 0.022f,
                 maxX + 0.022f, maxY + 0.022f, maxZ + 0.022f,
                 255, 100, 0, 110);
 
-        // 4. Темно-вишневий контур (+0.55 px = 0.034)
+        // 4. Outer soft amber boundary
         renderGlowingBox(poseStack, consumer,
                 minX - 0.034f, minY - 0.034f, minZ - 0.034f,
                 maxX + 0.034f, maxY + 0.034f, maxZ + 0.034f,
@@ -154,21 +154,30 @@ public class SocketBlockEntityRenderer implements BlockEntityRenderer<SocketBloc
     }
 
     /**
-     * Люмінесцентна лампа: м'який біло-блакитний ореол навколо спіралей.
+     * Fluorescent tube glow: brilliant white-cyan gas discharge and phosphor halo.
      */
     private void renderFluorescentGlow(PoseStack poseStack, VertexConsumer consumer) {
-        renderGlowingBox(poseStack, consumer,
-                0.368f, 0.412f, 0.368f,
-                0.632f, 0.718f, 0.632f,
-                220, 248, 255, 45);
+        // 1. Core intense phosphor discharge (#FFFFFF)
         renderGlowingBox(poseStack, consumer,
                 0.380f, 0.420f, 0.380f,
                 0.620f, 0.710f, 0.620f,
-                240, 252, 255, 80);
+                255, 255, 255, 220);
+
+        // 2. Middle luminous gas discharge zone (#E0F7FF)
+        renderGlowingBox(poseStack, consumer,
+                0.368f, 0.412f, 0.368f,
+                0.632f, 0.718f, 0.632f,
+                224, 247, 255, 140);
+
+        // 3. Outer diffuse ambient halo (#7DD3FC)
+        renderGlowingBox(poseStack, consumer,
+                0.350f, 0.400f, 0.350f,
+                0.650f, 0.730f, 0.650f,
+                125, 211, 252, 60);
     }
 
     /**
-     * LED лампа: яскраве холодно-біле світіння SMD чіпів.
+     * LED lamp glow: crisp modern neutral-white SMD diode emitter halos.
      */
     private void renderLedGlow(PoseStack poseStack, VertexConsumer consumer) {
         renderGlowingBox(poseStack, consumer,

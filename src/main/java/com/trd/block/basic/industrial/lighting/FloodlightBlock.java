@@ -41,18 +41,18 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 /**
- * Промисловий поворотний прожектор (Floodlight).
- * Підтримує 6-стороннє кріплення до блоків та кабелів WireBlock (підлога, стеля, 4 стіни, ефект гірлянди),
- * підключення живлення ВИКЛЮЧНО до монтажної основи (підошви)
- * та динамічне 3D наведення за поглядом гравця (Yaw + Pitch).
+ * Industrial swiveling searchlight fixture (Floodlight).
+ * Supports 6-sided mounting to solid surfaces and {@link WireBlock} cable runs (floor, ceiling, and walls).
+ * Power cables connect strictly to the stationary mounting base face.
+ * Features real-time player aim tracking (Yaw + Pitch), spherical raycast occlusion, and long-range illumination.
  */
 public class FloodlightBlock extends BaseEntityBlock {
     public static final MapCodec<FloodlightBlock> CODEC = simpleCodec(FloodlightBlock::new);
     public static final DirectionProperty MOUNT_FACE = BlockStateProperties.FACING;
-    public static final DirectionProperty FACING = MOUNT_FACE; // Сумісність
+    public static final DirectionProperty FACING = MOUNT_FACE;
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
 
-    // Хітбокси для 6 варіантів кріплення MOUNT_FACE (14×15×14 px)
+    // Bounding boxes for all 6 MOUNT_FACE orientations (14x15x14 pixels)
     private static final Map<Direction, VoxelShape> SHAPES = Map.of(
             Direction.UP,    Block.box(1.0, 0.0, 1.0, 15.0, 15.0, 15.0),
             Direction.DOWN,  Block.box(1.0, 1.0, 1.0, 15.0, 16.0, 15.0),
@@ -102,7 +102,7 @@ public class FloodlightBlock extends BaseEntityBlock {
         Direction mountFace = state.getValue(MOUNT_FACE);
         BlockPos supportPos = pos.relative(mountFace.getOpposite());
         BlockState support = level.getBlockState(supportPos);
-        // Дозволяємо монтаж на кабелі (ефект гірлянди) та тверді грані
+        // Allow attachment to wires (string-light effect) or solid block faces
         if (support.getBlock() instanceof WireBlock) {
             return true;
         }
@@ -180,6 +180,10 @@ public class FloodlightBlock extends BaseEntityBlock {
         return res.result();
     }
 
+    /**
+     * Interactively updates floodlight target orientation (Yaw / Pitch) based on player sight line.
+     * Sneak-interacting resets the fixture to its neutral default orientation.
+     */
     private ItemInteractionResult handleAimInteraction(BlockState state, Level level, BlockPos pos, Player player) {
         if (level.getBlockEntity(pos) instanceof FloodlightBlockEntity floodlightBE) {
             if (player.isShiftKeyDown()) {
@@ -195,7 +199,7 @@ public class FloodlightBlock extends BaseEntityBlock {
                 level.playSound(null, pos, SoundEvents.IRON_TRAPDOOR_OPEN, SoundSource.BLOCKS, 0.25f, 1.6f);
                 if (!level.isClientSide) {
                     player.displayClientMessage(
-                            Component.literal("§6[Прожектор] §fСкидання кутів: §eYaw " + Math.round(defYaw) + "° / Pitch 0°"),
+                            Component.translatable("message.trd.floodlight.reset", Math.round(defYaw)),
                             true
                     );
                 }
@@ -206,7 +210,7 @@ public class FloodlightBlock extends BaseEntityBlock {
                 level.playSound(null, pos, SoundEvents.IRON_TRAPDOOR_OPEN, SoundSource.BLOCKS, 0.25f, 1.6f);
                 if (!level.isClientSide) {
                     player.displayClientMessage(
-                            Component.literal("§6[Прожектор] §fНаведення: §eYaw " + Math.round(targetYaw) + "° / Pitch " + Math.round(targetPitch) + "°"),
+                            Component.translatable("message.trd.floodlight.aim", Math.round(targetYaw), Math.round(targetPitch)),
                             true
                     );
                 }

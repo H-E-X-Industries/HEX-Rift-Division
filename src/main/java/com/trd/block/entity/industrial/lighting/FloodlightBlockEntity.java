@@ -30,11 +30,12 @@ import java.util.Iterator;
 import java.util.Set;
 
 /**
- * Промисловий поворотний прожектор (Floodlight).
- * Споживання: 40 од./такт.
- * Буфер: 40 од. (миттєва реакція на розрив мережі).
- * Двоосьовий шарнір: плавний поворот 360° Yaw та нахил Pitch від -75° до +90°.
- * Підтримує 6-стороннє кріплення (підлога, стеля, 4 стіни).
+ * Industrial swiveling searchlight block entity.
+ * Power consumption: 40 energy units/tick.
+ * Internal buffer: 40 energy units (immediate reaction to network power loss).
+ * Dual-axis gimbal: smooth 360° Yaw rotation and -75° to +90° Pitch tilting.
+ * Employs a 3D spherical raycasting algorithm to detect obstacle collisions up to 50 blocks
+ * and dynamically manages invisible {@link LightBlock} positions along the beam corridor.
  */
 public class FloodlightBlockEntity extends BlockEntity implements IEnergyReceiver, IEnergyConnector {
 
@@ -44,8 +45,8 @@ public class FloodlightBlockEntity extends BlockEntity implements IEnergyReceive
     public static final int MAX_BEAM_DISTANCE = 50;
     public static final int MAX_DISTANCE = MAX_BEAM_DISTANCE;
 
-    public static final float MAX_YAW_SPEED = 6.0f;   // градусів за тік
-    public static final float MAX_PITCH_SPEED = 5.0f; // градусів за тік
+    public static final float MAX_YAW_SPEED = 6.0f;   // degrees per tick
+    public static final float MAX_PITCH_SPEED = 5.0f; // degrees per tick
 
     private long energyStored = 0L;
 
@@ -57,7 +58,7 @@ public class FloodlightBlockEntity extends BlockEntity implements IEnergyReceive
     private boolean raycastDirty = true;
     private int raycastCheckCounter = 0;
 
-    // Плавна орієнтація прожектора (градуси)
+    // Smooth gimbal orientation angles (in degrees)
     public float yaw = 0.0f;
     public float prevYaw = 0.0f;
     public float targetYaw = 0.0f;
@@ -107,7 +108,7 @@ public class FloodlightBlockEntity extends BlockEntity implements IEnergyReceive
         this.prevYaw = this.yaw;
         this.prevPitch = this.pitch;
 
-        // Плавне доведення yaw по найкоротшій дузі
+        // Smooth yaw interpolation across shortest angular arc
         float yawDiff = Mth.wrapDegrees(this.targetYaw - this.yaw);
         if (Math.abs(yawDiff) > 0.01f) {
             float step = Mth.clamp(yawDiff, -MAX_YAW_SPEED, MAX_YAW_SPEED);
@@ -116,7 +117,7 @@ public class FloodlightBlockEntity extends BlockEntity implements IEnergyReceive
             this.yaw = this.targetYaw;
         }
 
-        // Плавне доведення pitch
+        // Smooth pitch interpolation
         float pitchDiff = this.targetPitch - this.pitch;
         if (Math.abs(pitchDiff) > 0.01f) {
             float step = Mth.clamp(pitchDiff, -MAX_PITCH_SPEED, MAX_PITCH_SPEED);
@@ -133,7 +134,7 @@ public class FloodlightBlockEntity extends BlockEntity implements IEnergyReceive
     // ==================== BASE PORT CONNECTION ====================
 
     /**
-     * Повертає сторону підключення проводу — СУВОРО з боку монтажної підошви (основи) прожектора.
+     * Returns the allowed wire connection side, locked strictly to the stationary mounting base face.
      */
     public Direction getConnectionSide() {
         BlockState state = getBlockState();
@@ -223,13 +224,13 @@ public class FloodlightBlockEntity extends BlockEntity implements IEnergyReceive
                 ? state.getValue(FloodlightBlock.MOUNT_FACE)
                 : Direction.UP;
 
-        // 3D-вектор променя в локальній системі координат прожектора
+        // Compute local 3D beam direction vector from spherical angles
         float yawRad = (float) Math.toRadians(this.yaw);
         float pitchRad = (float) Math.toRadians(this.pitch);
         float cosP = Mth.cos(pitchRad);
         Vec3 localBeamDir = new Vec3(-Mth.sin(yawRad) * cosP, Mth.sin(pitchRad), Mth.cos(yawRad) * cosP).normalize();
 
-        // Поворот вектора під орієнтацію монтажної бази MOUNT_FACE
+        // Transform vector into world space based on mounting base orientation
         Vector3f dirVec = localBeamDir.toVector3f();
         switch (mountFace) {
             case DOWN -> dirVec.rotateX((float) Math.toRadians(180));
@@ -250,7 +251,7 @@ public class FloodlightBlockEntity extends BlockEntity implements IEnergyReceive
         }
         Vec3 beamDir = new Vec3(dirVec.x(), dirVec.y(), dirVec.z()).normalize();
 
-        // Зміщення центру обертання шарнірів барабана відносно центру блоку
+        // Drum pivot offset relative to block center
         Vector3f pivotOffset = new Vector3f(0.0f, 0.0625f, 0.0f);
         switch (mountFace) {
             case DOWN -> pivotOffset.rotateX((float) Math.toRadians(180));
@@ -346,7 +347,7 @@ public class FloodlightBlockEntity extends BlockEntity implements IEnergyReceive
         } else if (dist == 49) {
             return 3;
         } else {
-            return 2; // d >= 50
+            return 2;
         }
     }
 

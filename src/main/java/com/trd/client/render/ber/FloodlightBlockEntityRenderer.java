@@ -16,24 +16,23 @@ import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 /**
- * 3D-рендер об'ємного поворотного прожектора (Floodlight).
- * Ієрархічний рендер шарнірів із 144 FPS partialTick інтерполяцією (Yaw + Pitch)
- * та Гауссовим об'ємним променем світла безпосередньо від лінзи.
+ * 3D Block Entity Renderer for industrial swiveling searchlights (Floodlight).
+ * Performs high-framerate (144+ FPS) partialTick interpolation for gimbal orientation (Yaw + Pitch),
+ * renders Flywheel/baked partial models (yoke and drum), and projects volumetric light cone shells.
  */
 public class FloodlightBlockEntityRenderer implements BlockEntityRenderer<FloodlightBlockEntity> {
 
-    // М'який теплий кремово-білий відтінок світла
+    // Warm high-intensity searchlight beam tint
     private static final int COLOR_R = 255;
     private static final int COLOR_G = 248;
     private static final int COLOR_B = 225;
 
     private static final int SIDES = 32;
-    private static final int RINGS = 14;
-    private static final int SHELLS = 6;
+    private static final int RINGS = 4;
+    private static final int SHELLS = 8;
 
     private static final double[] COS_TABLE = new double[SIDES];
     private static final double[] SIN_TABLE = new double[SIDES];
@@ -57,13 +56,13 @@ public class FloodlightBlockEntityRenderer implements BlockEntityRenderer<Floodl
                 ? state.getValue(FloodlightBlock.MOUNT_FACE)
                 : Direction.UP;
 
-        // 1. Інтерполяція кутів обертання для плавності 144 FPS
+        // 1. Interpolate rotation angles smoothly between physics ticks
         float renderYaw = Mth.rotLerp(partialTick, be.prevYaw, be.yaw);
         float renderPitch = Mth.lerp(partialTick, be.prevPitch, be.pitch);
 
         poseStack.pushPose();
 
-        // 2. Орієнтація під поверхню кріплення MOUNT_FACE
+        // 2. Transform to align with block MOUNT_FACE orientation
         if (mountFace != Direction.UP) {
             poseStack.translate(0.5f, 0.5f, 0.5f);
             switch (mountFace) {
@@ -86,14 +85,14 @@ public class FloodlightBlockEntityRenderer implements BlockEntityRenderer<Floodl
             poseStack.translate(-0.5f, -0.5f, -0.5f);
         }
 
-        // Крок А (Вилка / Yaw): перемістити у (0.5, 0.0, 0.5), повернути навколо осі Y, повернути назад
+        // Yoke rotation (Yaw): Pivot around block center vertical axis (0.5, 0.0, 0.5)
         poseStack.translate(0.5f, 0.0f, 0.5f);
         poseStack.mulPose(Axis.YP.rotationDegrees(180.0f - renderYaw));
         poseStack.translate(-0.5f, 0.0f, -0.5f);
 
         FlywheelFallbackHelper.renderBakedModel(ModModels.FLOODLIGHT_YOKE.get(), poseStack, bufferSource, state, packedLight, packedOverlay);
 
-        // Крок Б (Барабан / Pitch): перемістити у точку шарнірів вилки (0.5, 0.5625, 0.5), нахилити по осі X, повернути назад
+        // Drum elevation (Pitch): Pivot around trunnion bearings (0.5, 0.5625, 0.5)
         poseStack.translate(0.5f, 0.5625f, 0.5f);
         poseStack.mulPose(Axis.XP.rotationDegrees(renderPitch));
         poseStack.translate(-0.5f, -0.5625f, -0.5f);
@@ -102,178 +101,192 @@ public class FloodlightBlockEntityRenderer implements BlockEntityRenderer<Floodl
         BakedModel drumModel = isLit ? ModModels.FLOODLIGHT_DRUM_LIT.get() : ModModels.FLOODLIGHT_DRUM.get();
         FlywheelFallbackHelper.renderBakedModel(drumModel, poseStack, bufferSource, state, packedLight, packedOverlay);
 
-        // Жива електрична дуга у фокусі барабана між вугільними електродами
+        // Render incandescent electric arc between carbon electrodes
         if (isLit) {
             renderElectricArc(poseStack, bufferSource, be);
         }
 
-        // Крок В (Гауссів об'ємний промінь): рендериться безпосередньо в системі координат нахиленого барабана!
-        int lightLevel = be.getEffectiveLightLevel();
-        if (isLit && lightLevel > 0) {
-            float fadeFactor = lightLevel / 15.0f;
-            float beamDistance = be.getBeamDistance();
-            if (fadeFactor > 0.01f && beamDistance > 0.5f) {
-                renderGaussianBeamInDrumSpace(poseStack, bufferSource, beamDistance, fadeFactor);
-            }
+        // Volumetric beam projection (RenderType.lightning): unshaded additive blending
+        float currentDistance = be.getBeamDistance();
+        if (isLit && currentDistance > 0.1f) {
+            VertexConsumer consumer = bufferSource.getBuffer(RenderType.lightning());
+
+            float intensityFactor = be.getEffectiveLightLevel() / 15.0f;
+            renderVolumetricBeam(poseStack, consumer, currentDistance, intensityFactor);
         }
 
         poseStack.popPose();
     }
 
-    private void renderGaussianBeamInDrumSpace(PoseStack poseStack, MultiBufferSource bufferSource,
-                                               float beamDistance, float fadeFactor) {
-        // У локальній системі координат барабана:
-        // Центр шарніра барабана: (0.5, 0.5625, 0.5)
-        // Передня лінза барабана розташована на Z = 0.2375 (відстань ~0.2625 від центру)
-        // Промінь поширюється прямо вперед вздовж осі -Z
-        Vec3 start = new Vec3(0.5, 0.5625, 0.2375);
-        double coneLength = Math.max(0.1, beamDistance - 0.2625);
-
-        Matrix4f mat = poseStack.last().pose();
+    /**
+     * Renders a live electric arc between the carbon rods at the optical focal center of the drum reflector.
+     */
+    private void renderElectricArc(PoseStack poseStack, MultiBufferSource bufferSource, FloodlightBlockEntity be) {
         VertexConsumer consumer = bufferSource.getBuffer(RenderType.lightning());
 
-        float lengthRatio = (float) Math.min(1.0, coneLength / 49.7375);
+        float arcX = 0.5f;
+        float arcY = 0.5625f;
+        float arcZ = 0.60f;
 
-        Vec3[][] ringVertices = new Vec3[RINGS + 1][SIDES];
-        int[] ringAlphas = new int[RINGS + 1];
+        long time = be.getLevel() != null ? be.getLevel().getGameTime() : 0L;
+        float flicker = (float) Math.sin(time * 1.5) * 0.003f;
 
-        for (int s = 0; s < SHELLS; s++) {
-            float uNorm = (s + 1) / (float) SHELLS;
-            float gaussianWeight = (float) Math.exp(-3.2f * uNorm * uNorm);
-            float baseAlpha = 0.038f * gaussianWeight * fadeFactor;
+        // 1. Ultra-bright incandescent core (#FFFFFF)
+        renderArcCube(poseStack, consumer,
+                arcX - 0.012f + flicker, arcY - 0.012f, arcZ - 0.012f,
+                arcX + 0.012f + flicker, arcY + 0.012f, arcZ + 0.012f,
+                255, 255, 255, 255);
 
-            for (int k = 0; k <= RINGS; k++) {
-                float t = k / (float) RINGS;
-                float axialFade = (float) Math.pow(1.0f - t, 2.2f) * Math.min(1.0f, t * 8.0f + 0.35f);
-                float alpha = baseAlpha * axialFade;
-                ringAlphas[k] = Mth.clamp(Math.round(255.0f * alpha), 0, 255);
+        // 2. High-temperature golden plasma zone (#FFEA70)
+        renderArcCube(poseStack, consumer,
+                arcX - 0.025f + flicker, arcY - 0.025f, arcZ - 0.025f,
+                arcX + 0.025f + flicker, arcY + 0.025f, arcZ + 0.025f,
+                255, 234, 112, 180);
 
-                float ringRadius = (0.28f + t * 2.32f * lengthRatio) * (0.4f + 0.6f * uNorm);
-                double rz = start.z - t * coneLength;
+        // 3. Diffuse corona zone (#FFAA20)
+        renderArcCube(poseStack, consumer,
+                arcX - 0.045f, arcY - 0.045f, arcZ - 0.045f,
+                arcX + 0.045f, arcY + 0.045f, arcZ + 0.045f,
+                255, 170, 32, 90);
+    }
 
-                for (int i = 0; i < SIDES; i++) {
-                    double rx = start.x + COS_TABLE[i] * ringRadius;
-                    double ry = start.y + SIN_TABLE[i] * ringRadius;
-                    ringVertices[k][i] = new Vec3(rx, ry, rz);
-                }
-            }
+    private void renderArcCube(PoseStack poseStack, VertexConsumer consumer,
+                               float minX, float minY, float minZ,
+                               float maxX, float maxY, float maxZ,
+                               int r, int g, int b, int a) {
+        Matrix4f mat = poseStack.last().pose();
 
-            for (int k = 0; k < RINGS; k++) {
-                int a1 = ringAlphas[k];
-                int a2 = ringAlphas[k + 1];
+        // North
+        consumer.addVertex(mat, minX, minY, minZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, minX, maxY, minZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, maxX, maxY, minZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, maxX, minY, minZ).setColor(r, g, b, a);
 
-                if (a1 == 0 && a2 == 0) continue;
+        // South
+        consumer.addVertex(mat, maxX, minY, maxZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, maxX, maxY, maxZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, minX, maxY, maxZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, minX, minY, maxZ).setColor(r, g, b, a);
 
-                Vec3[] r1 = ringVertices[k];
-                Vec3[] r2 = ringVertices[k + 1];
+        // East
+        consumer.addVertex(mat, maxX, minY, minZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, maxX, maxY, minZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, maxX, maxY, maxZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, maxX, minY, maxZ).setColor(r, g, b, a);
 
-                for (int i = 0; i < SIDES; i++) {
-                    int next = (i + 1) % SIDES;
+        // West
+        consumer.addVertex(mat, minX, minY, maxZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, minX, maxY, maxZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, minX, maxY, minZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, minX, minY, minZ).setColor(r, g, b, a);
 
-                    Vec3 s1 = r1[i];
-                    Vec3 s2 = r1[next];
-                    Vec3 e2 = r2[next];
-                    Vec3 e1 = r2[i];
+        // Up
+        consumer.addVertex(mat, minX, maxY, minZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, minX, maxY, maxZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, maxX, maxY, maxZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, maxX, maxY, minZ).setColor(r, g, b, a);
 
-                    consumer.addVertex(mat, (float) s1.x, (float) s1.y, (float) s1.z).setColor(COLOR_R, COLOR_G, COLOR_B, a1);
-                    consumer.addVertex(mat, (float) s2.x, (float) s2.y, (float) s2.z).setColor(COLOR_R, COLOR_G, COLOR_B, a1);
-                    consumer.addVertex(mat, (float) e2.x, (float) e2.y, (float) e2.z).setColor(COLOR_R, COLOR_G, COLOR_B, a2);
-                    consumer.addVertex(mat, (float) e1.x, (float) e1.y, (float) e1.z).setColor(COLOR_R, COLOR_G, COLOR_B, a2);
+        // Down
+        consumer.addVertex(mat, minX, minY, maxZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, minX, minY, minZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, maxX, minY, minZ).setColor(r, g, b, a);
+        consumer.addVertex(mat, maxX, minY, maxZ).setColor(r, g, b, a);
+    }
+
+    /**
+     * Renders a soft, wide atmospheric volumetric light cone projecting forward from the drum's front lens (along -Z).
+     * Uses 8 closely spaced nested shells with gentle start opacity (combined 0.12f–0.16f at the lens)
+     * and quadratic longitudinal falloff ((1.0 - t)^2.2) to simulate diffused atmospheric haze without solid laser banding.
+     */
+    private void renderVolumetricBeam(PoseStack poseStack, VertexConsumer consumer, float distance, float intensity) {
+        Matrix4f mat = poseStack.last().pose();
+
+        final float originX = 0.5f;
+        final float originY = 0.5625f;
+        final float originZ = 0.22f; // Front lens face location in local drum space
+
+        // Front lens aperture radius (~0.28f, fitting snugly into the drum housing)
+        final float startRadius = 0.28f;
+        // Wide atmospheric haze footprint at full 45-block range (diameter ~7.0 blocks)
+        final float fullEndRadius = 3.50f;
+        final float maxRange = (float) FloodlightBlockEntity.MAX_DISTANCE;
+
+        // Proportional expansion scaling when beam is truncated by obstacles
+        float lengthFraction = Math.min(1.0f, distance / maxRange);
+        float effectiveEndRadius = startRadius + (fullEndRadius - startRadius) * lengthFraction;
+
+        // Smooth quadratic radial distribution across 8 nested shells
+        float[] shellFactors = { 0.35f, 0.45f, 0.55f, 0.65f, 0.75f, 0.84f, 0.92f, 1.00f };
+        // Soft per-shell base alphas (sum = 35 / 255 ≈ 0.137 total opacity at lens, individual 0.012f–0.020f)
+        int[] baseAlphas =     { 5,     5,     5,     5,     4,     4,     4,     3     };
+
+        for (int shell = 0; shell < SHELLS; shell++) {
+            float shellRatio = shellFactors[shell];
+            int maxAlpha = Math.round(baseAlphas[shell] * intensity);
+            if (maxAlpha <= 0) continue;
+
+            // Start all shells snugly at the front lens aperture (0.244f..0.280f)
+            float r0 = startRadius * (0.80f + 0.20f * shellRatio);
+            float rEnd = effectiveEndRadius * shellRatio;
+
+            for (int ring = 0; ring < RINGS; ring++) {
+                float t0 = (float) ring / RINGS;
+                float t1 = (float) (ring + 1) / RINGS;
+
+                // Project beam forward through the front lens (along -Z in local coordinates)
+                float z0 = originZ - t0 * distance;
+                float z1 = originZ - t1 * distance;
+
+                float ringRadius0 = r0 + (rEnd - r0) * t0;
+                float ringRadius1 = r0 + (rEnd - r0) * t1;
+
+                int a0 = calculateRingAlpha(t0, maxAlpha);
+                int a1 = calculateRingAlpha(t1, maxAlpha);
+
+                for (int side = 0; side < SIDES; side++) {
+                    int nextSide = (side + 1) % SIDES;
+
+                    float cosA = (float) COS_TABLE[side];
+                    float sinA = (float) SIN_TABLE[side];
+                    float cosB = (float) COS_TABLE[nextSide];
+                    float sinB = (float) SIN_TABLE[nextSide];
+
+                    float x0A = originX + ringRadius0 * cosA;
+                    float y0A = originY + ringRadius0 * sinA;
+
+                    float x0B = originX + ringRadius0 * cosB;
+                    float y0B = originY + ringRadius0 * sinB;
+
+                    float x1B = originX + ringRadius1 * cosB;
+                    float y1B = originY + ringRadius1 * sinB;
+
+                    float x1A = originX + ringRadius1 * cosA;
+                    float y1A = originY + ringRadius1 * sinA;
+
+                    // Quad: 0A -> 0B -> 1B -> 1A
+                    consumer.addVertex(mat, x0A, y0A, z0).setColor(COLOR_R, COLOR_G, COLOR_B, a0);
+                    consumer.addVertex(mat, x0B, y0B, z0).setColor(COLOR_R, COLOR_G, COLOR_B, a0);
+                    consumer.addVertex(mat, x1B, y1B, z1).setColor(COLOR_R, COLOR_G, COLOR_B, a1);
+                    consumer.addVertex(mat, x1A, y1A, z1).setColor(COLOR_R, COLOR_G, COLOR_B, a1);
                 }
             }
         }
     }
 
     /**
-     * Жива електрична плазмова дуга у фокусі барабана між вугільними електродами.
-     * Працює на високій частоті мерехтіння (High-Voltage Carbon Arc Flickering)
-     * із багатошаровим аддитивним світінням RenderType.lightning():
-     * - Сліпуче біле ядро (#FFFFFF)
-     * - Електрично-блакитна плазмова оболонка (#88EEFF)
-     * - Фіолетово-синє гало (#5577FF)
-     * - Глибока синьо-фіолетова корона (#3344DD)
+     * Calculates longitudinal quadratic distance falloff ((1.0 - t)^2.2) along the beam,
+     * ensuring gentle visibility near the lens and soft dissolution to 0.0 at the far end.
      */
-    private void renderElectricArc(PoseStack poseStack, MultiBufferSource bufferSource, FloodlightBlockEntity be) {
-        long time = System.currentTimeMillis();
-        // Псевдовипадкове мерехтіння високої частоти (~25-30 Гц)
-        long seed = be.getBlockPos().asLong() ^ (time / 35L);
-        java.util.Random rand = new java.util.Random(seed);
-
-        float flickerScale = 1.0f + (rand.nextFloat() - 0.5f) * 0.08f;
-        float flickerAlpha = Mth.clamp(1.0f + (rand.nextFloat() - 0.5f) * 0.12f, 0.7f, 1.2f);
-
-        // Мікро-дрейф фокальної точки дуги
-        float jx = (rand.nextFloat() - 0.5f) * 0.002f;
-        float jy = (rand.nextFloat() - 0.5f) * 0.002f;
-        float jz = (rand.nextFloat() - 0.5f) * 0.002f;
-
-        float cx = 0.50f + jx;
-        float cy = 0.5625f + jy;
-        float cz = 0.60f + jz;
-
-        VertexConsumer consumer = bufferSource.getBuffer(RenderType.lightning());
-        Matrix4f mat = poseStack.last().pose();
-
-        // 1. Біле розжарене ядро (#FFFFFF)
-        float s1 = 0.015f * flickerScale;
-        int a1 = Mth.clamp(Math.round(255 * flickerAlpha), 0, 255);
-        renderArcBox(consumer, mat, cx - s1, cy - s1 * 1.2f, cz - s1 * 1.4f, cx + s1, cy + s1 * 1.2f, cz + s1 * 1.4f, 255, 255, 255, a1);
-
-        // 2. Електрично-блакитна плазмова оболонка (#88EEFF)
-        float s2 = 0.030f * flickerScale;
-        int a2 = Mth.clamp(Math.round(190 * flickerAlpha), 0, 255);
-        renderArcBox(consumer, mat, cx - s2, cy - s2 * 1.2f, cz - s2 * 1.3f, cx + s2, cy + s2 * 1.2f, cz + s2 * 1.3f, 136, 238, 255, a2);
-
-        // 3. Фіолетово-синє гало (#5577FF)
-        float s3 = 0.052f * flickerScale;
-        int a3 = Mth.clamp(Math.round(100 * flickerAlpha), 0, 255);
-        renderArcBox(consumer, mat, cx - s3, cy - s3 * 1.15f, cz - s3 * 1.2f, cx + s3, cy + s3 * 1.15f, cz + s3 * 1.2f, 85, 119, 255, a3);
-
-        // 4. Глибока синьо-фіолетова корона (#3344DD)
-        float s4 = 0.078f * flickerScale;
-        int a4 = Mth.clamp(Math.round(45 * flickerAlpha), 0, 255);
-        renderArcBox(consumer, mat, cx - s4, cy - s4 * 1.1f, cz - s4 * 1.15f, cx + s4, cy + s4 * 1.1f, cz + s4 * 1.15f, 51, 68, 221, a4);
-    }
-
-    private void renderArcBox(VertexConsumer consumer, Matrix4f mat,
-                              float minX, float minY, float minZ,
-                              float maxX, float maxY, float maxZ,
-                              int r, int g, int b, int a) {
-        // North (Z-)
-        consumer.addVertex(mat, minX, minY, minZ).setColor(r, g, b, a);
-        consumer.addVertex(mat, minX, maxY, minZ).setColor(r, g, b, a);
-        consumer.addVertex(mat, maxX, maxY, minZ).setColor(r, g, b, a);
-        consumer.addVertex(mat, maxX, minY, minZ).setColor(r, g, b, a);
-
-        // South (Z+)
-        consumer.addVertex(mat, maxX, minY, maxZ).setColor(r, g, b, a);
-        consumer.addVertex(mat, maxX, maxY, maxZ).setColor(r, g, b, a);
-        consumer.addVertex(mat, minX, maxY, maxZ).setColor(r, g, b, a);
-        consumer.addVertex(mat, minX, minY, maxZ).setColor(r, g, b, a);
-
-        // East (X+)
-        consumer.addVertex(mat, maxX, minY, minZ).setColor(r, g, b, a);
-        consumer.addVertex(mat, maxX, maxY, minZ).setColor(r, g, b, a);
-        consumer.addVertex(mat, maxX, maxY, maxZ).setColor(r, g, b, a);
-        consumer.addVertex(mat, maxX, minY, maxZ).setColor(r, g, b, a);
-
-        // West (X-)
-        consumer.addVertex(mat, minX, minY, maxZ).setColor(r, g, b, a);
-        consumer.addVertex(mat, minX, maxY, maxZ).setColor(r, g, b, a);
-        consumer.addVertex(mat, minX, maxY, minZ).setColor(r, g, b, a);
-        consumer.addVertex(mat, minX, minY, minZ).setColor(r, g, b, a);
-
-        // Up (Y+)
-        consumer.addVertex(mat, minX, maxY, minZ).setColor(r, g, b, a);
-        consumer.addVertex(mat, minX, maxY, maxZ).setColor(r, g, b, a);
-        consumer.addVertex(mat, maxX, maxY, maxZ).setColor(r, g, b, a);
-        consumer.addVertex(mat, maxX, maxY, minZ).setColor(r, g, b, a);
-
-        // Down (Y-)
-        consumer.addVertex(mat, minX, minY, maxZ).setColor(r, g, b, a);
-        consumer.addVertex(mat, minX, minY, minZ).setColor(r, g, b, a);
-        consumer.addVertex(mat, maxX, minY, minZ).setColor(r, g, b, a);
-        consumer.addVertex(mat, maxX, minY, maxZ).setColor(r, g, b, a);
+    private int calculateRingAlpha(float t, int maxAlpha) {
+        if (t >= 0.999f || maxAlpha <= 0) {
+            return 0;
+        }
+        float falloff = (float) Math.pow(1.0f - t, 2.2);
+        int alpha = Math.round(maxAlpha * falloff);
+        if (alpha == 0 && falloff > 0.02f) {
+            alpha = 1;
+        }
+        return Math.min(255, alpha);
     }
 
     @Override

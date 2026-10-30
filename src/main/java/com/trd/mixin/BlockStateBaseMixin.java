@@ -8,7 +8,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * Гарантує, що ванільні факели сприймаються рушієм чанків як такі, що підлягають випадковому тиканню (isRandomlyTicking).
+ * Ensures vanilla floor and wall torches are recognized as ticking blocks (isRandomlyTicking).
+ * This enables the random tick lifecycle required for torch extinguishing physics.
  */
 @Mixin(BlockBehaviour.BlockStateBase.class)
 public abstract class BlockStateBaseMixin {

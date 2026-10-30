@@ -14,6 +14,11 @@ import net.minecraft.world.item.context.UseOnContext;
 
 import java.util.List;
 
+/**
+ * Item representation of light bulbs.
+ * Prevents standalone block placement; bulbs must be screwed directly into an E27 socket fixture.
+ * Displays a dynamic HUD durability bar and tooltip metrics indicating filament integrity.
+ */
 public class LampItem extends BlockItem {
 
     public LampItem(ElectricLampBlock block, Properties properties) {
@@ -26,9 +31,8 @@ public class LampItem extends BlockItem {
 
     @Override
     public InteractionResult useOn(UseOnContext context) {
-        // Забороняємо встановлення «голих» ламп безпосередньо на звичайні поверхні.
-        // Лампи мають вкручуватися виключно у патрон (EmptySocketBlock).
-        // При взаємодії з EmptySocketBlock спочатку спрацьовує useItemOn самого блоку патрона.
+        // Disallow placing naked bulbs directly in the world.
+        // Bulbs must be screwed into an EmptySocketBlock fixture.
         return InteractionResult.PASS;
     }
 
@@ -58,10 +62,10 @@ public class LampItem extends BlockItem {
         LampComponent comp = stack.get(ModDataComponents.LAMP_DATA.get());
         if (comp != null) {
             if (comp.isBroken()) {
-                return 0xFF2222; // Червоний для перегорілої лампи
+                return 0xFF2222; // Red for burned out / broken bulbs
             }
             float ratio = Math.clamp(comp.durability(), 0.0f, 1.0f);
-            return Mth.hsvToRgb(ratio / 3.0F, 1.0F, 1.0F); // Градієнт від зеленого до червоного
+            return Mth.hsvToRgb(ratio / 3.0F, 1.0F, 1.0F); // Hue gradient from green to red
         }
         return 0x55FF55;
     }

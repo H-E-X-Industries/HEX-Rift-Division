@@ -27,9 +27,9 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
- * Згаслий настінний факел (Unlit Wall Torch).
- * Не випромінює світла та часток полум'я.
- * Запалюється кресалом або палаючим факелом зі збереженням орієнтації на стіні.
+ * Extinguished wall-mounted torch fixture.
+ * Emits zero light and no flame/smoke particles.
+ * Can be relit using flint and steel or an active burning torch, preserving wall mounting orientation.
  */
 public class UnlitWallTorchBlock extends WallTorchBlock {
     public static final MapCodec<UnlitWallTorchBlock> CODEC = simpleCodec(UnlitWallTorchBlock::new);
@@ -51,7 +51,7 @@ public class UnlitWallTorchBlock extends WallTorchBlock {
 
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
-        // Згаслий настінний факел не випромінює часток вогню та диму
+        // Unlit wall torches do not emit flame or smoke particles
     }
 
     @Override

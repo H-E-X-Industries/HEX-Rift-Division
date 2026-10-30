@@ -13,13 +13,13 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 /**
- * Світлодіодна лампа (LED Lamp).
- * Рівень світла: 15.
- * Споживання: 1 од./такт (мінімальне споживання).
- * Знос: 0.0f (без фізичного зносу).
+ * Modern solid-state industrial LED lamp fixture.
+ * Light level: 15 (maximum).
+ * Power consumption: 1 energy unit/tick (high efficiency).
+ * Durability wear: 0.0f (no filament burnout).
  */
 public class LedLampBlock extends ElectricLampBlock {
-    // Компактні VoxelShape хітбокси для Світлодіодної LED лампи (6×10.2×6 px)
+    // Compact voxel shapes for LED lamp fixture (6x10.2x6 pixels)
     private static final Map<Direction, VoxelShape> SHAPES = Map.of(
             Direction.UP,    Block.box(5.0, 0.0, 5.0, 11.0, 10.2, 11.0),
             Direction.DOWN,  Block.box(5.0, 5.8, 5.0, 11.0, 16.0, 11.0),

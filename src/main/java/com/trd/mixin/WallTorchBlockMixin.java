@@ -17,7 +17,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 
 /**
- * Міксин для WallTorchBlock: додає випадкове тикання (randomTick) та механіку згасання для настінних факелів.
+ * Mixin for {@link WallTorchBlock} adding random tick execution and extinguishing mechanics,
+ * maintaining the original wall-mounting orientation when extinguished.
  */
 @Mixin(WallTorchBlock.class)
 public abstract class WallTorchBlockMixin extends TorchBlock {
@@ -35,10 +36,10 @@ public abstract class WallTorchBlockMixin extends TorchBlock {
     protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         boolean shouldExtinguish;
         if (level.isRainingAt(pos)) {
-            // Під відкритим дощем шанс згасання становить 80% за тік
+            // High extinguishing chance under direct open rainfall (80% per random tick)
             shouldExtinguish = random.nextFloat() < 0.80f;
         } else {
-            // У сухому приміщенні шанс згасання помірний (1 зі 120 випадкових тіків)
+            // Moderate extinguishing chance in sheltered areas (1 out of 120 random ticks)
             shouldExtinguish = random.nextInt(120) == 0;
         }
 

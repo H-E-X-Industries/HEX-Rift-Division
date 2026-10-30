@@ -9,6 +9,7 @@ import com.trd.api.energy.LightEnergyStorage;
 import com.trd.block.basic.industrial.lighting.ElectricLampBlock;
 import com.trd.block.basic.industrial.lighting.FluorescentLampBlock;
 import com.trd.block.basic.industrial.lighting.LedLampBlock;
+import com.trd.block.basic.industrial.lighting.TungstenLampBlock;
 import com.trd.block.entity.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -26,10 +27,9 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Енергетичний BlockEntity для патронів та світильників.
- * Підтримує підключення живлення ВИКЛЮЧНО з боку цоколя (основи),
- * повну відсутність буфера накопичення (миттєва реакція на розрив мережі)
- * та плавне динамічне згасання (4–6 тіків).
+ * Energy block entity for lamp sockets and light fixtures.
+ * Handles single-face base port wire connections, zero internal storage accumulation
+ * (immediate reaction to power cutoffs), and realistic thermal inertia / starter flicker physics.
  */
 public class SocketBlockEntity extends BlockEntity implements IEnergyReceiver, IEnergyConnector {
 
@@ -80,7 +80,7 @@ public class SocketBlockEntity extends BlockEntity implements IEnergyReceiver, I
     // ==================== BASE PORT CONNECTION ====================
 
     /**
-     * Повертає сторону підключення проводу — СУВОРО з боку підошви/цоколя світильника.
+     * Returns the allowed wire connection side, locked strictly to the fixture's mounting base/socket face.
      */
     public Direction getConnectionSide() {
         BlockState state = getBlockState();
@@ -186,34 +186,43 @@ public class SocketBlockEntity extends BlockEntity implements IEnergyReceiver, I
         boolean isBrokenState = this.broken || (state.hasProperty(ElectricLampBlock.BROKEN) && state.getValue(ElectricLampBlock.BROKEN));
         boolean hasPower = !isBrokenState && consumption > 0L && this.energyStored >= consumption;
 
+        // Discard consumed energy immediately: light fixtures must not hoard battery energy
         this.energyStored = 0L;
         setChanged();
 
         int maxLight = lampBlock.getMaxLightLevel();
-        int targetLight = 0;
+        int targetLight;
 
         if (state.getBlock() instanceof LedLampBlock) {
+            // LED: Instantaneous step response without thermal inertia
             targetLight = hasPower ? maxLight : 0;
             this.warmupTicks = 0;
             this.cooldownTicks = 0;
             this.flickerTicks = 0;
             this.currentLightLevel = targetLight;
         } else if (state.getBlock() instanceof FluorescentLampBlock) {
+            // Fluorescent (CFL): Realistic gas discharge starter ignition cycle (5 rhythmic flashes over 28 ticks)
             if (hasPower) {
                 this.cooldownTicks = 0;
-                if (this.warmupTicks < 8) {
+                if (this.warmupTicks < 28) {
                     this.warmupTicks++;
-                    if (this.flickerTicks <= 0) {
-                        this.flickerTicks = 1 + level.random.nextInt(2);
-                        targetLight = level.random.nextBoolean() ? maxLight : 0;
-                        if (targetLight > 0) {
-                            level.playSound(null, pos, SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.BLOCKS, 0.25f, 1.8f);
-                        }
-                    } else {
-                        this.flickerTicks--;
-                        targetLight = this.currentLightLevel;
+                    boolean isFlickerOn = (this.warmupTicks >= 1 && this.warmupTicks <= 2)
+                            || (this.warmupTicks >= 6 && this.warmupTicks <= 7)
+                            || (this.warmupTicks >= 12 && this.warmupTicks <= 14)
+                            || (this.warmupTicks >= 18 && this.warmupTicks <= 19)
+                            || (this.warmupTicks >= 23 && this.warmupTicks <= 25);
+
+                    targetLight = isFlickerOn ? maxLight : 0;
+
+                    // Play bimetallic starter click sound at the leading edge of each ignition attempt
+                    if (this.warmupTicks == 1 || this.warmupTicks == 6 || this.warmupTicks == 12 || this.warmupTicks == 18 || this.warmupTicks == 23) {
+                        level.playSound(null, pos, SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.BLOCKS, 0.35f, 1.8f + level.random.nextFloat() * 0.3f);
                     }
                 } else {
+                    if (this.warmupTicks == 28) {
+                        level.playSound(null, pos, SoundEvents.LEVER_CLICK, SoundSource.BLOCKS, 0.4f, 1.5f);
+                        this.warmupTicks = 29;
+                    }
                     targetLight = maxLight;
                 }
             } else {
@@ -223,7 +232,7 @@ public class SocketBlockEntity extends BlockEntity implements IEnergyReceiver, I
             }
             this.currentLightLevel = targetLight;
         } else {
-            // Лампи розжарення (Tungsten, Carbon): теплова інерція
+            // Incandescent bulbs (Tungsten, Carbon): Gradual thermal heating and cooling
             if (hasPower) {
                 this.cooldownTicks = 0;
                 if (this.warmupTicks < 2) {
@@ -237,7 +246,7 @@ public class SocketBlockEntity extends BlockEntity implements IEnergyReceiver, I
                 this.warmupTicks = 0;
                 if (this.currentLightLevel > 0) {
                     this.cooldownTicks++;
-                    int cooldownDuration = (lampBlock instanceof com.trd.block.basic.industrial.lighting.TungstenLampBlock) ? 4 : 5;
+                    int cooldownDuration = (lampBlock instanceof TungstenLampBlock) ? 4 : 5;
                     float remaining = Math.max(0.0f, 1.0f - (float) this.cooldownTicks / cooldownDuration);
                     targetLight = Math.round(maxLight * remaining);
                 } else {

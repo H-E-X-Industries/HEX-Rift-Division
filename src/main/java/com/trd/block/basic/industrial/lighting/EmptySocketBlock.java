@@ -40,15 +40,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 /**
- * Промисловий патрон E27.
- * Підтримує кріплення на будь-які грані блоків та кабелів/проводів WireBlock (ефект гірлянди).
- * Провід підключається ВИКЛЮЧНО з боку цоколя (основи).
+ * Industrial E27 carbolite lamp socket fixture.
+ * Supports mounting in 6 directions on solid blocks or directly onto {@link WireBlock} cable runs (string light effect).
+ * Power and cables connect strictly to the base/socket mount face.
  */
 public class EmptySocketBlock extends Block implements EntityBlock {
     public static final MapCodec<EmptySocketBlock> CODEC = simpleCodec(EmptySocketBlock::new);
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
 
-    // Геометричні колізії для компактного патрона E27 (габарити 6x4x6 на 6 сторін)
+    // Compact voxel shapes for E27 socket fixture (6x4x6 bounding box across 6 directions)
     private static final Map<Direction, VoxelShape> SHAPES = ImmutableMap.<Direction, VoxelShape>builder()
             .put(Direction.UP, Block.box(5.0, 0.0, 5.0, 11.0, 4.0, 11.0))
             .put(Direction.DOWN, Block.box(5.0, 12.0, 5.0, 11.0, 16.0, 11.0))
@@ -100,7 +100,7 @@ public class EmptySocketBlock extends Block implements EntityBlock {
         Direction facing = state.getValue(FACING);
         BlockPos supportPos = pos.relative(facing.getOpposite());
         BlockState support = level.getBlockState(supportPos);
-        // Дозволяємо монтаж на кабелі (ефект гірлянди) та тверді грані
+        // Allow attachment to wires (string-light effect) or solid block faces
         if (support.getBlock() instanceof WireBlock) {
             return true;
         }

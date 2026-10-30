@@ -23,7 +23,7 @@ public class ModDataComponents {
     // БАЗОВІ ТИПИ ДАНИХ (Універсальні заміни)
     // =========================================================
 
-    // Дата-компонент фізичного ресурсу та зносу лампи
+    // Physical durability and wear tracking component for electric lamps
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<LampComponent>> LAMP_DATA =
             DATA_COMPONENTS.register("lamp_data",
                     () -> DataComponentType.<LampComponent>builder()

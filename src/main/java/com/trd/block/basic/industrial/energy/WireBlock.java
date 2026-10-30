@@ -150,19 +150,19 @@ public class WireBlock extends BaseEntityBlock {
             return sideFromNeighbor == facing.getOpposite();
         }
 
-        // 4. Світильники та патрони (ефект гірлянди) — провід підключається ВИКЛЮЧНО до цоколя (основи)
+        // 4. Light fixtures and sockets (string-light effect): wire connects strictly to the base mount face
         if (block instanceof EmptySocketBlock || block instanceof ElectricLampBlock) {
             Direction facing = neighborState.getValue(EmptySocketBlock.FACING);
             return sideFromNeighbor == facing.getOpposite();
         }
 
-        // 5. Прожектор — підключення виключно до монтажної підошви (основи)
+        // 5. Floodlight: wire connects strictly to the stationary mounting base face
         if (block instanceof FloodlightBlock) {
             Direction mountFace = neighborState.getValue(FloodlightBlock.MOUNT_FACE);
             return sideFromNeighbor == mountFace.getOpposite();
         }
 
-        // 6. Інші пристрої з енергетичними інтерфейсами
+        // 6. Generic energy receivers and block entities
         BlockEntity be = world.getBlockEntity(neighborPos);
         if (be == null) {
             return false;

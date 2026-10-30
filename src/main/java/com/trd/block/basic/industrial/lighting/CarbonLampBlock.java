@@ -13,13 +13,13 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 /**
- * Вугільна лампа розжарення (Carbon Filament Lamp).
- * Рівень світла: 8.
- * Споживання: 12 од./такт.
- * Знос: 0.04f на randomTick (швидкий знос).
+ * Early incandescent carbon filament lamp fixture.
+ * Light level: 8.
+ * Power consumption: 12 energy units/tick.
+ * Durability wear: 0.04f per random tick (fast degradation).
  */
 public class CarbonLampBlock extends ElectricLampBlock {
-    // Компактні VoxelShape хітбокси для Вугільної лампи розжарення (6×11×6 px)
+    // Compact voxel shapes for carbon filament lamp (6x11x6 pixels)
     private static final Map<Direction, VoxelShape> SHAPES = Map.of(
             Direction.UP,    Block.box(5.0, 0.0, 5.0, 11.0, 11.0, 11.0),
             Direction.DOWN,  Block.box(5.0, 5.0, 5.0, 11.0, 16.0, 11.0),

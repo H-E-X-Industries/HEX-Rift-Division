@@ -27,9 +27,9 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 /**
- * Згаслий підлоговий факел (Unlit Torch).
- * Не випромінює світла та часток полум'я.
- * Запалюється кресалом або палаючим факелом.
+ * Extinguished floor torch fixture.
+ * Emits zero light and no flame/smoke particles.
+ * Can be relit using flint and steel or an active burning torch, updating sealed room climate accordingly.
  */
 public class UnlitTorchBlock extends TorchBlock {
     public static final MapCodec<UnlitTorchBlock> CODEC = simpleCodec(UnlitTorchBlock::new);
@@ -51,7 +51,7 @@ public class UnlitTorchBlock extends TorchBlock {
 
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
-        // Згаслий факел не випромінює часток вогню та диму
+        // Unlit torches do not emit flame or smoke particles
     }
 
     @Override

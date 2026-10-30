@@ -46,9 +46,10 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 /**
- * Базовий клас промислових електричних ламп.
- * Підтримує кріплення на будь-які грані блоків та кабелів WireBlock (ефект гірлянди).
- * Провід та живлення підключаються ВИКЛЮЧНО з боку цоколя (основи).
+ * Base class for all industrial electric light fixtures.
+ * Supports mounting in 6 directions on solid blocks or directly onto {@link WireBlock} cable runs (string light effect).
+ * Power and cables connect strictly to the base/socket mount face.
+ * Features realistic thermal inertia, warmup/cooldown curves, durability wear, and lamp unscrewing interaction.
  */
 public abstract class ElectricLampBlock extends Block implements EntityBlock {
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
@@ -56,7 +57,7 @@ public abstract class ElectricLampBlock extends Block implements EntityBlock {
     public static final BooleanProperty BROKEN = BooleanProperty.create("broken");
     public static final IntegerProperty LIGHT_LEVEL = IntegerProperty.create("light_level", 0, 15);
 
-    // Форми світильника з колбою, орієнтовані на 6 сторін (база 6x6, висота до 11 пікселів)
+    // Hitbox geometries for 6 mounting directions (6x6 base, up to 11 pixels height)
     private static final Map<Direction, VoxelShape> SHAPES = ImmutableMap.<Direction, VoxelShape>builder()
             .put(Direction.UP, Block.box(5.0, 0.0, 5.0, 11.0, 11.0, 11.0))
             .put(Direction.DOWN, Block.box(5.0, 5.0, 5.0, 11.0, 16.0, 11.0))
@@ -87,8 +88,14 @@ public abstract class ElectricLampBlock extends Block implements EntityBlock {
                 .setValue(LIGHT_LEVEL, 0));
     }
 
+    /**
+     * Power consumption in energy units per tick.
+     */
     public abstract long getConsumptionPerTick();
 
+    /**
+     * Physical durability degradation per random block tick while lit.
+     */
     public abstract float getWearPerRandomTick();
 
     public int getMaxLightLevel() {
@@ -150,7 +157,7 @@ public abstract class ElectricLampBlock extends Block implements EntityBlock {
         Direction facing = state.getValue(FACING);
         BlockPos supportPos = pos.relative(facing.getOpposite());
         BlockState support = level.getBlockState(supportPos);
-        // Дозволяємо монтаж на кабелі (ефект гірлянди) та тверді грані
+        // Allow attachment to wires (string-light effect) or solid block faces
         if (support.getBlock() instanceof WireBlock) {
             return true;
         }
@@ -260,6 +267,10 @@ public abstract class ElectricLampBlock extends Block implements EntityBlock {
         return InteractionResult.PASS;
     }
 
+    /**
+     * Unscrews the light bulb from the socket, reverting the world block to {@link EmptySocketBlock}
+     * and yielding the corresponding {@link LampItem} with its current durability and broken state preserved.
+     */
     public void unscrewLamp(BlockState state, Level level, BlockPos pos, Player player) {
         if (!level.isClientSide()) {
             Direction facing = state.getValue(FACING);

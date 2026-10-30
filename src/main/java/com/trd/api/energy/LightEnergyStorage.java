@@ -3,8 +3,8 @@ package com.trd.api.energy;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 
 /**
- * Адаптер NeoForge IEnergyStorage для приладів освітлення (IEnergyReceiver).
- * Забезпечує пряму сумісність світильників та прожекторів з будь-якими джерелами Forge/NeoForge Energy.
+ * NeoForge {@link IEnergyStorage} adapter for lighting appliances implementing {@link IEnergyReceiver}.
+ * Enables seamless compatibility between TRD light fixtures/floodlights and external Forge/NeoForge energy sources.
  */
 public class LightEnergyStorage implements IEnergyStorage {
 

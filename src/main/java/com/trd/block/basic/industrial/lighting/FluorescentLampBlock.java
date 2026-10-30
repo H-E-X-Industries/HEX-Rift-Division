@@ -13,13 +13,13 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 /**
- * Люмінесцентна лампа (Fluorescent Lamp).
- * Рівень світла: 13.
- * Споживання: 3 од./такт.
- * Знос: 0.003f на randomTick (довговічна).
+ * Compact fluorescent lamp (CFL) fixture.
+ * Light level: 13.
+ * Power consumption: 3 energy units/tick.
+ * Durability wear: 0.003f per random tick (high longevity, features ignition starter flicker).
  */
 public class FluorescentLampBlock extends ElectricLampBlock {
-    // Компактні VoxelShape хітбокси для Люмінесцентної компакт-лампи (КЛЛ) (6×11.5×6 px)
+    // Compact voxel shapes for CFL fixture (6x11.5x6 pixels)
     private static final Map<Direction, VoxelShape> SHAPES = Map.of(
             Direction.UP,    Block.box(5.0, 0.0, 5.0, 11.0, 11.5, 11.0),
             Direction.DOWN,  Block.box(5.0, 4.5, 5.0, 11.0, 16.0, 11.0),

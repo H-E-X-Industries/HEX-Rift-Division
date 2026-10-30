@@ -13,13 +13,13 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 /**
- * Вольфрамова лампа розжарення (Tungsten Lamp).
- * Рівень світла: 12.
- * Споживання: 6 од./такт.
- * Знос: 0.01f на randomTick (середній ресурс).
+ * Standard incandescent tungsten coil lamp fixture (A60 bulb).
+ * Light level: 12.
+ * Power consumption: 6 energy units/tick.
+ * Durability wear: 0.01f per random tick (balanced service life).
  */
 public class TungstenLampBlock extends ElectricLampBlock {
-    // Компактні VoxelShape хітбокси для Вольфрамової лампи (220В / А60) (6×10.5×6 px)
+    // Compact voxel shapes for tungsten lamp (6x10.5x6 pixels)
     private static final Map<Direction, VoxelShape> SHAPES = Map.of(
             Direction.UP,    Block.box(5.0, 0.0, 5.0, 11.0, 10.5, 11.0),
             Direction.DOWN,  Block.box(5.0, 5.5, 5.0, 11.0, 16.0, 11.0),
@@ -30,8 +30,8 @@ public class TungstenLampBlock extends ElectricLampBlock {
     );
 
     public TungstenLampBlock(Properties properties,
-                             Supplier<? extends Item> lampItemSupplier,
-                             Supplier<? extends Block> socketBlockSupplier) {
+                            Supplier<? extends Item> lampItemSupplier,
+                            Supplier<? extends Block> socketBlockSupplier) {
         super(properties, 12, lampItemSupplier, socketBlockSupplier);
     }
 
