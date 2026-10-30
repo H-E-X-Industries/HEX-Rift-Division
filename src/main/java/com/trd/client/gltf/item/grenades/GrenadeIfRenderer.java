@@ -1,15 +1,15 @@
 package com.trd.client.gltf.item.grenades;
 
-import com.hex.hexrender.direct.GemRenderItemRenderer;
+import com.hex.hexrender.direct.HexItemRenderer;
 
 /**
- * Рендерер ударной гранаты в руке на glTF через GemRender.
+ * Рендерер ударной гранаты в руке на glTF через HexRender.
  * <p>
  * Вся начинка — в {@link GrenadeIfGltfAppearance}: какие клипы показывать, какая
  * текстура у текущего вида и почему у предмета не видно чеки. Здесь нужен только
  * сам рендерер, который NeoForge и достаёт из {@code getCustomRenderer}.
  */
-public class GrenadeIfRenderer extends GemRenderItemRenderer {
+public class GrenadeIfRenderer extends HexItemRenderer {
 
     public GrenadeIfRenderer() {
         super(new GrenadeIfGltfAppearance());

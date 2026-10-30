@@ -94,7 +94,7 @@ config="trd.mixins.json"
 [[dependencies.${mod_id}]]
     modId="hexrender"
     type="required"
-    versionRange="[0.1.6,1.0.0)"
+    versionRange="[1.0.0,)"
     ordering="AFTER"
     side="CLIENT"
 # TerraBlender
