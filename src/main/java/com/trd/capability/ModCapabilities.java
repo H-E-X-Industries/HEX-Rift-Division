@@ -310,6 +310,11 @@ public class ModCapabilities {
                         if (core instanceof com.trd.multiblock.industrial.smelter.SmelterBlockEntity smelter) {
                             return smelter.getItemHandler(side);
                         }
+                        if (core instanceof com.trd.multiblock.industrial.heaters.HeaterBlockEntity heater) {
+                            // Твердотопливный нагреватель: экспонирует свой инвентарь
+                            // через все блоки мультиблока (верх/низ/бока контроллера).
+                            return heater.getItemHandler(side);
+                        }
                         if (core instanceof com.trd.multiblock.industrial.ccmachine.CCMachineBlockEntity ccm) {
                             if (be.getPartRole() == com.trd.multiblock.system.PartRole.UNIVERSAL_CONNECTOR) {
                                 return ccm.getAutomationItemHandler();

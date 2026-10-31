@@ -353,6 +353,14 @@ public class TurretBulletGltfRenderer extends EntityRenderer<TurretBulletEntity>
         poseStack.mulPose(Axis.YP.rotationDegrees(yawDeg - 180.0F));
         poseStack.mulPose(Axis.XP.rotationDegrees(pitchDeg));
         poseStack.mulPose(Axis.ZP.rotationDegrees(entity.spin));
+        // Модель трассёра (turret_bullet.gltf) автором лежит вертикально (длинная ось Y),
+        // а HEX Render игнорирует статическую ротацию ноды глТФ для нескинованных мешей.
+        // Поэтому разворачиваем её здесь: нос (+Y) уходит в −Z, куда смотрит матрица полёта.
+        // Обычная модель (turret_bullet2.gltf) автором уже лежит вдоль −Z — её не трогаем.
+        // Ставим ПОСЛЕ spin'а: прокрутка должна идти вокруг уже развёрнутой оси Z.
+        if (tracer) {
+            poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
+        }
 
         poseStack.scale(MODEL_SCALE, MODEL_SCALE, MODEL_SCALE);
 

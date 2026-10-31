@@ -133,16 +133,20 @@ public class TurretLightEntity extends Monster implements GeoEntity, RangedAttac
         if (myOwner != null) {
             if (entity.getUUID().equals(myOwner)) return true;
 
-            // Другая обычная турель с тем же владельцем
+            // Другая обычная турель: союзник, если тот же владелец
+            // (у портативных турелей нет чипа владельцев — считаем их только по owner).
             if (entity instanceof TurretLightEntity otherTurret) {
                 UUID theirOwner = otherTurret.getOwnerUUID();
                 if (myOwner.equals(theirOwner)) return true;
             }
 
-            // Linked-турель с тем же владельцем
+            // Linked-турель: союзник, если владельцы связаны напрямую или через её чип
+            // (портативная турель не имеет собственного списка доверенных — односторонняя проверка).
             if (entity instanceof TurretLightLinkedEntity linkedTurret) {
-                UUID theirOwner = linkedTurret.getOwnerUUID();
-                if (myOwner.equals(theirOwner)) return true;
+                if (com.trd.entity.weapons.turrets.logic.TurretLightComputer.areTurretOwnersAllied(
+                        myOwner, null, linkedTurret.getOwnerUUID(), linkedTurret.getAllowedUsers())) {
+                    return true;
+                }
             }
         }
         return false;

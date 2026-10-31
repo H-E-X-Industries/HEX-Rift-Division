@@ -153,7 +153,12 @@ public class LowPressureSteamCondenserBlock extends BaseEntityBlock implements S
         BlockEntity be = params.getOptionalParameter(LootContextParams.BLOCK_ENTITY);
         if (be instanceof LowPressureSteamCondenserBlockEntity cond) {
             ItemStack stack = new ItemStack(this);
-            stack.set(net.minecraft.core.component.DataComponents.BLOCK_ENTITY_DATA, net.minecraft.world.item.component.CustomData.of(cond.saveWithoutMetadata(params.getLevel().registryAccess())));
+            // BlockItem.setBlockEntityData добавляет обязательный ключ "id":
+            // CustomData.of без "id" приводит к DecoderException на строгом
+            // кодеке BLOCK_ENTITY_DATA (тот же класс бага, что и краш бочек).
+            net.minecraft.world.item.BlockItem.setBlockEntityData(stack,
+                    com.trd.block.entity.ModBlockEntities.LOW_PRESSURE_STEAM_CONDENSER_BE.get(),
+                    cond.saveWithoutMetadata(params.getLevel().registryAccess()));
             return Collections.singletonList(stack);
         }
         return super.getDrops(state, params);

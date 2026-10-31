@@ -253,7 +253,12 @@ public class FluidBarrelBlock extends BaseEntityBlock {
             net.minecraft.world.item.ItemStack itemStack = new net.minecraft.world.item.ItemStack(this);
             if (!barrel.fluidTank.isEmpty()) {
                 net.minecraft.nbt.CompoundTag nbt = barrel.saveWithoutMetadata(pParams.getLevel().registryAccess());
-                net.minecraft.world.item.component.CustomData.set(net.minecraft.core.component.DataComponents.BLOCK_ENTITY_DATA, itemStack, nbt);
+                // ВАЖНО: BlockItem.setBlockEntityData, а не CustomData.set —
+                // компонент BLOCK_ENTITY_DATA оценивается строгим кодеком
+                // (CustomData.CODEC_WITH_ID) и БЕЗ ключа "id" падает при
+                // декодировании пакета (краш при pick-block копировании наполненной бочки).
+                net.minecraft.world.item.BlockItem.setBlockEntityData(itemStack,
+                        com.trd.block.entity.ModBlockEntities.FLUID_BARREL_BE.get(), nbt);
             }
             return java.util.Collections.singletonList(itemStack);
         }
@@ -267,7 +272,10 @@ public class FluidBarrelBlock extends BaseEntityBlock {
         if (be instanceof FluidBarrelBlockEntity barrel && !barrel.fluidTank.isEmpty()) {
             net.minecraft.nbt.CompoundTag nbt = barrel.saveWithoutMetadata(level.registryAccess());
             nbt.remove("Inventory");
-            net.minecraft.world.item.component.CustomData.set(net.minecraft.core.component.DataComponents.BLOCK_ENTITY_DATA, stack, nbt);
+            // BlockItem.setBlockEntityData добавляет обязательный ключ "id" — у CustomData.set
+            // его нет, и вне-креатив-путь тоже упадёт на строгом кодеке компонента.
+            net.minecraft.world.item.BlockItem.setBlockEntityData(stack,
+                    com.trd.block.entity.ModBlockEntities.FLUID_BARREL_BE.get(), nbt);
         }
         return stack;
     }
@@ -303,8 +311,12 @@ public class FluidBarrelBlock extends BaseEntityBlock {
         net.minecraft.world.item.component.CustomData beData = pStack.get(net.minecraft.core.component.DataComponents.BLOCK_ENTITY_DATA);
         net.minecraft.nbt.CompoundTag beTag = beData != null ? beData.copyTag() : null;
 
-        String fluidName = beTag != null ? beTag.getString("FluidName") : "";
-        int amount = beTag != null ? beTag.getInt("Amount") : 0;
+        // NeoForge 1.21.1 сохраняет FluidTank в NBT как составной объект "Fluid":
+        // {"Fluid":{"id":"minecraft:water","amount":12345}} — прежние ключи FluidName/Amount
+        // остались от 1.20.x, поэтому тултип не показывал содержимое и бар молчал.
+        net.minecraft.nbt.CompoundTag fluidTag = (beTag != null && beTag.contains("Fluid")) ? beTag.getCompound("Fluid") : null;
+        String fluidName = fluidTag != null && !fluidTag.isEmpty() ? fluidTag.getString("id") : "";
+        int amount = fluidTag != null && !fluidTag.isEmpty() ? fluidTag.getInt("amount") : 0;
         boolean hasFluid = !fluidName.isEmpty() && !fluidName.equals("minecraft:empty") && amount > 0;
 
         String filter = beTag != null ? beTag.getString("FluidFilter") : "";

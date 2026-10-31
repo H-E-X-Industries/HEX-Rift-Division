@@ -57,13 +57,13 @@ public class ModModels {
 
     static {
         String[] materials = {"iron", "duralumin", "steel", "titanium", "tungsten_carbide"};
-        int[] gearSizes = {1, 2, 3};
-        for (int size : gearSizes) {
-            for (String mat : materials) {
-                String name = "gear" + size + "_" + mat; 
-                GEAR_MODELS.put(name, PartialModel.of(ResourceLocation.fromNamespaceAndPath("trd", "block/" + name)));
-            }
-        }
+        // ВАЖНО: ключи карты — это РЕАЛЬНЫЕ registry-пути предметов GearItem,
+        // именно так ищет модель ShaftVisual.rebuildGear() / ShaftRenderer.
+        // Раньше тут были ключи "gear1_steel"/"gear2_steel" — они никогда не совпадали
+        // с путями предметов ("steel_gear_small"/"steel_gear_medium"), поэтому шестерни
+        // на вале не рендерились (lookup возвращал null и молча пропускался).
+        GEAR_MODELS.put("steel_gear_small",  PartialModel.of(ResourceLocation.fromNamespaceAndPath("trd", "block/steel_gear_small")));
+        GEAR_MODELS.put("steel_gear_medium", PartialModel.of(ResourceLocation.fromNamespaceAndPath("trd", "block/steel_gear_medium")));
 
         String[] diameters = {"light", "medium", "heavy"};
         for (String dia : diameters) {

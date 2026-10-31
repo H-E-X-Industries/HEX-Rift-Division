@@ -244,13 +244,15 @@ public class FuelTankSmallBlock extends BaseEntityBlock implements com.trd.multi
         tooltip.add(Component.translatable("tooltip.trd.fuel_tank.resistant").withStyle(ChatFormatting.GREEN));
 
         net.minecraft.world.item.component.CustomData customData2 = stack.getOrDefault(net.minecraft.core.component.DataComponents.BLOCK_ENTITY_DATA, net.minecraft.world.item.component.CustomData.EMPTY); net.minecraft.nbt.CompoundTag nbt = customData2.copyTag();
-        net.minecraft.nbt.CompoundTag beTag = (nbt != null && nbt.contains("BlockEntityTag")) ? nbt.getCompound("BlockEntityTag") : null;
-
-        String fluidName = beTag != null ? beTag.getString("FluidName") : "";
-        int amount = beTag != null ? beTag.getInt("Amount") : 0;
+        // Данные лежат на верхнем уровне NBT (компонент BLOCK_ENTITY_DATA),
+        // никакого вложенного "BlockEntityTag" никогда не существовало.
+        // NeoForge 1.21.1 сохраняет FluidTank как {"Fluid":{"id":...,"amount":...}}.
+        net.minecraft.nbt.CompoundTag fluidTag = (nbt != null && nbt.contains("Fluid")) ? nbt.getCompound("Fluid") : null;
+        String fluidName = fluidTag != null && !fluidTag.isEmpty() ? fluidTag.getString("id") : "";
+        int amount = fluidTag != null && !fluidTag.isEmpty() ? fluidTag.getInt("amount") : 0;
         boolean hasFluid = !fluidName.isEmpty() && !fluidName.equals("minecraft:empty") && amount > 0;
 
-        String filter = beTag != null ? beTag.getString("FluidFilter") : "";
+        String filter = nbt != null && nbt.contains("FluidFilter") ? nbt.getString("FluidFilter") : "";
         boolean hasFilter = filter != null && !filter.isEmpty() && !filter.equals("none");
 
         String displayId = hasFluid ? fluidName : (hasFilter ? filter : "");

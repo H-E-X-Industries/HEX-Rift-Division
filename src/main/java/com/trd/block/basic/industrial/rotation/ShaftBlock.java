@@ -397,6 +397,11 @@ public class ShaftBlock extends BaseEntityBlock {
     }
 
     private boolean isSupport(Level level, BlockPos pos, Direction axisDir) {
+        return isSupportBlock(level, pos, axisDir);
+    }
+
+    /** Публичная (для пакета) проверка: может ли блок на этой позиции служить опорой вала по заданной оси. */
+    static boolean isSupportBlock(Level level, BlockPos pos, Direction axisDir) {
         BlockState state = level.getBlockState(pos);
         Block block = state.getBlock();
         if (block instanceof BearingBlock) {

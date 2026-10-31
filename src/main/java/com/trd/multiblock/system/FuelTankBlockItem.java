@@ -26,12 +26,32 @@ public class FuelTankBlockItem extends MultiblockBlockItem {
             return FluidStack.EMPTY;
         }
         CompoundTag be = stack.get(DataComponents.BLOCK_ENTITY_DATA).copyTag();
-        String name = be.getString("FluidName");
-        int amount = be.getInt("Amount");
-        if (name.isEmpty() || name.equals("minecraft:empty") || amount <= 0) return FluidStack.EMPTY;
-        Fluid fluid = BuiltInRegistries.FLUID.get(ResourceLocation.parse(name));
-        if (fluid == null || fluid == Fluids.EMPTY) return FluidStack.EMPTY;
-        return new FluidStack(fluid, amount);
+        // NeoForge 1.21.1 сохраняет FluidTank как {"Fluid":{"id":...,"amount":...}},
+        // ключи FluidName/Amount существовали только в 1.20.x.
+        if (be.contains("Fluid")) {
+            CompoundTag fluid = be.getCompound("Fluid");
+            if (!fluid.isEmpty()) {
+                String name = fluid.getString("id");
+                int amount = fluid.getInt("amount");
+                if (!name.isEmpty() && !name.equals("minecraft:empty") && amount > 0) {
+                    Fluid f = BuiltInRegistries.FLUID.get(ResourceLocation.parse(name));
+                    if (f != null && f != Fluids.EMPTY) {
+                        return new FluidStack(f, amount);
+                    }
+                }
+            }
+        }
+        // Ассемблерный фолбэк: FluidStack.parseOptional на всякий случай не нужен,
+        // но поддержим и старый формат для совместимости уже созданных предметов.
+        String legacyName = be.getString("FluidName");
+        int legacyAmount = be.getInt("Amount");
+        if (!legacyName.isEmpty() && !legacyName.equals("minecraft:empty") && legacyAmount > 0) {
+            Fluid legacyFluid = BuiltInRegistries.FLUID.get(ResourceLocation.parse(legacyName));
+            if (legacyFluid != null && legacyFluid != Fluids.EMPTY) {
+                return new FluidStack(legacyFluid, legacyAmount);
+            }
+        }
+        return FluidStack.EMPTY;
     }
 
     @Override
