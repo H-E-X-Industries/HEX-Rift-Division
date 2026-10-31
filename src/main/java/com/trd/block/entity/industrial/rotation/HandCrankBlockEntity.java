@@ -88,7 +88,10 @@ public class HandCrankBlockEntity extends KineticNodeBlockEntity {
         BlockState state = getBlockState();
         if (!state.hasProperty(HandCrankBlock.FACING)) return 0;
         Direction facing = state.getValue(HandCrankBlock.FACING);
-        if (facing == Direction.SOUTH || facing == Direction.EAST || facing == Direction.UP) {
+        // Инверсия знака скорости синхронизирована с ClientKineticAngleTracker:
+        // там инвертируется {SOUTH, WEST, DOWN}, здесь раньше было {SOUTH, EAST, UP} —
+        // поэтому на FACING EAST/UP привод крутился в противоположную валу сторону.
+        if (facing == Direction.SOUTH || facing == Direction.WEST || facing == Direction.DOWN) {
             return -this.speed;
         }
         return this.speed;

@@ -198,7 +198,9 @@ public class MissileTurretBlockEntity extends EnergyNodeBlockEntity {
         // 1. Проверка владельца
         if (ownerUUID != null && entity.getUUID().equals(ownerUUID)) return true;
 
-        // 2. Проверка чипа
+        // 2. Чип владельцев — собираем список UUID один раз, чтобы
+        // сравнивать и с игроками, и с владельцами других турелей.
+        List<UUID> chipOwners = new ArrayList<>();
         ItemStack chipStack = this.missileContainer.getStackInSlot(MissileAmmoContainer.CHIP_SLOT_INDEX);
         if (!chipStack.isEmpty() && chipStack.getItem() instanceof TurretChipItem) {
             // В 1.21 у ItemStack нет NBT — данные чипа лежат в компоненте CUSTOM_DATA
@@ -209,11 +211,12 @@ public class MissileTurretBlockEntity extends EnergyNodeBlockEntity {
                     String s = t.getAsString();
                     String uuidStr = s.contains("|") ? s.split("\\|")[0] : s;
                     try {
-                        if (entity.getUUID().equals(UUID.fromString(uuidStr))) return true;
+                        chipOwners.add(UUID.fromString(uuidStr));
                     } catch (IllegalArgumentException ignored) {}
                 }
             }
         }
+        if (chipOwners.contains(entity.getUUID())) return true;
 
         // 3. Проверка команд
         if (this.level != null) {
@@ -224,12 +227,16 @@ public class MissileTurretBlockEntity extends EnergyNodeBlockEntity {
             }
         }
 
-        // 4. Союзные турели
+        // 4. Союзные турели — по владельцам И через чипы:
+        // чужая турель считается союзной, если её владелец есть в нашем чипе
+        // или наш владелец есть в её чипе (для linked-турелей).
         if (entity instanceof com.trd.entity.weapons.turrets.TurretLightEntity turret) {
-            return ownerUUID != null && ownerUUID.equals(turret.getOwnerUUID());
+            return com.trd.entity.weapons.turrets.logic.TurretLightComputer.areTurretOwnersAllied(
+                    ownerUUID, chipOwners, turret.getOwnerUUID(), null);
         }
         if (entity instanceof com.trd.entity.weapons.turrets.TurretLightLinkedEntity linked) {
-            return ownerUUID != null && ownerUUID.equals(linked.getOwnerUUID());
+            return com.trd.entity.weapons.turrets.logic.TurretLightComputer.areTurretOwnersAllied(
+                    ownerUUID, chipOwners, linked.getOwnerUUID(), linked.getAllowedUsers());
         }
 
         return false;

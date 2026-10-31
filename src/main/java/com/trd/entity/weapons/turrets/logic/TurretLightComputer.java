@@ -154,6 +154,23 @@ public class TurretLightComputer {
         return 999;
     }
 
+    /**
+     * Машино-союзничество двух турелей (любых типов) по владельцам и чипам:
+     * тот же владелец ИЛИ владелец одного из них есть в списке доверенных игроков другого.
+     * Список доверенных = игроки, вписанные в чип владельцев, вставленный в турель.
+     * Раньше обычные/linked-турели не считали друг друга союзниками вовсе
+     * (isAlliedTo знал только Player), и Monster.class-сканирование goal#5
+     * вовлекало их в дружественный огонь.
+     */
+    public static boolean areTurretOwnersAllied(UUID myOwner, List<UUID> myTrustedUsers,
+                                                UUID theirOwner, List<UUID> theirTrustedUsers) {
+        if (myOwner == null || theirOwner == null) return false;
+        if (myOwner.equals(theirOwner)) return true;
+        if (myTrustedUsers != null && myTrustedUsers.contains(theirOwner)) return true;
+        if (theirTrustedUsers != null && theirTrustedUsers.contains(myOwner)) return true;
+        return false;
+    }
+
     public boolean isAllied(Entity entity, UUID ownerUUID) {
         // 1. Проверка владельца
         if (ownerUUID != null && entity.getUUID().equals(ownerUUID)) return true;

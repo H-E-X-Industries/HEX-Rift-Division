@@ -17,6 +17,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluids;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
@@ -150,8 +151,18 @@ public class LowPressureSteamCondenserBlockEntity extends FluidNodeBlockEntity {
         Direction right = facing.getCounterClockWise();
 
         for (Direction side : new Direction[]{left, right}) {
-            BlockEntity neighbor = level.getBlockEntity(pos.relative(side));
+            BlockPos neighborPos = pos.relative(side);
+            BlockEntity neighbor = level.getBlockEntity(neighborPos);
             if (neighbor instanceof LowPressureSteamCondenserBlockEntity other) {
+                // Порты касаются друг друга ТОЛЬКО если сосед правильно ориентирован:
+                // его боковой порт должен смотреть на общую грань. Если сосед подставил
+                // нам своё лицо/спину (там портов нет) — НЕ объединяемся.
+                BlockState neighborState = level.getBlockState(neighborPos);
+                IFluidHandler exposed = level.getCapability(
+                        Capabilities.FluidHandler.BLOCK, neighborPos, neighborState, neighbor, side.getOpposite());
+                if (exposed == null) {
+                    continue;
+                }
                 // Защита от двойного переноса: балансирует только "меньший" по координате
                 if (pos.asLong() < other.getBlockPos().asLong()) {
                     balanceTanks(this.steamTank, other.steamTank);

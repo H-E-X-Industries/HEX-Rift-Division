@@ -603,6 +603,15 @@ public class TurretLightLinkedEntity extends Monster implements GeoEntity, Range
             // Проверка списка с чипа
             return allowedUsers.contains(id);
         }
+
+        // Союзничество машин: турели одного владельца или владельцы,
+        // вписанные в чипах друг друга, — не стреляют друг в друга.
+        if (entity instanceof TurretLightEntity other) {
+            return TurretLightComputer.areTurretOwnersAllied(getOwnerUUID(), this.allowedUsers, other.getOwnerUUID(), null);
+        }
+        if (entity instanceof TurretLightLinkedEntity other) {
+            return TurretLightComputer.areTurretOwnersAllied(getOwnerUUID(), this.allowedUsers, other.getOwnerUUID(), other.getAllowedUsers());
+        }
         return false;
     }
 
@@ -767,6 +776,11 @@ public class TurretLightLinkedEntity extends Monster implements GeoEntity, Range
     public void setAllowedUsers(List<UUID> users) {
         this.allowedUsers.clear();
         this.allowedUsers.addAll(users);
+    }
+
+    /** Доверенные игроки из чипа владельцев (для проверок союзничества машин). */
+    public List<UUID> getAllowedUsers() {
+        return java.util.Collections.unmodifiableList(this.allowedUsers);
     }
 
     public void clearAllowedUsers() {

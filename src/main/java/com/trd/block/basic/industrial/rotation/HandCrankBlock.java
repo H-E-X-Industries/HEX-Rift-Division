@@ -46,6 +46,37 @@ public class HandCrankBlock extends BaseEntityBlock {
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
+    /**
+     * Ручной привод должен опираться на блок со стороны своего привода (FACING.getOpposite()).
+     * Если опору сломали — привод отваливается и разбивается.
+     */
+    @Override
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        super.neighborChanged(state, level, pos, block, fromPos, isMoving);
+        if (!level.isClientSide) {
+            Direction mountDir = state.getValue(FACING).getOpposite();
+            if (!isMounted(level, pos, mountDir)) {
+                level.destroyBlock(pos, true);
+            }
+        }
+    }
+
+    private static boolean isMounted(Level level, BlockPos pos, Direction mountDir) {
+        BlockPos mountPos = pos.relative(mountDir);
+        // Стандартные опоры (подшипник, муфта, мотор, кран, кинетические порты мультиблоков)
+        if (ShaftBlock.isSupportBlock(level, mountPos, mountDir)) {
+            return true;
+        }
+        // Лёгкий вал того же направления, на который привод может механически соединиться
+        BlockState mountState = level.getBlockState(mountPos);
+        if (mountState.getBlock() instanceof ShaftBlock shaft
+                && shaft.getDiameter() == com.trd.api.rotation.ShaftDiameter.LIGHT
+                && mountState.getValue(ShaftBlock.FACING).getAxis() == mountDir.getAxis()) {
+            return true;
+        }
+        return false;
+    }
+
     public HandCrankBlock() {
         this(Properties.of().mapColor(MapColor.METAL).strength(2.0f).sound(SoundType.METAL).noOcclusion());
     }

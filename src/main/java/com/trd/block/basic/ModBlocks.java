@@ -117,10 +117,11 @@ public class ModBlocks {
     public static final DeferredBlock<net.minecraft.world.level.block.Block> DECO_BARREL = registerBlock("deco_barrel", () -> new net.minecraft.world.level.block.Block(net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
 
     // Fluid Pipes
-    public static final DeferredBlock<net.minecraft.world.level.block.Block> BRONZE_FLUID_PIPE = registerBlock("bronze_fluid_pipe", () -> new com.trd.block.basic.industrial.fluids.FluidPipeBlock(com.trd.api.fluids.system.PipeTier.BRONZE, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
-    public static final DeferredBlock<net.minecraft.world.level.block.Block> STEEL_FLUID_PIPE = registerBlock("steel_fluid_pipe", () -> new com.trd.block.basic.industrial.fluids.FluidPipeBlock(com.trd.api.fluids.system.PipeTier.STEEL, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
-    public static final DeferredBlock<net.minecraft.world.level.block.Block> LEAD_FLUID_PIPE = registerBlock("lead_fluid_pipe", () -> new com.trd.block.basic.industrial.fluids.FluidPipeBlock(com.trd.api.fluids.system.PipeTier.LEAD, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
-    public static final DeferredBlock<net.minecraft.world.level.block.Block> TUNGSTEN_FLUID_PIPE = registerBlock("tungsten_fluid_pipe", () -> new com.trd.block.basic.industrial.fluids.FluidPipeBlock(com.trd.api.fluids.system.PipeTier.TUNGSTEN, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
+    // Звук установки/разрушения как у фонаря (металлический) — раньше потерялся при порте (был STONE по умолчанию)
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> BRONZE_FLUID_PIPE = registerBlock("bronze_fluid_pipe", () -> new com.trd.block.basic.industrial.fluids.FluidPipeBlock(com.trd.api.fluids.system.PipeTier.BRONZE, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of().sound(net.minecraft.world.level.block.SoundType.LANTERN)));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> STEEL_FLUID_PIPE = registerBlock("steel_fluid_pipe", () -> new com.trd.block.basic.industrial.fluids.FluidPipeBlock(com.trd.api.fluids.system.PipeTier.STEEL, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of().sound(net.minecraft.world.level.block.SoundType.LANTERN)));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> LEAD_FLUID_PIPE = registerBlock("lead_fluid_pipe", () -> new com.trd.block.basic.industrial.fluids.FluidPipeBlock(com.trd.api.fluids.system.PipeTier.LEAD, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of().sound(net.minecraft.world.level.block.SoundType.LANTERN)));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> TUNGSTEN_FLUID_PIPE = registerBlock("tungsten_fluid_pipe", () -> new com.trd.block.basic.industrial.fluids.FluidPipeBlock(com.trd.api.fluids.system.PipeTier.TUNGSTEN, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of().sound(net.minecraft.world.level.block.SoundType.LANTERN)));
 
     // Conveyors
     public static final DeferredBlock<net.minecraft.world.level.block.Block> CONVEYOR = registerBlock("conveyor", () -> new com.trd.block.basic.industrial.ConveyorBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK).noOcclusion()));
@@ -905,7 +906,9 @@ public class ModBlocks {
     public static void register(net.neoforged.bus.api.IEventBus eventBus) {
         BLOCKS.register(eventBus);
 
-        ModItems.ITEMS.register("fuel_tank_big", () -> new com.trd.multiblock.system.FuelTankBlockItem(FUEL_TANK_BIG.get(), 2592000, new net.minecraft.world.item.Item.Properties()));
+        // Вместимость должна совпадать с BE: FuelTankBlockEntity.CAPACITY = 768_000
+        // (раньше тут было 2592000, и полная цистерна показывала ~30% заполнения).
+        ModItems.ITEMS.register("fuel_tank_big", () -> new com.trd.multiblock.system.FuelTankBlockItem(FUEL_TANK_BIG.get(), 768000, new net.minecraft.world.item.Item.Properties()));
         ModItems.ITEMS.register("fuel_tank_small", () -> new com.trd.multiblock.system.FuelTankBlockItem(FUEL_TANK_SMALL.get(), 288000, new net.minecraft.world.item.Item.Properties()));
 
         com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(TROMBONE, "tooltip.trd.machine.trombone.desc");

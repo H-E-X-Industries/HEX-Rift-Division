@@ -250,8 +250,11 @@ public class FuelTankBlock extends BaseEntityBlock implements com.trd.multiblock
         net.minecraft.world.item.component.CustomData customData = stack.getOrDefault(net.minecraft.core.component.DataComponents.BLOCK_ENTITY_DATA, net.minecraft.world.item.component.CustomData.EMPTY);
         net.minecraft.nbt.CompoundTag beTag = customData.copyTag();
 
-        String fluidName = beTag != null ? beTag.getString("FluidName") : "";
-        int amount = beTag != null ? beTag.getInt("Amount") : 0;
+        // NeoForge 1.21.1 пишет FluidTank в NBT как вложенный объект "Fluid",
+        // {"id":...,"amount":...} — старые ключи FluidName/Amount (1.20.x) больше не валидны.
+        net.minecraft.nbt.CompoundTag fluidTag = (beTag != null && beTag.contains("Fluid")) ? beTag.getCompound("Fluid") : null;
+        String fluidName = fluidTag != null && !fluidTag.isEmpty() ? fluidTag.getString("id") : "";
+        int amount = fluidTag != null && !fluidTag.isEmpty() ? fluidTag.getInt("amount") : 0;
         boolean hasFluid = !fluidName.isEmpty() && !fluidName.equals("minecraft:empty") && amount > 0;
 
         String filter = beTag != null ? beTag.getString("FluidFilter") : "";

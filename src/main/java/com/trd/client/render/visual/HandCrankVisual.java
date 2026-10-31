@@ -24,10 +24,6 @@ public class HandCrankVisual extends AbstractBlockEntityVisual<HandCrankBlockEnt
     private final float localY;
     private final float localZ;
 
-    private float smoothedSpeed = 0f;
-    private float currentAngle = 0f;
-    private float lastFrameTime = -1.0f;
-
     public HandCrankVisual(VisualizationContext ctx, HandCrankBlockEntity blockEntity, float partialTick) {
         super(ctx, blockEntity, partialTick);
 
@@ -49,45 +45,12 @@ public class HandCrankVisual extends AbstractBlockEntityVisual<HandCrankBlockEnt
 
     @Override
     public void beginFrame(Context context) {
-        float physicalTargetSpeed = blockEntity.getVisualSpeed();
-        float partialTick = context.partialTick();
-        float timeInSeconds = (level.getGameTime() + partialTick) / 20.0f;
-
-        if (this.lastFrameTime < 0) this.lastFrameTime = timeInSeconds;
-        float deltaSeconds = timeInSeconds - this.lastFrameTime;
-        if (deltaSeconds > 0.25f || deltaSeconds <= 0f) deltaSeconds = 0.016f;
-        this.lastFrameTime = timeInSeconds;
-
-        float targetSpeed = physicalTargetSpeed;
-
-        if (this.smoothedSpeed == 0 && targetSpeed != 0) {
-            this.smoothedSpeed = targetSpeed;
-        }
-
-        float speedDiff = targetSpeed - this.smoothedSpeed;
-        if (Math.abs(speedDiff) > 0.1f) {
-            this.smoothedSpeed += speedDiff * 4.0f * deltaSeconds;
-        } else {
-            this.smoothedSpeed = targetSpeed;
-        }
-
-        this.currentAngle += this.smoothedSpeed * ((float) Math.PI / 30.0f) * deltaSeconds;
-        float twoPi = (float) (2 * Math.PI);
-        this.currentAngle = this.currentAngle % twoPi;
-        if (this.currentAngle < 0) this.currentAngle += twoPi;
-
-        if (targetSpeed == 0 && Math.abs(this.smoothedSpeed) < 5.0f) {
-            float PI_OVER_4 = (float) (Math.PI / 4.0);
-            float targetSnap = Math.round(this.currentAngle / PI_OVER_4) * PI_OVER_4;
-            float snapDiff = targetSnap - this.currentAngle;
-
-            if (Math.abs(snapDiff) > 0.001f) {
-                float pull = 8.0f * (1.0f - (Math.abs(this.smoothedSpeed) / 5.0f));
-                this.currentAngle += snapDiff * pull * deltaSeconds;
-            } else {
-                this.currentAngle = targetSnap;
-            }
-        }
+        // Используем общий сетевой трекер углов, как ShaftVisual/BearingVisual:
+        // все узлы одной кинетической сети получают ОДИН угол (синхронно по фазе),
+        // а ручной привод больше не дрейфует относительно вала, на который он стоит.
+        // getNetworkScale()/знак инверсии уже учтены внутри трекера.
+        float currentAngle = com.trd.client.rotation.ClientKineticAngleTracker
+                .getAngle(blockEntity, facing, context.partialTick());
 
         handle.setIdentityTransform()
                 .translate(localX, localY, localZ)
