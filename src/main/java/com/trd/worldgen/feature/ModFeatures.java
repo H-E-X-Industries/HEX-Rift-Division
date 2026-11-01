@@ -1,6 +1,8 @@
 package com.trd.worldgen.feature;
 
 import com.trd.main.MainRegistry;
+import com.trd.worldgen.feature.oil.OilVeinConfiguration;
+import com.trd.worldgen.feature.oil.OilVeinFeature;
 import com.trd.worldgen.feature.vien.*;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.levelgen.feature.Feature;
@@ -17,6 +19,10 @@ public class ModFeatures {
     public static final java.util.function.Supplier<Feature<SpecialVeinConfiguration>> SPECIAL_VEIN =
             FEATURES.register("special_vein",
                     () -> new SpecialVeinFeature(SpecialVeinConfiguration.CODEC));
+
+    public static final java.util.function.Supplier<Feature<OilVeinConfiguration>> OIL_VEIN =
+            FEATURES.register("oil_vein",
+                    () -> new OilVeinFeature(OilVeinConfiguration.CODEC));
 
     public static final java.util.function.Supplier<Feature<net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration>> DEPTH_WORM_HIVE =
             FEATURES.register("depth_worm_hive",

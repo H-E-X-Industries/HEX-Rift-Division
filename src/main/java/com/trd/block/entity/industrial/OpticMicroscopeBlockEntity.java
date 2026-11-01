@@ -63,7 +63,7 @@ public class OpticMicroscopeBlockEntity extends BlockEntity {
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
             return switch (slot) {
-                case INPUT_SLOT -> stack.is(ModItems.CONGLOMERATE_CHUNK.get());
+                case INPUT_SLOT -> stack.is(ModItems.CONGLOMERATE_CHUNK.get()) || stack.is(ModItems.OIL_ROCK_CHUNK.get());
                 case OUTPUT_SLOT -> false;
                 case PIPETTE_IN_SLOT -> stack.is(ModItems.PIPETTE.get());
                 case PIPETTE_OUT_SLOT -> false;
@@ -159,7 +159,10 @@ public class OpticMicroscopeBlockEntity extends BlockEntity {
         }
 
         // Уже проанализированный — просто оставляем в слоте, ничего не тратим и не двигаем.
-        if (ConglomerateItem.isAnalyzed(input)) {
+        boolean alreadyAnalyzed = (input.getItem() instanceof com.trd.item.oil.OilRockChunkItem)
+                ? com.trd.item.oil.OilRockChunkItem.isAnalyzed(input)
+                : ConglomerateItem.isAnalyzed(input);
+        if (alreadyAnalyzed) {
             resetProgress();
             return;
         }
@@ -202,7 +205,11 @@ public class OpticMicroscopeBlockEntity extends BlockEntity {
 
         ItemStack out = input.copy();
         out.setCount(1);
-        ConglomerateItem.setAnalyzed(out);
+        if (out.getItem() instanceof com.trd.item.oil.OilRockChunkItem) {
+            com.trd.item.oil.OilRockChunkItem.setAnalyzed(out);
+        } else {
+            ConglomerateItem.setAnalyzed(out);
+        }
         itemHandler.setStackInSlot(OUTPUT_SLOT, out);
         itemHandler.getStackInSlot(INPUT_SLOT).shrink(1);
         return true;

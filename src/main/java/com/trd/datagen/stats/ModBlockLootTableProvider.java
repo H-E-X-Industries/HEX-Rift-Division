@@ -85,6 +85,16 @@ public class ModBlockLootTableProvider extends net.minecraft.data.loot.BlockLoot
         registerOreWithMultipleDrops(ModBlocks.DOLOMITE, ModItems.DOLOMITE_CHUNK, fortune);
         registerOreWithMultipleDrops(ModBlocks.SULFUR_CLUSTER, ModItems.SULFUR, fortune);
 
+        // Нефтеносные блоки и породы: при разрушении игроком ничего не дропают (нужна буровая вышка или отбор проб)
+        this.add(ModBlocks.POROUS_OIL_STONE.get(), noDrop());
+        this.add(ModBlocks.DEEPSLATE_OIL_SHALE.get(), noDrop());
+        this.add(ModBlocks.OIL_SAND.get(), noDrop());
+        this.add(ModBlocks.OIL_DIRT.get(), noDrop());
+        exceptions.add(ModBlocks.POROUS_OIL_STONE.get());
+        exceptions.add(ModBlocks.DEEPSLATE_OIL_SHALE.get());
+        exceptions.add(ModBlocks.OIL_SAND.get());
+        exceptions.add(ModBlocks.OIL_DIRT.get());
+
         // Обугленное бревно: в 1.20.1 провайдер содержал charcoal+Silk Touch, НО закоммиченный
         // вывод датагена был простым dropSelf, и ForgeGradle 1.20.1 по умолчанию включал
         // src/generated/resources в ресурсы — то есть в игре отдавался именно простой дроп.

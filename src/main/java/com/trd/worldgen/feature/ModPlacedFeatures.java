@@ -62,6 +62,14 @@ public class ModPlacedFeatures {
             ));
         }
 
+        // === НЕФТЯНЫЕ ЗАЛЕЖИ ===
+        for (com.trd.worldgen.feature.oil.OilVeinRegistry.OilVeinEntry entry : com.trd.worldgen.feature.oil.OilVeinRegistry.OIL_VEINS) {
+            Holder<ConfiguredFeature<?, ?>> configured = configuredFeatures.getOrThrow(entry.configuredKey);
+            register(context, entry.placedKey, configured, List.of(
+                    BiomeFilter.biome()
+            ));
+        }
+
         // === СЕКВОЙИ ===
         var giantSequoia = configuredFeatures.getOrThrow(ModConfiguredFeatures.GIANT_SEQUOIA_KEY);
         var smallSequoia = configuredFeatures.getOrThrow(ModConfiguredFeatures.SMALL_SEQUOIA_KEY);
