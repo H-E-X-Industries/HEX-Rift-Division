@@ -23,6 +23,12 @@ public class OilComposition {
     private final ResourceLocation biomeKey;
     private final float temperature;
 
+    // Месторождение (Cluster of pockets)
+    private final boolean isField;
+    private final String fieldName;
+    private final int totalPockets;
+    private final int pocketIndex;
+
     public OilComposition(Map<OilFraction, Integer> fractions,
                           float gasRatio,
                           float sulfur,
@@ -30,7 +36,11 @@ public class OilComposition {
                           ReservoirType reservoirType,
                           VeinShape shape,
                           @Nullable ResourceLocation biomeKey,
-                          float temperature) {
+                          float temperature,
+                          boolean isField,
+                          String fieldName,
+                          int totalPockets,
+                          int pocketIndex) {
         this.fractions = Collections.unmodifiableMap(new EnumMap<>(fractions));
         this.gasRatio = gasRatio;
         this.sulfur = sulfur;
@@ -39,6 +49,10 @@ public class OilComposition {
         this.shape = shape;
         this.biomeKey = biomeKey;
         this.temperature = temperature;
+        this.isField = isField;
+        this.fieldName = fieldName != null ? fieldName : "";
+        this.totalPockets = totalPockets;
+        this.pocketIndex = pocketIndex;
     }
 
     public Map<OilFraction, Integer> getFractions() {
@@ -57,10 +71,13 @@ public class OilComposition {
         return sulfur > 0.0f;
     }
 
-    /**
-     * Коэффициент коррозийности сырой нефти [0.0 ... 1.0].
-     * Чем выше содержание серы (H2S), тем выше коррозия труб и оборудования при выкачке.
-     */
+    public OilComposition withReservoirType(ReservoirType newType) {
+        if (this.reservoirType == newType) return this;
+        return new OilComposition(this.fractions, this.gasRatio, this.sulfur, this.pressure,
+                newType, this.shape, this.biomeKey, this.temperature,
+                this.isField, this.fieldName, this.totalPockets, this.pocketIndex);
+    }
+
     public float getCorrosiveness() {
         return Math.min(1.0f, sulfur * 20.0f);
     }
@@ -90,41 +107,121 @@ public class OilComposition {
         return temperature;
     }
 
+    public boolean isField() {
+        return isField;
+    }
+
+    public String getFieldName() {
+        return fieldName;
+    }
+
+    public int getTotalPockets() {
+        return totalPockets;
+    }
+
+    public int getPocketIndex() {
+        return pocketIndex;
+    }
+
     public static OilComposition generate(int yLevel, long veinSeed,
                                           Holder<Biome> biomeHolder,
                                           VeinShape shape,
-                                          ReservoirType reservoirType) {
+                                          ReservoirType reservoirType,
+                                          boolean isField,
+                                          String fieldName,
+                                          int totalPockets,
+                                          int pocketIndex) {
         RandomSource random = RandomSource.create(veinSeed ^ 0x011C0DEC0FFEE1L);
         float temperature = biomeHolder.value().getBaseTemperature();
         ResourceLocation biomeKey = biomeHolder.unwrapKey().map(k -> k.location()).orElse(null);
 
         Map<OilFraction, Integer> frac = new EnumMap<>(OilFraction.class);
 
-        // Климатический спектр фракций по температуре
-        if (temperature <= 0.35f) {
-            // Холодный климат (тундра, тайга, снежные пики): тяжелые фракции
-            frac.put(OilFraction.BITUMEN, 38 + random.nextInt(6)); // 38-43% Гудроновая
-            frac.put(OilFraction.FUEL_OIL, 26 + random.nextInt(5)); // 26-30% Мазутная
-            frac.put(OilFraction.DIESEL, 16 + random.nextInt(4));   // 16-19% Дизельная
-            frac.put(OilFraction.KEROSENE, 7 + random.nextInt(3));  // 7-9% Керосиновая
-            frac.put(OilFraction.NAPHTHA, 3 + random.nextInt(2));   // 3-4% Лигроиновая
-            frac.put(OilFraction.GASOLINE, 1 + random.nextInt(2));  // 1-2% Бензиновая
-        } else if (temperature >= 1.0f) {
-            // Жаркий климат (пустыни, саванны, меза): легкие фракции
-            frac.put(OilFraction.GASOLINE, 22 + random.nextInt(6)); // 22-27% Бензиновая
-            frac.put(OilFraction.NAPHTHA, 24 + random.nextInt(5));  // 24-28% Лигроиновая
-            frac.put(OilFraction.KEROSENE, 18 + random.nextInt(4)); // 18-21% Керосиновая
-            frac.put(OilFraction.DIESEL, 14 + random.nextInt(4));   // 14-17% Дизельная
-            frac.put(OilFraction.FUEL_OIL, 8 + random.nextInt(4));  // 8-11% Мазутная
-            frac.put(OilFraction.BITUMEN, 2 + random.nextInt(3));   // 2-4% Гудроновая
+        // === ПРИОРИТЕТ 1: ТИП ЗАЛЕЖИ (ReservoirType) ===
+        // === ПРИОРИТЕТ 2: ВЛИЯНИЕ ТЕМПЕРАТУРЫ БИОМА ===
+        if (reservoirType == ReservoirType.TAR_SANDS) {
+            // БИТУМИНОЗНЫЕ ПЕСКИ / ЗАМАЗУЧЕННЫЙ ГРУНТ: тяжелые фракции ВСЕГДА доминируют!
+            if (temperature <= 0.25f) {
+                // Холодный биом (тундра, снег): 65-72% тяжелых фракций!
+                frac.put(OilFraction.BITUMEN, 42 + random.nextInt(6)); // 42-47%
+                frac.put(OilFraction.FUEL_OIL, 23 + random.nextInt(4)); // 23-26%
+                frac.put(OilFraction.DIESEL, 14 + random.nextInt(3));   // 14-16%
+                frac.put(OilFraction.KEROSENE, 7 + random.nextInt(2));  // 7-8%
+                frac.put(OilFraction.NAPHTHA, 4 + random.nextInt(2));   // 4-5%
+                frac.put(OilFraction.GASOLINE, 2 + random.nextInt(2));  // 2-3%
+            } else if (temperature <= 0.50f) {
+                // Умеренно-холодный биом (тайга): 58-64% тяжелых фракций
+                frac.put(OilFraction.BITUMEN, 36 + random.nextInt(5)); // 36-40%
+                frac.put(OilFraction.FUEL_OIL, 22 + random.nextInt(4)); // 22-25%
+                frac.put(OilFraction.DIESEL, 17 + random.nextInt(3));   // 17-19%
+                frac.put(OilFraction.KEROSENE, 11 + random.nextInt(2)); // 11-12%
+                frac.put(OilFraction.NAPHTHA, 7 + random.nextInt(2));   // 7-8%
+                frac.put(OilFraction.GASOLINE, 4 + random.nextInt(2));  // 4-5%
+            } else if (temperature < 0.90f) {
+                // Умеренный биом: 50-56% тяжелых фракций
+                frac.put(OilFraction.BITUMEN, 31 + random.nextInt(4)); // 31-34%
+                frac.put(OilFraction.FUEL_OIL, 20 + random.nextInt(3)); // 20-22%
+                frac.put(OilFraction.DIESEL, 19 + random.nextInt(3));   // 19-21%
+                frac.put(OilFraction.KEROSENE, 14 + random.nextInt(3)); // 14-16%
+                frac.put(OilFraction.NAPHTHA, 9 + random.nextInt(2));   // 9-10%
+                frac.put(OilFraction.GASOLINE, 5 + random.nextInt(2));  // 5-6%
+            } else {
+                // Пустыня: за счет климатической компенсации 42-49% тяжелых фракций (тяжелые все еще во главе!)
+                frac.put(OilFraction.BITUMEN, 26 + random.nextInt(4)); // 26-29%
+                frac.put(OilFraction.FUEL_OIL, 18 + random.nextInt(3)); // 18-20%
+                frac.put(OilFraction.DIESEL, 20 + random.nextInt(3));   // 20-22%
+                frac.put(OilFraction.KEROSENE, 16 + random.nextInt(3)); // 16-18%
+                frac.put(OilFraction.NAPHTHA, 11 + random.nextInt(2));  // 11-12%
+                frac.put(OilFraction.GASOLINE, 7 + random.nextInt(3));  // 7-9%
+            }
+        } else if (reservoirType == ReservoirType.TIGHT_SHALE) {
+            // НЕФТЯНОЙ СЛАНЕЦ: сдвиг в сторону средних и легких фракций
+            if (temperature <= 0.35f) {
+                frac.put(OilFraction.DIESEL, 26 + random.nextInt(4));
+                frac.put(OilFraction.FUEL_OIL, 23 + random.nextInt(3));
+                frac.put(OilFraction.BITUMEN, 18 + random.nextInt(3));
+                frac.put(OilFraction.KEROSENE, 16 + random.nextInt(3));
+                frac.put(OilFraction.NAPHTHA, 10 + random.nextInt(2));
+                frac.put(OilFraction.GASOLINE, 5 + random.nextInt(2));
+            } else if (temperature >= 0.90f) {
+                frac.put(OilFraction.NAPHTHA, 25 + random.nextInt(4));
+                frac.put(OilFraction.GASOLINE, 24 + random.nextInt(4));
+                frac.put(OilFraction.KEROSENE, 21 + random.nextInt(3));
+                frac.put(OilFraction.DIESEL, 17 + random.nextInt(3));
+                frac.put(OilFraction.FUEL_OIL, 8 + random.nextInt(2));
+                frac.put(OilFraction.BITUMEN, 4 + random.nextInt(2));
+            } else {
+                frac.put(OilFraction.DIESEL, 24 + random.nextInt(4));
+                frac.put(OilFraction.KEROSENE, 20 + random.nextInt(3));
+                frac.put(OilFraction.NAPHTHA, 18 + random.nextInt(3));
+                frac.put(OilFraction.GASOLINE, 15 + random.nextInt(3));
+                frac.put(OilFraction.FUEL_OIL, 14 + random.nextInt(2));
+                frac.put(OilFraction.BITUMEN, 8 + random.nextInt(2));
+            }
         } else {
-            // Умеренный климат (равнины, леса)
-            frac.put(OilFraction.DIESEL, 23 + random.nextInt(5));   // 23-27% Дизельная
-            frac.put(OilFraction.FUEL_OIL, 18 + random.nextInt(5)); // 18-22% Мазутная
-            frac.put(OilFraction.KEROSENE, 14 + random.nextInt(4)); // 14-17% Керосиновая
-            frac.put(OilFraction.BITUMEN, 14 + random.nextInt(4));  // 14-17% Гудроновая
-            frac.put(OilFraction.NAPHTHA, 12 + random.nextInt(3));  // 12-14% Лигроиновая
-            frac.put(OilFraction.GASOLINE, 11 + random.nextInt(3)); // 11-13% Бензиновая
+            // ПОРИСТЫЙ ПЕСЧАНИК: сбалансированная сырая нефть
+            if (temperature <= 0.35f) {
+                frac.put(OilFraction.FUEL_OIL, 27 + random.nextInt(4));
+                frac.put(OilFraction.BITUMEN, 23 + random.nextInt(4));
+                frac.put(OilFraction.DIESEL, 22 + random.nextInt(3));
+                frac.put(OilFraction.KEROSENE, 14 + random.nextInt(2));
+                frac.put(OilFraction.NAPHTHA, 8 + random.nextInt(2));
+                frac.put(OilFraction.GASOLINE, 5 + random.nextInt(2));
+            } else if (temperature >= 0.90f) {
+                frac.put(OilFraction.NAPHTHA, 24 + random.nextInt(4));
+                frac.put(OilFraction.GASOLINE, 22 + random.nextInt(4));
+                frac.put(OilFraction.KEROSENE, 20 + random.nextInt(3));
+                frac.put(OilFraction.DIESEL, 18 + random.nextInt(3));
+                frac.put(OilFraction.FUEL_OIL, 11 + random.nextInt(2));
+                frac.put(OilFraction.BITUMEN, 4 + random.nextInt(2));
+            } else {
+                frac.put(OilFraction.DIESEL, 25 + random.nextInt(4));
+                frac.put(OilFraction.FUEL_OIL, 20 + random.nextInt(3));
+                frac.put(OilFraction.KEROSENE, 18 + random.nextInt(3));
+                frac.put(OilFraction.NAPHTHA, 15 + random.nextInt(3));
+                frac.put(OilFraction.GASOLINE, 12 + random.nextInt(2));
+                frac.put(OilFraction.BITUMEN, 9 + random.nextInt(2));
+            }
         }
 
         // Нормализация суммы фракций ровно к 100%
@@ -132,8 +229,9 @@ public class OilComposition {
         for (int v : frac.values()) sum += v;
         if (sum != 100) {
             int diff = 100 - sum;
-            OilFraction adjustFraction = temperature <= 0.35f ? OilFraction.BITUMEN
-                    : (temperature >= 1.0f ? OilFraction.GASOLINE : OilFraction.DIESEL);
+            OilFraction adjustFraction = reservoirType == ReservoirType.TAR_SANDS
+                    ? OilFraction.BITUMEN
+                    : (temperature <= 0.35f ? OilFraction.FUEL_OIL : (temperature >= 0.90f ? OilFraction.GASOLINE : OilFraction.DIESEL));
             frac.put(adjustFraction, frac.get(adjustFraction) + diff);
         }
 
@@ -149,15 +247,16 @@ public class OilComposition {
         // Базовое гидростатическое/литостатическое давление по горизонту Y
         float basePressure;
         if (yLevel >= 40) {
-            basePressure = 12.0f + random.nextFloat() * 18.0f; // 12-30 bar (поверхность)
+            basePressure = 12.0f + random.nextFloat() * 18.0f;
         } else if (yLevel >= 0) {
-            basePressure = 60.0f + random.nextFloat() * 45.0f; // 60-105 bar (средний)
+            basePressure = 60.0f + random.nextFloat() * 45.0f;
         } else {
-            basePressure = 140.0f + random.nextFloat() * 70.0f; // 140-210 bar (глубокий сланец)
+            basePressure = 140.0f + random.nextFloat() * 70.0f;
         }
         float pressure = Math.round(basePressure * (1.0f + 2.5f * gasRatio) * 10.0f) / 10.0f;
 
-        return new OilComposition(frac, gasRatio, sulfur, pressure, reservoirType, shape, biomeKey, temperature);
+        return new OilComposition(frac, gasRatio, sulfur, pressure, reservoirType, shape, biomeKey, temperature,
+                isField, fieldName, totalPockets, pocketIndex);
     }
 
     public CompoundTag save() {
@@ -172,6 +271,11 @@ public class OilComposition {
         tag.putString("Shape", shape.name());
         if (biomeKey != null) tag.putString("Biome", biomeKey.toString());
         tag.putFloat("Temp", temperature);
+
+        tag.putBoolean("IsField", isField);
+        tag.putString("FieldName", fieldName);
+        tag.putInt("TotalPockets", totalPockets);
+        tag.putInt("PocketIndex", pocketIndex);
         return tag;
     }
 
@@ -203,6 +307,12 @@ public class OilComposition {
         ResourceLocation biomeKey = tag.contains("Biome") ? ResourceLocation.tryParse(tag.getString("Biome")) : null;
         float temp = tag.getFloat("Temp");
 
-        return new OilComposition(fractions, gasRatio, sulfur, pressure, resType, shape, biomeKey, temp);
+        boolean isField = tag.getBoolean("IsField");
+        String fieldName = tag.getString("FieldName");
+        int totalPockets = tag.getInt("TotalPockets");
+        int pocketIndex = tag.getInt("PocketIndex");
+
+        return new OilComposition(fractions, gasRatio, sulfur, pressure, resType, shape, biomeKey, temp,
+                isField, fieldName, totalPockets, pocketIndex);
     }
 }

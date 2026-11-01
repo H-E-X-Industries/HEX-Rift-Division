@@ -5,10 +5,12 @@ import com.trd.api.oil.OilFraction;
 import com.trd.api.oil.OilVeinManager;
 import com.trd.api.oil.ReservoirType;
 import com.trd.item.ModItems;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -54,6 +56,26 @@ public class OilRockChunkItem extends Item {
 
     public static void setAnalyzed(ItemStack stack) {
         CustomData.update(DataComponents.CUSTOM_DATA, stack, tag -> tag.putBoolean("Analyzed", true));
+    }
+
+    public static boolean isField(ItemStack stack) {
+        if (!stack.has(DataComponents.CUSTOM_DATA)) return false;
+        return stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getBoolean("IsField");
+    }
+
+    public static String getFieldName(ItemStack stack) {
+        if (!stack.has(DataComponents.CUSTOM_DATA)) return "";
+        return stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getString("FieldName");
+    }
+
+    public static int getTotalPockets(ItemStack stack) {
+        if (!stack.has(DataComponents.CUSTOM_DATA)) return 1;
+        return stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getInt("TotalPockets");
+    }
+
+    public static int getPocketIndex(ItemStack stack) {
+        if (!stack.has(DataComponents.CUSTOM_DATA)) return 1;
+        return stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getInt("PocketIndex");
     }
 
     public static Map<OilFraction, Integer> getFractions(ItemStack stack) {
@@ -111,6 +133,18 @@ public class OilRockChunkItem extends Item {
 
         tooltip.add(Component.literal("§6=== [Результаты геохимического анализа] ==="));
 
+        // Месторождение / Одиночный карман
+        if (isField(stack)) {
+            String fName = getFieldName(stack);
+            int total = getTotalPockets(stack);
+            int idx = getPocketIndex(stack);
+            tooltip.add(Component.literal("§a★ Месторождение: §f\"" + fName + "\""));
+            tooltip.add(Component.literal(String.format(Locale.ROOT, "§a  Является частью нефтяного месторождения состоящего из %d карманов поблизости", total)));
+            tooltip.add(Component.literal(String.format(Locale.ROOT, "§2  [Карман %d из %d]", idx, total)));
+        } else {
+            tooltip.add(Component.literal("§7Залежь: §fОдиночный нефтяной карман"));
+        }
+
         ReservoirType resType = getReservoirType(stack);
         tooltip.add(Component.literal("§7Коллектор: §f" + resType.getDisplayNameRu()));
 
@@ -119,8 +153,13 @@ public class OilRockChunkItem extends Item {
             tooltip.add(Component.literal("§eУглеводородный спектр:"));
             for (OilFraction f : OilFraction.values()) {
                 int pct = fractions.getOrDefault(f, 0);
-                tooltip.add(Component.literal(String.format(Locale.ROOT, "  • %s: §f%d%%", f.getDisplayNameRu(), pct))
-                        .withStyle(style -> style.withColor(f.getColor())));
+                MutableComponent line = Component.literal("  • ")
+                        .withStyle(style -> style.withColor(f.getColor()))
+                        .append(Component.literal(f.getDisplayNameRu() + ": ")
+                                .withStyle(style -> style.withColor(f.getColor())))
+                        .append(Component.literal(pct + "%")
+                                .withStyle(ChatFormatting.WHITE));
+                tooltip.add(line);
             }
         }
 

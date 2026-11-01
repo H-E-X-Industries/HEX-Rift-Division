@@ -11,9 +11,13 @@ import com.trd.item.ModItems;
 import com.trd.item.oil.OilRockChunkItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.BaseEntityBlock;
@@ -65,6 +69,20 @@ public class OilReservoirBlock extends BaseEntityBlock {
         return new ItemStack(this);
     }
 
+    @Override
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        // Легкие струйки нефтяного пара/испарений над открытыми блоками нефти
+        if (random.nextFloat() < 0.06f) {
+            BlockPos above = pos.above();
+            if (level.getBlockState(above).isAir()) {
+                double x = pos.getX() + 0.15 + random.nextDouble() * 0.7;
+                double y = pos.getY() + 1.02;
+                double z = pos.getZ() + 0.15 + random.nextDouble() * 0.7;
+                level.addParticle(ParticleTypes.SMOKE, x, y, z, 0.0, 0.015 + random.nextDouble() * 0.015, 0.0);
+            }
+        }
+    }
+
     /**
      * Отбор керна / образца породы литой киркой.
      * @param tierLevel 0=iron(30%), 1=steel(45-50%), 2=titanium(60%)
@@ -74,6 +92,16 @@ public class OilReservoirBlock extends BaseEntityBlock {
         OilVeinManager.OilVeinData vein = null;
         if (be instanceof OilReservoirBlockEntity entity && entity.getVeinId() != null) {
             vein = OilVeinManager.get(level).getVein(entity.getVeinId());
+        }
+
+        if (vein == null) {
+            // Поверхностное нефтепроявление (следы) или блок вне подземного кармана
+            Block.popResource(level, pos, new ItemStack(this.asItem()));
+            player.displayClientMessage(
+                    Component.literal("§7[TRD] Поверхностные следы выветрены и окислены. Пробуритесь к подземному карману для отбора керна."),
+                    true
+            );
+            return;
         }
 
         Holder<Biome> biome = level.getBiome(pos);
@@ -86,15 +114,11 @@ public class OilReservoirBlock extends BaseEntityBlock {
         };
 
         if (level.random.nextFloat() < chunkChance) {
-            ItemStack chunk;
-            if (vein != null) {
-                chunk = OilRockChunkItem.createFromVein(vein, biome);
-            } else {
-                // Если блок поставлен вручную вне жилы — генерируем детерминированный локальный состав
-                OilComposition comp = OilComposition.generate(pos.getY(), level.getSeed() ^ pos.asLong(),
-                        biome, VeinShape.PUDDLE, reservoirType);
-                chunk = OilRockChunkItem.createFromComposition(comp, biome);
+            OilComposition comp = vein.composition;
+            if (this.reservoirType != ReservoirType.TAR_SANDS && comp.getReservoirType() != this.reservoirType) {
+                comp = comp.withReservoirType(this.reservoirType);
             }
+            ItemStack chunk = OilRockChunkItem.createFromComposition(comp, biome);
             Block.popResource(level, pos, chunk);
         } else {
             Block.popResource(level, pos, new ItemStack(ModItems.HARD_ROCK.get()));

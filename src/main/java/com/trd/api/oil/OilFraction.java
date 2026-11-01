@@ -1,12 +1,12 @@
 package com.trd.api.oil;
 
 public enum OilFraction {
-    GASOLINE("gasoline", 0xFF5555, "Бензиновая"),
-    NAPHTHA("naphtha", 0xFFAA00, "Лигроиновая"),
-    KEROSENE("kerosene", 0x55FFFF, "Керосиновая"),
-    DIESEL("diesel", 0x5555FF, "Дизельная"),
-    FUEL_OIL("fuel_oil", 0xAAAAAA, "Мазутная"),
-    BITUMEN("bitumen", 0x9E9E9E, "Гудроновая");
+    GASOLINE("gasoline", 0xBEC287, "Бензиновая"),
+    NAPHTHA("naphtha", 0xAE8D3D, "Лигроиновая"),
+    KEROSENE("kerosene", 0xC290A8, "Керосиновая"),
+    DIESEL("diesel", 0xB9C487, "Дизельная"),
+    FUEL_OIL("fuel_oil", 0x140C04, "Мазутная"),
+    BITUMEN("bitumen", 0x0A0601, "Гудроновая");
 
     private final String id;
     private final int color;

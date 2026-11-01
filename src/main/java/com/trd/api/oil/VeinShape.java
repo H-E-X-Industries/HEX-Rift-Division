@@ -4,7 +4,7 @@ import net.minecraft.util.StringRepresentable;
 
 public enum VeinShape implements StringRepresentable {
     PUDDLE("puddle", "Линза / Лужа"),
-    STRATIFIED("stratified", "Тонкий пласт"),
+    STRATIFIED("stratified", "Глубинный пласт"),
     DOME("dome", "Купол"),
     LENTICULAR("lenticular", "Линза"),
     DIAPIR("diapir", "Шток / Столб");

@@ -11,7 +11,6 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
-import net.neoforged.neoforge.common.Tags;
 import net.neoforged.neoforge.common.world.BiomeModifier;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
@@ -76,29 +75,12 @@ public class OilVeinRegistry {
     }
 
     static {
-        // === ПО ВЕР Х Н О С Т Ь (только лужи, в 20 раз реже конгломератов, V=10x) ===
-        // Пустыни: заменяют только песок -> oil_sand
-        register("surface_desert", 40, 120, 30, 45, 200, 0.85f, 1.5f,
-                VeinShape.PUDDLE, ReservoirType.TAR_SANDS, Tags.Biomes.IS_DESERT);
-
-        // Тундра / Снежные биомы: заменяют только землю -> oil_dirt
-        register("surface_tundra", 40, 120, 30, 45, 200, 0.85f, 1.5f,
-                VeinShape.PUDDLE, ReservoirType.TAR_SANDS, Tags.Biomes.IS_SNOWY);
-
-        // === С Р Е Д Н И Е (Y = 0..40, пористый песчаник porous_oil_stone, купола) ===
-        register("medium", 0, 40, 11, 19, 280, 0.75f, 2.2f,
+        // === ЕДИНАЯ СИСТЕМА НЕФТЯНЫХ МАКРО-БАССЕЙНОВ (1800x1800 блоков) ===
+        // Гарантирует изоляцию 1500-2000 блоков между месторождениями,
+        // спавнит гигантские глубинные пласты (2-3 блока, R=75..110),
+        // 4-кратные пористые купола (R=26..40), вертикальные штоки DIAPIR (от -50 до +45)
+        // и огромные поверхностные лужи в пустыне/тундре/тайге.
+        register("basin_system", -64, 120, 25, 110, 1, 0.85f, 1.8f,
                 VeinShape.DOME, ReservoirType.POROUS_STONE, BiomeTags.IS_OVERWORLD);
-
-        // Океанический бонус: в океанах средние залежи спавнятся значительно чаще!
-        register("medium_ocean", 0, 40, 11, 19, 90, 0.75f, 2.2f,
-                VeinShape.DOME, ReservoirType.POROUS_STONE, BiomeTags.IS_OCEAN);
-
-        // === Г Л У Б О К И Е (Y = -64..0, пласты толщиной 2-3 блока в дипслейте deepslate_oil_shale) ===
-        register("deep", -64, 0, 35, 55, 360, 0.85f, 1.8f,
-                VeinShape.STRATIFIED, ReservoirType.TIGHT_SHALE, BiomeTags.IS_OVERWORLD);
-
-        // Океанический бонус: в океанах глубокие пласты спавнятся значительно чаще!
-        register("deep_ocean", -64, 0, 35, 55, 120, 0.85f, 1.8f,
-                VeinShape.STRATIFIED, ReservoirType.TIGHT_SHALE, BiomeTags.IS_OCEAN);
     }
 }
