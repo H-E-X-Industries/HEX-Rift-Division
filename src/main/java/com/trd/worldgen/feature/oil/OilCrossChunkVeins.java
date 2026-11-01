@@ -14,10 +14,12 @@ import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.biome.Climate;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.LegacyRandomSource;
 import net.minecraft.world.level.levelgen.WorldgenRandom;
 import net.neoforged.neoforge.common.Tags;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -174,6 +176,47 @@ public final class OilCrossChunkVeins {
         }
     }
 
+    /**
+     * Быстрый поиск нефтяного кармана по координатам блока в мире.
+     * Возвращает жилу, если точка находится внутри геометрии кармана (fieldValue <= 1.0).
+     */
+    @Nullable
+    public static OilVein getVeinAt(ServerLevel level, int x, int y, int z) {
+        long worldSeed = level.getSeed();
+        int queryMargin = 450;
+        int b0x = Math.floorDiv(x - queryMargin, BASIN_SIZE);
+        int b1x = Math.floorDiv(x + queryMargin, BASIN_SIZE);
+        int b0z = Math.floorDiv(z - queryMargin, BASIN_SIZE);
+        int b1z = Math.floorDiv(z + queryMargin, BASIN_SIZE);
+
+        for (int bx = b0x; bx <= b1x; bx++) {
+            for (int bz = b0z; bz <= b1z; bz++) {
+                List<OilVein> veins = getVeinsForBasin(level, worldSeed, bx, bz);
+                for (OilVein v : veins) {
+                    if (v.shape == VeinShape.PUDDLE) {
+                        // Для поверхностной лужи (TAR_SANDS): 2D проекция + проверка нахождения у дневной поверхности
+                        if (v.fieldValue(x, v.cy, z) <= 1.0) {
+                            int surfaceY = level.getHeight(Heightmap.Types.OCEAN_FLOOR, x, z);
+                            if (Math.abs(y - surfaceY) <= 8 && y >= 55) {
+                                return v;
+                            }
+                        }
+                    } else {
+                        if (v.fieldValue(x, y, z) <= 1.0) {
+                            return v;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    public static OilVein getVeinAt(ServerLevel level, BlockPos pos) {
+        return getVeinAt(level, pos.getX(), pos.getY(), pos.getZ());
+    }
+
     private static final Map<Long, List<OilVein>> BASIN_CACHE = Collections.synchronizedMap(
             new LinkedHashMap<>(64, 0.75f, true) {
                 @Override
@@ -213,11 +256,14 @@ public final class OilCrossChunkVeins {
         int anchorZ = basinZ * BASIN_SIZE + 350 + rng.nextInt(BASIN_SIZE - 700);
 
         Holder<Biome> centerBiome = sampleNoiseBiome(level, anchorX, 60, anchorZ);
-        boolean isOcean = centerBiome != null && centerBiome.is(BiomeTags.IS_OCEAN);
+        boolean isOcean = centerBiome != null && (centerBiome.is(BiomeTags.IS_OCEAN)
+                || centerBiome.is(BiomeTags.IS_DEEP_OCEAN)
+                || centerBiome.is(BiomeTags.IS_RIVER));
         boolean isDesert = centerBiome != null && centerBiome.is(Tags.Biomes.IS_DESERT);
         boolean isSnowy = centerBiome != null && centerBiome.is(Tags.Biomes.IS_SNOWY);
         boolean isColdOrTaiga = centerBiome != null && (centerBiome.is(BiomeTags.IS_TAIGA) || centerBiome.is(Tags.Biomes.IS_COLD_OVERWORLD));
-        boolean canHaveSurfacePuddle = isDesert || isSnowy || isColdOrTaiga;
+        // Поверхностные битумные лужи возможны ТОЛЬКО на суше (пустыни/тундра). В океанах поверхностных луж нет!
+        boolean canHaveSurfacePuddle = !isOcean && (isDesert || isSnowy || isColdOrTaiga);
 
         // В пустынях и снежных биомах шанс наличия нефтяной системы повышен до 90%
         float basinActiveChance = (isDesert || isSnowy) ? 0.90f : (isOcean ? 0.75f : 0.65f);

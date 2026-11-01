@@ -5,8 +5,8 @@ public enum OilFraction {
     NAPHTHA("naphtha", 0xAE8D3D, "Лигроиновая"),
     KEROSENE("kerosene", 0xC290A8, "Керосиновая"),
     DIESEL("diesel", 0xB9C487, "Дизельная"),
-    FUEL_OIL("fuel_oil", 0x140C04, "Мазутная"),
-    BITUMEN("bitumen", 0x0A0601, "Гудроновая");
+    FUEL_OIL("fuel_oil", 0x767676, "Мазутная"),
+    BITUMEN("bitumen", 0x585858, "Гудроновая");
 
     private final String id;
     private final int color;

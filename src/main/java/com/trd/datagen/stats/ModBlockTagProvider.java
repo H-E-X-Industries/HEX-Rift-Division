@@ -176,6 +176,10 @@ public class ModBlockTagProvider extends BlockTagsProvider {
                 return;
             }
 
+            if (block == ModBlocks.OIL_SAND.get() || block == ModBlocks.OIL_DIRT.get()) {
+                return;
+            }
+
             if (AXE_BLOCKS.contains(block)) {
                 axeTag.add(block);
                 return;

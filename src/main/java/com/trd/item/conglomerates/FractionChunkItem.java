@@ -1,7 +1,10 @@
 package com.trd.item.conglomerates;
 
+import com.trd.api.metallurgy.system.Metal;
+import com.trd.api.metallurgy.system.MetallurgyRegistry;
 import com.trd.api.vein.FractionLayerMatrix;
 import com.trd.api.vein.FractionType;
+import com.trd.api.vein.MetalGranules;
 import com.trd.main.MainRegistry;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
@@ -389,6 +392,22 @@ public class FractionChunkItem extends Item {
     }
 
     private MutableComponent metalComponent(String metalId) {
-        return Component.literal(metalId).withStyle(style -> style.withColor(0x767676));
+        return MetallurgyRegistry.get(ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, metalId))
+                .map(metal -> (MutableComponent) Component.translatable(metal.getTranslationKey())
+                        .withStyle(style -> style.withColor(metalDisplayColor(metalId, metal.getColor()))))
+                .orElseGet(() -> {
+                    Item granule = MetalGranules.forMetal(metalId);
+                    MutableComponent fallback = granule != null ? granule.getDescription().copy() : Component.literal(metalId);
+                    return fallback.withStyle(style -> style.withColor(0xC0C0C0));
+                });
+    }
+
+    private int metalDisplayColor(String metalId, int metalColor) {
+        if (metalId.equals("tungsten")) {
+            return MetallurgyRegistry.get(ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "titanium"))
+                    .map(Metal::getColor)
+                    .orElse(0xD3D9E2);
+        }
+        return metalColor;
     }
 }

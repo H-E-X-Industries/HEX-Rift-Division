@@ -235,25 +235,33 @@ public class OilComposition {
             frac.put(adjustFraction, frac.get(adjustFraction) + diff);
         }
 
-        // Газовый фактор (5% - 80%)
-        float gasRatio = 0.05f + random.nextFloat() * 0.75f;
+        // Газовый фактор и пластовое давление
+        float gasRatio;
+        float pressure;
+
+        if (reservoirType == ReservoirType.TAR_SANDS || shape == VeinShape.PUDDLE) {
+            // Поверхностная залежь (битуминозные пески / лужа): открыта атмосфере, полностью дегазирована, давление атмосферное
+            gasRatio = 0.01f + random.nextFloat() * 0.03f; // 1% - 4% остаточного растворенного газа
+            pressure = 1.0f + Math.round(random.nextFloat() * 1.5f * 10.0f) / 10.0f; // 1.0 - 2.5 bar
+        } else {
+            // Подземные залежи (купола, пласты) под непроницаемой покрышкой
+            gasRatio = 0.10f + random.nextFloat() * 0.65f;
+            float basePressure;
+            if (yLevel >= 40) {
+                basePressure = 15.0f + random.nextFloat() * 20.0f;
+            } else if (yLevel >= 0) {
+                basePressure = 50.0f + random.nextFloat() * 40.0f;
+            } else {
+                basePressure = 130.0f + random.nextFloat() * 60.0f;
+            }
+            pressure = Math.round(basePressure * (1.0f + 0.8f * gasRatio) * 10.0f) / 10.0f;
+        }
 
         // Сернистость: 50% сладкая (0%), 50% кислая (1.5% - 4.5%)
         float sulfur = 0.0f;
         if (random.nextFloat() < 0.50f) {
             sulfur = 0.015f + random.nextFloat() * 0.030f;
         }
-
-        // Базовое гидростатическое/литостатическое давление по горизонту Y
-        float basePressure;
-        if (yLevel >= 40) {
-            basePressure = 12.0f + random.nextFloat() * 18.0f;
-        } else if (yLevel >= 0) {
-            basePressure = 60.0f + random.nextFloat() * 45.0f;
-        } else {
-            basePressure = 140.0f + random.nextFloat() * 70.0f;
-        }
-        float pressure = Math.round(basePressure * (1.0f + 2.5f * gasRatio) * 10.0f) / 10.0f;
 
         return new OilComposition(frac, gasRatio, sulfur, pressure, reservoirType, shape, biomeKey, temperature,
                 isField, fieldName, totalPockets, pocketIndex);

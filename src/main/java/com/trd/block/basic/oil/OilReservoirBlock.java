@@ -1,14 +1,10 @@
 package com.trd.block.basic.oil;
 
-import com.mojang.serialization.MapCodec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.trd.api.oil.OilComposition;
-import com.trd.api.oil.OilVeinManager;
 import com.trd.api.oil.ReservoirType;
-import com.trd.api.oil.VeinShape;
-import com.trd.block.entity.oil.OilReservoirBlockEntity;
 import com.trd.item.ModItems;
 import com.trd.item.oil.OilRockChunkItem;
+import com.trd.worldgen.feature.oil.OilCrossChunkVeins;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.particles.ParticleTypes;
@@ -20,22 +16,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.RenderShape;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import org.jetbrains.annotations.Nullable;
 
-public class OilReservoirBlock extends BaseEntityBlock {
-
-    public static final MapCodec<OilReservoirBlock> CODEC = RecordCodecBuilder.mapCodec(instance ->
-            instance.group(
-                    propertiesCodec(),
-                    net.minecraft.util.StringRepresentable.fromEnum(ReservoirType::values)
-                            .fieldOf("reservoir_type").forGetter(OilReservoirBlock::getReservoirType)
-            ).apply(instance, OilReservoirBlock::new)
-    );
+public class OilReservoirBlock extends Block {
 
     private final ReservoirType reservoirType;
 
@@ -46,22 +30,6 @@ public class OilReservoirBlock extends BaseEntityBlock {
 
     public ReservoirType getReservoirType() {
         return reservoirType;
-    }
-
-    @Override
-    protected MapCodec<? extends BaseEntityBlock> codec() {
-        return CODEC;
-    }
-
-    @Nullable
-    @Override
-    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new OilReservoirBlockEntity(pos, state);
-    }
-
-    @Override
-    public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.MODEL;
     }
 
     @Override
@@ -85,18 +53,14 @@ public class OilReservoirBlock extends BaseEntityBlock {
 
     /**
      * Отбор керна / образца породы литой киркой.
+     * Быстрый детерминированный поиск жилы по координатам без BlockEntity!
      * @param tierLevel 0=iron(30%), 1=steel(45-50%), 2=titanium(60%)
      */
     public void mineWithCastPickaxe(ServerLevel level, BlockPos pos, Player player, int tierLevel) {
-        BlockEntity be = level.getBlockEntity(pos);
-        OilVeinManager.OilVeinData vein = null;
-        if (be instanceof OilReservoirBlockEntity entity && entity.getVeinId() != null) {
-            vein = OilVeinManager.get(level).getVein(entity.getVeinId());
-        }
+        OilCrossChunkVeins.OilVein vein = OilCrossChunkVeins.getVeinAt(level, pos);
 
         if (vein == null) {
             // Поверхностное нефтепроявление (следы) или блок вне подземного кармана
-            Block.popResource(level, pos, new ItemStack(this.asItem()));
             player.displayClientMessage(
                     Component.literal("§7[TRD] Поверхностные следы выветрены и окислены. Пробуритесь к подземному карману для отбора керна."),
                     true
@@ -106,7 +70,7 @@ public class OilReservoirBlock extends BaseEntityBlock {
 
         Holder<Biome> biome = level.getBiome(pos);
 
-        float chunkChance = switch (tierLevel) {
+        float chunkChance = player.isCreative() ? 1.0f : switch (tierLevel) {
             case 0 -> 0.30f;
             case 1 -> 0.50f;
             case 2 -> 0.60f;
@@ -114,7 +78,8 @@ public class OilReservoirBlock extends BaseEntityBlock {
         };
 
         if (level.random.nextFloat() < chunkChance) {
-            OilComposition comp = vein.composition;
+            OilComposition comp = OilComposition.generate(vein.cy, vein.seed, biome, vein.shape, vein.reservoirType,
+                    vein.isField, vein.fieldName, vein.totalPockets, vein.pocketIndex);
             if (this.reservoirType != ReservoirType.TAR_SANDS && comp.getReservoirType() != this.reservoirType) {
                 comp = comp.withReservoirType(this.reservoirType);
             }
@@ -122,6 +87,10 @@ public class OilReservoirBlock extends BaseEntityBlock {
             Block.popResource(level, pos, chunk);
         } else {
             Block.popResource(level, pos, new ItemStack(ModItems.HARD_ROCK.get()));
+            player.displayClientMessage(
+                    Component.literal("§e[TRD] Образец породы раскрошился при отборе. Попробуйте еще раз."),
+                    true
+            );
         }
     }
 }

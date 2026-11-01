@@ -185,19 +185,29 @@ public class OilRockChunkItem extends Item {
         // Технологические требования и рекомендации по оборудованию
         tooltip.add(Component.literal("§dТехнологические требования:"));
 
-        if (gasRatio >= 0.40f || pressure >= 150.0f) {
+        boolean hasWarning = false;
+
+        if (resType != ReservoirType.TAR_SANDS && (pressure >= 150.0f || (gasRatio >= 0.40f && pressure >= 80.0f))) {
             tooltip.add(Component.literal(" §c⚠ ТРЕБУЕТСЯ ПРЕВЕНТОР (BOP): Критическое давление газа! Скважину сдетонирует без устьевого превентора."));
+            hasWarning = true;
         }
 
         if (sulfur > 0.0f) {
             tooltip.add(Component.literal(String.format(Locale.ROOT,
                     " §e⚠ ТРЕБУЕТСЯ МОДУЛЬ ГИДРООЧИСТКИ: Высокое содержание H₂S (Коррозия %.1f%%). Без десульфуризации вызывает ускоренный износ бура и разрушение труб при выкачке.", corrosiveness)));
+            hasWarning = true;
         }
 
         if (resType == ReservoirType.TIGHT_SHALE) {
             tooltip.add(Component.literal(" §6⚠ ТРЕБУЕТСЯ МОДУЛЬ ФРЕКИНГА: Низкопроницаемый сланец. Требуется гидроразрыв и подача бурового раствора."));
+            hasWarning = true;
         } else if (resType == ReservoirType.TAR_SANDS) {
             tooltip.add(Component.literal(" §b⚠ ТРЕБУЕТСЯ ПАРОВОЙ ИНЖЕКТОР (EOR): Застывший битум. Требуется нагнетание пара для снижения вязкости."));
+            hasWarning = true;
+        }
+
+        if (!hasWarning) {
+            tooltip.add(Component.literal(" §a✓ Стандартная добыча: Осложнений нет, достаточно базового насоса."));
         }
     }
 }

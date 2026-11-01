@@ -3,7 +3,7 @@ package com.trd.api.oil;
 import net.minecraft.util.StringRepresentable;
 
 public enum VeinShape implements StringRepresentable {
-    PUDDLE("puddle", "Линза / Лужа"),
+    PUDDLE("puddle", "Поверхностная лужа / Битумное озеро"),
     STRATIFIED("stratified", "Глубинный пласт"),
     DOME("dome", "Купол"),
     LENTICULAR("lenticular", "Линза"),
