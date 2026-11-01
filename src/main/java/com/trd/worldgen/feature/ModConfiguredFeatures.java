@@ -70,6 +70,17 @@ public class ModConfiguredFeatures {
                     ));
         }
 
+        // --- НЕФТЯНЫЕ ЗАЛЕЖИ ---
+        Feature<com.trd.worldgen.feature.oil.OilVeinConfiguration> oilVein = ModFeatures.OIL_VEIN.get();
+        for (com.trd.worldgen.feature.oil.OilVeinRegistry.OilVeinEntry entry : com.trd.worldgen.feature.oil.OilVeinRegistry.OIL_VEINS) {
+            register(context, entry.configuredKey, oilVein,
+                    new com.trd.worldgen.feature.oil.OilVeinConfiguration(
+                            entry.minSize, entry.maxSize, entry.minY, entry.maxY,
+                            entry.density, entry.rarity, entry.maxStretch,
+                            "oil_" + entry.name, entry.shape, entry.reservoirType
+                    ));
+        }
+
         // --- СЕКВОЙИ ---
         register(context, GIANT_SEQUOIA_KEY, Feature.TREE, new TreeConfiguration.TreeConfigurationBuilder(
                 BlockStateProvider.simple(ModBlocks.SEQUOIA_BARK.get()),

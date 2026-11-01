@@ -65,6 +65,15 @@ public class ModBlockEntities {
                     com.trd.block.basic.ModBlocks.CONGLOMERATE.get()
             ).build(null));
 
+    public static final java.util.function.Supplier<net.minecraft.world.level.block.entity.BlockEntityType<com.trd.block.entity.oil.OilReservoirBlockEntity>> OIL_RESERVOIR =
+            BLOCK_ENTITIES.register("oil_reservoir", () -> net.minecraft.world.level.block.entity.BlockEntityType.Builder.of(
+                    com.trd.block.entity.oil.OilReservoirBlockEntity::new,
+                    com.trd.block.basic.ModBlocks.POROUS_OIL_STONE.get(),
+                    com.trd.block.basic.ModBlocks.DEEPSLATE_OIL_SHALE.get(),
+                    com.trd.block.basic.ModBlocks.OIL_SAND.get(),
+                    com.trd.block.basic.ModBlocks.OIL_DIRT.get()
+            ).build(null));
+
     public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.hive.DepthWormNestBlockEntity>> DEPTH_WORM_NEST =
             BLOCK_ENTITIES.register("depth_worm_nest",
                     () -> BlockEntityType.Builder.of(com.trd.block.entity.hive.DepthWormNestBlockEntity::new,

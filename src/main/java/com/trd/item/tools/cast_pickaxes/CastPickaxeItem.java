@@ -259,6 +259,27 @@ public class CastPickaxeItem extends PickaxeItem {
             return true;
         }
 
+        // === НЕФТЯНОЙ КОЛЛЕКТОР / ПОРОДА ===
+        if (state.getBlock() instanceof com.trd.block.basic.oil.OilReservoirBlock oilBlock) {
+            if (!fullCharge) {
+                spawnCritParticles(level, pos.getCenter());
+                level.playSound(null, pos, SoundEvents.STONE_HIT, SoundSource.BLOCKS, 1.0f, 0.5f);
+                level.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_WEAK, SoundSource.PLAYERS, 0.5f, 1.2f);
+                stack.hurtAndBreak(1, player, EquipmentSlot.MAINHAND);
+                return true;
+            }
+
+            int tierLevel = stats.getConglomerateTierLevel();
+            oilBlock.mineWithCastPickaxe((ServerLevel) level, pos, player, tierLevel);
+
+            stack.hurtAndBreak(2, player, EquipmentSlot.MAINHAND);
+            spawnCritParticles(level, pos.getCenter());
+            playPickaxeHitSound(level, pos, chargePercent);
+            level.playSound(null, player.blockPosition(), SoundEvents.PLAYER_ATTACK_STRONG, SoundSource.PLAYERS, 1.0f, 0.8f);
+            player.causeFoodExhaustion(0.2f);
+            return true;
+        }
+
         float hardness = state.getDestroySpeed(level, pos);
         boolean canHarvest = isCorrectToolForDrops(stack, state);
 

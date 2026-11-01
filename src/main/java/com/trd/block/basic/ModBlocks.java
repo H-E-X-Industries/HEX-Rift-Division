@@ -90,6 +90,27 @@ public class ModBlocks {
             () -> new Block(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.STONE)
                     .mapColor(net.minecraft.world.level.material.MapColor.STONE).strength(-1.0F, 3600000.0F).isValidSpawn((state, getter, pos, entityType) -> false)));
 
+    // Нефтяные породы и коллекторы
+    public static final DeferredBlock<Block> POROUS_OIL_STONE = registerBlock("porous_oil_stone",
+            () -> new com.trd.block.basic.oil.OilReservoirBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.STONE)
+                    .mapColor(net.minecraft.world.level.material.MapColor.STONE).strength(-1.0F, 3600000.0F).noOcclusion().isValidSpawn((state, getter, pos, entityType) -> false),
+                    com.trd.api.oil.ReservoirType.POROUS_STONE));
+
+    public static final DeferredBlock<Block> DEEPSLATE_OIL_SHALE = registerBlock("deepslate_oil_shale",
+            () -> new com.trd.block.basic.oil.OilReservoirBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.DEEPSLATE)
+                    .mapColor(net.minecraft.world.level.material.MapColor.DEEPSLATE).strength(-1.0F, 3600000.0F).sound(net.minecraft.world.level.block.SoundType.DEEPSLATE).noOcclusion().isValidSpawn((state, getter, pos, entityType) -> false),
+                    com.trd.api.oil.ReservoirType.TIGHT_SHALE));
+
+    public static final DeferredBlock<Block> OIL_SAND = registerBlock("oil_sand",
+            () -> new com.trd.block.basic.oil.OilReservoirBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.SAND)
+                    .mapColor(net.minecraft.world.level.material.MapColor.COLOR_BLACK).strength(1.5F, 4.0F).sound(net.minecraft.world.level.block.SoundType.SAND),
+                    com.trd.api.oil.ReservoirType.TAR_SANDS));
+
+    public static final DeferredBlock<Block> OIL_DIRT = registerBlock("oil_dirt",
+            () -> new com.trd.block.basic.oil.OilReservoirBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.DIRT)
+                    .mapColor(net.minecraft.world.level.material.MapColor.COLOR_BLACK).strength(1.5F, 4.0F).sound(net.minecraft.world.level.block.SoundType.GRAVEL),
+                    com.trd.api.oil.ReservoirType.TAR_SANDS));
+
     public static java.util.List<DeferredBlock<Block>> BATTERY_BLOCKS = new java.util.ArrayList<>();
 
     public static final DeferredBlock<Block> MACHINE_BATTERY = registerBattery("machine_battery");

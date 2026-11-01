@@ -111,6 +111,12 @@ public class ModBlockStateProvider extends BlockStateProvider {
         cubeAllWithItem(ModBlocks.SULFUR_TILE);
         cubeAllWithItem(ModBlocks.SULFUR_BRICKS);
 
+        // Нефтяные породы
+        cubeAllWithItem(ModBlocks.POROUS_OIL_STONE);
+        cubeAllWithItem(ModBlocks.DEEPSLATE_OIL_SHALE);
+        cubeAllWithItem(ModBlocks.OIL_SAND);
+        cubeAllWithItem(ModBlocks.OIL_DIRT);
+
         // Металлы / декор
         cubeAllWithItem(ModBlocks.DECO_STEEL);
         cubeAllWithItem(ModBlocks.DECO_STEEL_DARK);

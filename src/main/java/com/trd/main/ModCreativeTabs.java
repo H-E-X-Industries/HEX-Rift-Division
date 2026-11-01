@@ -424,6 +424,7 @@ public class ModCreativeTabs {
                         output.accept(ModItems.REINFORCEDBRICK.get());
 
                         output.accept(ModItems.CONGLOMERATE_CHUNK.get());
+                        output.accept(ModItems.OIL_ROCK_CHUNK.get());
                         output.accept(ModItems.FRACTION_CHUNK.get());
                         output.accept(ModItems.METAL_PIECE.get());
                         output.accept(ModItems.HARD_ROCK.get());
@@ -487,6 +488,11 @@ public class ModCreativeTabs {
 
                         output.accept(ModBlocks.CONGLOMERATE.get());
                         output.accept(ModBlocks.DEPLETED_CONGLOMERATE.get());
+
+                        output.accept(ModBlocks.POROUS_OIL_STONE.get());
+                        output.accept(ModBlocks.DEEPSLATE_OIL_SHALE.get());
+                        output.accept(ModBlocks.OIL_SAND.get());
+                        output.accept(ModBlocks.OIL_DIRT.get());
 
                         output.accept(ModBlocks.DOLOMITE.get());
                         output.accept(ModBlocks.LIMESTONE.get());
