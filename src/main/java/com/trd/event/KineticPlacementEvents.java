@@ -1,7 +1,10 @@
 package com.trd.event;
 
 import com.trd.api.rotation.BeltConnectionHelper;
+import com.trd.block.basic.industrial.rotation.BearingBlock;
+import com.trd.block.basic.industrial.rotation.ClutchBlock;
 import com.trd.block.basic.industrial.rotation.ShaftBlock;
+import com.trd.block.basic.industrial.rotation.TachometerBlock;
 import com.trd.block.entity.industrial.rotation.ShaftBlockEntity;
 import com.trd.main.MainRegistry;
 import net.minecraft.core.BlockPos;
@@ -39,15 +42,39 @@ public class KineticPlacementEvents {
         if (level == null) return;
 
         BlockHitResult hitResult = event.getHitVec();
+        BlockPos clickedPos = hitResult.getBlockPos();
+        BlockState clickedState = level.getBlockState(clickedPos);
+
+        // Если игрок кликает без Shift валом по подшипнику, сцеплению или тахометру,
+        // в который вставляется вал — это вставка вала через useItemOn, а не размещение блока
+        if (!player.isShiftKeyDown() && blockItem.getBlock() instanceof ShaftBlock) {
+            if (clickedState.getBlock() instanceof BearingBlock && !clickedState.getValue(BearingBlock.HAS_SHAFT)) {
+                return;
+            }
+            if (clickedState.getBlock() instanceof ClutchBlock && !clickedState.getValue(ClutchBlock.HAS_SHAFT)) {
+                return;
+            }
+            if (clickedState.getBlock() instanceof TachometerBlock && !clickedState.getValue(TachometerBlock.HAS_SHAFT)) {
+                return;
+            }
+        }
+
         BlockPlaceContext placeCtx = new BlockPlaceContext(new UseOnContext(player, event.getHand(), hitResult));
         placeCtx = blockItem.updatePlacementContext(placeCtx);
         if (placeCtx == null || !placeCtx.canPlace()) return;
 
         BlockPos targetPos = placeCtx.getClickedPos();
         Block placedBlock = blockItem.getBlock();
-        BlockState placedState = placedBlock.getStateForPlacement(placeCtx);
-        if (placedState == null) {
-            placedState = placedBlock.defaultBlockState();
+
+        // Безопасное получение состояния без вызова placedBlock.getStateForPlacement(placeCtx),
+        // чтобы исключить ложные сообщения валидации опор ("Слишком длинный пролёт")
+        BlockState placedState = placedBlock.defaultBlockState();
+        if (placedBlock instanceof ShaftBlock && placedState.hasProperty(ShaftBlock.FACING)) {
+            Direction facing = placeCtx.getNearestLookingDirection().getOpposite();
+            if (clickedState.getBlock() instanceof ShaftBlock && clickedState.hasProperty(ShaftBlock.FACING)) {
+                facing = clickedState.getValue(ShaftBlock.FACING);
+            }
+            placedState = placedState.setValue(ShaftBlock.FACING, facing);
         }
 
         // 1. Блокировка установки блоков в ремни (клиент + сервер до предикции)
