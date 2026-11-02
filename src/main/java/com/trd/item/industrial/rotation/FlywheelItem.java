@@ -83,7 +83,7 @@ public class FlywheelItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        // Описание (tooltip.trd.machine.flywheel.desc) открывается через MachineTooltipRegistry по Shift
         super.appendHoverText(stack, context, tooltip, flag);
-        tooltip.add(Component.translatable("tooltip.trd.machine.flywheel.desc").withStyle(ChatFormatting.GRAY));
     }
 }

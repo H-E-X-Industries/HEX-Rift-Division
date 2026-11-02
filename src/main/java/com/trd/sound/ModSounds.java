@@ -36,6 +36,8 @@ public class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> MOTOR_ELECTRO_START = registerSoundEvents("motor_electro_start");
     public static final DeferredHolder<SoundEvent, SoundEvent> MOTOR_ELECTRO_LOOP = registerSoundEvents("motor_electro_loop");
     public static final DeferredHolder<SoundEvent, SoundEvent> GILSE_LIGHT = registerSoundEvents("gilse_light");
+    /** Установка жидкостных труб: тяжёлый металлический стук (metal_click на низком питче). */
+    public static final DeferredHolder<SoundEvent, SoundEvent> FLUID_PIPE_PLACE = registerSoundEvents("fluid_pipe_place");
 
     /** Щелчок чеки ударной гранаты: кадр 0.3333 с клипа {@code pin_pull}. */
     public static final DeferredHolder<SoundEvent, SoundEvent> GRENADE_PIN = registerSoundEvents("grenade_pin");

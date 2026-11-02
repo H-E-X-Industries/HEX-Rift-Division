@@ -556,6 +556,7 @@ public class ModBlocks {
                     .sound(net.minecraft.world.level.block.SoundType.STONE)
                     .requiresCorrectToolForDrops()
                     .noOcclusion()
+                    .noCollission()
                     .lightLevel(state -> 15)));
 
     // Невидимые блоки коллизии под лучом (ставятся BeamPlacerItem)
@@ -884,6 +885,7 @@ public class ModBlocks {
         com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(CLUTCH, "tooltip.trd.machine.clutch.desc");
         com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(MOTOR_ELECTRO, "tooltip.trd.machine.motor_electro.desc");
         com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(STANOK, "tooltip.trd.machine.stanok.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(STATOR_BLOCK, "tooltip.trd.machine.stator.desc");
 
         // Электричество
         com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(MACHINE_BATTERY, "tooltip.trd.machine.machine_battery.desc");

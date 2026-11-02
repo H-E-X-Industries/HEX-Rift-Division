@@ -1,6 +1,5 @@
 package com.trd.item.industrial.energy;
 
-import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -46,7 +45,7 @@ public class StatorCoilItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        // Описание (tooltip.trd.machine.stator_coil.desc) открывается через MachineTooltipRegistry по Shift
         super.appendHoverText(stack, context, tooltip, flag);
-        tooltip.add(Component.translatable("tooltip.trd.machine.stator_coil.desc").withStyle(ChatFormatting.GRAY));
     }
 }
