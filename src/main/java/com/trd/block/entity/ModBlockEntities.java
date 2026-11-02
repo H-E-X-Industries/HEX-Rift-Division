@@ -167,6 +167,12 @@ public class ModBlockEntities {
                     ModBlocks.CASTING_POT.get()
             ).build(null));
 
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.industrial.casting.SmallSmelterBlockEntity>> SMALL_SMELTER_BE =
+            BLOCK_ENTITIES.register("small_smelter", () -> BlockEntityType.Builder.of(
+                    com.trd.block.entity.industrial.casting.SmallSmelterBlockEntity::new,
+                    ModBlocks.SMALL_SMELTER.get()
+            ).build(null));
+
     public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.industrial.casting.CastingDescentBlockEntity>> CASTING_DESCENT =
             BLOCK_ENTITIES.register("casting_descent", () -> BlockEntityType.Builder.of(
                     com.trd.block.entity.industrial.casting.CastingDescentBlockEntity::new,

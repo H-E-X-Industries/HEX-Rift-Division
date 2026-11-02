@@ -5,6 +5,7 @@ import com.trd.api.metallurgy.system.ISmelter;
 import com.trd.api.metallurgy.system.Metal;
 import com.trd.api.metallurgy.system.MetallurgyRegistry;
 import com.trd.block.basic.industrial.casting.CastingDescentBlock;
+import com.trd.block.basic.industrial.casting.SmallSmelterBlock;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.multiblock.industrial.ccmachine.CCMachineBlockEntity;
 import com.trd.multiblock.system.MultiblockPartEntity;
@@ -192,21 +193,39 @@ public class CastingDescentBlockEntity extends BlockEntity {
         Direction facing = descentState.getValue(CastingDescentBlock.FACING);
         Direction back = facing.getOpposite();
 
-        ISmelter smelter = checkSmelterAt(level, pos.relative(back));
+        // 1. Приоритет: позиция прямо сзади спуска (фронтовая сторона для мелкой плавильни)
+        ISmelter smelter = checkSmelterAt(level, pos.relative(back), facing, true);
         if (smelter != null) return smelter;
 
+        // 2. Остальные горизонтальные стороны — только для большой плавильни/нагревателя
         for (Direction dir : Direction.Plane.HORIZONTAL) {
             if (dir == back) continue;
-            smelter = checkSmelterAt(level, pos.relative(dir));
+            smelter = checkSmelterAt(level, pos.relative(dir), facing, false);
             if (smelter != null) return smelter;
         }
 
         return null;
     }
 
-    private ISmelter checkSmelterAt(Level level, BlockPos checkPos) {
+    private ISmelter checkSmelterAt(Level level, BlockPos checkPos, Direction descentFacing, boolean allowSmall) {
         BlockEntity be = level.getBlockEntity(checkPos);
         if (be instanceof ISmelter smelter) {
+            // === МЕЛКАЯ ПЛАВИЛЬНЯ ===
+            // Только фронтовое подключение: мелкая плавильня должна смотреть на спуск
+            if (be instanceof SmallSmelterBlockEntity) {
+                if (!allowSmall) return null;
+                BlockState smelterState = level.getBlockState(checkPos);
+                if (smelterState.hasProperty(SmallSmelterBlock.FACING)) {
+                    Direction smelterFacing = smelterState.getValue(SmallSmelterBlock.FACING);
+                    if (smelterFacing == descentFacing) {
+                        return smelter;
+                    }
+                }
+                return null;
+            }
+
+            // === БОЛЬШАЯ ПЛАВИЛЬНЯ / НАГРЕВАТЕЛЬ ===
+            // Любая боковая сторона подходит
             return smelter;
         }
 

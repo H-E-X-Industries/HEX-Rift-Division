@@ -278,6 +278,11 @@ public class ModCapabilities {
         );
         event.registerBlockEntity(
                 net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
+                com.trd.block.entity.ModBlockEntities.SMALL_SMELTER_BE.get(),
+                (be, side) -> be.getItemHandler(side)
+        );
+        event.registerBlockEntity(
+                net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
                 com.trd.block.entity.ModBlockEntities.CC_MACHINE_BE.get(),
                 (be, side) -> be.getAutomationItemHandler()
         );
