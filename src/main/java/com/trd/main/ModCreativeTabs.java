@@ -425,6 +425,7 @@ public class ModCreativeTabs {
                         output.accept(ModItems.REINFORCEDBRICK.get());
 
                         output.accept(ModItems.CONGLOMERATE_CHUNK.get());
+                        output.accept(ModItems.OIL_ROCK_CHUNK.get());
                         output.accept(ModItems.FRACTION_CHUNK.get());
                         output.accept(ModItems.METAL_PIECE.get());
                         output.accept(ModItems.HARD_ROCK.get());
@@ -489,6 +490,11 @@ public class ModCreativeTabs {
                         output.accept(ModBlocks.CONGLOMERATE.get());
                         output.accept(ModBlocks.DEPLETED_CONGLOMERATE.get());
 
+                        output.accept(ModBlocks.POROUS_OIL_STONE.get());
+                        output.accept(ModBlocks.DEEPSLATE_OIL_SHALE.get());
+                        output.accept(ModBlocks.OIL_SAND.get());
+                        output.accept(ModBlocks.OIL_DIRT.get());
+
                         output.accept(ModBlocks.DOLOMITE.get());
                         output.accept(ModBlocks.LIMESTONE.get());
                         output.accept(ModBlocks.SULFUR_CLUSTER.get());
@@ -532,5 +538,15 @@ public class ModCreativeTabs {
 
     public static void register(IEventBus eventBus) {
         CREATIVE_MODE_TABS.register(eventBus);
+        eventBus.addListener(ModCreativeTabs::onBuildCreativeTabs);
+    }
+
+    private static void onBuildCreativeTabs(net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent event) {
+        if (event.getTabKey() == net.minecraft.world.item.CreativeModeTabs.NATURAL_BLOCKS) {
+            event.accept(ModBlocks.POROUS_OIL_STONE.get());
+            event.accept(ModBlocks.DEEPSLATE_OIL_SHALE.get());
+            event.accept(ModBlocks.OIL_SAND.get());
+            event.accept(ModBlocks.OIL_DIRT.get());
+        }
     }
 }

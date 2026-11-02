@@ -163,6 +163,7 @@ public class ModBlockTagProvider extends BlockTagsProvider {
         // incorrectBlocksForDrops ссылается на incorrect_for_netherite_tool.
         var netheriteTag = tag(BlockTags.INCORRECT_FOR_NETHERITE_TOOL);
         var axeTag = tag(BlockTags.MINEABLE_WITH_AXE);
+        tag(BlockTags.MINEABLE_WITH_SHOVEL).add(ModBlocks.OIL_SAND.get(), ModBlocks.OIL_DIRT.get());
 
         // Дефолт — каменная кирка. Исключения проверяются здесь, а не через
         // TagBuilder#remove: в формате тега {replace, values} записи удаления нет,
@@ -172,6 +173,10 @@ public class ModBlockTagProvider extends BlockTagsProvider {
             Block block = entry.get();
 
             if (block instanceof net.minecraft.world.level.block.LeavesBlock) {
+                return;
+            }
+
+            if (block == ModBlocks.OIL_SAND.get() || block == ModBlocks.OIL_DIRT.get()) {
                 return;
             }
 

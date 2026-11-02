@@ -35,6 +35,16 @@ public class ModBiomeModifiers {
                     ));
         }
 
+        // === НЕФТЯНЫЕ ЗАЛЕЖИ ===
+        for (com.trd.worldgen.feature.oil.OilVeinRegistry.OilVeinEntry entry : com.trd.worldgen.feature.oil.OilVeinRegistry.OIL_VEINS) {
+            context.register(entry.biomeModifierKey,
+                    new BiomeModifiers.AddFeaturesBiomeModifier(
+                            biomes.getOrThrow(entry.targetBiomeTag),
+                            HolderSet.direct(placedFeatures.getOrThrow(entry.placedKey)),
+                            GenerationStep.Decoration.UNDERGROUND_ORES
+                    ));
+        }
+
         // === АВТО-ДОБАВЛЕНИЕ РУД В БИОМЫ ===
         for (OreVeinRegistry.OreEntry ore : OreVeinRegistry.ORES) {
             context.register(ore.biomeModifierKey,

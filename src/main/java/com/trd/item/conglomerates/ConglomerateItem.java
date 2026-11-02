@@ -1,5 +1,7 @@
 package com.trd.item.conglomerates;
 
+import com.trd.api.metallurgy.system.Metal;
+import com.trd.api.metallurgy.system.MetallurgyRegistry;
 import com.trd.api.vein.FractionLayerMatrix;
 import com.trd.api.vein.FractionType;
 import com.trd.api.vein.MetalGranules;
@@ -340,8 +342,14 @@ public class ConglomerateItem extends Item {
 
     /** Название металла из metal-реестра (цвет — цвет металла) + его буст слева в скобках. */
     private MutableComponent metalWithBoost(String metalId, float boost) {
-        MutableComponent name = Component.literal(metalId)
-                .withStyle(style -> style.withColor(metalDisplayColor(metalId, 0x767676)));
+        MutableComponent name = MetallurgyRegistry.get(ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, metalId))
+                .map(metal -> (MutableComponent) Component.translatable(metal.getTranslationKey())
+                        .withStyle(style -> style.withColor(metalDisplayColor(metalId, metal.getColor()))))
+                .orElseGet(() -> {
+                    Item granule = MetalGranules.forMetal(metalId);
+                    MutableComponent fallback = granule != null ? granule.getDescription().copy() : Component.literal(metalId);
+                    return fallback.withStyle(style -> style.withColor(0xC0C0C0));
+                });
         if (boost != 1.0f) {
             name.append(Component.literal(" (" + formatBoost(boost) + ")")
                     .withStyle(style -> style.withColor(C_METAL_BOOST)));
@@ -355,7 +363,9 @@ public class ConglomerateItem extends Item {
      */
     private int metalDisplayColor(String metalId, int metalColor) {
         if (metalId.equals("tungsten")) {
-            return 0x767676;
+            return MetallurgyRegistry.get(ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "titanium"))
+                    .map(Metal::getColor)
+                    .orElse(0xD3D9E2);
         }
         return metalColor;
     }

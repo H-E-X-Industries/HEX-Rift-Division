@@ -106,6 +106,7 @@ public class ModItems {
     public static final DeferredItem<Item> CONGLOMERATE_POWDER = ITEMS.register("conglomerate_powder", () -> new Item(new Item.Properties()));
     
     public static final DeferredItem<Item> CONGLOMERATE_CHUNK = ITEMS.register("conglomerate_chunk", () -> new com.trd.item.conglomerates.ConglomerateItem(new Item.Properties()));
+    public static final DeferredItem<Item> OIL_ROCK_CHUNK = ITEMS.register("oil_rock_chunk", () -> new com.trd.item.oil.OilRockChunkItem(new Item.Properties()));
     public static final DeferredItem<Item> FRACTION_CHUNK = ITEMS.register("ore_fraction", () -> new com.trd.item.conglomerates.FractionChunkItem(new Item.Properties()));
     public static final DeferredItem<Item> METAL_PIECE = ITEMS.register("metal_piece", () -> new com.trd.item.conglomerates.MetalPieceItem(new Item.Properties()));
 
