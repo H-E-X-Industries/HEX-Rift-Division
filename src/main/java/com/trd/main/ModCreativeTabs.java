@@ -144,8 +144,6 @@ public class ModCreativeTabs {
 
                         //ИНСТРУМЕНТЫ
                         output.accept(ModItems.SCREWDRIVER.get());
-                        output.accept(ModBlocks.INSULATION_CONTROLLER.get());
-                        output.accept(ModBlocks.ATMOSPHERIC_SCANNER.get());
                         output.accept(ModItems.BEAM_PLACER.get());
                         output.accept(ModItems.POKER.get());
                         output.accept(ModItems.HAMMER.get());
@@ -300,6 +298,9 @@ public class ModCreativeTabs {
 
                         output.accept(ModBlocks.REDSTONE_RADIO_TRANSMITTER.get());
                         output.accept(ModBlocks.REDSTONE_RADIO_RECEIVER.get());
+
+                        output.accept(ModBlocks.INSULATION_CONTROLLER.get());
+                        output.accept(ModBlocks.ATMOSPHERIC_SCANNER.get());
                     })
                     .build());
 

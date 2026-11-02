@@ -363,7 +363,11 @@ public class ElectricFurnaceBlockEntity extends BlockEntity implements IEnergyRe
         @Override public boolean isItemValid(int index, ItemStack stack) { return false; }
     }
 
-    /** Умная вставка: батареи → слот 2, всё остальное → слот 0. Извлечение невозможно. */
+    /**
+     * Автоматизация печи со стороны: вставка (вход/батареи) + извлечение.
+     * Задача: извлекатель забирает ВСЁ, кроме входного слота и заряженных аккумуляторов.
+     * Виртуальные слоты: 0=вход(real 0), 1=батарея(real 2), 2=выход(real 1).
+     */
     private class SmartInputHandler implements net.neoforged.neoforge.items.IItemHandler {
         private final ItemStackHandler wrapped;
 
@@ -371,12 +375,19 @@ public class ElectricFurnaceBlockEntity extends BlockEntity implements IEnergyRe
             this.wrapped = wrapped;
         }
 
-        @Override public int getSlots() { return 2; } // виртуальные слоты: 0=вход, 1=батарея
+        @Override public int getSlots() { return 3; } // виртуальные слоты: 0=вход, 1=батарея, 2=выход
+
+        private int virtualToReal(int index) {
+            return switch (index) {
+                case 1 -> 2;  // батарея
+                case 2 -> 1;  // выход
+                default -> 0; // вход
+            };
+        }
 
         @Override
         public ItemStack getStackInSlot(int index) {
-            int realSlot = (index == 1) ? 2 : 0;
-            return wrapped.getStackInSlot(realSlot);
+            return wrapped.getStackInSlot(virtualToReal(index));
         }
 
         @Override
@@ -399,31 +410,45 @@ public class ElectricFurnaceBlockEntity extends BlockEntity implements IEnergyRe
                 return wrapped.insertItem(2, stack, simulate);
             }
 
+            // В выходной слот класть нельзя никогда
+            if (index == 2) {
+                return isBattery ? wrapped.insertItem(2, stack, simulate) : wrapped.insertItem(0, stack, simulate);
+            }
+
             return wrapped.insertItem(targetSlot, stack, simulate);
         }
 
         @Override
         public ItemStack extractItem(int index, int amount, boolean simulate) {
-            return ItemStack.EMPTY; // через боковые стороны нельзя забирать
+            int realSlot = virtualToReal(index);
+            // Входной слот (0) не забираем — оттуда предметы только расходуются
+            if (realSlot == 0) return ItemStack.EMPTY;
+            // Заряженный аккумулятор не забираем
+            if (realSlot == 2 && hasStoredEnergy(wrapped.getStackInSlot(2))) return ItemStack.EMPTY;
+            return wrapped.extractItem(realSlot, amount, simulate);
         }
 
         @Override
         public int getSlotLimit(int index) {
-            int realSlot = (index == 1) ? 2 : 0;
-            return wrapped.getSlotLimit(realSlot);
+            return wrapped.getSlotLimit(virtualToReal(index));
         }
 
         @Override
         public boolean isItemValid(int index, ItemStack stack) {
-            if (index == 1) { // батарейный виртуальный слот
-                return stack.getCapability(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.ITEM) != null
-                        || stack.getItem() instanceof ModBatteryItem
-                        || stack.getItem() instanceof EnergyCellItem;
-            }
-            // входной виртуальный слот — всё кроме батарей
-            return !(stack.getCapability(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.ITEM) != null
+            boolean isBattery = stack.getCapability(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.ITEM) != null
                     || stack.getItem() instanceof ModBatteryItem
-                    || stack.getItem() instanceof EnergyCellItem);
+                    || stack.getItem() instanceof EnergyCellItem;
+            // Выходной виртуальный слот (2) — вставка запрещена
+            if (index == 2) return false;
+            if (index == 1) return isBattery; // батарейный виртуальный слот
+            return !isBattery; // входной виртуальный слот — всё кроме батарей
         }
+    }
+
+    /** Есть ли в предмете извлекаемая энергия (не отдаём такие аккумуляторы автоматике). */
+    private static boolean hasStoredEnergy(ItemStack stack) {
+        if (stack.isEmpty()) return false;
+        IEnergyStorage storage = stack.getCapability(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.ITEM);
+        return storage != null && storage.canExtract() && storage.getEnergyStored() > 0;
     }
 }

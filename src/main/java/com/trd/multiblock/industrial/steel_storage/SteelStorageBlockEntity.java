@@ -66,6 +66,45 @@ public class SteelStorageBlockEntity extends BlockEntity implements MenuProvider
         super(ModBlockEntities.STEEL_STORAGE_BE.get(), pos, state);
     }
 
+    /**
+     * Индекс извлекателя, чья сейчас очередь работать (0 или 1).
+     * Используется только когда к хранилищу подключено ровно 2 извлекателя:
+     * тогда они тасуют работу поочерёдно — один вынул 3, потом второй вынул 3.
+     * При 1 или 3+ извлекателях значение игнорируется (условие определяется динамически).
+     */
+    private int extractorTurn = 0;
+
+    /**
+     * Все подключённые к этому хранилищу извлекатели (Mode.EXTRACTOR),
+     * отсортированные по {@link BlockPos#asLong()} — даёт стабильный порядок
+     * независимо от направления сканирования (Direction.values() — не отсортирован).
+     */
+    public java.util.List<BlockPos> getConnectedExtractors() {
+        java.util.List<BlockPos> result = new java.util.ArrayList<>();
+        if (level == null) return result;
+        for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
+            BlockPos p = worldPosition.relative(dir);
+            if (level.getBlockEntity(p) instanceof com.trd.block.entity.industrial.conveyors.ConveyorBufferBlockEntity buf
+                    && buf.getMode() == com.trd.block.entity.industrial.conveyors.ConveyorBufferBlockEntity.Mode.EXTRACTOR) {
+                result.add(p);
+            }
+        }
+        result.sort(java.util.Comparator.comparingLong(BlockPos::asLong));
+        return result;
+    }
+
+    /** Чередование работает только при ровно двух подключённых извлекателях. */
+    public boolean isExtractorTurn(int extractorIndex) {
+        return extractorIndex == extractorTurn;
+    }
+
+    /** Передаёт ход следующему по порядку извлекателю (циклично 0 ↔ 1). */
+    public void advanceExtractorTurn() {
+        extractorTurn = (extractorTurn + 1) % 2;
+        setChanged();
+    }
+
+
     public boolean isEmpty() {
         for (int i = 0; i < inventory.getSlots(); i++) {
             if (!inventory.getStackInSlot(i).isEmpty()) return false;
@@ -106,6 +145,7 @@ public class SteelStorageBlockEntity extends BlockEntity implements MenuProvider
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         tag.put("Inventory", inventory.serializeNBT(registries));
+        tag.putInt("ExtractorTurn", extractorTurn);
     }
 
     @Override
@@ -122,6 +162,9 @@ public class SteelStorageBlockEntity extends BlockEntity implements MenuProvider
                 invTag.putInt("Size", SLOTS);
             }
             inventory.deserializeNBT(registries, invTag);
+        }
+        if (tag.contains("ExtractorTurn")) {
+            extractorTurn = tag.getInt("ExtractorTurn") % 2;
         }
     }
 

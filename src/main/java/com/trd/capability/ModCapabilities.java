@@ -155,6 +155,11 @@ public class ModCapabilities {
         );
         event.registerBlockEntity(
                 ENERGY_CONNECTOR,
+                com.trd.block.entity.ModBlockEntities.PAINTABLE_WIRE_BE.get(),
+                (be, side) -> be.getEnergyConnector(side)
+        );
+        event.registerBlockEntity(
+                ENERGY_CONNECTOR,
                 com.trd.block.entity.ModBlockEntities.CONNECTOR_BE.get(),
                 (be, side) -> be.getEnergyConnector(side)
         );
@@ -315,6 +320,14 @@ public class ModCapabilities {
                             // через все блоки мультиблока (верх/низ/бока контроллера).
                             return heater.getItemHandler(side);
                         }
+                        if (core instanceof com.trd.multiblock.industrial.coccer.CoccerOvenBlockEntity oven) {
+                            // Коксовая печь: конвейерные вставщик/извлекатель физически
+                            // "тыкаются" в part-блоки вокруг контроллера, поэтому
+                            // автоматизацию отдаём через ЛЮБУЮ часть структуры.
+                            // Вставка только во входной слот (0), извлечение только из
+                            // выходного (1) — входной слот автоматике не отдаётся.
+                            return oven.getAutomationHandler();
+                        }
                         if (core instanceof com.trd.multiblock.industrial.ccmachine.CCMachineBlockEntity ccm) {
                             if (be.getPartRole() == com.trd.multiblock.system.PartRole.UNIVERSAL_CONNECTOR) {
                                 return ccm.getAutomationItemHandler();
@@ -368,7 +381,7 @@ public class ModCapabilities {
         event.registerBlockEntity(
                 net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
                 com.trd.block.entity.ModBlockEntities.COCCER_OVEN_BE.get(),
-                (be, side) -> be.getInventory()
+                (be, side) -> be.getAutomationHandler()
         );
         event.registerBlockEntity(
                 net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,

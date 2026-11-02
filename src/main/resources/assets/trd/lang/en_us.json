@@ -230,6 +230,8 @@
     "block.trd.wire_fence":  "Wire Fence",
     "block.trd.wire_fence_alt":  "Thin Wire Fence",
     "block.trd.zinc_block":  "Block of Zinc",
+    "death.attack.barbedWire":  "%1$s was pricked by barbed wire",
+    "death.attack.cremated":  "%1$s was vaporized by the hydrogen flame",
     "death.attack.crusher":  "%1$s became minced meat",
   "death.attack.turretBullet":  "%1$s was shot down by %2$s",
     "death.attack.fireBlast":  "%1$s burned to ash in the flames",

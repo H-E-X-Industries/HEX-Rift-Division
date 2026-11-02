@@ -166,7 +166,9 @@ public class CoccerOvenBlockEntity extends BlockEntity implements MenuProvider, 
         be.burnEntitiesInRecess(level, pos);
 
         // === ДЫМ ===
-        if (be.currentRecipe != null) {
+        // Дым только когда реально идёт обработка (температура достигла требуемой),
+        // а не когда предметы просто лежат внутри холодной печи. Хвост — ~5 сек после окончания.
+        if (be.isProcessing) {
             be.smokeTicks = SMOKE_TAIL_TICKS;
         } else if (be.smokeTicks > 0) {
             be.smokeTicks--;

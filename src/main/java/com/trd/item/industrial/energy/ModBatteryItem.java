@@ -90,10 +90,10 @@ public class ModBatteryItem extends Item {
         }
 
         if (maxReceive > 0) {
-            tooltip.add(Component.translatable("tooltip.trd.energy_input", maxReceive).withStyle(ChatFormatting.GRAY));
+            tooltip.add(Component.translatable("tooltip.trd.battery.transfer_rate", maxReceive));
         }
         if (maxExtract > 0) {
-            tooltip.add(Component.translatable("tooltip.trd.energy_output", maxExtract).withStyle(ChatFormatting.GRAY));
+            tooltip.add(Component.translatable("tooltip.trd.battery.discharge_rate", maxExtract));
         }
         super.appendHoverText(stack, context, tooltip, flag);
     }

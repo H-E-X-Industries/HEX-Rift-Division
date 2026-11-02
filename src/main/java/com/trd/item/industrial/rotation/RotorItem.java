@@ -66,7 +66,7 @@ public class RotorItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        // Описание (tooltip.trd.machine.rotor.desc) открывается через MachineTooltipRegistry по Shift
         super.appendHoverText(stack, context, tooltip, flag);
-        tooltip.add(Component.translatable("tooltip.trd.machine.rotor.desc").withStyle(ChatFormatting.GRAY));
     }
 }
