@@ -342,6 +342,6 @@ public class StatorBlock extends BaseEntityBlock implements IMultiblockControlle
     public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, context, tooltip, flag);
         tooltip.add(Component.literal("Максимальная скорость: ∞").withStyle(ChatFormatting.GRAY));
-        tooltip.add(Component.translatable("tooltip.trd.machine.stator.desc").withStyle(ChatFormatting.DARK_GRAY));
+        // Описание (tooltip.trd.machine.stator.desc) открывается через MachineTooltipRegistry по Shift
     }
 }

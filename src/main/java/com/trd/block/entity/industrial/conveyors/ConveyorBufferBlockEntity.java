@@ -84,6 +84,24 @@ public class ConveyorBufferBlockEntity extends BlockEntity implements MenuProvid
     private void tickExtractor(Direction facing) {
         Direction back = facing.getOpposite();
 
+        // 0. Чередование: если к стальному хранилищу сзади подключено РОВНО 2 извлекателя —
+        // они работают по очереди: один вынул 3, потом второй вынул 3.
+        // При другом количестве (1 или 3+) — стандартное поведение.
+        if (level.getBlockEntity(worldPosition.relative(back))
+                instanceof com.trd.multiblock.industrial.steel_storage.SteelStorageBlockEntity storage) {
+            java.util.List<BlockPos> extractors = storage.getConnectedExtractors();
+            if (extractors.size() == 2) {
+                int myIndex = extractors.indexOf(worldPosition);
+                if (myIndex >= 0) {
+                    if (!storage.isExtractorTurn(myIndex)) {
+                        return; // не наш ход — пропускаем тик целиком (забор и пуш на конвейер)
+                    }
+                    // Наш ход — эстафета передаётся сразу, дальше обычная логика
+                    storage.advanceExtractorTurn();
+                }
+            }
+        }
+
         // 1. Забираем из станка сзади — до 3 из ОДНОГО слота за раз
         IItemHandler machine = findMachine(back);
         if (machine != null) {
