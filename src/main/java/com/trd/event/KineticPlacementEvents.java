@@ -7,19 +7,71 @@ import com.trd.main.MainRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.common.util.TriState;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 
 @EventBusSubscriber(modid = MainRegistry.MOD_ID)
 public class KineticPlacementEvents {
+
+    @SubscribeEvent
+    public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
+        ItemStack stack = event.getItemStack();
+        if (!(stack.getItem() instanceof BlockItem blockItem)) return;
+
+        Player player = event.getEntity();
+        LevelAccessor level = event.getLevel();
+        if (level == null) return;
+
+        BlockHitResult hitResult = event.getHitVec();
+        BlockPlaceContext placeCtx = new BlockPlaceContext(new UseOnContext(player, event.getHand(), hitResult));
+        placeCtx = blockItem.updatePlacementContext(placeCtx);
+        if (placeCtx == null || !placeCtx.canPlace()) return;
+
+        BlockPos targetPos = placeCtx.getClickedPos();
+        Block placedBlock = blockItem.getBlock();
+        BlockState placedState = placedBlock.getStateForPlacement(placeCtx);
+        if (placedState == null) {
+            placedState = placedBlock.defaultBlockState();
+        }
+
+        // 1. Блокировка установки блоков в ремни (клиент + сервер до предикции)
+        if (isObstructingBelt(level, targetPos, placedState)) {
+            event.setUseItem(TriState.FALSE);
+            event.setCanceled(true);
+            event.setCancellationResult(InteractionResult.FAIL);
+            if (level.isClientSide()) {
+                player.displayClientMessage(Component.literal("§cЭто место заблокировано ремнём!"), true);
+            }
+            return;
+        }
+
+        // 2. Сканирование зоны 3х3х3 для защиты габаритов большой/средней шестерни
+        String gearMsg = getGearObstruction(level, targetPos, placedBlock);
+        if (gearMsg != null) {
+            event.setUseItem(TriState.FALSE);
+            event.setCanceled(true);
+            event.setCancellationResult(InteractionResult.FAIL);
+            if (level.isClientSide()) {
+                player.displayClientMessage(Component.literal(gearMsg), true);
+            }
+        }
+    }
 
     @SubscribeEvent
     public static void onBlockPlaced(BlockEvent.EntityPlaceEvent event) {
@@ -30,7 +82,7 @@ public class KineticPlacementEvents {
         BlockState placedState = event.getPlacedBlock();
         Block placedBlock = placedState.getBlock();
 
-        // 1. Блокировка установки блоков в ремни
+        // 1. Блокировка установки блоков в ремни (серверный предохранитель)
         if (isObstructingBelt(level, placedPos, placedState)) {
             event.setCanceled(true);
             if (event.getEntity() instanceof Player player) {
@@ -40,6 +92,16 @@ public class KineticPlacementEvents {
         }
 
         // 2. Сканирование зоны 3х3х3 для защиты габаритов большой/средней шестерни
+        String gearMsg = getGearObstruction(level, placedPos, placedBlock);
+        if (gearMsg != null) {
+            event.setCanceled(true);
+            if (event.getEntity() instanceof Player player) {
+                player.displayClientMessage(Component.literal(gearMsg), true);
+            }
+        }
+    }
+
+    public static String getGearObstruction(LevelAccessor level, BlockPos placedPos, Block placedBlock) {
         for (BlockPos neighborPos : BlockPos.betweenClosed(placedPos.offset(-1, -1, -1), placedPos.offset(1, 1, 1))) {
             if (neighborPos.equals(placedPos)) continue;
 
@@ -70,25 +132,18 @@ public class KineticPlacementEvents {
                     if (inPlane) {
                         if (sum == 1) {
                             // Крестовина: 100% заблокировано шестерней
-                            event.setCanceled(true);
-                            if (event.getEntity() instanceof Player player) {
-                                player.displayClientMessage(Component.literal("§cЭто место заблокировано средней шестернёй!"), true);
-                            }
-                            return;
+                            return "§cЭто место заблокировано средней шестернёй!";
                         } else if (sum == 2) {
                             // Диагональ: Можно ставить только валы (чтобы можно было ставить маленькие шестерни)
                             if (!(placedBlock instanceof ShaftBlock)) {
-                                event.setCanceled(true);
-                                if (event.getEntity() instanceof Player player) {
-                                    player.displayClientMessage(Component.literal("§cПо диагонали от средней шестерни можно ставить только валы!"), true);
-                                }
-                                return;
+                                return "§cПо диагонали от средней шестерни можно ставить только валы!";
                             }
                         }
                     }
                 }
             }
         }
+        return null;
     }
 
     private static boolean isObstructingBelt(LevelAccessor level, BlockPos placedPos, BlockState placedState) {
