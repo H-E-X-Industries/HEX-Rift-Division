@@ -144,10 +144,10 @@ public class KineticNetwork {
             }
         }
 
-        // 2. Опрашиваем генераторы
+        // 2. Опрашиваем генераторы с приведением к базовой скорости сети
         long maxAbsSpeed = 0;
-        Map<BlockPos, Long> genSpeeds = new HashMap<>();
-        Map<BlockPos, Long> genTorques = new HashMap<>();
+        Map<BlockPos, Long> genRootSpeeds = new HashMap<>();
+        Map<BlockPos, Long> genEffectiveTorques = new HashMap<>();
         
         for (BlockPos genPos : generators) {
             if (level.isLoaded(genPos) && level.getBlockEntity(genPos) instanceof Rotational gen) {
@@ -161,35 +161,40 @@ public class KineticNetwork {
                         genSpeed = -genSpeed;
                     }
                 }
-                
-                genSpeeds.put(genPos, genSpeed);
-                genTorques.put(genPos, genTorque);
 
-                if (Math.abs(genSpeed) > maxAbsSpeed) {
-                    maxAbsSpeed = Math.abs(genSpeed);
-                    targetNetworkSpeed = genSpeed;
+                float scale = gen.getNetworkScale();
+                if (Math.abs(scale) < 0.001f) scale = 1.0f;
+                long effectiveRootSpeed = Math.round(genSpeed / (double) scale);
+                long effectiveRootTorque = (long) (genTorque * Math.abs(scale));
+
+                genRootSpeeds.put(genPos, effectiveRootSpeed);
+                genEffectiveTorques.put(genPos, effectiveRootTorque);
+
+                if (Math.abs(effectiveRootSpeed) > maxAbsSpeed) {
+                    maxAbsSpeed = Math.abs(effectiveRootSpeed);
+                    targetNetworkSpeed = effectiveRootSpeed;
                 }
             }
         }
 
         // 3. Проверяем допуск 20% и суммируем мощность
         long tolerance = (long) (maxAbsSpeed * 0.20);
-        for (Map.Entry<BlockPos, Long> entry : genSpeeds.entrySet()) {
+        for (Map.Entry<BlockPos, Long> entry : genRootSpeeds.entrySet()) {
             BlockPos pos = entry.getKey();
-            long genSpeed = entry.getValue();
+            long effSpeed = entry.getValue();
             
-            if (genSpeed == 0) {
+            if (effSpeed == 0) {
                 continue;
             }
 
             // Если направление вращения противоположно сети — ломаем
-            if (targetNetworkSpeed != 0 && Math.signum(genSpeed) != Math.signum(targetNetworkSpeed)) {
+            if (targetNetworkSpeed != 0 && Math.signum(effSpeed) != Math.signum(targetNetworkSpeed)) {
                 KineticNetworkManager.get(level).scheduleBreakage(pos);
                 continue;
             }
 
-            if (Math.abs(genSpeed - targetNetworkSpeed) <= tolerance) {
-                this.totalGeneratedTorque += genTorques.get(pos);
+            if (Math.abs(effSpeed - targetNetworkSpeed) <= tolerance) {
+                this.totalGeneratedTorque += genEffectiveTorques.get(pos);
             }
         }
 
