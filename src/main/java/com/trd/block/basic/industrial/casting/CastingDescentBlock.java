@@ -114,7 +114,10 @@ public class CastingDescentBlock extends BaseEntityBlock {
                     && part.getPartRole() == com.trd.multiblock.system.PartRole.FLUID_OUTPUT;
         }
 
-        return true;
+        BlockState behindState = level.getBlockState(behindPos);
+        return behindState.getBlock() instanceof SmallSmelterBlock
+                && behindState.hasProperty(SmallSmelterBlock.FACING)
+                && behindState.getValue(SmallSmelterBlock.FACING) == state.getValue(FACING);
     }
 
     @Override

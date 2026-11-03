@@ -61,16 +61,36 @@ public class HandCrankBlock extends BaseEntityBlock {
         }
     }
 
-    private static boolean isMounted(Level level, BlockPos pos, Direction mountDir) {
+    @Override
+    public boolean canSurvive(BlockState state, net.minecraft.world.level.LevelReader level, BlockPos pos) {
+        Direction mountDir = state.getValue(FACING).getOpposite();
+        return isMounted(level, pos, mountDir);
+    }
+
+    @Override
+    public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState,
+                                  net.minecraft.world.level.LevelAccessor level, BlockPos currentPos, BlockPos neighborPos) {
+        Direction mountDir = state.getValue(FACING).getOpposite();
+        if (direction == mountDir && !canSurvive(state, level, currentPos)) {
+            return net.minecraft.world.level.block.Blocks.AIR.defaultBlockState();
+        }
+        return super.updateShape(state, direction, neighborState, level, currentPos, neighborPos);
+    }
+
+    private static boolean isMounted(net.minecraft.world.level.LevelReader level, BlockPos pos, Direction mountDir) {
         BlockPos mountPos = pos.relative(mountDir);
+        BlockState mountState = level.getBlockState(mountPos);
+        if (mountState.getBlock() instanceof HandCrankBlock) {
+            return false;
+        }
         // Стандартные опоры (подшипник, муфта, мотор, кран, кинетические порты мультиблоков)
         if (ShaftBlock.isSupportBlock(level, mountPos, mountDir)) {
             return true;
         }
         // Лёгкий вал того же направления, на который привод может механически соединиться
-        BlockState mountState = level.getBlockState(mountPos);
         if (mountState.getBlock() instanceof ShaftBlock shaft
                 && shaft.getDiameter() == com.trd.api.rotation.ShaftDiameter.LIGHT
+                && mountState.hasProperty(ShaftBlock.FACING)
                 && mountState.getValue(ShaftBlock.FACING).getAxis() == mountDir.getAxis()) {
             return true;
         }
@@ -99,7 +119,13 @@ public class HandCrankBlock extends BaseEntityBlock {
     @Nullable
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return this.defaultBlockState().setValue(FACING, context.getNearestLookingDirection().getOpposite());
+        Direction clickedFace = context.getClickedFace();
+        Direction facing = clickedFace;
+        Direction mountDir = facing.getOpposite();
+        if (isMounted(context.getLevel(), context.getClickedPos(), mountDir)) {
+            return this.defaultBlockState().setValue(FACING, facing);
+        }
+        return null;
     }
 
     @Nullable

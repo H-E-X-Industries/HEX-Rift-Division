@@ -43,6 +43,8 @@ public class ModMenuTypes {
 
     public static final java.util.function.Supplier<MenuType<com.trd.menu.industrial.SmelterMenu>> SMELTER_MENU =
             MENUS.register("smelter_menu", () -> IMenuTypeExtension.create(com.trd.menu.industrial.SmelterMenu::create));
+    public static final java.util.function.Supplier<MenuType<com.trd.menu.industrial.SmallSmelterMenu>> SMALL_SMELTER_MENU =
+            MENUS.register("small_smelter_menu", () -> IMenuTypeExtension.create(com.trd.menu.industrial.SmallSmelterMenu::create));
 
     public static final java.util.function.Supplier<MenuType<com.trd.menu.industrial.CCMachineMenu>> CC_MACHINE_MENU =
             MENUS.register("cc_machine_menu", () -> IMenuTypeExtension.create(com.trd.menu.industrial.CCMachineMenu::create));
