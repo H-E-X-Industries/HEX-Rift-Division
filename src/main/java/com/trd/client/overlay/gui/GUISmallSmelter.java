@@ -104,6 +104,11 @@ public class GUISmallSmelter extends AbstractContainerScreen<SmallSmelterMenu> {
     }
 
     @Override
+    protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        // Убираем текст "Малая плавильня" и "Инвентарь"
+    }
+
+    @Override
     public void render(GuiGraphics gui, int mouseX, int mouseY, float delta) {
         this.renderBackground(gui, mouseX, mouseY, delta);
         super.render(gui, mouseX, mouseY, delta);
