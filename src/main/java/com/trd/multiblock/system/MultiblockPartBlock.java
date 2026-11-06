@@ -133,15 +133,12 @@ public class MultiblockPartBlock extends BaseEntityBlock implements net.minecraf
                 if (be instanceof IMultiblockPart part && part.getControllerPos() != null) {
                     BlockPos ctrlPos = part.getControllerPos();
                     BlockState ctrlState = level.getBlockState(ctrlPos);
-                    
-                    if (ctrlState.getBlock() instanceof IMultiblockController controller) {
-                        ItemStack ctrlDrop = new ItemStack(ctrlState.getBlock());
-                        BlockEntity ctrlBe = level.getBlockEntity(ctrlPos);
 
-                        if (ctrlBe != null) {
-                            ctrlBe.saveToItem(ctrlDrop, level.registryAccess());
-                        }
-                        
+                    if (ctrlState.getBlock() instanceof IMultiblockController controller) {
+                        // Путём onRemove блок приходит при взрывах и программном разрушении:
+                        // дропаем ЧИСТЫЙ контроллер без состояния (сохраняют только ручная
+                        // поломка через playerWillDestroy у хранилищ и middle-click копия).
+                        ItemStack ctrlDrop = new ItemStack(ctrlState.getBlock());
                         Block.popResource(level, ctrlPos, ctrlDrop);
 
                         net.minecraft.core.Direction facing = ctrlState.hasProperty(HorizontalDirectionalBlock.FACING)
@@ -166,10 +163,6 @@ public class MultiblockPartBlock extends BaseEntityBlock implements net.minecraf
     public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
         if (!level.isClientSide) {
             BlockEntity be = level.getBlockEntity(pos);
-            System.out.println("TEST DESTROY: be=" + be + " at " + pos);
-            if (be instanceof IMultiblockPart part) {
-                System.out.println("TEST DESTROY: part.getControllerPos()=" + part.getControllerPos());
-            }
             if (be instanceof IMultiblockPart part && part.getControllerPos() != null) {
                 BlockPos ctrlPos = part.getControllerPos();
                 BlockState ctrlState = level.getBlockState(ctrlPos);
@@ -178,7 +171,12 @@ public class MultiblockPartBlock extends BaseEntityBlock implements net.minecraf
                         ItemStack ctrlDrop = new ItemStack(ctrlState.getBlock());
                         BlockEntity ctrlBe = level.getBlockEntity(ctrlPos);
 
-                        if (ctrlBe != null) {
+                        // Состояние при ручной поломке сохраняют только хранилища
+                        // (топливные цистерны и прочие BE на базе бочки жидкости).
+                        // Процессуальные станки (бойлер, плавильня, паровая машина)
+                        // всегда падают чистыми: их температура/танки не должны
+                        // «переноситься» вместе с предметом.
+                        if (ctrlBe != null && keepsStateOnDrop(ctrlBe)) {
                             ctrlBe.saveToItem(ctrlDrop, level.registryAccess());
                         }
 
@@ -210,7 +208,8 @@ public class MultiblockPartBlock extends BaseEntityBlock implements net.minecraf
                 ItemStack ctrlDrop = new ItemStack(ctrlState.getBlock());
                 BlockEntity ctrlBe = level.getBlockEntity(ctrlPos);
 
-                if (ctrlBe != null) {
+                // Копирование (middle-click) с содержимым — только у хранилищ
+                if (ctrlBe != null && keepsStateOnDrop(ctrlBe)) {
                     ctrlBe.saveToItem(ctrlDrop, level.registryAccess());
                 }
 
@@ -218,6 +217,14 @@ public class MultiblockPartBlock extends BaseEntityBlock implements net.minecraf
             }
         }
         return super.getCloneItemStack(level, pos, state);
+    }
+
+    /**
+     * Хранилища (BE на базе бочки жидкости: топливные цистерны и т.п.) переносят
+     * содержимое в дропнутый предмет; станки-процессуальные машины — нет.
+     */
+    private static boolean keepsStateOnDrop(BlockEntity be) {
+        return be instanceof com.trd.block.entity.industrial.fluids.FluidBarrelBlockEntity;
     }
 
     @Override

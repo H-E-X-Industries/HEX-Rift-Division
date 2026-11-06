@@ -251,7 +251,12 @@ public class FluidBarrelBlock extends BaseEntityBlock {
         net.minecraft.world.level.block.entity.BlockEntity blockEntity = pParams.getOptionalParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.BLOCK_ENTITY);
         if (blockEntity instanceof FluidBarrelBlockEntity barrel) {
             net.minecraft.world.item.ItemStack itemStack = new net.minecraft.world.item.ItemStack(this);
-            if (!barrel.fluidTank.isEmpty()) {
+
+            // Содержимое сохраняется только при поломке игроком: ваниль передаёт
+            // игрока в THIS_ENTITY. Взрывы и программное разрушение дают чистый пустой
+            // станок (защита от «взорвал — унес заправленный»).
+            net.minecraft.world.entity.Entity breaker = pParams.getOptionalParameter(net.minecraft.world.level.storage.loot.parameters.LootContextParams.THIS_ENTITY);
+            if (breaker instanceof net.minecraft.world.entity.player.Player && !barrel.fluidTank.isEmpty()) {
                 net.minecraft.nbt.CompoundTag nbt = barrel.saveWithoutMetadata(pParams.getLevel().registryAccess());
                 // ВАЖНО: BlockItem.setBlockEntityData, а не CustomData.set —
                 // компонент BLOCK_ENTITY_DATA оценивается строгим кодеком

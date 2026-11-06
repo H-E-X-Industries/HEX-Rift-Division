@@ -174,14 +174,10 @@ public class SteelStorageBlock extends BaseEntityBlock implements IMultiblockCon
     @Override
     public void onBlockExploded(BlockState state, Level level, BlockPos pos, Explosion explosion) {
         if (!level.isClientSide && !MultiblockStructureHelper.isDestroying()) {
-            BlockEntity be = level.getBlockEntity(pos);
-            if (be instanceof SteelStorageBlockEntity storage) {
-                ItemStack stack = new ItemStack(this);
-                if (!storage.isEmpty()) {
-                    storage.saveToItem(stack, level.registryAccess());
-                }
-                popResource(level, pos, stack);
-            }
+            // Взрыв дропает ЧИСТЫЙ станок: содержимое не переносится и не выпадает
+            // предметами (иначе взрыв использовался бы как бесплатное извлечение).
+            ItemStack stack = new ItemStack(this);
+            popResource(level, pos, stack);
         }
         super.onBlockExploded(state, level, pos, explosion);
     }
