@@ -60,6 +60,14 @@ public class FluidNetworkManager extends SavedData {
                 continue;
             }
 
+            // Выгруженные узлы необрабатываем: к BFS их не пускает строгая
+            // canConnectLogically, а одинарные сети для них создавать не нужно —
+            // узел сам перестроится в reanchorNode при загрузке чанка
+            // (FluidPipeBlockEntity.onLoad).
+            if (!level.isLoaded(startNode.getPos())) {
+                continue;
+            }
+
             FluidNetwork newNetwork = new FluidNetwork(this);
             networks.add(newNetwork);
 
@@ -149,8 +157,13 @@ public class FluidNetworkManager extends SavedData {
     // ==================== ПРОВЕРКА ФИЛЬТРОВ И МАШИН ====================
     private boolean canConnectLogically(BlockPos pos1, BlockPos pos2) {
         if (!level.isLoaded(pos1) || !level.isLoaded(pos2)) {
-            // Разрешаем соединение условно, чтобы не разорвать выгруженную сеть.
-            return true;
+            // СТРОГО: соединение через выгруженный чанк запрещено.
+            // Раньше здесь было true, из-за чего rebuildAllNetworks при старте сервера
+            // слепо склеивал ВСЕ трубы измерения в одну гигантскую сеть, игнорируя
+            // фильтры: двигатель получал сеть другой линии (лишнее потребление) или
+            // сеть целиком блокировалась одной трубой без фильтра. Выгруженные узлы
+            // восстановят соединения сами при загрузке чанка (reanchorNode).
+            return false;
         }
 
         BlockEntity be1 = level.getBlockEntity(pos1);
@@ -195,6 +208,25 @@ public class FluidNetworkManager extends SavedData {
             addNode(pos);
         } else if (node.getNetwork() == null) {
             reAddNode(pos, null);
+        }
+    }
+
+    /**
+     * Перестраивает окружение узла при загрузке чанка (вызывается из onLoad
+     * трубы/открытого клапана). В отличие от {@link #ensureNodeConnected},
+     * делает это ВСЕГДА, даже если узел уже привязан к сети: rebuildAllNetworks
+     * собирал сети, пока чанк был выгружен, из-за чего привязка узла могла
+     * устареть. Локальная перестройка соединяет узел строго по актуальным
+     * соседям и фильтрам, но не трогает остальную топологию сети.
+     */
+    public void reanchorNode(BlockPos pos) {
+        if (!level.isLoaded(pos)) {
+            return; // чанк ещё не готов — соединения пересчитает следующая загрузка
+        }
+        if (hasNode(pos)) {
+            reAddNode(pos, null);
+        } else {
+            addNode(pos);
         }
     }
 

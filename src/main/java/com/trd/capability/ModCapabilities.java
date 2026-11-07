@@ -155,6 +155,11 @@ public class ModCapabilities {
         );
         event.registerBlockEntity(
                 ENERGY_CONNECTOR,
+                com.trd.block.entity.ModBlockEntities.PAINTABLE_WIRE_BE.get(),
+                (be, side) -> be.getEnergyConnector(side)
+        );
+        event.registerBlockEntity(
+                ENERGY_CONNECTOR,
                 com.trd.block.entity.ModBlockEntities.CONNECTOR_BE.get(),
                 (be, side) -> be.getEnergyConnector(side)
         );
@@ -320,6 +325,14 @@ public class ModCapabilities {
                             // через все блоки мультиблока (верх/низ/бока контроллера).
                             return heater.getItemHandler(side);
                         }
+                        if (core instanceof com.trd.multiblock.industrial.coccer.CoccerOvenBlockEntity oven) {
+                            // Коксовая печь: конвейерные вставщик/извлекатель физически
+                            // "тыкаются" в part-блоки вокруг контроллера, поэтому
+                            // автоматизацию отдаём через ЛЮБУЮ часть структуры.
+                            // Вставка только во входной слот (0), извлечение только из
+                            // выходного (1) — входной слот автоматике не отдаётся.
+                            return oven.getAutomationHandler();
+                        }
                         if (core instanceof com.trd.multiblock.industrial.ccmachine.CCMachineBlockEntity ccm) {
                             if (be.getPartRole() == com.trd.multiblock.system.PartRole.UNIVERSAL_CONNECTOR) {
                                 return ccm.getAutomationItemHandler();
@@ -373,136 +386,136 @@ public class ModCapabilities {
         event.registerBlockEntity(
                 net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
                 com.trd.block.entity.ModBlockEntities.COCCER_OVEN_BE.get(),
-                (be, side) -> be.getInventory()
+                (be, side) -> be.getAutomationHandler()
         );
         event.registerBlockEntity(
                 net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
                 com.trd.block.entity.ModBlockEntities.STANOK_BE.get(),
                 (be, side) -> null
         );
-    // Item Capabilities
-    event.registerItem(ENERGY_PROVIDER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 5000, 100, 100), com.trd.item.ModItems.BATTERY.get());
-    event.registerItem(ENERGY_RECEIVER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 5000, 100, 100), com.trd.item.ModItems.BATTERY.get());
-    event.registerItem(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.ITEM, (stack, ctx) -> new com.trd.api.energy.ForgeItemWrapper(new com.trd.api.energy.ItemEnergyStorage(stack, 5000, 100, 100)), com.trd.item.ModItems.BATTERY.get());
+        // Item Capabilities
+        event.registerItem(ENERGY_PROVIDER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 5000, 100, 100), com.trd.item.ModItems.BATTERY.get());
+        event.registerItem(ENERGY_RECEIVER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 5000, 100, 100), com.trd.item.ModItems.BATTERY.get());
+        event.registerItem(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.ITEM, (stack, ctx) -> new com.trd.api.energy.ForgeItemWrapper(new com.trd.api.energy.ItemEnergyStorage(stack, 5000, 100, 100)), com.trd.item.ModItems.BATTERY.get());
 
-    event.registerItem(ENERGY_PROVIDER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 20000, 500, 500), com.trd.item.ModItems.BATTERY_ADVANCED.get());
-    event.registerItem(ENERGY_RECEIVER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 20000, 500, 500), com.trd.item.ModItems.BATTERY_ADVANCED.get());
-    event.registerItem(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.ITEM, (stack, ctx) -> new com.trd.api.energy.ForgeItemWrapper(new com.trd.api.energy.ItemEnergyStorage(stack, 20000, 500, 500)), com.trd.item.ModItems.BATTERY_ADVANCED.get());
+        event.registerItem(ENERGY_PROVIDER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 20000, 500, 500), com.trd.item.ModItems.BATTERY_ADVANCED.get());
+        event.registerItem(ENERGY_RECEIVER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 20000, 500, 500), com.trd.item.ModItems.BATTERY_ADVANCED.get());
+        event.registerItem(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.ITEM, (stack, ctx) -> new com.trd.api.energy.ForgeItemWrapper(new com.trd.api.energy.ItemEnergyStorage(stack, 20000, 500, 500)), com.trd.item.ModItems.BATTERY_ADVANCED.get());
 
-    event.registerItem(ENERGY_PROVIDER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 250000, 1000, 1000), com.trd.item.ModItems.BATTERY_LITHIUM.get());
-    event.registerItem(ENERGY_RECEIVER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 250000, 1000, 1000), com.trd.item.ModItems.BATTERY_LITHIUM.get());
-    event.registerItem(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.ITEM, (stack, ctx) -> new com.trd.api.energy.ForgeItemWrapper(new com.trd.api.energy.ItemEnergyStorage(stack, 250000, 1000, 1000)), com.trd.item.ModItems.BATTERY_LITHIUM.get());
+        event.registerItem(ENERGY_PROVIDER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 250000, 1000, 1000), com.trd.item.ModItems.BATTERY_LITHIUM.get());
+        event.registerItem(ENERGY_RECEIVER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 250000, 1000, 1000), com.trd.item.ModItems.BATTERY_LITHIUM.get());
+        event.registerItem(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.ITEM, (stack, ctx) -> new com.trd.api.energy.ForgeItemWrapper(new com.trd.api.energy.ItemEnergyStorage(stack, 250000, 1000, 1000)), com.trd.item.ModItems.BATTERY_LITHIUM.get());
 
-    event.registerItem(ENERGY_PROVIDER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 5000000, 40000, 200000), com.trd.item.ModItems.BATTERY_TRIXITE.get());
-    event.registerItem(ENERGY_RECEIVER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 5000000, 40000, 200000), com.trd.item.ModItems.BATTERY_TRIXITE.get());
-    event.registerItem(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.ITEM, (stack, ctx) -> new com.trd.api.energy.ForgeItemWrapper(new com.trd.api.energy.ItemEnergyStorage(stack, 5000000, 40000, 200000)), com.trd.item.ModItems.BATTERY_TRIXITE.get());
+        event.registerItem(ENERGY_PROVIDER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 5000000, 40000, 200000), com.trd.item.ModItems.BATTERY_TRIXITE.get());
+        event.registerItem(ENERGY_RECEIVER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 5000000, 40000, 200000), com.trd.item.ModItems.BATTERY_TRIXITE.get());
+        event.registerItem(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.ITEM, (stack, ctx) -> new com.trd.api.energy.ForgeItemWrapper(new com.trd.api.energy.ItemEnergyStorage(stack, 5000000, 40000, 200000)), com.trd.item.ModItems.BATTERY_TRIXITE.get());
 
-    var creativeStorage = new com.trd.api.energy.ItemEnergyStorage(net.minecraft.world.item.ItemStack.EMPTY, Long.MAX_VALUE, Long.MAX_VALUE, Long.MAX_VALUE) {
-        @Override public long getEnergyStored() { return Long.MAX_VALUE / 2; } // Using half max to prevent overflow issues
-        @Override public void setEnergyStored(long energy) {}
-        @Override public long extractEnergy(long maxExtract, boolean simulate) { return maxExtract; }
-        @Override public long receiveEnergy(long maxReceive, boolean simulate) { return 0; }
-        @Override public boolean canReceive() { return false; }
-        @Override public boolean canExtract() { return true; }
-    };
-    
-    event.registerItem(ENERGY_PROVIDER_ITEM, (stack, ctx) -> creativeStorage, com.trd.item.ModItems.CREATIVE_BATTERY.get());
-    event.registerItem(ENERGY_RECEIVER_ITEM, (stack, ctx) -> creativeStorage, com.trd.item.ModItems.CREATIVE_BATTERY.get());
-    event.registerItem(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.ITEM, (stack, ctx) -> new com.trd.api.energy.ForgeItemWrapper(creativeStorage), com.trd.item.ModItems.CREATIVE_BATTERY.get());
+        var creativeStorage = new com.trd.api.energy.ItemEnergyStorage(net.minecraft.world.item.ItemStack.EMPTY, Long.MAX_VALUE, Long.MAX_VALUE, Long.MAX_VALUE) {
+            @Override public long getEnergyStored() { return Long.MAX_VALUE / 2; } // Using half max to prevent overflow issues
+            @Override public void setEnergyStored(long energy) {}
+            @Override public long extractEnergy(long maxExtract, boolean simulate) { return maxExtract; }
+            @Override public long receiveEnergy(long maxReceive, boolean simulate) { return 0; }
+            @Override public boolean canReceive() { return false; }
+            @Override public boolean canExtract() { return true; }
+        };
+        
+        event.registerItem(ENERGY_PROVIDER_ITEM, (stack, ctx) -> creativeStorage, com.trd.item.ModItems.CREATIVE_BATTERY.get());
+        event.registerItem(ENERGY_RECEIVER_ITEM, (stack, ctx) -> creativeStorage, com.trd.item.ModItems.CREATIVE_BATTERY.get());
+        event.registerItem(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.ITEM, (stack, ctx) -> new com.trd.api.energy.ForgeItemWrapper(creativeStorage), com.trd.item.ModItems.CREATIVE_BATTERY.get());
 
-    event.registerItem(ENERGY_PROVIDER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 1000000, 5000, 5000), com.trd.item.ModItems.ENERGY_CELL.get());
-    event.registerItem(ENERGY_RECEIVER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 1000000, 5000, 5000), com.trd.item.ModItems.ENERGY_CELL.get());
-    event.registerItem(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.ITEM, (stack, ctx) -> new com.trd.api.energy.ForgeItemWrapper(new com.trd.api.energy.ItemEnergyStorage(stack, 1000000, 5000, 5000)), com.trd.item.ModItems.ENERGY_CELL.get());
+        event.registerItem(ENERGY_PROVIDER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 1000000, 5000, 5000), com.trd.item.ModItems.ENERGY_CELL.get());
+        event.registerItem(ENERGY_RECEIVER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 1000000, 5000, 5000), com.trd.item.ModItems.ENERGY_CELL.get());
+        event.registerItem(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.ITEM, (stack, ctx) -> new com.trd.api.energy.ForgeItemWrapper(new com.trd.api.energy.ItemEnergyStorage(stack, 1000000, 5000, 5000)), com.trd.item.ModItems.ENERGY_CELL.get());
 
-    // Fluid Capabilities
-    event.registerBlockEntity(
-            net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
-            com.trd.block.entity.ModBlockEntities.MULTIBLOCK_PART.get(),
-            (be, side) -> {
-                if (be.getControllerPos() != null && be.getLevel() != null) {
-                    com.trd.multiblock.system.PartRole role = be.getPartRole();
-                    if (role == com.trd.multiblock.system.PartRole.FLUID_CONNECTOR || 
-                        role == com.trd.multiblock.system.PartRole.UNIVERSAL_CONNECTOR || 
-                        role == com.trd.multiblock.system.PartRole.FLUID_INPUT || 
-                        role == com.trd.multiblock.system.PartRole.FLUID_OUTPUT || 
-                        role == com.trd.multiblock.system.PartRole.FLUID_LADDER) {
-                        
-                        net.minecraft.world.level.block.entity.BlockEntity core = be.getLevel().getBlockEntity(be.getControllerPos());
-                        if (core instanceof com.trd.multiblock.industrial.ccmachine.CCMachineBlockEntity ccm) {
-                            return ccm.getPortFluidHandler(be.getBlockPos(), side);
-                        } else if (core instanceof com.trd.multiblock.system.IMultiblockFluidHandler handler) {
-                            return handler.getCapabilityForPart(side, role);
-                        } else if (core instanceof com.trd.multiblock.system.IFluidTankProvider provider) {
-                            return provider.getFluidHandlerCapability();
+        // Fluid Capabilities
+        event.registerBlockEntity(
+                net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
+                com.trd.block.entity.ModBlockEntities.MULTIBLOCK_PART.get(),
+                (be, side) -> {
+                    if (be.getControllerPos() != null && be.getLevel() != null) {
+                        com.trd.multiblock.system.PartRole role = be.getPartRole();
+                        if (role == com.trd.multiblock.system.PartRole.FLUID_CONNECTOR || 
+                            role == com.trd.multiblock.system.PartRole.UNIVERSAL_CONNECTOR || 
+                            role == com.trd.multiblock.system.PartRole.FLUID_INPUT || 
+                            role == com.trd.multiblock.system.PartRole.FLUID_OUTPUT || 
+                            role == com.trd.multiblock.system.PartRole.FLUID_LADDER) {
+                            
+                            net.minecraft.world.level.block.entity.BlockEntity core = be.getLevel().getBlockEntity(be.getControllerPos());
+                            if (core instanceof com.trd.multiblock.industrial.ccmachine.CCMachineBlockEntity ccm) {
+                                return ccm.getPortFluidHandler(be.getBlockPos(), side);
+                            } else if (core instanceof com.trd.multiblock.system.IMultiblockFluidHandler handler) {
+                                return handler.getCapabilityForPart(side, role, be.getBlockPos());
+                            } else if (core instanceof com.trd.multiblock.system.IFluidTankProvider provider) {
+                                return provider.getFluidHandlerCapability();
+                            }
                         }
                     }
+                    return null;
                 }
-                return null;
-            }
-    );
+        );
 
-    event.registerBlockEntity(
-            net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
-            com.trd.block.entity.ModBlockEntities.CC_MACHINE_BE.get(),
-            (be, side) -> be.getFluidHandler()
-    );
+        event.registerBlockEntity(
+                net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
+                com.trd.block.entity.ModBlockEntities.CC_MACHINE_BE.get(),
+                (be, side) -> be.getFluidHandler()
+        );
 
-    event.registerBlockEntity(
-            net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
-            com.trd.block.entity.ModBlockEntities.FUEL_TANK_BE.get(),
-            (be, side) -> be.getFluidHandlerCapability()
-    );
+        event.registerBlockEntity(
+                net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
+                com.trd.block.entity.ModBlockEntities.FUEL_TANK_BE.get(),
+                (be, side) -> be.getFluidHandlerCapability()
+        );
 
-    event.registerBlockEntity(
-            net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
-            com.trd.block.entity.ModBlockEntities.FUEL_TANK_SMALL_BE.get(),
-            (be, side) -> be.getFluidHandlerCapability()
-    );
+        event.registerBlockEntity(
+                net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
+                com.trd.block.entity.ModBlockEntities.FUEL_TANK_SMALL_BE.get(),
+                (be, side) -> be.getFluidHandlerCapability()
+        );
 
-    event.registerBlockEntity(
-            net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
-            com.trd.block.entity.ModBlockEntities.FLUID_BARREL_BE.get(),
-            (be, side) -> be.networkFluidHandler
-    );
+        event.registerBlockEntity(
+                net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
+                com.trd.block.entity.ModBlockEntities.FLUID_BARREL_BE.get(),
+                (be, side) -> be.networkFluidHandler
+        );
 
-    event.registerBlockEntity(
-            net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
-            com.trd.block.entity.ModBlockEntities.LOW_PRESSURE_STEAM_CONDENSER_BE.get(),
-            (be, side) -> be.getFluidHandler(side)
-    );
+        event.registerBlockEntity(
+                net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
+                com.trd.block.entity.ModBlockEntities.LOW_PRESSURE_STEAM_CONDENSER_BE.get(),
+                (be, side) -> be.getFluidHandler(side)
+        );
 
-    event.registerBlockEntity(
-            net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
-            com.trd.block.entity.ModBlockEntities.WATER_PUMP_BE.get(),
-            (be, side) -> be.getFluidHandler(side)
-    );
+        event.registerBlockEntity(
+                net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
+                com.trd.block.entity.ModBlockEntities.WATER_PUMP_BE.get(),
+                (be, side) -> be.getFluidHandler(side)
+        );
 
-    event.registerBlockEntity(
-            net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
-            com.trd.block.entity.ModBlockEntities.CENTRIFUGE_MOTOR_BE.get(),
-            (be, side) -> be.getFluidHandler(side)
-    );
+        event.registerBlockEntity(
+                net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
+                com.trd.block.entity.ModBlockEntities.CENTRIFUGE_MOTOR_BE.get(),
+                (be, side) -> be.getFluidHandler(side)
+        );
 
-    event.registerBlockEntity(
-            net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
-            com.trd.block.entity.ModBlockEntities.CHEMICAL_PLANT_PORT_BE.get(),
-            (be, side) -> be.getFluidHandler(side)
-    );
+        event.registerBlockEntity(
+                net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
+                com.trd.block.entity.ModBlockEntities.CHEMICAL_PLANT_PORT_BE.get(),
+                (be, side) -> be.getFluidHandler(side)
+        );
 
-    event.registerBlockEntity(
-            net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
-            com.trd.block.entity.ModBlockEntities.COCCER_OVEN_BE.get(),
-            (be, side) -> be.getFluidHandlerCapability()
-    );
+        event.registerBlockEntity(
+                net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
+                com.trd.block.entity.ModBlockEntities.COCCER_OVEN_BE.get(),
+                (be, side) -> be.getFluidHandlerCapability()
+        );
 
-    // Item Fluid Capabilities
-    net.neoforged.neoforge.capabilities.ICapabilityProvider<net.minecraft.world.item.ItemStack, Void, net.neoforged.neoforge.fluids.capability.IFluidHandlerItem> fluidContainerProvider =
-        (stack, ctx) -> new com.trd.item.industrial.fluids.FluidContainerItem.FluidHandler(stack, (com.trd.item.industrial.fluids.FluidContainerItem) stack.getItem());
+        // Item Fluid Capabilities
+        net.neoforged.neoforge.capabilities.ICapabilityProvider<net.minecraft.world.item.ItemStack, Void, net.neoforged.neoforge.fluids.capability.IFluidHandlerItem> fluidContainerProvider =
+            (stack, ctx) -> new com.trd.item.industrial.fluids.FluidContainerItem.FluidHandler(stack, (com.trd.item.industrial.fluids.FluidContainerItem) stack.getItem());
 
-    event.registerItem(net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.ITEM, fluidContainerProvider,
-        com.trd.item.ModItems.PIPETTE.get(),
-        com.trd.item.ModItems.PIPETTE_IDUSTRIAL.get(),
-        com.trd.item.ModItems.FLUID_TANK_IRON.get()
-    );
-}
+        event.registerItem(net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.ITEM, fluidContainerProvider,
+            com.trd.item.ModItems.PIPETTE.get(),
+            com.trd.item.ModItems.PIPETTE_IDUSTRIAL.get(),
+            com.trd.item.ModItems.FLUID_TANK_IRON.get()
+        );
+    }
 }

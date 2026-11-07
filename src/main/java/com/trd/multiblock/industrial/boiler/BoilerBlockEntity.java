@@ -3,6 +3,7 @@ package com.trd.multiblock.industrial.boiler;
 import com.trd.api.fluids.ModFluids;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.multiblock.industrial.heaters.HeaterBlockEntity;
+import com.trd.multiblock.system.IMultiblockController;
 import com.trd.multiblock.system.IMultiblockFluidHandler;
 import com.trd.multiblock.system.PartRole;
 import net.minecraft.core.BlockPos;
@@ -60,38 +61,61 @@ public class BoilerBlockEntity extends BlockEntity implements IMultiblockFluidHa
         }
     };
 
-    private final IFluidHandler waterHandler = new IFluidHandler() {
+    /**
+     * УНИВЕРСАЛЬНЫЙ порт бойлера: объединяет оба танка.
+     * Вода идёт в водяной бак, пар — в паровой; отдаём сначала пар (выходной бак),
+     * затем воду. Через любой порт валидной жидкости, но только через внешние грани.
+     */
+    private final IFluidHandler universalHandler = new IFluidHandler() {
         @Override
-        public int getTanks() { return waterTank.getTanks(); }
-        @Override
-        public @NotNull FluidStack getFluidInTank(int tank) { return waterTank.getFluidInTank(tank); }
-        @Override
-        public int getTankCapacity(int tank) { return waterTank.getTankCapacity(tank); }
-        @Override
-        public boolean isFluidValid(int tank, @NotNull FluidStack stack) { return waterTank.isFluidValid(tank, stack); }
-        @Override
-        public int fill(FluidStack resource, FluidAction action) { return waterTank.fill(resource, action); }
-        @Override
-        public @NotNull FluidStack drain(FluidStack resource, FluidAction action) { return FluidStack.EMPTY; }
-        @Override
-        public @NotNull FluidStack drain(int maxDrain, FluidAction action) { return FluidStack.EMPTY; }
-    };
+        public int getTanks() { return 2; }
 
-    private final IFluidHandler steamHandler = new IFluidHandler() {
         @Override
-        public int getTanks() { return steamTank.getTanks(); }
+        public @NotNull FluidStack getFluidInTank(int tank) {
+            if (tank == 0) return waterTank.getFluid();
+            if (tank == 1) return steamTank.getFluid();
+            return FluidStack.EMPTY;
+        }
+
         @Override
-        public @NotNull FluidStack getFluidInTank(int tank) { return steamTank.getFluidInTank(tank); }
+        public int getTankCapacity(int tank) {
+            if (tank == 0) return waterTank.getCapacity();
+            if (tank == 1) return steamTank.getCapacity();
+            return 0;
+        }
+
         @Override
-        public int getTankCapacity(int tank) { return steamTank.getTankCapacity(tank); }
+        public boolean isFluidValid(int tank, @NotNull FluidStack stack) {
+            if (tank == 0) return waterTank.isFluidValid(stack);
+            if (tank == 1) return steamTank.isFluidValid(stack);
+            return false;
+        }
+
         @Override
-        public boolean isFluidValid(int tank, @NotNull FluidStack stack) { return steamTank.isFluidValid(tank, stack); }
+        public int fill(@NotNull FluidStack resource, FluidAction action) {
+            if (waterTank.isFluidValid(resource)) {
+                int filled = waterTank.fill(resource, action);
+                if (filled > 0) return filled;
+            }
+            if (steamTank.isFluidValid(resource)) {
+                return steamTank.fill(resource, action);
+            }
+            return 0;
+        }
+
         @Override
-        public int fill(FluidStack resource, FluidAction action) { return 0; }
+        public @NotNull FluidStack drain(@NotNull FluidStack resource, FluidAction action) {
+            if (steamTank.isFluidValid(resource)) return steamTank.drain(resource, action);
+            if (waterTank.isFluidValid(resource)) return waterTank.drain(resource, action);
+            return FluidStack.EMPTY;
+        }
+
         @Override
-        public @NotNull FluidStack drain(FluidStack resource, FluidAction action) { return steamTank.drain(resource, action); }
-        @Override
-        public @NotNull FluidStack drain(int maxDrain, FluidAction action) { return steamTank.drain(maxDrain, action); }
+        public @NotNull FluidStack drain(int maxDrain, FluidAction action) {
+            FluidStack drained = steamTank.drain(maxDrain, action);
+            if (!drained.isEmpty()) return drained;
+            return waterTank.drain(maxDrain, action);
+        }
     };
 
     public BoilerBlockEntity(BlockPos pos, BlockState state) {
@@ -158,13 +182,26 @@ public class BoilerBlockEntity extends BlockEntity implements IMultiblockFluidHa
     }
 
     @Override
-    public @Nullable IFluidHandler getCapabilityForPart(@Nullable Direction side, PartRole role) {
-        if (role == PartRole.FLUID_INPUT) {
-            return waterHandler;
-        } else if (role == PartRole.FLUID_OUTPUT) {
-            return steamHandler;
+    public @Nullable IFluidHandler getCapabilityForPart(@Nullable Direction side, PartRole role, BlockPos partPos) {
+        // Универсальный порт: заливать/выливать можно через любой порт бойлера,
+        // но трубы подключаются только через грани, смотрящие наружу конструкции.
+        // Именно это запрещает приём воды через «внутренние» и прочие неслужебные грани.
+        if (side != null && !isExternalPartFace(partPos, side)) {
+            return null;
         }
-        return null;
+        return universalHandler;
+    }
+
+    /** Грань части смотрит наружу структуры? (не упирается в соседнюю часть или в сам контроллер). */
+    private boolean isExternalPartFace(BlockPos partPos, Direction side) {
+        if (level == null) return true;
+        BlockState state = getBlockState();
+        if (!state.hasProperty(BoilerBlock.FACING)) return true;
+        Direction facing = state.getValue(BoilerBlock.FACING);
+        if (state.getBlock() instanceof IMultiblockController controller) {
+            return controller.getStructureHelper().isPortFaceExternal(worldPosition, facing, partPos, side);
+        }
+        return true;
     }
 
     @Override

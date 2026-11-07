@@ -44,7 +44,10 @@ public class ValveBlockEntity extends FluidPipeBlockEntity {
             BlockState state = getBlockState();
             if (state.getBlock() instanceof ValveBlock && state.getValue(ValveBlock.POWERED)) {
                 FluidNetworkManager manager = FluidNetworkManager.get((ServerLevel) this.level);
-                manager.ensureNodeConnected(getBlockPos());
+                // reanchorNode вместо ensureNodeConnected: привязка узла к сети могла
+                // устареть после rebuildAllNetworks при выгруженном чанке,
+                // пересоединяем строго по актуальным соседям и фильтрам.
+                manager.reanchorNode(getBlockPos());
             }
             // Синхронизируем предыдущий уровень сигнала с фактическим: источник мог
             // измениться, пока чанк был выгружен (иначе первый фронт теряется).

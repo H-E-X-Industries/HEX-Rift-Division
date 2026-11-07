@@ -32,11 +32,8 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
-import net.minecraft.world.level.storage.loot.LootParams;
-import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -144,24 +141,6 @@ public class LowPressureSteamCondenserBlock extends BaseEntityBlock implements S
                 level.addParticle(ParticleTypes.BUBBLE_COLUMN_UP, d0, d1, d2, 0.0D, 0.05D, 0.0D);
             }
         }
-    }
-
-    // ===== Дропы с сохранением содержимого =====
-    @Override
-    @SuppressWarnings("deprecation")
-    public List<ItemStack> getDrops(BlockState state, LootParams.Builder params) {
-        BlockEntity be = params.getOptionalParameter(LootContextParams.BLOCK_ENTITY);
-        if (be instanceof LowPressureSteamCondenserBlockEntity cond) {
-            ItemStack stack = new ItemStack(this);
-            // BlockItem.setBlockEntityData добавляет обязательный ключ "id":
-            // CustomData.of без "id" приводит к DecoderException на строгом
-            // кодеке BLOCK_ENTITY_DATA (тот же класс бага, что и краш бочек).
-            net.minecraft.world.item.BlockItem.setBlockEntityData(stack,
-                    com.trd.block.entity.ModBlockEntities.LOW_PRESSURE_STEAM_CONDENSER_BE.get(),
-                    cond.saveWithoutMetadata(params.getLevel().registryAccess()));
-            return Collections.singletonList(stack);
-        }
-        return super.getDrops(state, params);
     }
 
     @Override

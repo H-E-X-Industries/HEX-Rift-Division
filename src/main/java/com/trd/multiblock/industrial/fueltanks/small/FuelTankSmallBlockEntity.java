@@ -43,7 +43,7 @@ public class FuelTankSmallBlockEntity extends FluidBarrelBlockEntity implements 
         return this.networkFluidHandler;
     }
 
-    public IFluidHandler getCapabilityForPart(@Nullable Direction side, PartRole role) {
+    public IFluidHandler getCapabilityForPart(@Nullable Direction side, PartRole role, BlockPos partPos) {
         if (side != null) {
             Direction facing = this.getBlockState().getValue(FuelTankSmallBlock.FACING);
             // Allow connection only to front (facing) and back (opposite)

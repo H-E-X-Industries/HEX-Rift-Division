@@ -191,6 +191,41 @@ public class MultiblockStructureHelper {
         return controller.getPartRole(gridPos);
     }
 
+    // ==================== ВНЕШНИЕ ГРАНИ ЧАСТЕЙ ====================
+
+    /**
+     * Кэш мировых смещений ВСЕХ занятых клеток структуры (части + сам контроллер)
+     * относительно контроллера, отдельно для каждого поворота (facing).
+     */
+    private final Map<Direction, Set<BlockPos>> occupiedOffsetsCache = new HashMap<>();
+
+    private Set<BlockPos> occupiedRelativeToController(Direction facing) {
+        return occupiedOffsetsCache.computeIfAbsent(facing, f -> {
+            Set<BlockPos> occupied = new HashSet<>();
+            occupied.add(BlockPos.ZERO); // клетка самого контроллера
+            for (BlockPos local : structureMap.keySet()) {
+                occupied.add(rotate(local.subtract(controllerOffset), f));
+            }
+            return occupied;
+        });
+    }
+
+    /**
+     * Является ли грань part-блока внешней (смотрящей НАРУЖУ конструкции, а не на сосед-
+     * часть структуры или контроллер).
+     *
+     * @param controllerWorldPos мировая позиция контроллера
+     * @param facing             поворот контроллера (для актуальных структур — горизонтальный FACING)
+     * @param partWorldPos       мировая позиция части (порта)
+     * @param side               проверяемая грань части
+     */
+    public boolean isPortFaceExternal(BlockPos controllerWorldPos, Direction facing, BlockPos partWorldPos, Direction side) {
+        BlockPos portOffset = partWorldPos.subtract(controllerWorldPos);
+        BlockPos neighborOffset = portOffset.relative(side); // клетка за этой гранью
+        // Если за гранью стоит клетка структуры (часть или контроллер) — грань внутренняя.
+        return !occupiedRelativeToController(facing).contains(neighborOffset);
+    }
+
     private final Set<Block> replaceableBlocks = Set.of(
             Blocks.AIR, Blocks.CAVE_AIR, Blocks.VOID_AIR, Blocks.SNOW, Blocks.VINE, Blocks.WATER, Blocks.LAVA
     );
