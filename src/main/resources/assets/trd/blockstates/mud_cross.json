@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "trd:block/mud_cross" },
+    "facing=east":  { "model": "trd:block/mud_cross", "y": 90 },
+    "facing=south": { "model": "trd:block/mud_cross", "y": 180 },
+    "facing=west":  { "model": "trd:block/mud_cross", "y": 270 }
+  }
+}

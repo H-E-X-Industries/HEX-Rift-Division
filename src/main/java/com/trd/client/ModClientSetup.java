@@ -75,6 +75,8 @@ public class ModClientSetup {
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.STATOR_BE.get(), com.trd.client.render.ber.StatorRenderer::new);
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.DROBITEL_BE.get(), com.trd.client.render.ber.DrobitelRenderer::new);
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.SHAFT_BE.get(), com.trd.client.render.ber.ShaftRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.MUD_CROSS_BE.get(),
+                ctx -> new com.hex.hexrender.client.GltfBlockEntityRenderer<>(ctx, new com.trd.client.gltf.blockentity.drilling.MudCrossModelDescriptor()));
 
         // Пять текстур пули сшиваются в один атлас вариантов. Звать надо до
         // первого выстрела, иначе первые пули просто не рисуются: модель
