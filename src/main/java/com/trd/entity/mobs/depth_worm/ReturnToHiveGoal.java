@@ -65,6 +65,15 @@ public class ReturnToHiveGoal extends Goal {
         return null;
     }
 
+    @Nullable
+    private UUID getNetworkIdForPos(BlockPos pos) {
+        BlockEntity be = worm.level().getBlockEntity(pos);
+        if (be instanceof HiveNetworkMember member) {
+            return member.getNetworkId();
+        }
+        return null;
+    }
+
     private BlockPos findNearestRelay() {
         BlockPos lastExit = worm.getLastExitPos();
         if (lastExit != null) {
@@ -117,6 +126,16 @@ public class ReturnToHiveGoal extends Goal {
         } else {
             LivingEntity target = worm.getTarget();
             if (target != null && target.isAlive()) return false;
+        }
+
+        BlockPos entry = findNearestEntryPoint();
+        if (entry != null) {
+            this.targetPos = entry;
+            this.targetIsSoil = isSoil(entry);
+            if (!targetIsSoil && worm.getBoundNestPos() == null) {
+                worm.bindToNest(entry);
+            }
+            return true;
         }
 
         BlockPos boundNest = worm.getBoundNestPos();
@@ -194,11 +213,6 @@ public class ReturnToHiveGoal extends Goal {
     }
 
     private BlockPos findNearestEntryPoint() {
-        BlockPos bound = worm.getBoundNestPos();
-        if (bound != null && worm.level().isLoaded(bound) && isValidHiveEntry(bound)) {
-            return bound;
-        }
-
         UUID netId = getWormNetworkId();
         HiveNetworkManager manager = HiveNetworkManager.get(worm.level());
         if (manager != null && netId != null) {
@@ -208,7 +222,7 @@ public class ReturnToHiveGoal extends Goal {
                 double bestDist = Double.MAX_VALUE;
                 Vec3 wormPos = worm.position();
                 for (BlockPos p : network.members) {
-                    if (worm.level().isLoaded(p)) {
+                    if (worm.level().isLoaded(p) && isValidHiveEntry(p)) {
                         double d = wormPos.distanceToSqr(p.getX() + 0.5, p.getY() + 0.5, p.getZ() + 0.5);
                         if (d < bestDist) {
                             bestDist = d;
@@ -218,6 +232,11 @@ public class ReturnToHiveGoal extends Goal {
                 }
                 if (best != null) return best;
             }
+        }
+
+        BlockPos bound = worm.getBoundNestPos();
+        if (bound != null && worm.level().isLoaded(bound) && isValidHiveEntry(bound)) {
+            return bound;
         }
 
         BlockPos wormPos = worm.blockPosition();
@@ -282,6 +301,31 @@ public class ReturnToHiveGoal extends Goal {
             worm.setTarget(null);
         }
 
+        BlockPos currentBlockPos = worm.blockPosition();
+
+        // 1. Быстрое поглощение: если червь уже касается, стоит на блоке или рядом с узлом улья
+        BlockPos[] immediateCandidates = new BlockPos[]{
+                currentBlockPos,
+                currentBlockPos.below(),
+                currentBlockPos.above(),
+                currentBlockPos.north(),
+                currentBlockPos.south(),
+                currentBlockPos.east(),
+                currentBlockPos.west()
+        };
+        UUID wormNet = getWormNetworkId();
+        for (BlockPos candidate : immediateCandidates) {
+            if (isValidHiveEntry(candidate)) {
+                UUID candNet = getNetworkIdForPos(candidate);
+                if (wormNet == null || wormNet.equals(candNet)) {
+                    this.targetPos = candidate;
+                    this.targetIsSoil = isSoil(candidate);
+                    enterNetwork(candidate);
+                    return;
+                }
+            }
+        }
+
         if (targetPos == null) return;
 
         double targetX = targetPos.getX() + 0.5;
@@ -290,15 +334,7 @@ public class ReturnToHiveGoal extends Goal {
 
         Vec3 wormPos = worm.position();
         double distSq = wormPos.distanceToSqr(targetX, targetY, targetZ);
-        double dy = Math.abs(targetY - wormPos.y);
-        BlockPos currentBlockPos = worm.blockPosition();
-
-        if (isValidHiveEntry(currentBlockPos)) {
-            this.targetPos = currentBlockPos;
-            this.targetIsSoil = isSoil(currentBlockPos);
-            enterNetwork(currentBlockPos);
-            return;
-        }
+        double verticalDiff = wormPos.y - targetY; // positive if worm is above target
 
         // Track stuck progress
         if (currentBlockPos.equals(lastPos)) {
@@ -318,12 +354,10 @@ public class ReturnToHiveGoal extends Goal {
 
         Vec3 targetCenter = new Vec3(targetX, targetY, targetZ);
         boolean pathClear = isPathClearOfNonHiveBlocks(worm.getEyePosition(), targetCenter);
-        double horizDistSq = (targetX - wormPos.x) * (targetX - wormPos.x) + (targetZ - wormPos.z) * (targetZ - wormPos.z);
-        double verticalDiff = wormPos.y - targetY; // positive if worm is above target
 
-        if (distSq < 2.0 && Math.abs(verticalDiff) <= 1.5) {
+        if (distSq <= 4.0 && Math.abs(verticalDiff) <= 2.0) {
             phase = ApproachPhase.ENTERING;
-        } else if (pathClear && ((distSq < 25.0 && horizDistSq < 16.0 && verticalDiff >= -1.0 && verticalDiff <= 5.0) || (distSq < 8.0 && Math.abs(verticalDiff) < 2.5))) {
+        } else if (distSq < 36.0 && (distSq <= 6.25 || pathClear)) {
             if (phase != ApproachPhase.SLIDING) slidingTicks = 0;
             phase = ApproachPhase.SLIDING;
         } else {
@@ -376,8 +410,8 @@ public class ReturnToHiveGoal extends Goal {
                         if (dug) {
                             stuckTicks = 0;
                             pathRecalcCooldown = 20;
-                        } else {
-                            // Search for open space away from ceiling/wall to escape dead end or get closer to wall
+                        } else if (distSq >= 25.0) {
+                            // Search for open space away from ceiling/wall to escape dead end ONLY when far from hive
                             BlockPos openEscape = findOpenSpaceAwayFromCeiling(currentBlockPos, 14);
                             if (openEscape != null) {
                                 Path escPath = worm.getNavigation().createPath(openEscape, 0);
@@ -387,17 +421,20 @@ public class ReturnToHiveGoal extends Goal {
                                     worm.getNavigation().moveTo(openEscape.getX() + 0.5, openEscape.getY(), openEscape.getZ() + 0.5, 1.2D);
                                 }
                             }
+                        } else {
+                            // Close to hive (< 5 blocks): directly approach
+                            worm.getNavigation().moveTo(approachPos.getX() + 0.5, approachPos.getY(), approachPos.getZ() + 0.5, 1.2D);
                         }
                     }
                 }
 
                 // Look where the worm is walking (path node), or horizontally toward hive if close
-                if (worm.getNavigation().getPath() != null && !worm.getNavigation().getPath().isDone()) {
-                    net.minecraft.world.level.pathfinder.Node nextNode = worm.getNavigation().getPath().getNextNode();
-                    worm.getLookControl().setLookAt(nextNode.x + 0.5, nextNode.y + 0.5, nextNode.z + 0.5, 30.0F, 30.0F);
-                } else if (distSq < 36.0) {
+                if (distSq < 36.0) {
                     double lookY = (worm.getY() < targetY - 2.0 && getCeilingClearance(worm.level(), currentBlockPos) <= 3) ? worm.getEyeY() : targetY;
                     worm.getLookControl().setLookAt(targetX, lookY, targetZ, 30.0F, 30.0F);
+                } else if (worm.getNavigation().getPath() != null && !worm.getNavigation().getPath().isDone()) {
+                    net.minecraft.world.level.pathfinder.Node nextNode = worm.getNavigation().getPath().getNextNode();
+                    worm.getLookControl().setLookAt(nextNode.x + 0.5, nextNode.y + 0.5, nextNode.z + 0.5, 30.0F, 30.0F);
                 }
 
                 // Anti-stuck logic
@@ -412,14 +449,15 @@ public class ReturnToHiveGoal extends Goal {
                     boolean hasCeiling = clearance < 4;
 
                     if (hasCeiling) {
-                        // NEVER jump into a ceiling! Find open cave space leading away from ceiling
-                        BlockPos openPos = findOpenSpaceAwayFromCeiling(currentBlockPos, 14);
-                        if (openPos != null) {
-                            Path escPath = worm.getNavigation().createPath(openPos, 0);
-                            if (escPath != null && escPath.canReach()) {
-                                worm.getNavigation().moveTo(escPath, 1.3D);
-                            } else {
-                                worm.getNavigation().moveTo(openPos.getX() + 0.5, openPos.getY(), openPos.getZ() + 0.5, 1.3D);
+                        if (distSq >= 25.0) {
+                            BlockPos openPos = findOpenSpaceAwayFromCeiling(currentBlockPos, 14);
+                            if (openPos != null) {
+                                Path escPath = worm.getNavigation().createPath(openPos, 0);
+                                if (escPath != null && escPath.canReach()) {
+                                    worm.getNavigation().moveTo(escPath, 1.3D);
+                                } else {
+                                    worm.getNavigation().moveTo(openPos.getX() + 0.5, openPos.getY(), openPos.getZ() + 0.5, 1.3D);
+                                }
                             }
                         }
                         stuckTicks = STUCK_THRESHOLD / 2;
@@ -444,7 +482,7 @@ public class ReturnToHiveGoal extends Goal {
                 Vec3 tgtCenter = new Vec3(targetX, targetY, targetZ);
 
                 if (slidingTicks > 60) {
-                    if (distSq < 16.0 && isPathClearOfNonHiveBlocks(worm.position(), tgtCenter)) {
+                    if (distSq < 16.0 && (distSq <= 4.0 || isPathClearOfNonHiveBlocks(worm.getEyePosition(), tgtCenter))) {
                         enterNetwork(targetPos);
                     } else {
                         phase = ApproachPhase.NAVIGATING;
@@ -454,7 +492,7 @@ public class ReturnToHiveGoal extends Goal {
                 }
 
                 // If non-hive obstacle appeared or distance grew too large, abort sliding
-                if (distSq > 30.0 || !isPathClearOfNonHiveBlocks(worm.position(), tgtCenter)) {
+                if (distSq > 36.0 || (distSq > 4.0 && !isPathClearOfNonHiveBlocks(worm.getEyePosition(), tgtCenter))) {
                     phase = ApproachPhase.NAVIGATING;
                     slidingTicks = 0;
                     return;
@@ -463,13 +501,13 @@ public class ReturnToHiveGoal extends Goal {
                 worm.getNavigation().stop();
                 Vec3 toTarget = new Vec3(targetX - wormPos.x, targetY - wormPos.y, targetZ - wormPos.z);
                 double dist = Math.sqrt(distSq);
-                double speed = Math.min(0.20, Math.max(0.08, dist * 0.08));
+                double speed = Math.min(0.25, Math.max(0.10, dist * 0.10));
                 Vec3 move = toTarget.normalize().scale(speed);
                 worm.setPos(wormPos.x + move.x, wormPos.y + move.y, wormPos.z + move.z);
                 worm.setDeltaMovement(Vec3.ZERO);
                 worm.getLookControl().setLookAt(targetX, targetY, targetZ, 30.0F, 30.0F);
 
-                if (dist < 1.2 || (worm.onGround() && dist < 2.0 && wormPos.y <= targetY + 0.8)) {
+                if (dist < 1.5 || (worm.onGround() && dist < 2.2 && wormPos.y <= targetY + 1.2)) {
                     enterNetwork(targetPos);
                 }
             }
@@ -478,7 +516,7 @@ public class ReturnToHiveGoal extends Goal {
                 worm.getNavigation().stop();
                 worm.setDeltaMovement(Vec3.ZERO);
                 Vec3 tgtCenter = new Vec3(targetX, targetY, targetZ);
-                if (distSq < 4.0 && isPathClearOfNonHiveBlocks(worm.position(), tgtCenter)) {
+                if (distSq <= 6.25 && (distSq <= 3.0 || isPathClearOfNonHiveBlocks(worm.getEyePosition(), tgtCenter))) {
                     enterNetwork(targetPos);
                 } else {
                     phase = ApproachPhase.NAVIGATING;
@@ -500,6 +538,8 @@ public class ReturnToHiveGoal extends Goal {
     }
 
     private boolean isObstacleBlock(Level level, BlockPos pos) {
+        if (targetPos != null && pos.equals(targetPos)) return false;
+        if (pos.equals(worm.blockPosition()) || pos.equals(worm.blockPosition().above())) return false;
         BlockState state = level.getBlockState(pos);
         if (state.isAir()) return false;
         if (isPassableHiveBlock(state, pos)) return false;
@@ -509,14 +549,13 @@ public class ReturnToHiveGoal extends Goal {
     private boolean isPathClearOfNonHiveBlocks(Vec3 from, Vec3 to) {
         Vec3 diff = to.subtract(from);
         double dist = diff.length();
-        if (dist < 0.1) return true;
-        Vec3 step = diff.normalize().scale(0.35);
-        int numSteps = (int) Math.ceil(dist / 0.35);
+        if (dist < 0.5) return true;
+        Vec3 dir = diff.normalize();
         Level level = worm.level();
         BlockPos.MutableBlockPos mpos = new BlockPos.MutableBlockPos();
 
-        for (int i = 0; i <= numSteps; i++) {
-            Vec3 point = from.add(step.scale(i));
+        for (double d = 0.35; d < dist - 0.25; d += 0.35) {
+            Vec3 point = from.add(dir.scale(d));
             mpos.set(point.x, point.y, point.z);
             if (isObstacleBlock(level, mpos)) {
                 return false;
@@ -701,8 +740,9 @@ public class ReturnToHiveGoal extends Goal {
         Vec3 wormPos = worm.position();
         Vec3 entryCenter = new Vec3(entryPos.getX() + 0.5, entryPos.getY() + 0.5, entryPos.getZ() + 0.5);
         double distSq = wormPos.distanceToSqr(entryCenter);
-        if (distSq > 16.0 || !isPathClearOfNonHiveBlocks(wormPos, entryCenter)) {
-            // Worm is too far or vertically separated by non-hive blocks (e.g. under floor)
+        if (distSq > 16.0) return;
+        if (distSq > 3.0 && !isPathClearOfNonHiveBlocks(worm.getEyePosition(), entryCenter)) {
+            // Worm is separated by a solid non-hive wall
             return;
         }
 
@@ -717,6 +757,10 @@ public class ReturnToHiveGoal extends Goal {
             if (be2 instanceof HiveNetworkMember member2) {
                 netId = member2.getNetworkId();
             }
+        }
+
+        if (netId == null) {
+            netId = getWormNetworkId();
         }
 
         if (netId == null) return;
