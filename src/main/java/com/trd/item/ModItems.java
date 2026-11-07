@@ -91,6 +91,11 @@ public class ModItems {
     public static final DeferredItem<Item> BATTERY_LITHIUM = ITEMS.register("battery_lithium", () -> new com.trd.item.industrial.energy.ModBatteryItem(new Item.Properties().stacksTo(1), 250000, 1000, 1000));
     public static final DeferredItem<Item> BATTERY_TRIXITE = ITEMS.register("battery_trixite", () -> new com.trd.item.industrial.energy.ModBatteryItem(new Item.Properties().stacksTo(1), 5000000, 40000, 200000));
     public static final DeferredItem<Item> ENERGY_CELL = ITEMS.register("energy_cell_basic", () -> new com.trd.item.industrial.energy.EnergyCellItem(new Item.Properties().stacksTo(1), 1000000, 5000, 5000));
+
+    // Термометры: ртутный показывает столб ртути на левом HUD, электронный — цифровое значение температуры
+    public static final DeferredItem<Item> MERCURY_THERMOMETER = ITEMS.register("mercury_thermometer", () -> new com.trd.item.climate.MercuryThermometerItem(new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> ELECTRIC_THERMOMETER = ITEMS.register("electric_thermometer", () -> new com.trd.item.climate.ElectricThermometerItem(new Item.Properties().stacksTo(1), 10000, 100, 100));
+
     public static final DeferredItem<Item> WIRE_COIL = ITEMS.register("wire_coil", () -> new com.trd.item.industrial.energy.WireCoilItem(new Item.Properties().stacksTo(1)));
     public static final DeferredItem<Item> PRESS_CARRIAGE = ITEMS.register("press_carriage", () -> new Item(new Item.Properties().stacksTo(1)));
     public static final DeferredItem<Item> WIRE_CARRIAGE = ITEMS.register("wire_carriage", () -> new Item(new Item.Properties().stacksTo(1)));

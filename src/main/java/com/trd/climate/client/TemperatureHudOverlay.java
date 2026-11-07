@@ -42,6 +42,11 @@ public class TemperatureHudOverlay {
             return;
         }
 
+        // Цифровое значение температуры показывается только при заряженном электронном термометре в инвентаре
+        if (!ThermometerClientHelper.hasWorkingElectricThermometer(mc.player)) {
+            return;
+        }
+
         // Получаем текущую температуру из клиентского кэша
         float currentTemp = ClientTemperatureHandler.getCurrentTemp();
         int color = ClientTemperatureHandler.getTemperatureColor();
