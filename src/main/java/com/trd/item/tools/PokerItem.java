@@ -1,6 +1,7 @@
 package com.trd.item.tools;
 
 import com.trd.block.entity.industrial.casting.CastingPotBlockEntity;
+import com.trd.block.entity.industrial.casting.SmallSmelterBlockEntity;
 import com.trd.event.HotItemHandler;
 import com.trd.event.SlagItem;
 import com.trd.multiblock.industrial.smelter.SmelterBlockEntity;
@@ -50,6 +51,10 @@ public class PokerItem extends Item {
 
         if (be instanceof SmelterBlockEntity smelter) {
             return handleSmelter(level, pos, player, smelter, poker);
+        }
+
+        if (be instanceof SmallSmelterBlockEntity smallSmelter) {
+            return handleSmallSmelter(level, pos, player, smallSmelter, poker);
         }
 
         return InteractionResult.PASS;
@@ -154,6 +159,36 @@ public class PokerItem extends Item {
 
     private InteractionResult dumpSmelterContents(Level level, BlockPos pos, Player player,
                                                   SmelterBlockEntity smelter, ItemStack poker) {
+        if (!smelter.hasMetal()) {
+            player.displayClientMessage(Component.translatable("message.trd.poker.smelter_empty"), true);
+            return InteractionResult.PASS;
+        }
+
+        List<ItemStack> slagItems = smelter.dumpMetalAsSlag();
+
+        for (ItemStack slag : slagItems) {
+            ensureSlagIsHot(slag);
+            popResourceSafe(level, pos, slag);
+        }
+
+        level.playSound(null, pos, SoundEvents.ITEM_PICKUP, SoundSource.BLOCKS, 1.0f, 0.8f);
+        damagePoker(poker, player, Math.max(1, slagItems.size()));
+
+        player.displayClientMessage(Component.translatable("message.trd.poker.slag_dumped", slagItems.size()), true);
+
+        return InteractionResult.CONSUME;
+    }
+
+    private InteractionResult handleSmallSmelter(Level level, BlockPos pos, Player player,
+                                                 SmallSmelterBlockEntity smelter, ItemStack poker) {
+        if (player.isShiftKeyDown()) {
+            return dumpSmallSmelterContents(level, pos, player, smelter, poker);
+        }
+        return InteractionResult.PASS;
+    }
+
+    private InteractionResult dumpSmallSmelterContents(Level level, BlockPos pos, Player player,
+                                                       SmallSmelterBlockEntity smelter, ItemStack poker) {
         if (!smelter.hasMetal()) {
             player.displayClientMessage(Component.translatable("message.trd.poker.smelter_empty"), true);
             return InteractionResult.PASS;

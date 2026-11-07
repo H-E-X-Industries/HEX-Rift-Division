@@ -401,7 +401,7 @@ public class ShaftBlock extends BaseEntityBlock {
     }
 
     /** Публичная (для пакета) проверка: может ли блок на этой позиции служить опорой вала по заданной оси. */
-    static boolean isSupportBlock(Level level, BlockPos pos, Direction axisDir) {
+    public static boolean isSupportBlock(net.minecraft.world.level.LevelReader level, BlockPos pos, Direction axisDir) {
         BlockState state = level.getBlockState(pos);
         Block block = state.getBlock();
         if (block instanceof BearingBlock) {

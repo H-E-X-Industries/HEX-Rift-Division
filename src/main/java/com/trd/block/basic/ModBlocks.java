@@ -701,8 +701,8 @@ public class ModBlocks {
             () -> new net.minecraft.world.level.block.SlabBlock(BlockBehaviour.Properties.ofFullCopy(FIREBRICK_BLOCK.get())));
     public static final DeferredBlock<net.minecraft.world.level.block.SlabBlock> REINFORCEDBRICK_SLAB = registerBlock("reinforcedbrick_slab",
             () -> new net.minecraft.world.level.block.SlabBlock(BlockBehaviour.Properties.ofFullCopy(REINFORCEDBRICK_BLOCK.get())));
-    public static final DeferredBlock<Block> SMALL_SMELTER = registerBlock("small_smelter",
-            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().strength(3.0f, 10.0f)));
+    public static final DeferredBlock<com.trd.block.basic.industrial.casting.SmallSmelterBlock> SMALL_SMELTER = registerBlock("small_smelter",
+            () -> new com.trd.block.basic.industrial.casting.SmallSmelterBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().strength(3.0f, 10.0f)));
     public static final DeferredBlock<Block> DET_MINER = registerBlock("det_miner",
             () -> new com.trd.block.basic.weapons.explosives.DetMinerBlock(
                     BlockBehaviour.Properties.of().strength(0.5F, 6.0F)

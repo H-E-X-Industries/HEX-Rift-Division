@@ -32,6 +32,7 @@ public class ModClientSetup {
         event.register(com.trd.menu.ModMenuTypes.MOTOR_ELECTRO_MENU.get(), com.trd.client.overlay.gui.GUIMotorElectro::new);
         event.register(com.trd.menu.ModMenuTypes.HEATER_MENU.get(), com.trd.client.overlay.gui.GUIHeater::new);
         event.register(com.trd.menu.ModMenuTypes.SMELTER_MENU.get(), com.trd.client.overlay.gui.GUISmelter::new);
+        event.register(com.trd.menu.ModMenuTypes.SMALL_SMELTER_MENU.get(), com.trd.client.overlay.gui.GUISmallSmelter::new);
         event.register(com.trd.menu.ModMenuTypes.CC_MACHINE_MENU.get(), com.trd.client.overlay.gui.GUICCMachine::new);
         event.register(com.trd.menu.ModMenuTypes.DROBITEL_MENU.get(), com.trd.client.overlay.gui.DrobitelScreen::new);
         event.register(com.trd.menu.ModMenuTypes.CENTRIFUGE_MENU.get(), com.trd.client.overlay.gui.CentrifugeScreen::new);
