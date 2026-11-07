@@ -158,8 +158,9 @@ public class ModCreativeTabs {
                         output.accept(ModItems.INFINITE_FLUID_BARREL.get());
                         output.accept(ModItems.FLUID_IDENTIFIER.get());
 
-                        // Термометры: электронный в креативе сразу заряжен (как полный вариант катушки)
+                        // Термометры: разряженный и заряженный (как пустая и полная катушки)
                         output.accept(ModItems.MERCURY_THERMOMETER.get());
+                        output.accept(ModItems.ELECTRIC_THERMOMETER.get());
                         ItemStack fullThermometer = new ItemStack(ModItems.ELECTRIC_THERMOMETER.get());
                         ModBatteryItem.setEnergy(fullThermometer, com.trd.item.climate.ElectricThermometerItem.DEFAULT_CAPACITY);
                         output.accept(fullThermometer);

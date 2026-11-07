@@ -889,6 +889,10 @@
     "tooltip.trd.battery.stored":  "§7Заряд:",
     "tooltip.trd.battery.transfer_rate":  "§aВход: §f%s JE/t",
     "tooltip.trd.energy":  "Энергия: %s / %s JE",
+    "tooltip.trd.thermometer.mercury.danger":  "Опасно выкидывать!",
+
+    "chat.trd.thermometer.current_temp":  "Текущая температура тела: %s°C",
+    "chat.trd.thermometer.temp_rate":  "Скорость изменения температуры: ~%s°C/сек",
     "tooltip.trd.condenser.cooling":  "❄ Охлаждение: ",
     "tooltip.trd.condenser.steam_in":  "⬇ Пар Н.Д. (вход): ",
     "tooltip.trd.condenser.water_out":  "⬆ Вода (выход): ",

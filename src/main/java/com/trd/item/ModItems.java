@@ -93,7 +93,7 @@ public class ModItems {
     public static final DeferredItem<Item> ENERGY_CELL = ITEMS.register("energy_cell_basic", () -> new com.trd.item.industrial.energy.EnergyCellItem(new Item.Properties().stacksTo(1), 1000000, 5000, 5000));
 
     // Термометры: ртутный показывает столб ртути на левом HUD, электронный — цифровое значение температуры
-    public static final DeferredItem<Item> MERCURY_THERMOMETER = ITEMS.register("mercury_thermometer", () -> new Item(new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> MERCURY_THERMOMETER = ITEMS.register("mercury_thermometer", () -> new com.trd.item.climate.MercuryThermometerItem(new Item.Properties().stacksTo(1)));
     public static final DeferredItem<Item> ELECTRIC_THERMOMETER = ITEMS.register("electric_thermometer", () -> new com.trd.item.climate.ElectricThermometerItem(new Item.Properties().stacksTo(1), 10000, 100, 100));
 
     public static final DeferredItem<Item> WIRE_COIL = ITEMS.register("wire_coil", () -> new com.trd.item.industrial.energy.WireCoilItem(new Item.Properties().stacksTo(1)));

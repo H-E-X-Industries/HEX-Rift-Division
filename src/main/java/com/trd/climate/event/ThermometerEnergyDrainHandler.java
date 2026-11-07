@@ -26,7 +26,16 @@ public class ThermometerEnergyDrainHandler {
     public static void onPlayerTick(PlayerTickEvent.Post event) {
         var player = event.getEntity();
 
-        if (player.level().isClientSide() || player.isSpectator() || player.isCreative()) {
+        if (player.level().isClientSide() || player.isSpectator()) {
+            return;
+        }
+
+        // Замер температуры для расчёта скорости изменения (ПКМ термометра) — в том числе в креативе
+        if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            TemperatureRateTracker.record(serverPlayer, player.getData(com.trd.climate.attachment.ModAttachments.PLAYER_TEMPERATURE).getCurrentTemp());
+        }
+
+        if (player.isCreative()) {
             return;
         }
 
