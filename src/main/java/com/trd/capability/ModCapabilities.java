@@ -422,6 +422,12 @@ public class ModCapabilities {
     event.registerItem(ENERGY_RECEIVER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 1000000, 5000, 5000), com.trd.item.ModItems.ENERGY_CELL.get());
     event.registerItem(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.ITEM, (stack, ctx) -> new com.trd.api.energy.ForgeItemWrapper(new com.trd.api.energy.ItemEnergyStorage(stack, 1000000, 5000, 5000)), com.trd.item.ModItems.ENERGY_CELL.get());
 
+    // ─── Электронный термометр: буфер 10 000 JE, заряжается как переносной аккумулятор ───
+    event.registerItem(ENERGY_PROVIDER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 10000, 100, 100), com.trd.item.ModItems.ELECTRIC_THERMOMETER.get());
+    event.registerItem(ENERGY_RECEIVER_ITEM, (stack, ctx) -> new com.trd.api.energy.ItemEnergyStorage(stack, 10000, 100, 100), com.trd.item.ModItems.ELECTRIC_THERMOMETER.get());
+    event.registerItem(net.neoforged.neoforge.capabilities.Capabilities.EnergyStorage.ITEM, (stack, ctx) -> new com.trd.api.energy.ForgeItemWrapper(new com.trd.api.energy.ItemEnergyStorage(stack, 10000, 100, 100)), com.trd.item.ModItems.ELECTRIC_THERMOMETER.get());
+
+
     // Fluid Capabilities
     event.registerBlockEntity(
             net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
