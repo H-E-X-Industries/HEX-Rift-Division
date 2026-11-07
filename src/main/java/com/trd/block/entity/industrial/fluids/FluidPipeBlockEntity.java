@@ -42,7 +42,12 @@ public class FluidPipeBlockEntity extends BlockEntity {
         super.onLoad();
         if (this.level != null && !this.level.isClientSide) {
             FluidNetworkManager manager = FluidNetworkManager.get((ServerLevel) this.level);
-            manager.ensureNodeConnected(this.getBlockPos());
+            // reanchorNode вместо ensureNodeConnected: узел мог быть привязан к
+            // устаревшей сети, собранной rebuildAllNetworks при выгруженном чанке.
+            // ensureNodeConnected налепил бы на сеть network != null, а пересоединить
+            // не стал бы. Перестройка при каждой загрузке чанка даёт строго
+            // актуальные соединения по соседям и фильтрам.
+            manager.reanchorNode(this.getBlockPos());
         }
     }
 

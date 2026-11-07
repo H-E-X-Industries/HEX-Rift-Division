@@ -439,7 +439,7 @@ public class ModCapabilities {
                         if (core instanceof com.trd.multiblock.industrial.ccmachine.CCMachineBlockEntity ccm) {
                             return ccm.getPortFluidHandler(be.getBlockPos(), side);
                         } else if (core instanceof com.trd.multiblock.system.IMultiblockFluidHandler handler) {
-                            return handler.getCapabilityForPart(side, role);
+                            return handler.getCapabilityForPart(side, role, be.getBlockPos());
                         } else if (core instanceof com.trd.multiblock.system.IFluidTankProvider provider) {
                             return provider.getFluidHandlerCapability();
                         }

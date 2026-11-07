@@ -5,6 +5,7 @@ import com.trd.api.rotation.KineticNetworkManager;
 import com.trd.api.rotation.Rotational;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.block.entity.industrial.rotation.KineticNodeBlockEntity;
+import com.trd.multiblock.system.IMultiblockController;
 import com.trd.multiblock.system.IMultiblockFluidHandler;
 import com.trd.multiblock.system.PartRole;
 import net.minecraft.core.BlockPos;
@@ -35,38 +36,62 @@ public class SteamEngineBlockEntity extends KineticNodeBlockEntity implements IM
         }
     };
 
-    private final IFluidHandler steamCap = new IFluidHandler() {
+    /**
+     * УНИВЕРСАЛЬНЫЙ порт двигателя: объединяет оба танка (вход/выход).
+     * Заливать/выливать жидкости можно через любой порт; жидкости распределяются
+     * по валидности танков: высокий/низкий пар идут в свои танки.
+     */
+    private final IFluidHandler universalCap = new IFluidHandler() {
         @Override
-        public int getTanks() { return steamTank.getTanks(); }
-        @Override
-        public @NotNull FluidStack getFluidInTank(int tank) { return steamTank.getFluidInTank(tank); }
-        @Override
-        public int getTankCapacity(int tank) { return steamTank.getTankCapacity(tank); }
-        @Override
-        public boolean isFluidValid(int tank, @NotNull FluidStack stack) { return steamTank.isFluidValid(tank, stack); }
-        @Override
-        public int fill(FluidStack resource, FluidAction action) { return steamTank.fill(resource, action); }
-        @Override
-        public @NotNull FluidStack drain(FluidStack resource, FluidAction action) { return FluidStack.EMPTY; }
-        @Override
-        public @NotNull FluidStack drain(int maxDrain, FluidAction action) { return FluidStack.EMPTY; }
-    };
+        public int getTanks() { return 2; }
 
-    private final IFluidHandler lowPressureCap = new IFluidHandler() {
         @Override
-        public int getTanks() { return lowPressureSteamTank.getTanks(); }
+        public @NotNull FluidStack getFluidInTank(int tank) {
+            if (tank == 0) return steamTank.getFluid();
+            if (tank == 1) return lowPressureSteamTank.getFluid();
+            return FluidStack.EMPTY;
+        }
+
         @Override
-        public @NotNull FluidStack getFluidInTank(int tank) { return lowPressureSteamTank.getFluidInTank(tank); }
+        public int getTankCapacity(int tank) {
+            if (tank == 0) return steamTank.getCapacity();
+            if (tank == 1) return lowPressureSteamTank.getCapacity();
+            return 0;
+        }
+
         @Override
-        public int getTankCapacity(int tank) { return lowPressureSteamTank.getTankCapacity(tank); }
+        public boolean isFluidValid(int tank, @NotNull FluidStack stack) {
+            if (tank == 0) return steamTank.isFluidValid(stack);
+            if (tank == 1) return lowPressureSteamTank.isFluidValid(stack);
+            return false;
+        }
+
         @Override
-        public boolean isFluidValid(int tank, @NotNull FluidStack stack) { return lowPressureSteamTank.isFluidValid(tank, stack); }
+        public int fill(@NotNull FluidStack resource, FluidAction action) {
+            if (steamTank.isFluidValid(resource)) {
+                int filled = steamTank.fill(resource, action);
+                if (filled > 0) return filled;
+            }
+            if (lowPressureSteamTank.isFluidValid(resource)) {
+                return lowPressureSteamTank.fill(resource, action);
+            }
+            return 0;
+        }
+
         @Override
-        public int fill(FluidStack resource, FluidAction action) { return 0; }
+        public @NotNull FluidStack drain(@NotNull FluidStack resource, FluidAction action) {
+            if (lowPressureSteamTank.isFluidValid(resource)) return lowPressureSteamTank.drain(resource, action);
+            if (steamTank.isFluidValid(resource)) return steamTank.drain(resource, action);
+            return FluidStack.EMPTY;
+        }
+
         @Override
-        public @NotNull FluidStack drain(FluidStack resource, FluidAction action) { return lowPressureSteamTank.drain(resource, action); }
-        @Override
-        public @NotNull FluidStack drain(int maxDrain, FluidAction action) { return lowPressureSteamTank.drain(maxDrain, action); }
+        public @NotNull FluidStack drain(int maxDrain, FluidAction action) {
+            // Сначала отдаём выходной (низкое давление), затем входной запас.
+            FluidStack drained = lowPressureSteamTank.drain(maxDrain, action);
+            if (!drained.isEmpty()) return drained;
+            return steamTank.drain(maxDrain, action);
+        }
     };
 
     private long currentSpeed = 0;
@@ -78,24 +103,47 @@ public class SteamEngineBlockEntity extends KineticNodeBlockEntity implements IM
     }
 
     @Override
-    public @Nullable IFluidHandler getCapabilityForPart(@Nullable Direction side, PartRole role) {
-        if (!getBlockState().hasProperty(SteamEngineBlock.FACING)) {
+    public @Nullable IFluidHandler getCapabilityForPart(@Nullable Direction side, PartRole role, BlockPos partPos) {
+        // Универсальный порт: заливать/выливать можно через любой порт двигателя,
+        // но подключение (и capability, и визуальный коннект трубы — они завязаны
+        // на одну и ту же capability) разрешено ТОЛЬКО на портовых гранях:
+        //  - верхний блок (входной порт, 'I') — сбоку, перпендикулярно оси facing;
+        //  - блок ниже (выходной порт, 'O') — спереди и сзади, вдоль оси facing.
+        if (side != null && !isPortAccessFace(partPos, side, role)) {
             return null;
         }
-        Direction facing = this.getBlockState().getValue(SteamEngineBlock.FACING);
+        return universalCap;
+    }
 
+    /** Грань порта валидна для подключения? Структурно внешняя И соответствует расположению самого порта. */
+    private boolean isPortAccessFace(BlockPos partPos, Direction side, PartRole role) {
+        BlockState state = getBlockState();
+        if (!state.hasProperty(SteamEngineBlock.FACING)) return true;
+        // Структурно-внутренние грани закрыты всегда (за гранью часть/контроллер).
+        if (!isExternalPartFace(partPos, side)) return false;
+        Direction facing = state.getValue(SteamEngineBlock.FACING);
         if (role == PartRole.FLUID_OUTPUT) {
-            // Ограничение: подключать трубы можно ТОЛЬКО по оси парового двигателя (вдоль направления facing)
-            if (side == null || side.getAxis() == facing.getAxis()) {
-                return lowPressureCap;
-            }
-        } else if (role == PartRole.FLUID_INPUT) {
-            // Ограничение: подключать трубы можно ТОЛЬКО перпендикулярно оси (сбоку)
-            if (side == null || (side.getAxis() != facing.getAxis() && side.getAxis() != Direction.Axis.Y)) {
-                return steamCap;
-            }
+            // Выходной порт (блок ниже верхнего): спереди и сзади — вдоль оси facing.
+            return side.getAxis() == facing.getAxis();
         }
-        return null;
+        if (role == PartRole.FLUID_INPUT) {
+            // Входной (верхний) порт: сбоку — перпендикулярно оси facing, по горизонтали.
+            return side.getAxis() != facing.getAxis() && side.getAxis() != Direction.Axis.Y;
+        }
+        // Прочие роли (если появятся) — любая структурно-внешняя грань.
+        return true;
+    }
+
+    /** Грань части смотрит наружу структуры? (не упирается в соседнюю часть или в сам контроллер). */
+    private boolean isExternalPartFace(BlockPos partPos, Direction side) {
+        if (level == null) return true;
+        BlockState state = getBlockState();
+        if (!state.hasProperty(SteamEngineBlock.FACING)) return true;
+        Direction facing = state.getValue(SteamEngineBlock.FACING);
+        if (state.getBlock() instanceof IMultiblockController controller) {
+            return controller.getStructureHelper().isPortFaceExternal(worldPosition, facing, partPos, side);
+        }
+        return true;
     }
 
     public static void tick(Level level, BlockPos pos, BlockState state, SteamEngineBlockEntity be) {
