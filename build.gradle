@@ -129,10 +129,10 @@ dependencies {
     }
 
     // 4. HexRender (bundled via Jar-in-Jar)
-    implementation name: 'hexrender', version: '1.0.0'
+    implementation name: 'hexrender', version: '2.0.0'
     jarJar(name: 'hexrender') {
         version {
-            strictly '[1.0.0, 2.0.0)'
+            strictly '[2.0.0, 3.0.0)'
         }
     }
 
