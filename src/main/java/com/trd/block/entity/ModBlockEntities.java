@@ -287,6 +287,11 @@ public class ModBlockEntities {
                     com.trd.climate.block.entity.AtmosphericScannerBlockEntity::new,
                     ModBlocks.ATMOSPHERIC_SCANNER.get()).build(null));
 
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.climate.block.entity.MercuryThermometerBlockEntity>> THERMOMETER_MERC_BE =
+            BLOCK_ENTITIES.register("thermometer_merc_be", () -> BlockEntityType.Builder.of(
+                    com.trd.climate.block.entity.MercuryThermometerBlockEntity::new,
+                    ModBlocks.THERMOMETER_MERC.get()).build(null));
+
     public static void register(IEventBus eventBus) {
         BLOCK_ENTITIES.register(eventBus);
     }

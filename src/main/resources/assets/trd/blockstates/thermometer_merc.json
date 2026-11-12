@@ -1,0 +1,18 @@
+{
+  "variants": {
+    "facing=north": { "model": "trd:block/thermometer_merc_wall", "y": 180 },
+    "facing=south": { "model": "trd:block/thermometer_merc_wall" },
+    "facing=east":  { "model": "trd:block/thermometer_merc_wall", "y": 270 },
+    "facing=west":  { "model": "trd:block/thermometer_merc_wall", "y": 90 },
+
+    "facing=down,dial=north": { "model": "trd:block/thermometer_merc_floor" },
+    "facing=down,dial=east":  { "model": "trd:block/thermometer_merc_floor", "y": 90 },
+    "facing=down,dial=south": { "model": "trd:block/thermometer_merc_floor", "y": 180 },
+    "facing=down,dial=west":  { "model": "trd:block/thermometer_merc_floor", "y": 270 },
+
+    "facing=up,dial=north":   { "model": "trd:block/thermometer_merc_floor", "x": 180, "y": 180 },
+    "facing=up,dial=east":    { "model": "trd:block/thermometer_merc_floor", "x": 180, "y": 270 },
+    "facing=up,dial=south":   { "model": "trd:block/thermometer_merc_floor", "x": 180 },
+    "facing=up,dial=west":    { "model": "trd:block/thermometer_merc_floor", "x": 180, "y": 90 }
+  }
+}

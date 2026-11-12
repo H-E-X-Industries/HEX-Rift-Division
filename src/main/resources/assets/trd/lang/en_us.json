@@ -1,6 +1,8 @@
 {
     "block.trd.insulation_controller": "Thermal Insulation Controller",
     "block.trd.atmospheric_scanner": "Atmospheric Scanner",
+    "block.trd.thermometer_merc": "Stationary Mercury Thermometer",
+    "message.trd.thermometer.reading": "Reading: %s",
     "message.trd.insulation.controller_selected": "Thermal Insulation Controller selected at [%d, %d, %d]! Right-click with screwdriver on the opposite corner to seal.",
     "message.trd.insulation.sealed_success": "Room successfully sealed! Interior volume: %d blocks.",
     "message.trd.insulation.scanner_sealed_success": "Irregular room successfully sealed! Interior volume: %d blocks.",

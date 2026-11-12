@@ -6,6 +6,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.biome.Biome;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Калькулятор температуры окружающей среды для игрока.
@@ -53,15 +54,48 @@ public class TemperatureCalculator {
 
     /**
      * Рассчитывает целевую температуру окружающей среды для игрока.
-     * 
+     *
      * @param player Игрок
      * @param level Мир сервера
      * @param shelterLevel Уровень укрытия (0.0 - 1.0)
      * @return Температура в градусах Цельсия
      */
     public static float calculateTargetEnvTemp(Player player, ServerLevel level, float shelterLevel) {
-        BlockPos pos = player.blockPosition();
-        
+        float envTemp = calculateTargetEnvTempCore(player, level, player.blockPosition(), shelterLevel);
+
+        // Тепло от факела в руке (согревает при холоде)
+        envTemp += getTorchHeat(player, envTemp);
+
+        // Тепловая изоляция от брони (защищает от холода, не перегревает в жару)
+        if (envTemp < 20.0f) {
+            float insulation = ArmorInsulationHelper.calculateArmorInsulation(player);
+            envTemp = Math.min(20.0f, envTemp + insulation);
+        }
+
+        return envTemp;
+    }
+
+    /**
+     * Температура в точке мира для стационарных приборов (термометры).
+     * <p>
+     * Тот же расчёт, что для стоящего в этой точке игрока, но без персональных
+     * факторов (вода вокруг тела, факел в руке, изоляция брони): биом, высота,
+     * недра, погода, укрытие и лучистое тепло ближайших источников.
+     * Внутри герметичного помещения возвращается комнатная температура
+     * (со сквозняком при утечке и локальным жаром у источников).
+     */
+    public static float calculatePointTemp(ServerLevel level, BlockPos pos) {
+        float shelterLevel = ShelterHelper.calculateShelterLevel(level, pos);
+        return calculateTargetEnvTempCore(null, level, pos, shelterLevel);
+    }
+
+    /**
+     * Общее ядро расчёта температуры среды в точке.
+     *
+     * @param player игрок (может быть null для приборов); от него зависит только
+     *               учёт воды — факел и броня применяются снаружи
+     */
+    private static float calculateTargetEnvTempCore(@Nullable Player player, ServerLevel level, BlockPos pos, float shelterLevel) {
         // 0. Проверяем, находится ли игрок в изолированном помещении (Tier 1 или Tier 2)
         com.trd.climate.room.SealedRoom room = com.trd.climate.room.SealedRoomManager.findRoomAt(level, pos);
         if (room != null && room.isStructureValid()) {
@@ -75,7 +109,7 @@ public class TemperatureCalculator {
             }
 
             // Влияние воды (если внутри комнаты есть бассейн)
-            if (player.isInWater()) {
+            if (player != null && player.isInWater()) {
                 envTemp += getWaterEffect(envTemp);
             }
 
@@ -85,15 +119,6 @@ public class TemperatureCalculator {
             if (radiant > 0.0f) {
                 float roomTargetWithRadiant = Math.min(26.0f, envTemp + radiant * 0.65f);
                 envTemp = Math.max(envTemp, roomTargetWithRadiant);
-            }
-
-            // Тепло от факела в руке
-            envTemp += getTorchHeat(player, envTemp);
-
-            // Тепловая изоляция брони (если в комнате прохладно)
-            if (envTemp < 20.0f) {
-                float insulation = ArmorInsulationHelper.calculateArmorInsulation(player);
-                envTemp = Math.min(20.0f, envTemp + insulation);
             }
 
             return envTemp;
@@ -127,7 +152,7 @@ public class TemperatureCalculator {
         }
 
         // 6. Влияние воды (быстрое переохлаждение на холоде, приятное охлаждение в жару)
-        if (player.isInWater()) {
+        if (player != null && player.isInWater()) {
             envTemp += getWaterEffect(envTemp);
         }
 
@@ -141,15 +166,6 @@ public class TemperatureCalculator {
                 // Экстремальные источники (лава в упор)
                 envTemp += (radiantHeat - 25.0f) * 0.5f;
             }
-        }
-
-        // 8. Тепло от факела в руке (согревает при холоде)
-        envTemp += getTorchHeat(player, envTemp);
-
-        // 9. Тепловая изоляция от брони (защищает от холода, не перегревает в жару)
-        if (envTemp < 20.0f) {
-            float insulation = ArmorInsulationHelper.calculateArmorInsulation(player);
-            envTemp = Math.min(20.0f, envTemp + insulation);
         }
 
         return envTemp;

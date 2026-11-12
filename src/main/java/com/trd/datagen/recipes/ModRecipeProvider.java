@@ -49,6 +49,17 @@ public class ModRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_lignite_block", has(ModBlocks.LIGNITE_BLOCK.get()))
                 .save(writer);
 
+        // --- ТЕРМОМЕТРЫ: взаимный крафт предмет <-> блок (стационарный) ---
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.DECORATIONS, ModBlocks.THERMOMETER_MERC.get(), 1)
+                .requires(ModItems.MERCURY_THERMOMETER.get())
+                .unlockedBy("has_mercury_thermometer", has(ModItems.MERCURY_THERMOMETER.get()))
+                .save(writer, ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "thermometer_merc_from_item"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.TOOLS, ModItems.MERCURY_THERMOMETER.get(), 1)
+                .requires(ModBlocks.THERMOMETER_MERC.get())
+                .unlockedBy("has_thermometer_merc_block", has(ModBlocks.THERMOMETER_MERC.get()))
+                .save(writer, ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "mercury_thermometer_from_block"));
+
         // --- ПЕРЕПЛАВКА В ПЕЧИ ---
         SimpleCookingRecipeBuilder.smelting(
                         Ingredient.of(ModItems.FIRE_SMES.get()),

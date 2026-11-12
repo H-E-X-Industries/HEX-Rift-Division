@@ -1,6 +1,8 @@
 {
     "block.trd.insulation_controller": "Контроллер термоизоляции",
     "block.trd.atmospheric_scanner": "Атмосферный сканер",
+    "block.trd.thermometer_merc": "Стационарный ртутный термометр",
+    "message.trd.thermometer.reading": "Показание: %s",
     "message.trd.insulation.controller_selected": "Контроллер термоизоляции выбран на [%d, %d, %d]! Нажмите отверткой на противоположный угол куба для герметизации.",
     "message.trd.insulation.sealed_success": "Помещение успешно герметизировано! Внутренний объем: %d блоков.",
     "message.trd.insulation.scanner_sealed_success": "Помещение сложной формы успешно герметизировано! Внутренний объем: %d блоков.",

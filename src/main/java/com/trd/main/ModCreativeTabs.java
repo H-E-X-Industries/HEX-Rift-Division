@@ -165,6 +165,9 @@ public class ModCreativeTabs {
                         ModBatteryItem.setEnergy(fullThermometer, com.trd.item.climate.ElectricThermometerItem.DEFAULT_CAPACITY);
                         output.accept(fullThermometer);
 
+                        // Стационарный ртутный термометр (блок: напольный / потолочный / настенный)
+                        output.accept(ModBlocks.THERMOMETER_MERC.get());
+
 
                         //КИНЕТИКА
                         output.accept(ModBlocks.HAND_CRANK_BLOCK.get());
