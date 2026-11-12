@@ -31,8 +31,8 @@ public class MercuryThermometerHud {
             ResourceLocation.fromNamespaceAndPath("trd", "textures/gui/item/mercury_thermometer_gui.png");
 
     // Размеры арта внутри канваса 256x256
-    private static final int BODY_WIDTH = 24;       // видимая часть тела (x 0..23)
-    private static final int BODY_HEIGHT = 71;      // высота арта (y 0..70)
+    public static final int BODY_WIDTH = 24;        // видимая часть тела (x 0..23)
+    public static final int BODY_HEIGHT = 71;       // высота арта (y 0..70)
 
     // Полоска ртути: источник в правом канале текстуры и позиция внутри тела
     private static final int MERCURY_SRC_U = 24;
@@ -75,6 +75,16 @@ public class MercuryThermometerHud {
         int x = HUD_X;
         int y = (mc.getWindow().getGuiScaledHeight() - BODY_HEIGHT) / 2;
 
+        drawThermometer(guiGraphics, x, y, currentTemp);
+    }
+
+    /**
+     * Рисует арт ртутного термометра с живым столбом ртути в указанной точке.
+     * Общий для предметной версии (левый HUD) и стационарной
+     * (центр экрана при наведении на блок, см. StationaryThermometerHud).
+     */
+    public static void drawThermometer(GuiGraphics guiGraphics, int x, int y, float currentTemp) {
+        // Тело термометра: шкала +50..-50 и тёмные окна трубки
         guiGraphics.blit(TEXTURE, x, y, BODY_WIDTH, BODY_HEIGHT,
                 0, 0, BODY_WIDTH, BODY_HEIGHT, 256, 256);
 

@@ -926,6 +926,12 @@ public class ModBlocks {
                     () -> new com.trd.climate.block.AtmosphericScannerBlock(
                             BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).strength(3.5f).requiresCorrectToolForDrops()));
 
+    // Климатическая система: стационарный ртутный термометр (напольный/потолочный/настенный)
+    public static final DeferredBlock<com.trd.climate.block.MercuryThermometerBlock> THERMOMETER_MERC =
+            registerBlock("thermometer_merc",
+                    () -> new com.trd.climate.block.MercuryThermometerBlock(
+                            BlockBehaviour.Properties.of().strength(0.4f).sound(net.minecraft.world.level.block.SoundType.GLASS).noOcclusion()));
+
     public static void register(net.neoforged.bus.api.IEventBus eventBus) {
         BLOCKS.register(eventBus);
 
