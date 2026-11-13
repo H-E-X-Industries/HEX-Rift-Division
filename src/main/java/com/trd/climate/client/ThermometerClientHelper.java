@@ -8,8 +8,9 @@ import net.minecraft.world.item.ItemStack;
 /**
  * Клиентские проверки наличия термометров у игрока.
  * <p>
- * Электронный термометр считается «работающим», если он лежит в любом слоте
- * инвентаря (36 слотов + броня + offhand) и всё ещё имеет заряд.
+ * Электронный термометр ищется в любом слоте инвентаря (36 слотов + броня + offhand).
+ * Заряд при этом не учитывается: разряженный прибор тоже показывается на HUD,
+ * но с тёмными («выключенными») экранами.
  * Ртутный термометр показывает шкалу, когда он находится в хотбаре (в т.ч. в главной руке)
  * или в offhand.
  */
@@ -19,18 +20,17 @@ public final class ThermometerClientHelper {
 
     /** Электронный термометр есть в инвентаре и заряжен (энергия > 0). */
     public static boolean hasWorkingElectricThermometer(Player player) {
-        return findWorkingElectricThermometer(player) != null;
+        ItemStack stack = findElectricThermometer(player);
+        return stack != null && ElectricThermometerItem.getEnergy(stack) > 0;
     }
 
-    /** Ищет заряженный электронный термометр во всём инвентаре игрока. */
-    public static ItemStack findWorkingElectricThermometer(Player player) {
+    /** Ищет электронный термометр во всём инвентаре игрока (заряд не проверяется). */
+    public static ItemStack findElectricThermometer(Player player) {
         if (player == null) return null;
         var inventory = player.getInventory();
         for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack stack = inventory.getItem(i);
-            if (!stack.isEmpty()
-                    && stack.getItem() instanceof ElectricThermometerItem
-                    && ElectricThermometerItem.getEnergy(stack) > 0) {
+            if (!stack.isEmpty() && stack.getItem() instanceof ElectricThermometerItem) {
                 return stack;
             }
         }

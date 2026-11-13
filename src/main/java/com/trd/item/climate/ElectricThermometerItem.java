@@ -22,8 +22,10 @@ import java.util.List;
  * Работает как переносной аккумулятор: хранит энергию в компонентах стека
  * (CUSTOM_DATA -> "energy"), имеет полоску заряда и тултип заряда, унаследованные от {@link ModBatteryItem}.
  * <p>
- * Пока прибор лежит в любом слоте инвентаря игрока и заряжен — на HUD по центру экрана
- * отображается цифровое значение температуры тела (см. {@link com.trd.climate.client.TemperatureHudOverlay}).
+ * Пока прибор лежит в любом слоте инвентаря игрока — в левом нижнем углу экрана
+ * отображается дисплей прибора с показанием температуры тела и графиком её изменения
+ * (см. {@link com.trd.climate.client.ElectricThermometerHud}). Если заряд кончился,
+ * дисплей остаётся тёмным («выключенным»).
  * Энергия расходуется по 10 JE раз в 3 секунды (см. {@link com.trd.climate.event.ThermometerEnergyDrainHandler}).
  */
 public class ElectricThermometerItem extends ModBatteryItem {
