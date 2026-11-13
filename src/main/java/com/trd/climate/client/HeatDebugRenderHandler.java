@@ -7,10 +7,9 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.trd.client.config.ModKeyBindings;
+import com.trd.client.config.ModDebugMode;
 import com.trd.main.MainRegistry;
 import net.minecraft.client.Camera;
-import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -30,10 +29,8 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.joml.Matrix4f;
-import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 
 import java.util.ArrayList;
@@ -43,8 +40,15 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * F3-отладка температурных полей (Heat Debug Overlay).
- * При включенном экране F3 сканирует источники тепла (костры, печи, лаву и др.)
+ * Отладка температурных полей (Heat Debug Overlay).
+ * <p>
+ * Включается общим режимом отладки мода ({@link com.trd.client.config.ModDebugMode}),
+ * который переключается переназначаемой клавишей
+ * {@link com.trd.client.config.ModKeyBindings#DEBUG_RENDER_KEY}. Отдельной клавиши
+ * у климата нет намеренно — иначе она разъезжается с общим режимом отладки, когда
+ * игрок переназначает клавишу в настройках.
+ * <p>
+ * Когда режим включён, сканирует источники тепла (костры, печи, лаву и др.)
  * и поблочно окрашивает их верхние грани в градиент от зеленого к желтому и красному,
  * отображая точную температуру (+X.X°C) над каждым блоком в 3D пространстве.
  */
@@ -62,51 +66,15 @@ public class HeatDebugRenderHandler {
         float maxHeatScale = 1.0f;
     }
 
-    public static boolean heatDebugEnabled = false;
-
-    @SubscribeEvent
-    public static void onClientTick(ClientTickEvent.Post event) {
-        if (!ModKeyBindings.HEAT_DEBUG_KEY.consumeClick()) {
-            return;
-        }
-        if (isAnyOtherKeyPressed(ModKeyBindings.HEAT_DEBUG_KEY)) {
-            return;
-        }
-        heatDebugEnabled = !heatDebugEnabled;
-    }
-
-    /** Проверяет, что не зажата ни одна другая клавиша — защита от комбинаций вида F3+H, если забинден F3. */
-    private static boolean isAnyOtherKeyPressed(KeyMapping keyMapping) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc == null || mc.getWindow() == null) {
-            return false;
-        }
-        long window = mc.getWindow().getWindow();
-        if (window == 0L) {
-            return false;
-        }
-        int boundKey = keyMapping.getKey().getValue();
-        if (boundKey == GLFW.GLFW_KEY_F3) {
-            for (int key = GLFW.GLFW_KEY_SPACE; key <= GLFW.GLFW_KEY_MENU; key++) {
-                if (key == boundKey) {
-                    continue;
-                }
-                if (GLFW.glfwGetKey(window, key) == GLFW.GLFW_PRESS) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
     @SubscribeEvent
     public static void onRenderLevelStage(RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
             return;
         }
 
-        // Проверяем флаг включения отладки (управляется переназначаемой клавишей HEAT_DEBUG_KEY)
-        if (!heatDebugEnabled) {
+        // Проверяем флаг включения отладки (общий режим отладки мода, переключаемый
+        // переназначаемой клавишей DEBUG_RENDER_KEY)
+        if (!ModDebugMode.enabled) {
             return;
         }
 

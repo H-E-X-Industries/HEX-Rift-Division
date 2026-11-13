@@ -25,17 +25,9 @@ public class ModKeyBindings {
             "key.categories.trd"
     );
 
-    /** Отладочная визуализация оружия (дебаг-рендеры). Переназначается в настройках. */
+    /** Отладочная визуализация мода (турели, оружие, климат). Переназначается в настройках. */
     public static final KeyMapping DEBUG_RENDER_KEY = new KeyMapping(
             "key.trd.debug_render",
-            InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_F3,
-            "key.categories.trd"
-    );
-
-    /** Отладочная визуализация температуры (тепловые поля, источники тепла). Переназначается в настройках. */
-    public static final KeyMapping HEAT_DEBUG_KEY = new KeyMapping(
-            "key.trd.heat_debug",
             InputConstants.Type.KEYSYM,
             GLFW.GLFW_KEY_F3,
             "key.categories.trd"

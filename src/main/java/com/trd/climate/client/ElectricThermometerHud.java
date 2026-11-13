@@ -32,8 +32,9 @@ import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
  *   <li>заряд есть — экраны подсвечены (накладываются «включённые» экраны), показание и график рисуются;</li>
  *   <li>заряд кончился — остаётся только корпус с тёмными экранами.</li>
  * </ul>
- * График показывает изменение температуры за секунду: один градус — один пиксель
- * (см. {@link TemperatureGraphHistory}).
+ * График показывает изменение температуры за секунду: один градус — один пиксель,
+ * при этом точка не перепрыгивает больше чем на пиксель за шаг, так что график
+ * поднимается и опускается плавно (см. {@link TemperatureGraphHistory}).
  */
 @EventBusSubscriber(modid = "trd", bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class ElectricThermometerHud {
@@ -202,14 +203,13 @@ public class ElectricThermometerHud {
      * новое значение справа, ноль — в центре окна.
      */
     private static void drawGraph(GuiGraphics guiGraphics, int x, int y) {
-        float[] columns = TemperatureGraphHistory.getColumns();
+        int[] rows = TemperatureGraphHistory.getRows();
         for (int column = 0; column < TemperatureGraphHistory.COLUMNS; column++) {
-            float change = columns[column];
-            if (Float.isNaN(change)) {
+            int row = rows[column];
+            if (row < 0) {
                 // Столбец ещё без данных
                 continue;
             }
-            int row = TemperatureGraphHistory.rowForChange(change);
             guiGraphics.blit(TEXTURE, x + GRAPH_X + column, y + GRAPH_Y + row, 1, 1,
                     DOT_U, DOT_V, 1, 1, TEXTURE_SIZE, TEXTURE_SIZE);
         }

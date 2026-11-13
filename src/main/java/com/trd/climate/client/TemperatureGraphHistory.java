@@ -18,12 +18,16 @@ import java.util.Deque;
  * на дисплее электронного термометра.
  * <p>
  * Температура снимается раз в секунду (в такт клиента). По двум соседним замерам
- * считается, на сколько градусов температура изменилась за секунду, — именно это
- * значение становится новым столбцом графика.
+ * считается, на сколько градусов температура изменилась за секунду, — из этого
+ * значения получается строка графика.
  * <p>
  * Шкала графика — {@link #DEGREES_PER_PIXEL} градуса на пиксель, то есть изменение
  * температуры на 1°C сразу сдвигает точку на пиксель вверх (нагрев) или вниз (охлаждение).
  * Ноль — центр окна, строк всего {@link #ROWS}, поэтому максимум ±3°C/сек.
+ * <p>
+ * Точка не перепрыгивает больше чем на один пиксель за шаг: новая строка
+ * ограничена предыдущей, поэтому график поднимается и опускается плавно,
+ * а не перескакивает сразу на несколько строк.
  * <p>
  * Хранится не больше {@link #COLUMNS} значений, поэтому график показывает последние
  * секунды изменения температуры: новое значение всегда справа, самое старое уходит влево.
@@ -39,9 +43,11 @@ public final class TemperatureGraphHistory {
     public static final int SAMPLE_INTERVAL_TICKS = 20;
     /** Сколько градусов (в секунду) соответствует одному пикселю графика. */
     public static final float DEGREES_PER_PIXEL = 1.0f;
+    /** Максимальный сдвиг точки за один шаг, пикселей (плавный график). */
+    public static final int MAX_STEP = 1;
 
-    /** Изменение температуры — по одному значению на столбец графика, от старого к новому. */
-    private static final Deque<Float> CHANGE_COLUMNS = new ArrayDeque<>();
+    /** Строки графика — по одной на столбец, от старой к новой. */
+    private static final Deque<Integer> COLUMN_ROWS = new ArrayDeque<>();
 
     /** Температура последнего замера. */
     private static float lastTemp = Float.NaN;
@@ -110,29 +116,36 @@ public final class TemperatureGraphHistory {
         // Изменение температуры за секунду (°C/сек): интервал между замерами ~1 сек.
         float change = span > 0 ? (temp - previousTemp) / (span / 20.0f) : 0.0f;
 
-        CHANGE_COLUMNS.addLast(change);
-        while (CHANGE_COLUMNS.size() > COLUMNS) {
-            CHANGE_COLUMNS.removeFirst();
+        int targetRow = rowForChange(change);
+        Integer previousRow = COLUMN_ROWS.peekLast();
+        // Плавность: точка не может перепрыгнуть больше чем на пиксель за шаг.
+        int row = previousRow == null
+                ? targetRow
+                : Mth.clamp(targetRow, previousRow - MAX_STEP, previousRow + MAX_STEP);
+
+        COLUMN_ROWS.addLast(row);
+        while (COLUMN_ROWS.size() > COLUMNS) {
+            COLUMN_ROWS.removeFirst();
         }
     }
 
     /**
-     * Значения столбцов графика: слева самые старые, справа самые новые.
-     * Столбец без данных помечен {@link Float#NaN}.
+     * Строки графика: слева самые старые, справа самые новые.
+     * Столбец без данных помечен -1.
      *
-     * @return массив длиной {@link #COLUMNS} с изменением температуры, °C/сек
+     * @return массив длиной {@link #COLUMNS} со строками графика (0 — верх)
      */
-    public static float[] getColumns() {
-        float[] columns = new float[COLUMNS];
-        Arrays.fill(columns, Float.NaN);
-        int index = COLUMNS - CHANGE_COLUMNS.size();
-        for (Float change : CHANGE_COLUMNS) {
+    public static int[] getRows() {
+        int[] rows = new int[COLUMNS];
+        Arrays.fill(rows, -1);
+        int index = COLUMNS - COLUMN_ROWS.size();
+        for (Integer row : COLUMN_ROWS) {
             if (index >= COLUMNS) {
                 break;
             }
-            columns[index++] = change;
+            rows[index++] = row;
         }
-        return columns;
+        return rows;
     }
 
     /**
@@ -151,7 +164,7 @@ public final class TemperatureGraphHistory {
 
     /** Сбрасывает историю замеров и график. */
     public static void reset() {
-        CHANGE_COLUMNS.clear();
+        COLUMN_ROWS.clear();
         lastTemp = Float.NaN;
         lastSampleTick = Long.MIN_VALUE;
     }
