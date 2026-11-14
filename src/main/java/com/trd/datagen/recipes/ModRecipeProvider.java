@@ -60,6 +60,17 @@ public class ModRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_thermometer_merc_block", has(ModBlocks.THERMOMETER_MERC.get()))
                 .save(writer, ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "mercury_thermometer_from_block"));
 
+        // Стационарный электронный термометр <-> переносный (обычный рецепт не переносит заряд)
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.DECORATIONS, ModBlocks.ELECTRIC_THERMOMETER_BLOCK.get(), 1)
+                .requires(ModItems.ELECTRIC_THERMOMETER.get())
+                .unlockedBy("has_electric_thermometer", has(ModItems.ELECTRIC_THERMOMETER.get()))
+                .save(writer, ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "electric_thermometer_block_from_item"));
+
+        ShapelessRecipeBuilder.shapeless(RecipeCategory.TOOLS, ModItems.ELECTRIC_THERMOMETER.get(), 1)
+                .requires(ModBlocks.ELECTRIC_THERMOMETER_BLOCK.get())
+                .unlockedBy("has_electric_thermometer_block", has(ModBlocks.ELECTRIC_THERMOMETER_BLOCK.get()))
+                .save(writer, ResourceLocation.fromNamespaceAndPath(MainRegistry.MOD_ID, "electric_thermometer_from_block"));
+
         // --- ПЕРЕПЛАВКА В ПЕЧИ ---
         SimpleCookingRecipeBuilder.smelting(
                         Ingredient.of(ModItems.FIRE_SMES.get()),

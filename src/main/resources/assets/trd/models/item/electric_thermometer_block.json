@@ -1,0 +1,49 @@
+{
+  "loader": "neoforge:obj",
+  "model": "trd:models/block/electric_thermometer.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.50, 0.0, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
+  },
+  "textures": {
+    "particle": "trd:block/electric_thermometer",
+    "m_d6cbb3f5-e505-2c46-e3cf-5ccd426be35b": "trd:block/electric_thermometer"
+  },
+  "display": {
+    "thirdperson_righthand": {
+      "rotation": [75, 45, 0],
+      "translation": [0, 2.5, 0],
+      "scale": [0.375, 0.375, 0.375]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [75, 45, 0],
+      "translation": [0, 2.5, 0],
+      "scale": [0.375, 0.375, 0.375]
+    },
+    "firstperson_righthand": {
+      "rotation": [0, 45, 0],
+      "translation": [0, 0, 0],
+      "scale": [0.4, 0.4, 0.4]
+    },
+    "firstperson_lefthand": {
+      "rotation": [0, 225, 0],
+      "translation": [0, 0, 0],
+      "scale": [0.4, 0.4, 0.4]
+    },
+    "ground": {
+      "translation": [0, 3, 0],
+      "scale": [0.25, 0.25, 0.25]
+    },
+    "gui": {
+      "rotation": [30, 225, 0],
+      "translation": [0, 0, 0],
+      "scale": [0.625, 0.625, 0.625]
+    },
+    "fixed": {
+      "scale": [0.5, 0.5, 0.5]
+    }
+  }
+}
