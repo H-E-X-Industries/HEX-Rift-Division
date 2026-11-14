@@ -160,13 +160,15 @@ public class ModCreativeTabs {
 
                         // Термометры: разряженный и заряженный (как пустая и полная катушки)
                         output.accept(ModItems.MERCURY_THERMOMETER.get());
+                        output.accept(ModBlocks.THERMOMETER_MERC.get());
+
                         output.accept(ModItems.ELECTRIC_THERMOMETER.get());
                         ItemStack fullThermometer = new ItemStack(ModItems.ELECTRIC_THERMOMETER.get());
                         ModBatteryItem.setEnergy(fullThermometer, com.trd.item.climate.ElectricThermometerItem.DEFAULT_CAPACITY);
                         output.accept(fullThermometer);
 
                         // Стационарный ртутный термометр (блок: напольный / потолочный / настенный)
-                        output.accept(ModBlocks.THERMOMETER_MERC.get());
+                        output.accept(ModBlocks.ELECTRIC_THERMOMETER_BLOCK.get());
 
 
                         //КИНЕТИКА

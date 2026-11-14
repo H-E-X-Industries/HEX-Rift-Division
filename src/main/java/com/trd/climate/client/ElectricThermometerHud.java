@@ -1,5 +1,6 @@
 package com.trd.climate.client;
 
+import com.trd.climate.TemperatureGraph;
 import com.trd.item.climate.ElectricThermometerItem;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -152,14 +153,31 @@ public class ElectricThermometerHud {
      * @param powered    true — прибор запитан (экраны горят), false — разряжен
      */
     public static void drawThermometer(GuiGraphics guiGraphics, int x, int y, boolean powered) {
+        if (!powered) {
+            // Прибор разряжен — экраны остаются тёмными, рисуем только корпус.
+            guiGraphics.blit(TEXTURE, x, y, BODY_WIDTH, BODY_HEIGHT,
+                    0.0F, 0.0F, BODY_WIDTH, BODY_HEIGHT, TEXTURE_SIZE, TEXTURE_SIZE);
+            return;
+        }
+
+        drawDisplay(guiGraphics, x, y, ClientTemperatureHandler.getCurrentTemp(),
+                TemperatureGraphHistory.getRows());
+    }
+
+    /**
+     * Рисует включённый дисплей прибора: корпус, горящие экраны, показание и график.
+     * Используется и предметным термометром, и стационарным блоком.
+     *
+     * @param guiGraphics график интерфейса
+     * @param x           левый край прибора на экране
+     * @param y           верхний край прибора на экране
+     * @param temp        температура для показания, °C
+     * @param rows        строки графика (0 — верх, -1 — столбец без данных)
+     */
+    public static void drawDisplay(GuiGraphics guiGraphics, int x, int y, float temp, int[] rows) {
         // Корпус (в нём уже есть тёмные «выключенные» экраны)
         guiGraphics.blit(TEXTURE, x, y, BODY_WIDTH, BODY_HEIGHT,
                 0.0F, 0.0F, BODY_WIDTH, BODY_HEIGHT, TEXTURE_SIZE, TEXTURE_SIZE);
-
-        if (!powered) {
-            // Прибор разряжен — экраны остаются тёмными.
-            return;
-        }
 
         // Подсвеченные экраны
         guiGraphics.blit(TEXTURE, x + TEMP_SCREEN_X, y + TEMP_SCREEN_Y, ON_TEMP_W, ON_TEMP_H,
@@ -167,8 +185,8 @@ public class ElectricThermometerHud {
         guiGraphics.blit(TEXTURE, x + GRAPH_X, y + GRAPH_Y, ON_GRAPH_SIZE, ON_GRAPH_SIZE,
                 ON_GRAPH_U, ON_GRAPH_V, ON_GRAPH_SIZE, ON_GRAPH_SIZE, TEXTURE_SIZE, TEXTURE_SIZE);
 
-        drawTemperature(guiGraphics, x, y, ClientTemperatureHandler.getCurrentTemp());
-        drawGraph(guiGraphics, x, y);
+        drawTemperature(guiGraphics, x, y, temp);
+        drawGraph(guiGraphics, x, y, rows);
     }
 
     /**
@@ -202,9 +220,8 @@ public class ElectricThermometerHud {
      * Рисует график изменения температуры: по точке на каждый столбец,
      * новое значение справа, ноль — в центре окна.
      */
-    private static void drawGraph(GuiGraphics guiGraphics, int x, int y) {
-        int[] rows = TemperatureGraphHistory.getRows();
-        for (int column = 0; column < TemperatureGraphHistory.COLUMNS; column++) {
+    private static void drawGraph(GuiGraphics guiGraphics, int x, int y, int[] rows) {
+        for (int column = 0; column < TemperatureGraph.COLUMNS; column++) {
             int row = rows[column];
             if (row < 0) {
                 // Столбец ещё без данных

@@ -2,6 +2,7 @@
     "block.trd.insulation_controller": "Контролер термоізоляції",
     "block.trd.atmospheric_scanner": "Атмосферний сканер",
     "block.trd.thermometer_merc": "Стаціонарний ртутний термометр",
+    "block.trd.electric_thermometer_block": "Стаціонарний електронний термометр",
     "message.trd.thermometer.reading": "Показання: %s",
     "message.trd.insulation.controller_selected": "Контролер термоізоляції обрано на [%d, %d, %d]! Натисніть викруткою на протилежний кут куба для герметизації.",
     "message.trd.insulation.sealed_success": "Приміщення успішно герметизовано! Внутрішній об'єм: %d блоків.",
