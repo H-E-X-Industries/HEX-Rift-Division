@@ -48,7 +48,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISmelter {
+public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISmelter, com.trd.api.climate.IHeatSource {
     public static final int MAX_TEMP = 1600;
     /** Ранний старт плавки: при температуре печи от этой доли точки плавления процесс уже идёт */
     public static final float EARLY_MELT_RATIO = 0.85f;
@@ -1020,6 +1020,12 @@ public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISm
     public ItemStackHandler getInventory() { return inventory; }
     public ContainerData getData() { return data; }
     public float getTemperature() { return temperature; }
+
+    @Override
+    public String getHeatSourceId() { return "trd:smelter"; }
+
+    @Override
+    public float getSourceTemperature() { return temperature; }
     public int getSmokeTicks() { return smokeTicks; }
     public Map<Metal, Integer> getMetalTank() { return Collections.unmodifiableMap(metalTank); }
     public int getTotalMetalAmount() { return totalMetalAmount; }

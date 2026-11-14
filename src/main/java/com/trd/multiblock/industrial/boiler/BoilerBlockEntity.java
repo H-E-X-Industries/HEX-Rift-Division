@@ -23,7 +23,7 @@ import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class BoilerBlockEntity extends BlockEntity implements IMultiblockFluidHandler {
+public class BoilerBlockEntity extends BlockEntity implements IMultiblockFluidHandler, com.trd.api.climate.IHeatSource {
     public static final float BOILING_POINT = 100.0f;
     public static final float MAX_TEMP = 600.0f;
     public static final float HEAT_COST_PER_MB = 0.5f;
@@ -238,4 +238,10 @@ public class BoilerBlockEntity extends BlockEntity implements IMultiblockFluidHa
     public FluidTank getWaterTank() { return waterTank; }
     public FluidTank getSteamTank() { return steamTank; }
     public float getTemperature() { return temperature; }
+
+    @Override
+    public String getHeatSourceId() { return "trd:boiler"; }
+
+    @Override
+    public float getSourceTemperature() { return temperature; }
 }

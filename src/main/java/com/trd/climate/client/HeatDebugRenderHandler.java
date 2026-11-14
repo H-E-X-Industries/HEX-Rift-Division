@@ -7,6 +7,9 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import com.trd.api.climate.HeatSourceRegistry;
+import com.trd.climate.calculation.HeatSourceHelper;
+import com.trd.climate.calculation.TemperatureCalculator;
 import com.trd.client.config.ModDebugMode;
 import com.trd.main.MainRegistry;
 import net.minecraft.client.Camera;
@@ -14,18 +17,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.level.block.AbstractFurnaceBlock;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.CampfireBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -48,23 +44,25 @@ import java.util.Map;
  * у климата нет намеренно — иначе она разъезжается с общим режимом отладки, когда
  * игрок переназначает клавишу в настройках.
  * <p>
- * Когда режим включён, сканирует источники тепла (костры, печи, лаву и др.)
- * и поблочно окрашивает их верхние грани в градиент от зеленого к желтому и красному,
- * отображая точную температуру (+X.X°C) над каждым блоком в 3D пространстве.
+ * Оверлей показывает <b>абсолютную температуру в точке</b>, посчитанную тем же кодом,
+ * что и для термометра/игрока ({@link TemperatureCalculator#calculatePointTemp}),
+ * поэтому его показания не могут разойтись с приборами. Раньше оверлей имел
+ * собственную таблицу источников и собственную формулу, из-за чего показывал
+ * «+31°C» там, где термометр честно мерил 20°C.
+ * <p>
+ * Тепловое поле пересчитывается раз в 5 тиков и кэшируется: расчёт не душит кадр.
  */
 @EventBusSubscriber(modid = MainRegistry.MOD_ID, value = Dist.CLIENT)
 public class HeatDebugRenderHandler {
 
     private static final int SCAN_RADIUS_XZ = 16;
     private static final int SCAN_RADIUS_Y = 8;
+    private static final int REBUILD_INTERVAL_TICKS = 5;
     private static final double TEXT_MAX_DISTANCE_SQ = 12.0 * 12.0;
 
-    private record HeatSource(BlockPos pos, double radius, float maxHeat) {}
-
-    private static class BlockHeatInfo {
-        float totalHeat = 0.0f;
-        float maxHeatScale = 1.0f;
-    }
+    /** Кэш теплового поля: позиция точки измерения -> абсолютная температура в ней. */
+    private static final Map<BlockPos, Float> cachedField = new HashMap<>();
+    private static int lastRebuildTick = Integer.MIN_VALUE;
 
     @SubscribeEvent
     public static void onRenderLevelStage(RenderLevelStageEvent event) {
@@ -88,80 +86,20 @@ public class HeatDebugRenderHandler {
         Vec3 camPos = camera.getPosition();
         BlockPos playerPos = mc.player.blockPosition();
 
-        // 1. Поиск активных источников тепла вокруг игрока
-        List<HeatSource> sources = findNearbyHeatSources(level, playerPos);
-        if (sources.isEmpty()) {
-            return;
+        // 1. Пересчёт теплового поля раз в REBUILD_INTERVAL_TICKS тиков
+        if (mc.player.tickCount - lastRebuildTick >= REBUILD_INTERVAL_TICKS
+                || lastRebuildTick == Integer.MIN_VALUE) {
+            lastRebuildTick = mc.player.tickCount;
+            rebuildField(level, playerPos);
         }
 
-        // 2. Расчет температуры для каждого затронутого блока с открытой верхней гранью
-        Map<BlockPos, BlockHeatInfo> affectedBlocks = new HashMap<>();
-        BlockPos.MutableBlockPos checkPos = new BlockPos.MutableBlockPos();
-
-        for (HeatSource source : sources) {
-            // Включаем сам блок источника тепла в расчет
-            BlockHeatInfo srcInfo = affectedBlocks.computeIfAbsent(source.pos(), k -> new BlockHeatInfo());
-            srcInfo.totalHeat = Math.max(srcInfo.totalHeat, source.maxHeat());
-            srcInfo.maxHeatScale = Math.max(srcInfo.maxHeatScale, source.maxHeat());
-
-            int rad = (int) Math.ceil(source.radius());
-            Vec3 sourceCenter = new Vec3(source.pos().getX() + 0.5, source.pos().getY() + 0.5, source.pos().getZ() + 0.5);
-
-            for (int dx = -rad; dx <= rad; dx++) {
-                for (int dz = -rad; dz <= rad; dz++) {
-                    for (int dy = -rad; dy <= rad; dy++) {
-                        checkPos.set(source.pos().getX() + dx, source.pos().getY() + dy, source.pos().getZ() + dz);
-                        if (checkPos.equals(source.pos())) {
-                            continue;
-                        }
-                        BlockState state = level.getBlockState(checkPos);
-
-                        // Проверяем, что блок твердый, а над ним воздух или прозрачный блок
-                        if (!state.isAir() && state.isSolidRender(level, checkPos)) {
-                            BlockState aboveState = level.getBlockState(checkPos.above());
-                            if (!aboveState.isSolidRender(level, checkPos.above())) {
-                                Vec3 topCenter = new Vec3(checkPos.getX() + 0.5, checkPos.getY() + 1.0, checkPos.getZ() + 0.5);
-                                double dist = sourceCenter.distanceTo(topCenter);
-
-                                if (dist <= source.radius()) {
-                                    // Проверка прямой видимости (рейкаст), чтобы тепло не проходило сквозь стены
-                                    ClipContext clipContext = new ClipContext(
-                                            sourceCenter,
-                                            topCenter,
-                                            ClipContext.Block.VISUAL,
-                                            ClipContext.Fluid.NONE,
-                                            CollisionContext.empty()
-                                    );
-                                    BlockHitResult hit = level.clip(clipContext);
-                                    if (hit.getType() == HitResult.Type.MISS
-                                            || hit.getBlockPos().equals(source.pos())
-                                            || hit.getBlockPos().equals(checkPos)) {
-
-                                        float factor = (float) (1.0 - (dist / source.radius()));
-                                        float heat = source.maxHeat() * factor * factor;
-
-                                        if (heat > 0.05f) {
-                                            BlockPos immutablePos = checkPos.immutable();
-                                            BlockHeatInfo info = affectedBlocks.computeIfAbsent(immutablePos, k -> new BlockHeatInfo());
-                                            info.totalHeat += heat;
-                                            info.maxHeatScale = Math.max(info.maxHeatScale, source.maxHeat());
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        if (affectedBlocks.isEmpty()) {
+        if (cachedField.isEmpty()) {
             return;
         }
 
         PoseStack poseStack = event.getPoseStack();
 
-        // 3. Отрисовка цветных тинтов на верхних гранях блоков
+        // 2. Отрисовка цветных тинтов на верхних гранях блоков
         poseStack.pushPose();
         poseStack.translate(-camPos.x, -camPos.y, -camPos.z);
         Matrix4f pose = poseStack.last().pose();
@@ -177,13 +115,11 @@ public class HeatDebugRenderHandler {
         Tesselator tesselator = Tesselator.getInstance();
         BufferBuilder builder = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 
-        for (Map.Entry<BlockPos, BlockHeatInfo> entry : affectedBlocks.entrySet()) {
+        for (Map.Entry<BlockPos, Float> entry : cachedField.entrySet()) {
             BlockPos bpos = entry.getKey();
-            BlockHeatInfo info = entry.getValue();
+            float temp = entry.getValue();
 
-            float t = Math.min(1.0f, info.totalHeat / Math.max(1.0f, info.maxHeatScale));
-
-            // Градиент: t=0 -> Зеленый, t=0.5 -> Желтый, t=1.0 -> Красный
+            float t = temperatureGradient(temp);
             float r, g, b;
             if (t < 0.5f) {
                 r = 2.0f * t;
@@ -216,21 +152,21 @@ public class HeatDebugRenderHandler {
         RenderSystem.depthMask(true);
         poseStack.popPose();
 
-        // 4. Отрисовка 3D надписей с температурой над блоками
+        // 3. Отрисовка 3D надписей с абсолютной температурой над блоками
         try (com.mojang.blaze3d.vertex.ByteBufferBuilder byteBufferBuilder = new com.mojang.blaze3d.vertex.ByteBufferBuilder(16384)) {
             MultiBufferSource.BufferSource textBufferSource = MultiBufferSource.immediate(byteBufferBuilder);
 
-            for (Map.Entry<BlockPos, BlockHeatInfo> entry : affectedBlocks.entrySet()) {
+            for (Map.Entry<BlockPos, Float> entry : cachedField.entrySet()) {
                 BlockPos bpos = entry.getKey();
-                BlockHeatInfo info = entry.getValue();
+                float temp = entry.getValue();
 
                 double distSq = camPos.distanceToSqr(bpos.getX() + 0.5, bpos.getY() + 1.0, bpos.getZ() + 0.5);
                 if (distSq > TEXT_MAX_DISTANCE_SQ) {
                     continue; // Не захламляем экран вдали
                 }
 
-                String text = String.format(Locale.ROOT, "+%.1f°C", info.totalHeat);
-                float t = Math.min(1.0f, info.totalHeat / Math.max(1.0f, info.maxHeatScale));
+                String text = String.format(Locale.ROOT, "%.1f°C", temp);
+                float t = temperatureGradient(temp);
                 int red = (int) ((t < 0.5f ? 2.0f * t : 1.0f) * 255);
                 int green = (int) ((t < 0.5f ? 1.0f : 2.0f * (1.0f - t)) * 255);
                 int textColor = 0xFF000000 | (red << 16) | (green << 8);
@@ -259,39 +195,83 @@ public class HeatDebugRenderHandler {
         }
     }
 
-    private static List<HeatSource> findNearbyHeatSources(ClientLevel level, BlockPos playerPos) {
-        List<HeatSource> list = new ArrayList<>();
-        BlockPos.MutableBlockPos checkPos = new BlockPos.MutableBlockPos();
+    /**
+     * Цветовая шкала по абсолютной температуре: 0°C -> зелёный, 20°C -> жёлтый, 40°C+ -> красный.
+     */
+    private static float temperatureGradient(float temp) {
+        return Math.min(1.0f, Math.max(0.0f, temp / 40.0f));
+    }
 
-        for (int x = -SCAN_RADIUS_XZ; x <= SCAN_RADIUS_XZ; x++) {
-            for (int z = -SCAN_RADIUS_XZ; z <= SCAN_RADIUS_XZ; z++) {
-                for (int y = -SCAN_RADIUS_Y; y <= SCAN_RADIUS_Y; y++) {
-                    checkPos.set(playerPos.getX() + x, playerPos.getY() + y, playerPos.getZ() + z);
-                    BlockState state = level.getBlockState(checkPos);
+    /**
+     * Полный пересчёт теплового поля вокруг игрока.
+     * <p>
+     * 1. Одним проходом находятся все источники тепла (реестр — ваниль и приборы мода).
+     * 2. Для каждого блока с «полом» (сплошной блок, над ним воздух/прозрачный) в радиусе
+     *    излучения источников считается абсолютная температура точки тем же кодом,
+     *    что и у термометра: {@link TemperatureCalculator#calculatePointTemp}.
+     */
+    private static void rebuildField(ClientLevel level, BlockPos playerPos) {
+        cachedField.clear();
 
-                    // Костры
-                    if (state.is(Blocks.CAMPFIRE) && state.getValue(CampfireBlock.LIT)) {
-                        list.add(new HeatSource(checkPos.immutable(), 5.0, 15.0f));
-                    } else if (state.is(Blocks.SOUL_CAMPFIRE) && state.getValue(CampfireBlock.LIT)) {
-                        list.add(new HeatSource(checkPos.immutable(), 5.0, 10.5f));
-                    }
-                    // Печки
-                    else if ((state.is(Blocks.FURNACE) || state.is(Blocks.BLAST_FURNACE) || state.is(Blocks.SMOKER))
-                            && state.getValue(AbstractFurnaceBlock.LIT)) {
-                        list.add(new HeatSource(checkPos.immutable(), 3.0, 12.0f));
-                    }
-                    // Лава
-                    else if (state.is(Blocks.LAVA)) {
-                        list.add(new HeatSource(checkPos.immutable(), 4.0, 20.0f));
-                    }
-                    // Огонь
-                    else if (state.is(Blocks.FIRE)) {
-                        list.add(new HeatSource(checkPos.immutable(), 2.5, 10.0f));
+        // Источники ищем в области отрисовки + максимальный радиус излучения,
+        // чтобы источник за краем экрана всё равно грел видимые блоки.
+        float maxSourceRadius = HeatSourceRegistry.maxRadius();
+        List<HeatSourceHelper.HeatSource> sources = new ArrayList<>();
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+
+        int scanR = SCAN_RADIUS_XZ + (int) Math.ceil(maxSourceRadius);
+        int scanY = SCAN_RADIUS_Y + (int) Math.ceil(maxSourceRadius);
+        for (int x = -scanR; x <= scanR; x++) {
+            for (int z = -scanR; z <= scanR; z++) {
+                for (int y = -scanY; y <= scanY; y++) {
+                    cursor.set(playerPos.getX() + x, playerPos.getY() + y, playerPos.getZ() + z);
+                    HeatSourceHelper.HeatSource source = HeatSourceHelper.resolveAt(level, cursor);
+                    if (source != null) {
+                        sources.add(source);
                     }
                 }
             }
         }
 
-        return list;
+        if (sources.isEmpty()) {
+            return;
+        }
+
+        // Для каждого источника окрашиваем блоки с «полом» в радиусе его излучения
+        for (HeatSourceHelper.HeatSource source : sources) {
+            int rad = (int) Math.ceil(source.radius());
+            BlockPos srcPos = source.pos();
+
+            // Сам блок источника — его температура видна на нём самом
+            cachedField.put(srcPos, TemperatureCalculator.calculatePointTemp(level, srcPos, sources));
+
+            for (int dx = -rad; dx <= rad; dx++) {
+                for (int dz = -rad; dz <= rad; dz++) {
+                    for (int dy = -rad; dy <= rad; dy++) {
+                        if (dx * dx + dy * dy + dz * dz > rad * rad) {
+                            continue;
+                        }
+                        cursor.set(srcPos.getX() + dx, srcPos.getY() + dy, srcPos.getZ() + dz);
+                        if (cursor.equals(srcPos)) {
+                            continue;
+                        }
+                        BlockState state = level.getBlockState(cursor);
+
+                        // Показываем температуру на верхней грани «пола»
+                        if (!state.isAir() && state.isSolidRender(level, cursor)) {
+                            BlockState aboveState = level.getBlockState(cursor.above());
+                            if (!aboveState.isSolidRender(level, cursor.above())) {
+                                BlockPos floorPos = cursor.immutable();
+                                if (!cachedField.containsKey(floorPos)) {
+                                    float temp = TemperatureCalculator.calculatePointTemp(
+                                            level, floorPos.above(), sources);
+                                    cachedField.put(floorPos, temp);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }

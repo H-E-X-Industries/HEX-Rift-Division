@@ -1,11 +1,11 @@
 package com.trd.climate.room;
 
+import com.trd.api.climate.HeatSourceDef;
+import com.trd.api.climate.HeatSourceRegistry;
+import com.trd.api.climate.IHeatSource;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
-import net.minecraft.world.level.block.AbstractFurnaceBlock;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.CampfireBlock;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Collection;
@@ -47,42 +47,47 @@ public final class RoomClimateHelper {
 
     /**
      * Возвращает параметры теплового источника (потолок температуры и мощность).
+     * <p>
+     * Работает на едином {@link HeatSourceRegistry}: ванильные блоки разрешаются по
+     * состоянию, приборы мода — по блок-сущности {@link IHeatSource}, и их мощность
+     * зависит от реальной температуры прибора.
      */
-    public static ThermalSourceInfo getSourceInfo(BlockState state, boolean isLargeRoom) {
-        if (state.is(Blocks.CAMPFIRE) && state.getValue(CampfireBlock.LIT)) {
-            if (isLargeRoom) return null;
-            return new ThermalSourceInfo(24.0f, 3.6f, false);
+    public static ThermalSourceInfo getSourceInfo(Level level, BlockPos pos, boolean isLargeRoom) {
+        BlockState state = level.getBlockState(pos);
+
+        float deviceTemp = 1.0f; // ванильные источники: активное состояние = полная мощность
+        HeatSourceDef def;
+
+        if (HeatSourceRegistry.usesBlockEntity(state.getBlock())
+                && level.getBlockEntity(pos) instanceof IHeatSource heatSource) {
+            if (!heatSource.isHeatActive()) {
+                return null;
+            }
+            def = HeatSourceRegistry.byId(heatSource.getHeatSourceId());
+            if (def == null) {
+                return null;
+            }
+            deviceTemp = heatSource.getSourceTemperature();
+            if (def.powerAt(deviceTemp) <= 0.0f) {
+                return null;
+            }
+        } else {
+            def = HeatSourceRegistry.resolveState(state);
+            if (def == null) {
+                return null;
+            }
         }
-        if (state.is(Blocks.SOUL_CAMPFIRE) && state.getValue(CampfireBlock.LIT)) {
-            if (isLargeRoom) return null;
-            return new ThermalSourceInfo(20.0f, 2.4f, false);
+
+        if (isLargeRoom && def.negligibleInLargeRooms()) {
+            return null;
         }
-        if (state.is(Blocks.TORCH) || state.is(Blocks.WALL_TORCH)) {
-            if (isLargeRoom) return null;
-            return new ThermalSourceInfo(18.0f, 0.4f, false);
+
+        float target = def.roomTargetAt(deviceTemp, NEUTRAL_TEMP);
+        float power = def.roomPowerAt(deviceTemp);
+        if (power <= 0.0f) {
+            return null;
         }
-        if (state.is(Blocks.BLAST_FURNACE) && state.getValue(AbstractFurnaceBlock.LIT)) {
-            return new ThermalSourceInfo(45.0f, 5.0f, false);
-        }
-        if ((state.is(Blocks.FURNACE) || state.is(Blocks.SMOKER)) && state.getValue(AbstractFurnaceBlock.LIT)) {
-            return new ThermalSourceInfo(34.0f, 3.5f, false);
-        }
-        if (state.is(Blocks.FIRE)) {
-            return new ThermalSourceInfo(55.0f, 4.0f, false);
-        }
-        if (state.is(Blocks.LAVA)) {
-            return new ThermalSourceInfo(68.0f, 7.0f, false);
-        }
-        if (state.is(Blocks.BLUE_ICE)) {
-            return new ThermalSourceInfo(-10.0f, 2.0f, true);
-        }
-        if (state.is(Blocks.PACKED_ICE)) {
-            return new ThermalSourceInfo(0.0f, 1.0f, true);
-        }
-        if (state.is(Blocks.ICE)) {
-            return new ThermalSourceInfo(8.0f, 0.6f, true);
-        }
-        return null;
+        return new ThermalSourceInfo(target, power, def.cooling());
     }
 
     /**
@@ -130,7 +135,7 @@ public final class RoomClimateHelper {
             float currentRoomTemp,
             float ambientTemp,
             int volume,
-            ServerLevel level,
+            Level level,
             Collection<BlockPos> cachedSources
     ) {
         int v = Math.max(1, volume);
@@ -148,8 +153,7 @@ public final class RoomClimateHelper {
         if (cachedSources != null && !cachedSources.isEmpty()) {
             float totalDelta = 0.0f;
             for (BlockPos pos : cachedSources) {
-                BlockState state = level.getBlockState(pos);
-                ThermalSourceInfo src = getSourceInfo(state, isLargeRoom);
+                ThermalSourceInfo src = getSourceInfo(level, pos, isLargeRoom);
                 if (src == null) continue;
 
                 if (!src.isCooling()) {

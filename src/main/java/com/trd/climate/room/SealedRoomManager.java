@@ -17,14 +17,80 @@ public final class SealedRoomManager {
 
     private static final Map<ResourceKey<Level>, Map<BlockPos, SealedRoom>> ACTIVE_ROOMS = new ConcurrentHashMap<>();
 
+    /**
+     * Клиентский кэш комнат, присланных сервером (см. SyncRoomClimatePayload).
+     * На клиенте блок-сущности контроллеров не содержат данных о комнате,
+     * поэтому расчёт температуры использует этот снимок.
+     * Хранится только для текущего измерения — сервер присылает комнаты рядом с игроком.
+     */
+    private static final Map<BlockPos, SealedRoom> CLIENT_ROOMS = new ConcurrentHashMap<>();
+
     private SealedRoomManager() {
+    }
+
+    private static Map<BlockPos, SealedRoom> roomsFor(Level level) {
+        // На клиенте используем кэш синхронизации: ACTIVE_ROOMS заполняют только
+        // серверные блок-сущности контроллеров.
+        if (level.isClientSide()) {
+            return CLIENT_ROOMS;
+        }
+        return ACTIVE_ROOMS.get(level.dimension());
+    }
+
+    /**
+     * Заменяет клиентский кэш комнат (вызывается из обработчика SyncRoomClimatePayload).
+     */
+    public static void replaceClientRooms(java.util.List<SyncedRoom> rooms) {
+        CLIENT_ROOMS.clear();
+        for (SyncedRoom room : rooms) {
+            CLIENT_ROOMS.put(room.getControllerPos(), room);
+        }
+    }
+
+    /**
+     * Очищает клиентский кэш комнат (смена измерения, выход из мира).
+     */
+    public static void clearClientRooms() {
+        CLIENT_ROOMS.clear();
+    }
+
+    /**
+     * Все комнаты измерения, чей объём находится в пределах {@code radius} от точки.
+     * Используется сервером для синхронизации комнат с клиентом.
+     */
+    public static java.util.List<SealedRoom> getRoomsNear(Level level, BlockPos center, double radius) {
+        java.util.List<SealedRoom> result = new java.util.ArrayList<>();
+        if (level == null || center == null) {
+            return result;
+        }
+        Map<BlockPos, SealedRoom> levelRooms = ACTIVE_ROOMS.get(level.dimension());
+        if (levelRooms == null || levelRooms.isEmpty()) {
+            return result;
+        }
+        double cx = center.getX() + 0.5;
+        double cy = center.getY() + 0.5;
+        double cz = center.getZ() + 0.5;
+        for (SealedRoom room : levelRooms.values()) {
+            net.minecraft.world.phys.AABB box = room.getInteriorBox();
+            if (box == null || !room.isStructureValid()) {
+                continue;
+            }
+            // Расстояние от точки до AABB (0, если точка внутри)
+            double dx = Math.max(Math.max(box.minX - cx, 0), cx - box.maxX);
+            double dy = Math.max(Math.max(box.minY - cy, 0), cy - box.maxY);
+            double dz = Math.max(Math.max(box.minZ - cz, 0), cz - box.maxZ);
+            if (dx * dx + dy * dy + dz * dz <= radius * radius) {
+                result.add(room);
+            }
+        }
+        return result;
     }
 
     /**
      * Регистрирует активную герметичную комнату.
      */
     public static void register(Level level, BlockPos controllerPos, SealedRoom room) {
-        if (level == null || controllerPos == null || room == null) {
+        if (level == null || controllerPos == null || room == null || level.isClientSide()) {
             return;
         }
         ACTIVE_ROOMS.computeIfAbsent(level.dimension(), k -> new ConcurrentHashMap<>())
@@ -35,7 +101,7 @@ public final class SealedRoomManager {
      * Удаляет комнату при разрушении контроллера или нарушении герметичности.
      */
     public static void unregister(Level level, BlockPos controllerPos) {
-        if (level == null || controllerPos == null) {
+        if (level == null || controllerPos == null || level.isClientSide()) {
             return;
         }
         Map<BlockPos, SealedRoom> levelRooms = ACTIVE_ROOMS.get(level.dimension());
@@ -54,7 +120,7 @@ public final class SealedRoomManager {
         if (level == null || pos == null) {
             return null;
         }
-        Map<BlockPos, SealedRoom> levelRooms = ACTIVE_ROOMS.get(level.dimension());
+        Map<BlockPos, SealedRoom> levelRooms = roomsFor(level);
         if (levelRooms == null || levelRooms.isEmpty()) {
             return null;
         }
@@ -82,7 +148,7 @@ public final class SealedRoomManager {
         if (level == null || pos == null) {
             return null;
         }
-        Map<BlockPos, SealedRoom> levelRooms = ACTIVE_ROOMS.get(level.dimension());
+        Map<BlockPos, SealedRoom> levelRooms = roomsFor(level);
         if (levelRooms == null || levelRooms.isEmpty()) {
             return null;
         }

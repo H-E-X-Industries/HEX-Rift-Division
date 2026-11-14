@@ -51,6 +51,9 @@ public class MainRegistry {
             com.trd.multiblock.industrial.coccer.CoccerOvenRecipeRegistry.init();
             com.trd.multiblock.industrial.stanok.StanokRecipes.register();
 
+            // Единый реестр источников тепла (ванильные блоки + приборы мода)
+            com.trd.climate.calculation.ModHeatSources.registerAll();
+
             // TerraBlender
             terrablender.api.Regions.register(new com.trd.worldgen.biome.terrablender.ModOverworldRegion(
                     net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MOD_ID, "overworld"), 2));

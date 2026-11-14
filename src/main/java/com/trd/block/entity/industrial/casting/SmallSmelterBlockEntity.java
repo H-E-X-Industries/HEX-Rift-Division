@@ -43,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class SmallSmelterBlockEntity extends BlockEntity implements MenuProvider, ISmelter {
+public class SmallSmelterBlockEntity extends BlockEntity implements MenuProvider, ISmelter, com.trd.api.climate.IHeatSource {
     // ========== КОНСТАНТЫ ==========
     public static final int MAX_TEMP = 1100;
     public static final int CAPACITY_UNITS = 81;   // 1 блок металла
@@ -495,6 +495,15 @@ public class SmallSmelterBlockEntity extends BlockEntity implements MenuProvider
     public int getBurnTime() { return burnTime; }
     public int getTotalBurnTime() { return totalBurnTime; }
     public boolean isBurning() { return burnTime > 0; }
+
+    @Override
+    public String getHeatSourceId() { return "trd:small_smelter"; }
+
+    @Override
+    public float getSourceTemperature() { return temperature; }
+
+    @Override
+    public boolean isHeatActive() { return isBurning(); }
     public SmeltRecipe getCurrentRecipe() { return currentRecipe; }
     public float getSmeltProgress() { return smeltProgress; }
     public float getSmeltMaxProgress() { return smeltMaxProgress; }

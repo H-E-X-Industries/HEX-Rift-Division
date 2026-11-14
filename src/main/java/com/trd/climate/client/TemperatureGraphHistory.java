@@ -67,10 +67,12 @@ public final class TemperatureGraphHistory {
 
     /**
      * Вход в мир: сбрасываем историю, чтобы график не тянул данные прошлой сессии.
+     * Заодно очищаем клиентский кэш герметичных комнат — его пришлёт сервер заново.
      */
     @SubscribeEvent
     public static void onPlayerLoggingIn(ClientPlayerNetworkEvent.LoggingIn event) {
         reset();
+        com.trd.climate.room.SealedRoomManager.clearClientRooms();
     }
 
     /**

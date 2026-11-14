@@ -33,7 +33,7 @@ public class ElectricThermometerItem extends ModBatteryItem {
     /** Буфер энергии по умолчанию, JE. */
     public static final int DEFAULT_CAPACITY = 10_000;
     /** Резерв JE, снимаемый раз в 3 секунды за работу. */
-    public static final int COST_PER_UPDATE = 10;
+    public static final int COST_PER_UPDATE = 5;
 
     public ElectricThermometerItem(Properties properties, int capacity, int maxReceive, int maxExtract) {
         super(properties, capacity, maxReceive, maxExtract);
