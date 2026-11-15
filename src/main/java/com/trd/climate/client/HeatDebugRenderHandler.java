@@ -152,7 +152,7 @@ public class HeatDebugRenderHandler {
                 float temp = tempValue;
                 float[] rgb = temperatureColor(temp);
                 float r = rgb[0], g = rgb[1], b = rgb[2];
-                float a = FACE_ALPHA;
+                float a = FACE_ALPHA * visibility(temp);
 
                 float x = bpos.getX();
                 float y = bpos.getY();
@@ -221,6 +221,10 @@ public class HeatDebugRenderHandler {
         // ── 2. Рамки вокруг мультиблоков-источников ─────────────────
         renderMultiblockOutlines(pose);
 
+        // ── 2б. Фантомные «воздушные источники» (воздух вплотную к
+        //        источнику) — рисуются рамкой поменьше ───────────────
+        renderAirHaloCells(pose);
+
         RenderSystem.enableCull();
         RenderSystem.depthMask(true);
         poseStack.popPose();
@@ -270,6 +274,8 @@ public class HeatDebugRenderHandler {
 
     /** Сколько мультиблоков одновременно обводить рамкой (страховка). */
     private static final int MAX_OUTLINED_MULTIBLOCKS = 16;
+    /** Сколько маркеров воздушных фантомов рисовать (страховка). */
+    private static final int MAX_HALO_MARKERS = 600;
 
     /**
      * Обводит рамками мультиблоки-источники — как ванильное выделение блока,
@@ -315,6 +321,46 @@ public class HeatDebugRenderHandler {
             BufferUploader.drawWithShader(builder.buildOrThrow());
         } else {
             // Нечего рисовать — закрываем билдер (build вернёт пустой меш)
+            builder.build();
+        }
+    }
+
+    /**
+     * Рисует фантомные «воздушные источники» — блоки воздуха, примыкающие
+     * к источнику вплотную. В самом мире таких блоков нет (сломать, добыть
+     * или измерить их нельзя), это чисто расчётные сущности половинной
+     * мощности, поэтому показываем их небольшими рамками.
+     */
+    private static void renderAirHaloCells(Matrix4f pose) {
+        Map<BlockPos, Float> halo = HeatDebugController.haloCells();
+        if (halo.isEmpty()) {
+            return;
+        }
+
+        Tesselator tesselator = Tesselator.getInstance();
+        BufferBuilder builder = tesselator.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.POSITION_COLOR);
+
+        int drawn = 0;
+        for (Map.Entry<BlockPos, Float> entry : halo.entrySet()) {
+            if (drawn >= MAX_HALO_MARKERS) {
+                break;
+            }
+            BlockPos pos = entry.getKey();
+            float[] rgb = temperatureColor(entry.getValue());
+            double cx = pos.getX() + 0.5;
+            double cy = pos.getY() + 0.5;
+            double cz = pos.getZ() + 0.5;
+            double h = 0.12; // половина размера маркера
+            renderBoxEdges(builder, pose,
+                    cx - h, cy - h, cz - h,
+                    cx + h, cy + h, cz + h,
+                    rgb[0], rgb[1], rgb[2], 0.45f);
+            drawn++;
+        }
+
+        if (drawn > 0) {
+            BufferUploader.drawWithShader(builder.buildOrThrow());
+        } else {
             builder.build();
         }
     }
@@ -386,6 +432,27 @@ public class HeatDebugRenderHandler {
         builder.addVertex(pose, bx, by, bz).setColor(r, g, b, a);
         builder.addVertex(pose, cx, cy, cz).setColor(r, g, b, a);
         builder.addVertex(pose, dx, dy, dz).setColor(r, g, b, a);
+    }
+
+    /**
+     * Насколько заметна пятно заливки при данной температуре.
+     * <p>
+     * Прозрачность растёт вместе с теплом, поэтому граница зоны влияния
+     * растворяется, а не обрывается резкой линией: у края радиуса влияния
+     * температура близка к фоновой, и там заливка просто исчезает.
+     *
+     * @return множитель 0..1
+     */
+    private static float visibility(float temp) {
+        if (temp >= 20.0f) {
+            // комнатная температура — невидимо, 50 °C и выше — полностью видно
+            return Math.min(1.0f, (temp - 20.0f) / 30.0f);
+        }
+        if (temp <= 0.0f) {
+            // холод: чем ниже, тем заметнее
+            return Math.min(1.0f, -temp / 10.0f);
+        }
+        return 0.2f;
     }
 
     /**

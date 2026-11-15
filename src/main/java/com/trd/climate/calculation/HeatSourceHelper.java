@@ -63,6 +63,31 @@ public final class HeatSourceHelper {
     /** Доля тепла, дошедшего на открытом воздухе — остальное сдувает ветер. */
     private static final float OUTDOOR_EFFICIENCY = 0.45f;
 
+    /**
+     * Мощность «воздушной кожи» источника — доля от основного источника.
+     * <p>
+     * Блоки воздуха, примыкающие к источнику вплотную, сами становятся
+     * фантомными источниками тепла с такой мощностью: они заполняют
+     * «слепые зоны» (карманы у склонов, углы), куда луч от самого блока
+     * источника не проходит. Это чисто расчётные сущности: в мире таких
+     * блоков нет, их нельзя сломать, добыть или измерить.
+     * <p>
+     * Воздушные источники не цепляются друг за друга: воздух рядом с
+     * воздушным источником источником не становится.
+     */
+    public static final float AIR_HALO_POWER = 0.5f;
+
+    /**
+     * Насколько сильно сплошное вещество гасит излучение, на 1 блок пути.
+     * <p>
+     * Больше — стена пропускает меньше тепла; меньше — тепло «просачивается»
+     * сквозь камни сильнее.
+     */
+    private static final double OCCLUSION_ATTENUATION = 4.0;
+
+    /** Максимум воздушных фантомов у одного источника (для отладки). */
+    private static final int MAX_AIR_HALO_CELLS = 64;
+
     /** Прирост доли тепла при полном укрытии. */
     private static final float SHELTER_EFFICIENCY = 0.55f;
 
@@ -410,6 +435,20 @@ public final class HeatSourceHelper {
 
     /**
      * Тепло от одного источника в конкретной точке, °C.
+     * <p>
+     * Учитываются две составляющие:
+     * <ol>
+     *   <li><b>Прямое излучение</b> от блока источника — ослабляется тем,
+     *       сколько сплошного вещества луч прошёл насквозь
+     *       ({@link #occlusionLength}): вместо «перекрыт / не перекрыт» получается
+     *       плавное затухание, без ступенек на склонах;</li>
+     *   <li><b>Воздушная кожа</b> источника — блоки воздуха, примыкающие
+     *       к источнику вплотную, сами становятся фантомным источником тепла
+     *       вдвое меньшей мощности ({@value #AIR_HALO_POWER}). Они заполняют
+     *       «слепые зоны» (карманы у склонов, углы), куда луч от самого
+     *       источника не проходит. Воздушные источники не цепляются друг за
+     *       друга: воздух рядом с воздухом источником не становится.</li>
+     * </ol>
      *
      * @param level        мир
      * @param source       источник
@@ -436,22 +475,106 @@ public final class HeatSourceHelper {
             return 0.0f;
         }
 
-        // Сплошные блоки между источником и целью гасят тепло
-        // (собственные блоки источника — например, части мультиблока — не гасят)
-        if (isOccluded(level, source.cells(), from, targetPoint, targetPos)) {
-            return 0.0f;
-        }
-
         float factor = (float) (distance / radius);
-        float falloff = falloffFactor(factor, source.def().falloffExponent());
+        float falloff = falloffFactor(factor, def.falloffExponent());
 
-        float heat = effective * falloff;
+        // Прямое излучение, ослабленное сплошными блоками на пути
+        double blocked = occlusionLength(level, source.cells(), from, targetPoint, targetPos);
+        float heat = effective * falloff * attenuation(blocked);
+
+        // Воздушная кожа: если прямой луч что-то перекрыл, тепло может прийти
+        // через примыкающий к источнику воздух (половинной мощности)
+        if (blocked > 0.001) {
+            float halo = airHaloHeat(level, source, targetPos, targetPoint, effective, radius);
+            heat = Math.max(heat, halo);
+        }
 
         // На открытом воздухе ветер сдувает большую часть тепла,
         // в укрытии (нора, пещера, комната) тепло задерживается полностью
         heat *= OUTDOOR_EFFICIENCY + SHELTER_EFFICIENCY * Mth.clamp(shelterLevel, 0.0f, 1.0f);
 
         return heat;
+    }
+
+    /**
+     * Ослабление излучения по длине сплошного вещества на пути луча.
+     * <p>
+     * Сплошной блок на пути не обрывает тепло совсем, а гасит его
+     * пропорционально тому, сколько вещества луч пересёк: так рядом с
+     * источником нет ступенек «жарко — сразу холодно».
+     *
+     * @param blockedLength длина участка луча внутри сплошных блоков, блоков
+     */
+    private static float attenuation(double blockedLength) {
+        if (blockedLength <= 0.0) {
+            return 1.0f;
+        }
+        return (float) Math.exp(-OCCLUSION_ATTENUATION * blockedLength);
+    }
+
+    /**
+     * Тепло от «воздушной кожи» источника — фантомных источников половинной
+     * мощности в блоках воздуха, примыкающих к источнику вплотную.
+     * <p>
+     * Берётся лучший из кандидатов (соседей ближайшего блока источника по
+     * грани). Кандидаты — только настоящий воздух, и только вплотную к
+     * источнику: воздушные источники не распространяются дальше на
+     * соседний воздух (никакой цепной реакции).
+     */
+    private static float airHaloHeat(Level level, HeatSource source, BlockPos targetPos,
+                                      Vec3 targetPoint, float effective, double radius) {
+        BlockPos nearest = source.nearestCell(targetPoint);
+        float best = 0.0f;
+        float exponent = source.def().falloffExponent();
+
+        for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
+            BlockPos air = nearest.relative(dir);
+            BlockState state = level.getBlockState(air);
+            if (!state.isAir()) {
+                continue; // не воздух — воздушным источником не станет
+            }
+            Vec3 airPoint = sourcePoint(air);
+            double distance = airPoint.distanceTo(targetPoint);
+            if (distance > radius) {
+                continue;
+            }
+            float falloff = falloffFactor((float) (distance / radius), exponent);
+            double blocked = occlusionLength(level, source.cells(), airPoint, targetPoint, targetPos);
+            float halo = effective * AIR_HALO_POWER * falloff * attenuation(blocked);
+            best = Math.max(best, halo);
+        }
+        return best;
+    }
+
+    /**
+     * Блоки воздуха, примыкающие к источнику вплотную — «воздушная кожа».
+     * <p>
+     * Нужна для отладки: показать, какие именно воздушные фантомы-источники
+     * участвуют в расчёте. В мире они не существуют — их нельзя сломать,
+     * добыть или измерить, это чисто расчётные сущности.
+     */
+    public static List<BlockPos> airHaloCells(Level level, HeatSource source) {
+        List<BlockPos> cells = new ArrayList<>();
+        java.util.Set<BlockPos> seen = new java.util.HashSet<>();
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        for (BlockPos cell : source.cells()) {
+            for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
+                cursor.set(cell.getX() + dir.getStepX(),
+                        cell.getY() + dir.getStepY(),
+                        cell.getZ() + dir.getStepZ());
+                if (!seen.add(cursor.immutable())) {
+                    continue;
+                }
+                if (!level.getBlockState(cursor).isAir()) {
+                    continue;
+                }
+                cells.add(cursor.immutable());
+                if (cells.size() >= MAX_AIR_HALO_CELLS) {
+                    return cells;
+                }
+            }
+        }
+        return cells;
     }
 
     /**
@@ -599,9 +722,35 @@ public final class HeatSourceHelper {
      * @param sourceCells блоки, из которых состоит источник (исключаются из проверки)
      */
     public static boolean isOccluded(Level level, List<BlockPos> sourceCells, Vec3 from, Vec3 to, BlockPos targetPos) {
+        return occlusionLength(level, sourceCells, from, to, targetPos) > 0.01;
+    }
+
+    /**
+     * Длина участка луча, прошедшего сквозь сплошные блоки, блоков.
+     * <p>
+     * Считается не «есть ли препятствие», а «сколько вещества луч пересёк»:
+     * угловой graze (луч едва задевает ребро блока) даёт почти нулевую длину,
+     * а стена даёт целый блок. Это и убирает ступеньки в поле температуры:
+     * раньше любой задетый угол обрывал тепло полностью.
+     * <p>
+     * Собственный обход воксела (DDA) вместо {@code Level#clip}: у {@code clip()}
+     * нет возможности исключить крайние блоки, поэтому луч, начинающийся или
+     * заканчивающийся внутри блока, всегда «упирается» в этот блок.
+     * <p>
+     * Блоком-препятствием считается сплошной блок ({@code isSolidRender}): стекло,
+     * листва, плиты и факелы тепло пропускают.
+     *
+     * @param sourceCells блоки, из которых состоит источник (исключаются из проверки)
+     */
+    public static double occlusionLength(Level level, List<BlockPos> sourceCells, Vec3 from, Vec3 to, BlockPos targetPos) {
         double dx = to.x - from.x;
         double dy = to.y - from.y;
         double dz = to.z - from.z;
+
+        double rayLength = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (rayLength < 1.0e-6) {
+            return 0.0;
+        }
 
         int x = Mth.floor(from.x);
         int y = Mth.floor(from.y);
@@ -642,10 +791,16 @@ public final class HeatSourceHelper {
         // Страховка от зацикливания: DDA проходит не больше |dx|+|dy|+|dz| вокселов
         int guard = (int) (Math.abs(dx) + Math.abs(dy) + Math.abs(dz)) * 3 + 16;
 
+        double blocked = 0.0;
+        double tPrev = 0.0;
+
         while (guard-- > 0) {
             if (x == endX && y == endY && z == endZ) {
-                return false;   // дошли до цели — преград нет
+                break;   // дошли до цели
             }
+
+            // Параметр t, при котором луч покидает текущий воксел
+            double tCur = Math.min(tMaxX, Math.min(tMaxY, tMaxZ));
 
             // Излучатель и цель преградой не считаются
             boolean isSource = multiCell
@@ -656,9 +811,11 @@ public final class HeatSourceHelper {
                 cursor.set(x, y, z);
                 BlockState state = level.getBlockState(cursor);
                 if (state.isSolidRender(level, cursor)) {
-                    return true;
+                    // Луч внутри этого воксела шёл от tPrev до tCur
+                    blocked += (tCur - tPrev) * rayLength;
                 }
             }
+            tPrev = tCur;
 
             // Шаг к следующему вокселу
             if (tMaxX < tMaxY) {
@@ -679,6 +836,6 @@ public final class HeatSourceHelper {
                 }
             }
         }
-        return false;
+        return blocked;
     }
 }

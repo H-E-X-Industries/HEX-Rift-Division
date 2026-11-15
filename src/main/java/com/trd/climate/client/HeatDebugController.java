@@ -20,6 +20,7 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -72,6 +73,8 @@ public class HeatDebugController {
     private static final Map<BlockPos, Integer> faceMasks = new ConcurrentHashMap<>();
     /** Снимок активных источников для рендера ( неизменяемый ). */
     private static volatile List<HeatSourceHelper.HeatSource> publishedSources = List.of();
+    /** Фантомные «воздушные источники» (блок → температура родителя). */
+    private static final Map<BlockPos, Float> haloCells = new ConcurrentHashMap<>();
 
     // ── Внутреннее состояние (только поток клиента) ─────────────────────
     private static final Map<ChunkPos, List<HeatSourceHelper.HeatSource>> chunkSources = new ConcurrentHashMap<>();
@@ -134,6 +137,15 @@ public class HeatDebugController {
     /** Снимок активных источников. */
     public static List<HeatSourceHelper.HeatSource> sources() {
         return publishedSources;
+    }
+
+    /**
+     * «Воздушная кожа» источников: блоки воздуха вплотную к источнику,
+     * которые считаются фантомными источниками тепла вдвое меньшей мощности.
+     * Блок → температура источника-«родителя».
+     */
+    public static Map<BlockPos, Float> haloCells() {
+        return haloCells;
     }
 
     /** Мультиблок-источник под прицелом игрока (или {@code null}). */
@@ -306,6 +318,15 @@ public class HeatDebugController {
         // Отбираем источники для поля: просто ближайшие к игроку
         pickFieldSources(playerPos);
 
+        // Пересчитываем «воздушную кожу» источников — фантомные воздушные
+        // источники половинной мощности (для отладки)
+        haloCells.clear();
+        for (HeatSourceHelper.HeatSource source : fieldSources) {
+            for (BlockPos air : HeatSourceHelper.airHaloCells(level, source)) {
+                haloCells.putIfAbsent(air, source.sourceTemp());
+            }
+        }
+
         // Публикуем неизменяемый снимок для потока рендера
         publishedSources = List.copyOf(fieldSources);
 
@@ -325,23 +346,50 @@ public class HeatDebugController {
     /**
      * Отбирает источники, которые попадут в поле температур.
      * <p>
-     * Просто ближайшие к игроку: никаких хитростей с «полем зрения» — оно
-     * давало мерцание при повороте камеры (набор источников менялся, поле
-     * пересобиралось), а невидимое за спиной всё равно отсекается фрустумом
-     * на этапе рендера. Все остальные источники участвуют в расчёте
+     * Набор <b>стабильный</b>: уже выбранные источники остаются, пока они в
+     * зоне, а новые добавляются только если осталось место. Раньше набор
+     * каждый раз пересобирался по принципу «16 ближайших» — при движении
+     * игрока он менялся, поле пересобиралось с нуля и границы радиусов
+     * «дорисовывались» на глазах (то самое странное обрезание).
+     * <p>
+     * Все источники вне выбранного набора всё равно участвуют в расчёте
      * температуры, просто не заливают экран.
      */
     private static void pickFieldSources(BlockPos playerPos) {
+        java.util.Map<BlockPos, HeatSourceHelper.HeatSource> fresh = new HashMap<>();
+        for (HeatSourceHelper.HeatSource source : activeSources) {
+            fresh.put(source.pos(), source);
+        }
+
+        // Оставляем те же источники (чтобы набор не менялся при движении),
+        // но берём их свежие данные: температура прибора могла измениться
+        List<HeatSourceHelper.HeatSource> kept = new ArrayList<>();
+        for (HeatSourceHelper.HeatSource old : fieldSources) {
+            HeatSourceHelper.HeatSource updated = fresh.get(old.pos());
+            if (updated != null) {
+                kept.add(updated);
+            }
+        }
+
+        if (kept.size() < MAX_FIELD_SOURCES && !activeSources.isEmpty()) {
+            Set<BlockPos> keptPositions = new HashSet<>();
+            for (HeatSourceHelper.HeatSource source : kept) {
+                keptPositions.add(source.pos());
+            }
+            List<HeatSourceHelper.HeatSource> sorted = new ArrayList<>(activeSources);
+            sorted.sort((a, b) -> Double.compare(distanceSq(a.pos(), playerPos), distanceSq(b.pos(), playerPos)));
+            for (HeatSourceHelper.HeatSource source : sorted) {
+                if (kept.size() >= MAX_FIELD_SOURCES) {
+                    break;
+                }
+                if (keptPositions.add(source.pos())) {
+                    kept.add(source);
+                }
+            }
+        }
+
         fieldSources.clear();
-        if (activeSources.isEmpty()) {
-            return;
-        }
-        List<HeatSourceHelper.HeatSource> sorted = new ArrayList<>(activeSources);
-        sorted.sort((a, b) -> Double.compare(distanceSq(a.pos(), playerPos), distanceSq(b.pos(), playerPos)));
-        int limit = Math.min(MAX_FIELD_SOURCES, sorted.size());
-        for (int i = 0; i < limit; i++) {
-            fieldSources.add(sorted.get(i));
-        }
+        fieldSources.addAll(kept);
     }
 
     private static double distanceSq(BlockPos pos, BlockPos playerPos) {
@@ -369,10 +417,34 @@ public class HeatDebugController {
             // куб поверх их нестандартной геометрии даёт z-fighting, а для
             // мультиблока вместо заливки рисуется рамка при наведении
             boolean paintSelf = source.cells().size() == 1;
-            for (BlockPos cell : source.cells()) {
-                pendingCells.add(new CellTask(cell, radius, paintSelf));
+            List<BlockPos> cells = source.cells();
+            if (cells.size() == 1) {
+                pendingCells.add(new CellTask(cells.get(0), radius, paintSelf));
+                continue;
+            }
+            // У многоблочного источника разворачиваем только граничные блоки:
+            // внутренние всё равно окружены своими же соседями, а их сферы
+            // полностью перекрываются — так поле считается заметно быстрее
+            // и без дыр в покрытии
+            Set<BlockPos> cellSet = new HashSet<>(cells);
+            for (BlockPos cell : cells) {
+                if (isBoundaryCell(cell, cellSet)) {
+                    pendingCells.add(new CellTask(cell, radius, paintSelf));
+                }
             }
         }
+    }
+
+    /**
+     * Граничный ли блок структуры (то есть хотя бы один сосед снаружи).
+     */
+    private static boolean isBoundaryCell(BlockPos cell, Set<BlockPos> cellSet) {
+        for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
+            if (!cellSet.contains(cell.relative(dir))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -619,6 +691,7 @@ public class HeatDebugController {
         expandedCells.clear();
         stalePoints.clear();
         publishedSources = List.of();
+        haloCells.clear();
         hoveredMultiblock = null;
         sourcesSignature = 0;
         errorCount = 0;
