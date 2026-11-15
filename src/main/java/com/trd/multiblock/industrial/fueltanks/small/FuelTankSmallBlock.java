@@ -53,7 +53,7 @@ public class FuelTankSmallBlock extends BaseEntityBlock implements com.trd.multi
     protected com.mojang.serialization.MapCodec<? extends BaseEntityBlock> codec() { return CODEC; }
 
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
-    private static MultiblockStructureHelper helper;
+    private static volatile MultiblockStructureHelper helper;
     private static final String CAPACITY = "288000";
 
     public FuelTankSmallBlock(Properties properties) {

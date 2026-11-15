@@ -66,12 +66,18 @@ public final class ModDebugMode {
 
     /**
      * Доступен ли режим отладки в текущем режиме игры.
+     * <p>
+     * В creative/spectator — всегда. В выживании и приключении — только если
+     * это разрешено командой {@code /trdheat allow}.
      */
     private static boolean canUseDebugMode(Minecraft mc) {
         if (mc.player == null) {
             return false;
         }
-        return mc.player.isCreative() || mc.player.isSpectator();
+        if (mc.player.isCreative() || mc.player.isSpectator()) {
+            return true;
+        }
+        return ModClientConfig.heatDebugAllowSurvival();
     }
 
     /** Проверяет, что не зажата ни одна другая клавиша — защита от комбинаций вида F3+H. */

@@ -1,11 +1,8 @@
 package com.trd.climate.calculation;
 
 import com.trd.multiblock.system.IMultiblockController;
-import com.trd.multiblock.system.MultiblockStructureHelper;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayList;
@@ -27,6 +24,14 @@ import java.util.List;
  * </ul>
  */
 public final class MultiblockHeatHelper {
+
+    /** Кэш структур мультиблоков: контроллер -> список его блоков. */
+    private static final java.util.Map<BlockPos, CachedCells> CELL_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
+    /** Время жизни записи в кэше, мс. */
+    private static final long CACHE_TTL_MS = 2000L;
+
+    /** Запись кэша со временем последнего обновления. */
+    private record CachedCells(List<BlockPos> cells, long stamp) {}
 
     private MultiblockHeatHelper() {
     }
@@ -59,6 +64,12 @@ public final class MultiblockHeatHelper {
     /**
      * Все блоки структуры мультиблока: контроллер и его части.
      * <p>
+     * Части ищутся по блок-сущностям соседних чанков (у каждой есть ссылка на
+     * свой контроллер) — <b>без обращения к {@code getStructureHelper()}</b>.
+     * Тот метод создаёт структуру лениво и кэширует её в статическом поле
+     * блока, поэтому вызов из другого потока (клиентский тик против рендера)
+     * иногда приводил к падению. Здесь же такой риск убирается полностью.
+     * <p>
      * Если структура собрать не удалось (например, контроллер разобран),
      * возвращается список из одного контроллера.
      */
@@ -66,32 +77,44 @@ public final class MultiblockHeatHelper {
         if (level == null || controllerPos == null) {
             return List.of();
         }
-        BlockState state = level.getBlockState(controllerPos);
-        if (!(state.getBlock() instanceof IMultiblockController controller)) {
-            return List.of(controllerPos.immutable());
+        long now = System.currentTimeMillis();
+        CachedCells cached = CELL_CACHE.get(controllerPos);
+        if (cached != null && now - cached.stamp() < CACHE_TTL_MS) {
+            return cached.cells();
         }
-        try {
-            MultiblockStructureHelper helper = controller.getStructureHelper();
-            if (helper == null) {
-                return List.of(controllerPos.immutable());
-            }
-            Direction facing = state.hasProperty(HorizontalDirectionalBlock.FACING)
-                    ? state.getValue(HorizontalDirectionalBlock.FACING)
-                    : Direction.NORTH;
 
-            List<BlockPos> cells = new ArrayList<>();
-            cells.add(controllerPos.immutable());
-            for (BlockPos grid : helper.getPartOffsets()) {
-                BlockPos world = helper.getRotatedPos(controllerPos, grid, facing);
-                if (world != null && !cells.contains(world)) {
-                    cells.add(world.immutable());
+        List<BlockPos> cells = new ArrayList<>();
+        cells.add(controllerPos.immutable());
+
+        // Части мультиблока лежат рядом с контроллером: ищем их среди
+        // блок-сущностей чанков вокруг
+        int cx = controllerPos.getX() >> 4;
+        int cz = controllerPos.getZ() >> 4;
+        for (int x = cx - 1; x <= cx + 1; x++) {
+            for (int z = cz - 1; z <= cz + 1; z++) {
+                net.minecraft.world.level.chunk.ChunkAccess chunk = level.getChunkSource()
+                        .getChunk(x, z, net.minecraft.world.level.chunk.status.ChunkStatus.FULL, false);
+                if (!(chunk instanceof net.minecraft.world.level.chunk.LevelChunk levelChunk)) {
+                    continue;
+                }
+                for (net.minecraft.world.level.block.entity.BlockEntity be : levelChunk.getBlockEntities().values()) {
+                    if (be instanceof com.trd.multiblock.system.roles.IMultiblockPart part
+                            && controllerPos.equals(part.getControllerPos())) {
+                        BlockPos pos = be.getBlockPos();
+                        if (!cells.contains(pos)) {
+                            cells.add(pos.immutable());
+                        }
+                    }
                 }
             }
-            return Collections.unmodifiableList(cells);
-        } catch (Throwable e) {
-            // Структура может быть в промежуточном состоянии (разбирается) —
-            // тогда считаем источником один только контроллер
-            return List.of(controllerPos.immutable());
         }
+
+        List<BlockPos> result = Collections.unmodifiableList(cells);
+        CELL_CACHE.put(controllerPos.immutable(), new CachedCells(result, now));
+        // Чистим старые записи, чтобы кэш не рос бесконечно
+        if (CELL_CACHE.size() > 256) {
+            CELL_CACHE.entrySet().removeIf(e -> now - e.getValue().stamp() > CACHE_TTL_MS * 4);
+        }
+        return result;
     }
 }

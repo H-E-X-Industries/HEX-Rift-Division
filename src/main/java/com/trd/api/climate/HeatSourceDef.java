@@ -70,7 +70,7 @@ public record HeatSourceDef(
     public static final float MAX_TRANSFER = 0.9f;
 
     /** Минимальная доля радиуса излучения при нулевой мощности. */
-    public static final float MIN_RADIUS_FACTOR = 0.25f;
+    public static final float MIN_RADIUS_FACTOR = 0.35f;
 
     public HeatSourceDef {
         if (id == null || id.isEmpty()) {

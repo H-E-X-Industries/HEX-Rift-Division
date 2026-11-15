@@ -205,7 +205,7 @@ public class HeatDebugRenderHandler {
         BufferUploader.drawWithShader(builder.buildOrThrow());
 
         // Рамка вокруг всего мультиблока, на который смотрит игрок
-        renderMultiblockOutline(mc);
+        renderMultiblockOutline(mc, pose);
 
         RenderSystem.enableCull();
         RenderSystem.depthMask(true);
@@ -255,8 +255,12 @@ public class HeatDebugRenderHandler {
      * <p>
      * Используется готовый снимок источников из {@link HeatDebugController}:
      * поток рендера не обращается к миру вообще.
+     * <p>
+     * Вершины линий обязательно добавляются <b>с матрицей</b> ({@code addVertex(pose, ...)}):
+     * иначе они остались бы в мировых координатах и оказались бы за пределами
+     * экрана (в кадре матрица модели-вид уже содержит поворот камеры).
      */
-    private static void renderMultiblockOutline(Minecraft mc) {
+    private static void renderMultiblockOutline(Minecraft mc, Matrix4f pose) {
         if (!(mc.hitResult instanceof net.minecraft.world.phys.BlockHitResult hit)) {
             return;
         }
@@ -285,7 +289,7 @@ public class HeatDebugRenderHandler {
             float r = 1.0f, g = 0.85f, b = 0.2f, a = 0.9f;
             double x0 = minX - 0.05, y0 = minY - 0.05, z0 = minZ - 0.05;
             double x1 = maxX + 1.05, y1 = maxY + 1.05, z1 = maxZ + 1.05;
-            renderBoxEdges(consumer, x0, y0, z0, x1, y1, z1, r, g, b, a);
+            renderBoxEdges(consumer, pose, x0, y0, z0, x1, y1, z1, r, g, b, a);
 
             bufferSource.endBatch(renderType);
             return;
@@ -295,30 +299,30 @@ public class HeatDebugRenderHandler {
     /**
      * Рисует рёбра прямоугольного параллелепипеда.
      */
-    private static void renderBoxEdges(com.mojang.blaze3d.vertex.VertexConsumer c,
+    private static void renderBoxEdges(com.mojang.blaze3d.vertex.VertexConsumer c, Matrix4f pose,
                                        double x0, double y0, double z0,
                                        double x1, double y1, double z1,
                                        float r, float g, float b, float a) {
-        line(c, x0, y0, z0, x1, y0, z0, r, g, b, a);
-        line(c, x1, y0, z0, x1, y0, z1, r, g, b, a);
-        line(c, x1, y0, z1, x0, y0, z1, r, g, b, a);
-        line(c, x0, y0, z1, x0, y0, z0, r, g, b, a);
-        line(c, x0, y1, z0, x1, y1, z0, r, g, b, a);
-        line(c, x1, y1, z0, x1, y1, z1, r, g, b, a);
-        line(c, x1, y1, z1, x0, y1, z1, r, g, b, a);
-        line(c, x0, y1, z1, x0, y1, z0, r, g, b, a);
-        line(c, x0, y0, z0, x0, y1, z0, r, g, b, a);
-        line(c, x1, y0, z0, x1, y1, z0, r, g, b, a);
-        line(c, x1, y0, z1, x1, y1, z1, r, g, b, a);
-        line(c, x0, y0, z1, x0, y1, z1, r, g, b, a);
+        line(c, pose, x0, y0, z0, x1, y0, z0, r, g, b, a);
+        line(c, pose, x1, y0, z0, x1, y0, z1, r, g, b, a);
+        line(c, pose, x1, y0, z1, x0, y0, z1, r, g, b, a);
+        line(c, pose, x0, y0, z1, x0, y0, z0, r, g, b, a);
+        line(c, pose, x0, y1, z0, x1, y1, z0, r, g, b, a);
+        line(c, pose, x1, y1, z0, x1, y1, z1, r, g, b, a);
+        line(c, pose, x1, y1, z1, x0, y1, z1, r, g, b, a);
+        line(c, pose, x0, y1, z1, x0, y1, z0, r, g, b, a);
+        line(c, pose, x0, y0, z0, x0, y1, z0, r, g, b, a);
+        line(c, pose, x1, y0, z0, x1, y1, z0, r, g, b, a);
+        line(c, pose, x1, y0, z1, x1, y1, z1, r, g, b, a);
+        line(c, pose, x0, y0, z1, x0, y1, z1, r, g, b, a);
     }
 
-    private static void line(com.mojang.blaze3d.vertex.VertexConsumer c,
+    private static void line(com.mojang.blaze3d.vertex.VertexConsumer c, Matrix4f pose,
                              double x0, double y0, double z0,
                              double x1, double y1, double z1,
                              float r, float g, float b, float a) {
-        c.addVertex((float) x0, (float) y0, (float) z0).setColor(r, g, b, a);
-        c.addVertex((float) x1, (float) y1, (float) z1).setColor(r, g, b, a);
+        c.addVertex(pose, (float) x0, (float) y0, (float) z0).setColor(r, g, b, a);
+        c.addVertex(pose, (float) x1, (float) y1, (float) z1).setColor(r, g, b, a);
     }
 
     /**

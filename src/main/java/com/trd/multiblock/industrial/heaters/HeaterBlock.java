@@ -40,7 +40,7 @@ public class HeaterBlock extends BaseEntityBlock implements IMultiblockControlle
 
     public static final MapCodec<HeaterBlock> CODEC = simpleCodec(HeaterBlock::new);
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
-    private static MultiblockStructureHelper helper;
+    private static volatile MultiblockStructureHelper helper;
 
     public HeaterBlock(Properties properties) {
         super(properties.noOcclusion());

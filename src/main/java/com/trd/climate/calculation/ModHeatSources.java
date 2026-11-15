@@ -75,74 +75,74 @@ public final class ModHeatSources {
         // ── Костры ─────────────────────────────────────────────
         // 700 °C, но потолок 45 — костёр греет соседей на десятки градусов, не на сотни
         HeatSourceRegistry.register(Blocks.CAMPFIRE, def("minecraft:campfire",
-                        45.0f, 6.0f, 0.60f, 700.0f, 24.0f, 3.6f, false, true, 1.0f, 1.0f),
+                        45.0f, 8.0f, 0.60f, 700.0f, 24.0f, 3.6f, false, true, 1.0f, 1.0f),
                 state -> state.getValue(CampfireBlock.LIT));
 
         HeatSourceRegistry.register(Blocks.SOUL_CAMPFIRE, def("minecraft:soul_campfire",
-                        40.0f, 6.0f, 0.55f, 700.0f, 20.0f, 2.4f, false, true, 1.0f, 1.0f),
+                        40.0f, 8.0f, 0.55f, 700.0f, 20.0f, 2.4f, false, true, 1.0f, 1.0f),
                 state -> state.getValue(CampfireBlock.LIT));
 
         // ── Факелы ────────────────────────────────────────────
         // Локального жара почти не дают (тепло в руке считается отдельно),
         // но в герметичном помещении подогревают воздух.
         HeatSourceRegistry.register(Blocks.TORCH, def("minecraft:torch",
-                        0.0f, 2.0f, 0.30f, 800.0f, 18.0f, 0.4f, false, true, 1.0f, 1.0f),
+                        0.0f, 3.0f, 0.30f, 800.0f, 18.0f, 0.4f, false, true, 1.0f, 1.0f),
                 state -> true);
         HeatSourceRegistry.register(Blocks.WALL_TORCH, def("minecraft:wall_torch",
-                        0.0f, 2.0f, 0.30f, 800.0f, 18.0f, 0.4f, false, true, 1.0f, 1.0f),
+                        0.0f, 3.0f, 0.30f, 800.0f, 18.0f, 0.4f, false, true, 1.0f, 1.0f),
                 state -> true);
         HeatSourceRegistry.register(Blocks.SOUL_TORCH, def("minecraft:soul_torch",
-                        0.0f, 2.0f, 0.30f, 800.0f, 18.0f, 0.4f, false, true, 1.0f, 1.0f),
+                        0.0f, 3.0f, 0.30f, 800.0f, 18.0f, 0.4f, false, true, 1.0f, 1.0f),
                 state -> true);
         HeatSourceRegistry.register(Blocks.SOUL_WALL_TORCH, def("minecraft:soul_wall_torch",
-                        0.0f, 2.0f, 0.30f, 800.0f, 18.0f, 0.4f, false, true, 1.0f, 1.0f),
+                        0.0f, 3.0f, 0.30f, 800.0f, 18.0f, 0.4f, false, true, 1.0f, 1.0f),
                 state -> true);
 
         // ── Печи ──────────────────────────────────────────────
         HeatSourceRegistry.register(Blocks.FURNACE, def("minecraft:furnace",
-                        200.0f, 4.0f, 0.50f, 900.0f, 34.0f, 3.5f, false, false, 1.0f, 1.0f),
+                        150.0f, 6.0f, 0.50f, 900.0f, 34.0f, 3.5f, false, false, 1.0f, 1.0f),
                 state -> state.getValue(AbstractFurnaceBlock.LIT));
 
         HeatSourceRegistry.register(Blocks.SMOKER, def("minecraft:smoker",
-                        200.0f, 4.0f, 0.50f, 900.0f, 34.0f, 3.5f, false, false, 1.0f, 1.0f),
+                        150.0f, 6.0f, 0.50f, 900.0f, 34.0f, 3.5f, false, false, 1.0f, 1.0f),
                 state -> state.getValue(AbstractFurnaceBlock.LIT));
 
         HeatSourceRegistry.register(Blocks.BLAST_FURNACE, def("minecraft:blast_furnace",
-                        280.0f, 4.0f, 0.55f, 1400.0f, 45.0f, 5.0f, false, false, 1.0f, 1.0f),
+                        200.0f, 6.0f, 0.55f, 1400.0f, 45.0f, 5.0f, false, false, 1.0f, 1.0f),
                 state -> state.getValue(AbstractFurnaceBlock.LIT));
 
         // ── Лава ──────────────────────────────────────────────
         // 1200 °C и отдаёт 86% своего тепла — у кромки лавы реально жарко.
         HeatSourceRegistry.register(Blocks.LAVA, def("minecraft:lava",
-                        900.0f, 5.0f, 0.95f, 1200.0f, 68.0f, 7.0f, false, false, 1.0f, 1.0f),
+                        500.0f, 6.0f, 0.95f, 1200.0f, 68.0f, 7.0f, false, false, 1.0f, 1.0f),
                 state -> state.getValue(LiquidBlock.LEVEL) == 0);
 
         HeatSourceRegistry.register(Blocks.LAVA, def("minecraft:flowing_lava",
-                        500.0f, 3.5f, 0.90f, 1200.0f, 45.0f, 3.5f, false, false, 1.0f, 1.0f),
+                        300.0f, 4.0f, 0.90f, 1200.0f, 45.0f, 3.5f, false, false, 1.0f, 1.0f),
                 state -> state.getValue(LiquidBlock.LEVEL) > 0);
 
         // ── Огонь ─────────────────────────────────────────────
         HeatSourceRegistry.register(Blocks.FIRE, def("minecraft:fire",
-                        180.0f, 3.5f, 0.60f, 900.0f, 55.0f, 4.0f, false, false, 1.0f, 1.0f),
+                        130.0f, 5.0f, 0.60f, 900.0f, 55.0f, 4.0f, false, false, 1.0f, 1.0f),
                 state -> true);
 
         // ── Магма-блок ────────────────────────────────────────
         HeatSourceRegistry.register(Blocks.MAGMA_BLOCK, def("minecraft:magma_block",
-                        160.0f, 3.0f, 0.70f, 700.0f, 38.0f, 2.5f, false, false, 1.0f, 1.0f),
+                        120.0f, 4.0f, 0.70f, 700.0f, 38.0f, 2.5f, false, false, 1.0f, 1.0f),
                 state -> true);
 
         // ── Охладители ────────────────────────────────────────
         // Для холодильников maxHeat — сколько градусов они забирают у окружения.
         HeatSourceRegistry.register(Blocks.ICE, def("minecraft:ice",
-                        8.0f, 2.5f, 0.50f, 0.0f, 8.0f, 0.6f, true, false, 1.0f, 1.0f),
+                        8.0f, 4.0f, 0.50f, 0.0f, 8.0f, 0.6f, true, false, 1.0f, 1.0f),
                 state -> true);
 
         HeatSourceRegistry.register(Blocks.PACKED_ICE, def("minecraft:packed_ice",
-                        11.0f, 2.5f, 0.45f, -18.0f, 0.0f, 1.0f, true, false, 1.0f, 1.0f),
+                        11.0f, 4.0f, 0.45f, -18.0f, 0.0f, 1.0f, true, false, 1.0f, 1.0f),
                 state -> true);
 
         HeatSourceRegistry.register(Blocks.BLUE_ICE, def("minecraft:blue_ice",
-                        15.0f, 3.0f, 0.40f, -50.0f, -10.0f, 2.0f, true, false, 1.0f, 1.0f),
+                        15.0f, 4.5f, 0.40f, -50.0f, -10.0f, 2.0f, true, false, 1.0f, 1.0f),
                 state -> true);
     }
 
@@ -155,32 +155,32 @@ public final class ModHeatSources {
         // Доломит держит тепло плохо: при 1000 °C соседние блоки получают
         // около 380 °C (0.38 × 1000), при 1600 °C — потолок 600 °C.
         HeatSourceRegistry.registerIdOnly(com.trd.block.basic.ModBlocks.HEATER.get(), def("trd:heater",
-                600.0f, 5.0f, 0.35f, 1600.0f, 55.0f, 5.0f, false, false, 200.0f, 1600.0f));
+                600.0f, 8.0f, 0.35f, 1600.0f, 55.0f, 5.0f, false, false, 200.0f, 1600.0f));
 
         // Медный котёл: 20..600 °C. Медь проводит тепло лучше доломита,
         // поэтому при той же температуре котёл греет окружение сильнее.
         HeatSourceRegistry.registerIdOnly(com.trd.block.basic.ModBlocks.BOILER.get(), def("trd:boiler",
-                400.0f, 4.0f, 0.60f, 600.0f, 48.0f, 4.0f, false, false, 100.0f, 600.0f));
+                400.0f, 7.0f, 0.60f, 600.0f, 48.0f, 4.0f, false, false, 100.0f, 600.0f));
 
         // Плавильня: 0..1600 °C.
         HeatSourceRegistry.registerIdOnly(com.trd.block.basic.ModBlocks.SMELTER.get(), def("trd:smelter",
-                600.0f, 5.0f, 0.40f, 1600.0f, 58.0f, 5.0f, false, false, 300.0f, 1600.0f));
+                600.0f, 8.0f, 0.40f, 1600.0f, 58.0f, 5.0f, false, false, 300.0f, 1600.0f));
 
         // Коксовая печь: 0..2700 °C — самая горячая.
         HeatSourceRegistry.registerIdOnly(com.trd.block.basic.ModBlocks.COCCER_OVEN.get(), def("trd:coking_oven",
-                900.0f, 5.0f, 0.45f, 2700.0f, 65.0f, 6.0f, false, false, 300.0f, 2700.0f));
+                900.0f, 8.0f, 0.45f, 2700.0f, 65.0f, 6.0f, false, false, 300.0f, 2700.0f));
 
         // Малая плавильня: 0..1100 °C.
         HeatSourceRegistry.registerIdOnly(com.trd.block.basic.ModBlocks.SMALL_SMELTER.get(), def("trd:small_smelter",
-                450.0f, 4.0f, 0.45f, 1100.0f, 45.0f, 4.0f, false, false, 200.0f, 1100.0f));
+                450.0f, 6.0f, 0.45f, 1100.0f, 45.0f, 4.0f, false, false, 200.0f, 1100.0f));
 
         // Нагреватель химического завода: 0 / 50 / 100 °C.
         HeatSourceRegistry.registerIdOnly(com.trd.block.basic.ModBlocks.CHEMICAL_PLANT_HEATER.get(), def("trd:chemical_plant_heater",
-                120.0f, 3.0f, 0.60f, 100.0f, 32.0f, 2.5f, false, false, 50.0f, 100.0f));
+                120.0f, 5.0f, 0.60f, 100.0f, 32.0f, 2.5f, false, false, 50.0f, 100.0f));
 
         // Электрическая печь: температуры нет, работает по состоянию LIT.
         HeatSourceRegistry.registerIdOnly(com.trd.block.basic.ModBlocks.ELECTRO_FURNACE.get(), def("trd:electro_furnace",
-                250.0f, 4.0f, 0.50f, 1200.0f, 40.0f, 3.5f, false, false, 1.0f, 1.0f));
+                250.0f, 7.0f, 0.50f, 1200.0f, 40.0f, 3.5f, false, false, 1.0f, 1.0f));
     }
 
     /**
