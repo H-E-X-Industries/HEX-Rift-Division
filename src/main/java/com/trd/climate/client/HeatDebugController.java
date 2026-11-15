@@ -92,6 +92,14 @@ public class HeatDebugController {
     private static final LinkedHashSet<ChunkPos> scanQueue = new LinkedHashSet<>();
     private static final List<HeatSourceHelper.HeatSource> activeSources = new ArrayList<>();
     private static final List<HeatSourceHelper.HeatSource> calculationSources = new ArrayList<>();
+    /**
+     * Кластеры (лавовые озёра, ледники) считаются один раз на чанк, а не
+     * заново по всем источникам каждые 5 тиков: на леднике это были тысячи
+     * обходов в ширину за тик, и сбор данных не успевал никогда.
+     */
+    private static final Map<ChunkPos, List<HeatSourceHelper.HeatSource>> chunkClusters = new HashMap<>();
+    /** Чанки, чьи кластеры устарели (пересканированы или выгружены). */
+    private static final Set<ChunkPos> dirtyChunks = new HashSet<>();
     private static final ArrayDeque<CellTask> pendingCells = new ArrayDeque<>();
     private static final ArrayDeque<BlockPos> pendingPoints = new ArrayDeque<>();
     private static final Set<BlockPos> queuedPoints = new HashSet<>();
@@ -324,7 +332,11 @@ public class HeatDebugController {
             ChunkPos cp = entry.getKey();
             long dx = (cp.x << 4) + 8 - playerPos.getX();
             long dz = (cp.z << 4) + 8 - playerPos.getZ();
-            return dx * dx + dz * dz > rangeSq || !level.hasChunk(cp.x, cp.z);
+            boolean drop = dx * dx + dz * dz > rangeSq || !level.hasChunk(cp.x, cp.z);
+            if (drop) {
+                dirtyChunks.add(cp);
+            }
+            return drop;
         });
 
         queueChunksAround(level, playerPos, false);
@@ -337,25 +349,33 @@ public class HeatDebugController {
                 continue;
             }
             List<HeatSourceHelper.HeatSource> valid = new ArrayList<>(cached.size());
+            boolean changed = false;
             for (HeatSourceHelper.HeatSource old : cached) {
                 HeatSourceHelper.HeatSource fresh = HeatSourceHelper.resolveAt(level, old.pos());
                 if (fresh == null) {
+                    changed = true;
                     continue;
                 }
                 long dx = fresh.pos().getX() - playerPos.getX();
                 long dy = fresh.pos().getY() - playerPos.getY();
                 long dz = fresh.pos().getZ() - playerPos.getZ();
                 if (dx * dx + dy * dy + dz * dz > rangeSq) {
+                    changed = true;
                     continue;
+                }
+                if (fresh.sourceTemp() != old.sourceTemp() || fresh.power() != old.power()) {
+                    changed = true;
                 }
                 valid.add(fresh);
                 activeSources.add(fresh);
             }
-            entry.setValue(valid);
+            if (changed || valid.size() != cached.size()) {
+                entry.setValue(valid);
+                dirtyChunks.add(entry.getKey());
+            }
         }
 
-        calculationSources.clear();
-        calculationSources.addAll(HeatSourceHelper.clusterSources(level, activeSources));
+        rebuildDirtyClusters(level);
 
         int oldSignature = sourcesSignature;
         pickFieldSources(playerPos);
@@ -375,6 +395,45 @@ public class HeatDebugController {
 
         if (signature != oldSignature) {
             rebuildCandidates();
+        }
+    }
+
+    /**
+     * Пересобирает кластеры только у изменившихся чанков и их соседей:
+     * озеро может пересекать границу чанка, поэтому соседа тоже надо
+     * пересчитать. Неизменные чанки не трогаем.
+     */
+    private static void rebuildDirtyClusters(ClientLevel level) {
+        if (!dirtyChunks.isEmpty()) {
+            Set<ChunkPos> affected = new HashSet<>();
+            for (ChunkPos cp : dirtyChunks) {
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dz = -1; dz <= 1; dz++) {
+                        affected.add(new ChunkPos(cp.x + dx, cp.z + dz));
+                    }
+                }
+            }
+            dirtyChunks.clear();
+
+            List<HeatSourceHelper.HeatSource> pool = new ArrayList<>();
+            for (ChunkPos cp : affected) {
+                List<HeatSourceHelper.HeatSource> cached = chunkSources.get(cp);
+                if (cached != null) {
+                    pool.addAll(cached);
+                }
+            }
+            List<HeatSourceHelper.HeatSource> clustered = HeatSourceHelper.clusterSources(level, pool);
+            for (ChunkPos cp : affected) {
+                chunkClusters.remove(cp);
+            }
+            for (HeatSourceHelper.HeatSource cluster : clustered) {
+                chunkClusters.computeIfAbsent(new ChunkPos(cluster.pos()), k -> new ArrayList<>()).add(cluster);
+            }
+        }
+
+        calculationSources.clear();
+        for (List<HeatSourceHelper.HeatSource> clusters : chunkClusters.values()) {
+            calculationSources.addAll(clusters);
         }
     }
 
@@ -480,6 +539,7 @@ public class HeatDebugController {
             }
             List<HeatSourceHelper.HeatSource> found = scanChunk(level, cp, playerPos);
             chunkSources.put(cp, found);
+            dirtyChunks.add(cp);
 
             if (chunkSources.size() > MAX_SOURCE_CACHE) {
                 double range = ModClientConfig.heatDebugRadius() + HeatSourceRegistry.maxRadius();
@@ -655,6 +715,8 @@ public class HeatDebugController {
         workHaloCells.clear();
         workHoveredMultiblock = null;
         chunkSources.clear();
+        chunkClusters.clear();
+        dirtyChunks.clear();
         scanQueue.clear();
         activeSources.clear();
         calculationSources.clear();

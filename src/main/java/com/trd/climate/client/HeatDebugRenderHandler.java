@@ -3,9 +3,11 @@ package com.trd.climate.client;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.BufferUploader;
+import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.trd.climate.calculation.HeatSourceHelper;
 import com.trd.client.config.ModClientConfig;
@@ -14,7 +16,9 @@ import com.trd.main.MainRegistry;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.AABB;
@@ -67,6 +71,13 @@ public class HeatDebugRenderHandler {
     private static final float FACE_EPSILON = 0.003f;
     /** Отступ рамки мультиблока от границ структуры. */
     private static final float OUTLINE_EPSILON = 0.01f;
+    /**
+     * Сколько блоков заливки уходит в один буфер. Общий {@code Tesselator}
+     * рассчитан примерно на 1500 квадов; поле у лавового озера легко даёт
+     * в несколько раз больше, буфер переполняется, и одно исключение навсегда
+     * глушило весь оверлей.
+     */
+    private static final int FACE_BATCH = 1200;
     /** Флаг, чтобы не спамить в лог одной и той же ошибкой. */
     private static boolean errorLogged = false;
 
@@ -76,6 +87,7 @@ public class HeatDebugRenderHandler {
             return;
         }
         if (!ModDebugMode.enabled) {
+            errorLogged = false;
             return;
         }
         try {
@@ -121,9 +133,15 @@ public class HeatDebugRenderHandler {
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
 
         // ── 1. Заливка открытых граней ──────────────────────────────
+        // Свой буфер и порции: общий Tesselator рассчитан на ~1500 квадов,
+        // а поле у лавового озера легко даёт несколько тысяч блоков. Раньше
+        // переполнение бросало исключение, которое глушило весь оверлей
+        // до перезапуска клиента.
         if (!field.isEmpty() && !faceMasks.isEmpty()) {
-            Tesselator tesselator = Tesselator.getInstance();
-            BufferBuilder builder = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+            ByteBufferBuilder faceBytes = new ByteBufferBuilder(FACE_BATCH * 6 * 16);
+            BufferBuilder builder = new BufferBuilder(faceBytes, VertexFormat.Mode.QUADS,
+                    DefaultVertexFormat.POSITION_COLOR);
+            int batchCount = 0;
 
             for (Map.Entry<BlockPos, Integer> entry : faceMasks.entrySet()) {
                 BlockPos bpos = entry.getKey();
@@ -136,22 +154,17 @@ public class HeatDebugRenderHandler {
                     continue;
                 }
 
-                // Отсекаем пятна за пределами радиуса отображения
                 double ddx = bpos.getX() + 0.5 - playerX;
                 double ddy = bpos.getY() + 0.5 - playerY;
                 double ddz = bpos.getZ() + 0.5 - playerZ;
                 if (ddx * ddx + ddy * ddy + ddz * ddz > cullRadiusSq) {
                     continue;
                 }
-
-                // Отсекаем блоки вне пирамиды видимости камеры: за спиной
-                // ничего не рисуется, даже если оно попало в поле
                 if (frustum != null && !frustum.isVisible(new AABB(bpos))) {
                     continue;
                 }
 
-                float temp = tempValue;
-                float[] rgb = temperatureColor(temp);
+                float[] rgb = temperatureColor(tempValue);
                 float r = rgb[0], g = rgb[1], b = rgb[2];
                 float a = FACE_ALPHA;
 
@@ -160,80 +173,52 @@ public class HeatDebugRenderHandler {
                 float z = bpos.getZ();
                 float e = FACE_EPSILON;
 
-                // Верхняя грань
                 if ((mask & 1) != 0) {
-                    addQuad(builder, pose,
-                            x, y + 1 + e, z,
-                            x, y + 1 + e, z + 1,
-                            x + 1, y + 1 + e, z + 1,
-                            x + 1, y + 1 + e, z,
-                            r, g, b, a);
+                    addQuad(builder, pose, x, y + 1 + e, z, x, y + 1 + e, z + 1,
+                            x + 1, y + 1 + e, z + 1, x + 1, y + 1 + e, z, r, g, b, a);
                 }
-                // Нижняя
                 if ((mask & 2) != 0) {
-                    addQuad(builder, pose,
-                            x, y - e, z,
-                            x + 1, y - e, z,
-                            x + 1, y - e, z + 1,
-                            x, y - e, z + 1,
-                            r, g, b, a);
+                    addQuad(builder, pose, x, y - e, z, x + 1, y - e, z,
+                            x + 1, y - e, z + 1, x, y - e, z + 1, r, g, b, a);
                 }
-                // +X
                 if ((mask & 4) != 0) {
-                    addQuad(builder, pose,
-                            x + 1 + e, y, z,
-                            x + 1 + e, y, z + 1,
-                            x + 1 + e, y + 1, z + 1,
-                            x + 1 + e, y + 1, z,
-                            r, g, b, a);
+                    addQuad(builder, pose, x + 1 + e, y, z, x + 1 + e, y, z + 1,
+                            x + 1 + e, y + 1, z + 1, x + 1 + e, y + 1, z, r, g, b, a);
                 }
-                // −X
                 if ((mask & 8) != 0) {
-                    addQuad(builder, pose,
-                            x - e, y, z,
-                            x - e, y, z + 1,
-                            x - e, y + 1, z + 1,
-                            x - e, y + 1, z,
-                            r, g, b, a);
+                    addQuad(builder, pose, x - e, y, z, x - e, y, z + 1,
+                            x - e, y + 1, z + 1, x - e, y + 1, z, r, g, b, a);
                 }
-                // +Z
                 if ((mask & 16) != 0) {
-                    addQuad(builder, pose,
-                            x, y, z + 1 + e,
-                            x + 1, y, z + 1 + e,
-                            x + 1, y + 1, z + 1 + e,
-                            x, y + 1, z + 1 + e,
-                            r, g, b, a);
+                    addQuad(builder, pose, x, y, z + 1 + e, x + 1, y, z + 1 + e,
+                            x + 1, y + 1, z + 1 + e, x, y + 1, z + 1 + e, r, g, b, a);
                 }
-                // −Z
                 if ((mask & 32) != 0) {
-                    addQuad(builder, pose,
-                            x, y, z - e,
-                            x + 1, y, z - e,
-                            x + 1, y + 1, z - e,
-                            x, y + 1, z - e,
-                            r, g, b, a);
+                    addQuad(builder, pose, x, y, z - e, x + 1, y, z - e,
+                            x + 1, y + 1, z - e, x, y + 1, z - e, r, g, b, a);
+                }
+
+                if (++batchCount >= FACE_BATCH) {
+                    flushFaces(builder);
+                    builder = new BufferBuilder(faceBytes, VertexFormat.Mode.QUADS,
+                            DefaultVertexFormat.POSITION_COLOR);
+                    batchCount = 0;
                 }
             }
 
-            // buildOrThrow() здесь нельзя: если за кадр не добавилось ни одного
-            // квада (все точки ещё без температуры, с маской 0 или отсечены
-            // фрустумом/радиусом), он бросает IllegalStateException — render()
-            // прерывался, и в таких кадрах не рисовалось вообще ничего:
-            // ни заливки, ни рамок, ни цифр (оверлей «замирал»).
-            // build() в этом случае просто возвращает null.
-            com.mojang.blaze3d.vertex.MeshData mesh = builder.build();
-            if (mesh != null) {
-                BufferUploader.drawWithShader(mesh);
+            if (batchCount > 0) {
+                flushFaces(builder);
+            } else {
+                builder.build();
             }
+            faceBytes.close();
         }
 
-        // ── 2. Рамки вокруг мультиблоков-источников ─────────────────
-        renderMultiblockOutlines(pose, snap);
-
-        // ── 2б. Фантомные «воздушные источники» (воздух вплотную к
-        //        источнику) — рисуются рамкой поменьше ───────────────
-        renderAirHaloCells(pose, snap);
+        // ── 2. Рамки мультиблоков и маркеры воздушных источников ────
+        // Через тот же путь, что и рамка отвёртки: RenderType.lines()
+        // несёт нормали и рисуется шейдером rendertype_lines. Старый путь
+        // (Mode.LINES + шейдер position_color) отбрасывал линии молча.
+        renderLines(poseStack, snap);
 
         RenderSystem.enableCull();
         RenderSystem.depthMask(true);
@@ -282,104 +267,71 @@ public class HeatDebugRenderHandler {
         }
     }
 
-    /** Сколько мультиблоков одновременно обводить рамкой (страховка). */
     private static final int MAX_OUTLINED_MULTIBLOCKS = 16;
     /** Сколько маркеров воздушных фантомов рисовать (страховка). */
     private static final int MAX_HALO_MARKERS = 600;
 
     /**
-     * Обводит рамками мультиблоки-источники — как ванильное выделение блока,
-     * только вокруг всей конструкции и цветом её температуры.
-     * <p>
-     * Рамка рисуется для каждого мультиблока в зоне отладки (их немного:
-     * поле показывает лишь ближайшие источники), плюс для мультиблока под
-     * прицелом, если он в зону не попал. Сами блоки конструкции НЕ
-     * заливаются квадами — именно заливка давала z-fighting с моделями
-     * и «выделение рандомных блок-партов».
-     * <p>
-     * Линии рисуются с включённым тестом глубины: рамка за стеной не видна.
-     * <p>
-     * <b>Важно:</b> линии рисуются через собственный {@link Tesselator}, а не через
-     * {@code mc.renderBuffers().bufferSource()}: у общего буфера общая память
-     * с ванильным рендером, и обращение к нему посреди отрисовки уровня
-     * роняло игру с нативным крашем в драйвере видеокарты.
+     * Сбрасывает порцию заливки. Пустой буфер даёт {@code null} — это норма,
+     * а не ошибка.
      */
-    private static void renderMultiblockOutlines(Matrix4f pose, HeatDebugController.Snapshot snap) {
-        List<HeatSourceHelper.HeatSource> sources = snap.sources;
-        HeatSourceHelper.HeatSource hovered = snap.hoveredMultiblock;
-
-        Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder builder = tesselator.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.POSITION_COLOR);
-
-        int drawn = 0;
-        java.util.Set<BlockPos> drawnPositions = new java.util.HashSet<>();
-        for (HeatSourceHelper.HeatSource source : sources) {
-            if (source.cells().size() <= 1 || drawn >= MAX_OUTLINED_MULTIBLOCKS) {
-                continue;
-            }
-            addSourceOutline(builder, pose, source);
-            drawnPositions.add(source.pos());
-            drawn++;
-        }
-        // Мультиблок под прицелом — даже если он не попал в ближайшую зону
-        if (hovered != null && hovered.cells().size() > 1 && !drawnPositions.contains(hovered.pos())) {
-            addSourceOutline(builder, pose, hovered);
-            drawn++;
-        }
-
-        if (drawn > 0) {
-            BufferUploader.drawWithShader(builder.buildOrThrow());
-        } else {
-            // Нечего рисовать — закрываем билдер (build вернёт пустой меш)
-            builder.build();
+    private static void flushFaces(BufferBuilder builder) {
+        MeshData mesh = builder.build();
+        if (mesh != null) {
+            BufferUploader.drawWithShader(mesh);
         }
     }
 
     /**
-     * Рисует фантомные «воздушные источники» — блоки воздуха, примыкающие
-     * к источнику вплотную. В самом мире таких блоков нет (сломать, добыть
-     * или измерить их нельзя), это чисто расчётные сущности половинной
-     * мощности, поэтому показываем их небольшими рамками.
+     * Рамки мультиблоков и маркеры «воздушной кожи» — тем же путём, что и
+     * рамка отвёртки: {@link RenderType#lines()} несёт нормали и рисуется
+     * шейдером {@code rendertype_lines}. Старый путь ({@code Mode.LINES} плюс
+     * шейдер {@code position_color}) отбрасывал линии молча, поэтому рамок
+     * не было видно никогда.
      */
-    private static void renderAirHaloCells(Matrix4f pose, HeatDebugController.Snapshot snap) {
-        Map<BlockPos, Float> halo = snap.haloCells;
-        if (halo.isEmpty()) {
-            return;
-        }
-
-        Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder builder = tesselator.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.POSITION_COLOR);
+    private static void renderLines(PoseStack poseStack, HeatDebugController.Snapshot snap) {
+        MultiBufferSource.BufferSource bufferSource =
+                com.trd.client.renderer.debug.DebugLineBuffers.source();
+        VertexConsumer lines = bufferSource.getBuffer(RenderType.lines());
 
         int drawn = 0;
-        for (Map.Entry<BlockPos, Float> entry : halo.entrySet()) {
-            if (drawn >= MAX_HALO_MARKERS) {
+        java.util.Set<BlockPos> drawnPositions = new java.util.HashSet<>();
+        for (HeatSourceHelper.HeatSource source : snap.sources) {
+            if (source.cells().size() <= 1 || drawn >= MAX_OUTLINED_MULTIBLOCKS) {
+                continue;
+            }
+            addSourceOutline(poseStack, lines, source);
+            drawnPositions.add(source.pos());
+            drawn++;
+        }
+        HeatSourceHelper.HeatSource hovered = snap.hoveredMultiblock;
+        if (hovered != null && hovered.cells().size() > 1 && !drawnPositions.contains(hovered.pos())) {
+            addSourceOutline(poseStack, lines, hovered);
+        }
+
+        int markers = 0;
+        for (Map.Entry<BlockPos, Float> entry : snap.haloCells.entrySet()) {
+            if (markers >= MAX_HALO_MARKERS) {
                 break;
             }
             BlockPos pos = entry.getKey();
             float[] rgb = temperatureColor(entry.getValue());
-            double cx = pos.getX() + 0.5;
-            double cy = pos.getY() + 0.5;
-            double cz = pos.getZ() + 0.5;
-            double h = 0.12; // половина размера маркера
-            renderBoxEdges(builder, pose,
-                    cx - h, cy - h, cz - h,
-                    cx + h, cy + h, cz + h,
+            double h = 0.12;
+            LevelRenderer.renderLineBox(poseStack, lines,
+                    pos.getX() + 0.5 - h, pos.getY() + 0.5 - h, pos.getZ() + 0.5 - h,
+                    pos.getX() + 0.5 + h, pos.getY() + 0.5 + h, pos.getZ() + 0.5 + h,
                     rgb[0], rgb[1], rgb[2], 0.45f);
-            drawn++;
+            markers++;
         }
 
-        if (drawn > 0) {
-            BufferUploader.drawWithShader(builder.buildOrThrow());
-        } else {
-            builder.build();
-        }
+        bufferSource.endBatch(RenderType.lines());
     }
 
     /**
-     * Добавляет в буфер рёбра ограничивающего бокса конструкции,
-     * окрашенные в цвет её температуры.
+     * Рамка вокруг всей конструкции цветом её температуры. Сами блоки
+     * конструкции не заливаются — квады з-файтились с её моделью.
      */
-    private static void addSourceOutline(BufferBuilder builder, Matrix4f pose,
+    private static void addSourceOutline(PoseStack poseStack, VertexConsumer lines,
                                          HeatSourceHelper.HeatSource source) {
         int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
         int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
@@ -394,39 +346,10 @@ public class HeatDebugRenderHandler {
 
         float[] rgb = temperatureColor(source.sourceTemp());
         float e = OUTLINE_EPSILON;
-        renderBoxEdges(builder, pose,
+        LevelRenderer.renderLineBox(poseStack, lines,
                 minX - e, minY - e, minZ - e,
                 maxX + 1 + e, maxY + 1 + e, maxZ + 1 + e,
                 rgb[0], rgb[1], rgb[2], 1.0f);
-    }
-
-    /**
-     * Рисует рёбра прямоугольного параллелепипеда.
-     */
-    private static void renderBoxEdges(BufferBuilder builder, Matrix4f pose,
-                                       double x0, double y0, double z0,
-                                       double x1, double y1, double z1,
-                                       float r, float g, float b, float a) {
-        line(builder, pose, x0, y0, z0, x1, y0, z0, r, g, b, a);
-        line(builder, pose, x1, y0, z0, x1, y0, z1, r, g, b, a);
-        line(builder, pose, x1, y0, z1, x0, y0, z1, r, g, b, a);
-        line(builder, pose, x0, y0, z1, x0, y0, z0, r, g, b, a);
-        line(builder, pose, x0, y1, z0, x1, y1, z0, r, g, b, a);
-        line(builder, pose, x1, y1, z0, x1, y1, z1, r, g, b, a);
-        line(builder, pose, x1, y1, z1, x0, y1, z1, r, g, b, a);
-        line(builder, pose, x0, y1, z1, x0, y1, z0, r, g, b, a);
-        line(builder, pose, x0, y0, z0, x0, y1, z0, r, g, b, a);
-        line(builder, pose, x1, y0, z0, x1, y1, z0, r, g, b, a);
-        line(builder, pose, x1, y0, z1, x1, y1, z1, r, g, b, a);
-        line(builder, pose, x0, y0, z1, x0, y1, z1, r, g, b, a);
-    }
-
-    private static void line(BufferBuilder builder, Matrix4f pose,
-                             double x0, double y0, double z0,
-                             double x1, double y1, double z1,
-                             float r, float g, float b, float a) {
-        builder.addVertex(pose, (float) x0, (float) y0, (float) z0).setColor(r, g, b, a);
-        builder.addVertex(pose, (float) x1, (float) y1, (float) z1).setColor(r, g, b, a);
     }
 
     /**
