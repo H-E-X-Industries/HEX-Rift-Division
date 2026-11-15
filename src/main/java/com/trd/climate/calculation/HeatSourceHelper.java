@@ -30,12 +30,14 @@ public final class HeatSourceHelper {
     /**
      * Экспонента спада интенсивности излучения с расстоянием.
      * <p>
-     * Значение меньше 1 даёт более «пологий» градиент: тепло не исчезает мгновенно
-     * на втором-третьем блоке, а плавно гаснет к краю радиуса. При 1.3 тепло
-     * обрывалось слишком резко (в метре от печи жарко, через два — как в
-     * коридоре).
+     * Значение меньше 1 даёт «пологий» градиент: тепло не исчезает мгновенно
+     * на втором-третьем блоке, а плавно гаснет к краю радиуса. При значениях
+     * больше 1 тепло обрывалось неестественно резко (у лавы 330 °C, а уже через
+     * четыре блока — комнатная температура). При 0.6 спад мягкий: у кромки
+     * жарко, дальше тепло тает постепенно и сходит на нет только у самого
+     * края радиуса излучения.
      */
-    public static final float FALLOFF_EXPONENT = 1.15f;
+    public static final float FALLOFF_EXPONENT = 0.6f;
 
     /**
      * Коэффициент убывающей отдачи для перекрывающихся источников:
@@ -129,11 +131,16 @@ public final class HeatSourceHelper {
      * Сканируется куб со стороной 2·R+1, где R — максимальный радиус излучения
      * среди зарегистрированных источников.
      */
+    /** Максимум блоков в одном кластере (лавовое озеро, ледник). */
+    private static final int MAX_CLUSTER_CELLS = 96;
+
     public static List<HeatSource> findNearbyHeatSources(Level level, BlockPos center) {
         List<HeatSource> sources = new ArrayList<>();
         // Мультиблок находится сразу по нескольким блокам (контроллер + парты) —
         // оставляем только один источник на конструкцию
         java.util.Set<BlockPos> seen = new java.util.HashSet<>();
+        // Блоки, уже вошедшие в кластер (лавовое озеро): повторно не разрешаем
+        java.util.Set<BlockPos> claimed = new java.util.HashSet<>();
 
         float maxRadius = HeatSourceRegistry.maxRadius();
         if (maxRadius <= 0.0f) {
@@ -152,14 +159,133 @@ public final class HeatSourceHelper {
                         continue;
                     }
                     cursor.set(center.getX() + dx, center.getY() + dy, center.getZ() + dz);
-                    HeatSource source = resolveAt(level, cursor);
-                    if (source != null && seen.add(source.pos())) {
-                        sources.add(source);
+                    if (claimed.contains(cursor)) {
+                        continue; // блок уже вошёл в кластер соседнего источника
                     }
+                    HeatSource source = resolveAt(level, cursor);
+                    if (source == null || !seen.add(source.pos())) {
+                        continue;
+                    }
+                    // Простые ванильные источники (лава, лёд, магма) часто лежат
+                    // огромными скоплениями: сотни одинаковых блоков = сотни
+                    // источников, и для каждого строится луч перекрытия. Склеиваем
+                    // соседние блоки с тем же описанием в ОДИН источник-кластер:
+                    // озеро греет как единое тело (расстояние — до ближайшей
+                    // кромки), а расчёт дешевеет в десятки раз.
+                    if (source.cells().size() == 1
+                            && HeatSourceRegistry.resolveState(level.getBlockState(cursor)) == source.def()) {
+                        source = expandCluster(level, source, claimed, center, rSq);
+                    }
+                    sources.add(source);
                 }
             }
         }
         return sources;
+    }
+
+    /**
+     * Склеивает готовый список источников в кластеры.
+     * <p>
+     * Вариант для кода, который собрал источники сам (по одному на блок —
+     * например, отладочный сканер чанков) и хочет ту же экономию, что даёт
+     * кластеризация в {@link #findNearbyHeatSources}: смежные одиночные
+     * источники с одинаковым описанием (лава, лёд, магма) объединяются в
+     * один источник со множеством блоков. Мультиблоки и приборы мода
+     * (источник по блок-сущности) не трогаем — у каждого прибора своя
+     * температура и мощность.
+     */
+    public static List<HeatSource> clusterSources(Level level, List<HeatSource> sources) {
+        List<HeatSource> result = new ArrayList<>();
+        java.util.Map<BlockPos, HeatSource> singles = new java.util.HashMap<>();
+        for (HeatSource s : sources) {
+            if (s.cells().size() > 1
+                    || HeatSourceRegistry.resolveState(level.getBlockState(s.pos())) != s.def()) {
+                result.add(s);
+            } else {
+                singles.put(s.pos(), s);
+            }
+        }
+        if (singles.isEmpty()) {
+            return result;
+        }
+
+        java.util.Set<BlockPos> visited = new java.util.HashSet<>();
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        for (HeatSource seed : singles.values()) {
+            if (!visited.add(seed.pos())) {
+                continue;
+            }
+            List<BlockPos> cells = new ArrayList<>();
+            java.util.ArrayDeque<BlockPos> queue = new java.util.ArrayDeque<>();
+            cells.add(seed.pos());
+            queue.add(seed.pos());
+            while (!queue.isEmpty() && cells.size() < MAX_CLUSTER_CELLS) {
+                BlockPos cur = queue.poll();
+                for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
+                    cursor.set(cur.getX() + dir.getStepX(),
+                            cur.getY() + dir.getStepY(),
+                            cur.getZ() + dir.getStepZ());
+                    HeatSource neighbour = singles.get(cursor);
+                    if (neighbour == null || neighbour.def() != seed.def()) {
+                        continue;
+                    }
+                    if (visited.add(neighbour.pos())) {
+                        cells.add(neighbour.pos());
+                        queue.add(neighbour.pos());
+                    }
+                }
+            }
+            result.add(new HeatSource(seed.pos(), seed.def(), seed.power(), seed.sourceTemp(), cells));
+        }
+        return result;
+    }
+
+    /**
+     * Склеивает смежные блоки с тем же описанием источника в один кластер.
+     * <p>
+     * Обход в ширину по шести соседям: лавовое озеро или ледяная пещера
+     * становятся одним источником со множеством блоков (как мультиблок),
+     * поэтому внутренние блоки скопления вообще не участвуют в расчёте.
+     * Размер кластера ограничен ({@value #MAX_CLUSTER_CELLS}), чтобы поиск
+     * ближайшего блока оставался дешёвым.
+     */
+    private static HeatSource expandCluster(Level level, HeatSource first,
+                                            java.util.Set<BlockPos> claimed,
+                                            BlockPos center, int rSq) {
+        HeatSourceDef def = first.def();
+        List<BlockPos> cells = new ArrayList<>();
+        java.util.ArrayDeque<BlockPos> queue = new java.util.ArrayDeque<>();
+        BlockPos start = first.pos();
+        claimed.add(start);
+        cells.add(start);
+        queue.add(start);
+
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        while (!queue.isEmpty() && cells.size() < MAX_CLUSTER_CELLS) {
+            BlockPos cur = queue.poll();
+            for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
+                cursor.set(cur.getX() + dir.getStepX(),
+                        cur.getY() + dir.getStepY(),
+                        cur.getZ() + dir.getStepZ());
+                long dx = cursor.getX() - center.getX();
+                long dy = cursor.getY() - center.getY();
+                long dz = cursor.getZ() - center.getZ();
+                if (dx * dx + dy * dy + dz * dz > rSq) {
+                    continue; // не выползаем за пределы области сканирования
+                }
+                if (claimed.contains(cursor)) {
+                    continue;
+                }
+                if (HeatSourceRegistry.resolveState(level.getBlockState(cursor)) != def) {
+                    continue;
+                }
+                BlockPos immutable = cursor.immutable();
+                claimed.add(immutable);
+                cells.add(immutable);
+                queue.add(immutable);
+            }
+        }
+        return new HeatSource(start, def, first.power(), first.sourceTemp(), cells);
     }
 
     /**

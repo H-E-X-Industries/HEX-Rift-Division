@@ -64,8 +64,6 @@ public class HeatDebugController {
     private static final int MAX_SOURCE_CACHE = 2048;
     /** Сколько источников одновременно показывается в поле температур. */
     private static final int MAX_FIELD_SOURCES = 16;
-    /** Минимум источников в поле (даже если они за спиной). */
-    private static final int MIN_FIELD_SOURCES = 6;
 
     // ── Данные для рендера (потокобезопасные) ──────────────────────────
     /** Температура в точке, °C. */
@@ -79,6 +77,12 @@ public class HeatDebugController {
     private static final Map<ChunkPos, List<HeatSourceHelper.HeatSource>> chunkSources = new ConcurrentHashMap<>();
     private static final ArrayDeque<ChunkPos> scanQueue = new ArrayDeque<>();
     private static final List<HeatSourceHelper.HeatSource> activeSources = new ArrayList<>();
+    /**
+     * Источники для расчёта температур: смежные одинаковые блоки (лавовые
+     * озёра, ледники) склеены в кластеры, иначе каждая точка поля гоняла
+     * бы луч перекрытия к каждому из сотен блоков лавы.
+     */
+    private static final List<HeatSourceHelper.HeatSource> calculationSources = new ArrayList<>();
     /** Клетки источников, вокруг которых ещё ищутся блоки для поля. */
     private static final ArrayDeque<CellTask> pendingCells = new ArrayDeque<>();
     private static final ArrayDeque<BlockPos> pendingPoints = new ArrayDeque<>();
@@ -94,10 +98,15 @@ public class HeatDebugController {
     /** Точки, которые были в поле, но исчезли из нового набора кандидатов. */
     private static final Set<BlockPos> stalePoints = new HashSet<>();
 
+    /** Мультиблок-источник под прицелом игрока (для рамки в рендере). */
+    private static volatile HeatSourceHelper.HeatSource hoveredMultiblock = null;
+
     /**
-     * Задача развёртки: клетка источника и радиус её излучения.
+     * Задача развёртки: клетка источника, радиус её излучения и нужно ли
+     * заливать саму клетку (у мультиблоков — нет: заливка кубом поверх
+     * нестандартной модели даёт z-fighting, вместо неё рисуется рамка).
      */
-    private record CellTask(BlockPos pos, float radius) {}
+    private record CellTask(BlockPos pos, float radius, boolean paintSelf) {}
 
     private static ClientLevel cachedLevel = null;
     private static int lastRefreshTick = Integer.MIN_VALUE;
@@ -125,6 +134,11 @@ public class HeatDebugController {
     /** Снимок активных источников. */
     public static List<HeatSourceHelper.HeatSource> sources() {
         return publishedSources;
+    }
+
+    /** Мультиблок-источник под прицелом игрока (или {@code null}). */
+    public static HeatSourceHelper.HeatSource hoveredMultiblock() {
+        return hoveredMultiblock;
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -178,8 +192,19 @@ public class HeatDebugController {
         // 1. Обновление списка источников
         if (tick - lastRefreshTick >= REFRESH_INTERVAL_TICKS || lastRefreshTick == Integer.MIN_VALUE) {
             lastRefreshTick = tick;
-            refreshSources(level, playerPos, mc.player.getLookAngle());
+            refreshSources(level, playerPos);
         }
+
+        // 1б. Мультиблок под прицелом: его рендер обведёт рамкой
+        // (один resolveAt в тик — дёшево, результат уже вычислен игрой)
+        HeatSourceHelper.HeatSource hover = null;
+        if (mc.hitResult instanceof net.minecraft.world.phys.BlockHitResult blockHit) {
+            HeatSourceHelper.HeatSource s = HeatSourceHelper.resolveAt(level, blockHit.getBlockPos());
+            if (s != null && s.cells().size() > 1) {
+                hover = s;
+            }
+        }
+        hoveredMultiblock = hover;
 
         // 2. Периодическое пересканирование чанков — чтобы подхватывать
         //    установленные и сломанные блоки (кэш чанков стареет)
@@ -230,8 +255,7 @@ public class HeatDebugController {
     // ИСТОЧНИКИ
     // ═══════════════════════════════════════════════════════════
 
-    private static void refreshSources(ClientLevel level, BlockPos playerPos,
-                                       net.minecraft.world.phys.Vec3 look) {
+    private static void refreshSources(ClientLevel level, BlockPos playerPos) {
         int radius = ModClientConfig.heatDebugRadius();
         float maxSourceRadius = HeatSourceRegistry.maxRadius();
         double rangeSq = (radius + maxSourceRadius) * (radius + maxSourceRadius);
@@ -272,8 +296,15 @@ public class HeatDebugController {
             entry.setValue(valid);
         }
 
-        // Отбираем источники для поля: ближние и те, что в поле зрения
-        pickFieldSources(playerPos, look);
+        // Источники для расчёта температур: лавовые озёра и ледники —
+        // одним кластером, а не сотней источников (иначе расчёт поля
+        // встаёт колом). Для заливки по-прежнему используем активные
+        // источники по одному на блок — кластер сам по себе не заливается
+        calculationSources.clear();
+        calculationSources.addAll(HeatSourceHelper.clusterSources(level, activeSources));
+
+        // Отбираем источники для поля: просто ближайшие к игроку
+        pickFieldSources(playerPos);
 
         // Публикуем неизменяемый снимок для потока рендера
         publishedSources = List.copyOf(fieldSources);
@@ -294,37 +325,22 @@ public class HeatDebugController {
     /**
      * Отбирает источники, которые попадут в поле температур.
      * <p>
-     * Приоритет — ближние к игроку и находящиеся в поле зрения: в аду или в
-     * ледяных горах источников сотни, а показать нужно то, что перед
-     * игроком. Всё остальное всё равно учитывается в расчёте температуры,
-     * просто не заливает экран.
+     * Просто ближайшие к игроку: никаких хитростей с «полем зрения» — оно
+     * давало мерцание при повороте камеры (набор источников менялся, поле
+     * пересобиралось), а невидимое за спиной всё равно отсекается фрустумом
+     * на этапе рендера. Все остальные источники участвуют в расчёте
+     * температуры, просто не заливают экран.
      */
-    private static void pickFieldSources(BlockPos playerPos, net.minecraft.world.phys.Vec3 look) {
+    private static void pickFieldSources(BlockPos playerPos) {
         fieldSources.clear();
         if (activeSources.isEmpty()) {
             return;
         }
         List<HeatSourceHelper.HeatSource> sorted = new ArrayList<>(activeSources);
         sorted.sort((a, b) -> Double.compare(distanceSq(a.pos(), playerPos), distanceSq(b.pos(), playerPos)));
-
-        // Сначала то, что в поле зрения
-        for (HeatSourceHelper.HeatSource source : sorted) {
-            if (fieldSources.size() >= MAX_FIELD_SOURCES) {
-                break;
-            }
-            if (isInView(source.pos(), playerPos, look)) {
-                fieldSources.add(source);
-            }
-        }
-        // Если перед игроком почти ничего нет — берём ближайшие, даже за спиной
-        int minSources = Math.min(MIN_FIELD_SOURCES, sorted.size());
-        for (HeatSourceHelper.HeatSource source : sorted) {
-            if (fieldSources.size() >= minSources) {
-                break;
-            }
-            if (!fieldSources.contains(source)) {
-                fieldSources.add(source);
-            }
+        int limit = Math.min(MAX_FIELD_SOURCES, sorted.size());
+        for (int i = 0; i < limit; i++) {
+            fieldSources.add(sorted.get(i));
         }
     }
 
@@ -333,31 +349,6 @@ public class HeatDebugController {
         double dy = pos.getY() - playerPos.getY();
         double dz = pos.getZ() - playerPos.getZ();
         return dx * dx + dy * dy + dz * dz;
-    }
-
-    /**
-     * Находится ли источник перед игроком (в горизонтальной плоскости).
-     */
-    private static boolean isInView(BlockPos pos, BlockPos playerPos, net.minecraft.world.phys.Vec3 look) {
-        if (look == null) {
-            return true;
-        }
-        double dx = pos.getX() + 0.5 - (playerPos.getX() + 0.5);
-        double dz = pos.getZ() + 0.5 - (playerPos.getZ() + 0.5);
-        double len = Math.sqrt(dx * dx + dz * dz);
-        if (len < 1.0) {
-            return true; // прямо под игроком
-        }
-        double lx = look.x;
-        double lz = look.z;
-        double llen = Math.sqrt(lx * lx + lz * lz);
-        if (llen < 0.01) {
-            return true; // смотрит строго вверх или вниз
-        }
-        lx /= llen;
-        lz /= llen;
-        double dot = (lx * dx + lz * dz) / len;
-        return dot > -0.2; // допускаем немного за спиной
     }
 
     /**
@@ -374,8 +365,12 @@ public class HeatDebugController {
         pendingCells.clear();
         for (HeatSourceHelper.HeatSource source : fieldSources) {
             float radius = source.radius();
+            // Мультиблоки и кластеры (лавовые озёра) сами не заливаются:
+            // куб поверх их нестандартной геометрии даёт z-fighting, а для
+            // мультиблока вместо заливки рисуется рамка при наведении
+            boolean paintSelf = source.cells().size() == 1;
             for (BlockPos cell : source.cells()) {
-                pendingCells.add(new CellTask(cell, radius));
+                pendingCells.add(new CellTask(cell, radius, paintSelf));
             }
         }
     }
@@ -494,10 +489,11 @@ public class HeatDebugController {
         expandedCells.add(cell);
 
         // Сам блок источника — его температура видна на нём самом.
-        // Добавляем всегда: у мультиблоков контроллер и парты не считаются
-        // «сплошными» (noOcclusion / фантомы), и без этого они бы не
-        // подсвечивались цветом температуры
-        addCandidate(cell, level, seenCandidates);
+        // Только для одиночных блоков: заливка мультиблоков и кластеров
+        // лавы вызывает z-fighting с их моделями/поверхностью
+        if (task.paintSelf()) {
+            addCandidate(cell, level, seenCandidates);
+        }
 
         int rad = (int) Math.ceil(task.radius());
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
@@ -580,7 +576,7 @@ public class HeatDebugController {
      */
     private static void computePendingPoints(ClientLevel level, long deadline) {
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
-        List<HeatSourceHelper.HeatSource> sources = activeSources;
+        List<HeatSourceHelper.HeatSource> sources = calculationSources;
         while (!pendingPoints.isEmpty() && System.nanoTime() < deadline) {
             BlockPos pos = pendingPoints.poll();
             cursor.set(pos.getX(), pos.getY(), pos.getZ());
@@ -616,12 +612,14 @@ public class HeatDebugController {
         chunkSources.clear();
         scanQueue.clear();
         activeSources.clear();
+        calculationSources.clear();
         pendingCells.clear();
         pendingPoints.clear();
         seenCandidates.clear();
         expandedCells.clear();
         stalePoints.clear();
         publishedSources = List.of();
+        hoveredMultiblock = null;
         sourcesSignature = 0;
         errorCount = 0;
         lastRefreshTick = Integer.MIN_VALUE;

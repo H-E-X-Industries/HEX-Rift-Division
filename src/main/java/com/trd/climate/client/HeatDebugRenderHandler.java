@@ -7,15 +7,17 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import com.trd.climate.calculation.HeatSourceHelper;
 import com.trd.client.config.ModClientConfig;
 import com.trd.client.config.ModDebugMode;
 import com.trd.main.MainRegistry;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -24,41 +26,46 @@ import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
 
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 /**
  * Отладка температурных полей (Heat Debug Overlay).
  * <p>
- * Включается общим режимом отладки мода ({@link com.trd.client.config.ModDebugMode}),
+ * Включается общим режимом отладки мода ({@link ModDebugMode}),
  * который переключается переназначаемой клавишей
- * {@link com.trd.client.config.ModKeyBindings#DEBUG_RENDER_KEY}. Отдельной клавиши
- * у климата нет намеренно — иначе она разъезжается с общим режимом отладки, когда
- * игрок переназначает клавишу в настройках.
+ * {@link com.trd.client.config.ModKeyBindings#DEBUG_RENDER_KEY}.
  * <p>
  * Оверлей показывает <b>абсолютную температуру в точке</b>, посчитанную тем же кодом,
  * что и для термометра/игрока ({@link com.trd.climate.calculation.TemperatureCalculator#calculatePointTemp}),
  * поэтому его показания не могут разойтись с приборами.
  * <p>
  * <b>Поток рендера ничего не знает о мире.</b> Все расчёты идут в клиентском тике
- * ({@link HeatDebugController}); здесь только отрисовка готовых данных. Это и
- * быстрее, и безопаснее: обращения к блок-сущностям из потока рендера гоняются
- * с тиковым потоком и роняли игру при установке мультиблоков.
+ * ({@link HeatDebugController}); здесь только отрисовка готовых данных.
  * <p>
- * Закрашиваются <b>все открытые грани</b> блока (не только верхняя), а цифра с
- * температурой остаётся над блоком. Радиус и лимит пятен задаются в клиентских
- * настройках ({@link ModClientConfig}).
+ * Рендер:
+ * <ul>
+ *   <li>закрашиваются открытые грани блоков вокруг источников (цвет — плавный
+ *       градиент зелёный → жёлтый → красный, без «вырвиглазных» порогов);</li>
+ *   <li>блоки вне пирамиды видимости камеры отсекаются через {@link Frustum}
+ *       (за спиной и за стеной по краю экрана ничего не рисуется);</li>
+ *   <li>мультиблок-источник под прицелом обводится рамкой — как ванильное
+ *       выделение блока, только цветом его температуры. Сами блоки мультиблока
+ *       НЕ заливаются (иначе квады з-файтятся с его моделью);</li>
+ *   <li>цифры с температурой рисуются только рядом с игроком.</li>
+ * </ul>
  */
 @EventBusSubscriber(modid = MainRegistry.MOD_ID, value = Dist.CLIENT)
 public class HeatDebugRenderHandler {
 
     /** Радиус, в пределах которого рисуется текст с температурой. */
     private static final double TEXT_MAX_DISTANCE_SQ = 12.0 * 12.0;
-    /** Температура, выше которой блок подсвечивается ярко-красным, °C. */
-    private static final float HOT_BLOCK_THRESHOLD = 200.0f;
-    /** Сколько мультиблоков одновременно обводить рамкой. */
-    private static final int MAX_OUTLINED_MULTIBLOCKS = 12;
+    /** Прозрачность заливки граней. */
+    private static final float FACE_ALPHA = 0.5f;
+    /** Отступ заливки от грани блока, чтобы не слипалась с моделью. */
+    private static final float FACE_EPSILON = 0.003f;
+    /** Отступ рамки мультиблока от границ структуры. */
+    private static final float OUTLINE_EPSILON = 0.01f;
     /** Флаг, чтобы не спамить в лог одной и той же ошибкой. */
     private static boolean errorLogged = false;
 
@@ -76,7 +83,7 @@ public class HeatDebugRenderHandler {
             // Оверлей не должен ронять игру
             if (!errorLogged) {
                 errorLogged = true;
-                com.trd.main.MainRegistry.LOGGER.error("[TRD] Ошибка отрисовки оверлея тепла:", t);
+                MainRegistry.LOGGER.error("[TRD] Ошибка отрисовки оверлея тепла:", t);
             }
         }
     }
@@ -89,15 +96,14 @@ public class HeatDebugRenderHandler {
 
         Map<BlockPos, Float> field = HeatDebugController.field();
         Map<BlockPos, Integer> faceMasks = HeatDebugController.faceMasks();
-        if (field.isEmpty() || faceMasks.isEmpty()) {
-            return;
-        }
 
-        ClientLevel level = mc.level;
         Camera camera = event.getCamera();
         Vec3 camPos = camera.getPosition();
-        double cullRadius = ModClientConfig.heatDebugRadius();
-        double cullRadiusSq = cullRadius * cullRadius;
+        Frustum frustum = event.getFrustum();
+        double cullRadiusSq = (double) ModClientConfig.heatDebugRadius() * ModClientConfig.heatDebugRadius();
+        double playerX = mc.player.getX();
+        double playerY = mc.player.getY();
+        double playerZ = mc.player.getZ();
 
         PoseStack poseStack = event.getPoseStack();
         poseStack.pushPose();
@@ -112,227 +118,196 @@ public class HeatDebugRenderHandler {
         RenderSystem.disableCull();
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
 
-        Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder builder = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+        // ── 1. Заливка открытых граней ──────────────────────────────
+        if (!field.isEmpty() && !faceMasks.isEmpty()) {
+            Tesselator tesselator = Tesselator.getInstance();
+            BufferBuilder builder = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
 
-        for (Map.Entry<BlockPos, Float> entry : field.entrySet()) {
-            BlockPos bpos = entry.getKey();
-            Integer maskValue = faceMasks.get(bpos);
-            if (maskValue == null) {
-                continue;
-            }
-            int mask = maskValue;
+            for (Map.Entry<BlockPos, Integer> entry : faceMasks.entrySet()) {
+                BlockPos bpos = entry.getKey();
+                Float tempValue = field.get(bpos);
+                if (tempValue == null) {
+                    continue;
+                }
+                int mask = entry.getValue();
+                if (mask == 0) {
+                    continue;
+                }
 
-            // Отсекаем пятна за пределами радиуса отображения
-            double ddx = bpos.getX() - mc.player.getX();
-            double ddy = bpos.getY() - mc.player.getY();
-            double ddz = bpos.getZ() - mc.player.getZ();
-            if (ddx * ddx + ddy * ddy + ddz * ddz > cullRadiusSq) {
-                continue;
+                // Отсекаем пятна за пределами радиуса отображения
+                double ddx = bpos.getX() + 0.5 - playerX;
+                double ddy = bpos.getY() + 0.5 - playerY;
+                double ddz = bpos.getZ() + 0.5 - playerZ;
+                if (ddx * ddx + ddy * ddy + ddz * ddz > cullRadiusSq) {
+                    continue;
+                }
+
+                // Отсекаем блоки вне пирамиды видимости камеры: за спиной
+                // ничего не рисуется, даже если оно попало в поле
+                if (frustum != null && !frustum.isVisible(new AABB(bpos))) {
+                    continue;
+                }
+
+                float temp = tempValue;
+                float[] rgb = temperatureColor(temp);
+                float r = rgb[0], g = rgb[1], b = rgb[2];
+                float a = FACE_ALPHA;
+
+                float x = bpos.getX();
+                float y = bpos.getY();
+                float z = bpos.getZ();
+                float e = FACE_EPSILON;
+
+                // Верхняя грань
+                if ((mask & 1) != 0) {
+                    addQuad(builder, pose,
+                            x, y + 1 + e, z,
+                            x, y + 1 + e, z + 1,
+                            x + 1, y + 1 + e, z + 1,
+                            x + 1, y + 1 + e, z,
+                            r, g, b, a);
+                }
+                // Нижняя
+                if ((mask & 2) != 0) {
+                    addQuad(builder, pose,
+                            x, y - e, z,
+                            x + 1, y - e, z,
+                            x + 1, y - e, z + 1,
+                            x, y - e, z + 1,
+                            r, g, b, a);
+                }
+                // +X
+                if ((mask & 4) != 0) {
+                    addQuad(builder, pose,
+                            x + 1 + e, y, z,
+                            x + 1 + e, y, z + 1,
+                            x + 1 + e, y + 1, z + 1,
+                            x + 1 + e, y + 1, z,
+                            r, g, b, a);
+                }
+                // −X
+                if ((mask & 8) != 0) {
+                    addQuad(builder, pose,
+                            x - e, y, z,
+                            x - e, y, z + 1,
+                            x - e, y + 1, z + 1,
+                            x - e, y + 1, z,
+                            r, g, b, a);
+                }
+                // +Z
+                if ((mask & 16) != 0) {
+                    addQuad(builder, pose,
+                            x, y, z + 1 + e,
+                            x + 1, y, z + 1 + e,
+                            x + 1, y + 1, z + 1 + e,
+                            x, y + 1, z + 1 + e,
+                            r, g, b, a);
+                }
+                // −Z
+                if ((mask & 32) != 0) {
+                    addQuad(builder, pose,
+                            x, y, z - e,
+                            x + 1, y, z - e,
+                            x + 1, y + 1, z - e,
+                            x, y + 1, z - e,
+                            r, g, b, a);
+                }
             }
 
-            float temp = entry.getValue();
-            float t = temperatureGradient(temp);
-            float r, g, b;
-            float a = 0.55f;
-            if (temp > HOT_BLOCK_THRESHOLD) {
-                // Очень горячие блоки (200 °C и выше) — чистым красным,
-                // чтобы сразу было видно, где опасно
-                r = 1.0f;
-                g = 0.0f;
-                b = 0.0f;
-                a = 0.85f;
-            } else if (t < 0.5f) {
-                r = 2.0f * t;
-                g = 1.0f;
-                b = 0.0f;
-            } else {
-                r = 1.0f;
-                g = 2.0f * (1.0f - t);
-                b = 0.0f;
-            }
-
-            float x = bpos.getX();
-            float y = bpos.getY();
-            float z = bpos.getZ();
-            float e = 0.002f; // небольшой отступ, чтобы грань не слипалась с блоком
-
-            // Верхняя грань
-            if ((mask & 1) != 0) {
-                addQuad(builder, pose,
-                        x, y + 1 + e, z,
-                        x, y + 1 + e, z + 1,
-                        x + 1, y + 1 + e, z + 1,
-                        x + 1, y + 1 + e, z,
-                        r, g, b, a);
-            }
-            // Нижняя
-            if ((mask & 2) != 0) {
-                addQuad(builder, pose,
-                        x, y - e, z,
-                        x + 1, y - e, z,
-                        x + 1, y - e, z + 1,
-                        x, y - e, z + 1,
-                        r, g, b, a);
-            }
-            // +X
-            if ((mask & 4) != 0) {
-                addQuad(builder, pose,
-                        x + 1 + e, y, z,
-                        x + 1 + e, y, z + 1,
-                        x + 1 + e, y + 1, z + 1,
-                        x + 1 + e, y + 1, z,
-                        r, g, b, a);
-            }
-            // −X
-            if ((mask & 8) != 0) {
-                addQuad(builder, pose,
-                        x - e, y, z,
-                        x - e, y, z + 1,
-                        x - e, y + 1, z + 1,
-                        x - e, y + 1, z,
-                        r, g, b, a);
-            }
-            // +Z
-            if ((mask & 16) != 0) {
-                addQuad(builder, pose,
-                        x, y, z + 1 + e,
-                        x + 1, y, z + 1 + e,
-                        x + 1, y + 1, z + 1 + e,
-                        x, y + 1, z + 1 + e,
-                        r, g, b, a);
-            }
-            // −Z
-            if ((mask & 32) != 0) {
-                addQuad(builder, pose,
-                        x, y, z - e,
-                        x + 1, y, z - e,
-                        x + 1, y + 1, z - e,
-                        x, y + 1, z - e,
-                        r, g, b, a);
-            }
+            BufferUploader.drawWithShader(builder.buildOrThrow());
         }
 
-        BufferUploader.drawWithShader(builder.buildOrThrow());
-
-        // Рамка вокруг всего мультиблока, на который смотрит игрок
-        renderMultiblockOutline(mc, pose);
+        // ── 2. Рамка вокруг мультиблока под прицелом ────────────────
+        renderHoveredMultiblockOutline(pose);
 
         RenderSystem.enableCull();
         RenderSystem.depthMask(true);
-        poseStack.popPose();
 
-        // Цифры с температурой — над блоком
-        try (com.mojang.blaze3d.vertex.ByteBufferBuilder byteBufferBuilder = new com.mojang.blaze3d.vertex.ByteBufferBuilder(16384)) {
-            MultiBufferSource.BufferSource textBufferSource = MultiBufferSource.immediate(byteBufferBuilder);
+        // ── 3. Цифры с температурой — над ближними блоками ─────────
+        if (!field.isEmpty()) {
+            try (com.mojang.blaze3d.vertex.ByteBufferBuilder byteBufferBuilder = new com.mojang.blaze3d.vertex.ByteBufferBuilder(16384)) {
+                MultiBufferSource.BufferSource textBufferSource = MultiBufferSource.immediate(byteBufferBuilder);
 
-            for (Map.Entry<BlockPos, Float> entry : field.entrySet()) {
-                BlockPos bpos = entry.getKey();
-                float temp = entry.getValue();
+                for (Map.Entry<BlockPos, Float> entry : field.entrySet()) {
+                    BlockPos bpos = entry.getKey();
+                    float temp = entry.getValue();
 
-                double distSq = camPos.distanceToSqr(bpos.getX() + 0.5, bpos.getY() + 1.0, bpos.getZ() + 0.5);
-                if (distSq > TEXT_MAX_DISTANCE_SQ) {
-                    continue; // Не захламляем экран вдали
+                    double distSq = camPos.distanceToSqr(bpos.getX() + 0.5, bpos.getY() + 1.0, bpos.getZ() + 0.5);
+                    if (distSq > TEXT_MAX_DISTANCE_SQ) {
+                        continue; // Не захламляем экран вдали
+                    }
+
+                    String text = String.format(Locale.ROOT, "%.1f°C", temp);
+                    float[] rgb = temperatureColor(temp);
+                    int textColor = 0xFF000000
+                            | ((int) (rgb[0] * 255) << 16)
+                            | ((int) (rgb[1] * 255) << 8)
+                            | (int) (rgb[2] * 255);
+
+                    net.minecraft.client.renderer.debug.DebugRenderer.renderFloatingText(
+                            poseStack,
+                            textBufferSource,
+                            text,
+                            bpos.getX() + 0.5,
+                            bpos.getY() + 1.25,
+                            bpos.getZ() + 0.5,
+                            textColor,
+                            0.025f,
+                            true,
+                            0.0f,
+                            true
+                    );
                 }
 
-                String text = String.format(Locale.ROOT, "%.1f°C", temp);
-                float t = temperatureGradient(temp);
-                int red = (int) ((t < 0.5f ? 2.0f * t : 1.0f) * 255);
-                int green = (int) ((t < 0.5f ? 1.0f : 2.0f * (1.0f - t)) * 255);
-                int textColor = 0xFF000000 | (red << 16) | (green << 8);
-
-                net.minecraft.client.renderer.debug.DebugRenderer.renderFloatingText(
-                        poseStack,
-                        textBufferSource,
-                        text,
-                        bpos.getX() + 0.5,
-                        bpos.getY() + 1.25,
-                        bpos.getZ() + 0.5,
-                        textColor,
-                        0.025f,
-                        true,
-                        0.0f,
-                        true
-                );
+                textBufferSource.endBatch();
             }
-
-            textBufferSource.endBatch();
         }
+
+        poseStack.popPose();
     }
 
     /**
-     * Подсвечивает мультиблоки — рамкой вокруг всей конструкции.
+     * Обводит рамкой мультиблок-источник, на который смотрит игрок.
      * <p>
-     * Рамка рисуется для каждого мультиблока в зоне отладки (их немного),
-     * так что видно сразу: вот этот станок — единое целое из девяти блоков.
+     * Выделяется <b>только</b> конструкция под прицелом (как ванильное
+     * выделение блока): никаких рамок вокруг всех мультиблоков подряд —
+     * они превращали отладку в кашу. Цвет рамки — температура конструкции.
      * <p>
-     * Используется готовый снимок источников из {@link HeatDebugController}:
-     * поток рендера не обращается к миру вообще.
+     * Линии рисуются с включённым тестом глубины: рамка за стеной не видна,
+     * как и у ванильного выделения.
      * <p>
      * <b>Важно:</b> линии рисуются через собственный {@link Tesselator}, а не через
-     * {@code mc.renderBuffers().bufferSource()}. У буфера источника общая
-     * {@code ByteBuffer} с ванильным рендером: если взять её посреди отрисовки
-     * уровня, ванильные буферы окажутся испорчены — и игра падает с
-     * нативным крашем в драйвере видеокарты (EXCEPTION_ACCESS_VIOLATION).
+     * {@code mc.renderBuffers().bufferSource()}: у общего буфера общая память
+     * с ванильным рендером, и обращение к нему посреди отрисовки уровня
+     * роняло игру с нативным крашем в драйвере видеокарты.
      */
-    private static void renderMultiblockOutline(Minecraft mc, Matrix4f pose) {
-        List<com.trd.climate.calculation.HeatSourceHelper.HeatSource> sources = HeatDebugController.sources();
-        if (sources.isEmpty()) {
+    private static void renderHoveredMultiblockOutline(Matrix4f pose) {
+        HeatSourceHelper.HeatSource source = HeatDebugController.hoveredMultiblock();
+        if (source == null || source.cells().size() <= 1) {
             return;
         }
 
+        int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
+        for (BlockPos c : source.cells()) {
+            minX = Math.min(minX, c.getX());
+            minY = Math.min(minY, c.getY());
+            minZ = Math.min(minZ, c.getZ());
+            maxX = Math.max(maxX, c.getX());
+            maxY = Math.max(maxY, c.getY());
+            maxZ = Math.max(maxZ, c.getZ());
+        }
+
+        float[] rgb = temperatureColor(source.sourceTemp());
+
         Tesselator tesselator = Tesselator.getInstance();
         BufferBuilder builder = tesselator.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.POSITION_COLOR);
-
-        int drawn = 0;
-        for (com.trd.climate.calculation.HeatSourceHelper.HeatSource source : sources) {
-            if (source.cells().size() <= 1 || drawn >= MAX_OUTLINED_MULTIBLOCKS) {
-                continue;
-            }
-            int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
-            int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
-            for (BlockPos c : source.cells()) {
-                minX = Math.min(minX, c.getX());
-                minY = Math.min(minY, c.getY());
-                minZ = Math.min(minZ, c.getZ());
-                maxX = Math.max(maxX, c.getX());
-                maxY = Math.max(maxY, c.getY());
-                maxZ = Math.max(maxZ, c.getZ());
-            }
-
-            // Контур мультиблока красится тем же цветом, что и температура:
-            // так сразу видно, насколько горячая конструкция
-            float temp = HeatDebugController.field().getOrDefault(source.pos(), source.sourceTemp());
-            float t = temperatureGradient(temp);
-            float r, g, b;
-            if (temp > HOT_BLOCK_THRESHOLD) {
-                r = 1.0f;
-                g = 0.0f;
-                b = 0.0f;
-            } else if (t < 0.5f) {
-                r = 2.0f * t;
-                g = 1.0f;
-                b = 0.0f;
-            } else {
-                r = 1.0f;
-                g = 2.0f * (1.0f - t);
-                b = 0.0f;
-            }
-            float a = 0.9f;
-
-            renderBoxEdges(builder, pose,
-                    minX - 0.05, minY - 0.05, minZ - 0.05,
-                    maxX + 1.05, maxY + 1.05, maxZ + 1.05,
-                    r, g, b, a);
-            drawn++;
-        }
-
-        if (drawn > 0) {
-            BufferUploader.drawWithShader(builder.buildOrThrow());
-        } else {
-            // Нечего рисовать — закрываем билдер (build вернёт пустой меш)
-            builder.build();
-        }
+        float e = OUTLINE_EPSILON;
+        renderBoxEdges(builder, pose,
+                minX - e, minY - e, minZ - e,
+                maxX + 1 + e, maxY + 1 + e, maxZ + 1 + e,
+                rgb[0], rgb[1], rgb[2], 1.0f);
+        BufferUploader.drawWithShader(builder.buildOrThrow());
     }
 
     /**
@@ -366,10 +341,6 @@ public class HeatDebugRenderHandler {
 
     /**
      * Добавляет квад в вершинный буфер по четырём углам (по часовой стрелке).
-     * <p>
-     * Углы задаются явно: если пытаться вывести грань из двух диагональных
-     * углов блока, то у граней, параллельных оси Z, квад вырождается в линию
-     * (и такая грань просто не рисуется).
      */
     private static void addQuad(BufferBuilder builder, Matrix4f pose,
                                 float ax, float ay, float az,
@@ -384,22 +355,41 @@ public class HeatDebugRenderHandler {
     }
 
     /**
-     * Цветовая шкала по абсолютной температуре.
+     * Цвет температуры: единый плавный градиент без порогов.
      * <p>
      * Шкала нелинейная, иначе 40 °C выглядели бы как 500:
      * <ul>
+     *   <li>≤ 0 °C — голубой (холод);</li>
      *   <li>0…40 °C — зелёный → жёлтый (комфорт и лёгкий жар);</li>
      *   <li>40…200 °C — жёлтый → красный (опасно);</li>
-     *   <li>выше 200 °C — отдельный ярко-красный цвет.</li>
+     *   <li>выше 200 °C — тот же красный, яркость НЕ накручивается:
+     *       никакого «сверх-выделения» для раскалённых блоков.</li>
      * </ul>
+     *
+     * @return массив [r, g, b] в диапазоне 0..1
      */
-    private static float temperatureGradient(float temp) {
+    private static float[] temperatureColor(float temp) {
+        if (temp <= 0.0f) {
+            // Холод: от светло-голубого к насыщенно-голубому
+            float c = Math.min(1.0f, -temp / 30.0f);
+            return new float[]{0.4f * (1.0f - c), 0.7f, 1.0f};
+        }
+        float t;
         if (temp <= 40.0f) {
-            return Math.max(0.0f, temp) / 80.0f;
+            t = temp / 80.0f;               // 0 .. 0.5
+        } else if (temp <= 200.0f) {
+            t = 0.5f + (temp - 40.0f) / 320.0f; // 0.5 .. 1.0
+        } else {
+            t = 1.0f;
         }
-        if (temp <= 200.0f) {
-            return 0.5f + (temp - 40.0f) / 320.0f;
+        float r, g;
+        if (t < 0.5f) {
+            r = 2.0f * t;
+            g = 1.0f;
+        } else {
+            r = 1.0f;
+            g = 2.0f * (1.0f - t);
         }
-        return 1.0f;
+        return new float[]{r, g, 0.0f};
     }
 }
