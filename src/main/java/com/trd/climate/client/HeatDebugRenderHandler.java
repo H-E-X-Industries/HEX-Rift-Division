@@ -95,8 +95,9 @@ public class HeatDebugRenderHandler {
             return;
         }
 
-        Map<BlockPos, Float> field = HeatDebugController.field();
-        Map<BlockPos, Integer> faceMasks = HeatDebugController.faceMasks();
+        HeatDebugController.Snapshot snap = HeatDebugController.snapshot();
+        Map<BlockPos, Float> field = snap.field;
+        Map<BlockPos, Integer> faceMasks = snap.faceMasks;
 
         Camera camera = event.getCamera();
         Vec3 camPos = camera.getPosition();
@@ -152,7 +153,7 @@ public class HeatDebugRenderHandler {
                 float temp = tempValue;
                 float[] rgb = temperatureColor(temp);
                 float r = rgb[0], g = rgb[1], b = rgb[2];
-                float a = FACE_ALPHA * visibility(temp);
+                float a = FACE_ALPHA;
 
                 float x = bpos.getX();
                 float y = bpos.getY();
@@ -215,15 +216,24 @@ public class HeatDebugRenderHandler {
                 }
             }
 
-            BufferUploader.drawWithShader(builder.buildOrThrow());
+            // buildOrThrow() здесь нельзя: если за кадр не добавилось ни одного
+            // квада (все точки ещё без температуры, с маской 0 или отсечены
+            // фрустумом/радиусом), он бросает IllegalStateException — render()
+            // прерывался, и в таких кадрах не рисовалось вообще ничего:
+            // ни заливки, ни рамок, ни цифр (оверлей «замирал»).
+            // build() в этом случае просто возвращает null.
+            com.mojang.blaze3d.vertex.MeshData mesh = builder.build();
+            if (mesh != null) {
+                BufferUploader.drawWithShader(mesh);
+            }
         }
 
         // ── 2. Рамки вокруг мультиблоков-источников ─────────────────
-        renderMultiblockOutlines(pose);
+        renderMultiblockOutlines(pose, snap);
 
         // ── 2б. Фантомные «воздушные источники» (воздух вплотную к
         //        источнику) — рисуются рамкой поменьше ───────────────
-        renderAirHaloCells(pose);
+        renderAirHaloCells(pose, snap);
 
         RenderSystem.enableCull();
         RenderSystem.depthMask(true);
@@ -294,9 +304,9 @@ public class HeatDebugRenderHandler {
      * с ванильным рендером, и обращение к нему посреди отрисовки уровня
      * роняло игру с нативным крашем в драйвере видеокарты.
      */
-    private static void renderMultiblockOutlines(Matrix4f pose) {
-        List<HeatSourceHelper.HeatSource> sources = HeatDebugController.sources();
-        HeatSourceHelper.HeatSource hovered = HeatDebugController.hoveredMultiblock();
+    private static void renderMultiblockOutlines(Matrix4f pose, HeatDebugController.Snapshot snap) {
+        List<HeatSourceHelper.HeatSource> sources = snap.sources;
+        HeatSourceHelper.HeatSource hovered = snap.hoveredMultiblock;
 
         Tesselator tesselator = Tesselator.getInstance();
         BufferBuilder builder = tesselator.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.POSITION_COLOR);
@@ -331,8 +341,8 @@ public class HeatDebugRenderHandler {
      * или измерить их нельзя), это чисто расчётные сущности половинной
      * мощности, поэтому показываем их небольшими рамками.
      */
-    private static void renderAirHaloCells(Matrix4f pose) {
-        Map<BlockPos, Float> halo = HeatDebugController.haloCells();
+    private static void renderAirHaloCells(Matrix4f pose, HeatDebugController.Snapshot snap) {
+        Map<BlockPos, Float> halo = snap.haloCells;
         if (halo.isEmpty()) {
             return;
         }
@@ -432,27 +442,6 @@ public class HeatDebugRenderHandler {
         builder.addVertex(pose, bx, by, bz).setColor(r, g, b, a);
         builder.addVertex(pose, cx, cy, cz).setColor(r, g, b, a);
         builder.addVertex(pose, dx, dy, dz).setColor(r, g, b, a);
-    }
-
-    /**
-     * Насколько заметна пятно заливки при данной температуре.
-     * <p>
-     * Прозрачность растёт вместе с теплом, поэтому граница зоны влияния
-     * растворяется, а не обрывается резкой линией: у края радиуса влияния
-     * температура близка к фоновой, и там заливка просто исчезает.
-     *
-     * @return множитель 0..1
-     */
-    private static float visibility(float temp) {
-        if (temp >= 20.0f) {
-            // комнатная температура — невидимо, 50 °C и выше — полностью видно
-            return Math.min(1.0f, (temp - 20.0f) / 30.0f);
-        }
-        if (temp <= 0.0f) {
-            // холод: чем ниже, тем заметнее
-            return Math.min(1.0f, -temp / 10.0f);
-        }
-        return 0.2f;
     }
 
     /**
