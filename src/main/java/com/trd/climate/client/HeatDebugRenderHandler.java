@@ -136,12 +136,12 @@ public class HeatDebugRenderHandler {
             float r, g, b;
             float a = 0.55f;
             if (temp > HOT_BLOCK_THRESHOLD) {
-                // Очень горячие блоки (200 °C и выше) — ярко-красным, чтобы
-                // сразу было видно, где опасно
+                // Очень горячие блоки (200 °C и выше) — чистым красным,
+                // чтобы сразу было видно, где опасно
                 r = 1.0f;
-                g = 0.06f;
-                b = 0.06f;
-                a = 0.8f;
+                g = 0.0f;
+                b = 0.0f;
+                a = 0.85f;
             } else if (t < 0.5f) {
                 r = 2.0f * t;
                 g = 1.0f;
@@ -284,7 +284,6 @@ public class HeatDebugRenderHandler {
         Tesselator tesselator = Tesselator.getInstance();
         BufferBuilder builder = tesselator.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.POSITION_COLOR);
 
-        float r = 1.0f, g = 0.85f, b = 0.2f, a = 0.95f;
         int drawn = 0;
         for (com.trd.climate.calculation.HeatSourceHelper.HeatSource source : sources) {
             if (source.cells().size() <= 1 || drawn >= MAX_OUTLINED_MULTIBLOCKS) {
@@ -300,6 +299,27 @@ public class HeatDebugRenderHandler {
                 maxY = Math.max(maxY, c.getY());
                 maxZ = Math.max(maxZ, c.getZ());
             }
+
+            // Контур мультиблока красится тем же цветом, что и температура:
+            // так сразу видно, насколько горячая конструкция
+            float temp = HeatDebugController.field().getOrDefault(source.pos(), source.sourceTemp());
+            float t = temperatureGradient(temp);
+            float r, g, b;
+            if (temp > HOT_BLOCK_THRESHOLD) {
+                r = 1.0f;
+                g = 0.0f;
+                b = 0.0f;
+            } else if (t < 0.5f) {
+                r = 2.0f * t;
+                g = 1.0f;
+                b = 0.0f;
+            } else {
+                r = 1.0f;
+                g = 2.0f * (1.0f - t);
+                b = 0.0f;
+            }
+            float a = 0.9f;
+
             renderBoxEdges(builder, pose,
                     minX - 0.05, minY - 0.05, minZ - 0.05,
                     maxX + 1.05, maxY + 1.05, maxZ + 1.05,
@@ -364,9 +384,22 @@ public class HeatDebugRenderHandler {
     }
 
     /**
-     * Цветовая шкала по абсолютной температуре: 0°C -> зелёный, 20°C -> жёлтый, 40°C+ -> красный.
+     * Цветовая шкала по абсолютной температуре.
+     * <p>
+     * Шкала нелинейная, иначе 40 °C выглядели бы как 500:
+     * <ul>
+     *   <li>0…40 °C — зелёный → жёлтый (комфорт и лёгкий жар);</li>
+     *   <li>40…200 °C — жёлтый → красный (опасно);</li>
+     *   <li>выше 200 °C — отдельный ярко-красный цвет.</li>
+     * </ul>
      */
     private static float temperatureGradient(float temp) {
-        return Math.min(1.0f, Math.max(0.0f, temp / 40.0f));
+        if (temp <= 40.0f) {
+            return Math.max(0.0f, temp) / 80.0f;
+        }
+        if (temp <= 200.0f) {
+            return 0.5f + (temp - 40.0f) / 320.0f;
+        }
+        return 1.0f;
     }
 }
