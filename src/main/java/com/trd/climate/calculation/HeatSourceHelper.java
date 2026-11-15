@@ -30,6 +30,12 @@ public final class HeatSourceHelper {
     /** Экспонента спада интенсивности излучения с расстоянием. */
     public static final float FALLOFF_EXPONENT = 1.3f;
 
+    /**
+     * Коэффициент убывающей отдачи для перекрывающихся источников:
+     * ближний источник учитывается полностью, следующий — 35% от него, и так далее.
+     */
+    public static final float OVERLAP_DECAY = 0.35f;
+
     /** Доля тепла, дошедшего на открытом воздухе — остальное сдувает ветер. */
     private static final float OUTDOOR_EFFICIENCY = 0.45f;
 
@@ -38,21 +44,68 @@ public final class HeatSourceHelper {
 
     /**
      * Найденный источник тепла.
+     * <p>
+     * Для мультиблоков источник — это <b>вся конструкция</b> разом: {@link #cells()}
+     * содержит контроллер и все блоки-парты, а расстояние считается до ближайшей
+     * части. Поэтому станок греет окружение как единый источник (а не как десяток
+     * отдельных), и касание любой его грани ощущается одинаково.
      *
-     * @param pos   позиция блока-источника
-     * @param def   описание источника из реестра
-     * @param power мощность источника (0..1) с учётом его текущей температуры
+     * @param pos       позиция блока-источника (для мультиблока — контроллер)
+     * @param def       описание источника из реестра
+     * @param power     мощность источника (0..1) с учётом его текущей температуры
+     * @param sourceTemp текущая температура источника, °C
+     * @param cells     блоки, из которых состоит источник
      */
-    public record HeatSource(BlockPos pos, HeatSourceDef def, float power) {
+    public record HeatSource(BlockPos pos, HeatSourceDef def, float power, float sourceTemp,
+                             List<BlockPos> cells) {
 
-        /** Эффективная мощность излучения источника, °C. */
-        public float effectiveHeat() {
-            return def.maxHeat() * power;
+        public HeatSource {
+            cells = (cells == null || cells.isEmpty()) ? List.of(pos) : List.copyOf(cells);
         }
 
-        /** Радиус излучения источника, блоков. */
+        /** Обычный одиночный блок-источник. */
+        public HeatSource(BlockPos pos, HeatSourceDef def, float power, float sourceTemp) {
+            this(pos, def, power, sourceTemp, List.of(pos));
+        }
+
+        /**
+         * Выход источника у поверхности, °C.
+         * <p>
+         * Для нагревателя — доля его собственной температуры (по теплопроводности),
+         * ограниченная потолком {@link HeatSourceDef#maxHeat()}. Мощность здесь
+         * не учитывается отдельно: у приборов мода текущая температура уже
+         * отражает мощность (холодный нагреватель и так отдаёт мало тепла).
+         */
+        public float effectiveHeat() {
+            return def.radiantOutput(sourceTemp);
+        }
+
+        /**
+         * Радиус излучения источника, блоков.
+         * Зависит от текущей мощности: слабый источник греет только вплотную.
+         */
         public float radius() {
-            return def.radius();
+            return def.radiusAt(power);
+        }
+
+        /**
+         * Ближайший блок источника к точке — от него считается расстояние
+         * и строится луч излучения.
+         */
+        public BlockPos nearestCell(Vec3 point) {
+            BlockPos best = pos;
+            double bestDist = Double.MAX_VALUE;
+            for (BlockPos cell : cells) {
+                double dx = cell.getX() + 0.5 - point.x;
+                double dy = cell.getY() + 0.5 - point.y;
+                double dz = cell.getZ() + 0.5 - point.z;
+                double d = dx * dx + dy * dy + dz * dz;
+                if (d < bestDist) {
+                    bestDist = d;
+                    best = cell;
+                }
+            }
+            return best;
         }
     }
 
@@ -71,6 +124,9 @@ public final class HeatSourceHelper {
      */
     public static List<HeatSource> findNearbyHeatSources(Level level, BlockPos center) {
         List<HeatSource> sources = new ArrayList<>();
+        // Мультиблок находится сразу по нескольким блокам (контроллер + парты) —
+        // оставляем только один источник на конструкцию
+        java.util.Set<BlockPos> seen = new java.util.HashSet<>();
 
         float maxRadius = HeatSourceRegistry.maxRadius();
         if (maxRadius <= 0.0f) {
@@ -90,7 +146,7 @@ public final class HeatSourceHelper {
                     }
                     cursor.set(center.getX() + dx, center.getY() + dy, center.getZ() + dz);
                     HeatSource source = resolveAt(level, cursor);
-                    if (source != null) {
+                    if (source != null && seen.add(source.pos())) {
                         sources.add(source);
                     }
                 }
@@ -101,32 +157,79 @@ public final class HeatSourceHelper {
 
     /**
      * Разрешает источник тепла в конкретном блоке.
+     * <p>
+     * Блок-парт мультиблока разрешается в источник его контроллера:
+     * вся конструкция считается одним источником тепла.
      *
      * @return источник или {@code null}, если блок не является активным источником
      */
     public static HeatSource resolveAt(Level level, BlockPos pos) {
         BlockState state = level.getBlockState(pos);
 
-        // 1) Приборы мода: активность и температура берутся у самого прибора
-        if (HeatSourceRegistry.usesBlockEntity(state.getBlock())
-                && level.getBlockEntity(pos) instanceof IHeatSource heatSource) {
+        // 1) Приборы мода и блоки-парты мультиблоков: активность и температура
+        //    берутся у самого прибора (у мультиблока — у контроллера)
+        //    Блок-сущность читаем только там, где она точно нужна: приборы мода
+        //    и части мультиблоков. Иначе на каждый блок в области сканирования
+        //    пришлось бы лезть в чанк за сущностью.
+        boolean mayHaveSource = HeatSourceRegistry.usesBlockEntity(state.getBlock())
+                || state.getBlock() instanceof com.trd.multiblock.system.MultiblockPartBlock;
+        if (mayHaveSource) {
+            net.minecraft.world.level.block.entity.BlockEntity be = level.getBlockEntity(pos);
+
+            if (be instanceof IHeatSource heatSource) {
+                HeatSourceDef def = HeatSourceRegistry.byId(heatSource.getHeatSourceId());
+                if (def != null) {
+                    float power = heatSource.isHeatActive()
+                            ? def.powerAt(heatSource.getSourceTemperature())
+                            : 0.0f;
+                    if (power > 0.0f) {
+                        // Для контроллера мультиблока источником является вся конструкция
+                        List<BlockPos> cells = MultiblockHeatHelper.structureCells(level, pos);
+                        return new HeatSource(pos.immutable(), def, power,
+                                heatSource.getSourceTemperature(), cells);
+                    }
+                }
+                return null;
+            }
+
+            if (be instanceof com.trd.multiblock.system.roles.IMultiblockPart part
+                    && part.getControllerPos() != null) {
+                return resolveMultiblockSource(level, part.getControllerPos());
+            }
+        }
+
+        // 2) Контроллер мультиблока (сам блок, а не его блок-сущность)
+        BlockPos controllerPos = MultiblockHeatHelper.resolveControllerPos(level, pos);
+        if (controllerPos != null && !controllerPos.equals(pos)) {
+            return resolveMultiblockSource(level, controllerPos);
+        }
+
+        // 3) Ванильные источники: активность задана состоянием блока
+        HeatSourceDef def = HeatSourceRegistry.resolveState(state);
+        if (def != null) {
+            float power = def.powerAt(1.0f);
+            if (power > 0.0f) {
+                return new HeatSource(pos.immutable(), def, power, def.sourceTemp());
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Источник тепла мультиблока: контроллер + все его части как единый источник.
+     */
+    private static HeatSource resolveMultiblockSource(Level level, BlockPos controllerPos) {
+        if (level.getBlockEntity(controllerPos) instanceof IHeatSource heatSource) {
             HeatSourceDef def = HeatSourceRegistry.byId(heatSource.getHeatSourceId());
             if (def != null) {
                 float power = heatSource.isHeatActive()
                         ? def.powerAt(heatSource.getSourceTemperature())
                         : 0.0f;
                 if (power > 0.0f) {
-                    return new HeatSource(pos.immutable(), def, power);
+                    List<BlockPos> cells = MultiblockHeatHelper.structureCells(level, controllerPos);
+                    return new HeatSource(controllerPos.immutable(), def, power,
+                            heatSource.getSourceTemperature(), cells);
                 }
-            }
-        }
-
-        // 2) Ванильные источники: активность задана состоянием блока
-        HeatSourceDef def = HeatSourceRegistry.resolveState(state);
-        if (def != null) {
-            float power = def.powerAt(1.0f);
-            if (power > 0.0f) {
-                return new HeatSource(pos.immutable(), def, power);
             }
         }
         return null;
@@ -170,19 +273,20 @@ public final class HeatSourceHelper {
         }
 
         HeatSourceDef def = source.def();
-        double radius = def.radius();
+        double radius = source.radius();
         if (radius <= 0.0) {
             return 0.0f;
         }
 
-        Vec3 from = sourcePoint(source.pos());
+        Vec3 from = sourcePoint(source.nearestCell(targetPoint));
         double distance = from.distanceTo(targetPoint);
         if (distance > radius) {
             return 0.0f;
         }
 
         // Сплошные блоки между источником и целью гасят тепло
-        if (isOccluded(level, source.pos(), from, targetPoint, targetPos)) {
+        // (собственные блоки источника — например, части мультиблока — не гасят)
+        if (isOccluded(level, source.cells(), from, targetPoint, targetPos)) {
             return 0.0f;
         }
 
@@ -217,12 +321,19 @@ public final class HeatSourceHelper {
     /**
      * Применяет лучистое тепло источников к температуре среды.
      * <p>
-     * Каждый источник ограничен собственным «комфортным потолком»
-     * ({@link HeatSourceDef#comfortCap()}): у костра это 26 °C, у доменной печи 40 °C,
-     * у лавы 60 °C, у льда — нижняя граница (8 / 0 / −10 °C).
-     * <p>
-     * Источник может двигать температуру <b>только в сторону своего потолка</b>:
-     * костёр не выстудит жаркую пустыню, а лёд не нагреет холодную тундру.
+     * Жёстких потолков на температуру среды нет, но есть два ограничителя,
+     * не дающих нескольким источникам сложить тепло в космос:
+     * <ol>
+     *   <li><b>Убывающая отдача</b>: вклад перекрывающихся источников суммируется
+     *       с убывающим коэффициентом — ближний источник считается полностью,
+     *       каждый следующий даёт всё меньше ({@value #OVERLAP_DECAY} от предыдущего).</li>
+     *   <li><b>Потолок температуры источника</b>: точка не может нагреться выше
+     *       температуры самого горячего источника ({@link HeatSourceDef#sourceTemp()}).
+     *       Лавовое озеро из сотен блоков греет соседей как один мощный источник,
+     *       а не как сумма сотен.</li>
+     * </ol>
+     * Охладители работают симметрично: точка не опускается ниже температуры
+     * самого холодного источника.
      *
      * @param scale множитель вклада (например 0.65 для помещения, где воздух
      *              частично поглощает излучение)
@@ -246,25 +357,60 @@ public final class HeatSourceHelper {
         Vec3 probe = probePoint(pos);
         float result = baseTemp;
 
+        List<Float> heats = new ArrayList<>();
+        List<Float> cools = new ArrayList<>();
+        float hottest = Float.NEGATIVE_INFINITY;
+        float coldest = Float.POSITIVE_INFINITY;
+
         for (HeatSource source : sources) {
             float contribution = heatFromSource(level, source, pos, probe, shelterLevel) * scale;
             if (contribution <= 0.0f) {
                 continue;
             }
-            HeatSourceDef def = source.def();
-            float cap = def.comfortCap();
-
-            if (def.cooling()) {
-                // Охладитель: температура не опускается ниже его порога
-                float limited = Math.max(cap, result - contribution);
-                result = Math.min(result, limited);
+            if (source.def().cooling()) {
+                cools.add(contribution);
+                coldest = Math.min(coldest, source.sourceTemp());
             } else {
-                // Нагреватель: температура не поднимается выше его потолка
-                float limited = Math.min(cap, result + contribution);
-                result = Math.max(result, limited);
+                heats.add(contribution);
+                hottest = Math.max(hottest, source.sourceTemp());
             }
         }
+
+        // Нагреватели: убывающая отдача для перекрывающихся источников
+        result += diminishingSum(heats);
+        // Охладители: симметрично
+        result -= diminishingSum(cools);
+
+        // Потолок/пол температуры источника: точка не может быть горячее
+        // самого горячего источника и холоднее самого холодного
+        if (hottest > Float.NEGATIVE_INFINITY) {
+            result = Math.min(result, Math.max(baseTemp, hottest));
+        }
+        if (coldest < Float.POSITIVE_INFINITY) {
+            result = Math.max(result, Math.min(baseTemp, coldest));
+        }
         return result;
+    }
+
+    /**
+     * Сумма вкладов с убывающей отдачей: самый сильный источник учитывается
+     * полностью, каждый следующий — с коэффициентом {@value #OVERLAP_DECAY}
+     * от предыдущего (0.35, 0.12, 0.04 ...).
+     * <p>
+     * Именно это не даёт лавовому озеру сложить сотни источников в 6000 °C.
+     */
+    private static float diminishingSum(List<Float> contributions) {
+        if (contributions.isEmpty()) {
+            return 0.0f;
+        }
+        contributions.sort((a, b) -> Float.compare(b, a));
+        float sum = 0.0f;
+        float factor = 1.0f;
+        for (float c : contributions) {
+            sum += c * factor;
+            factor *= OVERLAP_DECAY;
+        }
+        return sum;
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -289,6 +435,18 @@ public final class HeatSourceHelper {
      * @param targetPos блок цели (исключается из проверки)
      */
     public static boolean isOccluded(Level level, BlockPos sourcePos, Vec3 from, Vec3 to, BlockPos targetPos) {
+        return isOccluded(level, List.of(sourcePos), from, to, targetPos);
+    }
+
+    /**
+     * Проверяет, перекрыт ли путь от источника к цели сплошными блоками.
+     * <p>
+     * Вариант для источников из нескольких блоков (мультиблок): собственные блоки
+     * источника не считаются препятствием.
+     *
+     * @param sourceCells блоки, из которых состоит источник (исключаются из проверки)
+     */
+    public static boolean isOccluded(Level level, List<BlockPos> sourceCells, Vec3 from, Vec3 to, BlockPos targetPos) {
         double dx = to.x - from.x;
         double dy = to.y - from.y;
         double dz = to.z - from.z;
@@ -313,12 +471,20 @@ public final class HeatSourceHelper {
         double tMaxY = stepY != 0.0 ? (stepY > 0.0 ? (y + 1 - from.y) : (from.y - y)) * tDeltaY : Double.MAX_VALUE;
         double tMaxZ = stepZ != 0.0 ? (stepZ > 0.0 ? (z + 1 - from.z) : (from.z - z)) * tDeltaZ : Double.MAX_VALUE;
 
-        final int srcX = sourcePos.getX();
-        final int srcY = sourcePos.getY();
-        final int srcZ = sourcePos.getZ();
         final int tgtX = targetPos.getX();
         final int tgtY = targetPos.getY();
         final int tgtZ = targetPos.getZ();
+
+        // Блоки источника (например, части мультиблока) препятствием не считаются.
+        // Для одиночного блока сравнение дешевле, поэтому множество создаётся
+        // только когда источник действительно состоит из нескольких блоков.
+        final boolean multiCell = sourceCells.size() > 1;
+        final java.util.Set<BlockPos> sourceSet = multiCell
+                ? new java.util.HashSet<>(sourceCells)
+                : java.util.Collections.emptySet();
+        final int srcX = sourceCells.isEmpty() ? Integer.MIN_VALUE : sourceCells.get(0).getX();
+        final int srcY = sourceCells.isEmpty() ? Integer.MIN_VALUE : sourceCells.get(0).getY();
+        final int srcZ = sourceCells.isEmpty() ? Integer.MIN_VALUE : sourceCells.get(0).getZ();
 
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         // Страховка от зацикливания: DDA проходит не больше |dx|+|dy|+|dz| вокселов
@@ -330,7 +496,9 @@ public final class HeatSourceHelper {
             }
 
             // Излучатель и цель преградой не считаются
-            boolean isSource = (x == srcX && y == srcY && z == srcZ);
+            boolean isSource = multiCell
+                    ? sourceSet.contains(new BlockPos(x, y, z))
+                    : (x == srcX && y == srcY && z == srcZ);
             boolean isTarget = (x == tgtX && y == tgtY && z == tgtZ);
             if (!isSource && !isTarget) {
                 cursor.set(x, y, z);

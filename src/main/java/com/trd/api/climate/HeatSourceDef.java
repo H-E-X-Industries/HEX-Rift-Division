@@ -12,14 +12,36 @@ import net.minecraft.util.Mth;
  *   <li>для расчёта объёмного нагрева герметичного помещения;</li>
  *   <li>для клиентской визуализации теплового поля.</li>
  * </ul>
- * Раньше эти три задачи решались тремя разными таблицами с разными числами,
- * из-за чего дебаг-режим и термометр показывали разные значения.
+ *
+ * <h2>Как считается тепло</h2>
+ * <pre>
+ *   ΔT(у поверхности) = min(maxHeat, sourceTemp × (0.1 + 0.8 × conductivity))
+ *   ΔT(в точке)       = ΔT(у поверхности) × спад(расстояние)
+ * </pre>
+ * То есть <b>теплопроводность — это доля температуры самого источника</b>,
+ * доходящая до соседних блоков: при conductivity = 1 блок отдаёт до 90% своего
+ * тепла (0.1 + 0.8 × 1), при conductivity = 0 — лишь 10%. Например, нагреватель
+ * из доломитовых кирпичей (conductivity 0.35) при 1000 °C отдаёт соседям
+ * около 380 °C, а медный котёл (conductivity 0.6) при тех же 1000 °C — больше.
+ * <p>
+ * Параметр {@code maxHeat} при этом остаётся <b>потолком</b>: сколько градусов
+ * источник способен добавить соседям у самой поверхности, независимо от его
+ * температуры (нужно, чтобы обычный костёр не разогревал комнату до 400 °C).
+ * <p>
+ * Жёстких потолков температуры у самих блоков нет, но есть два ограничителя,
+ * не дающих нескольким источникам сложить тепло в космос:
+ * убывающая отдача для перекрывающихся источников и потолок «температура
+ * источника» (см. {@link com.trd.climate.calculation.HeatSourceHelper}).
  *
  * @param id                    идентификатор источника ({@code "trd:heater"})
- * @param maxHeat               максимальное лучистое тепло в упор, °C (прибавка к температуре среды)
- * @param radius                радиус излучения, блоков
- * @param comfortCap            предел ощущаемой температуры рядом с источником, °C:
- *                              для нагревателей — потолок, для охладителей (лёд) — нижняя граница
+ * @param maxHeat               потолок выхода источника: сколько градусов он может
+ *                              добавить соседям у самой поверхности, °C
+ * @param radius                максимальный радиус излучения, блоков (при 100% мощности)
+ * @param conductivity          теплопроводность 0..1: доля температуры источника,
+ *                              доходящая до соседей (0.1 при 0, 0.9 при 1)
+ * @param sourceTemp            температура самого источника, °C (лава 1200, костёр 700, лёд 0).
+ *                              Блок не может нагреться выше температуры источника, даже если
+ *                              рядом действуют сразу несколько источников
  * @param roomTarget            потолок объёмного нагрева герметичного помещения, °C
  * @param roomPower             мощность объёмного нагрева (скорость выхода на потолок)
  * @param cooling               true — источник холода, false — источник тепла
@@ -32,7 +54,8 @@ public record HeatSourceDef(
         String id,
         float maxHeat,
         float radius,
-        float comfortCap,
+        float conductivity,
+        float sourceTemp,
         float roomTarget,
         float roomPower,
         boolean cooling,
@@ -41,13 +64,47 @@ public record HeatSourceDef(
         float tempMax
 ) {
 
+    /** Минимальная доля передаваемого тепла при теплопроводности 0. */
+    public static final float MIN_TRANSFER = 0.1f;
+    /** Максимальная доля передаваемого тепла при теплопроводности 1. */
+    public static final float MAX_TRANSFER = 0.9f;
+
+    /** Минимальная доля радиуса излучения при нулевой мощности. */
+    public static final float MIN_RADIUS_FACTOR = 0.25f;
+
     public HeatSourceDef {
         if (id == null || id.isEmpty()) {
             throw new IllegalArgumentException("HeatSourceDef: id не может быть пустым");
         }
         maxHeat = Mth.clamp(maxHeat, 0.0f, 500.0f);
         radius = Mth.clamp(radius, 0.5f, 32.0f);
+        conductivity = Mth.clamp(conductivity, 0.0f, 1.0f);
         roomPower = Math.max(0.0f, roomPower);
+    }
+
+    /**
+     * Доля собственного тепла, передаваемая окружению (по теплопроводности).
+     * conductivity = 1 → {@value #MAX_TRANSFER}, conductivity = 0 → {@value #MIN_TRANSFER}.
+     */
+    public float transferFactor() {
+        return MIN_TRANSFER + (MAX_TRANSFER - MIN_TRANSFER) * conductivity;
+    }
+
+    /**
+     * Выход источника у самой поверхности, °C.
+     * <p>
+     * Нагреватель отдаёт соседям долю своей температуры (по теплопроводности),
+     * но не больше потолка {@code maxHeat}. Охладитель, наоборот, забирает
+     * фиксированное количество градусов (у льда это и есть его «температура»
+     * относительно окружающей среды).
+     *
+     * @param sourceTemp текущая температура источника, °C
+     */
+    public float radiantOutput(float sourceTemp) {
+        if (cooling) {
+            return maxHeat * transferFactor();
+        }
+        return Math.min(maxHeat, sourceTemp * transferFactor());
     }
 
     /**
@@ -66,6 +123,14 @@ public record HeatSourceDef(
     }
 
     /**
+     * Эффективный радиус излучения при текущей мощности источника:
+     * чем слабее источник, тем ближе к нему ощущается тепло.
+     */
+    public float radiusAt(float power) {
+        return radius * (MIN_RADIUS_FACTOR + (1.0f - MIN_RADIUS_FACTOR) * power);
+    }
+
+    /**
      * Потолок объёмного нагрева при текущей мощности источника.
      * <p>
      * При мощности меньше 100% потолок смещается от {@link #roomTarget} к нейтральной
@@ -76,10 +141,7 @@ public record HeatSourceDef(
      */
     public float roomTargetAt(float deviceTemp, float neutral) {
         float power = powerAt(deviceTemp);
-        if (cooling) {
-            // Для охладителя потолок — это нижняя граница; при слабом охлаждении она выше.
-            return neutral + (roomTarget - neutral) * power;
-        }
+        // Для охладителя потолок — это нижняя граница; при слабом охлаждении она выше.
         return neutral + (roomTarget - neutral) * power;
     }
 

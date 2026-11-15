@@ -896,6 +896,12 @@
 
     "chat.trd.thermometer.current_temp":  "Текущая температура тела: %s°C",
     "chat.trd.thermometer.temp_rate":  "Скорость изменения температуры: ~%s°C/сек",
+    "chat.trd.thermometer.block_temp":  "Температура блока: %s°C",
+    "chat.trd.thermometer.conductivity":  "Теплопроводность: %s",
+    "chat.trd.thermometer.source_power":  "Мощность источника: %s",
+    "chat.trd.thermometer.source_temp":  "Температура источника: %s°C",
+    "chat.trd.thermometer.not_a_source":  "Блок не является источником тепла",
+    "chat.trd.debug.unavailable":  "Режим отладки недоступен!",
     "tooltip.trd.condenser.cooling":  "❄ Охлаждение: ",
     "tooltip.trd.condenser.steam_in":  "⬇ Пар Н.Д. (вход): ",
     "tooltip.trd.condenser.water_out":  "⬆ Вода (выход): ",

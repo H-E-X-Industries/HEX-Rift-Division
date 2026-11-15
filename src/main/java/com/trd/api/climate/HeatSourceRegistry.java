@@ -147,6 +147,17 @@ public final class HeatSourceRegistry {
     }
 
     /**
+     * Может ли этот блок вообще быть источником тепла.
+     * <p>
+     * Быстрая отсевка при массовом сканировании мира: дешевле проверить
+     * тип блока по хеш-таблице, чем доставать блок-сущность и прогонять
+     * предикаты состояния у каждого блока подряд.
+     */
+    public static boolean isPotentialSource(Block block) {
+        return block != null && (BY_BLOCK.containsKey(block) || BLOCK_ENTITY_BLOCKS.contains(block));
+    }
+
+    /**
      * Максимальный радиус излучения среди всех источников — размер области сканирования.
      */
     public static float maxRadius() {

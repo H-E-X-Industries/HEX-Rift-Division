@@ -78,24 +78,53 @@ public class ElectricThermometerItem extends ModBatteryItem {
     }
 
     /**
-     * ПКМ — вывести в чат текущую температуру тела и скорость её изменения.
+     * ПКМ — замерить блок, на который смотрит игрок (до 5 блоков):
+     * его температуру, а для источников тепла — ещё и теплопроводность,
+     * текущую мощность и температуру самого прибора.
      */
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-        if (!level.isClientSide() && player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-            var data = player.getData(com.trd.climate.attachment.ModAttachments.PLAYER_TEMPERATURE);
-            float currentTemp = data.getCurrentTemp();
-            float ratePerSecond = com.trd.climate.event.TemperatureRateTracker.getRatePerSecond(serverPlayer);
+        if (!level.isClientSide()) {
+            var hit = getPlayerPOVHitResult(level, player,
+                    net.minecraft.world.level.ClipContext.Fluid.NONE);
+            net.minecraft.core.BlockPos pos = hit.getBlockPos();
 
-            player.displayClientMessage(Component.translatable("chat.trd.thermometer.current_temp",
-                            Component.literal(String.format(java.util.Locale.ROOT, "%.1f", currentTemp))
+            java.util.Locale locale = java.util.Locale.ROOT;
+
+            // Температура воздуха рядом с блоком (тем же кодом, что и стационарные
+            // термометры и отладочный оверлей)
+            float blockTemp = com.trd.climate.calculation.TemperatureCalculator.calculateAirTempNear(level, pos);
+            player.displayClientMessage(Component.translatable("chat.trd.thermometer.block_temp",
+                            Component.literal(String.format(locale, "%.1f", blockTemp))
                                     .withStyle(ChatFormatting.AQUA)),
                     false);
-            player.displayClientMessage(Component.translatable("chat.trd.thermometer.temp_rate",
-                            Component.literal(String.format(java.util.Locale.ROOT, "%.2f", ratePerSecond))
-                                    .withStyle(ChatFormatting.YELLOW)),
-                    false);
+
+            // Если блок — источник тепла, показываем его параметры
+            var source = com.trd.climate.calculation.HeatSourceHelper.resolveAt(level, pos);
+            if (source != null) {
+                var def = source.def();
+
+                player.displayClientMessage(Component.translatable("chat.trd.thermometer.conductivity",
+                                Component.literal(String.format(locale, "%.0f%%", def.conductivity() * 100.0f))
+                                        .withStyle(ChatFormatting.GOLD)),
+                        false);
+                player.displayClientMessage(Component.translatable("chat.trd.thermometer.source_power",
+                                Component.literal(String.format(locale, "%.0f%%", source.power() * 100.0f))
+                                        .withStyle(ChatFormatting.YELLOW)),
+                        false);
+
+                // Температура самого источника (у приборов — текущая, у мультиблока —
+                // температура контроллера, у ванильных — реальная температура блока)
+                player.displayClientMessage(Component.translatable("chat.trd.thermometer.source_temp",
+                                Component.literal(String.format(locale, "%.0f", source.sourceTemp()))
+                                        .withStyle(ChatFormatting.RED)),
+                        false);
+            } else {
+                // Не источник: показываем теплопроводность материала (нейтральная)
+                player.displayClientMessage(Component.translatable("chat.trd.thermometer.not_a_source"),
+                        false);
+            }
         }
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
     }

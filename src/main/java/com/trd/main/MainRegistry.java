@@ -11,7 +11,11 @@ public class MainRegistry {
     public static final String MOD_ID = "trd";
     public static final Logger LOGGER = LogUtils.getLogger();
 
-    public MainRegistry(IEventBus modEventBus) {
+    public MainRegistry(IEventBus modEventBus, net.neoforged.fml.ModContainer modContainer) {
+        // Клиентские настройки (trd-client.toml)
+        modContainer.registerConfig(net.neoforged.fml.config.ModConfig.Type.CLIENT,
+                com.trd.client.config.ModClientConfig.SPEC);
+
         // Инициализация динамических ресурсов металлургии (до регистрации блоков и предметов)
         com.trd.main.ResourceRegistry.init();
 

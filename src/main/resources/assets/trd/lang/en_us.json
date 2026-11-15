@@ -893,6 +893,12 @@
 
     "chat.trd.thermometer.current_temp":  "Current body temperature: %s°C",
     "chat.trd.thermometer.temp_rate":  "Temperature change rate: ~%s°C/s",
+    "chat.trd.thermometer.block_temp":  "Block temperature: %s°C",
+    "chat.trd.thermometer.conductivity":  "Thermal conductivity: %s",
+    "chat.trd.thermometer.source_power":  "Source power: %s",
+    "chat.trd.thermometer.source_temp":  "Source temperature: %s°C",
+    "chat.trd.thermometer.not_a_source":  "This block is not a heat source",
+    "chat.trd.debug.unavailable":  "Debug mode is not available!",
     "tooltip.trd.condenser.cooling":  "❄ Cooling: ",
     "tooltip.trd.condenser.steam_in":  "⬇ L.P. Steam (input): ",
     "tooltip.trd.condenser.water_out":  "⬆ Water (output): ",

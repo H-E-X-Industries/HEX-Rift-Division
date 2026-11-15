@@ -82,6 +82,9 @@ public class TemperatureCalculator {
             envTemp = Math.min(20.0f, envTemp + insulation);
         }
 
+        // Контактный нагрев/охлаждение от блоков, которых игрок касается
+        envTemp += calculateContactHeat(player, level, shelterLevel);
+
         return envTemp;
     }
 
@@ -97,6 +100,22 @@ public class TemperatureCalculator {
     public static float calculatePointTemp(Level level, BlockPos pos) {
         float shelterLevel = ShelterHelper.calculateShelterLevel(level, pos);
         return calculateTargetEnvTempCore(null, level, pos, shelterLevel);
+    }
+
+    /**
+     * Температура воздуха рядом с блоком — там, где реально находится игрок.
+     * <p>
+     * Если блок сплошной (пол, стена), меряем в воздухе над ним: внутри блока
+     * не видно неба, нет солнечного прогрева и глубины залегания, поэтому
+     * температура «внутри» на 3–5 °C ниже и не совпадает с показаниями
+     * термометра. Для несплошных блоков (лава, вода, воздух) меряем в самом блоке.
+     *
+     * @param pos блок, рядом с которым меряем
+     */
+    public static float calculateAirTempNear(Level level, BlockPos pos) {
+        net.minecraft.world.level.block.state.BlockState state = level.getBlockState(pos);
+        boolean solid = !state.isAir() && state.isSolidRender(level, pos);
+        return calculatePointTemp(level, solid ? pos.above() : pos);
     }
 
     /**
@@ -218,6 +237,69 @@ public class TemperatureCalculator {
                stack.is(Blocks.SOUL_TORCH.asItem()) ||
                stack.is(Blocks.WALL_TORCH.asItem()) ||
                stack.is(Blocks.SOUL_WALL_TORCH.asItem());
+    }
+
+    /** Нейтральная температура, относительно которой считается контактный теплообмен. */
+    private static final float CONTACT_NEUTRAL = 20.0f;
+    /** Жёсткий предел суммарного контактного влияния, °C (см. soft-cap через tanh). */
+    private static final float CONTACT_CAP = 18.0f;
+    /** Доля температуры источника, доходящая до кожи при прямом касании. */
+    private static final float CONTACT_TEMP_FRACTION = 0.25f;
+
+    /**
+     * Контактный теплообмен с блоками, которых касается игрок (пол под ногами,
+     * стены в упор, блоки внутри хитбокса).
+     * <p>
+     * Эффективная теплопроводность контакта растёт вместе с «горячестью» блока:
+     * чуть тёплый блок отдаёт лишь малую долю своего тепла, раскалённый — почти всё.
+     * При касании самого источника учитывается его собственная температура
+     * (у мультиблока — любой его блок: конструкция считается единым целым).
+     * <p>
+     * Суммарное влияние плавно ограничено (soft-cap через tanh), поэтому касание
+     * нагревателя на 1600 °C больно, но не убивает мгновенно.
+     *
+     * @return прибавка к целевой температуре среды, °C (в пределах ±{@link #CONTACT_CAP})
+     */
+    public static float calculateContactHeat(Player player, Level level, float shelterLevel) {
+        var sources = HeatSourceHelper.findNearbyHeatSources(level, player.blockPosition());
+        if (sources.isEmpty()) {
+            return 0.0f;
+        }
+
+        // Блоки, которых касается игрок: хитбокс + блок под ногами
+        net.minecraft.world.phys.AABB box = player.getBoundingBox().inflate(0.05);
+        BlockPos min = BlockPos.containing(box.minX, box.minY - 0.05, box.minZ);
+        BlockPos max = BlockPos.containing(box.maxX, box.maxY, box.maxZ);
+
+        float raw = 0.0f;
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        for (BlockPos pos : BlockPos.betweenClosed(min, max)) {
+            cursor.set(pos);
+            // Температура блока = нейтраль + лучистое тепло в его точке
+            float blockTemp = HeatSourceHelper.applyRadiantHeat(
+                    level, cursor, CONTACT_NEUTRAL, shelterLevel, 1.0f, sources);
+            float delta = blockTemp - CONTACT_NEUTRAL;
+
+            // Прямое касание самого источника (в т.ч. любой части мультиблока):
+            // температура источника доходит до кожи не полностью
+            for (HeatSourceHelper.HeatSource source : sources) {
+                if (source.cells().contains(pos)) {
+                    float contactTemp = source.sourceTemp() * CONTACT_TEMP_FRACTION;
+                    delta = Math.max(delta, contactTemp - CONTACT_NEUTRAL);
+                    break;
+                }
+            }
+
+            if (Math.abs(delta) < 0.5f) {
+                continue;
+            }
+            // Теплопроводность контакта растёт с горячестью блока: 0.25 → 0.9
+            float contactConductivity = 0.25f + 0.65f * Math.min(1.0f, Math.abs(delta) / 60.0f);
+            raw += delta * contactConductivity * 0.3f;
+        }
+
+        // Мягкий предел: tanh не даёт контакту с раскалённым блоком убить мгновенно
+        return (float) (CONTACT_CAP * Math.tanh(raw / CONTACT_CAP));
     }
 
     /**
