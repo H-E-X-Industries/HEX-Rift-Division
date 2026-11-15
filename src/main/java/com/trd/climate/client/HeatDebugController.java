@@ -46,6 +46,13 @@ public class HeatDebugController {
     private static int errorCount = 0;
     private static final int MAX_SOURCE_CACHE = 2048;
     private static final int MAX_FIELD_SOURCES = 16;
+    /** Порог изменения температуры для отображения блока в дебаге, °C. */
+    private static final float MIN_TEMP_DELTA = 3.0f;
+    /**
+     * Базовая температура среды в точке игрока: считается один раз за тик
+     * и используется как ноль для отсева блоков с ΔT меньше порога.
+     */
+    private static float cachedBaseTemp = 20.0f;
 
     // ═══════════════════════════════════════════════════════════
     // НЕИЗМЕНЯЕМЫЙ СНИМОК ДЛЯ РЕНДЕРА (атомарная публикация)
@@ -115,6 +122,8 @@ public class HeatDebugController {
     private static final Map<BlockPos, Float> workField = new HashMap<>();
     private static final Map<BlockPos, Integer> workFaceMasks = new HashMap<>();
     private static final Map<BlockPos, Float> workHaloCells = new HashMap<>();
+    /** Мультиблоки для рамок (кластеры лавы и льда сюда не входят). */
+    private static final List<HeatSourceHelper.HeatSource> workOutlineSources = new ArrayList<>();
     private static HeatSourceHelper.HeatSource workHoveredMultiblock = null;
 
     private record CellTask(BlockPos pos, float radius, boolean paintSelf) {}
@@ -216,6 +225,10 @@ public class HeatDebugController {
         int tick = mc.player.tickCount;
         lastPlayerPos = playerPos;
 
+        // Кэш базовой температуры для фильтрации: считаем один раз в центре
+        // области вместо тысяч вызовов для каждого блока
+        cachedBaseTemp = TemperatureCalculator.calculatePointTemp(level, playerPos, List.of());
+
         // 1. Обновление списка источников
         if (tick - lastRefreshTick >= REFRESH_INTERVAL_TICKS || lastRefreshTick == Integer.MIN_VALUE) {
             lastRefreshTick = tick;
@@ -313,7 +326,7 @@ public class HeatDebugController {
         snapshot = new Snapshot(
                 workField,
                 workFaceMasks,
-                fieldSources,
+                workOutlineSources,
                 workHaloCells,
                 workHoveredMultiblock
         );
@@ -348,30 +361,16 @@ public class HeatDebugController {
             if (cached.isEmpty()) {
                 continue;
             }
-            List<HeatSourceHelper.HeatSource> valid = new ArrayList<>(cached.size());
-            boolean changed = false;
-            for (HeatSourceHelper.HeatSource old : cached) {
-                HeatSourceHelper.HeatSource fresh = HeatSourceHelper.resolveAt(level, old.pos());
-                if (fresh == null) {
-                    changed = true;
-                    continue;
+            // Кэш проверяется при сканировании чанка, а не каждые 5 тиков:
+            // повторный resolveAt по каждому блоку ледника не укладывался
+            // в бюджет тика, и поле переставало обновляться
+            for (HeatSourceHelper.HeatSource source : cached) {
+                long dx = source.pos().getX() - playerPos.getX();
+                long dy = source.pos().getY() - playerPos.getY();
+                long dz = source.pos().getZ() - playerPos.getZ();
+                if (dx * dx + dy * dy + dz * dz <= rangeSq) {
+                    activeSources.add(source);
                 }
-                long dx = fresh.pos().getX() - playerPos.getX();
-                long dy = fresh.pos().getY() - playerPos.getY();
-                long dz = fresh.pos().getZ() - playerPos.getZ();
-                if (dx * dx + dy * dy + dz * dz > rangeSq) {
-                    changed = true;
-                    continue;
-                }
-                if (fresh.sourceTemp() != old.sourceTemp() || fresh.power() != old.power()) {
-                    changed = true;
-                }
-                valid.add(fresh);
-                activeSources.add(fresh);
-            }
-            if (changed || valid.size() != cached.size()) {
-                entry.setValue(valid);
-                dirtyChunks.add(entry.getKey());
             }
         }
 
@@ -382,8 +381,27 @@ public class HeatDebugController {
 
         workHaloCells.clear();
         for (HeatSourceHelper.HeatSource source : fieldSources) {
+            // Воздушные источники только в радиусе отображения, как и обычные
+            double sdx = source.pos().getX() - playerPos.getX();
+            double sdy = source.pos().getY() - playerPos.getY();
+            double sdz = source.pos().getZ() - playerPos.getZ();
+            double sourceDist = Math.sqrt(sdx * sdx + sdy * sdy + sdz * sdz);
+            if (sourceDist > ModClientConfig.heatDebugRadius()) {
+                continue;
+            }
             for (BlockPos air : HeatSourceHelper.airHaloCells(level, source)) {
+                // Цвет маркера — от родительского источника
                 workHaloCells.putIfAbsent(air, source.sourceTemp());
+            }
+        }
+
+        // Рамки только у настоящих мультиблоков: у кластера (лава, лёд) блок
+        // в якоре разрешается в то же описание, у мультиблока — нет
+        workOutlineSources.clear();
+        for (HeatSourceHelper.HeatSource source : fieldSources) {
+            if (source.cells().size() > 1
+                    && HeatSourceRegistry.resolveState(level.getBlockState(source.pos())) != source.def()) {
+                workOutlineSources.add(source);
             }
         }
 
@@ -437,9 +455,14 @@ public class HeatDebugController {
         }
     }
 
+    /**
+     * Источники для поля: кластеры, а не отдельные блоки. Иначе 16 слотов
+     * занимали 16 блоков одного ледника, а печь рядом в поле не попадала.
+     * Кластер занимает один слот и покрывает всё озеро.
+     */
     private static void pickFieldSources(BlockPos playerPos) {
         Map<BlockPos, HeatSourceHelper.HeatSource> fresh = new HashMap<>();
-        for (HeatSourceHelper.HeatSource source : activeSources) {
+        for (HeatSourceHelper.HeatSource source : calculationSources) {
             fresh.put(source.pos(), source);
         }
 
@@ -451,12 +474,12 @@ public class HeatDebugController {
             }
         }
 
-        if (kept.size() < MAX_FIELD_SOURCES && !activeSources.isEmpty()) {
+        if (kept.size() < MAX_FIELD_SOURCES && !calculationSources.isEmpty()) {
             Set<BlockPos> keptPositions = new HashSet<>();
             for (HeatSourceHelper.HeatSource source : kept) {
                 keptPositions.add(source.pos());
             }
-            List<HeatSourceHelper.HeatSource> sorted = new ArrayList<>(activeSources);
+            List<HeatSourceHelper.HeatSource> sorted = new ArrayList<>(calculationSources);
             sorted.sort((a, b) -> Double.compare(distanceSq(a.pos(), playerPos), distanceSq(b.pos(), playerPos)));
             for (HeatSourceHelper.HeatSource source : sorted) {
                 if (kept.size() >= MAX_FIELD_SOURCES) {
@@ -494,8 +517,12 @@ public class HeatDebugController {
                 continue;
             }
             Set<BlockPos> cellSet = new HashSet<>(cells);
+            // У кластера (озеро, ледник) разворачиваем только граничные клетки:
+            // внутренние окружены своими же соседями, их сферы полностью
+            // перекрыты, а расчёт лучей перекрытия к ним — основная нагрузка
+            // у больших озёр. Берём только те, у которых есть открытая грань.
             for (BlockPos cell : cells) {
-                if (isBoundaryCell(cell, cellSet)) {
+                if (isBoundaryCell(cell, cellSet) && hasOpenFace(cachedLevel, cell)) {
                     pendingCells.add(new CellTask(cell, radius, paintSelf));
                 }
             }
@@ -681,17 +708,36 @@ public class HeatDebugController {
     private static void computePendingPoints(ClientLevel level, long deadline) {
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         List<HeatSourceHelper.HeatSource> sources = calculationSources;
+        double reach = ModClientConfig.heatDebugRadius() + HeatSourceRegistry.maxRadius();
+        double reachSq = reach * reach;
         while (!pendingPoints.isEmpty() && System.nanoTime() < deadline) {
             BlockPos pos = pendingPoints.poll();
             queuedPoints.remove(pos);
             if (!seenCandidates.contains(pos)) {
                 continue;
             }
+            // Кластеры за пределами досягаемости в расчёт лучей не входят
+            List<HeatSourceHelper.HeatSource> near = new ArrayList<>();
+            for (HeatSourceHelper.HeatSource source : sources) {
+                if (source.pos().distSqr(pos) <= reachSq) {
+                    near.add(source);
+                }
+            }
             cursor.set(pos.getX(), pos.getY(), pos.getZ());
             net.minecraft.world.level.block.state.BlockState state = level.getBlockState(cursor);
             boolean solid = !state.isAir() && state.isSolidRender(level, cursor);
             cursor.set(pos.getX(), pos.getY() + (solid ? 1 : 0), pos.getZ());
-            float temp = TemperatureCalculator.calculatePointTemp(level, cursor, sources);
+            float temp = TemperatureCalculator.calculatePointTemp(level, cursor, near);
+            
+            // Фильтр: не показываем блоки с малым ΔT (освобождаем ресурсы)
+            float delta = Math.abs(temp - cachedBaseTemp);
+            if (delta < MIN_TEMP_DELTA) {
+                // Точка остаётся в seenCandidates: круговое обновление её
+                // пересчитает, и она появится, когда температура изменится
+                workField.remove(pos);
+                continue;
+            }
+            
             workField.put(pos, temp);
         }
     }
@@ -713,6 +759,7 @@ public class HeatDebugController {
         workField.clear();
         workFaceMasks.clear();
         workHaloCells.clear();
+        workOutlineSources.clear();
         workHoveredMultiblock = null;
         chunkSources.clear();
         chunkClusters.clear();

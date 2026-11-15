@@ -279,7 +279,14 @@ public final class HeatSourceHelper {
                     }
                 }
             }
-            result.add(new HeatSource(seed.pos(), seed.def(), seed.power(), seed.sourceTemp(), cells));
+            // Якорь кластера — детерминированная минимальная позиция:
+            // произвольный seed менял якорь каждый тик, подпись fieldSources
+            // считалась изменённой, и поле пересобиралось раньше, чем успевало
+            // посчитаться (симптом «лёд вешает рендер»)
+            BlockPos anchor = cells.stream()
+                    .min(java.util.Comparator.comparingLong(BlockPos::asLong))
+                    .orElse(seed.pos());
+            result.add(new HeatSource(anchor, seed.def(), seed.power(), seed.sourceTemp(), cells));
         }
         return result;
     }

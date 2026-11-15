@@ -21,6 +21,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
@@ -237,7 +238,14 @@ public class HeatDebugRenderHandler {
 
                     double distSq = camPos.distanceToSqr(bpos.getX() + 0.5, bpos.getY() + 1.0, bpos.getZ() + 0.5);
                     if (distSq > TEXT_MAX_DISTANCE_SQ) {
-                        continue; // Не захламляем экран вдали
+                        continue;
+                    }
+                    
+                    // Не рисуем текст над блоками, над которыми стоит полный блок
+                    BlockPos above = bpos.above();
+                    BlockState aboveState = mc.level.getBlockState(above);
+                    if (!aboveState.isAir() && aboveState.isSolidRender(mc.level, above)) {
+                        continue;
                     }
 
                     String text = String.format(Locale.ROOT, "%.1f°C", temp);
@@ -269,7 +277,7 @@ public class HeatDebugRenderHandler {
 
     private static final int MAX_OUTLINED_MULTIBLOCKS = 16;
     /** Сколько маркеров воздушных фантомов рисовать (страховка). */
-    private static final int MAX_HALO_MARKERS = 600;
+    private static final int MAX_HALO_MARKERS = 400;
 
     /**
      * Сбрасывает порцию заливки. Пустой буфер даёт {@code null} — это норма,
@@ -283,13 +291,21 @@ public class HeatDebugRenderHandler {
     }
 
     /**
-     * Рамки мультиблоков и маркеры «воздушной кожи» — тем же путём, что и
-     * рамка отвёртки: {@link RenderType#lines()} несёт нормали и рисуется
-     * шейдером {@code rendertype_lines}. Старый путь ({@code Mode.LINES} плюс
-     * шейдер {@code position_color}) отбрасывал линии молча, поэтому рамок
-     * не было видно никогда.
+     * Рамки мультиблоков и маркеры «воздушной кожи». Маркеры тоже
+     * отсекаются фрустумом и радиусом — у озера лавы их сотни.
      */
     private static void renderLines(PoseStack poseStack, HeatDebugController.Snapshot snap) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null || mc.player == null) {
+            return;
+        }
+        Camera camera = mc.gameRenderer.getMainCamera();
+        Vec3 camPos = camera.getPosition();
+        double playerX = mc.player.getX();
+        double playerY = mc.player.getY();
+        double playerZ = mc.player.getZ();
+        double cullRadiusSq = (double) ModClientConfig.heatDebugRadius() * ModClientConfig.heatDebugRadius();
+
         MultiBufferSource.BufferSource bufferSource =
                 com.trd.client.renderer.debug.DebugLineBuffers.source();
         VertexConsumer lines = bufferSource.getBuffer(RenderType.lines());
@@ -315,6 +331,15 @@ public class HeatDebugRenderHandler {
                 break;
             }
             BlockPos pos = entry.getKey();
+            
+            // Отсечка по радиусу и фрустуму — у озера лавы сотни маркеров
+            double ddx = pos.getX() + 0.5 - playerX;
+            double ddy = pos.getY() + 0.5 - playerY;
+            double ddz = pos.getZ() + 0.5 - playerZ;
+            if (ddx * ddx + ddy * ddy + ddz * ddz > cullRadiusSq) {
+                continue;
+            }
+            
             float[] rgb = temperatureColor(entry.getValue());
             double h = 0.12;
             LevelRenderer.renderLineBox(poseStack, lines,
