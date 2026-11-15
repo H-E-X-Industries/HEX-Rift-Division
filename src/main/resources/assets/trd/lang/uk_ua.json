@@ -892,7 +892,7 @@
     "chat.trd.heat_debug.radius_set":  "Радіус налагодження тепла: %s блоків",
     "chat.trd.heat_debug.allow_on":  "Налагодження дозволено у виживанні та пригодах",
     "chat.trd.heat_debug.allow_off":  "Налагодження заборонено у виживанні та пригодах",
-    "chat.trd.heat_debug.help":  "Налагодження тепла: /trdheat radius <1-100>, /trdheat allow",
+    "chat.trd.heat_debug.help":  "Налагодження: /trddebug radius <1-100>, /trddebug allow",
     "tooltip.trd.condenser.cooling":  "❄ Cooling: ",
     "tooltip.trd.condenser.steam_in":  "⬇ L.P. Steam (input): ",
     "tooltip.trd.condenser.water_out":  "⬆ Water (output): ",

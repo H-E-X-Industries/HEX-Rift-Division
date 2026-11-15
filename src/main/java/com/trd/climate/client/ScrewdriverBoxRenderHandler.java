@@ -89,7 +89,10 @@ public class ScrewdriverBoxRenderHandler {
         Matrix4f pose = poseStack.last().pose();
 
         // 1. Отрисовка каркаса (зелёные линии)
-        MultiBufferSource.BufferSource bufferSource = mc.renderBuffers().bufferSource();
+        // Отдельный буфер: общий буфер рендера трогать нельзя — иначе ванильная
+        // геометрия смешается с отладочной и игра упадёт в драйвере видеокарты
+        MultiBufferSource.BufferSource bufferSource =
+                com.trd.client.renderer.debug.DebugLineBuffers.source();
         VertexConsumer lineConsumer = bufferSource.getBuffer(RenderType.lines());
         LevelRenderer.renderLineBox(poseStack, lineConsumer, minX, minY, minZ, maxX, maxY, maxZ,
                 0.1f, 1.0f, 0.2f, 1.0f);

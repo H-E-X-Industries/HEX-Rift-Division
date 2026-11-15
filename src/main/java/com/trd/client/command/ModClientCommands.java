@@ -15,12 +15,16 @@ import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
 /**
  * Клиентские команды мода (работают только на клиенте).
  * <p>
- * Отладочный режим тепла — чисто клиентская штука, поэтому и настройки его
+ * Отладочный режим — чисто клиентская штука, поэтому и настройки его
  * задаются клиентскими командами, а не серверными.
+ * <p>
+ * Команда называется {@code /trddebug}, потому что к режиму отладки относятся
+ * не только тепловые поля, но и лучи взрывов, наведение турелей и прочее.
+ * {@code /trdheat} остаётся как короткий синоним.
  *
  * <pre>
- *   /trdheat radius [1..100] — радиус сферы отладки вокруг игрока
- *   /trdheat allow            — разрешить отладку в выживании и приключении
+ *   /trddebug radius [1..100] — радиус сферы отладки вокруг игрока
+ *   /trddebug allow            — разрешить отладку в выживании и приключении
  * </pre>
  */
 @EventBusSubscriber(modid = MainRegistry.MOD_ID, value = Dist.CLIENT)
@@ -30,19 +34,26 @@ public class ModClientCommands {
     public static void onRegisterClientCommands(RegisterClientCommandsEvent event) {
         CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
 
-        dispatcher.register(
-                Commands.literal("trdheat")
-                        .then(Commands.literal("radius")
-                                .executes(ModClientCommands::showRadius)
-                                .then(Commands.argument("value",
-                                        com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, 100))
-                                        .executes(ModClientCommands::setRadius))
-                        )
-                        .then(Commands.literal("allow")
-                                .executes(ModClientCommands::toggleAllow)
-                        )
-                        .executes(ModClientCommands::showHelp)
-        );
+        dispatcher.register(buildRoot("trddebug"));
+        // Короткий синоним для тех, кто привык к прежнему названию
+        dispatcher.register(buildRoot("trdheat"));
+    }
+
+    /**
+     * Собирает корень команды с подкомандами.
+     */
+    private static com.mojang.brigadier.builder.LiteralArgumentBuilder<CommandSourceStack> buildRoot(String name) {
+        return Commands.literal(name)
+                .then(Commands.literal("radius")
+                        .executes(ModClientCommands::showRadius)
+                        .then(Commands.argument("value",
+                                com.mojang.brigadier.arguments.IntegerArgumentType.integer(1, 100))
+                                .executes(ModClientCommands::setRadius))
+                )
+                .then(Commands.literal("allow")
+                        .executes(ModClientCommands::toggleAllow)
+                )
+                .executes(ModClientCommands::showHelp);
     }
 
     private static int showRadius(CommandContext<CommandSourceStack> ctx) {

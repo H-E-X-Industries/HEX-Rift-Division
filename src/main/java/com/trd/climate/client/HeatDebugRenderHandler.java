@@ -55,6 +55,10 @@ public class HeatDebugRenderHandler {
 
     /** Радиус, в пределах которого рисуется текст с температурой. */
     private static final double TEXT_MAX_DISTANCE_SQ = 12.0 * 12.0;
+    /** Температура, выше которой блок подсвечивается ярко-красным, °C. */
+    private static final float HOT_BLOCK_THRESHOLD = 200.0f;
+    /** Сколько мультиблоков одновременно обводить рамкой. */
+    private static final int MAX_OUTLINED_MULTIBLOCKS = 12;
     /** Флаг, чтобы не спамить в лог одной и той же ошибкой. */
     private static boolean errorLogged = false;
 
@@ -130,7 +134,15 @@ public class HeatDebugRenderHandler {
             float temp = entry.getValue();
             float t = temperatureGradient(temp);
             float r, g, b;
-            if (t < 0.5f) {
+            float a = 0.55f;
+            if (temp > HOT_BLOCK_THRESHOLD) {
+                // Очень горячие блоки (200 °C и выше) — ярко-красным, чтобы
+                // сразу было видно, где опасно
+                r = 1.0f;
+                g = 0.06f;
+                b = 0.06f;
+                a = 0.8f;
+            } else if (t < 0.5f) {
                 r = 2.0f * t;
                 g = 1.0f;
                 b = 0.0f;
@@ -139,7 +151,6 @@ public class HeatDebugRenderHandler {
                 g = 2.0f * (1.0f - t);
                 b = 0.0f;
             }
-            float a = 0.55f;
 
             float x = bpos.getX();
             float y = bpos.getY();
@@ -250,25 +261,33 @@ public class HeatDebugRenderHandler {
     }
 
     /**
-     * Подсвечивает мультиблок целиком — рамкой вокруг всей конструкции,
-     * когда игрок смотрит на любой её блок.
+     * Подсвечивает мультиблоки — рамкой вокруг всей конструкции.
+     * <p>
+     * Рамка рисуется для каждого мультиблока в зоне отладки (их немного),
+     * так что видно сразу: вот этот станок — единое целое из девяти блоков.
      * <p>
      * Используется готовый снимок источников из {@link HeatDebugController}:
      * поток рендера не обращается к миру вообще.
      * <p>
-     * Вершины линий обязательно добавляются <b>с матрицей</b> ({@code addVertex(pose, ...)}):
-     * иначе они остались бы в мировых координатах и оказались бы за пределами
-     * экрана (в кадре матрица модели-вид уже содержит поворот камеры).
+     * <b>Важно:</b> линии рисуются через собственный {@link Tesselator}, а не через
+     * {@code mc.renderBuffers().bufferSource()}. У буфера источника общая
+     * {@code ByteBuffer} с ванильным рендером: если взять её посреди отрисовки
+     * уровня, ванильные буферы окажутся испорчены — и игра падает с
+     * нативным крашем в драйвере видеокарты (EXCEPTION_ACCESS_VIOLATION).
      */
     private static void renderMultiblockOutline(Minecraft mc, Matrix4f pose) {
-        if (!(mc.hitResult instanceof net.minecraft.world.phys.BlockHitResult hit)) {
+        List<com.trd.climate.calculation.HeatSourceHelper.HeatSource> sources = HeatDebugController.sources();
+        if (sources.isEmpty()) {
             return;
         }
-        BlockPos looked = hit.getBlockPos();
 
-        List<com.trd.climate.calculation.HeatSourceHelper.HeatSource> sources = HeatDebugController.sources();
+        Tesselator tesselator = Tesselator.getInstance();
+        BufferBuilder builder = tesselator.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.POSITION_COLOR);
+
+        float r = 1.0f, g = 0.85f, b = 0.2f, a = 0.95f;
+        int drawn = 0;
         for (com.trd.climate.calculation.HeatSourceHelper.HeatSource source : sources) {
-            if (source.cells().size() <= 1 || !source.cells().contains(looked)) {
+            if (source.cells().size() <= 1 || drawn >= MAX_OUTLINED_MULTIBLOCKS) {
                 continue;
             }
             int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
@@ -281,48 +300,48 @@ public class HeatDebugRenderHandler {
                 maxY = Math.max(maxY, c.getY());
                 maxZ = Math.max(maxZ, c.getZ());
             }
+            renderBoxEdges(builder, pose,
+                    minX - 0.05, minY - 0.05, minZ - 0.05,
+                    maxX + 1.05, maxY + 1.05, maxZ + 1.05,
+                    r, g, b, a);
+            drawn++;
+        }
 
-            MultiBufferSource.BufferSource bufferSource = mc.renderBuffers().bufferSource();
-            net.minecraft.client.renderer.RenderType renderType = net.minecraft.client.renderer.RenderType.lines();
-            com.mojang.blaze3d.vertex.VertexConsumer consumer = bufferSource.getBuffer(renderType);
-
-            float r = 1.0f, g = 0.85f, b = 0.2f, a = 0.9f;
-            double x0 = minX - 0.05, y0 = minY - 0.05, z0 = minZ - 0.05;
-            double x1 = maxX + 1.05, y1 = maxY + 1.05, z1 = maxZ + 1.05;
-            renderBoxEdges(consumer, pose, x0, y0, z0, x1, y1, z1, r, g, b, a);
-
-            bufferSource.endBatch(renderType);
-            return;
+        if (drawn > 0) {
+            BufferUploader.drawWithShader(builder.buildOrThrow());
+        } else {
+            // Нечего рисовать — закрываем билдер (build вернёт пустой меш)
+            builder.build();
         }
     }
 
     /**
      * Рисует рёбра прямоугольного параллелепипеда.
      */
-    private static void renderBoxEdges(com.mojang.blaze3d.vertex.VertexConsumer c, Matrix4f pose,
+    private static void renderBoxEdges(BufferBuilder builder, Matrix4f pose,
                                        double x0, double y0, double z0,
                                        double x1, double y1, double z1,
                                        float r, float g, float b, float a) {
-        line(c, pose, x0, y0, z0, x1, y0, z0, r, g, b, a);
-        line(c, pose, x1, y0, z0, x1, y0, z1, r, g, b, a);
-        line(c, pose, x1, y0, z1, x0, y0, z1, r, g, b, a);
-        line(c, pose, x0, y0, z1, x0, y0, z0, r, g, b, a);
-        line(c, pose, x0, y1, z0, x1, y1, z0, r, g, b, a);
-        line(c, pose, x1, y1, z0, x1, y1, z1, r, g, b, a);
-        line(c, pose, x1, y1, z1, x0, y1, z1, r, g, b, a);
-        line(c, pose, x0, y1, z1, x0, y1, z0, r, g, b, a);
-        line(c, pose, x0, y0, z0, x0, y1, z0, r, g, b, a);
-        line(c, pose, x1, y0, z0, x1, y1, z0, r, g, b, a);
-        line(c, pose, x1, y0, z1, x1, y1, z1, r, g, b, a);
-        line(c, pose, x0, y0, z1, x0, y1, z1, r, g, b, a);
+        line(builder, pose, x0, y0, z0, x1, y0, z0, r, g, b, a);
+        line(builder, pose, x1, y0, z0, x1, y0, z1, r, g, b, a);
+        line(builder, pose, x1, y0, z1, x0, y0, z1, r, g, b, a);
+        line(builder, pose, x0, y0, z1, x0, y0, z0, r, g, b, a);
+        line(builder, pose, x0, y1, z0, x1, y1, z0, r, g, b, a);
+        line(builder, pose, x1, y1, z0, x1, y1, z1, r, g, b, a);
+        line(builder, pose, x1, y1, z1, x0, y1, z1, r, g, b, a);
+        line(builder, pose, x0, y1, z1, x0, y1, z0, r, g, b, a);
+        line(builder, pose, x0, y0, z0, x0, y1, z0, r, g, b, a);
+        line(builder, pose, x1, y0, z0, x1, y1, z0, r, g, b, a);
+        line(builder, pose, x1, y0, z1, x1, y1, z1, r, g, b, a);
+        line(builder, pose, x0, y0, z1, x0, y1, z1, r, g, b, a);
     }
 
-    private static void line(com.mojang.blaze3d.vertex.VertexConsumer c, Matrix4f pose,
+    private static void line(BufferBuilder builder, Matrix4f pose,
                              double x0, double y0, double z0,
                              double x1, double y1, double z1,
                              float r, float g, float b, float a) {
-        c.addVertex(pose, (float) x0, (float) y0, (float) z0).setColor(r, g, b, a);
-        c.addVertex(pose, (float) x1, (float) y1, (float) z1).setColor(r, g, b, a);
+        builder.addVertex(pose, (float) x0, (float) y0, (float) z0).setColor(r, g, b, a);
+        builder.addVertex(pose, (float) x1, (float) y1, (float) z1).setColor(r, g, b, a);
     }
 
     /**
