@@ -159,8 +159,13 @@ public final class HeatSourceRegistry {
 
     /**
      * Максимальный радиус излучения среди всех источников — размер области сканирования.
+     * <p>
+     * Учитывает, что реальный радиус источника растёт вместе с его тепловыходом
+     * (до ×{@link HeatSourceDef#HEAT_RADIUS_MAX_SCALE}, см.
+     * {@link HeatSourceDef#heatRadiusScale(float)}): мощную лаву нужно найти,
+     * даже если она за десяток блоков.
      */
     public static float maxRadius() {
-        return maxRadius;
+        return maxRadius * HeatSourceDef.HEAT_RADIUS_MAX_SCALE;
     }
 }

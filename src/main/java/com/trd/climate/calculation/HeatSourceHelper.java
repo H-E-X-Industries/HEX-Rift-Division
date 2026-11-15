@@ -28,16 +28,31 @@ import java.util.List;
 public final class HeatSourceHelper {
 
     /**
-     * Экспонента спада интенсивности излучения с расстоянием.
+     * Кривая спада излучения с расстоянием.
      * <p>
-     * Значение меньше 1 даёт «пологий» градиент: тепло не исчезает мгновенно
-     * на втором-третьем блоке, а плавно гаснет к краю радиуса. При значениях
-     * больше 1 тепло обрывалось неестественно резко (у лавы 330 °C, а уже через
-     * четыре блока — комнатная температура). При 0.6 спад мягкий: у кромки
-     * жарко, дальше тепло тает постепенно и сходит на нет только у самого
-     * края радиуса излучения.
+     * Форма: {@code f(t) = (1 − t)^p · (1 + p·t)}, где {@code t = d / R} —
+     * доля пройденного радиуса, а {@code p} — показатель формы, который
+     * задаётся теплопроводностью источника ({@link HeatSourceDef#falloffExponent()}).
+     * <p>
+     * Почему так:
+     * <ul>
+     *   <li>у края радиуса (t → 1) значение <b>и наклон</b> кривой стремятся
+     *       к нулю — влияние источника мягко уходит в ноль, без «обрыва»,
+     *       из-за которого температура падала на сотни градусов за пару блоков;</li>
+     *   <li>при {@code p = 1} спад почти линейный (хороший проводник: лава
+     *       разносит тепло далеко и равномерно);</li>
+     *   <li>при {@code p = 3} тепло держится у самой поверхности (плохой
+     *       проводник: нагреватель из доломитовых кирпичей греет вплотную).</li>
+     * </ul>
      */
-    public static final float FALLOFF_EXPONENT = 0.6f;
+    public static float falloffFactor(float normalizedDistance, float exponent) {
+        if (normalizedDistance >= 1.0f) {
+            return 0.0f;
+        }
+        float t = Math.max(0.0f, normalizedDistance);
+        float u = 1.0f - t;
+        return (float) (Math.pow(u, exponent) * (1.0f + exponent * t));
+    }
 
     /**
      * Коэффициент убывающей отдачи для перекрывающихся источников:
@@ -91,10 +106,14 @@ public final class HeatSourceHelper {
 
         /**
          * Радиус излучения источника, блоков.
-         * Зависит от текущей мощности: слабый источник греет только вплотную.
+         * Зависит от текущей мощности (слабый прибор греет только вплотную)
+         * и от тепловыхода: чем горячее источник, тем дальше чувствуется
+         * его излучение ({@link HeatSourceDef#heatRadiusScale(float)}).
          */
         public float radius() {
-            return def.radiusAt(power);
+            return def.radiusAt(power)
+                    * def.heatRadiusScale(effectiveHeat())
+                    * def.spreadByConductivity();
         }
 
         /**
@@ -423,8 +442,8 @@ public final class HeatSourceHelper {
             return 0.0f;
         }
 
-        float factor = (float) (1.0 - (distance / radius));
-        float falloff = (float) Math.pow(Math.max(0.0f, factor), FALLOFF_EXPONENT);
+        float factor = (float) (distance / radius);
+        float falloff = falloffFactor(factor, source.def().falloffExponent());
 
         float heat = effective * falloff;
 

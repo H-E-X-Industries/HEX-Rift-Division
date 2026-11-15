@@ -38,7 +38,7 @@ public final class ModClientConfig {
         HEAT_DEBUG_RADIUS = builder
                 .comment("Радиус отображения тепловых пятен в режиме отладки тепла (блоков).",
                         "Больше радиус — больше нагрузка на ПК. Допустимо: 1..100.")
-                .defineInRange("heatDebugRadius", 25, 1, 100);
+                .defineInRange("heatDebugRadius", 35, 1, 100);
         HEAT_DEBUG_ALLOW_SURVIVAL = builder
                 .comment("Разрешить режим отладки в выживании и приключении.",
                         "По умолчанию отладка доступна только в creative/spectator.")
@@ -47,7 +47,7 @@ public final class ModClientConfig {
                 .comment("Максимальное количество тепловых пятен в отладочном оверлее.",
                         "Больше значение — подробнее картина, но выше нагрузка на FPS.",
                         "Допустимо: 200..20000.")
-                .defineInRange("heatDebugMaxPoints", 2000, 200, 20000);
+                .defineInRange("heatDebugMaxPoints", 4000, 200, 20000);
         builder.pop();
         SPEC = builder.build();
     }

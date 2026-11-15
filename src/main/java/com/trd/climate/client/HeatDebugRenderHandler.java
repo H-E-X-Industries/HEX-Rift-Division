@@ -26,6 +26,7 @@ import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -49,9 +50,9 @@ import java.util.Map;
  *       градиент зелёный → жёлтый → красный, без «вырвиглазных» порогов);</li>
  *   <li>блоки вне пирамиды видимости камеры отсекаются через {@link Frustum}
  *       (за спиной и за стеной по краю экрана ничего не рисуется);</li>
- *   <li>мультиблок-источник под прицелом обводится рамкой — как ванильное
- *       выделение блока, только цветом его температуры. Сами блоки мультиблока
- *       НЕ заливаются (иначе квады з-файтятся с его моделью);</li>
+ *   <li>мультиблоки-источники обводятся рамкой по периметру — как ванильное
+ *       выделение блока, только цветом температуры конструкции. Сами блоки
+ *       мультиблока НЕ заливаются (иначе квады з-файтятся с его моделью);</li>
  *   <li>цифры с температурой рисуются только рядом с игроком.</li>
  * </ul>
  */
@@ -217,13 +218,16 @@ public class HeatDebugRenderHandler {
             BufferUploader.drawWithShader(builder.buildOrThrow());
         }
 
-        // ── 2. Рамка вокруг мультиблока под прицелом ────────────────
-        renderHoveredMultiblockOutline(pose);
+        // ── 2. Рамки вокруг мультиблоков-источников ─────────────────
+        renderMultiblockOutlines(pose);
 
         RenderSystem.enableCull();
         RenderSystem.depthMask(true);
+        poseStack.popPose();
 
         // ── 3. Цифры с температурой — над ближними блоками ─────────
+        // Рисуется ПОСЛЕ popPose: renderFloatingText сам переводит мировые
+        // координаты относительно камеры, поэтому сдвиг -camPos ему не нужен
         if (!field.isEmpty()) {
             try (com.mojang.blaze3d.vertex.ByteBufferBuilder byteBufferBuilder = new com.mojang.blaze3d.vertex.ByteBufferBuilder(16384)) {
                 MultiBufferSource.BufferSource textBufferSource = MultiBufferSource.immediate(byteBufferBuilder);
@@ -262,31 +266,65 @@ public class HeatDebugRenderHandler {
                 textBufferSource.endBatch();
             }
         }
-
-        poseStack.popPose();
     }
 
+    /** Сколько мультиблоков одновременно обводить рамкой (страховка). */
+    private static final int MAX_OUTLINED_MULTIBLOCKS = 16;
+
     /**
-     * Обводит рамкой мультиблок-источник, на который смотрит игрок.
+     * Обводит рамками мультиблоки-источники — как ванильное выделение блока,
+     * только вокруг всей конструкции и цветом её температуры.
      * <p>
-     * Выделяется <b>только</b> конструкция под прицелом (как ванильное
-     * выделение блока): никаких рамок вокруг всех мультиблоков подряд —
-     * они превращали отладку в кашу. Цвет рамки — температура конструкции.
+     * Рамка рисуется для каждого мультиблока в зоне отладки (их немного:
+     * поле показывает лишь ближайшие источники), плюс для мультиблока под
+     * прицелом, если он в зону не попал. Сами блоки конструкции НЕ
+     * заливаются квадами — именно заливка давала z-fighting с моделями
+     * и «выделение рандомных блок-партов».
      * <p>
-     * Линии рисуются с включённым тестом глубины: рамка за стеной не видна,
-     * как и у ванильного выделения.
+     * Линии рисуются с включённым тестом глубины: рамка за стеной не видна.
      * <p>
      * <b>Важно:</b> линии рисуются через собственный {@link Tesselator}, а не через
      * {@code mc.renderBuffers().bufferSource()}: у общего буфера общая память
      * с ванильным рендером, и обращение к нему посреди отрисовки уровня
      * роняло игру с нативным крашем в драйвере видеокарты.
      */
-    private static void renderHoveredMultiblockOutline(Matrix4f pose) {
-        HeatSourceHelper.HeatSource source = HeatDebugController.hoveredMultiblock();
-        if (source == null || source.cells().size() <= 1) {
-            return;
+    private static void renderMultiblockOutlines(Matrix4f pose) {
+        List<HeatSourceHelper.HeatSource> sources = HeatDebugController.sources();
+        HeatSourceHelper.HeatSource hovered = HeatDebugController.hoveredMultiblock();
+
+        Tesselator tesselator = Tesselator.getInstance();
+        BufferBuilder builder = tesselator.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.POSITION_COLOR);
+
+        int drawn = 0;
+        java.util.Set<BlockPos> drawnPositions = new java.util.HashSet<>();
+        for (HeatSourceHelper.HeatSource source : sources) {
+            if (source.cells().size() <= 1 || drawn >= MAX_OUTLINED_MULTIBLOCKS) {
+                continue;
+            }
+            addSourceOutline(builder, pose, source);
+            drawnPositions.add(source.pos());
+            drawn++;
+        }
+        // Мультиблок под прицелом — даже если он не попал в ближайшую зону
+        if (hovered != null && hovered.cells().size() > 1 && !drawnPositions.contains(hovered.pos())) {
+            addSourceOutline(builder, pose, hovered);
+            drawn++;
         }
 
+        if (drawn > 0) {
+            BufferUploader.drawWithShader(builder.buildOrThrow());
+        } else {
+            // Нечего рисовать — закрываем билдер (build вернёт пустой меш)
+            builder.build();
+        }
+    }
+
+    /**
+     * Добавляет в буфер рёбра ограничивающего бокса конструкции,
+     * окрашенные в цвет её температуры.
+     */
+    private static void addSourceOutline(BufferBuilder builder, Matrix4f pose,
+                                         HeatSourceHelper.HeatSource source) {
         int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
         int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
         for (BlockPos c : source.cells()) {
@@ -299,15 +337,11 @@ public class HeatDebugRenderHandler {
         }
 
         float[] rgb = temperatureColor(source.sourceTemp());
-
-        Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder builder = tesselator.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.POSITION_COLOR);
         float e = OUTLINE_EPSILON;
         renderBoxEdges(builder, pose,
                 minX - e, minY - e, minZ - e,
                 maxX + 1 + e, maxY + 1 + e, maxZ + 1 + e,
                 rgb[0], rgb[1], rgb[2], 1.0f);
-        BufferUploader.drawWithShader(builder.buildOrThrow());
     }
 
     /**
