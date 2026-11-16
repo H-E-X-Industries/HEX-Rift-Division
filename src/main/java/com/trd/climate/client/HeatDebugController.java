@@ -18,6 +18,8 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Сбор данных для отладочного оверлея тепла.
@@ -71,10 +73,13 @@ public class HeatDebugController {
                 Map<BlockPos, Float> haloCells,
                 HeatSourceHelper.HeatSource hoveredMultiblock
         ) {
-            this.field = Map.copyOf(field);
-            this.faceMasks = Map.copyOf(faceMasks);
-            this.sources = List.copyOf(sources);
-            this.haloCells = Map.copyOf(haloCells);
+            // Без копирования: карты и список — потокобезопасные, и рендер
+            // читает их напрямую. Копия на несколько тысяч блоков каждый тик
+            // съедала заметную часть кадра и плодила мусор в куче
+            this.field = field;
+            this.faceMasks = faceMasks;
+            this.sources = sources;
+            this.haloCells = haloCells;
             this.hoveredMultiblock = hoveredMultiblock;
         }
 
@@ -118,11 +123,11 @@ public class HeatDebugController {
     private static final Set<BlockPos> stalePoints = new HashSet<>();
 
     /** Рабочие копии карт — публикуются в конце тика. */
-    private static final Map<BlockPos, Float> workField = new HashMap<>();
-    private static final Map<BlockPos, Integer> workFaceMasks = new HashMap<>();
-    private static final Map<BlockPos, Float> workHaloCells = new HashMap<>();
+    private static final Map<BlockPos, Float> workField = new ConcurrentHashMap<>();
+    private static final Map<BlockPos, Integer> workFaceMasks = new ConcurrentHashMap<>();
+    private static final Map<BlockPos, Float> workHaloCells = new ConcurrentHashMap<>();
     /** Мультиблоки для рамок (кластеры лавы и льда сюда не входят). */
-    private static final List<HeatSourceHelper.HeatSource> workOutlineSources = new ArrayList<>();
+    private static final List<HeatSourceHelper.HeatSource> workOutlineSources = new CopyOnWriteArrayList<>();
     private static HeatSourceHelper.HeatSource workHoveredMultiblock = null;
 
     /** Задача расширения области влияния одного источника. */
@@ -366,7 +371,7 @@ public class HeatDebugController {
 
         queueChunksAround(level, playerPos, false);
 
-        rebuildDirtyClusters(level);
+        rebuildDirtyClusters(level, playerPos);
 
         int oldSignature = sourcesSignature;
         pickFieldSources(playerPos);
@@ -397,12 +402,14 @@ public class HeatDebugController {
             }
         }
 
-        int signature = 1;
+        // Подпись набора источников — порядок-independent: иначе перестановка
+        // источников при движении игрока считалась бы изменением и поле
+        // пересобиралось бы на каждом шаге
+        int signature = 0;
         for (HeatSourceHelper.HeatSource source : fieldSources) {
-            signature = signature * 31 + source.pos().hashCode();
             // Число клеток: озеро могло подрасти, а якорь остался тем же —
             // без этого поле не пересобиралось и влияние оставалось старым
-            signature = signature * 31 + source.cells().size();
+            signature += source.pos().hashCode() * 31 + source.cells().size();
         }
         sourcesSignature = signature;
 
@@ -412,46 +419,57 @@ public class HeatDebugController {
     }
 
     /**
-     * Пересобирает кластеры только у изменившихся чанков и их соседей:
-     * озеро может пересекать границу чанка, поэтому соседа тоже надо
-     * пересчитать. Неизменные чанки не трогаем.
+     * Пересобирает кластеры только у изменившихся чанков.
+     * <p>
+     * Кластеры считаются <b>по каждому чанку отдельно</b>. Раньше кластеры
+     * собирались из пула «грязных» чанков: чанки сканируются по очереди, и
+     * озеро льда то собиралось в один кластер, то распадалось на куски, пока
+     * не отсканировался соседний чанк. Каждая пересборка меняла число
+     * клеток, а по нему считалась подпись поля — и поле пересобиралось
+     * заново, то исчезая, то появляясь.
+     * <p>
+     * Теперь кластер каждого чанка зависит только от источников этого чанка,
+     * поэтому пересканирование меняет ровно те чанки, которых коснулось.
+     * Озеро на границе чанков станет двумя кластерами — на картинку это не
+     * влияет: зона влияния всё равно покрывает оба.
      */
-    private static void rebuildDirtyClusters(ClientLevel level) {
+    private static void rebuildDirtyClusters(ClientLevel level, BlockPos playerPos) {
         if (!dirtyChunks.isEmpty()) {
-            Set<ChunkPos> affected = new HashSet<>();
             for (ChunkPos cp : dirtyChunks) {
-                for (int dx = -1; dx <= 1; dx++) {
-                    for (int dz = -1; dz <= 1; dz++) {
-                        affected.add(new ChunkPos(cp.x + dx, cp.z + dz));
-                    }
+                List<HeatSourceHelper.HeatSource> cached = chunkSources.get(cp);
+                if (cached == null || cached.isEmpty()) {
+                    chunkClusters.remove(cp);
+                    continue;
                 }
+                chunkClusters.put(cp, HeatSourceHelper.clusterSources(level, cached));
             }
             dirtyChunks.clear();
-
-            List<HeatSourceHelper.HeatSource> pool = new ArrayList<>();
-            for (ChunkPos cp : affected) {
-                List<HeatSourceHelper.HeatSource> cached = chunkSources.get(cp);
-                if (cached != null) {
-                    pool.addAll(cached);
-                }
-            }
-            List<HeatSourceHelper.HeatSource> clustered = HeatSourceHelper.clusterSources(level, pool);
-            for (ChunkPos cp : affected) {
-                chunkClusters.remove(cp);
-            }
-            for (HeatSourceHelper.HeatSource cluster : clustered) {
-                chunkClusters.computeIfAbsent(new ChunkPos(cluster.pos()), k -> new ArrayList<>()).add(cluster);
-            }
         }
+
+        // Источники, до которых с поля не дотянуться, в отбор не идут:
+        // иначе на каждый блок поля приходилось бы перебирать их все
+        double reach = ModClientConfig.heatDebugRadius() + HeatSourceRegistry.maxRadius() + 2.0;
+        double reachSq = reach * reach;
 
         calculationSources.clear();
         sourceBoxes.clear();
         for (List<HeatSourceHelper.HeatSource> clusters : chunkClusters.values()) {
             for (HeatSourceHelper.HeatSource cluster : clusters) {
                 calculationSources.add(cluster);
-                sourceBoxes.add(boxOf(cluster));
+                SourceBox box = boxOf(cluster);
+                if (distanceSqToBox(box, playerPos) <= reachSq + box.radius() * box.radius()) {
+                    sourceBoxes.add(box);
+                }
             }
         }
+    }
+
+    /** Квадрат расстояния от точки до габаритного ящика источника. */
+    private static double distanceSqToBox(SourceBox box, BlockPos pos) {
+        double dx = Math.max(box.minX() - pos.getX(), 0) + Math.max(pos.getX() - box.maxX(), 0);
+        double dy = Math.max(box.minY() - pos.getY(), 0) + Math.max(pos.getY() - box.maxY(), 0);
+        double dz = Math.max(box.minZ() - pos.getZ(), 0) + Math.max(pos.getZ() - box.maxZ(), 0);
+        return dx * dx + dy * dy + dz * dz;
     }
 
     /**
@@ -480,47 +498,31 @@ public class HeatDebugController {
      * Источники для поля: кластеры, а не отдельные блоки. Иначе 16 слотов
      * занимали 16 блоков одного ледника, а печь рядом в поле не попадала.
      * Кластер занимает один слот и покрывает всё озеро.
+     * <p>
+     * Выбираются ближайшие к игроку, без «липкости» к прошлым источникам.
+     * Раньше старые источники удерживали слоты, и новый источник, к которому
+     * игрок подлетел, в поле не попадал вообще — оверлей его просто не видел,
+     * пока не выключить и не включить отладку заново.
      */
     private static void pickFieldSources(BlockPos playerPos) {
-        Map<BlockPos, HeatSourceHelper.HeatSource> fresh = new HashMap<>();
-        for (HeatSourceHelper.HeatSource source : calculationSources) {
-            fresh.put(source.pos(), source);
-        }
+        List<SourceBox> sorted = new ArrayList<>(sourceBoxes);
+        sorted.sort((a, b) -> Double.compare(
+                distanceSqToBox(a, playerPos),
+                distanceSqToBox(b, playerPos)));
 
         List<HeatSourceHelper.HeatSource> kept = new ArrayList<>();
-        for (HeatSourceHelper.HeatSource old : fieldSources) {
-            HeatSourceHelper.HeatSource updated = fresh.get(old.pos());
-            if (updated != null) {
-                kept.add(updated);
+        Set<BlockPos> keptPositions = new HashSet<>();
+        for (SourceBox box : sorted) {
+            if (kept.size() >= MAX_FIELD_SOURCES) {
+                break;
             }
-        }
-
-        if (kept.size() < MAX_FIELD_SOURCES && !calculationSources.isEmpty()) {
-            Set<BlockPos> keptPositions = new HashSet<>();
-            for (HeatSourceHelper.HeatSource source : kept) {
-                keptPositions.add(source.pos());
-            }
-            List<HeatSourceHelper.HeatSource> sorted = new ArrayList<>(calculationSources);
-            sorted.sort((a, b) -> Double.compare(distanceSq(a.pos(), playerPos), distanceSq(b.pos(), playerPos)));
-            for (HeatSourceHelper.HeatSource source : sorted) {
-                if (kept.size() >= MAX_FIELD_SOURCES) {
-                    break;
-                }
-                if (keptPositions.add(source.pos())) {
-                    kept.add(source);
-                }
+            if (keptPositions.add(box.source().pos())) {
+                kept.add(box.source());
             }
         }
 
         fieldSources.clear();
         fieldSources.addAll(kept);
-    }
-
-    private static double distanceSq(BlockPos pos, BlockPos playerPos) {
-        double dx = pos.getX() - playerPos.getX();
-        double dy = pos.getY() - playerPos.getY();
-        double dz = pos.getZ() - playerPos.getZ();
-        return dx * dx + dy * dy + dz * dz;
     }
 
     private static void rebuildCandidates() {
@@ -592,12 +594,13 @@ public class HeatDebugController {
                     // точки и съедали лимит кандидатов
                     if (cells.size() > 1 && ddx == 0 && ddy == 0 && ddz == 0) {
                         double cellDistSq = distanceSqToCells(bx, by, bz, cells);
-                        if (cellDistSq <= 0.0) {
-                            continue;   // собственные клетки источника не рисуем
-                        }
                         if (cellDistSq > radSq) {
                             continue;
                         }
+                        // Собственные клетки источника пропускать нельзя:
+                        // из-за них сам источник то пропадал с экрана, то
+                        // появлялся — в зависимости от того, как он лёг
+                        // в кластер
                     }
                     cursor.set(bx, by, bz);
                     BlockState state = level.getBlockState(cursor);
@@ -658,7 +661,21 @@ public class HeatDebugController {
             return;
         }
         do {
-            ChunkPos cp = scanQueue.iterator().next();
+            // Сначала сканируем чанк, ближайший к игроку: пока он не
+            // просканирован, источники рядом с игроком в поле не появляются,
+            // а очередь на 50 чанков обходилась по порядку — новая местность
+            // попадала в конец и ждала своей очереди
+            ChunkPos cp = null;
+            long best = Long.MAX_VALUE;
+            for (ChunkPos candidate : scanQueue) {
+                long dx = ((long) candidate.x << 4) + 8 - playerPos.getX();
+                long dz = ((long) candidate.z << 4) + 8 - playerPos.getZ();
+                long d = dx * dx + dz * dz;
+                if (d < best) {
+                    best = d;
+                    cp = candidate;
+                }
+            }
             scanQueue.remove(cp);
             if (!level.hasChunk(cp.x, cp.z)) {
                 continue;

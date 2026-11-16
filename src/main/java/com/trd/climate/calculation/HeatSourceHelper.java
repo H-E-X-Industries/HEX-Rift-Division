@@ -134,11 +134,17 @@ public final class HeatSourceHelper {
          * Зависит от текущей мощности (слабый прибор греет только вплотную)
          * и от тепловыхода: чем горячее источник, тем дальше чувствуется
          * его излучение ({@link HeatSourceDef#heatRadiusScale(float)}).
+         * <p>
+         * У холодителя радиус по мощности <b>не</b> сжимается: его «мощность»
+         * — это разность температур, а не поток тепла, поэтому морозилка с
+         * заявленным радиусом 4 блока работает на все 4 блока, а не на полтора.
          */
         public float radius() {
-            return def.radiusAt(power)
-                    * def.heatRadiusScale(effectiveHeat())
-                    * def.spreadByConductivity();
+            float base = def.radiusAt(power) * def.spreadByConductivity();
+            if (def.cooling()) {
+                return base;
+            }
+            return base * def.heatRadiusScale(effectiveHeat());
         }
 
         /**
@@ -469,7 +475,24 @@ public final class HeatSourceHelper {
         if (effective <= 0.0f) {
             return 0.0f;
         }
+        float coupling = couplingFactor(level, source, targetPos, targetPoint, shelterLevel);
+        if (coupling <= 0.0f) {
+            return 0.0f;
+        }
+        return effective * coupling;
+    }
 
+    /**
+     * Доля влияния источника на точку: спад по расстоянию, затухание в
+     * препятствиях и снос ветром. Для нагревателя это доля его выхода,
+     * для охладителя — сила связи с воздухом.
+     *
+     * @param targetPos    блок цели
+     * @param targetPoint  точка измерения в целевом блоке
+     * @param shelterLevel уровень укрытия (0 — открытое небо, 1 — полное укрытие)
+     */
+    private static float couplingFactor(Level level, HeatSource source, BlockPos targetPos,
+                                         Vec3 targetPoint, float shelterLevel) {
         HeatSourceDef def = source.def();
         double radius = source.radius();
         if (radius <= 0.0) {
@@ -487,20 +510,20 @@ public final class HeatSourceHelper {
 
         // Прямое излучение, ослабленное сплошными блоками на пути
         double blocked = occlusionLength(level, source.cells(), from, targetPoint, targetPos);
-        float heat = effective * falloff * attenuation(blocked);
+        float coupling = falloff * attenuation(blocked);
 
         // Воздушная кожа: если прямой луч что-то перекрыл, тепло может прийти
         // через примыкающий к источнику воздух (половинной мощности)
         if (blocked > 0.001) {
-            float halo = airHaloHeat(level, source, targetPos, targetPoint, effective, radius);
-            heat = Math.max(heat, halo);
+            coupling = Math.max(coupling,
+                    haloCoupling(level, source, targetPos, targetPoint, radius, def.falloffExponent()));
         }
 
         // На открытом воздухе ветер сдувает большую часть тепла,
         // в укрытии (нора, пещера, комната) тепло задерживается полностью
-        heat *= OUTDOOR_EFFICIENCY + SHELTER_EFFICIENCY * Mth.clamp(shelterLevel, 0.0f, 1.0f);
+        coupling *= OUTDOOR_EFFICIENCY + SHELTER_EFFICIENCY * Mth.clamp(shelterLevel, 0.0f, 1.0f);
 
-        return heat;
+        return coupling;
     }
 
     /**
@@ -520,19 +543,21 @@ public final class HeatSourceHelper {
     }
 
     /**
-     * Тепло от «воздушной кожи» источника — фантомных источников половинной
-     * мощности в блоках воздуха, примыкающих к источнику вплотную.
+     * Сила связи через «воздушную кожу» источника: воздух вплотную к
+     * источнику сам становится фантомным источником половинной мощности.
      * <p>
      * Берётся лучший из кандидатов (соседей ближайшего блока источника по
      * грани). Кандидаты — только настоящий воздух, и только вплотную к
      * источнику: воздушные источники не распространяются дальше на
      * соседний воздух (никакой цепной реакции).
+     * <p>
+     * Возвращает долю от паспортного выхода источника (0…{@value #AIR_HALO_POWER}
+     * и выше при нескольких подходящих гранях).
      */
-    private static float airHaloHeat(Level level, HeatSource source, BlockPos targetPos,
-                                      Vec3 targetPoint, float effective, double radius) {
+    private static float haloCoupling(Level level, HeatSource source, BlockPos targetPos,
+                                      Vec3 targetPoint, double radius, float exponent) {
         BlockPos nearest = source.nearestCell(targetPoint);
         float best = 0.0f;
-        float exponent = source.def().falloffExponent();
 
         for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
             BlockPos air = nearest.relative(dir);
@@ -547,7 +572,7 @@ public final class HeatSourceHelper {
             }
             float falloff = falloffFactor((float) (distance / radius), exponent);
             double blocked = occlusionLength(level, source.cells(), airPoint, targetPoint, targetPos);
-            float halo = effective * AIR_HALO_POWER * falloff * attenuation(blocked);
+            float halo = AIR_HALO_POWER * falloff * attenuation(blocked);
             best = Math.max(best, halo);
         }
         return best;
@@ -644,27 +669,54 @@ public final class HeatSourceHelper {
         float hottest = Float.NEGATIVE_INFINITY;
         float coldest = Float.POSITIVE_INFINITY;
 
+        // ── 1. Нагрев ────────────────────────────────────────────
         for (HeatSource source : sources) {
+            if (source.def().cooling()) {
+                continue;
+            }
             float contribution = heatFromSource(level, source, pos, probe, shelterLevel) * scale;
             if (contribution <= 0.0f) {
                 continue;
             }
-            if (source.def().cooling()) {
-                cools.add(contribution);
-                coldest = Math.min(coldest, source.sourceTemp());
-            } else {
-                heats.add(contribution);
-                hottest = Math.max(hottest, source.sourceTemp());
-            }
+            heats.add(contribution);
+            hottest = Math.max(hottest, source.sourceTemp());
         }
 
         // Нагреватели: убывающая отдача для перекрывающихся источников
         result += diminishingSum(heats);
-        // Охладители: симметрично
+
+        // ── 2. Охлаждение ─────────────────────────────────────────
+        // Охладитель не «добавляет свои минус градусы», а тянет воздух к
+        // температуре своей поверхности. Чем горячее воздух, тем сильнее
+        // он тянет, поэтому лёд под костром забирает часть тепла костра
+        // (тепло уходит на таяние), а не просто складывает «+30 и −8».
+        // Забрать можно не больше паспортной мощности источника, так что
+        // холод из ничего не возникает и тепло не дублируется. У холодителя
+        // паспортная мощность — это ровно те градусы, которые он способен
+        // снять (у льда 8, у синего 15), без срезания на теплопроводность:
+        // лёд должен быть такой же морозилкой, как и задумано.
+        for (HeatSource source : sources) {
+            if (!source.def().cooling()) {
+                continue;
+            }
+            float coupling = couplingFactor(level, source, pos, probe, shelterLevel) * scale;
+            if (coupling <= 0.0f) {
+                continue;
+            }
+            float excess = result - source.sourceTemp();
+            if (excess <= 0.0f) {
+                continue;   // воздух холоднее поверхности источника — тянуть нечего
+            }
+            cools.add(Math.min(coupling * excess, source.def().maxHeat()));
+            coldest = Math.min(coldest, source.sourceTemp());
+        }
+
+        // Охладители: убывающая отдача и здесь — четыре глыбы льда рядом
+        // не охлаждают вчетверо сильнее одной
         result -= diminishingSum(cools);
 
-        // Потолок/пол температуры источника: точка не может быть горячее
-        // самого горячего источника и холоднее самого холодного
+        // Потолок/пол температуры источника: точка не может нагреться выше
+        // температуры самого горячего источника и остыть ниже самого холодного
         if (hottest > Float.NEGATIVE_INFINITY) {
             result = Math.min(result, Math.max(baseTemp, hottest));
         }
