@@ -475,7 +475,8 @@ public final class HeatSourceHelper {
         if (effective <= 0.0f) {
             return 0.0f;
         }
-        float coupling = couplingFactor(level, source, targetPos, targetPoint, shelterLevel);
+        float coupling = couplingFactor(level, source, source.nearestCell(targetPoint),
+                targetPos, targetPoint, shelterLevel);
         if (coupling <= 0.0f) {
             return 0.0f;
         }
@@ -486,20 +487,27 @@ public final class HeatSourceHelper {
      * Доля влияния источника на точку: спад по расстоянию, затухание в
      * препятствиях и снос ветром. Для нагревателя это доля его выхода,
      * для охладителя — сила связи с воздухом.
+     * <p>
+     * Считается от конкретной клетки источника: у глыбы льда их много, и
+     * каждая поверхность отдаёт холод отдельно. Иначе две пластины,
+     * случайно склеенные в один кластер, охлаждали бы зазор между собой
+     * как один-единственный источник — и радиатор переставал бы работать
+     * в зависимости от того, соединены пластины или нет.
      *
+     * @param cell         клетка источника, от которой считается связь
      * @param targetPos    блок цели
      * @param targetPoint  точка измерения в целевом блоке
      * @param shelterLevel уровень укрытия (0 — открытое небо, 1 — полное укрытие)
      */
-    private static float couplingFactor(Level level, HeatSource source, BlockPos targetPos,
-                                         Vec3 targetPoint, float shelterLevel) {
+    private static float couplingFactor(Level level, HeatSource source, BlockPos cell,
+                                         BlockPos targetPos, Vec3 targetPoint, float shelterLevel) {
         HeatSourceDef def = source.def();
         double radius = source.radius();
         if (radius <= 0.0) {
             return 0.0f;
         }
 
-        Vec3 from = sourcePoint(source.nearestCell(targetPoint));
+        Vec3 from = sourcePoint(cell);
         double distance = from.distanceTo(targetPoint);
         if (distance > radius) {
             return 0.0f;
@@ -516,7 +524,7 @@ public final class HeatSourceHelper {
         // через примыкающий к источнику воздух (половинной мощности)
         if (blocked > 0.001) {
             coupling = Math.max(coupling,
-                    haloCoupling(level, source, targetPos, targetPoint, radius, def.falloffExponent()));
+                    haloCoupling(level, source, cell, targetPos, targetPoint, radius, def.falloffExponent()));
         }
 
         // На открытом воздухе ветер сдувает большую часть тепла,
@@ -554,13 +562,12 @@ public final class HeatSourceHelper {
      * Возвращает долю от паспортного выхода источника (0…{@value #AIR_HALO_POWER}
      * и выше при нескольких подходящих гранях).
      */
-    private static float haloCoupling(Level level, HeatSource source, BlockPos targetPos,
+    private static float haloCoupling(Level level, HeatSource source, BlockPos cell, BlockPos targetPos,
                                       Vec3 targetPoint, double radius, float exponent) {
-        BlockPos nearest = source.nearestCell(targetPoint);
         float best = 0.0f;
 
         for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
-            BlockPos air = nearest.relative(dir);
+            BlockPos air = cell.relative(dir);
             BlockState state = level.getBlockState(air);
             if (!state.isAir()) {
                 continue; // не воздух — воздушным источником не станет
@@ -695,19 +702,36 @@ public final class HeatSourceHelper {
         // паспортная мощность — это ровно те градусы, которые он способен
         // снять (у льда 8, у синего 15), без срезания на теплопроводность:
         // лёд должен быть такой же морозилкой, как и задумано.
+        //
+        // Холод даёт каждая поверхность источника отдельно: у глыбы льда их
+        // много, и зазор между двумя пластинами холодится обеими — независимо
+        // от того, лежат пластины рядом или склеены в один кластер. Раньше
+        // кластер считался одним источником, и радиатор из льда работал
+        // только пока пластины не стояли рядом.
         for (HeatSource source : sources) {
             if (!source.def().cooling()) {
-                continue;
-            }
-            float coupling = couplingFactor(level, source, pos, probe, shelterLevel) * scale;
-            if (coupling <= 0.0f) {
                 continue;
             }
             float excess = result - source.sourceTemp();
             if (excess <= 0.0f) {
                 continue;   // воздух холоднее поверхности источника — тянуть нечего
             }
-            cools.add(Math.min(coupling * excess, source.def().maxHeat()));
+            double radius = source.radius();
+            for (BlockPos cell : source.cells()) {
+                // Грубая проверка расстояния: дорогой просчёт перекрытия
+                // делаем только для действительно близких поверхностей
+                double dx = cell.getX() + 0.5 - probe.x;
+                double dy = cell.getY() + 0.5 - probe.y;
+                double dz = cell.getZ() + 0.5 - probe.z;
+                if (dx * dx + dy * dy + dz * dz > radius * radius) {
+                    continue;
+                }
+                float coupling = couplingFactor(level, source, cell, pos, probe, shelterLevel) * scale;
+                if (coupling <= 0.0f) {
+                    continue;
+                }
+                cools.add(Math.min(coupling * excess, source.def().maxHeat()));
+            }
             coldest = Math.min(coldest, source.sourceTemp());
         }
 
