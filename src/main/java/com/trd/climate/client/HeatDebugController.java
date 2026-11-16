@@ -48,11 +48,6 @@ public class HeatDebugController {
     private static final int MAX_FIELD_SOURCES = 16;
     /** Порог изменения температуры для отображения блока в дебаге, °C. */
     private static final float MIN_TEMP_DELTA = 3.0f;
-    /**
-     * Базовая температура среды в точке игрока: считается один раз за тик
-     * и используется как ноль для отсева блоков с ΔT меньше порога.
-     */
-    private static float cachedBaseTemp = 20.0f;
 
     // ═══════════════════════════════════════════════════════════
     // НЕИЗМЕНЯЕМЫЙ СНИМОК ДЛЯ РЕНДЕРА (атомарная публикация)
@@ -97,8 +92,13 @@ public class HeatDebugController {
 
     private static final Map<ChunkPos, List<HeatSourceHelper.HeatSource>> chunkSources = new HashMap<>();
     private static final LinkedHashSet<ChunkPos> scanQueue = new LinkedHashSet<>();
-    private static final List<HeatSourceHelper.HeatSource> activeSources = new ArrayList<>();
     private static final List<HeatSourceHelper.HeatSource> calculationSources = new ArrayList<>();
+    /**
+     * Габариты источников для отсечки по расстоянию. У кластера (озеро
+     * лавы) крайние клетки лежат в десятках блоков от якоря, поэтому
+     * расстояние считается до ящика клеток, а не до одной точки.
+     */
+    private static final List<SourceBox> sourceBoxes = new ArrayList<>();
     /**
      * Кластеры (лавовые озёра, ледники) считаются один раз на чанк, а не
      * заново по всем источникам каждые 5 тиков: на леднике это были тысячи
@@ -107,14 +107,13 @@ public class HeatDebugController {
     private static final Map<ChunkPos, List<HeatSourceHelper.HeatSource>> chunkClusters = new HashMap<>();
     /** Чанки, чьи кластеры устарели (пересканированы или выгружены). */
     private static final Set<ChunkPos> dirtyChunks = new HashSet<>();
-    private static final ArrayDeque<CellTask> pendingCells = new ArrayDeque<>();
+    private static final ArrayDeque<SourceTask> pendingSources = new ArrayDeque<>();
     private static final ArrayDeque<BlockPos> pendingPoints = new ArrayDeque<>();
     private static final Set<BlockPos> queuedPoints = new HashSet<>();
     private static final List<BlockPos> refreshList = new ArrayList<>();
     private static int refreshIndex = 0;
     private static int lastTempRefreshTick = Integer.MIN_VALUE;
     private static final Set<BlockPos> seenCandidates = new HashSet<>();
-    private static final Set<BlockPos> expandedCells = new HashSet<>();
     private static final List<HeatSourceHelper.HeatSource> fieldSources = new ArrayList<>();
     private static final Set<BlockPos> stalePoints = new HashSet<>();
 
@@ -126,7 +125,25 @@ public class HeatDebugController {
     private static final List<HeatSourceHelper.HeatSource> workOutlineSources = new ArrayList<>();
     private static HeatSourceHelper.HeatSource workHoveredMultiblock = null;
 
-    private record CellTask(BlockPos pos, float radius, boolean paintSelf) {}
+    /** Задача расширения области влияния одного источника. */
+    private record SourceTask(HeatSourceHelper.HeatSource source, float radius) {}
+
+    /**
+     * Источник вместе с габаритами его клеток — для отсечки по расстоянию.
+     * <p>
+     * Якорь кластера — одна точка, а крайние клетки озера лежат в десятках
+     * блоков от неё. Если мерить до якоря, озеро выпадало из расчёта на
+     * собственном краю и влияние обрывалось на середине.
+     */
+    private record SourceBox(HeatSourceHelper.HeatSource source, float radius,
+                             int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
+        /** Накрывает ли ящик с запасом точку. */
+        boolean reaches(int x, int y, int z, float margin) {
+            return x >= minX - margin && x <= maxX + margin
+                    && y >= minY - margin && y <= maxY + margin
+                    && z >= minZ - margin && z <= maxZ + margin;
+        }
+    }
 
     private static ClientLevel cachedLevel = null;
     private static int lastRefreshTick = Integer.MIN_VALUE;
@@ -138,7 +155,6 @@ public class HeatDebugController {
 
     /** Reusable cursors — только в тиковом потоке. */
     private static final BlockPos.MutableBlockPos solidNeighbourCursor = new BlockPos.MutableBlockPos();
-    private static final BlockPos.MutableBlockPos expandedNearCursor = new BlockPos.MutableBlockPos();
 
     private HeatDebugController() {}
 
@@ -225,10 +241,6 @@ public class HeatDebugController {
         int tick = mc.player.tickCount;
         lastPlayerPos = playerPos;
 
-        // Кэш базовой температуры для фильтрации: считаем один раз в центре
-        // области вместо тысяч вызовов для каждого блока
-        cachedBaseTemp = TemperatureCalculator.calculatePointTemp(level, playerPos, List.of());
-
         // 1. Обновление списка источников
         if (tick - lastRefreshTick >= REFRESH_INTERVAL_TICKS || lastRefreshTick == Integer.MIN_VALUE) {
             lastRefreshTick = tick;
@@ -287,20 +299,20 @@ public class HeatDebugController {
 
         // 4. Отбор кандидатов
         long expandDeadline = phaseBudget(0.8);
-        while (!pendingCells.isEmpty()
+        while (!pendingSources.isEmpty()
                 && seenCandidates.size() < ModClientConfig.heatDebugMaxPoints()
                 && System.nanoTime() < expandDeadline) {
-            expandCell(level, pendingCells.poll());
+            expandSource(level, pendingSources.poll());
         }
         if (seenCandidates.size() >= ModClientConfig.heatDebugMaxPoints()) {
-            pendingCells.clear();
+            pendingSources.clear();
         }
 
         // 5. Расчёт температур
         computePendingPoints(level, phaseBudget(1.0));
 
         // 6. Уборка устаревших точек
-        if (pendingCells.isEmpty()) {
+        if (pendingSources.isEmpty()) {
             for (BlockPos pos : stalePoints) {
                 if (!seenCandidates.contains(pos)) {
                     workField.remove(pos);
@@ -354,26 +366,6 @@ public class HeatDebugController {
 
         queueChunksAround(level, playerPos, false);
 
-        activeSources.clear();
-
-        for (Map.Entry<ChunkPos, List<HeatSourceHelper.HeatSource>> entry : chunkSources.entrySet()) {
-            List<HeatSourceHelper.HeatSource> cached = entry.getValue();
-            if (cached.isEmpty()) {
-                continue;
-            }
-            // Кэш проверяется при сканировании чанка, а не каждые 5 тиков:
-            // повторный resolveAt по каждому блоку ледника не укладывался
-            // в бюджет тика, и поле переставало обновляться
-            for (HeatSourceHelper.HeatSource source : cached) {
-                long dx = source.pos().getX() - playerPos.getX();
-                long dy = source.pos().getY() - playerPos.getY();
-                long dz = source.pos().getZ() - playerPos.getZ();
-                if (dx * dx + dy * dy + dz * dz <= rangeSq) {
-                    activeSources.add(source);
-                }
-            }
-        }
-
         rebuildDirtyClusters(level);
 
         int oldSignature = sourcesSignature;
@@ -408,6 +400,9 @@ public class HeatDebugController {
         int signature = 1;
         for (HeatSourceHelper.HeatSource source : fieldSources) {
             signature = signature * 31 + source.pos().hashCode();
+            // Число клеток: озеро могло подрасти, а якорь остался тем же —
+            // без этого поле не пересобиралось и влияние оставалось старым
+            signature = signature * 31 + source.cells().size();
         }
         sourcesSignature = signature;
 
@@ -450,9 +445,35 @@ public class HeatDebugController {
         }
 
         calculationSources.clear();
+        sourceBoxes.clear();
         for (List<HeatSourceHelper.HeatSource> clusters : chunkClusters.values()) {
-            calculationSources.addAll(clusters);
+            for (HeatSourceHelper.HeatSource cluster : clusters) {
+                calculationSources.add(cluster);
+                sourceBoxes.add(boxOf(cluster));
+            }
         }
+    }
+
+    /**
+     * Габариты клеток источника — для отсечки по расстоянию.
+     * <p>
+     * У одиночного источника это его собственный блок, у кластера — ящик
+     * всех клеток. Считать расстояние до якоря нельзя: у озера лавы якорь
+     * стоит в углу, и противоположный край озера выпадал из расчёта.
+     */
+    private static SourceBox boxOf(HeatSourceHelper.HeatSource source) {
+        List<BlockPos> cells = source.cells();
+        int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
+        for (BlockPos c : cells) {
+            minX = Math.min(minX, c.getX());
+            maxX = Math.max(maxX, c.getX());
+            minY = Math.min(minY, c.getY());
+            maxY = Math.max(maxY, c.getY());
+            minZ = Math.min(minZ, c.getZ());
+            maxZ = Math.max(maxZ, c.getZ());
+        }
+        return new SourceBox(source, source.radius(), minX, minY, minZ, maxX, maxY, maxZ);
     }
 
     /**
@@ -505,37 +526,115 @@ public class HeatDebugController {
     private static void rebuildCandidates() {
         stalePoints.addAll(seenCandidates);
         seenCandidates.clear();
-        expandedCells.clear();
-        pendingCells.clear();
+        pendingSources.clear();
         lastRebuildPos = lastPlayerPos;
         for (HeatSourceHelper.HeatSource source : fieldSources) {
-            float radius = source.radius();
-            boolean paintSelf = source.cells().size() == 1;
-            List<BlockPos> cells = source.cells();
-            if (cells.size() == 1) {
-                pendingCells.add(new CellTask(cells.get(0), radius, paintSelf));
-                continue;
-            }
-            Set<BlockPos> cellSet = new HashSet<>(cells);
-            // У кластера (озеро, ледник) разворачиваем только граничные клетки:
-            // внутренние окружены своими же соседями, их сферы полностью
-            // перекрыты, а расчёт лучей перекрытия к ним — основная нагрузка
-            // у больших озёр. Берём только те, у которых есть открытая грань.
-            for (BlockPos cell : cells) {
-                if (isBoundaryCell(cell, cellSet) && hasOpenFace(cachedLevel, cell)) {
-                    pendingCells.add(new CellTask(cell, radius, paintSelf));
+            pendingSources.add(new SourceTask(source, source.radius()));
+        }
+    }
+
+    /**
+     * Расширяет область влияния источника на блоки-кандидаты поля.
+     * <p>
+     * Одиночный источник разворачивается сферой вокруг блока. Кластер
+     * (озеро лавы, куча льда) — объединением сфер вокруг <b>всех</b> его
+     * клеток.
+     * <p>
+     * Раньше клетки кластера отбрасывались как «уже развёрнутые», если рядом
+     * была развёрнута соседняя. Из-за этого у озера разворачивалась только
+     * одна клетка, и влияние источника обрывалось на краю радиуса действия:
+     * игрок видел горячий край и холодную пустоту в паре шагов.
+     * <p>
+     * Область считается по габаритному ящику кластера: для компактного
+     * кластера (озеро, ледник) это точное объединение сфер, для изрезанного
+     * (лава по склону) — с небольшим запасом, лишние точки отсеются по ΔT.
+     */
+    private static void expandSource(ClientLevel level, SourceTask task) {
+        HeatSourceHelper.HeatSource source = task.source();
+        List<BlockPos> cells = source.cells();
+
+        // +1: точка замера берётся на блок выше сплошного блока, иначе
+        // самый край зоны влияния не попадал бы в поле
+        int rad = (int) Math.ceil(task.radius()) + 1;
+        double radSq = (double) rad * rad;
+
+        int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
+        for (BlockPos c : cells) {
+            minX = Math.min(minX, c.getX());
+            maxX = Math.max(maxX, c.getX());
+            minY = Math.min(minY, c.getY());
+            maxY = Math.max(maxY, c.getY());
+            minZ = Math.min(minZ, c.getZ());
+            maxZ = Math.max(maxZ, c.getZ());
+        }
+
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        int maxPoints = ModClientConfig.heatDebugMaxPoints();
+
+        if (cells.size() == 1) {
+            // Одиночный источник показываем вместе с его собственным блоком
+            addCandidate(cells.get(0), level, seenCandidates);
+        }
+
+        for (int bx = minX - rad; bx <= maxX + rad; bx++) {
+            int ddx = Math.max(minX - bx, 0) + Math.max(bx - maxX, 0);
+            for (int by = minY - rad; by <= maxY + rad; by++) {
+                int ddy = Math.max(minY - by, 0) + Math.max(by - maxY, 0);
+                for (int bz = minZ - rad; bz <= maxZ + rad; bz++) {
+                    int ddz = Math.max(minZ - bz, 0) + Math.max(bz - maxZ, 0);
+                    double boxDistSq = (double) ddx * ddx + (double) ddy * ddy + (double) ddz * ddz;
+                    if (boxDistSq > radSq) {
+                        continue;
+                    }
+                    // Блок внутри габаритов: расстояние считаем до ближайшей
+                    // клетки кластера, иначе вогнутые участки давали лишние
+                    // точки и съедали лимит кандидатов
+                    if (cells.size() > 1 && ddx == 0 && ddy == 0 && ddz == 0) {
+                        double cellDistSq = distanceSqToCells(bx, by, bz, cells);
+                        if (cellDistSq <= 0.0) {
+                            continue;   // собственные клетки источника не рисуем
+                        }
+                        if (cellDistSq > radSq) {
+                            continue;
+                        }
+                    }
+                    cursor.set(bx, by, bz);
+                    BlockState state = level.getBlockState(cursor);
+                    if (state.isAir() || !state.isSolidRender(level, cursor)) {
+                        continue;
+                    }
+                    if (!hasOpenFace(level, cursor)) {
+                        continue;
+                    }
+                    addCandidate(cursor, level, seenCandidates);
+                    if (seenCandidates.size() >= maxPoints) {
+                        return;
+                    }
                 }
             }
         }
     }
 
-    private static boolean isBoundaryCell(BlockPos cell, Set<BlockPos> cellSet) {
-        for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
-            if (!cellSet.contains(cell.relative(dir))) {
-                return true;
+    /**
+     * Квадрат расстояния от точки до ближайшей клетки списка.
+     * Ноль означает, что точка сама является клеткой источника.
+     */
+    private static double distanceSqToCells(int x, int y, int z, List<BlockPos> cells) {
+        double best = Double.MAX_VALUE;
+        for (BlockPos c : cells) {
+            double dx = x - c.getX();
+            double dy = y - c.getY();
+            double dz = z - c.getZ();
+            double d = dx * dx + dy * dy + dz * dz;
+            if (d < best) {
+                best = d;
+                if (best <= 0.0) {
+                    return 0.0;
+                }
             }
         }
-        return false;
+        return best;
     }
 
     private static void queueChunksAround(ClientLevel level, BlockPos playerPos, boolean force) {
@@ -617,50 +716,6 @@ public class HeatDebugController {
     // ПОЛЕ ТЕМПЕРАТУР
     // ═══════════════════════════════════════════════════════════
 
-    private static void expandCell(ClientLevel level, CellTask task) {
-        BlockPos cell = task.pos();
-        if (isExpandedNear(cell)) {
-            return;
-        }
-        expandedCells.add(cell);
-
-        if (task.paintSelf()) {
-            addCandidate(cell, level, seenCandidates);
-        }
-
-        int rad = (int) Math.ceil(task.radius());
-        double maxDist = ModClientConfig.heatDebugRadius() + 2.0;
-        double maxDistSq = maxDist * maxDist;
-        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
-        for (int dx = -rad; dx <= rad; dx++) {
-            for (int dy = -rad; dy <= rad; dy++) {
-                for (int dz = -rad; dz <= rad; dz++) {
-                    if (dx * dx + dy * dy + dz * dz > rad * rad) {
-                        continue;
-                    }
-                    int bx = cell.getX() + dx;
-                    int by = cell.getY() + dy;
-                    int bz = cell.getZ() + dz;
-                    double pdx = bx - lastPlayerPos.getX();
-                    double pdy = by - lastPlayerPos.getY();
-                    double pdz = bz - lastPlayerPos.getZ();
-                    if (pdx * pdx + pdy * pdy + pdz * pdz > maxDistSq) {
-                        continue;
-                    }
-                    cursor.set(bx, by, bz);
-                    BlockState state = level.getBlockState(cursor);
-                    if (state.isAir() || !state.isSolidRender(level, cursor)) {
-                        continue;
-                    }
-                    if (!hasOpenFace(level, cursor)) {
-                        continue;
-                    }
-                    addCandidate(cursor, level, seenCandidates);
-                }
-            }
-        }
-    }
-
     private static void addCandidate(BlockPos pos, ClientLevel level, Set<BlockPos> seen) {
         BlockPos immutable = pos.immutable();
         if (seen.size() >= ModClientConfig.heatDebugMaxPoints()) {
@@ -707,30 +762,36 @@ public class HeatDebugController {
 
     private static void computePendingPoints(ClientLevel level, long deadline) {
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
-        List<HeatSourceHelper.HeatSource> sources = calculationSources;
-        double reach = ModClientConfig.heatDebugRadius() + HeatSourceRegistry.maxRadius();
-        double reachSq = reach * reach;
+        List<HeatSourceHelper.HeatSource> near = new ArrayList<>(8);
         while (!pendingPoints.isEmpty() && System.nanoTime() < deadline) {
             BlockPos pos = pendingPoints.poll();
             queuedPoints.remove(pos);
             if (!seenCandidates.contains(pos)) {
                 continue;
             }
-            // Кластеры за пределами досягаемости в расчёт лучей не входят
-            List<HeatSourceHelper.HeatSource> near = new ArrayList<>();
-            for (HeatSourceHelper.HeatSource source : sources) {
-                if (source.pos().distSqr(pos) <= reachSq) {
-                    near.add(source);
+            // В расчёт лучей входят только источники, чья зона влияния
+            // накрывает точку. Для кластера расстояние считается до ящика
+            // его клеток: до якоря озеро выпадало из расчёта на своём краю,
+            // и влияние обрывалось, хотя блоки грелись на 40–50 °C.
+            near.clear();
+            for (SourceBox box : sourceBoxes) {
+                if (box.reaches(pos.getX(), pos.getY(), pos.getZ(), box.radius() + 1.0f)) {
+                    near.add(box.source());
                 }
             }
             cursor.set(pos.getX(), pos.getY(), pos.getZ());
             net.minecraft.world.level.block.state.BlockState state = level.getBlockState(cursor);
             boolean solid = !state.isAir() && state.isSolidRender(level, cursor);
             cursor.set(pos.getX(), pos.getY() + (solid ? 1 : 0), pos.getZ());
-            float temp = TemperatureCalculator.calculatePointTemp(level, cursor, near);
-            
-            // Фильтр: не показываем блоки с малым ΔT (освобождаем ресурсы)
-            float delta = Math.abs(temp - cachedBaseTemp);
+            TemperatureCalculator.PointTemps point =
+                    TemperatureCalculator.calculatePointTemps(level, cursor, near);
+            float temp = point.temp();
+
+            // Фильтр: не показываем блоки, которые источники почти не изменили.
+            // Сравниваем с ФОНОМ В САМОЙ ТОЧКЕ, а не с температурой игрока:
+            // в пещере под тёплым небом температура игрока на 30 °C выше, и
+            // фильтр выбрасывал из влияния целые участки вокруг источника.
+            float delta = Math.abs(temp - point.ambient());
             if (delta < MIN_TEMP_DELTA) {
                 // Точка остаётся в seenCandidates: круговое обновление её
                 // пересчитает, и она появится, когда температура изменится
@@ -740,19 +801,6 @@ public class HeatDebugController {
             
             workField.put(pos, temp);
         }
-    }
-
-    private static boolean isExpandedNear(BlockPos cell) {
-        if (expandedCells.contains(cell)) {
-            return true;
-        }
-        int x = cell.getX(), y = cell.getY(), z = cell.getZ();
-        expandedNearCursor.set(x, y + 1, z); if (expandedCells.contains(expandedNearCursor)) return true;
-        expandedNearCursor.set(x, y - 1, z); if (expandedCells.contains(expandedNearCursor)) return true;
-        expandedNearCursor.set(x, y, z + 1); if (expandedCells.contains(expandedNearCursor)) return true;
-        expandedNearCursor.set(x, y, z - 1); if (expandedCells.contains(expandedNearCursor)) return true;
-        expandedNearCursor.set(x + 1, y, z); if (expandedCells.contains(expandedNearCursor)) return true;
-        expandedNearCursor.set(x - 1, y, z); return expandedCells.contains(expandedNearCursor);
     }
 
     private static void reset() {
@@ -765,16 +813,15 @@ public class HeatDebugController {
         chunkClusters.clear();
         dirtyChunks.clear();
         scanQueue.clear();
-        activeSources.clear();
         calculationSources.clear();
-        pendingCells.clear();
+        sourceBoxes.clear();
+        pendingSources.clear();
         pendingPoints.clear();
         queuedPoints.clear();
         refreshList.clear();
         refreshIndex = 0;
         lastTempRefreshTick = Integer.MIN_VALUE;
         seenCandidates.clear();
-        expandedCells.clear();
         stalePoints.clear();
         fieldSources.clear();
         snapshot = Snapshot.EMPTY;

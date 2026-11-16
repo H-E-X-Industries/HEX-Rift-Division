@@ -46,8 +46,10 @@ public final class ModClientConfig {
         HEAT_DEBUG_MAX_POINTS = builder
                 .comment("Максимальное количество тепловых пятен в отладочном оверлее.",
                         "Больше значение — подробнее картина, но выше нагрузка на FPS.",
+                        "У лавового озера зона влияния широкая: если края влияния",
+                        "обрезаются, подними значение до 8000..16000.",
                         "Допустимо: 200..20000.")
-                .defineInRange("heatDebugMaxPoints", 4000, 200, 20000);
+                .defineInRange("heatDebugMaxPoints", 8000, 200, 20000);
         builder.pop();
         SPEC = builder.build();
     }

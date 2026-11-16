@@ -130,6 +130,37 @@ public class TemperatureCalculator {
     }
 
     /**
+     * Температура среды в точке вместе с её фоном — температурой без источников.
+     * <p>
+     * Отладочному оверлею нужно знать, на сколько источники изменили
+     * температуру <b>конкретного блока</b>. Сравнивать блок с температурой
+     * игрока бессмысленно: в пещере под тёплым небом любой блок «холодный»
+     * относительно игрока, и оверлей выбрасывал из влияния целые участки
+     * вокруг источника. Фон считается в той же точке, что и температура,
+     * поэтому оба числа берутся из одного расчёта.
+     */
+    public static PointTemps calculatePointTemps(Level level, BlockPos pos,
+                                                 List<HeatSourceHelper.HeatSource> precomputedSources) {
+        float shelterLevel = ShelterHelper.calculateShelterLevel(level, pos);
+        Ambient ambient = ambientCore(null, level, pos, shelterLevel);
+        float temp = applyRadiant(level, pos, ambient.temp(), ambient.radiantShelter(),
+                ambient.radiantScale(), precomputedSources);
+        return new PointTemps(ambient.temp(), temp);
+    }
+
+    /** Фоновая температура точки и её итоговая температура. */
+    public record PointTemps(float ambient, float temp) {}
+
+    /**
+     * Фоновая температура среды в точке и параметры применения лучистого тепла.
+     *
+     * @param temp            температура среды без источников
+     * @param radiantShelter  укрытие, подставляемое в расчёт тепла
+     * @param radiantScale    множитель тепла (в закрытом помещении воздух гасит излучение)
+     */
+    private record Ambient(float temp, float radiantShelter, float radiantScale) {}
+
+    /**
      * Общее ядро расчёта температуры среды в точке.
      *
      * @param player игрок (может быть null для приборов); от него зависит только
@@ -142,6 +173,17 @@ public class TemperatureCalculator {
     private static float calculateTargetEnvTempCore(@Nullable Player player, Level level, BlockPos pos,
                                                     float shelterLevel,
                                                     @Nullable List<HeatSourceHelper.HeatSource> precomputedSources) {
+        Ambient ambient = ambientCore(player, level, pos, shelterLevel);
+        return applyRadiant(level, pos, ambient.temp(), ambient.radiantShelter(),
+                ambient.radiantScale(), precomputedSources);
+    }
+
+    /**
+     * Фоновая температура среды в точке: биом, высота, погода, укрытие, вода и
+     * герметичные помещения — но без лучистого тепла источников.
+     */
+    private static Ambient ambientCore(@Nullable Player player, Level level, BlockPos pos,
+                                       float shelterLevel) {
         // Вода в точке влияет и на игрока, и на прибор: промокший термометр меряет воду
         boolean inWater = (player != null && player.isInWater())
                 || level.getFluidState(pos).is(FluidTags.WATER);
@@ -165,7 +207,7 @@ public class TemperatureCalculator {
 
             // Локальный лучистый жар в упор к источникам внутри комнаты
             // (воздух помещения частично поглощает излучение — множитель 0.65)
-            return applyRadiant(level, pos, envTemp, 1.0f, 0.65f, precomputedSources);
+            return new Ambient(envTemp, 1.0f, 0.65f);
         }
 
         // 1. Базовая температура биома
@@ -201,7 +243,7 @@ public class TemperatureCalculator {
         }
 
         // 7. Лучистое тепло от источников (костры, печи, лава, приборы мода)
-        return applyRadiant(level, pos, envTemp, shelterLevel, 1.0f, precomputedSources);
+        return new Ambient(envTemp, shelterLevel, 1.0f);
     }
 
     /**
