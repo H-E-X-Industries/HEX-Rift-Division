@@ -104,6 +104,11 @@ public final class HeatSourceRegistry {
         return id == null ? null : BY_ID.get(id);
     }
 
+    /** Все зарегистрированные описания — для команд диагностики и тултипов. */
+    public static java.util.Collection<HeatSourceDef> allDefs() {
+        return java.util.Collections.unmodifiableCollection(BY_ID.values());
+    }
+
     /**
      * Ищет описание источника по состоянию блока (ванильные источники).
      */

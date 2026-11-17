@@ -56,6 +56,7 @@ public final class RoomClimateHelper {
         BlockState state = level.getBlockState(pos);
 
         float deviceTemp = 1.0f; // ванильные источники: активное состояние = полная мощность
+        float reserve = 1.0f;    // пассивные: запас эффективности из живого состояния
         HeatSourceDef def;
 
         if (HeatSourceRegistry.usesBlockEntity(state.getBlock())
@@ -76,18 +77,30 @@ public final class RoomClimateHelper {
             if (def == null) {
                 return null;
             }
+            // Пассивный источник: живой запас из хранилища состояний. Даже вынесенный
+            // из комнаты блок сохраняет свою эффективность (см. спецификацию v2).
+            if (def.isPassive() && !level.isClientSide()) {
+                var stored = ThermalStateStore.get((net.minecraft.server.level.ServerLevel) level).get(pos);
+                if (stored != null) {
+                    reserve = stored.reserve();
+                    // deviceTemp остаётся 1.0: у пассивных источников активность задана
+                    // состоянием блока, а живая температура влияет только на выход.
+                    // Подставлять её в powerAt() нельзя — у льда surfaceTemp = 0.
+                }
+            }
         }
 
         if (isLargeRoom && def.negligibleInLargeRooms()) {
             return null;
         }
 
-        float target = def.roomTargetAt(deviceTemp, NEUTRAL_TEMP);
-        float power = def.roomPowerAt(deviceTemp);
-        if (power <= 0.0f) {
+        float basePower = def.powerAt(deviceTemp) * reserve;
+        if (basePower <= 0.0f) {
             return null;
         }
-        return new ThermalSourceInfo(target, power, def.cooling());
+        float target = def.targetAtPower(basePower, NEUTRAL_TEMP);
+        float power = def.roomPower() * basePower;
+        return new ThermalSourceInfo(target, power, def.isCooling());
     }
 
     /**

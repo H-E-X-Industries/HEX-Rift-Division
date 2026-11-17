@@ -141,7 +141,7 @@ public final class HeatSourceHelper {
          */
         public float radius() {
             float base = def.radiusAt(power) * def.spreadByConductivity();
-            if (def.cooling()) {
+            if (def.isCooling()) {
                 return base;
             }
             return base * def.heatRadiusScale(effectiveHeat());
@@ -398,8 +398,23 @@ public final class HeatSourceHelper {
         HeatSourceDef def = HeatSourceRegistry.resolveState(state);
         if (def != null) {
             float power = def.powerAt(1.0f);
+            float temperature = def.surfaceTemp();
+
+            // Физичный пассивный источник (и побывавший в комнате) несёт живое состояние:
+            // запас уменьшает и выход, и температуру. Обе дороги — лучистая и объёмная —
+            // читают одно и то же состояние, поэтому базальт не может продолжить греть.
+            if (def.isPassive() && !level.isClientSide()) {
+                var stored = com.trd.climate.room.ThermalStateStore
+                        .get((net.minecraft.server.level.ServerLevel) level)
+                        .get(pos);
+                if (stored != null) {
+                    power *= stored.reserve();
+                    temperature = def.temperatureAt(stored.reserve());
+                }
+            }
+
             if (power > 0.0f) {
-                return new HeatSource(pos.immutable(), def, power, def.sourceTemp());
+                return new HeatSource(pos.immutable(), def, power, temperature);
             }
         }
         return null;
@@ -678,7 +693,7 @@ public final class HeatSourceHelper {
 
         // ── 1. Нагрев ────────────────────────────────────────────
         for (HeatSource source : sources) {
-            if (source.def().cooling()) {
+            if (source.def().isCooling()) {
                 continue;
             }
             float contribution = heatFromSource(level, source, pos, probe, shelterLevel) * scale;
@@ -709,7 +724,7 @@ public final class HeatSourceHelper {
         // кластер считался одним источником, и радиатор из льда работал
         // только пока пластины не стояли рядом.
         for (HeatSource source : sources) {
-            if (!source.def().cooling()) {
+            if (!source.def().isCooling()) {
                 continue;
             }
             float excess = result - source.sourceTemp();
@@ -730,7 +745,7 @@ public final class HeatSourceHelper {
                 if (coupling <= 0.0f) {
                     continue;
                 }
-                cools.add(Math.min(coupling * excess, source.def().maxHeat()));
+                cools.add(Math.min(coupling * excess, source.def().coolingPower()));
             }
             coldest = Math.min(coldest, source.sourceTemp());
         }

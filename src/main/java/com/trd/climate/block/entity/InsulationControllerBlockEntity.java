@@ -5,6 +5,7 @@ import com.trd.climate.block.InsulationControllerBlock;
 import com.trd.climate.room.AirtightHelper;
 import com.trd.climate.room.SealedRoom;
 import com.trd.climate.room.SealedRoomManager;
+import com.trd.climate.room.ThermalStateStore;
 import com.trd.climate.room.ValidationResult;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -386,8 +387,34 @@ public class InsulationControllerBlockEntity extends BlockEntity implements Seal
                     checkPos.set(x, y, z);
                     if (isThermalSource(level, checkPos)) {
                         cachedThermalSources.add(checkPos.immutable());
+                        ThermalStateStore.activateIfPassive(level, checkPos);
                     }
                 }
+            }
+        }
+
+        // Оболочка комнаты: источник, поставленный в стену/пол/потолок, тоже считается
+        // оказавшимся в герметичном помещении (иначе это лазейка для бесплатной лавы).
+        for (int x = minX - 1; x <= maxX + 1; x++) {
+            for (int z = minZ - 1; z <= maxZ + 1; z++) {
+                checkPos.set(x, minY - 1, z);
+                ThermalStateStore.activateIfPassive(level, checkPos);
+                checkPos.set(x, maxY + 1, z);
+                ThermalStateStore.activateIfPassive(level, checkPos);
+            }
+        }
+        for (int y = minY; y <= maxY; y++) {
+            for (int z = minZ - 1; z <= maxZ + 1; z++) {
+                checkPos.set(minX - 1, y, z);
+                ThermalStateStore.activateIfPassive(level, checkPos);
+                checkPos.set(maxX + 1, y, z);
+                ThermalStateStore.activateIfPassive(level, checkPos);
+            }
+            for (int x = minX; x <= maxX; x++) {
+                checkPos.set(x, y, minZ - 1);
+                ThermalStateStore.activateIfPassive(level, checkPos);
+                checkPos.set(x, y, maxZ + 1);
+                ThermalStateStore.activateIfPassive(level, checkPos);
             }
         }
     }

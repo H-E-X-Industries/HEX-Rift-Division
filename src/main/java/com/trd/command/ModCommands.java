@@ -43,6 +43,12 @@ public class ModCommands {
                                 .then(Commands.literal("scan")
                                         .executes(ModCommands::scanCurrentSector))
                         )
+                        .then(Commands.literal("climate")
+                                .then(Commands.literal("dump")
+                                        .executes(ModCommands::dumpHeatSources))
+                                .then(Commands.literal("states")
+                                        .executes(ModCommands::dumpThermalStates))
+                        )
         );
 
         // Быстрые псевдонимы (shortcuts)
@@ -211,6 +217,44 @@ public class ModCommands {
         }
 
         source.sendSuccess(() -> Component.literal("§6═══════════════════════════════════════════"), false);
+        return 1;
+    }
+
+    /** Печать всей таблицы источников — точка правки баланса. */
+    private static int dumpHeatSources(CommandContext<CommandSourceStack> context) {
+        CommandSourceStack source = context.getSource();
+        source.sendSuccess(() -> Component.literal("§6══════ [HEAT SOURCES: " +
+                com.trd.api.climate.HeatSourceRegistry.allDefs().size() + "] ══════"), false);
+        for (com.trd.api.climate.HeatSourceDef def
+                : com.trd.api.climate.HeatSourceRegistry.allDefs()) {
+            source.sendSuccess(() -> Component.literal(String.format(Locale.ROOT,
+                    "§e%s §7[%s/%s] §fT=%.0f §7out=%.0f cool=%.0f r=%.1f k=%.2f room=%.0f..%.0f p=%.1f%s",
+                    def.id(), def.role(), def.kind(), def.surfaceTemp(),
+                    def.outputHeat(), def.coolingPower(), def.radius(), def.conductivity(),
+                    def.roomFloor(), def.roomCeiling(), def.roomPower(),
+                    def.isPassive() ? String.format(Locale.ROOT,
+                            " §bphase=%.0f drain=%.4f restore=%.4f", def.phaseTemp(),
+                            def.drainRate(), def.restoreRate()) : "")), false);
+        }
+        return 1;
+    }
+
+    /** Печать живого состояния пассивных источников текущего измерения. */
+    private static int dumpThermalStates(CommandContext<CommandSourceStack> context) {
+        CommandSourceStack source = context.getSource();
+        com.trd.climate.room.ThermalStateStore store =
+                com.trd.climate.room.ThermalStateStore.get(source.getLevel());
+        source.sendSuccess(() -> Component.literal("§6══════ [THERMAL STATES: " +
+                store.size() + "] ══════"), false);
+        for (var entry : store.entries()) {
+            var pos = entry.pos();
+            var state = entry.state();
+            source.sendSuccess(() -> Component.literal(String.format(Locale.ROOT,
+                    "§7[%d, %d, %d] §f%s §7запас=§e%.0f%%",
+                    pos.getX(), pos.getY(), pos.getZ(),
+                    state.physical() ? "ФИЗИЧНЫЙ" : "нефизичный",
+                    state.reserve() * 100.0f)), false);
+        }
         return 1;
     }
 }
