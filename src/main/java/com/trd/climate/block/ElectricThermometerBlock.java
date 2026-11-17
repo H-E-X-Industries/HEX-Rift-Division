@@ -193,9 +193,38 @@ public class ElectricThermometerBlock extends BaseEntityBlock implements SimpleW
         if (!level.isClientSide()) {
             BlockEntity be = level.getBlockEntity(pos);
             if (be instanceof ElectricThermometerBlockEntity thermometer) {
+                // Показание самого термометра
                 String reading = String.format(Locale.ROOT, "%.1f°C", thermometer.getDisplayedTemp());
                 player.displayClientMessage(
                         Component.translatable("message.trd.thermometer.reading", reading), false);
+
+                // Информация о комнате (если термометр в герметичном помещении)
+                com.trd.climate.room.SealedRoom room = com.trd.climate.room.SealedRoomManager.findRoomAt(level, pos);
+                if (room != null && room.isStructureValid()) {
+                    int volume = room.getVolume();
+                    float roomTemp = room.getRoomTemperature();
+                    
+                    player.displayClientMessage(
+                            Component.literal(String.format(Locale.ROOT, "§7Комната: §f%d блоков§7, темп. §f%.1f°C", volume, roomTemp)), false);
+                    
+                    // Информация об источниках в комнате
+                    java.util.List<BlockPos> sources = new java.util.ArrayList<>();
+                    if (level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+                        com.trd.climate.room.ThermalStateStore store = com.trd.climate.room.ThermalStateStore.get(serverLevel);
+                        if (store != null) {
+                            for (com.trd.climate.room.ThermalStateStore.Entry entry : store.entriesNear(pos, 20.0)) {
+                                if (room.contains(entry.pos())) {
+                                    sources.add(entry.pos());
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (!sources.isEmpty()) {
+                        player.displayClientMessage(
+                                Component.literal(String.format(Locale.ROOT, "§7Источников в комнате: §f%d", sources.size())), false);
+                    }
+                }
             }
         }
         return InteractionResult.sidedSuccess(level.isClientSide());

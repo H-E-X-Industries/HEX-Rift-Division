@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-public class ElectricFurnaceBlockEntity extends BlockEntity implements IEnergyReceiver, IEnergyConnector {
+public class ElectricFurnaceBlockEntity extends BlockEntity implements IEnergyReceiver, IEnergyConnector, com.trd.api.climate.IHeatSource {
 
     public static final long MAX_ENERGY = 10_000L;
     public static final long RECEIVE_SPEED = 1_000L;
@@ -169,6 +169,22 @@ public class ElectricFurnaceBlockEntity extends BlockEntity implements IEnergyRe
     }
 
     public ItemStackHandler getItemHandler() { return itemHandler; }
+
+    // ===================== IHeatSource =====================
+
+    @Override
+    public String getHeatSourceId() { return "trd:electro_furnace"; }
+
+    /** Температурной шкалы нет: «горит» по состоянию LIT (реестр трактует 1.0 как полную мощность). */
+    @Override
+    public float getSourceTemperature() {
+        return getBlockState().getValue(ElectricFurnaceBlock.LIT) ? 1.0f : 0.0f;
+    }
+
+    @Override
+    public boolean isHeatActive() {
+        return getBlockState().getValue(ElectricFurnaceBlock.LIT);
+    }
 
     // ===================== TICK =====================
 

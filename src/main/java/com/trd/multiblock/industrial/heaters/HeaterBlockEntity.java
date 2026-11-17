@@ -32,7 +32,7 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 import javax.annotation.Nullable;
 import java.util.*;
 
-public class HeaterBlockEntity extends BlockEntity implements MenuProvider {
+public class HeaterBlockEntity extends BlockEntity implements MenuProvider, com.trd.api.climate.IHeatSource {
 
     // ═══════════════════════════════════════════════════════
     // СТРУКТУРА ДАННЫХ О ТОПЛИВЕ (единый источник правды)
@@ -409,6 +409,15 @@ public class HeaterBlockEntity extends BlockEntity implements MenuProvider {
 
     public float getTemperature() { return temperature; }
     public float getTemperatureDisplay() { return temperature; }
+
+    @Override
+    public String getHeatSourceId() { return "trd:heater"; }
+
+    @Override
+    public float getSourceTemperature() { return temperature; }
+
+    @Override
+    public boolean isHeatActive() { return isBurning(); }
     public int getBurnTime() { return burnTime; }
     public int getTotalBurnTime() { return totalBurnTime; }
     public boolean isBurning() { return burnTime > 0; }

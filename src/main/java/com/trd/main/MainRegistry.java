@@ -11,7 +11,11 @@ public class MainRegistry {
     public static final String MOD_ID = "trd";
     public static final Logger LOGGER = LogUtils.getLogger();
 
-    public MainRegistry(IEventBus modEventBus) {
+    public MainRegistry(IEventBus modEventBus, net.neoforged.fml.ModContainer modContainer) {
+        // Клиентские настройки (trd-client.toml)
+        modContainer.registerConfig(net.neoforged.fml.config.ModConfig.Type.CLIENT,
+                com.trd.client.config.ModClientConfig.SPEC);
+
         // Инициализация динамических ресурсов металлургии (до регистрации блоков и предметов)
         com.trd.main.ResourceRegistry.init();
 
@@ -50,6 +54,9 @@ public class MainRegistry {
             com.trd.api.chemistry.ChemicalPlantRecipeRegistry.init();
             com.trd.multiblock.industrial.coccer.CoccerOvenRecipeRegistry.init();
             com.trd.multiblock.industrial.stanok.StanokRecipes.register();
+
+            // Единый реестр источников тепла (ванильные блоки + приборы мода)
+            com.trd.climate.calculation.ModHeatSources.registerAll();
 
             // TerraBlender
             terrablender.api.Regions.register(new com.trd.worldgen.biome.terrablender.ModOverworldRegion(

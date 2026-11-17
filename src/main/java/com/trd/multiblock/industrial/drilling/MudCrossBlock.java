@@ -32,7 +32,7 @@ public class MudCrossBlock extends BaseEntityBlock implements IMultiblockControl
 
     public static final MapCodec<MudCrossBlock> CODEC = simpleCodec(MudCrossBlock::new);
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
-    private static MultiblockStructureHelper helper;
+    private static volatile MultiblockStructureHelper helper;
 
     public MudCrossBlock(Properties properties) {
         super(properties.noOcclusion());

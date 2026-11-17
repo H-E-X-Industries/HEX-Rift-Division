@@ -67,7 +67,7 @@ public class StanokBlock extends BaseEntityBlock implements IMultiblockControlle
     public static final com.mojang.serialization.MapCodec<StanokBlock> CODEC = simpleCodec(StanokBlock::new);
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
 
-    private static MultiblockStructureHelper helper;
+    private static volatile MultiblockStructureHelper helper;
 
     public StanokBlock(BlockBehaviour.Properties properties) {
         super(properties.noOcclusion().strength(3.0f, 10.0f));

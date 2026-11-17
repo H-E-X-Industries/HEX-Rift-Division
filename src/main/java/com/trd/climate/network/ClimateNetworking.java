@@ -28,6 +28,20 @@ public class ClimateNetworking {
             SyncTemperaturePayload::handle
         );
 
+        // Регистрация пакета синхронизации герметичных комнат (Сервер -> Клиент)
+        registrar.playToClient(
+            SyncRoomClimatePayload.TYPE,
+            SyncRoomClimatePayload.STREAM_CODEC,
+            SyncRoomClimatePayload::handle
+        );
+
+        // Живое состояние пассивных источников (Сервер -> Клиент): дебаг и термометр
+        registrar.playToClient(
+            SyncThermalStatesPayload.TYPE,
+            SyncThermalStatesPayload.STREAM_CODEC,
+            SyncThermalStatesPayload::handle
+        );
+
         // Регистрация пакета визуализации объема сканирования (Сервер -> Клиент)
         registrar.playToClient(
             ScannerVisualScanPayload.TYPE,

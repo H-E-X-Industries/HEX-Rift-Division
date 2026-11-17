@@ -5,6 +5,7 @@ import com.trd.climate.block.InsulationControllerBlock;
 import com.trd.climate.room.AirtightHelper;
 import com.trd.climate.room.SealedRoom;
 import com.trd.climate.room.SealedRoomManager;
+import com.trd.climate.room.ThermalStateStore;
 import com.trd.climate.room.ValidationResult;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -16,9 +17,6 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.AbstractFurnaceBlock;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.CampfireBlock;
 import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.TrapDoorBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -387,68 +385,54 @@ public class InsulationControllerBlockEntity extends BlockEntity implements Seal
             for (int y = minY; y < maxY; y++) {
                 for (int z = minZ; z < maxZ; z++) {
                     checkPos.set(x, y, z);
-                    BlockState state = level.getBlockState(checkPos);
-                    if (isThermalSource(state)) {
+                    if (isThermalSource(level, checkPos)) {
                         cachedThermalSources.add(checkPos.immutable());
+                        ThermalStateStore.activateIfPassive(level, checkPos);
                     }
                 }
             }
         }
-    }
 
-    private static boolean isThermalSource(BlockState state) {
-        return state.is(Blocks.CAMPFIRE)
-                || state.is(Blocks.SOUL_CAMPFIRE)
-                || state.is(Blocks.FURNACE)
-                || state.is(Blocks.BLAST_FURNACE)
-                || state.is(Blocks.SMOKER)
-                || state.is(Blocks.LAVA)
-                || state.is(Blocks.FIRE)
-                || state.is(Blocks.TORCH)
-                || state.is(Blocks.WALL_TORCH)
-                || state.is(Blocks.PACKED_ICE)
-                || state.is(Blocks.BLUE_ICE)
-                || state.is(Blocks.ICE);
+        // Оболочка комнаты: источник, поставленный в стену/пол/потолок, тоже считается
+        // оказавшимся в герметичном помещении (иначе это лазейка для бесплатной лавы).
+        for (int x = minX - 1; x <= maxX + 1; x++) {
+            for (int z = minZ - 1; z <= maxZ + 1; z++) {
+                checkPos.set(x, minY - 1, z);
+                ThermalStateStore.activateIfPassive(level, checkPos);
+                checkPos.set(x, maxY + 1, z);
+                ThermalStateStore.activateIfPassive(level, checkPos);
+            }
+        }
+        for (int y = minY; y <= maxY; y++) {
+            for (int z = minZ - 1; z <= maxZ + 1; z++) {
+                checkPos.set(minX - 1, y, z);
+                ThermalStateStore.activateIfPassive(level, checkPos);
+                checkPos.set(maxX + 1, y, z);
+                ThermalStateStore.activateIfPassive(level, checkPos);
+            }
+            for (int x = minX; x <= maxX; x++) {
+                checkPos.set(x, y, minZ - 1);
+                ThermalStateStore.activateIfPassive(level, checkPos);
+                checkPos.set(x, y, maxZ + 1);
+                ThermalStateStore.activateIfPassive(level, checkPos);
+            }
+        }
     }
 
     /**
-     * Расчет суммарного теплового баланса источников внутри помещения.
+     * Является ли блок источником тепла/холода для объёмного нагрева комнаты.
+     * <p>
+     * Работает на едином {@link com.trd.api.climate.HeatSourceRegistry}: ванильные
+     * источники — по состоянию блока, приборы мода — по блок-сущности
+     * {@link com.trd.api.climate.IHeatSource}.
      */
-    private float calculateHeatBalance(ServerLevel level) {
-        float totalQ = 0.0f;
-        boolean isLargeRoom = this.volume > 500;
-
-        for (BlockPos pos : cachedThermalSources) {
-            BlockState state = level.getBlockState(pos);
-            // Костры и факелы не имеют импакта в комнатах больше 500 блоков!
-            if (state.is(Blocks.CAMPFIRE) && state.getValue(CampfireBlock.LIT)) {
-                if (!isLargeRoom) totalQ += 15.0f;
-            } else if (state.is(Blocks.SOUL_CAMPFIRE) && state.getValue(CampfireBlock.LIT)) {
-                if (!isLargeRoom) totalQ += 10.5f;
-            } else if (state.is(Blocks.TORCH) || state.is(Blocks.WALL_TORCH)) {
-                if (!isLargeRoom) totalQ += 0.5f;
-            }
-            // Печи
-            else if ((state.is(Blocks.FURNACE) || state.is(Blocks.BLAST_FURNACE) || state.is(Blocks.SMOKER))
-                    && state.getValue(AbstractFurnaceBlock.LIT)) {
-                totalQ += 12.0f;
-            }
-            // Лава и огонь
-            else if (state.is(Blocks.LAVA)) {
-                totalQ += 20.0f;
-            } else if (state.is(Blocks.FIRE)) {
-                totalQ += 10.0f;
-            }
-            // Охладители (лед)
-            else if (state.is(Blocks.BLUE_ICE)) {
-                totalQ -= 10.0f;
-            } else if (state.is(Blocks.PACKED_ICE)) {
-                totalQ -= 5.0f;
-            } else if (state.is(Blocks.ICE)) {
-                totalQ -= 3.0f;
-            }
+    private static boolean isThermalSource(Level level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        if (com.trd.api.climate.HeatSourceRegistry.usesBlockEntity(state.getBlock())
+                && level.getBlockEntity(pos) instanceof com.trd.api.climate.IHeatSource) {
+            return true;
         }
-        return totalQ;
+        return com.trd.api.climate.HeatSourceRegistry.resolveState(state) != null;
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, InsulationControllerBlockEntity be) {

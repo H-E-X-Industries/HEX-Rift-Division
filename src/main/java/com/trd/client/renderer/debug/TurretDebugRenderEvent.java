@@ -52,7 +52,9 @@ public class TurretDebugRenderEvent {
         }
 
         PoseStack poseStack = event.getPoseStack();
-        MultiBufferSource.BufferSource bufferSource = mc.renderBuffers().bufferSource();
+        // Отдельный буфер: общий буфер рендера трогать нельзя — иначе
+        // ванильная геометрия окажется испорчена и игра упадёт в драйвере
+        MultiBufferSource.BufferSource bufferSource = DebugLineBuffers.source();
 
         Vec3 camPos = mc.gameRenderer.getMainCamera().getPosition();
 

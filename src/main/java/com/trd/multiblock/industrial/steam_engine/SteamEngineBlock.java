@@ -40,7 +40,7 @@ public class SteamEngineBlock extends BaseEntityBlock implements IMultiblockCont
 
     public static final MapCodec<SteamEngineBlock> CODEC = simpleCodec(SteamEngineBlock::new);
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
-    private static MultiblockStructureHelper helper;
+    private static volatile MultiblockStructureHelper helper;
 
     public SteamEngineBlock(Properties properties) {
         super(properties.noOcclusion());

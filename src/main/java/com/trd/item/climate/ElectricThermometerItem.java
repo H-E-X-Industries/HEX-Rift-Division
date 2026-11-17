@@ -33,7 +33,7 @@ public class ElectricThermometerItem extends ModBatteryItem {
     /** Буфер энергии по умолчанию, JE. */
     public static final int DEFAULT_CAPACITY = 10_000;
     /** Резерв JE, снимаемый раз в 3 секунды за работу. */
-    public static final int COST_PER_UPDATE = 10;
+    public static final int COST_PER_UPDATE = 5;
 
     public ElectricThermometerItem(Properties properties, int capacity, int maxReceive, int maxExtract) {
         super(properties, capacity, maxReceive, maxExtract);
@@ -78,24 +78,84 @@ public class ElectricThermometerItem extends ModBatteryItem {
     }
 
     /**
-     * ПКМ — вывести в чат текущую температуру тела и скорость её изменения.
+     * ПКМ — замерить блок, на который смотрит игрок (до 5 блоков):
+     * его температуру, а для источников тепла — ещё и теплопроводность,
+     * текущую мощность и температуру самого прибора.
      */
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-        if (!level.isClientSide() && player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-            var data = player.getData(com.trd.climate.attachment.ModAttachments.PLAYER_TEMPERATURE);
-            float currentTemp = data.getCurrentTemp();
-            float ratePerSecond = com.trd.climate.event.TemperatureRateTracker.getRatePerSecond(serverPlayer);
+        if (!level.isClientSide()) {
+            var hit = getPlayerPOVHitResult(level, player,
+                    net.minecraft.world.level.ClipContext.Fluid.NONE);
+            net.minecraft.core.BlockPos pos = hit.getBlockPos();
 
-            player.displayClientMessage(Component.translatable("chat.trd.thermometer.current_temp",
-                            Component.literal(String.format(java.util.Locale.ROOT, "%.1f", currentTemp))
-                                    .withStyle(ChatFormatting.AQUA)),
-                    false);
-            player.displayClientMessage(Component.translatable("chat.trd.thermometer.temp_rate",
-                            Component.literal(String.format(java.util.Locale.ROOT, "%.2f", ratePerSecond))
-                                    .withStyle(ChatFormatting.YELLOW)),
-                    false);
+            java.util.Locale locale = java.util.Locale.ROOT;
+
+            var source = com.trd.climate.calculation.HeatSourceHelper.resolveAt(level, pos);
+
+            if (source == null) {
+                // Обычный блок: температура САМОГО блока, а не воздуха над ним.
+                float blockTemp = com.trd.climate.calculation.TemperatureCalculator.calculatePointTemp(level, pos);
+                player.displayClientMessage(Component.translatable("chat.trd.thermometer.block_temp",
+                                Component.literal(String.format(locale, "%.1f", blockTemp))
+                                        .withStyle(ChatFormatting.AQUA)),
+                        false);
+                player.displayClientMessage(Component.translatable("chat.trd.thermometer.not_a_source"),
+                        false);
+            } else {
+                var def = source.def();
+                player.displayClientMessage(Component.translatable("chat.trd.thermometer.source_kind",
+                                Component.literal(def.isCooling() ? "охладитель" : "нагреватель")
+                                        .withStyle(ChatFormatting.GOLD),
+                                Component.literal(def.isPassive() ? "пассивный" : "активный")
+                                        .withStyle(ChatFormatting.AQUA)),
+                        false);
+
+                if (def.isPassive()) {
+                    var state = com.trd.climate.room.ThermalStateStore.stateAt(level, pos);
+                    boolean physical = state != null && state.physical();
+
+                    // Запас не печатаем: он дублирует «мощность источника» ниже.
+                    player.displayClientMessage(Component.translatable(
+                                    "chat.trd.thermometer.physical_state",
+                                    Component.literal(physical ? "ДА (в герметичной комнате)" : "НЕТ")
+                                            .withStyle(physical ? ChatFormatting.GREEN : ChatFormatting.GRAY)),
+                            false);
+
+                    if (physical) {
+                        // У физичного источника базовая и текущая температуры разные.
+                        player.displayClientMessage(Component.translatable(
+                                        "chat.trd.thermometer.source_temps",
+                                        Component.literal(String.format(locale, "%.0f", def.surfaceTemp()))
+                                                .withStyle(ChatFormatting.GRAY),
+                                        Component.literal(String.format(locale, "%.0f", source.sourceTemp()))
+                                                .withStyle(ChatFormatting.RED)),
+                                false);
+                    } else {
+                        // Вне комнаты запас не тратится — одна строка «температура»
+                        // (у побывавшего в комнате блока она остаётся замороженной).
+                        player.displayClientMessage(Component.translatable("chat.trd.thermometer.source_temp",
+                                        Component.literal(String.format(locale, "%.0f", source.sourceTemp()))
+                                                .withStyle(ChatFormatting.RED)),
+                                false);
+                    }
+                } else {
+                    player.displayClientMessage(Component.translatable("chat.trd.thermometer.source_temp",
+                                    Component.literal(String.format(locale, "%.0f", source.sourceTemp()))
+                                            .withStyle(ChatFormatting.RED)),
+                            false);
+                }
+
+                player.displayClientMessage(Component.translatable("chat.trd.thermometer.conductivity",
+                                Component.literal(String.format(locale, "%.0f%%", def.conductivity() * 100.0f))
+                                        .withStyle(ChatFormatting.GOLD)),
+                        false);
+                player.displayClientMessage(Component.translatable("chat.trd.thermometer.source_power",
+                                Component.literal(String.format(locale, "%.0f%%", source.power() * 100.0f))
+                                        .withStyle(ChatFormatting.YELLOW)),
+                        false);
+            }
         }
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide());
     }

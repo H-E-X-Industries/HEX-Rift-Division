@@ -37,7 +37,7 @@ public class CentrifugeCylinderBlock extends BaseEntityBlock implements IMultibl
 
     public static final com.mojang.serialization.MapCodec<CentrifugeCylinderBlock> CODEC = simpleCodec(CentrifugeCylinderBlock::new);
 
-    private static MultiblockStructureHelper helper;
+    private static volatile MultiblockStructureHelper helper;
 
     public CentrifugeCylinderBlock(Properties properties) {
         super(properties);

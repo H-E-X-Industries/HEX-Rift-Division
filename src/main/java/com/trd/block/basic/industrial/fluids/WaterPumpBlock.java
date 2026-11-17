@@ -42,7 +42,7 @@ public class WaterPumpBlock extends BaseEntityBlock implements IMultiblockContro
 
     public static final MapCodec<WaterPumpBlock> CODEC = simpleCodec(WaterPumpBlock::new);
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
-    private static MultiblockStructureHelper helper;
+    private static volatile MultiblockStructureHelper helper;
 
     public WaterPumpBlock(Properties properties) {
         super(properties.noOcclusion());
