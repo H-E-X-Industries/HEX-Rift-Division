@@ -55,12 +55,6 @@ public record HeatSourceDef(
         float radius,
         /** Теплопроводность 0..1: доля температуры, доходящая до соседей. */
         float conductivity,
-        /** HEATER: потолок температуры герметичной комнаты, °C. */
-        float roomCeiling,
-        /** COOLER: пол температуры герметичной комнаты, °C. */
-        float roomFloor,
-        /** Скорость выхода комнаты на потолок/пол. */
-        float roomPower,
         /** Костёр и факел физически не греют большую пещеру. */
         boolean negligibleInLargeRooms,
         /** Нижняя граница шкалы прибора (для PASSIVE не используется). */
@@ -78,8 +72,49 @@ public record HeatSourceDef(
         /** Абсолютный порог восстановления для охладителя с surfaceTemp == 0 (обычный лёд). */
         float restoreBelow,
         /** Во что превращается источник при истощении (базальт, вода, ...). */
-        ResourceLocation depletedBlock
+        ResourceLocation depletedBlock,
+        /**
+         * Профиль вероятностного таяния охладителей (лёд/пакед/блю).
+         * {@code null} — источник тает обычным линейным drainRate.
+         */
+        MeltParams melt
 ) {
+
+    /**
+     * Параметры таяния льда: чем выше температура среды, тем выше шанс таяния
+     * и тем короче кулдаун между роллами.
+     *
+     * @param chanceCold шанс за ролл при температуре около {@code surfaceTemp}
+     * @param chanceHot  шанс за ролл при {@code surfaceTemp + tempSpan} и выше
+     * @param cooldownCold тиков между роллами при холодной среде (например 20)
+     * @param cooldownHot  тиков между роллами при горячей среде (например 5)
+     * @param tempSpan диапазон температур, на котором интерполируются шанс и кулдаун
+     */
+    public record MeltParams(
+            float chanceCold, float chanceHot,
+            int cooldownCold, int cooldownHot,
+            float tempSpan
+    ) {
+        public MeltParams {
+            chanceCold = Mth.clamp(chanceCold, 0.0f, 1.0f);
+            chanceHot = Mth.clamp(chanceHot, 0.0f, 1.0f);
+            cooldownCold = Math.max(1, cooldownCold);
+            cooldownHot = Math.max(1, cooldownHot);
+            tempSpan = Math.max(1.0f, tempSpan);
+        }
+
+        /** Шанс таяния при заданной температуре среды. */
+        public float chanceAt(float roomTemp, float surfaceTemp) {
+            float t = Mth.clamp((roomTemp - surfaceTemp) / tempSpan, 0.0f, 1.0f);
+            return Mth.lerp(t, chanceCold, chanceHot);
+        }
+
+        /** Кулдаун между роллами (тиков) при заданной температуре среды. */
+        public int cooldownAt(float roomTemp, float surfaceTemp) {
+            float t = Mth.clamp((roomTemp - surfaceTemp) / tempSpan, 0.0f, 1.0f);
+            return Math.round(Mth.lerp(t, cooldownCold, cooldownHot));
+        }
+    }
 
     public enum Role { HEATER, COOLER }
 
@@ -109,7 +144,6 @@ public record HeatSourceDef(
         coolingPower = Mth.clamp(coolingPower, 0.0f, 500.0f);
         radius = Mth.clamp(radius, 0.5f, 32.0f);
         conductivity = Mth.clamp(conductivity, 0.0f, 1.0f);
-        roomPower = Math.max(0.0f, roomPower);
         drainRate = Math.max(0.0f, drainRate);
         restoreRate = Math.max(0.0f, restoreRate);
         restoreFactor = Math.max(1.0f, restoreFactor);
@@ -177,22 +211,6 @@ public record HeatSourceDef(
         return 0.6f + 0.4f * conductivity;
     }
 
-    /** Потолок/пол комнаты при заданной мощности. */
-    public float targetAtPower(float power, float neutral) {
-        float boundary = isCooling() ? roomFloor : roomCeiling;
-        return neutral + (boundary - neutral) * Mth.clamp(power, 0.0f, 1.0f);
-    }
-
-    /** Потолок/пол комнаты при заданной температуре прибора. */
-    public float roomTargetAt(float deviceTemp, float neutral) {
-        return targetAtPower(powerAt(deviceTemp), neutral);
-    }
-
-    /** Мощность объёмного нагрева при заданной температуре прибора. */
-    public float roomPowerAt(float deviceTemp) {
-        return roomPower * powerAt(deviceTemp);
-    }
-
     /**
      * Температура источника при заданном запасе (только для PASSIVE).
      * Нагреватель остывает вместе с запасом; охладитель остаётся на surfaceTemp.
@@ -231,9 +249,6 @@ public record HeatSourceDef(
         private float coolingPower;
         private float radius = 4.0f;
         private float conductivity = 0.5f;
-        private float roomCeiling;
-        private float roomFloor;
-        private float roomPower;
         private boolean negligibleInLargeRooms;
         private float deviceScaleMin = 1.0f;
         private float deviceScaleMax = 1.0f;
@@ -243,6 +258,7 @@ public record HeatSourceDef(
         private float restoreFactor = 2.0f;
         private float restoreBelow = 10.0f;
         private ResourceLocation depletedBlock;
+        private MeltParams melt;
 
         private Builder(String id) {
             this.id = id;
@@ -259,9 +275,6 @@ public record HeatSourceDef(
         public Builder coolingPower(float value) { this.coolingPower = value; return this; }
         public Builder radius(float value) { this.radius = value; return this; }
         public Builder conductivity(float value) { this.conductivity = value; return this; }
-        public Builder roomCeiling(float value) { this.roomCeiling = value; return this; }
-        public Builder roomFloor(float value) { this.roomFloor = value; return this; }
-        public Builder roomPower(float value) { this.roomPower = value; return this; }
         public Builder negligibleInLargeRooms(boolean value) { this.negligibleInLargeRooms = value; return this; }
         public Builder deviceScale(float min, float max) {
             this.deviceScaleMin = min;
@@ -277,6 +290,11 @@ public record HeatSourceDef(
             this.depletedBlock = value == null ? null : ResourceLocation.parse(value);
             return this;
         }
+        public Builder melt(float chanceCold, float chanceHot,
+                            int cooldownCold, int cooldownHot, float tempSpan) {
+            this.melt = new MeltParams(chanceCold, chanceHot, cooldownCold, cooldownHot, tempSpan);
+            return this;
+        }
 
         public HeatSourceDef build() {
             if (role == Role.HEATER && coolingPower != 0.0f) {
@@ -290,9 +308,8 @@ public record HeatSourceDef(
                         "PASSIVE HEATER " + id + ": phaseTemp должен быть ниже surfaceTemp");
             }
             return new HeatSourceDef(id, role, kind, surfaceTemp, outputHeat, coolingPower,
-                    radius, conductivity, roomCeiling, roomFloor, roomPower,
-                    negligibleInLargeRooms, deviceScaleMin, deviceScaleMax, phaseTemp,
-                    drainRate, restoreRate, restoreFactor, restoreBelow, depletedBlock);
+                    radius, conductivity, negligibleInLargeRooms, deviceScaleMin, deviceScaleMax, phaseTemp,
+                    drainRate, restoreRate, restoreFactor, restoreBelow, depletedBlock, melt);
         }
     }
 }

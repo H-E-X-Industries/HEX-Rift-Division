@@ -140,12 +140,6 @@ public class ElectricThermometerItem extends ModBatteryItem {
                                                 .withStyle(ChatFormatting.RED)),
                                 false);
                     }
-
-                    player.displayClientMessage(Component.translatable(
-                                    "chat.trd.thermometer.effective_heat",
-                                    Component.literal(String.format(locale, "%.0f", source.effectiveHeat()))
-                                            .withStyle(ChatFormatting.RED)),
-                            false);
                 } else {
                     player.displayClientMessage(Component.translatable("chat.trd.thermometer.source_temp",
                                     Component.literal(String.format(locale, "%.0f", source.sourceTemp()))

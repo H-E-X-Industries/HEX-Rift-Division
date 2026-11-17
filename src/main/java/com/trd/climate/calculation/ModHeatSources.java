@@ -50,14 +50,12 @@ public final class ModHeatSources {
         // ── Костры (пассивные, но догорают по ванильной механике) ──
         register(Blocks.CAMPFIRE, HeatSourceDef.builder("minecraft:campfire")
                 .heater().passive().surfaceTemp(700.0f).outputHeat(45.0f)
-                .radius(8.0f).conductivity(0.60f)
-                .roomCeiling(24.0f).roomPower(3.6f).negligibleInLargeRooms(true)
+                .radius(8.0f).conductivity(0.60f).negligibleInLargeRooms(true)
                 .phaseTemp(0.0f).build(), state -> state.getValue(CampfireBlock.LIT));
 
         register(Blocks.SOUL_CAMPFIRE, HeatSourceDef.builder("minecraft:soul_campfire")
                 .heater().passive().surfaceTemp(700.0f).outputHeat(40.0f)
-                .radius(8.0f).conductivity(0.55f)
-                .roomCeiling(20.0f).roomPower(2.4f).negligibleInLargeRooms(true)
+                .radius(8.0f).conductivity(0.55f).negligibleInLargeRooms(true)
                 .phaseTemp(0.0f).build(), state -> state.getValue(CampfireBlock.LIT));
 
         // ── Факелы ────────────────────────────────────────────
@@ -75,7 +73,6 @@ public final class ModHeatSources {
         register(Blocks.LAVA, HeatSourceDef.builder("minecraft:lava")
                 .heater().passive().surfaceTemp(1200.0f).outputHeat(500.0f)
                 .radius(6.0f).conductivity(0.95f)
-                .roomCeiling(68.0f).roomPower(7.0f)
                 .phaseTemp(700.0f).drainRate(0.0030f).restoreRate(0.0015f)
                 .depletedBlock("minecraft:basalt").build(),
                 state -> state.getValue(LiquidBlock.LEVEL) == 0);
@@ -83,7 +80,6 @@ public final class ModHeatSources {
         register(Blocks.LAVA, HeatSourceDef.builder("minecraft:flowing_lava")
                 .heater().passive().surfaceTemp(1200.0f).outputHeat(300.0f)
                 .radius(4.0f).conductivity(0.90f)
-                .roomCeiling(45.0f).roomPower(3.5f)
                 .phaseTemp(700.0f).drainRate(0.0040f).restoreRate(0.0015f)
                 .depletedBlock("minecraft:basalt").build(),
                 state -> state.getValue(LiquidBlock.LEVEL) > 0);
@@ -92,21 +88,25 @@ public final class ModHeatSources {
         register(Blocks.FIRE, HeatSourceDef.builder("minecraft:fire")
                 .heater().passive().surfaceTemp(900.0f).outputHeat(130.0f)
                 .radius(5.0f).conductivity(0.60f)
-                .roomCeiling(55.0f).roomPower(4.0f).phaseTemp(0.0f).build(),
+                .phaseTemp(0.0f).build(),
                 state -> true);
 
         // ── Магма-блок: остывает «на месте», пока не перестанет греть ──
         register(Blocks.MAGMA_BLOCK, HeatSourceDef.builder("minecraft:magma_block")
                 .heater().passive().surfaceTemp(700.0f).outputHeat(120.0f)
                 .radius(4.0f).conductivity(0.70f)
-                .roomCeiling(38.0f).roomPower(2.5f)
                 .phaseTemp(200.0f).drainRate(0.0025f).restoreRate(0.0010f).build(),
                 state -> true);
 
         // ── Охладители ────────────────────────────────────────
-        cooler(Blocks.ICE, "minecraft:ice", 8.0f, 4.0f, 0.50f, 0.0f, 8.0f, 0.6f, 0.0030f, 0.0015f);
-        cooler(Blocks.PACKED_ICE, "minecraft:packed_ice", 11.0f, 4.0f, 0.45f, -18.0f, 0.0f, 1.0f, 0.0020f, 0.0012f);
-        cooler(Blocks.BLUE_ICE, "minecraft:blue_ice", 15.0f, 4.5f, 0.40f, -50.0f, -10.0f, 2.0f, 0.0015f, 0.0010f);
+        // Параметры таяния (шанс при 0°C → шанс при +30°C, кд 20 тиков → 5 тиков):
+        // обычный лёд тает быстрее всего, синий — медленнее всего.
+        cooler(Blocks.ICE, "minecraft:ice", 8.0f, 4.0f, 0.50f, 0.0f, 8.0f, 0.6f, 0.0030f, 0.0015f,
+                0.02f, 0.30f, 20, 5, 30.0f);
+        cooler(Blocks.PACKED_ICE, "minecraft:packed_ice", 11.0f, 4.0f, 0.45f, -18.0f, 0.0f, 1.0f, 0.0020f, 0.0012f,
+                0.01f, 0.20f, 24, 7, 35.0f);
+        cooler(Blocks.BLUE_ICE, "minecraft:blue_ice", 15.0f, 4.5f, 0.40f, -50.0f, -10.0f, 2.0f, 0.0015f, 0.0010f,
+                0.005f, 0.12f, 30, 10, 40.0f);
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -154,8 +154,7 @@ public final class ModHeatSources {
     private static void torch(Block block, String id) {
         register(block, HeatSourceDef.builder(id)
                 .heater().passive().surfaceTemp(800.0f).outputHeat(0.0f)
-                .radius(3.0f).conductivity(0.30f)
-                .roomCeiling(18.0f).roomPower(0.4f).negligibleInLargeRooms(true)
+                .radius(3.0f).conductivity(0.30f).negligibleInLargeRooms(true)
                 .phaseTemp(0.0f).build(), state -> true);
     }
 
@@ -163,19 +162,20 @@ public final class ModHeatSources {
                                 float conductivity, float temp, float ceiling, float power) {
         register(block, HeatSourceDef.builder(id)
                 .heater().active().surfaceTemp(temp).outputHeat(output)
-                .radius(radius).conductivity(conductivity)
-                .roomCeiling(ceiling).roomPower(power).build(),
+                .radius(radius).conductivity(conductivity).build(),
                 state -> state.getValue(AbstractFurnaceBlock.LIT));
     }
 
     private static void cooler(Block block, String id, float output, float radius,
                                float conductivity, float temp, float floor, float power,
-                               float drainRate, float restoreRate) {
+                               float drainRate, float restoreRate,
+                               float meltChanceCold, float meltChanceHot,
+                               int meltCooldownCold, int meltCooldownHot, float meltTempSpan) {
         register(block, HeatSourceDef.builder(id)
                 .cooler().passive().surfaceTemp(temp).coolingPower(output)
                 .radius(radius).conductivity(conductivity)
-                .roomFloor(floor).roomPower(power)
                 .phaseTemp(0.0f).drainRate(drainRate).restoreRate(restoreRate)
+                .melt(meltChanceCold, meltChanceHot, meltCooldownCold, meltCooldownHot, meltTempSpan)
                 .depletedBlock("minecraft:water").build(), state -> true);
     }
 
@@ -185,7 +185,6 @@ public final class ModHeatSources {
         return HeatSourceDef.builder(id)
                 .heater().active().surfaceTemp(temp).outputHeat(output)
                 .radius(radius).conductivity(conductivity)
-                .roomCeiling(ceiling).roomPower(power)
                 .deviceScale(scaleMin, scaleMax)
                 .build();
     }

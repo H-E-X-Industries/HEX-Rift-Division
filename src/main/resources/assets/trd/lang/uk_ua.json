@@ -887,7 +887,6 @@
     "chat.trd.thermometer.source_kind":  "Джерело: %s, %s",
     "chat.trd.thermometer.physical_state":  "Фізичність: %s",
     "chat.trd.thermometer.source_temps":  "Температура джерела: базова %s°C, поточна %s°C",
-    "chat.trd.thermometer.effective_heat":  "Віддача біля поверхні (з урахуванням запасу): %s°C",
     "chat.trd.thermometer.conductivity":  "Теплопровідність: %s",
     "chat.trd.thermometer.source_power":  "Потужність джерела: %s",
     "chat.trd.thermometer.source_temp":  "Температура джерела: %s°C",

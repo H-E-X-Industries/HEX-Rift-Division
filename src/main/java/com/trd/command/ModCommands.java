@@ -228,10 +228,9 @@ public class ModCommands {
         for (com.trd.api.climate.HeatSourceDef def
                 : com.trd.api.climate.HeatSourceRegistry.allDefs()) {
             source.sendSuccess(() -> Component.literal(String.format(Locale.ROOT,
-                    "§e%s §7[%s/%s] §fT=%.0f §7out=%.0f cool=%.0f r=%.1f k=%.2f room=%.0f..%.0f p=%.1f%s",
+                    "§e%s §7[%s/%s] §fT=%.0f §7out=%.0f cool=%.0f r=%.1f k=%.2f%s",
                     def.id(), def.role(), def.kind(), def.surfaceTemp(),
                     def.outputHeat(), def.coolingPower(), def.radius(), def.conductivity(),
-                    def.roomFloor(), def.roomCeiling(), def.roomPower(),
                     def.isPassive() ? String.format(Locale.ROOT,
                             " §bphase=%.0f drain=%.4f restore=%.4f", def.phaseTemp(),
                             def.drainRate(), def.restoreRate()) : "")), false);

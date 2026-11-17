@@ -358,17 +358,19 @@ public final class HeatSourceHelper {
     }
 
     /**
-     * Кластеризуются только источники с одинаковым описанием И одинаковым живым запасом.
-     * Иначе половина лавового озера с запасом 80% и половина с 30% считались бы одним
+     * Кластеризуются только источники с одинаковым описанием И похожей температурой (±10°C).
+     * Иначе половина лавового озера с температурой 800°C и половина с 600°C считались бы одним
      * источником с температурой якоря, и вторая половина грела бы неверно.
      */
     private static boolean sameClusterGroup(HeatSource seed, Level level, BlockPos pos) {
-        if (HeatSourceRegistry.resolveState(level.getBlockState(pos)) != seed.def()) {
+        HeatSourceDef def = HeatSourceRegistry.resolveState(level.getBlockState(pos));
+        if (def != seed.def()) {
             return false;
         }
         var stored = com.trd.climate.room.ThermalStateStore.stateAt(level, pos);
-        float efficiency = stored == null ? 1.0f : stored.reserve();
-        return Math.abs(efficiency - seed.efficiency()) <= 0.02f;
+        float otherTemp = def.temperatureAt(stored == null ? 1.0f : stored.reserve());
+        float tempDifference = Math.abs(otherTemp - seed.sourceTemp());
+        return tempDifference <= 10.0f; // ±10°C вместо ±2% запаса
     }
 
     /**

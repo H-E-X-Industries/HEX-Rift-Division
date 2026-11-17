@@ -46,13 +46,15 @@ public final class RoomClimateHelper {
     public record ThermalSourceInfo(float targetTemp, float power, boolean isCooling) {}
 
     /**
-     * Возвращает параметры теплового источника (потолок температуры и мощность).
+     * Возвращает параметры теплового источника (целевая температура и мощность).
      * <p>
-     * Работает на едином {@link HeatSourceRegistry}: ванильные блоки разрешаются по
-     * состоянию, приборы мода — по блок-сущности {@link IHeatSource}, и их мощность
-     * зависит от реальной температуры прибора.
+     * Целевая температура рассчитывается динамически: источник может нагреть/охладить
+     * комнату максимум до 85% от своей температуры.
+     * <p>
+     * Мощность влияния на комнату зависит от объёма: больший объём требует больше
+     * энергии для изменения температуры.
      */
-    public static ThermalSourceInfo getSourceInfo(Level level, BlockPos pos, boolean isLargeRoom) {
+    public static ThermalSourceInfo getSourceInfo(Level level, BlockPos pos, boolean isLargeRoom, int roomVolume) {
         BlockState state = level.getBlockState(pos);
 
         float deviceTemp = 1.0f; // ванильные источники: активное состояние = полная мощность
@@ -96,8 +98,26 @@ public final class RoomClimateHelper {
         if (basePower <= 0.0f) {
             return null;
         }
-        float target = def.targetAtPower(basePower, NEUTRAL_TEMP);
-        float power = def.roomPower() * basePower;
+        
+        // Динамический расчёт целевой температуры и мощности
+        float sourceTemp = def.temperatureAt(reserve);
+        
+        // Целевая температура: источник может нагреть/охладить на 85% от своей температуры
+        float target;
+        if (def.isCooling()) {
+            // Охладитель: целевая = 85% от surfaceTemp
+            target = def.surfaceTemp() * 0.85f;
+        } else {
+            // Нагреватель: целевая = 85% от текущей температуры (с учётом запаса)
+            target = NEUTRAL_TEMP + (sourceTemp - NEUTRAL_TEMP) * 0.85f;
+        }
+        
+        // Мощность: рассчитывается на основе outputHeat/coolingPower и объёма
+        // Это полностью динамичный параметр - чем больше комната, тем сложнее её прогреть
+        float baseOutput = def.isCooling() ? def.coolingPower() : def.outputHeat();
+        float volumeScale = 100.0f; // 100 блоков = 1x масштаб
+        float power = (baseOutput / 100.0f) * basePower / (1.0f + roomVolume / volumeScale);
+        
         return new ThermalSourceInfo(target, power, def.isCooling());
     }
 
@@ -153,33 +173,44 @@ public final class RoomClimateHelper {
         float newTemp = currentRoomTemp;
         boolean isLargeRoom = v > 500;
 
-        // 1. Пассивное стремление к +15°C работает ИСКЛЮЧИТЕЛЬНО для малых помещений (до 500 блоков включительно).
+        // 1. Пассивное стремление к +15°C работает для малых помещений (до 500 блоков).
         if (v <= 500) {
             float passiveTarget = calculatePassiveTarget(ambientTemp, v);
             float inertiaRate = getThermalInertiaRate(v);
             newTemp += (passiveTarget - newTemp) * inertiaRate;
+        } else {
+            // Для больших комнат: если нет источников, температура спадает к нейтрали
+            // Скорость спада зависит от объёма (больше объём = медленнее спад)
+            boolean hasSources = cachedSources != null && !cachedSources.isEmpty();
+            if (!hasSources) {
+                float inertiaRate = getThermalInertiaRate(v);
+                newTemp += (NEUTRAL_TEMP - newTemp) * inertiaRate;
+            }
         }
 
-        // 2. Активные источники тепла и холода (с учетом потолка температуры каждого прибора)
+        // 2. Активные источники тепла и холода
         if (cachedSources != null && !cachedSources.isEmpty()) {
             float totalDelta = 0.0f;
             for (BlockPos pos : cachedSources) {
-                ThermalSourceInfo src = getSourceInfo(level, pos, isLargeRoom);
+                ThermalSourceInfo src = getSourceInfo(level, pos, isLargeRoom, v);
                 if (src == null) continue;
 
                 if (!src.isCooling()) {
-                    // Источник нагрева: греет ТОЛЬКО если текущая температура ниже его потолка!
-                    // Костер нагревает кибитку до комфортных +21..+24°C и не дает перегрева выше 24°C.
+                    // Источник нагрева: греет ТОЛЬКО если текущая температура ниже его целевой!
                     if (newTemp < src.targetTemp()) {
                         float potential = src.targetTemp() - newTemp;
-                        float rate = src.power() / (18.0f + v * 0.12f);
+                        // Скорость зависит от разницы температур (чем больше разница, тем быстрее)
+                        float tempFactor = Math.min(potential / 50.0f, 2.0f); // до 2x при разнице 100°C
+                        float rate = src.power() * tempFactor / (18.0f + v * 0.12f);
                         totalDelta += potential * rate;
                     }
                 } else {
-                    // Источник охлаждения (лед): охлаждает только если температура выше его порога
+                    // Источник охлаждения: охлаждает только если температура выше его целевой
                     if (newTemp > src.targetTemp()) {
                         float potential = src.targetTemp() - newTemp;
-                        float rate = src.power() / (18.0f + v * 0.12f);
+                        // Скорость зависит от разницы температур (чем больше разница, тем быстрее)
+                        float tempFactor = Math.min(Math.abs(potential) / 50.0f, 2.0f);
+                        float rate = src.power() * tempFactor / (18.0f + v * 0.12f);
                         totalDelta += potential * rate;
                     }
                 }
