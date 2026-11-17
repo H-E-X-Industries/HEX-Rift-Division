@@ -134,8 +134,16 @@ public record HeatSourceDef(
     public static final float MAX_TRANSFER = 0.9f;
     /** Минимальная доля радиуса излучения при нулевой мощности. */
     public static final float MIN_RADIUS_FACTOR = 0.35f;
-    /** Множители радиуса от тепловыхода. */
-    public static final float HEAT_RADIUS_MIN_SCALE = 0.5f;
+    /**
+     * Множители радиуса от тепловыхода.
+     * <p>
+     * Минимум поднят с 0.5 до 1.0: после балансировки источников их {@code outputHeat}
+     * лежит в шкале ощущаемой игроком температуры (единицы-десятки °C), и старый минимум
+     * 0.5 необоснованно вдвое срезал радиус каждого источника. Теперь при
+     * {@code outputHeat <= 100} радиус равен заявленному (умноженному только на
+     * теплопроводность и мощность), а удвоение получают лишь реально мощные источники.
+     */
+    public static final float HEAT_RADIUS_MIN_SCALE = 1.0f;
     public static final float HEAT_RADIUS_MAX_SCALE = 2.0f;
     /** Показатель формы спада: 1 — плохой проводник, 3 — хороший. */
     public static final float FALLOFF_EXPONENT_MIN = 1.0f;
