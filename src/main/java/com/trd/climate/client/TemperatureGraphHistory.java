@@ -73,6 +73,7 @@ public final class TemperatureGraphHistory {
     public static void onPlayerLoggingIn(ClientPlayerNetworkEvent.LoggingIn event) {
         reset();
         com.trd.climate.room.SealedRoomManager.clearClientRooms();
+        com.trd.climate.room.ClientThermalStateCache.clear();
     }
 
     /**

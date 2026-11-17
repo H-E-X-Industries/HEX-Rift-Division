@@ -92,18 +92,66 @@ public class ElectricThermometerItem extends ModBatteryItem {
 
             java.util.Locale locale = java.util.Locale.ROOT;
 
-            // Температура воздуха рядом с блоком (тем же кодом, что и стационарные
-            // термометры и отладочный оверлей)
-            float blockTemp = com.trd.climate.calculation.TemperatureCalculator.calculateAirTempNear(level, pos);
-            player.displayClientMessage(Component.translatable("chat.trd.thermometer.block_temp",
-                            Component.literal(String.format(locale, "%.1f", blockTemp))
-                                    .withStyle(ChatFormatting.AQUA)),
-                    false);
-
-            // Если блок — источник тепла, показываем его параметры
             var source = com.trd.climate.calculation.HeatSourceHelper.resolveAt(level, pos);
-            if (source != null) {
+
+            if (source == null) {
+                // Обычный блок: температура САМОГО блока, а не воздуха над ним.
+                float blockTemp = com.trd.climate.calculation.TemperatureCalculator.calculatePointTemp(level, pos);
+                player.displayClientMessage(Component.translatable("chat.trd.thermometer.block_temp",
+                                Component.literal(String.format(locale, "%.1f", blockTemp))
+                                        .withStyle(ChatFormatting.AQUA)),
+                        false);
+                player.displayClientMessage(Component.translatable("chat.trd.thermometer.not_a_source"),
+                        false);
+            } else {
                 var def = source.def();
+                player.displayClientMessage(Component.translatable("chat.trd.thermometer.source_kind",
+                                Component.literal(def.isCooling() ? "охладитель" : "нагреватель")
+                                        .withStyle(ChatFormatting.GOLD),
+                                Component.literal(def.isPassive() ? "пассивный" : "активный")
+                                        .withStyle(ChatFormatting.AQUA)),
+                        false);
+
+                if (def.isPassive()) {
+                    var state = com.trd.climate.room.ThermalStateStore.stateAt(level, pos);
+                    boolean physical = state != null && state.physical();
+
+                    // Запас не печатаем: он дублирует «мощность источника» ниже.
+                    player.displayClientMessage(Component.translatable(
+                                    "chat.trd.thermometer.physical_state",
+                                    Component.literal(physical ? "ДА (в герметичной комнате)" : "НЕТ")
+                                            .withStyle(physical ? ChatFormatting.GREEN : ChatFormatting.GRAY)),
+                            false);
+
+                    if (physical) {
+                        // У физичного источника базовая и текущая температуры разные.
+                        player.displayClientMessage(Component.translatable(
+                                        "chat.trd.thermometer.source_temps",
+                                        Component.literal(String.format(locale, "%.0f", def.surfaceTemp()))
+                                                .withStyle(ChatFormatting.GRAY),
+                                        Component.literal(String.format(locale, "%.0f", source.sourceTemp()))
+                                                .withStyle(ChatFormatting.RED)),
+                                false);
+                    } else {
+                        // Вне комнаты запас не тратится — одна строка «температура»
+                        // (у побывавшего в комнате блока она остаётся замороженной).
+                        player.displayClientMessage(Component.translatable("chat.trd.thermometer.source_temp",
+                                        Component.literal(String.format(locale, "%.0f", source.sourceTemp()))
+                                                .withStyle(ChatFormatting.RED)),
+                                false);
+                    }
+
+                    player.displayClientMessage(Component.translatable(
+                                    "chat.trd.thermometer.effective_heat",
+                                    Component.literal(String.format(locale, "%.0f", source.effectiveHeat()))
+                                            .withStyle(ChatFormatting.RED)),
+                            false);
+                } else {
+                    player.displayClientMessage(Component.translatable("chat.trd.thermometer.source_temp",
+                                    Component.literal(String.format(locale, "%.0f", source.sourceTemp()))
+                                            .withStyle(ChatFormatting.RED)),
+                            false);
+                }
 
                 player.displayClientMessage(Component.translatable("chat.trd.thermometer.conductivity",
                                 Component.literal(String.format(locale, "%.0f%%", def.conductivity() * 100.0f))
@@ -112,17 +160,6 @@ public class ElectricThermometerItem extends ModBatteryItem {
                 player.displayClientMessage(Component.translatable("chat.trd.thermometer.source_power",
                                 Component.literal(String.format(locale, "%.0f%%", source.power() * 100.0f))
                                         .withStyle(ChatFormatting.YELLOW)),
-                        false);
-
-                // Температура самого источника (у приборов — текущая, у мультиблока —
-                // температура контроллера, у ванильных — реальная температура блока)
-                player.displayClientMessage(Component.translatable("chat.trd.thermometer.source_temp",
-                                Component.literal(String.format(locale, "%.0f", source.sourceTemp()))
-                                        .withStyle(ChatFormatting.RED)),
-                        false);
-            } else {
-                // Не источник: показываем теплопроводность материала (нейтральная)
-                player.displayClientMessage(Component.translatable("chat.trd.thermometer.not_a_source"),
                         false);
             }
         }

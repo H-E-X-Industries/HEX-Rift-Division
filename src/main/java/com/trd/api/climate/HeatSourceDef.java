@@ -129,12 +129,23 @@ public record HeatSourceDef(
         return MIN_TRANSFER + (MAX_TRANSFER - MIN_TRANSFER) * conductivity;
     }
 
-    /** Выход источника у поверхности, °C. */
+    /** Выход источника у поверхности, °C (полная эффективность). */
     public float radiantOutput(float sourceTemp) {
+        return radiantOutput(sourceTemp, 1.0f);
+    }
+
+    /**
+     * Выход источника с учётом эффективности (запаса) — °C.
+     * <p>
+     * Без этого множителя остывшая лава с запасом 20% всё равно выдавала бы
+     * потолок {@code outputHeat}, пока её температура не упала бы ниже самого потолка.
+     */
+    public float radiantOutput(float sourceTemp, float efficiency) {
+        float e = Mth.clamp(efficiency, 0.0f, 1.0f);
         if (isCooling()) {
-            return coolingPower * transferFactor();
+            return coolingPower * transferFactor() * e;
         }
-        return Math.min(outputHeat, sourceTemp * transferFactor());
+        return Math.min(outputHeat, sourceTemp * transferFactor()) * e;
     }
 
     /** Мощность прибора (0..1) при заданной температуре. */

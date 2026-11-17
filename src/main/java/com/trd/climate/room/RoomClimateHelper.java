@@ -79,14 +79,12 @@ public final class RoomClimateHelper {
             }
             // Пассивный источник: живой запас из хранилища состояний. Даже вынесенный
             // из комнаты блок сохраняет свою эффективность (см. спецификацию v2).
-            if (def.isPassive() && !level.isClientSide()) {
-                var stored = ThermalStateStore.get((net.minecraft.server.level.ServerLevel) level).get(pos);
-                if (stored != null) {
-                    reserve = stored.reserve();
-                    // deviceTemp остаётся 1.0: у пассивных источников активность задана
-                    // состоянием блока, а живая температура влияет только на выход.
-                    // Подставлять её в powerAt() нельзя — у льда surfaceTemp = 0.
-                }
+            var stored = ThermalStateStore.stateAt(level, pos);
+            if (stored != null) {
+                reserve = stored.reserve();
+                // deviceTemp остаётся 1.0: у пассивных источников активность задана
+                // состоянием блока, а живая температура влияет только на выход.
+                // Подставлять её в powerAt() нельзя — у льда surfaceTemp = 0.
             }
         }
 

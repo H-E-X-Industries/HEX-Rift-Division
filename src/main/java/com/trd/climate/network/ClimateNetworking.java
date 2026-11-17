@@ -35,6 +35,13 @@ public class ClimateNetworking {
             SyncRoomClimatePayload::handle
         );
 
+        // Живое состояние пассивных источников (Сервер -> Клиент): дебаг и термометр
+        registrar.playToClient(
+            SyncThermalStatesPayload.TYPE,
+            SyncThermalStatesPayload.STREAM_CODEC,
+            SyncThermalStatesPayload::handle
+        );
+
         // Регистрация пакета визуализации объема сканирования (Сервер -> Клиент)
         registrar.playToClient(
             ScannerVisualScanPayload.TYPE,

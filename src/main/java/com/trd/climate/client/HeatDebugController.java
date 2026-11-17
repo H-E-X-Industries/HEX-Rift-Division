@@ -354,6 +354,15 @@ public class HeatDebugController {
     // ═══════════════════════════════════════════════════════════
 
     private static void refreshSources(ClientLevel level, BlockPos playerPos) {
+        // Запасы источников пришли новым пакетом — немедленно пересканировать все
+        // известные чанки, иначе дебаг-поле продолжает рисовать влияние со старым запасом.
+        if (com.trd.climate.room.ClientThermalStateCache.consumeDirty()) {
+            for (ChunkPos cp : chunkSources.keySet()) {
+                List<HeatSourceHelper.HeatSource> fresh = scanChunk(level, cp, playerPos);
+                chunkSources.put(cp, fresh);
+            }
+            dirtyChunks.addAll(chunkSources.keySet());
+        }
         int radius = ModClientConfig.heatDebugRadius();
         float maxSourceRadius = HeatSourceRegistry.maxRadius();
         double rangeSq = (radius + maxSourceRadius) * (radius + maxSourceRadius);
@@ -409,7 +418,11 @@ public class HeatDebugController {
         for (HeatSourceHelper.HeatSource source : fieldSources) {
             // Число клеток: озеро могло подрасти, а якорь остался тем же —
             // без этого поле не пересобиралось и влияние оставалось старым
-            signature += source.pos().hashCode() * 31 + source.cells().size();
+            // Запас источника меняется каждую секунду, а позиции и число клеток — нет.
+            // Без учёта эффективности поле пересобиралось бы только при движении блока,
+            // и дебаг показывал бы старый жар остывшей лавы.
+            signature += source.pos().hashCode() * 31 + source.cells().size()
+                    + Float.floatToIntBits(source.efficiency()) * 7;
         }
         sourcesSignature = signature;
 
@@ -555,8 +568,7 @@ public class HeatDebugController {
         HeatSourceHelper.HeatSource source = task.source();
         List<BlockPos> cells = source.cells();
 
-        // +1: точка замера берётся на блок выше сплошного блока, иначе
-        // самый край зоны влияния не попадал бы в поле
+        // +1: запас на край зоны влияния, чтобы последний блок не выпал из поля
         int rad = (int) Math.ceil(task.radius()) + 1;
         double radSq = (double) rad * rad;
 
@@ -796,10 +808,9 @@ public class HeatDebugController {
                     near.add(box.source());
                 }
             }
+            // Мерим температуру САМОГО блока, а не воздуха над ним: дебаг должен
+            // показывать температуру в точке influence, включая блок-источник.
             cursor.set(pos.getX(), pos.getY(), pos.getZ());
-            net.minecraft.world.level.block.state.BlockState state = level.getBlockState(cursor);
-            boolean solid = !state.isAir() && state.isSolidRender(level, cursor);
-            cursor.set(pos.getX(), pos.getY() + (solid ? 1 : 0), pos.getZ());
             TemperatureCalculator.PointTemps point =
                     TemperatureCalculator.calculatePointTemps(level, cursor, near);
             float temp = point.temp();

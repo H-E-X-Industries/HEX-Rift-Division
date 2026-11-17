@@ -325,29 +325,10 @@ public class HeatDebugRenderHandler {
             addSourceOutline(poseStack, lines, hovered);
         }
 
-        int markers = 0;
-        for (Map.Entry<BlockPos, Float> entry : snap.haloCells.entrySet()) {
-            if (markers >= MAX_HALO_MARKERS) {
-                break;
-            }
-            BlockPos pos = entry.getKey();
-            
-            // Отсечка по радиусу и фрустуму — у озера лавы сотни маркеров
-            double ddx = pos.getX() + 0.5 - playerX;
-            double ddy = pos.getY() + 0.5 - playerY;
-            double ddz = pos.getZ() + 0.5 - playerZ;
-            if (ddx * ddx + ddy * ddy + ddz * ddz > cullRadiusSq) {
-                continue;
-            }
-            
-            float[] rgb = temperatureColor(entry.getValue());
-            double h = 0.12;
-            LevelRenderer.renderLineBox(poseStack, lines,
-                    pos.getX() + 0.5 - h, pos.getY() + 0.5 - h, pos.getZ() + 0.5 - h,
-                    pos.getX() + 0.5 + h, pos.getY() + 0.5 + h, pos.getZ() + 0.5 + h,
-                    rgb[0], rgb[1], rgb[2], 0.45f);
-            markers++;
-        }
+        // Воздушная «кожа» источника — это не отдельные источники, а часть физики
+        // одного блока (см. HeatSourceHelper.haloCoupling). Раньше каждый такой воздушный
+        // блок рисовался отдельным маркером и выглядел как самостоятельный источник.
+        // Маркеры убраны: рамка/квад родительского источника уже показывает его зону.
 
         bufferSource.endBatch(RenderType.lines());
     }

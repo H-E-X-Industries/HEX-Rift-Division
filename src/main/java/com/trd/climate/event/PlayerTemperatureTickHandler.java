@@ -122,6 +122,22 @@ public class PlayerTemperatureTickHandler {
             (ServerPlayer) player,
             new com.trd.climate.network.SyncRoomClimatePayload(roomData)
         );
+
+        // 7. Живое состояние источников: клиентский дебаг-оверлей и ПКМ-термометр
+        //    должны читать тот же запас/физичность, что и серверные расчёты.
+        java.util.List<com.trd.climate.network.SyncThermalStatesPayload.Entry> thermalData =
+                new java.util.ArrayList<>();
+        for (var entry : com.trd.climate.room.ThermalStateStore.get(level).entriesNear(pos, 112.0)) {
+            if (thermalData.size() >= 512) {
+                break; // лимит StreamCodec — больше нет смысла слать состояния вне поля зрения
+            }
+            thermalData.add(new com.trd.climate.network.SyncThermalStatesPayload.Entry(
+                    entry.pos(), entry.state().reserve(), entry.state().physical()));
+        }
+        PacketDistributor.sendToPlayer(
+            (ServerPlayer) player,
+            new com.trd.climate.network.SyncThermalStatesPayload(thermalData)
+        );
     }
 
     /**

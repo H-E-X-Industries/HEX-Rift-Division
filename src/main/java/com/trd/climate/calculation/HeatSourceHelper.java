@@ -106,15 +106,25 @@ public final class HeatSourceHelper {
      * @param cells     блоки, из которых состоит источник
      */
     public record HeatSource(BlockPos pos, HeatSourceDef def, float power, float sourceTemp,
-                             List<BlockPos> cells) {
+                             List<BlockPos> cells, float efficiency) {
 
         public HeatSource {
             cells = (cells == null || cells.isEmpty()) ? List.of(pos) : List.copyOf(cells);
         }
 
-        /** Обычный одиночный блок-источник. */
+        /** Обычный одиночный блок-источник полной эффективности. */
         public HeatSource(BlockPos pos, HeatSourceDef def, float power, float sourceTemp) {
-            this(pos, def, power, sourceTemp, List.of(pos));
+            this(pos, def, power, sourceTemp, List.of(pos), 1.0f);
+        }
+
+        /** Одиночный источник с живым запасом (пассивный блок в комнате). */
+        public HeatSource(BlockPos pos, HeatSourceDef def, float power, float sourceTemp, float efficiency) {
+            this(pos, def, power, sourceTemp, List.of(pos), efficiency);
+        }
+
+        /** Источник из нескольких клеток полной эффективности. */
+        public HeatSource(BlockPos pos, HeatSourceDef def, float power, float sourceTemp, List<BlockPos> cells) {
+            this(pos, def, power, sourceTemp, cells, 1.0f);
         }
 
         /**
@@ -126,7 +136,7 @@ public final class HeatSourceHelper {
          * отражает мощность (холодный нагреватель и так отдаёт мало тепла).
          */
         public float effectiveHeat() {
-            return def.radiantOutput(sourceTemp);
+            return def.radiantOutput(sourceTemp, efficiency);
         }
 
         /**
@@ -276,7 +286,7 @@ public final class HeatSourceHelper {
                             cur.getY() + dir.getStepY(),
                             cur.getZ() + dir.getStepZ());
                     HeatSource neighbour = singles.get(cursor);
-                    if (neighbour == null || neighbour.def() != seed.def()) {
+                    if (neighbour == null || !sameClusterGroup(seed, level, neighbour.pos())) {
                         continue;
                     }
                     if (visited.add(neighbour.pos())) {
@@ -292,7 +302,8 @@ public final class HeatSourceHelper {
             BlockPos anchor = cells.stream()
                     .min(java.util.Comparator.comparingLong(BlockPos::asLong))
                     .orElse(seed.pos());
-            result.add(new HeatSource(anchor, seed.def(), seed.power(), seed.sourceTemp(), cells));
+            result.add(new HeatSource(anchor, seed.def(), seed.power(), seed.sourceTemp(),
+                    cells, seed.efficiency()));
         }
         return result;
     }
@@ -333,7 +344,7 @@ public final class HeatSourceHelper {
                 if (claimed.contains(cursor)) {
                     continue;
                 }
-                if (HeatSourceRegistry.resolveState(level.getBlockState(cursor)) != def) {
+                if (!sameClusterGroup(first, level, cursor)) {
                     continue;
                 }
                 BlockPos immutable = cursor.immutable();
@@ -342,7 +353,22 @@ public final class HeatSourceHelper {
                 queue.add(immutable);
             }
         }
-        return new HeatSource(start, def, first.power(), first.sourceTemp(), cells);
+        return new HeatSource(start, def, first.power(), first.sourceTemp(),
+                cells, first.efficiency());
+    }
+
+    /**
+     * Кластеризуются только источники с одинаковым описанием И одинаковым живым запасом.
+     * Иначе половина лавового озера с запасом 80% и половина с 30% считались бы одним
+     * источником с температурой якоря, и вторая половина грела бы неверно.
+     */
+    private static boolean sameClusterGroup(HeatSource seed, Level level, BlockPos pos) {
+        if (HeatSourceRegistry.resolveState(level.getBlockState(pos)) != seed.def()) {
+            return false;
+        }
+        var stored = com.trd.climate.room.ThermalStateStore.stateAt(level, pos);
+        float efficiency = stored == null ? 1.0f : stored.reserve();
+        return Math.abs(efficiency - seed.efficiency()) <= 0.02f;
     }
 
     /**
@@ -399,22 +425,20 @@ public final class HeatSourceHelper {
         if (def != null) {
             float power = def.powerAt(1.0f);
             float temperature = def.surfaceTemp();
+            float efficiency = 1.0f;
 
             // Физичный пассивный источник (и побывавший в комнате) несёт живое состояние:
             // запас уменьшает и выход, и температуру. Обе дороги — лучистая и объёмная —
             // читают одно и то же состояние, поэтому базальт не может продолжить греть.
-            if (def.isPassive() && !level.isClientSide()) {
-                var stored = com.trd.climate.room.ThermalStateStore
-                        .get((net.minecraft.server.level.ServerLevel) level)
-                        .get(pos);
-                if (stored != null) {
-                    power *= stored.reserve();
-                    temperature = def.temperatureAt(stored.reserve());
-                }
+            var stored = com.trd.climate.room.ThermalStateStore.stateAt(level, pos);
+            if (stored != null) {
+                efficiency = stored.reserve();
+                power *= efficiency;
+                temperature = def.temperatureAt(efficiency);
             }
 
             if (power > 0.0f) {
-                return new HeatSource(pos.immutable(), def, power, temperature);
+                return new HeatSource(pos.immutable(), def, power, temperature, efficiency);
             }
         }
         return null;
@@ -745,7 +769,8 @@ public final class HeatSourceHelper {
                 if (coupling <= 0.0f) {
                     continue;
                 }
-                cools.add(Math.min(coupling * excess, source.def().coolingPower()));
+                cools.add(Math.min(coupling * excess,
+                        source.def().coolingPower() * source.efficiency()));
             }
             coldest = Math.min(coldest, source.sourceTemp());
         }

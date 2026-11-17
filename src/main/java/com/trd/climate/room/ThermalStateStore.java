@@ -104,6 +104,18 @@ public final class ThermalStateStore extends SavedData {
         }
     }
 
+    /**
+     * Единая точка чтения живого состояния с обеих сторон: сервер читает SavedData,
+     * клиент — кэш, присланный пакетом. Это убирает рассинхрон дебаг-оверлея
+     * и показаний термометра.
+     */
+    public static ThermalState stateAt(net.minecraft.world.level.Level level, BlockPos pos) {
+        if (level.isClientSide()) {
+            return ClientThermalStateCache.get(pos);
+        }
+        return get((ServerLevel) level).get(pos);
+    }
+
     /** Состояние блока, если источник когда-либо побывал в комнате. */
     public ThermalState get(BlockPos pos) {
         return states.get(pos.asLong());
@@ -123,6 +135,19 @@ public final class ThermalStateStore extends SavedData {
         if (states.remove(pos.asLong()) != null) {
             setDirty();
         }
+    }
+
+    /** Снимок записей рядом с точкой — для сетевой синхронизации. */
+    public java.util.List<Entry> entriesNear(BlockPos center, double radius) {
+        java.util.List<Entry> result = new java.util.ArrayList<>();
+        double rSq = radius * radius;
+        for (var entry : states.long2ObjectEntrySet()) {
+            BlockPos pos = BlockPos.of(entry.getLongKey());
+            if (pos.distSqr(center) <= rSq) {
+                result.add(new Entry(pos, entry.getValue()));
+            }
+        }
+        return result;
     }
 
     /** Снимок всех записей для команд диагностики. */

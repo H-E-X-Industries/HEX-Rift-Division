@@ -244,16 +244,23 @@ public class ModCommands {
         CommandSourceStack source = context.getSource();
         com.trd.climate.room.ThermalStateStore store =
                 com.trd.climate.room.ThermalStateStore.get(source.getLevel());
-        source.sendSuccess(() -> Component.literal("§6══════ [THERMAL STATES: " +
-                store.size() + "] ══════"), false);
+        source.sendSuccess(() -> Component.literal(
+                "§6══════ [THERMAL STATES: " + store.size() + "] ══════"), false);
+        source.sendSuccess(() -> Component.literal(
+                "§7Только реальные блоки-источники. Воздушные гало — расчётные, в списке их нет."), false);
         for (var entry : store.entries()) {
             var pos = entry.pos();
             var state = entry.state();
+            var def = com.trd.api.climate.HeatSourceRegistry.resolveState(
+                    source.getLevel().getBlockState(pos));
+            if (def == null || !def.isPassive()) {
+                continue; // устаревшая запись — движок уберёт её на следующем шаге
+            }
             source.sendSuccess(() -> Component.literal(String.format(Locale.ROOT,
-                    "§7[%d, %d, %d] §f%s §7запас=§e%.0f%%",
-                    pos.getX(), pos.getY(), pos.getZ(),
+                    "§7[%d, %d, %d] §e%s §7%s §fзапас=§e%.0f%% §7T=§c%.0f°C",
+                    pos.getX(), pos.getY(), pos.getZ(), def.id(),
                     state.physical() ? "ФИЗИЧНЫЙ" : "нефизичный",
-                    state.reserve() * 100.0f)), false);
+                    state.reserve() * 100.0f, def.temperatureAt(state.reserve()))), false);
         }
         return 1;
     }
