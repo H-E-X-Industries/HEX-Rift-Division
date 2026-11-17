@@ -7,10 +7,12 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
 /**
- * Один секундный шаг термического движка пассивных источников.
+ * Тики термического движка пассивных источников.
  * <p>
- * Шаг привязан к тику уровня (а не к контроллеру комнаты), поэтому корректно
- * обрабатываются и перенос блока из комнаты, и снятие контроллера, и замена блока.
+ * Два шага: покадровое вероятностное таяние льда и секундный пересмотр
+ * всех записей (расход/восстановление запаса, превращение в depletedBlock).
+ * Шаги привязаны к тику уровня (а не к контроллеру комнаты), поэтому корректно
+ * обрабатываются перенос блока из комнаты, снятие контроллера и замена блока.
  */
 @EventBusSubscriber(modid = MainRegistry.MOD_ID)
 public final class ThermalStateTickHandler {
@@ -23,9 +25,12 @@ public final class ThermalStateTickHandler {
         if (!(event.getLevel() instanceof ServerLevel level)) {
             return;
         }
-        if (level.getGameTime() % 20L != 0L) {
-            return;
+        ThermalStateStore store = ThermalStateStore.get(level);
+        // Покадровое таяние льда (шанс и кулдаун зависят от температуры комнаты)
+        store.tickMelting(level);
+        // Секундный шаг расхода/восстановления и превращения блоков
+        if (level.getGameTime() % 20L == 0L) {
+            store.tick(level);
         }
-        ThermalStateStore.get(level).tick(level);
     }
 }

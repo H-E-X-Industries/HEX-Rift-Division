@@ -74,7 +74,7 @@ public final class ModHeatSources {
                 .heater().passive().surfaceTemp(1200.0f).outputHeat(500.0f)
                 .radius(6.0f).conductivity(0.95f)
                 .phaseTemp(700.0f).drainRate(0.0030f).restoreRate(0.0015f)
-                .depletedBlock("minecraft:basalt").build(),
+                .depletedBlock("minecraft:basalt").freezeRadius(4.0f).build(),
                 state -> state.getValue(LiquidBlock.LEVEL) == 0);
 
         register(Blocks.LAVA, HeatSourceDef.builder("minecraft:flowing_lava")
@@ -102,11 +102,11 @@ public final class ModHeatSources {
         // Параметры таяния (шанс при 0°C → шанс при +30°C, кд 20 тиков → 5 тиков):
         // обычный лёд тает быстрее всего, синий — медленнее всего.
         cooler(Blocks.ICE, "minecraft:ice", 8.0f, 4.0f, 0.50f, 0.0f, 8.0f, 0.6f, 0.0030f, 0.0015f,
-                0.02f, 0.30f, 20, 5, 30.0f);
+                0.02f, 0.30f, 20, 5, 30.0f, 0.02f);
         cooler(Blocks.PACKED_ICE, "minecraft:packed_ice", 11.0f, 4.0f, 0.45f, -18.0f, 0.0f, 1.0f, 0.0020f, 0.0012f,
-                0.01f, 0.20f, 24, 7, 35.0f);
+                0.01f, 0.20f, 24, 7, 35.0f, 0.015f);
         cooler(Blocks.BLUE_ICE, "minecraft:blue_ice", 15.0f, 4.5f, 0.40f, -50.0f, -10.0f, 2.0f, 0.0015f, 0.0010f,
-                0.005f, 0.12f, 30, 10, 40.0f);
+                0.005f, 0.12f, 30, 10, 40.0f, 0.01f);
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -170,12 +170,13 @@ public final class ModHeatSources {
                                float conductivity, float temp, float floor, float power,
                                float drainRate, float restoreRate,
                                float meltChanceCold, float meltChanceHot,
-                               int meltCooldownCold, int meltCooldownHot, float meltTempSpan) {
+                               int meltCooldownCold, int meltCooldownHot,
+                               float meltTempSpan, float meltLoss) {
         register(block, HeatSourceDef.builder(id)
                 .cooler().passive().surfaceTemp(temp).coolingPower(output)
                 .radius(radius).conductivity(conductivity)
                 .phaseTemp(0.0f).drainRate(drainRate).restoreRate(restoreRate)
-                .melt(meltChanceCold, meltChanceHot, meltCooldownCold, meltCooldownHot, meltTempSpan)
+                .melt(meltChanceCold, meltChanceHot, meltCooldownCold, meltCooldownHot, meltTempSpan, meltLoss)
                 .depletedBlock("minecraft:water").build(), state -> true);
     }
 

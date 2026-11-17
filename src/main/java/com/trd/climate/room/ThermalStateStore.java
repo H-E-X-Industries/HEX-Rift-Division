@@ -226,8 +226,101 @@ public final class ThermalStateStore extends SavedData {
                 Block depleted = BuiltInRegistries.BLOCK.get(def.depletedBlock());
                 if (depleted != null) {
                     level.setBlock(pos, depleted.defaultBlockState(), 3);
+                    // Синхронное застывание: текучая лава вокруг источника превращается
+                    // в тот же depletedBlock разом, а не отдельно по истечении своего запаса.
+                    if (def.freezeRadius() > 0.0f) {
+                        freezeSurroundingFluid(level, pos, def.freezeRadius(), depleted);
+                    }
                 }
                 states.remove(key);
+                dirty = true;
+            }
+        }
+
+        if (dirty) setDirty();
+    }
+
+    /**
+     * Синхронно замораживает текучую часть источника (лава → базальт).
+     * Заменяет только текучую лаву в радиусе, не трогая остальные блоки.
+     */
+    private static void freezeSurroundingFluid(ServerLevel level, BlockPos center,
+                                               float radius, Block depleted) {
+        net.minecraft.world.level.block.state.BlockState depletedState = depleted.defaultBlockState();
+        int r = (int) Math.ceil(radius);
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        for (int dx = -r; dx <= r; dx++) {
+            for (int dy = -r; dy <= r; dy++) {
+                for (int dz = -r; dz <= r; dz++) {
+                    if (dx * dx + dy * dy + dz * dz > radius * radius) {
+                        continue;
+                    }
+                    cursor.set(center.getX() + dx, center.getY() + dy, center.getZ() + dz);
+                    if (cursor.equals(center)) {
+                        continue;
+                    }
+                    var fluid = level.getFluidState(cursor);
+                    // Только текучая лава (не источник — он уже заменён)
+                    if (fluid.is(net.minecraft.tags.FluidTags.LAVA) && !fluid.isSource()) {
+                        level.setBlock(cursor, depletedState, 3);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Тиковый шаг вероятностного таяния льда (вызывается каждый тик).
+     * <p>
+     * Чем выше температура комнаты, тем выше шанс растаять за ролл и тем короче
+     * кулдаун между роллами. При успешном ролле запас уменьшается на {@code melt.loss()}.
+     * Вне герметичной комнаты лёд не тает (нефизичный источник).
+     */
+    public void tickMelting(ServerLevel level) {
+        if (states.isEmpty()) return;
+
+        boolean dirty = false;
+        long gameTime = level.getGameTime();
+        long[] keys = states.keySet().toLongArray();
+        for (long key : keys) {
+            BlockPos pos = BlockPos.of(key);
+            BlockState blockState = level.getBlockState(pos);
+            HeatSourceDef def = HeatSourceRegistry.resolveState(blockState);
+
+            // Только охладители с профилем таяния (лёд, пакед, блю)
+            if (def == null || !def.isPassive() || !def.isCooling() || def.melt() == null) {
+                continue;
+            }
+
+            var stored = states.get(key);
+            if (stored == null || !stored.physical()) {
+                continue;
+            }
+
+            SealedRoom room = findRoom(level, pos);
+            if (room == null) {
+                continue;
+            }
+
+            HeatSourceDef.MeltParams melt = def.melt();
+            float roomTemp = room.getRoomTemperature();
+            int cooldown = melt.cooldownAt(roomTemp, def.surfaceTemp());
+
+            // Детерминированный «ролл-таймер»: каждый блок проверяется раз в `cooldown` тиков,
+            // но фаза сдвинута по позиции, чтобы все льдины не таяли одновременно.
+            long phase = pos.asLong() & 0xFFFFL;
+            if ((gameTime + phase) % cooldown != 0L) {
+                continue;
+            }
+
+            float chance = melt.chanceAt(roomTemp, def.surfaceTemp());
+            if (level.random.nextFloat() >= chance) {
+                continue;
+            }
+
+            float nextReserve = Math.max(0.0f, stored.reserve() - melt.loss());
+            if (Math.abs(nextReserve - stored.reserve()) > 1.0e-5f) {
+                states.put(key, stored.withReserve(nextReserve));
                 dirty = true;
             }
         }

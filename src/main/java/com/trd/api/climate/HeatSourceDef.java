@@ -77,7 +77,13 @@ public record HeatSourceDef(
          * Профиль вероятностного таяния охладителей (лёд/пакед/блю).
          * {@code null} — источник тает обычным линейным drainRate.
          */
-        MeltParams melt
+        MeltParams melt,
+        /**
+         * Радиус синхронного застывания текучей части при истощении источника (блоков).
+         * 0 — застывает только сам блок-источник. Для лавы >0, чтобы текучая лава
+         * вокруг базальтового источника не застывала отдельно спустя время.
+         */
+        float freezeRadius
 ) {
 
     /**
@@ -89,11 +95,12 @@ public record HeatSourceDef(
      * @param cooldownCold тиков между роллами при холодной среде (например 20)
      * @param cooldownHot  тиков между роллами при горячей среде (например 5)
      * @param tempSpan диапазон температур, на котором интерполируются шанс и кулдаун
+     * @param loss доля запаса, теряемая при одном успешном ролле
      */
     public record MeltParams(
             float chanceCold, float chanceHot,
             int cooldownCold, int cooldownHot,
-            float tempSpan
+            float tempSpan, float loss
     ) {
         public MeltParams {
             chanceCold = Mth.clamp(chanceCold, 0.0f, 1.0f);
@@ -101,6 +108,7 @@ public record HeatSourceDef(
             cooldownCold = Math.max(1, cooldownCold);
             cooldownHot = Math.max(1, cooldownHot);
             tempSpan = Math.max(1.0f, tempSpan);
+            loss = Math.max(0.0f, loss);
         }
 
         /** Шанс таяния при заданной температуре среды. */
@@ -259,6 +267,7 @@ public record HeatSourceDef(
         private float restoreBelow = 10.0f;
         private ResourceLocation depletedBlock;
         private MeltParams melt;
+        private float freezeRadius;
 
         private Builder(String id) {
             this.id = id;
@@ -291,10 +300,12 @@ public record HeatSourceDef(
             return this;
         }
         public Builder melt(float chanceCold, float chanceHot,
-                            int cooldownCold, int cooldownHot, float tempSpan) {
-            this.melt = new MeltParams(chanceCold, chanceHot, cooldownCold, cooldownHot, tempSpan);
+                            int cooldownCold, int cooldownHot,
+                            float tempSpan, float loss) {
+            this.melt = new MeltParams(chanceCold, chanceHot, cooldownCold, cooldownHot, tempSpan, loss);
             return this;
         }
+        public Builder freezeRadius(float value) { this.freezeRadius = value; return this; }
 
         public HeatSourceDef build() {
             if (role == Role.HEATER && coolingPower != 0.0f) {
@@ -309,7 +320,8 @@ public record HeatSourceDef(
             }
             return new HeatSourceDef(id, role, kind, surfaceTemp, outputHeat, coolingPower,
                     radius, conductivity, negligibleInLargeRooms, deviceScaleMin, deviceScaleMax, phaseTemp,
-                    drainRate, restoreRate, restoreFactor, restoreBelow, depletedBlock, melt);
+                    drainRate, restoreRate, restoreFactor, restoreBelow, depletedBlock, melt,
+                    freezeRadius);
         }
     }
 }

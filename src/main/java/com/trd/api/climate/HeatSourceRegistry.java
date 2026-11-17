@@ -39,6 +39,13 @@ public final class HeatSourceRegistry {
     /** Типы блоков, у которых источник тепла определяется блок-сущностью. */
     private static final java.util.Set<Block> BLOCK_ENTITY_BLOCKS = ConcurrentHashMap.newKeySet();
 
+    /**
+     * Прямое соответствие блок → описание для тултипов.
+     * Заполняется и для ванильных, и для блоков мода — в отличие от BY_BLOCK,
+     * который хранит только источники с предикатом состояния.
+     */
+    private static final Map<Block, HeatSourceDef> DEF_BY_BLOCK = new ConcurrentHashMap<>();
+
     /** Максимальный радиус излучения среди всех зарегистрированных источников. */
     private static volatile float maxRadius = 0.0f;
 
@@ -65,6 +72,7 @@ public final class HeatSourceRegistry {
     public static void register(Block block, HeatSourceDef def, Predicate<BlockState> stateTest) {
         register(def, stateTest);
         BY_BLOCK.computeIfAbsent(block, k -> new ArrayList<>()).add(new Entry(stateTest, def));
+        DEF_BY_BLOCK.putIfAbsent(block, def);
     }
 
     /**
@@ -87,6 +95,7 @@ public final class HeatSourceRegistry {
         registerIdOnly(def);
         if (block != null) {
             BLOCK_ENTITY_BLOCKS.add(block);
+            DEF_BY_BLOCK.putIfAbsent(block, def);
         }
     }
 
@@ -149,6 +158,33 @@ public final class HeatSourceRegistry {
             }
         }
         return resolveState(state);
+    }
+
+    /**
+     * Описание источника по типу блока (для тултипов по предмету).
+     * Работает и для ванильных блоков, и для приборов мода.
+     */
+    public static HeatSourceDef defForBlock(Block block) {
+        return block == null ? null : DEF_BY_BLOCK.get(block);
+    }
+
+    /**
+     * Все описания, привязанные к типу блока (для тултипов по предмету).
+     * Для блоков мода (registerIdOnly) вернёт пустой список — у них деф
+     * живёт в блок-сущности и находится по id.
+     */
+    public static List<HeatSourceDef> defsForBlock(Block block) {
+        List<Entry> entries = BY_BLOCK.get(block);
+        if (entries == null || entries.isEmpty()) {
+            return List.of();
+        }
+        List<HeatSourceDef> result = new ArrayList<>(entries.size());
+        for (Entry entry : entries) {
+            if (!result.contains(entry.def())) {
+                result.add(entry.def());
+            }
+        }
+        return result;
     }
 
     /**
