@@ -906,6 +906,7 @@
     "chat.trd.thermometer.not_a_source":  "Блок не является источником тепла",
     "tooltip.trd.heat_source.type":  "§7Тип: §r%s §7| §r%s",
     "tooltip.trd.heat_source.temp":  "§7Температура: %s",
+    "tooltip.trd.heat_source.max_temp":  "§7Макс. температура: %s",
     "tooltip.trd.heat_source.conductivity":  "§7Теплопроводность: %s",
     "tooltip.trd.heat_source.radius":  "§7Радиус прямого действия: %s",
     "tooltip.trd.heat_source.drain":  "§7Расход запаса: %s",

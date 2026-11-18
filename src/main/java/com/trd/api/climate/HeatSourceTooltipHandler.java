@@ -50,8 +50,12 @@ public final class HeatSourceTooltipHandler {
                 Component.literal(kind).withStyle(ChatFormatting.AQUA),
                 Component.literal(role).withStyle(def.isCooling() ? ChatFormatting.BLUE : ChatFormatting.RED)));
 
-        // 2) Температура
-        tip.add(Component.translatable("tooltip.trd.heat_source.temp",
+        // 2) Температура. У активных приборов паспорт — это макс. температура корпуса
+        //    (внутри печь может быть жарче), у пассивных блоков — просто температура.
+        String tempKey = def.isPassive()
+                ? "tooltip.trd.heat_source.temp"
+                : "tooltip.trd.heat_source.max_temp";
+        tip.add(Component.translatable(tempKey,
                 value(String.format(Locale.ROOT, "%.0f°C", def.surfaceTemp()))));
 
         // 3) Теплопроводность

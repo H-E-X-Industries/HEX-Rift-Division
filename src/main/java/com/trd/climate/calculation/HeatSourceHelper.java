@@ -32,7 +32,7 @@ public final class HeatSourceHelper {
      * <p>
      * Форма: {@code f(t) = (1 − t)^p · (1 + p·t)}, где {@code t = d / R} —
      * доля пройденного радиуса, а {@code p} — показатель формы, который
-     * задаётся теплопроводностью источника ({@link HeatSourceDef#falloffExponent()}).
+     * задаётся полем {@code spread} ({@link HeatSourceDef#falloffExponent()}).
      * <p>
      * Почему так:
      * <ul>

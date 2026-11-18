@@ -35,12 +35,17 @@ import net.minecraft.util.Mth;
  *
  * <h2>Как считается тепло</h2>
  * <pre>
- *   ΔT(у поверхности) = min(outputHeat, sourceTemp × (0.1 + 0.8 × conductivity))   // HEATER
- *   ΔT(у поверхности) = coolingPower × (0.1 + 0.8 × conductivity)                  // COOLER
+ *   ΔT(у поверхности) = sourceTemp × conductivity × запас    // HEATER (outputHeat — потолок)
+ *   ΔT(у поверхности) = coolingPower × запас                 // COOLER
  *   ΔT(в точке)       = ΔT(у поверхности) × спад(расстояние)
- *   спад(d)           = (1 − d/R)^p × (1 + p·d/R),  p — от теплопроводности
- *   R                 = radius × мощность × тепловыход × теплопроводность
+ *   спад(d)           = (1 − d/R)^p × (1 + p·d/R),  p — от spread
+ *   R                 = radius × мощность × spread
  * </pre>
+ * <b>Теплопроводность</b> ({@code conductivity}) — это честная доля температуры источника,
+ * доходящая до воздуха: 700 °C × 1.7% = 12 °C у магмы. Именно её видит игрок в паспорте
+ * блока, поэтому баланс делается ею, а не скрытым потолком {@code outputHeat}.
+ * Форма спада и радиус задаются отдельным полем {@code spread}, чтобы смена доли отдачи
+ * не ломала уже настроенный профиль нагрева.
  */
 public record HeatSourceDef(
         String id,
@@ -53,8 +58,17 @@ public record HeatSourceDef(
         /** COOLER: сколько °C источник способен забрать. Для HEATER всегда 0. */
         float coolingPower,
         float radius,
-        /** Теплопроводность 0..1: доля температуры, доходящая до соседей. */
+        /**
+         * Теплопроводность 0..1 — доля паспортной температуры, доходящая до воздуха (°C =
+         * surfaceTemp × conductivity). Показывается в паспорте источника, поэтому именно
+         * этим полем балансируется ощущаемый жар.
+         */
         float conductivity,
+        /**
+         * Форма спада и радиус 0..1 (ранее это делала conductivity). 1 — тепло уходит
+         * далеко и равномерно, 0 — держится у поверхности. В паспорте не показывается.
+         */
+        float spread,
         /** Костёр и факел физически не греют большую пещеру. */
         boolean negligibleInLargeRooms,
         /** Нижняя граница шкалы прибора (для PASSIVE не используется). */
@@ -128,10 +142,13 @@ public record HeatSourceDef(
 
     public enum Kind { ACTIVE, PASSIVE }
 
-    /** Минимальная доля передаваемого тепла при теплопроводности 0. */
-    public static final float MIN_TRANSFER = 0.1f;
-    /** Максимальная доля передаваемого тепла при теплопроводности 1. */
-    public static final float MAX_TRANSFER = 0.9f;
+    /**
+     * Доля отдачи теперь равна самой теплопроводности: 0% → 0 °C, 100% → вся температура.
+     * Прежний пол 10% означал, что даже «холодный» источник с 0% проводимости выдавал
+     * 70 °C от 700 °C — из-за этого приходилось прятать баланс в скрытый outputHeat.
+     */
+    public static final float MIN_TRANSFER = 0.0f;
+    public static final float MAX_TRANSFER = 1.0f;
     /** Минимальная доля радиуса излучения при нулевой мощности. */
     public static final float MIN_RADIUS_FACTOR = 0.35f;
     /**
@@ -141,7 +158,7 @@ public record HeatSourceDef(
      * лежит в шкале ощущаемой игроком температуры (единицы-десятки °C), и старый минимум
      * 0.5 необоснованно вдвое срезал радиус каждого источника. Теперь при
      * {@code outputHeat <= 100} радиус равен заявленному (умноженному только на
-     * теплопроводность и мощность), а удвоение получают лишь реально мощные источники.
+     * {@code spread} и мощность), а удвоение получают лишь реально мощные источники.
      */
     public static final float HEAT_RADIUS_MIN_SCALE = 1.0f;
     public static final float HEAT_RADIUS_MAX_SCALE = 2.0f;
@@ -160,6 +177,7 @@ public record HeatSourceDef(
         coolingPower = Mth.clamp(coolingPower, 0.0f, 500.0f);
         radius = Mth.clamp(radius, 0.5f, 32.0f);
         conductivity = Mth.clamp(conductivity, 0.0f, 1.0f);
+        spread = Mth.clamp(spread, 0.0f, 1.0f);
         drainRate = Math.max(0.0f, drainRate);
         restoreRate = Math.max(0.0f, restoreRate);
         restoreFactor = Math.max(1.0f, restoreFactor);
@@ -193,8 +211,12 @@ public record HeatSourceDef(
     public float radiantOutput(float sourceTemp, float efficiency) {
         float e = Mth.clamp(efficiency, 0.0f, 1.0f);
         if (isCooling()) {
-            return coolingPower * transferFactor() * e;
+            // coolingPower уже в °C: это ровно те градусы, которые источник забирает.
+            // Теплопроводность здесь не множитель (иначе лёд внезапно стал бы слабее).
+            return coolingPower * e;
         }
+        // outputHeat — потолок (паспорт × conductivity), sourceTemp — текущая температура
+        // прибора/остывшей лавы, поэтому жар теперь масштабируется вместе с ней.
         return Math.min(outputHeat, sourceTemp * transferFactor()) * e;
     }
 
@@ -216,15 +238,15 @@ public record HeatSourceDef(
         return Mth.clamp(outputHeatValue / 100.0f, HEAT_RADIUS_MIN_SCALE, HEAT_RADIUS_MAX_SCALE);
     }
 
-    /** Показатель формы спада температуры от расстояния. */
+    /** Показатель формы спада температуры от расстояния (задаётся spread). */
     public float falloffExponent() {
         return FALLOFF_EXPONENT_MIN
-                + (FALLOFF_EXPONENT_MAX - FALLOFF_EXPONENT_MIN) * (1.0f - conductivity);
+                + (FALLOFF_EXPONENT_MAX - FALLOFF_EXPONENT_MIN) * (1.0f - spread);
     }
 
-    /** Доля радиуса, доступная источнику из-за его теплопроводности. */
+    /** Доля радиуса, доступная источнику из-за его формы излучения (spread). */
     public float spreadByConductivity() {
-        return 0.6f + 0.4f * conductivity;
+        return 0.6f + 0.4f * spread;
     }
 
     /**
@@ -265,6 +287,7 @@ public record HeatSourceDef(
         private float coolingPower;
         private float radius = 4.0f;
         private float conductivity = 0.5f;
+        private float spread = 0.5f;
         private boolean negligibleInLargeRooms;
         private float deviceScaleMin = 1.0f;
         private float deviceScaleMax = 1.0f;
@@ -292,6 +315,8 @@ public record HeatSourceDef(
         public Builder coolingPower(float value) { this.coolingPower = value; return this; }
         public Builder radius(float value) { this.radius = value; return this; }
         public Builder conductivity(float value) { this.conductivity = value; return this; }
+        /** Форма спада/радиус. По умолчанию 0.5 — как у прежней conductivity. */
+        public Builder spread(float value) { this.spread = value; return this; }
         public Builder negligibleInLargeRooms(boolean value) { this.negligibleInLargeRooms = value; return this; }
         public Builder deviceScale(float min, float max) {
             this.deviceScaleMin = min;
@@ -327,8 +352,8 @@ public record HeatSourceDef(
                         "PASSIVE HEATER " + id + ": phaseTemp должен быть ниже surfaceTemp");
             }
             return new HeatSourceDef(id, role, kind, surfaceTemp, outputHeat, coolingPower,
-                    radius, conductivity, negligibleInLargeRooms, deviceScaleMin, deviceScaleMax, phaseTemp,
-                    drainRate, restoreRate, restoreFactor, restoreBelow, depletedBlock, melt,
+                    radius, conductivity, spread, negligibleInLargeRooms, deviceScaleMin, deviceScaleMax,
+                    phaseTemp, drainRate, restoreRate, restoreFactor, restoreBelow, depletedBlock, melt,
                     freezeRadius);
         }
     }

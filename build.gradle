@@ -100,7 +100,10 @@ neoForge {
         }
         configureEach {
             systemProperty 'forge.logging.markers', 'REGISTRIES'
-            logLevel = org.slf4j.event.Level.DEBUG
+            // DEBUG на всех ранах заливал лог демона mixin-строками (6 МБ за сессию):
+            // демон задыхался и умирал прямо при открытии мира. Оставляем INFO,
+            // подробности при необходимости включаются конкретным run'ом.
+            logLevel = org.slf4j.event.Level.INFO
         }
     }
 

@@ -903,6 +903,7 @@
     "chat.trd.thermometer.not_a_source":  "This block is not a heat source",
     "tooltip.trd.heat_source.type":  "§7Type: §r%s §7| §r%s",
     "tooltip.trd.heat_source.temp":  "§7Temperature: %s",
+    "tooltip.trd.heat_source.max_temp":  "§7Max temperature: %s",
     "tooltip.trd.heat_source.conductivity":  "§7Thermal conductivity: %s",
     "tooltip.trd.heat_source.radius":  "§7Direct range: %s",
     "tooltip.trd.heat_source.drain":  "§7Reserve drain: %s",
