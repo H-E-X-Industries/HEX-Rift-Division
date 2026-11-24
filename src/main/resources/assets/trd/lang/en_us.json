@@ -905,6 +905,7 @@
     "tooltip.trd.heat_source.temp":  "§7Temperature: %s",
     "tooltip.trd.heat_source.max_temp":  "§7Max temperature: %s",
     "tooltip.trd.heat_source.conductivity":  "§7Thermal conductivity: %s",
+    "tooltip.trd.heat_source.conductivity_formula":  "§7Conductivity: %s/%s °C (K/T — drops as it heats up)",
     "tooltip.trd.heat_source.radius":  "§7Direct range: %s",
     "tooltip.trd.heat_source.drain":  "§7Reserve drain: %s",
     "chat.trd.debug.unavailable":  "Debug mode is not available!",

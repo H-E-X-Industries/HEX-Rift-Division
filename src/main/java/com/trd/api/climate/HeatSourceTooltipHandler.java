@@ -50,17 +50,24 @@ public final class HeatSourceTooltipHandler {
                 Component.literal(kind).withStyle(ChatFormatting.AQUA),
                 Component.literal(role).withStyle(def.isCooling() ? ChatFormatting.BLUE : ChatFormatting.RED)));
 
-        // 2) Температура. У активных приборов паспорт — это макс. температура корпуса
-        //    (внутри печь может быть жарче), у пассивных блоков — просто температура.
+        // 2) Температура. У активных приборов — фактическая (2700 °C у коксовой печи),
+        //    у пассивных блоков — температура самого блока.
         String tempKey = def.isPassive()
                 ? "tooltip.trd.heat_source.temp"
                 : "tooltip.trd.heat_source.max_temp";
         tip.add(Component.translatable(tempKey,
                 value(String.format(Locale.ROOT, "%.0f°C", def.surfaceTemp()))));
 
-        // 3) Теплопроводность
-        tip.add(Component.translatable("tooltip.trd.heat_source.conductivity",
-                value(String.format(Locale.ROOT, "%.0f%%", def.conductivity() * 100.0f))));
+        // 3) Теплопроводность. У активных — не фиксированный процент, а функция K/T:
+        //    чем горячее прибор, тем меньше доля его тепла доходит до игрока.
+        if (def.isPassive() || def.isCooling()) {
+            tip.add(Component.translatable("tooltip.trd.heat_source.conductivity",
+                    value(percent(def.transferFactor()))));
+        } else {
+            tip.add(Component.translatable("tooltip.trd.heat_source.conductivity_formula",
+                    value(String.format(Locale.ROOT, "%.0f", def.outputHeat())),
+                    value(String.format(Locale.ROOT, "%.0f", def.surfaceTemp()))));
+        }
 
         // 4) Радиус прямого воздействия
         tip.add(Component.translatable("tooltip.trd.heat_source.radius",
@@ -69,8 +76,22 @@ public final class HeatSourceTooltipHandler {
         // 5) Расход запаса в процентах в секунду (только для пассивных)
         if (def.isPassive()) {
             tip.add(Component.translatable("tooltip.trd.heat_source.drain",
-                    value(String.format(Locale.ROOT, "%.2f%%/сек", def.drainRate() * 100.0f))));
+                    value(percent(def.drainRate()) + "/сек")));
         }
+    }
+
+    /**
+     * Доля в процентах без лишних нулей: 0.0020 → «0.2%», 0.0015 → «0.15%», 0.02 → «2%».
+     */
+    private static String percent(float fraction) {
+        String s = String.format(Locale.ROOT, "%.2f", fraction * 100.0f);
+        if (s.endsWith("0")) {
+            s = s.substring(0, s.length() - 1);
+        }
+        if (s.endsWith(".")) {
+            s = s.substring(0, s.length() - 1);
+        }
+        return s + "%";
     }
 
     /** Значение, выделенное цветом. */

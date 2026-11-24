@@ -404,7 +404,7 @@ public final class HeatSourceHelper {
                         // Для контроллера мультиблока источником является вся конструкция
                         List<BlockPos> cells = MultiblockHeatHelper.structureCells(level, pos);
                         return new HeatSource(pos.immutable(), def, power,
-                                heatSource.getSourceTemperature(), cells);
+                                def.effectiveTemperature(heatSource.getSourceTemperature()), cells);
                     }
                 }
                 return null;
@@ -459,7 +459,7 @@ public final class HeatSourceHelper {
                 if (power > 0.0f) {
                     List<BlockPos> cells = MultiblockHeatHelper.structureCells(level, controllerPos);
                     return new HeatSource(controllerPos.immutable(), def, power,
-                            heatSource.getSourceTemperature(), cells);
+                            def.effectiveTemperature(heatSource.getSourceTemperature()), cells);
                 }
             }
         }

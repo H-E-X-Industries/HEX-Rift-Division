@@ -147,8 +147,10 @@ public class ElectricThermometerItem extends ModBatteryItem {
                             false);
                 }
 
+                // У активных приборов доля отдачи живая (K/T), у пассивных фиксированная.
                 player.displayClientMessage(Component.translatable("chat.trd.thermometer.conductivity",
-                                Component.literal(String.format(locale, "%.0f%%", def.conductivity() * 100.0f))
+                                Component.literal(String.format(locale, "%.2f%%",
+                                        def.transferFactor(source.sourceTemp()) * 100.0f))
                                         .withStyle(ChatFormatting.GOLD)),
                         false);
                 player.displayClientMessage(Component.translatable("chat.trd.thermometer.source_power",

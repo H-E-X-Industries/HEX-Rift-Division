@@ -192,9 +192,38 @@ public record HeatSourceDef(
         return kind == Kind.PASSIVE;
     }
 
-    /** Доля собственного тепла, передаваемая окружению (по теплопроводности). */
+    /** Доля собственного тепла, передаваемая окружению (фиксированная у пассивных). */
     public float transferFactor() {
         return MIN_TRANSFER + (MAX_TRANSFER - MIN_TRANSFER) * conductivity;
+    }
+
+    /**
+     * Доля отдачи при <b>текущей</b> температуре источника.
+     * <p>
+     * У активных нагревателей это функция {@code K / T}, где {@code K = outputHeat}
+     * (ощущаемый жар у корпуса), {@code T} — температура прибора. Чем горячее прибор,
+     * тем <b>меньше</b> доля его тепла доходит до игрока: печь на 2700 °C не обжигает
+     * сильнее печи на 300 °C. Произведение {@code T × (K / T)} даёт стабильные {@code K} °C.
+     * У пассивных блоков и охладителей доля фиксированная ({@link #transferFactor()}).
+     */
+    public float transferFactor(float sourceTemp) {
+        if (isPassive() || isCooling()) {
+            return transferFactor();
+        }
+        return Mth.clamp(outputHeat / Math.max(1.0f, sourceTemp), MIN_TRANSFER, MAX_TRANSFER);
+    }
+
+    /**
+     * Температура, которую источник сообщает внешнему миру (потолок излучения, термометр).
+     * <p>
+     * У приборов без температурной шкалы ({@code deviceScaleMax <= deviceScaleMin})
+     * блок-сущность сообщает «1.0» как флаг включения, а не градусы — подставляем паспорт.
+     */
+    public float effectiveTemperature(float reportedTemp) {
+        if (kind == Kind.ACTIVE && deviceScaleMax <= deviceScaleMin) {
+            return surfaceTemp;
+        }
+        return reportedTemp;
     }
 
     /** Выход источника у поверхности, °C (полная эффективность). */
@@ -215,9 +244,8 @@ public record HeatSourceDef(
             // Теплопроводность здесь не множитель (иначе лёд внезапно стал бы слабее).
             return coolingPower * e;
         }
-        // outputHeat — потолок (паспорт × conductivity), sourceTemp — текущая температура
-        // прибора/остывшей лавы, поэтому жар теперь масштабируется вместе с ней.
-        return Math.min(outputHeat, sourceTemp * transferFactor()) * e;
+        float temp = effectiveTemperature(sourceTemp);
+        return Math.min(outputHeat, temp * transferFactor(temp)) * e;
     }
 
     /** Мощность прибора (0..1) при заданной температуре. */
