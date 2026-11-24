@@ -192,25 +192,23 @@ public record HeatSourceDef(
         return kind == Kind.PASSIVE;
     }
 
-    /** Доля собственного тепла, передаваемая окружению (фиксированная у пассивных). */
+    /**
+     * Доля собственной температуры, передаваемая окружению — честная доля
+     * {@code conductivity}: {@code T × transferFactor} даёт реальный жар у поверхности.
+     */
     public float transferFactor() {
         return MIN_TRANSFER + (MAX_TRANSFER - MIN_TRANSFER) * conductivity;
     }
 
     /**
      * Доля отдачи при <b>текущей</b> температуре источника.
-     * <p>
-     * У активных нагревателей это функция {@code K / T}, где {@code K = outputHeat}
-     * (ощущаемый жар у корпуса), {@code T} — температура прибора. Чем горячее прибор,
-     * тем <b>меньше</b> доля его тепла доходит до игрока: печь на 2700 °C не обжигает
-     * сильнее печи на 300 °C. Произведение {@code T × (K / T)} даёт стабильные {@code K} °C.
-     * У пассивных блоков и охладителей доля фиксированная ({@link #transferFactor()}).
+     * Пассивные блоки и охладители используют фиксированную {@link #transferFactor()};
+     * активные нагреватели — то же честное значение из теплопроводности
+     * ({@code T × transferFactor} даёт жар у поверхности, а ощущаемый вклад —
+     * ту же долю от {@code outputHeat} в процентах).
      */
     public float transferFactor(float sourceTemp) {
-        if (isPassive() || isCooling()) {
-            return transferFactor();
-        }
-        return Mth.clamp(outputHeat / Math.max(1.0f, sourceTemp), MIN_TRANSFER, MAX_TRANSFER);
+        return transferFactor();
     }
 
     /**

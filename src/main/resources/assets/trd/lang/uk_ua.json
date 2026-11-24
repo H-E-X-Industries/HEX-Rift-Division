@@ -895,7 +895,6 @@
     "tooltip.trd.heat_source.temp":  "§7Температура: %s",
     "tooltip.trd.heat_source.max_temp":  "§7Макс. температура: %s",
     "tooltip.trd.heat_source.conductivity":  "§7Теплопровідність: %s",
-    "tooltip.trd.heat_source.conductivity_formula":  "§7Теплопровідність: %s/%s °C (K/T — падає з нагріванням)",
     "tooltip.trd.heat_source.radius":  "§7Радіус прямої дії: %s",
     "tooltip.trd.heat_source.drain":  "§7Витрата запасу: %s",
     "chat.trd.debug.unavailable":  "Режим налагодження недоступний!",

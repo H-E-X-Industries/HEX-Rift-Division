@@ -1,0 +1,9 @@
+ .../java/com/trd/api/climate/HeatSourceDef.java    |  20 +--
+ .../trd/api/climate/HeatSourceTooltipHandler.java  |  14 +-
+ .../trd/climate/calculation/ModHeatSources.java    | 181 +++++++--------------
+ .../com/trd/climate/room/ThermalStateStore.java    |  66 ++++++++
+ .../trd/climate/room/ThermalStateTickHandler.java  |   2 +
+ src/main/resources/assets/trd/lang/en_us.json      |   1 -
+ src/main/resources/assets/trd/lang/ru_ru.json      |   1 -
+ src/main/resources/assets/trd/lang/uk_ua.json      |   1 -
+ 8 files changed, 141 insertions(+), 145 deletions(-)

@@ -28,6 +28,8 @@ public final class ThermalStateTickHandler {
         ThermalStateStore store = ThermalStateStore.get(level);
         // Покадровое таяние льда (шанс и кулдаун зависят от температуры комнаты)
         store.tickMelting(level);
+        // Процессы воды: заморозка ниже 0°C, кипение выше 100°C
+        store.tickWaterPhysics(level);
         // Секундный шаг расхода/восстановления и превращения блоков
         if (level.getGameTime() % 20L == 0L) {
             store.tick(level);

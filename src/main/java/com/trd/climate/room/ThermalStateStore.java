@@ -11,7 +11,9 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.saveddata.SavedData;
 
@@ -38,6 +40,12 @@ public final class ThermalStateStore extends SavedData {
     public static final String NAME = "trd_thermal_states";
     /** Предел записей, чтобы база не разрослась (одна запись = один блок в комнате). */
     private static final int MAX_ENTRIES = 100_000;
+    /** Скорость спада запаса воды при заморозке ниже 0°C в секунду. */
+    private static final float WATER_FREEZE_DRAIN = 0.012f;
+    /** Скорость спада запаса воды при кипении выше 100°C в секунду. */
+    private static final float WATER_STEAM_DRAIN = 0.03f;
+    /** Шанс выпустить пузырьки пара за ролл на кипящей воде. */
+    private static final float STEAM_BUBBLE_CHANCE = 0.25f;
 
     /** Одна запись состояния блока. */
     public record ThermalState(float reserve, boolean physical) {
@@ -321,6 +329,64 @@ public final class ThermalStateStore extends SavedData {
             float nextReserve = Math.max(0.0f, stored.reserve() - melt.loss());
             if (Math.abs(nextReserve - stored.reserve()) > 1.0e-5f) {
                 states.put(key, stored.withReserve(nextReserve));
+                dirty = true;
+            }
+        }
+
+        if (dirty) setDirty();
+    }
+
+    /**
+     * Процессы воды: при охлаждении среды до 0°C и ниже вода теряет запас
+     * (как у льда, но вместо таяния — заморозка в {@link Blocks#ICE});
+     * при нагреве до 100°C и выше — «кипение»: пузырьки пара и ускоренный спад.
+     */
+    public void tickWaterPhysics(ServerLevel level) {
+        if (states.isEmpty()) return;
+
+        boolean dirty = false;
+        long[] keys = states.keySet().toLongArray();
+        for (long key : keys) {
+            BlockPos pos = BlockPos.of(key);
+            if (level.getBlockState(pos).getBlock() != Blocks.WATER) {
+                continue;
+            }
+            SealedRoom room = findRoom(level, pos);
+            if (room == null) {
+                continue;
+            }
+            float roomTemp = room.getRoomTemperature();
+            ThermalState stored = states.get(key);
+            if (stored == null) {
+                continue;
+            }
+
+            float drain = 0.0f;
+            if (roomTemp <= 0.0f) {
+                // Заморозка: вода остывает ниже 0°C — теряет запас, превращается в лёд.
+                drain = WATER_FREEZE_DRAIN;
+            } else if (roomTemp >= 100.0f) {
+                // Кипение: периодические пузырьки пара.
+                if (level.random.nextFloat() < STEAM_BUBBLE_CHANCE) {
+                    level.sendParticles(ParticleTypes.BUBBLE_COLUMN_UP,
+                            pos.getX() + 0.5, pos.getY() + 0.7, pos.getZ() + 0.5,
+                            3, 0.5, 0.05, 0.5, 0.002);
+                }
+                drain = WATER_STEAM_DRAIN;
+            }
+            if (drain <= 0.0f) {
+                continue;
+            }
+
+            float next = Mth.clamp(stored.reserve() - drain, 0.0f, 1.0f);
+            if (next < stored.reserve()) {
+                states.put(key, stored.withReserve(next));
+                dirty = true;
+            }
+            if (next <= 0.0f) {
+                // Заморозка до конца — вода превращается в лёд.
+                level.setBlock(pos, Blocks.ICE.defaultBlockState(), 3);
+                states.remove(key);
                 dirty = true;
             }
         }

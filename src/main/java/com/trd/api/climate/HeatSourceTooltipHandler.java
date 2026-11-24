@@ -58,16 +58,10 @@ public final class HeatSourceTooltipHandler {
         tip.add(Component.translatable(tempKey,
                 value(String.format(Locale.ROOT, "%.0f°C", def.surfaceTemp()))));
 
-        // 3) Теплопроводность. У активных — не фиксированный процент, а функция K/T:
-        //    чем горячее прибор, тем меньше доля его тепла доходит до игрока.
-        if (def.isPassive() || def.isCooling()) {
-            tip.add(Component.translatable("tooltip.trd.heat_source.conductivity",
-                    value(percent(def.transferFactor()))));
-        } else {
-            tip.add(Component.translatable("tooltip.trd.heat_source.conductivity_formula",
-                    value(String.format(Locale.ROOT, "%.0f", def.outputHeat())),
-                    value(String.format(Locale.ROOT, "%.0f", def.surfaceTemp()))));
-        }
+        // 3) Теплопроводность — честный процент температуры источника,
+        //    доходящий до воздуха (для ванильных: T × conductivity)
+        tip.add(Component.translatable("tooltip.trd.heat_source.conductivity",
+                value(percent(def.transferFactor()))));
 
         // 4) Радиус прямого воздействия
         tip.add(Component.translatable("tooltip.trd.heat_source.radius",

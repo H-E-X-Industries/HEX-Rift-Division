@@ -908,7 +908,6 @@
     "tooltip.trd.heat_source.temp":  "§7Температура: %s",
     "tooltip.trd.heat_source.max_temp":  "§7Макс. температура: %s",
     "tooltip.trd.heat_source.conductivity":  "§7Теплопроводность: %s",
-    "tooltip.trd.heat_source.conductivity_formula":  "§7Теплопроводность: %s/%s °C (K/T — падает с нагревом)",
     "tooltip.trd.heat_source.radius":  "§7Радиус прямого действия: %s",
     "tooltip.trd.heat_source.drain":  "§7Расход запаса: %s",
     "chat.trd.debug.unavailable":  "Режим отладки недоступен!",
