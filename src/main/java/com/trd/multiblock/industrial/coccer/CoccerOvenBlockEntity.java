@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class CoccerOvenBlockEntity extends BlockEntity implements MenuProvider, IFluidTankProvider {
+public class CoccerOvenBlockEntity extends BlockEntity implements MenuProvider, IFluidTankProvider, com.trd.api.climate.IHeatSource {
 
     public static final int MAX_TEMP = 2700;
     public static final int TANK_CAPACITY = 32000;
@@ -148,6 +148,12 @@ public class CoccerOvenBlockEntity extends BlockEntity implements MenuProvider, 
     public IFluidHandler getOutputOnlyFluidHandler() { return outputOnlyFluidHandler; }
     public ContainerData getContainerData() { return data; }
     public float getTemperature() { return temperature; }
+
+    @Override
+    public String getHeatSourceId() { return "trd:coking_oven"; }
+
+    @Override
+    public float getSourceTemperature() { return temperature; }
     public int getProgress() { return progress; }
     public int getMaxProgress() { return maxProgress; }
     public int getRequiredTemp() { return requiredTemp; }

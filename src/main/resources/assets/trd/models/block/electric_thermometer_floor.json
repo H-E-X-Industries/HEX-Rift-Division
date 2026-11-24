@@ -1,0 +1,15 @@
+{
+  "loader": "neoforge:obj",
+  "model": "trd:models/block/electric_thermometer.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.50, 0.0, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
+  },
+  "textures": {
+    "particle": "trd:block/electric_thermometer",
+    "m_d6cbb3f5-e505-2c46-e3cf-5ccd426be35b": "trd:block/electric_thermometer"
+  }
+}

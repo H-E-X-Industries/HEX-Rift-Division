@@ -60,7 +60,7 @@ public class StatorBlock extends BaseEntityBlock implements IMultiblockControlle
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
     public static final EnumProperty<Direction.Axis> AXIS = BlockStateProperties.AXIS;
 
-    private static MultiblockStructureHelper helper;
+    private static volatile MultiblockStructureHelper helper;
 
     public StatorBlock(Properties properties) {
         super(properties);

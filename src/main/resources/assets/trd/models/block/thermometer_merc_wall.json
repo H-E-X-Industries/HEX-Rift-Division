@@ -1,0 +1,15 @@
+{
+  "loader": "neoforge:obj",
+  "model": "trd:models/block/thermometer_merc_2.obj",
+  "flip_v": true,
+  "render_type": "minecraft:cutout",
+  "transform": {
+    "translation": [0.50, 0.0, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
+  },
+  "textures": {
+    "particle": "trd:block/thermometer_merc_2",
+    "m_aaa3956c-ba62-f91b-1d87-a75cd6be3e73": "trd:block/thermometer_merc_2"
+  }
+}

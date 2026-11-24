@@ -141,7 +141,6 @@ public class ModClientSetup {
         event.register(com.trd.client.config.ModKeyBindings.RELOAD_KEY);
         event.register(com.trd.client.config.ModKeyBindings.UNLOAD_KEY);
         event.register(com.trd.client.config.ModKeyBindings.DEBUG_RENDER_KEY);
-        event.register(com.trd.client.config.ModKeyBindings.HEAT_DEBUG_KEY);
     }
 
     @SubscribeEvent

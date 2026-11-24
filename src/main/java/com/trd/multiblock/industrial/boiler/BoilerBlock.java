@@ -38,7 +38,7 @@ public class BoilerBlock extends BaseEntityBlock implements IMultiblockControlle
 
     public static final MapCodec<BoilerBlock> CODEC = simpleCodec(BoilerBlock::new);
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
-    private static MultiblockStructureHelper helper;
+    private static volatile MultiblockStructureHelper helper;
 
     public BoilerBlock(Properties properties) {
         super(properties.noOcclusion());

@@ -1,7 +1,6 @@
 package com.trd.climate.calculation;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
 
@@ -31,7 +30,7 @@ public class ShelterHelper {
      * 0.0 - полностью на открытом воздухе
      * 1.0 - полное укрытие
      */
-    public static float calculateShelterLevel(ServerLevel level, BlockPos playerPos) {
+    public static float calculateShelterLevel(Level level, BlockPos playerPos) {
         // 1. Проверка прямого дождя/снега
         if (level.isRainingAt(playerPos)) {
             return 0.0f; // Прямые осадки - нет укрытия
@@ -50,7 +49,7 @@ public class ShelterHelper {
      * Проверяет, находится ли игрок в пещере.
      * Пещера определяется как достаточная толща породы над головой.
      */
-    private static boolean isInCave(ServerLevel level, BlockPos pos) {
+    private static boolean isInCave(Level level, BlockPos pos) {
         // Проверяем, видит ли игрок небо
         if (level.canSeeSky(pos)) {
             return false; // Видит небо - не в пещере
@@ -68,7 +67,7 @@ public class ShelterHelper {
      * Рассчитывает уровень укрытия от стен по 8 направлениям (роза ветров).
      * Возвращает долю заблокированных направлений (0.0 - 1.0).
      */
-    private static float calculateShelterFromWalls(ServerLevel level, BlockPos playerPos) {
+    private static float calculateShelterFromWalls(Level level, BlockPos playerPos) {
         int blockedDirections = 0;
         BlockPos.MutableBlockPos checkPos = new BlockPos.MutableBlockPos();
 
@@ -86,7 +85,7 @@ public class ShelterHelper {
     /**
      * Проверяет, заблокировано ли направление стенами/блоками.
      */
-    private static boolean isDirectionBlocked(ServerLevel level, BlockPos startPos, int[] direction, BlockPos.MutableBlockPos checkPos) {
+    private static boolean isDirectionBlocked(Level level, BlockPos startPos, int[] direction, BlockPos.MutableBlockPos checkPos) {
         int eyeLevel = startPos.getY() + 1; // Уровень глаз игрока
 
         // Сканируем в направлении на расстояние SCAN_RADIUS блоков

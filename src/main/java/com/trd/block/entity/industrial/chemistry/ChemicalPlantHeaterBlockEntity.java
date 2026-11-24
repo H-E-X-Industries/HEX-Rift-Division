@@ -18,7 +18,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-public class ChemicalPlantHeaterBlockEntity extends BlockEntity implements IEnergyReceiver, IEnergyConnector {
+public class ChemicalPlantHeaterBlockEntity extends BlockEntity implements IEnergyReceiver, IEnergyConnector, com.trd.api.climate.IHeatSource {
 
     public static final long MAX_ENERGY = 1000L;
     public static final long RECEIVE_SPEED = 1000L;
@@ -103,6 +103,12 @@ public class ChemicalPlantHeaterBlockEntity extends BlockEntity implements IEner
     public int getActiveTemperature() {
         return activeTemperature;
     }
+
+    @Override
+    public String getHeatSourceId() { return "trd:chemical_plant_heater"; }
+
+    @Override
+    public float getSourceTemperature() { return activeTemperature; }
 
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider provider) {

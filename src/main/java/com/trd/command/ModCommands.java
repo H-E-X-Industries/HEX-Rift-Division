@@ -43,6 +43,12 @@ public class ModCommands {
                                 .then(Commands.literal("scan")
                                         .executes(ModCommands::scanCurrentSector))
                         )
+                        .then(Commands.literal("climate")
+                                .then(Commands.literal("dump")
+                                        .executes(ModCommands::dumpHeatSources))
+                                .then(Commands.literal("states")
+                                        .executes(ModCommands::dumpThermalStates))
+                        )
         );
 
         // Быстрые псевдонимы (shortcuts)
@@ -211,6 +217,50 @@ public class ModCommands {
         }
 
         source.sendSuccess(() -> Component.literal("§6═══════════════════════════════════════════"), false);
+        return 1;
+    }
+
+    /** Печать всей таблицы источников — точка правки баланса. */
+    private static int dumpHeatSources(CommandContext<CommandSourceStack> context) {
+        CommandSourceStack source = context.getSource();
+        source.sendSuccess(() -> Component.literal("§6══════ [HEAT SOURCES: " +
+                com.trd.api.climate.HeatSourceRegistry.allDefs().size() + "] ══════"), false);
+        for (com.trd.api.climate.HeatSourceDef def
+                : com.trd.api.climate.HeatSourceRegistry.allDefs()) {
+            source.sendSuccess(() -> Component.literal(String.format(Locale.ROOT,
+                    "§e%s §7[%s/%s] §fT=%.0f §7out=%.0f cool=%.0f r=%.1f k=%.2f%s",
+                    def.id(), def.role(), def.kind(), def.surfaceTemp(),
+                    def.outputHeat(), def.coolingPower(), def.radius(), def.conductivity(),
+                    def.isPassive() ? String.format(Locale.ROOT,
+                            " §bphase=%.0f drain=%.4f restore=%.4f", def.phaseTemp(),
+                            def.drainRate(), def.restoreRate()) : "")), false);
+        }
+        return 1;
+    }
+
+    /** Печать живого состояния пассивных источников текущего измерения. */
+    private static int dumpThermalStates(CommandContext<CommandSourceStack> context) {
+        CommandSourceStack source = context.getSource();
+        com.trd.climate.room.ThermalStateStore store =
+                com.trd.climate.room.ThermalStateStore.get(source.getLevel());
+        source.sendSuccess(() -> Component.literal(
+                "§6══════ [THERMAL STATES: " + store.size() + "] ══════"), false);
+        source.sendSuccess(() -> Component.literal(
+                "§7Только реальные блоки-источники. Воздушные гало — расчётные, в списке их нет."), false);
+        for (var entry : store.entries()) {
+            var pos = entry.pos();
+            var state = entry.state();
+            var def = com.trd.api.climate.HeatSourceRegistry.resolveState(
+                    source.getLevel().getBlockState(pos));
+            if (def == null || !def.isPassive()) {
+                continue; // устаревшая запись — движок уберёт её на следующем шаге
+            }
+            source.sendSuccess(() -> Component.literal(String.format(Locale.ROOT,
+                    "§7[%d, %d, %d] §e%s §7%s §fзапас=§e%.0f%% §7T=§c%.0f°C",
+                    pos.getX(), pos.getY(), pos.getZ(), def.id(),
+                    state.physical() ? "ФИЗИЧНЫЙ" : "нефизичный",
+                    state.reserve() * 100.0f, def.temperatureAt(state.reserve()))), false);
+        }
         return 1;
     }
 }

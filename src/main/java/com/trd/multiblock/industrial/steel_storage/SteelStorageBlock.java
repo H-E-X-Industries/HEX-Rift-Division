@@ -48,7 +48,7 @@ public class SteelStorageBlock extends BaseEntityBlock implements IMultiblockCon
 
     public static final MapCodec<SteelStorageBlock> CODEC = simpleCodec(SteelStorageBlock::new);
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
-    private static MultiblockStructureHelper helper;
+    private static volatile MultiblockStructureHelper helper;
 
     @Override
     protected MapCodec<? extends BaseEntityBlock> codec() {

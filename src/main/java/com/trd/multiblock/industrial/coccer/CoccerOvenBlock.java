@@ -45,7 +45,7 @@ public class CoccerOvenBlock extends BaseEntityBlock implements IMultiblockContr
     public static final MapCodec<CoccerOvenBlock> CODEC = simpleCodec(CoccerOvenBlock::new);
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
     private static final float EFFECTS_MIN_TEMP = 300.0F;
-    private static MultiblockStructureHelper helper;
+    private static volatile MultiblockStructureHelper helper;
     private final Map<Direction, VoxelShape> shapeCache = new EnumMap<>(Direction.class);
 
     public CoccerOvenBlock(Properties properties) {

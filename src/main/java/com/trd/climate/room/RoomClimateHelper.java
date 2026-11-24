@@ -1,11 +1,11 @@
 package com.trd.climate.room;
 
+import com.trd.api.climate.HeatSourceDef;
+import com.trd.api.climate.HeatSourceRegistry;
+import com.trd.api.climate.IHeatSource;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
-import net.minecraft.world.level.block.AbstractFurnaceBlock;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.CampfireBlock;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Collection;
@@ -21,14 +21,17 @@ import java.util.Collection;
  *    - Помещения до 500 блоков пассивно сдвигают температуру в сторону +15.0°C на 100%..20% от модуля разницы.
  *    - ВНИМАНИЕ: Помещения больше 500 блоков ВООБЩЕ НЕ ИМЕЮТ стабилизации к 15 градусам.
  * 
- * 3. Потолки нагрева и баланс источников тепла:
- *    - Костер: потолок +22.0°C (комфортное жилое тепло). Костер физически НЕ МОЖЕТ нагреть комнату выше 22°C!
- *    - Костер душ: потолок +18.0°C.
- *    - Факел: потолок +16.0°C.
- *    - Обычная печь / коптильня: потолок +32.0°C.
- *    - Доменная печь: потолок +45.0°C.
- *    - Лава / открытый огонь: потолок +65.0°C.
- *    - Лед / плотный лед / синий лед: охладители до +8°C / 0°C / -10°C.
+ * 3. Потолки нагрева и баланс источников тепла.
+ *    Цель комнатная — та же шкала, что и у игрока ({@code 15..25 °C} комфорт, урон выше
+ *    {@code 40 °C}), поэтому цель источника выводится из его <b>ощущаемого</b> выхода
+ *    ({@code outputHeat}/{@code coolingPower}), а не из физической температуры блока:
+ *    {@code цель = 15 ± выход × запас}. иначе костёр (700 °C) «прогревал» бы комнату
+ *    до 600 °C, а коксовая печь — больше 1000 °C.
+ *    - Костёр: ~22 °C, душный ~21 °C, факел ~17 °C.
+ *    - Обычная печь / коптильня: ~27 °C, доменная ~34 °C.
+ *    - Лава в комнате: ~38 °C, открытый огонь ~31 °C.
+ *    - Коксовая печь на максимуме: ~40 °C (порог урона).
+ *    - Лёд / плотный / синий: ~7 / 4 / 0 °C.
  *    - В помещениях > 500 блоков костры и факелы имеют нулевой импакт.
  * 
  * 4. Разгерметизация (утечка) и открытые двери:
@@ -46,43 +49,76 @@ public final class RoomClimateHelper {
     public record ThermalSourceInfo(float targetTemp, float power, boolean isCooling) {}
 
     /**
-     * Возвращает параметры теплового источника (потолок температуры и мощность).
+     * Возвращает параметры теплового источника (целевая температура и мощность).
+     * <p>
+     * Цель — нейтраль {@value #NEUTRAL_TEMP} °C плюс/минус ощущаемый выход источника
+     * ({@code outputHeat}/{@code coolingPower}) с учётом живого запаса. Физическая
+     * температура блока здесь не участвует: она в сотни градусов и сделала бы комнату
+     * смертельно горячей.
+     * <p>
+     * Мощность влияния на комнату зависит от объёма: больший объём требует больше
+     * энергии для изменения температуры.
      */
-    public static ThermalSourceInfo getSourceInfo(BlockState state, boolean isLargeRoom) {
-        if (state.is(Blocks.CAMPFIRE) && state.getValue(CampfireBlock.LIT)) {
-            if (isLargeRoom) return null;
-            return new ThermalSourceInfo(24.0f, 3.6f, false);
+    public static ThermalSourceInfo getSourceInfo(Level level, BlockPos pos, boolean isLargeRoom, int roomVolume) {
+        BlockState state = level.getBlockState(pos);
+
+        float deviceTemp = 1.0f; // ванильные источники: активное состояние = полная мощность
+        float reserve = 1.0f;    // пассивные: запас эффективности из живого состояния
+        HeatSourceDef def;
+
+        if (HeatSourceRegistry.usesBlockEntity(state.getBlock())
+                && level.getBlockEntity(pos) instanceof IHeatSource heatSource) {
+            if (!heatSource.isHeatActive()) {
+                return null;
+            }
+            def = HeatSourceRegistry.byId(heatSource.getHeatSourceId());
+            if (def == null) {
+                return null;
+            }
+            deviceTemp = heatSource.getSourceTemperature();
+            if (def.powerAt(deviceTemp) <= 0.0f) {
+                return null;
+            }
+        } else {
+            def = HeatSourceRegistry.resolveState(state);
+            if (def == null) {
+                return null;
+            }
+            // Пассивный источник: живой запас из хранилища состояний. Даже вынесенный
+            // из комнаты блок сохраняет свою эффективность (см. спецификацию v2).
+            var stored = ThermalStateStore.stateAt(level, pos);
+            if (stored != null) {
+                reserve = stored.reserve();
+                // deviceTemp остаётся 1.0: у пассивных источников активность задана
+                // состоянием блока, а живая температура влияет только на выход.
+                // Подставлять её в powerAt() нельзя — у льда surfaceTemp = 0.
+            }
         }
-        if (state.is(Blocks.SOUL_CAMPFIRE) && state.getValue(CampfireBlock.LIT)) {
-            if (isLargeRoom) return null;
-            return new ThermalSourceInfo(20.0f, 2.4f, false);
+
+        if (isLargeRoom && def.negligibleInLargeRooms()) {
+            return null;
         }
-        if (state.is(Blocks.TORCH) || state.is(Blocks.WALL_TORCH)) {
-            if (isLargeRoom) return null;
-            return new ThermalSourceInfo(18.0f, 0.4f, false);
+
+        float basePower = def.powerAt(deviceTemp) * reserve;
+        if (basePower <= 0.0f) {
+            return null;
         }
-        if (state.is(Blocks.BLAST_FURNACE) && state.getValue(AbstractFurnaceBlock.LIT)) {
-            return new ThermalSourceInfo(45.0f, 5.0f, false);
-        }
-        if ((state.is(Blocks.FURNACE) || state.is(Blocks.SMOKER)) && state.getValue(AbstractFurnaceBlock.LIT)) {
-            return new ThermalSourceInfo(34.0f, 3.5f, false);
-        }
-        if (state.is(Blocks.FIRE)) {
-            return new ThermalSourceInfo(55.0f, 4.0f, false);
-        }
-        if (state.is(Blocks.LAVA)) {
-            return new ThermalSourceInfo(68.0f, 7.0f, false);
-        }
-        if (state.is(Blocks.BLUE_ICE)) {
-            return new ThermalSourceInfo(-10.0f, 2.0f, true);
-        }
-        if (state.is(Blocks.PACKED_ICE)) {
-            return new ThermalSourceInfo(0.0f, 1.0f, true);
-        }
-        if (state.is(Blocks.ICE)) {
-            return new ThermalSourceInfo(8.0f, 0.6f, true);
-        }
-        return null;
+        
+        // Ощущаемый выход источника — в той же шкале, что и температура игрока.
+        // Живой запас (лава остывает, лёд тает) срезает и цель, и мощность.
+        float baseOutput = def.isCooling() ? def.coolingPower() : def.outputHeat();
+        float effectiveOutput = baseOutput * reserve;
+        float target = def.isCooling()
+                ? NEUTRAL_TEMP - effectiveOutput
+                : NEUTRAL_TEMP + effectiveOutput;
+
+        // Мощность: чем больше комната, тем сложнее её прогреть.
+        // Делитель 20 (вместо прежних 100) компенсирует переход outputHeat из физических
+        // сотен градусов в ощущаемые единицы — иначе комната прогревалась бы за часы.
+        float volumeScale = 100.0f; // 100 блоков = 1x масштаб
+        float power = (baseOutput / 20.0f) * basePower / (1.0f + roomVolume / volumeScale);
+
+        return new ThermalSourceInfo(target, power, def.isCooling());
     }
 
     /**
@@ -130,41 +166,51 @@ public final class RoomClimateHelper {
             float currentRoomTemp,
             float ambientTemp,
             int volume,
-            ServerLevel level,
+            Level level,
             Collection<BlockPos> cachedSources
     ) {
         int v = Math.max(1, volume);
         float newTemp = currentRoomTemp;
         boolean isLargeRoom = v > 500;
 
-        // 1. Пассивное стремление к +15°C работает ИСКЛЮЧИТЕЛЬНО для малых помещений (до 500 блоков включительно).
+        // 1. Пассивное стремление к +15°C работает для малых помещений (до 500 блоков).
         if (v <= 500) {
             float passiveTarget = calculatePassiveTarget(ambientTemp, v);
             float inertiaRate = getThermalInertiaRate(v);
             newTemp += (passiveTarget - newTemp) * inertiaRate;
+        } else {
+            // Для больших комнат: если нет источников, температура спадает к нейтрали
+            // Скорость спада зависит от объёма (больше объём = медленнее спад)
+            boolean hasSources = cachedSources != null && !cachedSources.isEmpty();
+            if (!hasSources) {
+                float inertiaRate = getThermalInertiaRate(v);
+                newTemp += (NEUTRAL_TEMP - newTemp) * inertiaRate;
+            }
         }
 
-        // 2. Активные источники тепла и холода (с учетом потолка температуры каждого прибора)
+        // 2. Активные источники тепла и холода
         if (cachedSources != null && !cachedSources.isEmpty()) {
             float totalDelta = 0.0f;
             for (BlockPos pos : cachedSources) {
-                BlockState state = level.getBlockState(pos);
-                ThermalSourceInfo src = getSourceInfo(state, isLargeRoom);
+                ThermalSourceInfo src = getSourceInfo(level, pos, isLargeRoom, v);
                 if (src == null) continue;
 
                 if (!src.isCooling()) {
-                    // Источник нагрева: греет ТОЛЬКО если текущая температура ниже его потолка!
-                    // Костер нагревает кибитку до комфортных +21..+24°C и не дает перегрева выше 24°C.
+                    // Источник нагрева: греет ТОЛЬКО если текущая температура ниже его целевой!
                     if (newTemp < src.targetTemp()) {
                         float potential = src.targetTemp() - newTemp;
-                        float rate = src.power() / (18.0f + v * 0.12f);
+                        // Скорость зависит от разницы температур (чем больше разница, тем быстрее)
+                        float tempFactor = Math.min(potential / 50.0f, 2.0f); // до 2x при разнице 100°C
+                        float rate = src.power() * tempFactor / (18.0f + v * 0.12f);
                         totalDelta += potential * rate;
                     }
                 } else {
-                    // Источник охлаждения (лед): охлаждает только если температура выше его порога
+                    // Источник охлаждения: охлаждает только если температура выше его целевой
                     if (newTemp > src.targetTemp()) {
                         float potential = src.targetTemp() - newTemp;
-                        float rate = src.power() / (18.0f + v * 0.12f);
+                        // Скорость зависит от разницы температур (чем больше разница, тем быстрее)
+                        float tempFactor = Math.min(Math.abs(potential) / 50.0f, 2.0f);
+                        float rate = src.power() * tempFactor / (18.0f + v * 0.12f);
                         totalDelta += potential * rate;
                     }
                 }

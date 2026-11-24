@@ -40,7 +40,7 @@ import java.util.function.Supplier;
 public class CCMachineBlock extends BaseEntityBlock implements IMultiblockController {
     public static final MapCodec<CCMachineBlock> CODEC = simpleCodec(CCMachineBlock::new);
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
-    private static MultiblockStructureHelper helper;
+    private static volatile MultiblockStructureHelper helper;
     private final Map<Direction, VoxelShape> shapeCache = new EnumMap<>(Direction.class);
 
     public CCMachineBlock(Properties properties) {

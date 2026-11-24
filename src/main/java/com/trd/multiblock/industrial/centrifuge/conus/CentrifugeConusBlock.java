@@ -37,7 +37,7 @@ public class CentrifugeConusBlock extends BaseEntityBlock implements IMultiblock
 
     public static final com.mojang.serialization.MapCodec<CentrifugeConusBlock> CODEC = simpleCodec(CentrifugeConusBlock::new);
 
-    private static MultiblockStructureHelper helper;
+    private static volatile MultiblockStructureHelper helper;
 
     public CentrifugeConusBlock(Properties properties) {
         super(properties);
