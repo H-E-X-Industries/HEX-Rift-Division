@@ -1,6 +1,6 @@
 package com.trd.client.renderer;
 
-import com.trd.api.metallurgy.system.Metal;
+import com.trd.api.industiral.metallurgy.system.Metal;
 import com.trd.block.basic.industrial.casting.CastingDescentBlock;
 import com.trd.block.entity.industrial.casting.CastingDescentBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;

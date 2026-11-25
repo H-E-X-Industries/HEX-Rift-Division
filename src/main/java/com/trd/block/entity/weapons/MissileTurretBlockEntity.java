@@ -1,9 +1,8 @@
 package com.trd.block.entity.weapons;
 
 import com.trd.block.entity.ModBlockEntities;
-import com.trd.api.energy.EnergyNetworkManager;
 import com.trd.block.entity.industrial.energy.EnergyNodeBlockEntity;
-import com.trd.capability.ModCapabilities;
+import com.trd.api.capabilities.ModCapabilities;
 import com.trd.item.weapons.turrets.TurretChipItem;
 import com.trd.sound.ModSounds;
 import net.neoforged.neoforge.items.IItemHandler;
@@ -32,9 +31,6 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;

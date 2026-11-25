@@ -1,6 +1,7 @@
 package com.trd.multiblock.industrial.boiler;
 
-import com.trd.api.fluids.ModFluids;
+import com.trd.api.nature.climate.system.IHeatSource;
+import com.trd.api.industiral.fluids.ModFluids;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.multiblock.industrial.heaters.HeaterBlockEntity;
 import com.trd.multiblock.system.IMultiblockController;
@@ -23,7 +24,7 @@ import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class BoilerBlockEntity extends BlockEntity implements IMultiblockFluidHandler, com.trd.api.climate.IHeatSource {
+public class BoilerBlockEntity extends BlockEntity implements IMultiblockFluidHandler, IHeatSource {
     public static final float BOILING_POINT = 100.0f;
     public static final float MAX_TEMP = 600.0f;
     public static final float HEAT_COST_PER_MB = 0.5f;

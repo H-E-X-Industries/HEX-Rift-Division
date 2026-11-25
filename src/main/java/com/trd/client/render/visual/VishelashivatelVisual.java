@@ -1,7 +1,7 @@
 package com.trd.client.render.visual;
 
 import com.trd.client.render.flywheel.ModModels;
-import com.trd.client.rotation.ClientKineticAngleTracker;
+import com.trd.api.industiral.rotation.ClientKineticAngleTracker;
 import com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlockEntity;
 import dev.engine_room.flywheel.api.instance.Instance;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;

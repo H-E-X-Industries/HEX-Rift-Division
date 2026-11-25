@@ -1,17 +1,12 @@
 package com.trd.item.industrial.energy;
 
-import com.trd.api.energy.ModRecipes;
+import com.trd.api.industiral.energy.ModRecipes;
 import com.trd.item.ModItems;
-import net.minecraft.core.HolderLookup.Provider;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.Level;
-
-import javax.annotation.Nullable;
 
 /**
  * Намотка катушки провода: катушка + N слотов с промышленными медными проводами

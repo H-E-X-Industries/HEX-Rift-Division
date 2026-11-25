@@ -1,6 +1,6 @@
 package com.trd.client.overlay.gui;
 
-import com.trd.api.fluids.ModFluids;
+import com.trd.api.industiral.fluids.ModFluids;
 import com.trd.main.MainRegistry;
 import com.trd.menu.industrial.CoccerOvenMenu;
 import com.trd.multiblock.industrial.coccer.CoccerOvenBlockEntity;

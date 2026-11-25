@@ -1,11 +1,12 @@
 package com.trd.block.entity.industrial.fluids;
 
-import com.trd.api.fluids.system.*;
+import com.trd.api.industiral.fluids.system.*;
 import com.trd.block.basic.ModBlocks;
 import com.trd.block.basic.industrial.fluids.FluidBarrelBlock;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.item.ModItems;
 import com.trd.item.industrial.fluids.FluidIdentifierItem;
+import com.trd.item.industrial.fluids.InfiniteFluidBarrelItem;
 import com.trd.menu.industrial.FluidBarrelMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -42,7 +43,6 @@ import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
-import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
 import org.joml.Vector3f;
@@ -77,7 +77,7 @@ public class FluidBarrelBlockEntity extends FluidNodeBlockEntity implements Menu
             if (slot == IDENTIFIER_SLOT) return stack.getItem() instanceof FluidIdentifierItem;
             if (slot == FILL_IN_SLOT) return net.neoforged.neoforge.fluids.FluidUtil.getFluidHandler(stack).isPresent();
             if (slot == DRAIN_IN_SLOT) {
-                if (stack.getItem() instanceof com.trd.item.tools.InfiniteFluidBarrelItem) return true;
+                if (stack.getItem() instanceof InfiniteFluidBarrelItem) return true;
                 return net.neoforged.neoforge.fluids.FluidUtil.getFluidHandler(stack).isPresent();
             }
             if (slot == PROTECTOR_SLOT) {
@@ -401,7 +401,7 @@ public class FluidBarrelBlockEntity extends FluidNodeBlockEntity implements Menu
     protected void processBuckets() {
         ItemStack drainIn = itemHandler.getStackInSlot(DRAIN_IN_SLOT);
         if (!drainIn.isEmpty()) {
-            if (drainIn.getItem() instanceof com.trd.item.tools.InfiniteFluidBarrelItem) {
+            if (drainIn.getItem() instanceof InfiniteFluidBarrelItem) {
                 if (!this.fluidFilter.equals("none")) {
                     Fluid filterFluid = net.minecraft.core.registries.BuiltInRegistries.FLUID.get(ResourceLocation.parse(this.fluidFilter));
                     if (filterFluid != null && filterFluid != Fluids.EMPTY) {

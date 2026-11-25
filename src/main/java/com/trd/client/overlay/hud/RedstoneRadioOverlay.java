@@ -1,9 +1,9 @@
 package com.trd.client.overlay.hud;
 
-import com.trd.block.basic.redstone.RedstoneRadioBlock;
-import com.trd.block.entity.redstone.RedstoneRadioBlockEntity;
-import com.trd.block.entity.redstone.RedstoneRadioReceiverBlockEntity;
-import com.trd.block.entity.redstone.RedstoneRadioTransmitterBlockEntity;
+import com.trd.block.basic.industrial.RedstoneRadioBlock;
+import com.trd.block.entity.industrial.redstone.RedstoneRadioBlockEntity;
+import com.trd.block.entity.industrial.redstone.RedstoneRadioReceiverBlockEntity;
+import com.trd.block.entity.industrial.redstone.RedstoneRadioTransmitterBlockEntity;
 import com.trd.main.MainRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;

@@ -1,9 +1,9 @@
 package com.trd.network;
 
 import com.trd.main.MainRegistry;
-import com.trd.network.packet.energy.PacketSyncEnergy;
-import com.trd.network.packet.energy.SyncMotorRpmPacket;
-import com.trd.network.packet.energy.UpdateBatteryC2SPacket;
+import com.trd.network.packet.industrial.energy.PacketSyncEnergy;
+import com.trd.network.packet.industrial.energy.SyncMotorRpmPacket;
+import com.trd.network.packet.industrial.energy.UpdateBatteryC2SPacket;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
@@ -36,111 +36,111 @@ public class ModNetworking {
         );
 
         registrar.playToServer(
-            com.trd.network.packet.fluids.SelectFluidPacket.TYPE,
-            com.trd.network.packet.fluids.SelectFluidPacket.STREAM_CODEC,
-            com.trd.network.packet.fluids.SelectFluidPacket::handle
+            com.trd.network.packet.industrial.fluids.SelectFluidPacket.TYPE,
+            com.trd.network.packet.industrial.fluids.SelectFluidPacket.STREAM_CODEC,
+            com.trd.network.packet.industrial.fluids.SelectFluidPacket::handle
         );
 
         registrar.playToServer(
-            com.trd.network.packet.fluids.ToggleFavoriteFluidPacket.TYPE,
-            com.trd.network.packet.fluids.ToggleFavoriteFluidPacket.STREAM_CODEC,
-            com.trd.network.packet.fluids.ToggleFavoriteFluidPacket::handle
+            com.trd.network.packet.industrial.fluids.ToggleFavoriteFluidPacket.TYPE,
+            com.trd.network.packet.industrial.fluids.ToggleFavoriteFluidPacket.STREAM_CODEC,
+            com.trd.network.packet.industrial.fluids.ToggleFavoriteFluidPacket::handle
         );
 
         registrar.playToServer(
-            com.trd.network.packet.fluids.ClearFluidHistoryPacket.TYPE,
-            com.trd.network.packet.fluids.ClearFluidHistoryPacket.STREAM_CODEC,
-            com.trd.network.packet.fluids.ClearFluidHistoryPacket::handle
+            com.trd.network.packet.industrial.fluids.ClearFluidHistoryPacket.TYPE,
+            com.trd.network.packet.industrial.fluids.ClearFluidHistoryPacket.STREAM_CODEC,
+            com.trd.network.packet.industrial.fluids.ClearFluidHistoryPacket::handle
         );
 
         registrar.playToServer(
-            com.trd.network.packet.fluids.UpdateBarrelModeC2SPacket.TYPE,
-            com.trd.network.packet.fluids.UpdateBarrelModeC2SPacket.STREAM_CODEC,
-            com.trd.network.packet.fluids.UpdateBarrelModeC2SPacket::handle
+            com.trd.network.packet.industrial.fluids.UpdateBarrelModeC2SPacket.TYPE,
+            com.trd.network.packet.industrial.fluids.UpdateBarrelModeC2SPacket.STREAM_CODEC,
+            com.trd.network.packet.industrial.fluids.UpdateBarrelModeC2SPacket::handle
         );
 
         registrar.playToClient(
-            com.trd.network.packet.conveyor.SyncConveyorNetworkPacket.TYPE,
-            com.trd.network.packet.conveyor.SyncConveyorNetworkPacket.STREAM_CODEC,
-            com.trd.network.packet.conveyor.SyncConveyorNetworkPacket::handle
+            com.trd.network.packet.industrial.conveyor.SyncConveyorNetworkPacket.TYPE,
+            com.trd.network.packet.industrial.conveyor.SyncConveyorNetworkPacket.STREAM_CODEC,
+            com.trd.network.packet.industrial.conveyor.SyncConveyorNetworkPacket::handle
         );
 
         registrar.playToServer(
-            com.trd.network.packet.conveyor.UpdateSortirovshikFilterC2SPacket.TYPE,
-            com.trd.network.packet.conveyor.UpdateSortirovshikFilterC2SPacket.STREAM_CODEC,
-            com.trd.network.packet.conveyor.UpdateSortirovshikFilterC2SPacket::handle
+            com.trd.network.packet.industrial.conveyor.UpdateSortirovshikFilterC2SPacket.TYPE,
+            com.trd.network.packet.industrial.conveyor.UpdateSortirovshikFilterC2SPacket.STREAM_CODEC,
+            com.trd.network.packet.industrial.conveyor.UpdateSortirovshikFilterC2SPacket::handle
         );
 
         registrar.playToServer(
-            com.trd.network.packet.conveyor.UpdateSortirovshikModeC2SPacket.TYPE,
-            com.trd.network.packet.conveyor.UpdateSortirovshikModeC2SPacket.STREAM_CODEC,
-            com.trd.network.packet.conveyor.UpdateSortirovshikModeC2SPacket::handle
+            com.trd.network.packet.industrial.conveyor.UpdateSortirovshikModeC2SPacket.TYPE,
+            com.trd.network.packet.industrial.conveyor.UpdateSortirovshikModeC2SPacket.STREAM_CODEC,
+            com.trd.network.packet.industrial.conveyor.UpdateSortirovshikModeC2SPacket::handle
         );
 
         registrar.playToServer(
-            com.trd.network.packet.rotation.ScrollHandCrankPacket.TYPE,
-            com.trd.network.packet.rotation.ScrollHandCrankPacket.STREAM_CODEC,
-            com.trd.network.packet.rotation.ScrollHandCrankPacket::handle
+            com.trd.network.packet.industrial.rotation.ScrollHandCrankPacket.TYPE,
+            com.trd.network.packet.industrial.rotation.ScrollHandCrankPacket.STREAM_CODEC,
+            com.trd.network.packet.industrial.rotation.ScrollHandCrankPacket::handle
         );
 
         registrar.playToServer(
-            com.trd.network.packet.chemistry.ClearChemicalRecipePacket.TYPE,
-            com.trd.network.packet.chemistry.ClearChemicalRecipePacket.STREAM_CODEC,
-            com.trd.network.packet.chemistry.ClearChemicalRecipePacket::handle
+            com.trd.network.packet.industrial.chemistry.ClearChemicalRecipePacket.TYPE,
+            com.trd.network.packet.industrial.chemistry.ClearChemicalRecipePacket.STREAM_CODEC,
+            com.trd.network.packet.industrial.chemistry.ClearChemicalRecipePacket::handle
         );
 
         registrar.playToServer(
-            com.trd.network.packet.chemistry.SelectChemicalRecipePacket.TYPE,
-            com.trd.network.packet.chemistry.SelectChemicalRecipePacket.STREAM_CODEC,
-            com.trd.network.packet.chemistry.SelectChemicalRecipePacket::handle
+            com.trd.network.packet.industrial.chemistry.SelectChemicalRecipePacket.TYPE,
+            com.trd.network.packet.industrial.chemistry.SelectChemicalRecipePacket.STREAM_CODEC,
+            com.trd.network.packet.industrial.chemistry.SelectChemicalRecipePacket::handle
         );
 
         registrar.playToServer(
-            com.trd.network.packet.chemistry.UpdatePortModePacket.TYPE,
-            com.trd.network.packet.chemistry.UpdatePortModePacket.STREAM_CODEC,
-            com.trd.network.packet.chemistry.UpdatePortModePacket::handle
+            com.trd.network.packet.industrial.chemistry.UpdatePortModePacket.TYPE,
+            com.trd.network.packet.industrial.chemistry.UpdatePortModePacket.STREAM_CODEC,
+            com.trd.network.packet.industrial.chemistry.UpdatePortModePacket::handle
         );
 
         registrar.playToServer(
-            com.trd.network.packet.rotation.SelectStanokRecipePacket.TYPE,
-            com.trd.network.packet.rotation.SelectStanokRecipePacket.STREAM_CODEC,
-            com.trd.network.packet.rotation.SelectStanokRecipePacket::handle
+            com.trd.network.packet.industrial.rotation.SelectStanokRecipePacket.TYPE,
+            com.trd.network.packet.industrial.rotation.SelectStanokRecipePacket.STREAM_CODEC,
+            com.trd.network.packet.industrial.rotation.SelectStanokRecipePacket::handle
         );
 
         registrar.playToServer(
-            com.trd.network.packet.rotation.ClearStanokRecipePacket.TYPE,
-            com.trd.network.packet.rotation.ClearStanokRecipePacket.STREAM_CODEC,
-            com.trd.network.packet.rotation.ClearStanokRecipePacket::handle
+            com.trd.network.packet.industrial.rotation.ClearStanokRecipePacket.TYPE,
+            com.trd.network.packet.industrial.rotation.ClearStanokRecipePacket.STREAM_CODEC,
+            com.trd.network.packet.industrial.rotation.ClearStanokRecipePacket::handle
         );
 
         registrar.playToServer(
-            com.trd.network.packet.guns.PacketShoot.TYPE,
-            com.trd.network.packet.guns.PacketShoot.STREAM_CODEC,
-            com.trd.network.packet.guns.PacketShoot::handle
+            com.trd.network.packet.weapons.guns.PacketShoot.TYPE,
+            com.trd.network.packet.weapons.guns.PacketShoot.STREAM_CODEC,
+            com.trd.network.packet.weapons.guns.PacketShoot::handle
         );
 
         registrar.playToServer(
-            com.trd.network.packet.guns.PacketReloadGun.TYPE,
-            com.trd.network.packet.guns.PacketReloadGun.STREAM_CODEC,
-            com.trd.network.packet.guns.PacketReloadGun::handle
+            com.trd.network.packet.weapons.guns.PacketReloadGun.TYPE,
+            com.trd.network.packet.weapons.guns.PacketReloadGun.STREAM_CODEC,
+            com.trd.network.packet.weapons.guns.PacketReloadGun::handle
         );
 
         registrar.playToServer(
-            com.trd.network.packet.guns.PacketUnloadGun.TYPE,
-            com.trd.network.packet.guns.PacketUnloadGun.STREAM_CODEC,
-            com.trd.network.packet.guns.PacketUnloadGun::handle
+            com.trd.network.packet.weapons.guns.PacketUnloadGun.TYPE,
+            com.trd.network.packet.weapons.guns.PacketUnloadGun.STREAM_CODEC,
+            com.trd.network.packet.weapons.guns.PacketUnloadGun::handle
         );
 
         registrar.playToServer(
-            com.trd.network.packet.guns.PacketScopeState.TYPE,
-            com.trd.network.packet.guns.PacketScopeState.STREAM_CODEC,
-            com.trd.network.packet.guns.PacketScopeState::handle
+            com.trd.network.packet.weapons.guns.PacketScopeState.TYPE,
+            com.trd.network.packet.weapons.guns.PacketScopeState.STREAM_CODEC,
+            com.trd.network.packet.weapons.guns.PacketScopeState::handle
         );
 
         registrar.playToClient(
-            com.trd.network.packet.guns.PacketMachineGunAnim.TYPE,
-            com.trd.network.packet.guns.PacketMachineGunAnim.STREAM_CODEC,
-            com.trd.network.packet.guns.PacketMachineGunAnim::handle
+            com.trd.network.packet.weapons.guns.PacketMachineGunAnim.TYPE,
+            com.trd.network.packet.weapons.guns.PacketMachineGunAnim.STREAM_CODEC,
+            com.trd.network.packet.weapons.guns.PacketMachineGunAnim::handle
         );
 
         registrar.playToClient(
@@ -164,47 +164,47 @@ public class ModNetworking {
         // === ТУРЕЛИ ===
 
         registrar.playToClient(
-            com.trd.network.packet.turrets.PacketChipFeedback.TYPE,
-            com.trd.network.packet.turrets.PacketChipFeedback.STREAM_CODEC,
-            com.trd.network.packet.turrets.PacketChipFeedback::handle
+            com.trd.network.packet.weapons.turrets.PacketChipFeedback.TYPE,
+            com.trd.network.packet.weapons.turrets.PacketChipFeedback.STREAM_CODEC,
+            com.trd.network.packet.weapons.turrets.PacketChipFeedback::handle
         );
 
         registrar.playToServer(
-            com.trd.network.packet.turrets.PacketToggleTurret.TYPE,
-            com.trd.network.packet.turrets.PacketToggleTurret.STREAM_CODEC,
-            com.trd.network.packet.turrets.PacketToggleTurret::handle
+            com.trd.network.packet.weapons.turrets.PacketToggleTurret.TYPE,
+            com.trd.network.packet.weapons.turrets.PacketToggleTurret.STREAM_CODEC,
+            com.trd.network.packet.weapons.turrets.PacketToggleTurret::handle
         );
 
         registrar.playToServer(
-            com.trd.network.packet.turrets.PacketUpdateTurretSettings.TYPE,
-            com.trd.network.packet.turrets.PacketUpdateTurretSettings.STREAM_CODEC,
-            com.trd.network.packet.turrets.PacketUpdateTurretSettings::handle
+            com.trd.network.packet.weapons.turrets.PacketUpdateTurretSettings.TYPE,
+            com.trd.network.packet.weapons.turrets.PacketUpdateTurretSettings.STREAM_CODEC,
+            com.trd.network.packet.weapons.turrets.PacketUpdateTurretSettings::handle
         );
 
         registrar.playToServer(
-            com.trd.network.packet.turrets.PacketToggleExtraButton.TYPE,
-            com.trd.network.packet.turrets.PacketToggleExtraButton.STREAM_CODEC,
-            com.trd.network.packet.turrets.PacketToggleExtraButton::handle
+            com.trd.network.packet.weapons.turrets.PacketToggleExtraButton.TYPE,
+            com.trd.network.packet.weapons.turrets.PacketToggleExtraButton.STREAM_CODEC,
+            com.trd.network.packet.weapons.turrets.PacketToggleExtraButton::handle
         );
 
         registrar.playToServer(
-            com.trd.network.packet.turrets.PacketModifyTurretChip.TYPE,
-            com.trd.network.packet.turrets.PacketModifyTurretChip.STREAM_CODEC,
-            com.trd.network.packet.turrets.PacketModifyTurretChip::handle
+            com.trd.network.packet.weapons.turrets.PacketModifyTurretChip.TYPE,
+            com.trd.network.packet.weapons.turrets.PacketModifyTurretChip.STREAM_CODEC,
+            com.trd.network.packet.weapons.turrets.PacketModifyTurretChip::handle
         );
 
         // === РЕДСТОУН-РАДИО ===
 
         registrar.playToClient(
-            com.trd.network.packet.redstone.RedstoneRadioSyncPacket.TYPE,
-            com.trd.network.packet.redstone.RedstoneRadioSyncPacket.STREAM_CODEC,
-            com.trd.network.packet.redstone.RedstoneRadioSyncPacket::handle
+            com.trd.network.packet.industrial.redstone.RedstoneRadioSyncPacket.TYPE,
+            com.trd.network.packet.industrial.redstone.RedstoneRadioSyncPacket.STREAM_CODEC,
+            com.trd.network.packet.industrial.redstone.RedstoneRadioSyncPacket::handle
         );
 
         registrar.playToServer(
-            com.trd.network.packet.redstone.RedstoneRadioChannelPacket.TYPE,
-            com.trd.network.packet.redstone.RedstoneRadioChannelPacket.STREAM_CODEC,
-            com.trd.network.packet.redstone.RedstoneRadioChannelPacket::handle
+            com.trd.network.packet.industrial.redstone.RedstoneRadioChannelPacket.TYPE,
+            com.trd.network.packet.industrial.redstone.RedstoneRadioChannelPacket.STREAM_CODEC,
+            com.trd.network.packet.industrial.redstone.RedstoneRadioChannelPacket::handle
         );
     }
 }

@@ -85,7 +85,7 @@ public class StatorOverlay {
                 if (shaft.hasRotor()) {
                     long speed = Math.abs(shaft.getSpeed());
                     float rotorEfficiency = 1.0f;
-                    com.trd.api.rotation.RotorType rotorType = shaft.getRotorType();
+                    com.trd.api.industiral.rotation.RotorType rotorType = shaft.getRotorType();
                     if (rotorType != null) rotorEfficiency = rotorType.getEfficiency();
                     production = (long) ((speed * totalConversion * rotorEfficiency * 3.0f) / 40.0f);
                 }

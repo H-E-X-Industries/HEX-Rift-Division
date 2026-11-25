@@ -1,6 +1,6 @@
 package com.trd.block.basic.industrial.fluids;
 
-import com.trd.api.fluids.system.*;
+import com.trd.api.industiral.fluids.system.*;
 import com.trd.block.entity.industrial.fluids.FluidPipeBlockEntity;
 import com.trd.item.industrial.fluids.FluidIdentifierItem;
 import net.minecraft.ChatFormatting;
@@ -11,7 +11,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
@@ -80,7 +79,7 @@ public class FluidPipeBlock extends Block implements EntityBlock, SimpleWaterlog
         builder.add(NORTH, SOUTH, EAST, WEST, UP, DOWN, NONE, WATERLOGGED);
     }
 
-    public static final com.mojang.serialization.MapCodec<FluidPipeBlock> CODEC = simpleCodec(properties -> new FluidPipeBlock(com.trd.api.fluids.system.PipeTier.BRONZE, properties));
+    public static final com.mojang.serialization.MapCodec<FluidPipeBlock> CODEC = simpleCodec(properties -> new FluidPipeBlock(com.trd.api.industiral.fluids.system.PipeTier.BRONZE, properties));
     @Override protected com.mojang.serialization.MapCodec<? extends Block> codec() { return CODEC; }
 
     @Override
@@ -184,7 +183,7 @@ public class FluidPipeBlock extends Block implements EntityBlock, SimpleWaterlog
 
                 FluidNetworkManager manager = FluidNetworkManager.get(serverLevel);
                 for (BlockPos nodePos : positionsToUpdate) {
-                    com.trd.api.fluids.system.FluidNetwork net = manager.getNetwork(nodePos);
+                    com.trd.api.industiral.fluids.system.FluidNetwork net = manager.getNetwork(nodePos);
                     if (net != null) {
                         net.invalidateFluidCache();
                     }
@@ -211,7 +210,7 @@ public class FluidPipeBlock extends Block implements EntityBlock, SimpleWaterlog
             } else {
                 if (level.getBlockEntity(pos) instanceof FluidPipeBlockEntity be) {
                     FluidNetworkManager manager = FluidNetworkManager.get(serverLevel);
-                    com.trd.api.fluids.system.FluidNetwork net = manager.getNetwork(pos);
+                    com.trd.api.industiral.fluids.system.FluidNetwork net = manager.getNetwork(pos);
                     if (net != null) {
                         net.invalidateFluidCache();
                     }
@@ -252,7 +251,7 @@ public class FluidPipeBlock extends Block implements EntityBlock, SimpleWaterlog
     }
 
     private boolean checkExternalMeltdown(ServerLevel level, BlockPos pos) {
-        com.trd.api.fluids.system.PipeTier tier = this.getTier();
+        com.trd.api.industiral.fluids.system.PipeTier tier = this.getTier();
         java.util.List<BlockPos> positionsToCheck = new java.util.ArrayList<>();
         positionsToCheck.add(pos);
         for (Direction dir : Direction.values()) positionsToCheck.add(pos.relative(dir));

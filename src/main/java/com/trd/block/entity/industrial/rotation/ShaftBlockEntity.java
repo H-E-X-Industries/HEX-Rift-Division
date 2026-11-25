@@ -1,10 +1,8 @@
 package com.trd.block.entity.industrial.rotation;
 
-import com.trd.api.rotation.Rotational;
-import com.trd.api.rotation.ShaftDiameter;
-import com.trd.api.rotation.ShaftMaterial;
+import com.trd.api.industiral.rotation.Rotational;
+import com.trd.api.industiral.rotation.ShaftDiameter;
 import com.trd.block.basic.industrial.rotation.BearingBlock;
-import com.trd.block.basic.industrial.rotation.HandCrankBlock;
 import com.trd.block.basic.industrial.rotation.ShaftBlock;
 import com.trd.block.entity.ModBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -40,9 +38,9 @@ public class ShaftBlockEntity extends KineticNodeBlockEntity {
         return !attachedRotor.isEmpty();
     }
 
-    public com.trd.api.rotation.RotorType getRotorType() {
+    public com.trd.api.industiral.rotation.RotorType getRotorType() {
         if (hasRotor()) {
-            return com.trd.api.rotation.RotorType.COPPER;
+            return com.trd.api.industiral.rotation.RotorType.COPPER;
         }
         return null;
     }
@@ -57,7 +55,7 @@ public class ShaftBlockEntity extends KineticNodeBlockEntity {
         if (level != null && !level.isClientSide) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 2);
             if (level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
-                var net = com.trd.api.rotation.KineticNetworkManager.get(serverLevel).getNetworkFor(worldPosition);
+                var net = com.trd.api.industiral.rotation.KineticNetworkManager.get(serverLevel).getNetworkFor(worldPosition);
                 if (net != null) {
                     net.requestRecalculation();
                 }

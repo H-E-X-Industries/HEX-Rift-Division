@@ -1,7 +1,7 @@
 package com.trd.block.basic.industrial.rotation;
 
 import com.mojang.serialization.MapCodec;
-import com.trd.api.rotation.KineticNetworkManager;
+import com.trd.api.industiral.rotation.KineticNetworkManager;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.block.entity.industrial.rotation.HandCrankBlockEntity;
 import net.minecraft.ChatFormatting;
@@ -89,7 +89,7 @@ public class HandCrankBlock extends BaseEntityBlock {
         }
         // Лёгкий вал того же направления, на который привод может механически соединиться
         if (mountState.getBlock() instanceof ShaftBlock shaft
-                && shaft.getDiameter() == com.trd.api.rotation.ShaftDiameter.LIGHT
+                && shaft.getDiameter() == com.trd.api.industiral.rotation.ShaftDiameter.LIGHT
                 && mountState.hasProperty(ShaftBlock.FACING)
                 && mountState.getValue(ShaftBlock.FACING).getAxis() == mountDir.getAxis()) {
             return true;

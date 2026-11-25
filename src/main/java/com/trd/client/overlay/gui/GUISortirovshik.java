@@ -5,8 +5,8 @@ import com.trd.block.entity.industrial.conveyors.SortirovshikBlockEntity;
 import com.trd.main.MainRegistry;
 import com.trd.menu.industrial.SortirovshikMenu;
 
-import com.trd.network.packet.conveyor.UpdateSortirovshikFilterC2SPacket;
-import com.trd.network.packet.conveyor.UpdateSortirovshikModeC2SPacket;
+import com.trd.network.packet.industrial.conveyor.UpdateSortirovshikFilterC2SPacket;
+import com.trd.network.packet.industrial.conveyor.UpdateSortirovshikModeC2SPacket;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;

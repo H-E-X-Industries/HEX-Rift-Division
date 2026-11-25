@@ -1,15 +1,13 @@
 package com.trd.block.entity.industrial.energy;
 
-import com.trd.api.energy.ConnectorTier;
-import com.trd.api.energy.IEnergyConnector;
+import com.trd.api.industiral.energy.ConnectorTier;
+import com.trd.api.industiral.energy.IEnergyConnector;
 import com.trd.block.basic.industrial.energy.ConnectorBlock;
 import com.trd.block.entity.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.NbtUtils;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -17,7 +15,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
@@ -56,7 +53,7 @@ public class ConnectorBlockEntity extends BlockEntity implements IEnergyConnecto
         syncToClient();
 
         if (level != null && !level.isClientSide) {
-            com.trd.api.energy.EnergyNetworkManager manager = com.trd.api.energy.EnergyNetworkManager.get((net.minecraft.server.level.ServerLevel) level);
+            com.trd.api.industiral.energy.EnergyNetworkManager manager = com.trd.api.industiral.energy.EnergyNetworkManager.get((net.minecraft.server.level.ServerLevel) level);
             manager.addNode(worldPosition);
             manager.mergeP2PConnections(worldPosition, this.connections);
         }
@@ -68,7 +65,7 @@ public class ConnectorBlockEntity extends BlockEntity implements IEnergyConnecto
             syncToClient();
 
             if (level != null && !level.isClientSide) {
-                com.trd.api.energy.EnergyNetworkManager manager = com.trd.api.energy.EnergyNetworkManager.get((net.minecraft.server.level.ServerLevel) level);
+                com.trd.api.industiral.energy.EnergyNetworkManager manager = com.trd.api.industiral.energy.EnergyNetworkManager.get((net.minecraft.server.level.ServerLevel) level);
                 manager.removeNode(worldPosition);
                 manager.addNode(worldPosition);
 
@@ -210,7 +207,7 @@ public class ConnectorBlockEntity extends BlockEntity implements IEnergyConnecto
     public void onLoad() {
         super.onLoad();
         if (level != null && !level.isClientSide) {
-            com.trd.api.energy.EnergyNetworkManager manager = com.trd.api.energy.EnergyNetworkManager.get(
+            com.trd.api.industiral.energy.EnergyNetworkManager manager = com.trd.api.industiral.energy.EnergyNetworkManager.get(
                     (net.minecraft.server.level.ServerLevel) level);
             manager.addNode(worldPosition);
             manager.mergeP2PConnections(worldPosition, this.connections);
@@ -221,7 +218,7 @@ public class ConnectorBlockEntity extends BlockEntity implements IEnergyConnecto
     public void setRemoved() {
         super.setRemoved();
         if (level != null && !level.isClientSide) {
-            com.trd.api.energy.EnergyNetworkManager.get(
+            com.trd.api.industiral.energy.EnergyNetworkManager.get(
                     (net.minecraft.server.level.ServerLevel) level).removeNode(worldPosition);
         }
     }

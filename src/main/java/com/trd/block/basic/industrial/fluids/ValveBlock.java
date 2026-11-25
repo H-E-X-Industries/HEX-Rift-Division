@@ -1,19 +1,17 @@
 package com.trd.block.basic.industrial.fluids;
 
-import com.trd.api.fluids.system.FluidNetwork;
-import com.trd.api.fluids.system.FluidNetworkManager;
+import com.trd.api.industiral.fluids.system.FluidNetwork;
+import com.trd.api.industiral.fluids.system.FluidNetworkManager;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.block.entity.industrial.fluids.ValveBlockEntity;
 import com.trd.item.industrial.fluids.FluidIdentifierItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;

@@ -1,6 +1,6 @@
 package com.trd.client.renderer;
 
-import com.trd.api.metallurgy.system.Metal;
+import com.trd.api.industiral.metallurgy.system.Metal;
 import com.trd.multiblock.industrial.ccmachine.CCMachineBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;

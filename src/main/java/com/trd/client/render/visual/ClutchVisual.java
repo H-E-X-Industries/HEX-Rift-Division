@@ -1,9 +1,10 @@
 package com.trd.client.render.visual;
 
+import com.trd.api.industiral.rotation.ClientKineticAngleTracker;
 import com.trd.client.render.flywheel.ModModels;
-import com.trd.api.rotation.Rotational;
-import com.trd.api.rotation.ShaftDiameter;
-import com.trd.api.rotation.ShaftMaterial;
+import com.trd.api.industiral.rotation.Rotational;
+import com.trd.api.industiral.rotation.ShaftDiameter;
+import com.trd.api.industiral.rotation.ShaftMaterial;
 import com.trd.block.basic.industrial.rotation.BearingBlock;
 import com.trd.block.basic.industrial.rotation.ClutchBlock;
 import com.trd.block.basic.industrial.rotation.MotorElectroBlock;
@@ -154,7 +155,7 @@ public class ClutchVisual extends AbstractBlockEntityVisual<ClutchBlockEntity> i
         boolean powered = blockEntity.getBlockState().getValue(ClutchBlock.POWERED);
 
         if (powered) {
-            float angle = com.trd.client.rotation.ClientKineticAngleTracker.getAngle(blockEntity, facing, partialTick);
+            float angle = ClientKineticAngleTracker.getAngle(blockEntity, facing, partialTick);
             currentAngleFront = angle;
             currentAngleBack = angle;
             float currentSpeed = blockEntity.getSpeed();
@@ -168,14 +169,14 @@ public class ClutchVisual extends AbstractBlockEntityVisual<ClutchBlockEntity> i
             BlockEntity beBack = level.getBlockEntity(posBack);
 
             if (isHalfShaftConnected(posFront, beFront) && beFront instanceof KineticNodeBlockEntity rotFront) {
-                currentAngleFront = com.trd.client.rotation.ClientKineticAngleTracker.getAngle(rotFront, facing, partialTick);
+                currentAngleFront = ClientKineticAngleTracker.getAngle(rotFront, facing, partialTick);
                 this.smoothedSpeedFront = rotFront.getSpeed();
             } else {
                 currentAngleFront = updateAngle(0, deltaSeconds, timeInSeconds, currentAngleFront, true);
             }
 
             if (isHalfShaftConnected(posBack, beBack) && beBack instanceof KineticNodeBlockEntity rotBack) {
-                currentAngleBack = com.trd.client.rotation.ClientKineticAngleTracker.getAngle(rotBack, facing, partialTick);
+                currentAngleBack = ClientKineticAngleTracker.getAngle(rotBack, facing, partialTick);
                 this.smoothedSpeedBack = rotBack.getSpeed();
             } else {
                 currentAngleBack = updateAngle(0, deltaSeconds, timeInSeconds, currentAngleBack, false);

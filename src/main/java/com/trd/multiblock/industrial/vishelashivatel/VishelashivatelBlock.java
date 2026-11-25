@@ -1,7 +1,7 @@
 package com.trd.multiblock.industrial.vishelashivatel;
 
 import com.mojang.serialization.MapCodec;
-import com.trd.api.rotation.KineticNetworkManager;
+import com.trd.api.industiral.rotation.KineticNetworkManager;
 import com.trd.block.basic.ModBlocks;
 import com.trd.block.basic.industrial.rotation.ShaftBlock;
 import com.trd.block.entity.ModBlockEntities;
@@ -12,7 +12,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;

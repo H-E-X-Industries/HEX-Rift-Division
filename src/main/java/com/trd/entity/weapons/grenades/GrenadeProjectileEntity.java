@@ -1,8 +1,8 @@
 package com.trd.entity.weapons.grenades;
 
-import com.trd.explosion.logic.ExplosionFire;
-import com.trd.explosion.logic.ExplosionHE;
-import com.trd.explosion.logic.ExplosionStandard;
+import com.trd.event.explosion.logic.ExplosionFire;
+import com.trd.event.explosion.logic.ExplosionHE;
+import com.trd.event.explosion.logic.ExplosionStandard;
 import com.trd.sound.ModSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;

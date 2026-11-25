@@ -1,5 +1,6 @@
 package com.trd.multiblock.industrial.heaters;
 
+import com.trd.api.nature.climate.system.IHeatSource;
 import com.trd.block.basic.ModBlocks;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.item.ModItems;
@@ -32,7 +33,7 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 import javax.annotation.Nullable;
 import java.util.*;
 
-public class HeaterBlockEntity extends BlockEntity implements MenuProvider, com.trd.api.climate.IHeatSource {
+public class HeaterBlockEntity extends BlockEntity implements MenuProvider, IHeatSource {
 
     // ═══════════════════════════════════════════════════════
     // СТРУКТУРА ДАННЫХ О ТОПЛИВЕ (единый источник правды)

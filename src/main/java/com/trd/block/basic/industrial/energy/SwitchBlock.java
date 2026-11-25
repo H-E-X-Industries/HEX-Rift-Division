@@ -21,7 +21,7 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.BlockHitResult;
-import com.trd.api.energy.EnergyNetworkManager;
+import com.trd.api.industiral.energy.EnergyNetworkManager;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.block.entity.industrial.energy.SwitchBlockEntity;
 

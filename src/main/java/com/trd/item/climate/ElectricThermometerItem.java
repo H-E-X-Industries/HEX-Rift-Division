@@ -1,16 +1,16 @@
 package com.trd.item.climate;
 
-import com.trd.capability.ModCapabilities;
+import com.trd.client.overlay.hud.ElectricThermometerHud;
+import com.trd.event.climate.ThermometerEnergyDrainHandler;
+import com.trd.api.capabilities.ModCapabilities;
 import com.trd.item.industrial.energy.ModBatteryItem;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.Item.TooltipContext;
 import net.minecraft.world.level.Level;
 
 import javax.annotation.Nullable;
@@ -24,9 +24,9 @@ import java.util.List;
  * <p>
  * Пока прибор лежит в любом слоте инвентаря игрока — в левом нижнем углу экрана
  * отображается дисплей прибора с показанием температуры тела и графиком её изменения
- * (см. {@link com.trd.climate.client.ElectricThermometerHud}). Если заряд кончился,
+ * (см. {@link ElectricThermometerHud}). Если заряд кончился,
  * дисплей остаётся тёмным («выключенным»).
- * Энергия расходуется по 10 JE раз в 3 секунды (см. {@link com.trd.climate.event.ThermometerEnergyDrainHandler}).
+ * Энергия расходуется по 10 JE раз в 3 секунды (см. {@link ThermometerEnergyDrainHandler}).
  */
 public class ElectricThermometerItem extends ModBatteryItem {
 
@@ -92,11 +92,11 @@ public class ElectricThermometerItem extends ModBatteryItem {
 
             java.util.Locale locale = java.util.Locale.ROOT;
 
-            var source = com.trd.climate.calculation.HeatSourceHelper.resolveAt(level, pos);
+            var source = com.trd.api.nature.climate.system.calculation.HeatSourceHelper.resolveAt(level, pos);
 
             if (source == null) {
                 // Обычный блок: температура САМОГО блока, а не воздуха над ним.
-                float blockTemp = com.trd.climate.calculation.TemperatureCalculator.calculatePointTemp(level, pos);
+                float blockTemp = com.trd.api.nature.climate.system.calculation.TemperatureCalculator.calculatePointTemp(level, pos);
                 player.displayClientMessage(Component.translatable("chat.trd.thermometer.block_temp",
                                 Component.literal(String.format(locale, "%.1f", blockTemp))
                                         .withStyle(ChatFormatting.AQUA)),
@@ -113,7 +113,7 @@ public class ElectricThermometerItem extends ModBatteryItem {
                         false);
 
                 if (def.isPassive()) {
-                    var state = com.trd.climate.room.ThermalStateStore.stateAt(level, pos);
+                    var state = com.trd.api.nature.climate.system.room.ThermalStateStore.stateAt(level, pos);
                     boolean physical = state != null && state.physical();
 
                     // Запас не печатаем: он дублирует «мощность источника» ниже.

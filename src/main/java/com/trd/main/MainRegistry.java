@@ -1,6 +1,9 @@
 package com.trd.main;
 
 import com.mojang.logging.LogUtils;
+import com.trd.api.capabilities.ModDataComponents;
+import com.trd.api.nature.climate.ModHeatSources;
+import com.trd.api.nature.climate.system.ModAttachments;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -14,7 +17,7 @@ public class MainRegistry {
     public MainRegistry(IEventBus modEventBus, net.neoforged.fml.ModContainer modContainer) {
         // Клиентские настройки (trd-client.toml)
         modContainer.registerConfig(net.neoforged.fml.config.ModConfig.Type.CLIENT,
-                com.trd.client.config.ModClientConfig.SPEC);
+                com.trd.api.capabilities.config.ModClientConfig.SPEC);
 
         // Инициализация динамических ресурсов металлургии (до регистрации блоков и предметов)
         com.trd.main.ResourceRegistry.init();
@@ -23,13 +26,13 @@ public class MainRegistry {
         com.trd.block.basic.ModBlocks.register(modEventBus);
         com.trd.block.entity.ModBlockEntities.register(modEventBus);
         com.trd.entity.ModEntities.register(modEventBus);
-        com.trd.fx.particle.ModExplosionParticles.PARTICLE_TYPES.register(modEventBus);
+        com.trd.client.particle.ModExplosionParticles.PARTICLE_TYPES.register(modEventBus);
         com.trd.item.ModItems.register(modEventBus);
         com.trd.main.ModCreativeTabs.register(modEventBus);
-        com.trd.api.components.ModDataComponents.register(modEventBus);
+        ModDataComponents.register(modEventBus);
         com.trd.api.recipe.ModRecipes.register(modEventBus);
-        com.trd.api.energy.ModRecipes.register(modEventBus);
-        com.trd.api.fluids.ModFluids.register(modEventBus);
+        com.trd.api.industiral.energy.ModRecipes.register(modEventBus);
+        com.trd.api.industiral.fluids.ModFluids.register(modEventBus);
         com.trd.menu.ModMenuTypes.register(modEventBus);
         com.trd.sound.ModSounds.register(modEventBus);
         com.trd.worldgen.feature.ModFeatures.FEATURES.register(modEventBus);
@@ -37,26 +40,26 @@ public class MainRegistry {
         com.trd.worldgen.biome.sequoia.ModFoliagePlacerTypes.register(modEventBus);
         
         // Регистрация климатической системы
-        com.trd.climate.attachment.ModAttachments.register(modEventBus);
+        ModAttachments.register(modEventBus);
         
         modEventBus.addListener(this::commonSetup);
-        modEventBus.addListener(com.trd.climate.network.ClimateNetworking::registerPayloads);
+        modEventBus.addListener(com.trd.api.nature.climate.system.network.ClimateNetworking::registerPayloads);
     }
 
     private void commonSetup(final FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
-            com.trd.api.fuel.ModFuels.init();
-            com.trd.api.metallurgy.ModMetallurgy.init();
+            com.trd.api.industiral.fuel.ModFuels.init();
+            com.trd.api.industiral.metallurgy.ModMetallurgy.init();
             com.trd.multiblock.industrial.drobitel.DrobitelRecipes.register();
             com.trd.multiblock.industrial.centrifuge.conus.CentrifugeRecipes.init();
             com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderRecipes.init();
             com.trd.multiblock.industrial.vishelashivatel.VishelashivatelRecipes.init();
-            com.trd.api.chemistry.ChemicalPlantRecipeRegistry.init();
+            com.trd.api.industiral.chemistry.ChemicalPlantRecipeRegistry.init();
             com.trd.multiblock.industrial.coccer.CoccerOvenRecipeRegistry.init();
             com.trd.multiblock.industrial.stanok.StanokRecipes.register();
 
             // Единый реестр источников тепла (ванильные блоки + приборы мода)
-            com.trd.climate.calculation.ModHeatSources.registerAll();
+            ModHeatSources.registerAll();
 
             // TerraBlender
             terrablender.api.Regions.register(new com.trd.worldgen.biome.terrablender.ModOverworldRegion(

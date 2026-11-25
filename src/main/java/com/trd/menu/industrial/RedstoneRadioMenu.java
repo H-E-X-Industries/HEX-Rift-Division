@@ -1,6 +1,6 @@
 package com.trd.menu.industrial;
 
-import com.trd.block.entity.redstone.RedstoneRadioBlockEntity;
+import com.trd.block.entity.industrial.redstone.RedstoneRadioBlockEntity;
 import com.trd.menu.ModMenuTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;

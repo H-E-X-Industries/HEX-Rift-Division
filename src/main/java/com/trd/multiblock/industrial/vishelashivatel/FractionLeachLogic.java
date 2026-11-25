@@ -1,9 +1,9 @@
 package com.trd.multiblock.industrial.vishelashivatel;
 
-import com.trd.api.vein.FractionLayerMatrix;
-import com.trd.api.vein.FractionType;
-import com.trd.item.conglomerates.FractionChunkItem;
-import com.trd.item.conglomerates.MetalPieceItem;
+import com.trd.api.nature.ore.vein.FractionLayerMatrix;
+import com.trd.api.nature.ore.vein.FractionType;
+import com.trd.item.nature.conglomerates.FractionChunkItem;
+import com.trd.item.nature.conglomerates.MetalPieceItem;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
@@ -49,10 +49,10 @@ public final class FractionLeachLogic {
     public static boolean isProcessingFluid(Fluid fluid) {
         if (fluid == null) return false;
         if (fluid == Fluids.WATER) return true;
-        return fluid == com.trd.api.fluids.ModFluids.HYDROGEN_PEROXIDE_SOURCE.get()
-                || fluid == com.trd.api.fluids.ModFluids.SULFURIC_ACID_SOURCE.get()
-                || fluid == com.trd.api.fluids.ModFluids.SODIUM_HYDROXIDE_SOURCE.get()
-                || fluid == com.trd.api.fluids.ModFluids.HYDROGEN_CHLORINE_SOURCE.get();
+        return fluid == com.trd.api.industiral.fluids.ModFluids.HYDROGEN_PEROXIDE_SOURCE.get()
+                || fluid == com.trd.api.industiral.fluids.ModFluids.SULFURIC_ACID_SOURCE.get()
+                || fluid == com.trd.api.industiral.fluids.ModFluids.SODIUM_HYDROXIDE_SOURCE.get()
+                || fluid == com.trd.api.industiral.fluids.ModFluids.HYDROGEN_CHLORINE_SOURCE.get();
     }
 
     /** Тип операции переработки (null — рецепт не найден). */
@@ -213,7 +213,7 @@ public final class FractionLeachLogic {
         // Дешёвые металлы — из уже извлечённых (более мелких) слоёв; веса из запечённого NBT
         Map<String, Integer> weights = cheapWeights(matrix, input, next);
         int budget = Math.max(1, Math.round(nextLayerOu * SCROLL_DISCOUNT));
-        Map<String, Integer> outByMetal = com.trd.api.vein.DistributionMath.distribute(budget, weights);
+        Map<String, Integer> outByMetal = com.trd.api.nature.ore.vein.DistributionMath.distribute(budget, weights);
         for (Map.Entry<String, Integer> e : outByMetal.entrySet()) {
             if (e.getValue() > 0) {
                 result.add(MetalPieceItem.create(e.getKey()));

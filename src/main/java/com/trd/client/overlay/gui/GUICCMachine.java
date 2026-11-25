@@ -1,8 +1,8 @@
 package com.trd.client.overlay.gui;
 
-import com.trd.api.fluids.ModFluids;
-import com.trd.api.metallurgy.system.Metal;
-import com.trd.api.metallurgy.system.MetalUnits2;
+import com.trd.api.industiral.fluids.ModFluids;
+import com.trd.api.industiral.metallurgy.system.Metal;
+import com.trd.api.industiral.metallurgy.system.MetalUnits2;
 import com.trd.main.MainRegistry;
 import com.trd.menu.industrial.CCMachineMenu;
 import net.minecraft.client.gui.GuiGraphics;

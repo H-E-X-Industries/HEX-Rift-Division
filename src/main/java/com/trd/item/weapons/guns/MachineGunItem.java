@@ -1,15 +1,15 @@
 package com.trd.item.weapons.guns;
 
-import com.trd.client.config.ModKeyBindings;
+import com.trd.api.capabilities.config.ModKeyBindings;
 import com.trd.client.gltf.item.guns.MachineGunRenderer;
 import com.trd.client.overlay.MachineGunScope;
 import com.trd.entity.weapons.bullets.GilseEntity;
 import com.trd.entity.weapons.bullets.TurretBulletEntity;
 import com.trd.item.weapons.ammo.AmmoRegistry;
 import com.trd.main.MainRegistry;
-import com.trd.network.packet.guns.PacketMachineGunAnim;
-import com.trd.network.packet.guns.PacketReloadGun;
-import com.trd.network.packet.guns.PacketShoot;
+import com.trd.network.packet.weapons.guns.PacketMachineGunAnim;
+import com.trd.network.packet.weapons.guns.PacketReloadGun;
+import com.trd.network.packet.weapons.guns.PacketShoot;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
@@ -49,8 +49,6 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.List;
 import java.util.function.Consumer;
-
-import javax.annotation.Nullable;
 
 /**
  * Автоматическая 20-мм пушка. Питается патронами калибра {@code 20mm_turret},
@@ -1388,7 +1386,7 @@ ItemStack stack = mc.player.getMainHandItem();
             }
 
             if (ModKeyBindings.UNLOAD_KEY.consumeClick()) {
-                PacketDistributor.sendToServer(new com.trd.network.packet.guns.PacketUnloadGun());
+                PacketDistributor.sendToServer(new com.trd.network.packet.weapons.guns.PacketUnloadGun());
                 return;
             }
 

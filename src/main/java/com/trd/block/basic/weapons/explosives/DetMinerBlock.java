@@ -1,11 +1,11 @@
 package com.trd.block.basic.weapons.explosives;
 
-import com.trd.api.vein.VeinBiomeResolver;
-import com.trd.api.vein.VeinManager;
+import com.trd.api.nature.ore.vein.VeinBiomeResolver;
+import com.trd.api.nature.ore.vein.VeinManager;
 import com.trd.block.basic.ModBlocks;
-import com.trd.block.entity.conglomerate.ConglomerateBlockEntity;
+import com.trd.block.entity.nature.conglomerate.ConglomerateBlockEntity;
 import com.trd.item.ModItems;
-import com.trd.item.conglomerates.ConglomerateItem;
+import com.trd.item.nature.conglomerates.ConglomerateItem;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -31,7 +31,6 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.gameevent.GameEvent;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 

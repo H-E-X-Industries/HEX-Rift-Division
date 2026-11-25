@@ -1,5 +1,6 @@
 package com.trd.client.render.visual;
 
+import com.trd.api.industiral.rotation.ClientKineticAngleTracker;
 import com.trd.client.render.flywheel.ModModels;
 import com.trd.multiblock.industrial.steam_engine.SteamEngineBlock;
 import com.trd.multiblock.industrial.steam_engine.SteamEngineBlockEntity;
@@ -76,7 +77,7 @@ public class SteamEngineVisual extends AbstractBlockEntityVisual<SteamEngineBloc
     @Override
     public void beginFrame(Context ctx) {
         float partialTick = ctx.partialTick();
-        float currentAngle = com.trd.client.rotation.ClientKineticAngleTracker.getAngle(blockEntity, facing, partialTick);
+        float currentAngle = ClientKineticAngleTracker.getAngle(blockEntity, facing, partialTick);
 
         // --- АНИМАЦИЯ ---
         crankshaft.setIdentityTransform()

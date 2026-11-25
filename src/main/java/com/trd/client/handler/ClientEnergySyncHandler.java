@@ -3,9 +3,8 @@ package com.trd.client.handler;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
-import net.neoforged.api.distmarker.Dist;
 
-import com.trd.api.energy.ILongEnergyMenu;
+import com.trd.api.industiral.energy.ILongEnergyMenu;
 import com.trd.menu.industrial.MachineBatteryMenu;
 
 

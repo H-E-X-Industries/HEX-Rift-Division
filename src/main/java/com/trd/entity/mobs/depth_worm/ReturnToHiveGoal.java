@@ -1,24 +1,21 @@
 package com.trd.entity.mobs.depth_worm;
 
-import com.trd.api.hive.HiveNetwork;
-import com.trd.api.hive.HiveNetworkManager;
-import com.trd.api.hive.HiveNetworkMember;
+import com.trd.api.nature.hive.HiveNetwork;
+import com.trd.api.nature.hive.HiveNetworkManager;
+import com.trd.api.nature.hive.HiveNetworkMember;
 import com.trd.block.basic.ModBlocks;
-import com.trd.block.entity.hive.DepthWormNestBlockEntity;
-import com.trd.block.entity.hive.HiveSoilBlockEntity;
+import com.trd.block.entity.nature.hive.DepthWormNestBlockEntity;
+import com.trd.block.entity.nature.hive.HiveSoilBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.Path;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;

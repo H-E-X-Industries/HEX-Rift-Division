@@ -1,10 +1,10 @@
 package com.trd.worldgen.hive;
 
-import com.trd.api.hive.HiveNetwork;
-import com.trd.api.hive.HiveNetworkManager;
+import com.trd.api.nature.hive.HiveNetwork;
+import com.trd.api.nature.hive.HiveNetworkManager;
 import com.trd.block.basic.ModBlocks;
-import com.trd.block.entity.hive.DepthWormNestBlockEntity;
-import com.trd.block.entity.hive.HiveSoilBlockEntity;
+import com.trd.block.entity.nature.hive.DepthWormNestBlockEntity;
+import com.trd.block.entity.nature.hive.HiveSoilBlockEntity;
 import com.trd.main.MainRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

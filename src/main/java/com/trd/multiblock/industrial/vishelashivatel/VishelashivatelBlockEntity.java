@@ -1,8 +1,8 @@
 package com.trd.multiblock.industrial.vishelashivatel;
 
-import com.trd.api.rotation.KineticNetwork;
-import com.trd.api.rotation.KineticNetworkManager;
-import com.trd.api.rotation.Rotational;
+import com.trd.api.industiral.rotation.KineticNetwork;
+import com.trd.api.industiral.rotation.KineticNetworkManager;
+import com.trd.api.industiral.rotation.Rotational;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.item.industrial.fluids.FluidIdentifierItem;
 import com.trd.menu.industrial.VishelashivatelMenu;

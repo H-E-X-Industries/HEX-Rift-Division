@@ -1,6 +1,6 @@
 package com.trd.multiblock.industrial.coccer;
 
-import com.trd.api.fluids.ModFluids;
+import com.trd.api.industiral.fluids.ModFluids;
 import com.trd.item.ModItems;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;

@@ -1,7 +1,7 @@
 package com.trd.block.basic.industrial.fluids;
 
-import com.trd.api.fluids.system.BarrelTier;
-import com.trd.api.fluids.system.BaseFluidType;
+import com.trd.api.industiral.fluids.system.BarrelTier;
+import com.trd.api.industiral.fluids.system.BaseFluidType;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.block.entity.industrial.fluids.FluidBarrelBlockEntity;
 import com.trd.item.industrial.fluids.FluidIdentifierItem;
@@ -42,7 +42,7 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.shapes.Shapes;
 
 public class FluidBarrelBlock extends BaseEntityBlock {
-    public static final com.mojang.serialization.MapCodec<FluidBarrelBlock> CODEC = simpleCodec(properties -> new FluidBarrelBlock(com.trd.api.fluids.system.BarrelTier.STEEL, properties));
+    public static final com.mojang.serialization.MapCodec<FluidBarrelBlock> CODEC = simpleCodec(properties -> new FluidBarrelBlock(com.trd.api.industiral.fluids.system.BarrelTier.STEEL, properties));
 
     @Override
     protected com.mojang.serialization.MapCodec<? extends BaseEntityBlock> codec() {

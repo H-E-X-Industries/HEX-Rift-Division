@@ -1,8 +1,8 @@
 package com.trd.multiblock.industrial.drobitel;
 
-import com.trd.api.rotation.KineticNetwork;
-import com.trd.api.rotation.KineticNetworkManager;
-import com.trd.api.rotation.Rotational;
+import com.trd.api.industiral.rotation.KineticNetwork;
+import com.trd.api.industiral.rotation.KineticNetworkManager;
+import com.trd.api.industiral.rotation.Rotational;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.block.entity.industrial.rotation.KineticNodeBlockEntity;
 import com.trd.item.ModItems;
@@ -41,7 +41,6 @@ import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 import net.neoforged.neoforge.items.ItemStackHandler;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -520,8 +519,8 @@ public class DrobitelBlockEntity extends KineticNodeBlockEntity implements MenuP
 
     private List<ItemStack> getResults(ItemStack input) {
         if (input.isEmpty()) return List.of();
-        if (input.getItem() instanceof com.trd.item.conglomerates.ConglomerateItem) {
-            return com.trd.item.conglomerates.ConglomerateItem.splitToFractions(input);
+        if (input.getItem() instanceof com.trd.item.nature.conglomerates.ConglomerateItem) {
+            return com.trd.item.nature.conglomerates.ConglomerateItem.splitToFractions(input);
         }
         List<ItemStack> result = RECIPES.get(input.getItem());
         if (result == null) {

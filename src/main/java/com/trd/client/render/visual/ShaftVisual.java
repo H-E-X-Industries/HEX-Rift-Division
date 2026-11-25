@@ -1,11 +1,11 @@
 package com.trd.client.render.visual;
 
+import com.trd.api.industiral.rotation.ClientKineticAngleTracker;
 import com.trd.client.render.flywheel.ModModels;
 import com.trd.block.basic.industrial.rotation.ShaftBlock;
 import com.trd.block.entity.industrial.rotation.ShaftBlockEntity;
 import com.trd.item.industrial.rotation.GearItem;
 import com.trd.item.industrial.rotation.PulleyItem;
-import com.trd.main.MainRegistry;
 import dev.engine_room.flywheel.api.instance.Instance;
 import dev.engine_room.flywheel.api.visualization.VisualizationContext;
 import dev.engine_room.flywheel.lib.instance.InstanceTypes;
@@ -355,14 +355,14 @@ public class ShaftVisual extends AbstractBlockEntityVisual<ShaftBlockEntity> imp
         }
 
         float partialTick = ctx.partialTick();
-        float currentAngle = com.trd.client.rotation.ClientKineticAngleTracker.getAngle(blockEntity, facing, partialTick);
+        float currentAngle = ClientKineticAngleTracker.getAngle(blockEntity, facing, partialTick);
 
         // АНИМАЦИЯ РЕМНЯ (3D Траки)
         if (orbitCache != null && orbitTotalLength > 0 && trackCount > 0) {
             float r1 = getPulleyRadius(blockEntity);
             // Получаем физический угол сети без инверсии от facing модели,
             // так как геометрия ремня вычисляется в глобальных мировых осях (du, dv).
-            float beltAngle = com.trd.client.rotation.ClientKineticAngleTracker.getAngle(blockEntity, null, partialTick);
+            float beltAngle = ClientKineticAngleTracker.getAngle(blockEntity, null, partialTick);
             float beltOffset = (-beltAngle * r1) % orbitTotalLength;
             if (beltOffset < 0) beltOffset += orbitTotalLength;
 

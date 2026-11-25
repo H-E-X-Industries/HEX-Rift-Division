@@ -17,10 +17,9 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
-import com.trd.api.energy.EnergyNetworkManager;
+import com.trd.api.industiral.energy.EnergyNetworkManager;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.block.entity.industrial.energy.ConverterBlockEntity;
-import com.trd.item.ModItems;
 
 public class ConverterBlock extends BaseEntityBlock {
     public static final com.mojang.serialization.MapCodec<ConverterBlock> CODEC = simpleCodec(ConverterBlock::new);
@@ -71,7 +70,7 @@ public class ConverterBlock extends BaseEntityBlock {
     public InteractionResult doUse(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         ItemStack stack = player.getItemInHand(hand);
 
-        if (stack.getItem() instanceof com.trd.item.tools.ScrewdriverItem) {
+        if (stack.getItem() instanceof com.trd.item.industrial.tools.ScrewdriverItem) {
             if (!level.isClientSide) {
                 BlockEntity be = level.getBlockEntity(pos);
                 if (be instanceof ConverterBlockEntity converter) {

@@ -1,7 +1,7 @@
 package com.trd.client.overlay.hud;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.trd.api.fluids.ModFluids;
+import com.trd.api.industiral.fluids.ModFluids;
 import com.trd.main.MainRegistry;
 import com.trd.multiblock.industrial.boiler.BoilerBlockEntity;
 import com.trd.multiblock.system.MultiblockPartEntity;

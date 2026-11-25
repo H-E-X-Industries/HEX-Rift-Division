@@ -1,6 +1,6 @@
 package com.trd.block.entity.industrial.energy;
 
-import com.trd.api.energy.*;
+import com.trd.api.industiral.energy.*;
 import com.trd.item.industrial.energy.EnergyCellItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -25,7 +25,6 @@ import com.trd.block.entity.ModBlockEntities;
 import com.trd.menu.industrial.MachineBatteryMenu;
 import software.bernie.geckolib.animatable.GeoBlockEntity;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
-import software.bernie.geckolib.animation.AnimatableManager;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import javax.annotation.Nullable;

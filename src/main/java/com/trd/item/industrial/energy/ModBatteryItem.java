@@ -1,19 +1,16 @@
 package com.trd.item.industrial.energy;
 import java.util.List;
-import java.util.Optional;
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.Item.TooltipContext;
-import com.trd.api.energy.IEnergyProvider;
-import com.trd.api.energy.IEnergyReceiver;
-import com.trd.capability.ModCapabilities;
-import com.trd.item.industrial.energy.EnergyCellItem;
+import com.trd.api.industiral.energy.IEnergyProvider;
+import com.trd.api.industiral.energy.IEnergyReceiver;
+import com.trd.api.capabilities.ModCapabilities;
 
 public class ModBatteryItem extends Item {
     protected final int capacity;

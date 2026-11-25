@@ -20,8 +20,8 @@ import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 /**
  * Отрисовка отладочной визуализации турелей (сетка сканирования, точка упреждения,
  * траектория) после отрисовки сущностей. Включается общим режимом отладки мода
- * ({@link com.trd.client.config.ModDebugMode}), который переключается переназначаемой
- * клавишей {@link com.trd.client.config.ModKeyBindings#DEBUG_RENDER_KEY}.
+ * ({@link com.trd.api.capabilities.config.ModDebugMode}), который переключается переназначаемой
+ * клавишей {@link com.trd.api.capabilities.config.ModKeyBindings#DEBUG_RENDER_KEY}.
  */
 @EventBusSubscriber(modid = MainRegistry.MOD_ID, value = Dist.CLIENT)
 public class TurretDebugRenderEvent {
@@ -36,7 +36,7 @@ public class TurretDebugRenderEvent {
     @SubscribeEvent
     public static void onRenderLevelStage(RenderLevelStageEvent event) {
         // проверка флага вынесена в начало
-        if (!com.trd.client.config.ModDebugMode.enabled) {
+        if (!com.trd.api.capabilities.config.ModDebugMode.enabled) {
             return;
         }
 

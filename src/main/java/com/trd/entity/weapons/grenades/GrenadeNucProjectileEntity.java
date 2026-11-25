@@ -1,11 +1,11 @@
 package com.trd.entity.weapons.grenades;
 
 import com.trd.block.basic.weapons.explosives.IDetonatable;
-import com.trd.fx.particle.ExplosionParticleUtils;
+import com.trd.client.particle.ExplosionParticleUtils;
 import com.trd.item.ModItems;
 import com.trd.sound.ModSounds;
 
-import com.trd.explosion.logic.ExplosionHydrogen;
+import com.trd.event.explosion.logic.ExplosionHydrogen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;

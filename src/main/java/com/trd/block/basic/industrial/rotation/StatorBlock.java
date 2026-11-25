@@ -1,8 +1,8 @@
 package com.trd.block.basic.industrial.rotation;
 
 import com.mojang.serialization.MapCodec;
-import com.trd.api.energy.EnergyNetworkManager;
-import com.trd.api.rotation.KineticNetworkManager;
+import com.trd.api.industiral.energy.EnergyNetworkManager;
+import com.trd.api.industiral.rotation.KineticNetworkManager;
 import com.trd.block.basic.ModBlocks;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.block.entity.industrial.rotation.StatorBlockEntity;

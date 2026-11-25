@@ -1,8 +1,8 @@
 package com.trd.block.entity.industrial.rotation;
 
-import com.trd.api.rotation.Rotational;
-import com.trd.api.rotation.ShaftDiameter;
-import com.trd.api.rotation.ShaftMaterial;
+import com.trd.api.industiral.rotation.Rotational;
+import com.trd.api.industiral.rotation.ShaftDiameter;
+import com.trd.api.industiral.rotation.ShaftMaterial;
 import com.trd.block.basic.industrial.rotation.ClutchBlock;
 import com.trd.block.entity.ModBlockEntities;
 import net.minecraft.core.BlockPos;

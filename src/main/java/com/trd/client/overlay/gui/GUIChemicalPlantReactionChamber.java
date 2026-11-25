@@ -1,12 +1,12 @@
 package com.trd.client.overlay.gui;
 
-import com.trd.api.chemistry.ChemicalPlantRecipe;
-import com.trd.api.chemistry.ChemicalPlantRecipeRegistry;
-import com.trd.api.fluids.ModFluids;
+import com.trd.api.industiral.chemistry.ChemicalPlantRecipe;
+import com.trd.api.industiral.chemistry.ChemicalPlantRecipeRegistry;
+import com.trd.api.industiral.fluids.ModFluids;
 import com.trd.main.MainRegistry;
 import com.trd.menu.industrial.ChemicalPlantReactionChamberMenu;
-import com.trd.network.packet.chemistry.ClearChemicalRecipePacket;
-import com.trd.network.packet.chemistry.SelectChemicalRecipePacket;
+import com.trd.network.packet.industrial.chemistry.ClearChemicalRecipePacket;
+import com.trd.network.packet.industrial.chemistry.SelectChemicalRecipePacket;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;

@@ -7,14 +7,11 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntityTicker;
-import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -24,10 +21,10 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 import org.slf4j.Logger;
-import com.trd.api.energy.EnergyNetworkManager;
-import com.trd.api.energy.IEnergyConnector;
+import com.trd.api.industiral.energy.EnergyNetworkManager;
+import com.trd.api.industiral.energy.IEnergyConnector;
 import com.trd.block.entity.industrial.energy.WireBlockEntity;
-import com.trd.capability.ModCapabilities;
+import com.trd.api.capabilities.ModCapabilities;
 
 import javax.annotation.Nullable;
 import java.util.Map;

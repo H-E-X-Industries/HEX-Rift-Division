@@ -1,5 +1,6 @@
 package com.trd.menu.industrial;
 
+import com.trd.block.basic.industrial.conveyor.SortirovshikBlock;
 import com.trd.block.entity.industrial.conveyors.SortirovshikBlockEntity;
 import com.trd.menu.ModMenuTypes;
 import net.minecraft.network.FriendlyByteBuf;
@@ -54,7 +55,7 @@ public class SortirovshikMenu extends AbstractContainerMenu {
     public boolean stillValid(Player player) {
         return ContainerLevelAccess.create(level, blockEntity.getBlockPos()).evaluate((lvl, pos) -> {
             Block block = lvl.getBlockState(pos).getBlock();
-            if (!(block instanceof com.trd.block.basic.industrial.SortirovshikBlock)) {
+            if (!(block instanceof SortirovshikBlock)) {
                 return false;
             }
             return player.distanceToSqr((double) pos.getX() + 0.5D, (double) pos.getY() + 0.5D, (double) pos.getZ() + 0.5D) <= 64.0D;

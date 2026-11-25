@@ -3,7 +3,6 @@ package com.trd.menu.industrial;
 
 import com.trd.menu.ModMenuTypes;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.*;
@@ -15,13 +14,11 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.items.SlotItemHandler;
 
-import com.trd.api.energy.ILongEnergyMenu;
+import com.trd.api.industiral.energy.ILongEnergyMenu;
 import com.trd.block.basic.industrial.energy.MachineBatteryBlock;
 import com.trd.block.entity.industrial.energy.MachineBatteryBlockEntity;
 
-import com.trd.network.packet.energy.PacketSyncEnergy;
-
-import java.util.Optional;
+import com.trd.network.packet.industrial.energy.PacketSyncEnergy;
 
 public class MachineBatteryMenu extends AbstractContainerMenu implements ILongEnergyMenu {
     public final MachineBatteryBlockEntity blockEntity;

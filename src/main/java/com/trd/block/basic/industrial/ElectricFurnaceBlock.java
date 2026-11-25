@@ -1,15 +1,13 @@
 package com.trd.block.basic.industrial;
 
-import com.trd.api.energy.EnergyNetworkManager;
+import com.trd.api.industiral.energy.EnergyNetworkManager;
 import com.trd.block.entity.industrial.energy.ElectricFurnaceBlockEntity;
 import com.trd.menu.industrial.ElectricFurnaceMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Containers;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;

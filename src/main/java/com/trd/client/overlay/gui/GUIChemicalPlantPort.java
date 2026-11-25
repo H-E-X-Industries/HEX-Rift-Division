@@ -1,9 +1,9 @@
 package com.trd.client.overlay.gui;
 
-import com.trd.api.fluids.ModFluids;
+import com.trd.api.industiral.fluids.ModFluids;
 import com.trd.main.MainRegistry;
 import com.trd.menu.industrial.ChemicalPlantPortMenu;
-import com.trd.network.packet.chemistry.UpdatePortModePacket;
+import com.trd.network.packet.industrial.chemistry.UpdatePortModePacket;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;

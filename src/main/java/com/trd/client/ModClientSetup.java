@@ -1,5 +1,7 @@
 package com.trd.client;
 
+import com.trd.block.basic.deco.ScorchedBasaltBlock;
+import com.trd.block.basic.deco.CraterBasaltBlock;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.client.render.visual.MillstoneVisual;
 import com.trd.client.render.flywheel.ModModels;
@@ -138,9 +140,9 @@ public class ModClientSetup {
 
     @SubscribeEvent
     public static void registerKeyMappings(net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent event) {
-        event.register(com.trd.client.config.ModKeyBindings.RELOAD_KEY);
-        event.register(com.trd.client.config.ModKeyBindings.UNLOAD_KEY);
-        event.register(com.trd.client.config.ModKeyBindings.DEBUG_RENDER_KEY);
+        event.register(com.trd.api.capabilities.config.ModKeyBindings.RELOAD_KEY);
+        event.register(com.trd.api.capabilities.config.ModKeyBindings.UNLOAD_KEY);
+        event.register(com.trd.api.capabilities.config.ModKeyBindings.DEBUG_RENDER_KEY);
     }
 
     @SubscribeEvent
@@ -180,10 +182,10 @@ public class ModClientSetup {
             return -1;
         }, com.trd.item.ModItems.PIPETTE.get(), com.trd.item.ModItems.PIPETTE_IDUSTRIAL.get(), com.trd.item.ModItems.FLUID_TANK_IRON.get());
 
-        for (net.neoforged.neoforge.registries.DeferredHolder<net.minecraft.world.item.Item, ? extends net.minecraft.world.item.Item> dropObj : com.trd.api.fluids.ModFluids.getAllFluidDrops().values()) {
+        for (net.neoforged.neoforge.registries.DeferredHolder<net.minecraft.world.item.Item, ? extends net.minecraft.world.item.Item> dropObj : com.trd.api.industiral.fluids.ModFluids.getAllFluidDrops().values()) {
             event.register((stack, tintIndex) -> {
                 if (tintIndex == 0) {
-                    if (stack.getItem() instanceof com.trd.api.fluids.system.FluidDropItem drop) {
+                    if (stack.getItem() instanceof com.trd.api.industiral.fluids.system.FluidDropItem drop) {
                         return net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions.of(drop.getFluidType())
                                 .getTintColor() | 0xFF000000;
                     }
@@ -193,13 +195,13 @@ public class ModClientSetup {
         }
 
         // Overwrite specific ones
-        event.register((stack, tintIndex) -> tintIndex == 0 ? 0xFF717070 : -1, com.trd.api.fluids.ModFluids.FLUID_DROP_NONE.get());
-        event.register((stack, tintIndex) -> tintIndex == 0 ? 0xFFE64306 : -1, com.trd.api.fluids.ModFluids.FLUID_DROP_LAVA.get());
-        event.register((stack, tintIndex) -> tintIndex == 0 ? 0xFF4487FF : -1, com.trd.api.fluids.ModFluids.FLUID_DROP_WATER.get());
+        event.register((stack, tintIndex) -> tintIndex == 0 ? 0xFF717070 : -1, com.trd.api.industiral.fluids.ModFluids.FLUID_DROP_NONE.get());
+        event.register((stack, tintIndex) -> tintIndex == 0 ? 0xFFE64306 : -1, com.trd.api.industiral.fluids.ModFluids.FLUID_DROP_LAVA.get());
+        event.register((stack, tintIndex) -> tintIndex == 0 ? 0xFF4487FF : -1, com.trd.api.industiral.fluids.ModFluids.FLUID_DROP_WATER.get());
 
         // === Metallurgy Heat Gradients ===
-        com.trd.api.metallurgy.system.ItemHeatColorRegistry.registerMixed(
-                com.trd.api.metallurgy.system.ItemHeatColorRegistry.HeatGradient.RED_TO_WHITE,
+        com.trd.api.industiral.metallurgy.system.ItemHeatColorRegistry.registerMixed(
+                com.trd.api.industiral.metallurgy.system.ItemHeatColorRegistry.HeatGradient.RED_TO_WHITE,
                 net.minecraft.world.item.Items.NETHERITE_INGOT,
                 net.minecraft.world.item.Items.NETHERITE_BLOCK,
                 net.minecraft.world.item.Items.NETHERITE_PICKAXE,
@@ -213,8 +215,8 @@ public class ModClientSetup {
                 net.minecraft.world.item.Items.NETHERITE_BOOTS
         );
 
-        com.trd.api.metallurgy.system.ItemHeatColorRegistry.registerMixed(
-                com.trd.api.metallurgy.system.ItemHeatColorRegistry.HeatGradient.ORANGE_TO_WHITE,
+        com.trd.api.industiral.metallurgy.system.ItemHeatColorRegistry.registerMixed(
+                com.trd.api.industiral.metallurgy.system.ItemHeatColorRegistry.HeatGradient.ORANGE_TO_WHITE,
                 net.minecraft.world.item.Items.COPPER_INGOT,
                 net.minecraft.world.item.Items.COPPER_BLOCK,
                 net.minecraft.world.item.Items.RAW_COPPER,
@@ -297,8 +299,8 @@ public class ModClientSetup {
                 com.trd.main.ResourceRegistry.getBlock("zinc")
         );
 
-        com.trd.api.metallurgy.system.ItemHeatColorRegistry.registerMixed(
-                com.trd.api.metallurgy.system.ItemHeatColorRegistry.HeatGradient.BLUE_TO_WHITE,
+        com.trd.api.industiral.metallurgy.system.ItemHeatColorRegistry.registerMixed(
+                com.trd.api.industiral.metallurgy.system.ItemHeatColorRegistry.HeatGradient.BLUE_TO_WHITE,
                 com.trd.main.ResourceRegistry.getMainUnit("neodymium"),
                 com.trd.main.ResourceRegistry.getSmallUnit("neodymium"),
                 com.trd.main.ResourceRegistry.getBlock("neodymium")
@@ -378,7 +380,7 @@ public class ModClientSetup {
         );
 
         // Slag handler
-        event.register((stack, tintIndex) -> com.trd.api.metallurgy.system.ItemHeatColorRegistry.getSlagHeatColor(stack, tintIndex),
+        event.register((stack, tintIndex) -> com.trd.api.industiral.metallurgy.system.ItemHeatColorRegistry.getSlagHeatColor(stack, tintIndex),
                 com.trd.item.ModItems.SLAG.get()
         );
 
@@ -394,7 +396,7 @@ public class ModClientSetup {
                     if (tag.contains("MetalId")) {
                         try {
                             net.minecraft.resources.ResourceLocation id = net.minecraft.resources.ResourceLocation.parse(tag.getString("MetalId"));
-                            return com.trd.api.metallurgy.system.MetallurgyRegistry.get(id)
+                            return com.trd.api.industiral.metallurgy.system.MetallurgyRegistry.get(id)
                                     .map(m -> 0xFF000000 | m.getColor())
                                     .orElse(-1);
                         } catch (Exception ignored) {}
@@ -406,16 +408,16 @@ public class ModClientSetup {
 
         // Кусок фракции: тинт по цвету фракции и состоянию
         event.register((stack, tintIndex) -> {
-            if (tintIndex == 0 && stack.getItem() instanceof com.trd.item.conglomerates.FractionChunkItem) {
-                return com.trd.item.conglomerates.FractionChunkItem.getDisplayColor(stack);
+            if (tintIndex == 0 && stack.getItem() instanceof com.trd.item.nature.conglomerates.FractionChunkItem) {
+                return com.trd.item.nature.conglomerates.FractionChunkItem.getDisplayColor(stack);
             }
             return -1;
         }, com.trd.item.ModItems.FRACTION_CHUNK.get());
 
         // Кусочек металла: тинт по цвету металла
         event.register((stack, tintIndex) -> {
-            if (tintIndex == 0 && stack.getItem() instanceof com.trd.item.conglomerates.MetalPieceItem) {
-                return com.trd.item.conglomerates.MetalPieceItem.getDisplayColor(stack);
+            if (tintIndex == 0 && stack.getItem() instanceof com.trd.item.nature.conglomerates.MetalPieceItem) {
+                return com.trd.item.nature.conglomerates.MetalPieceItem.getDisplayColor(stack);
             }
             return -1;
         }, com.trd.item.ModItems.METAL_PIECE.get());
@@ -439,7 +441,7 @@ public class ModClientSetup {
             }
         }
         if (!valid.isEmpty()) {
-            event.register((stack, tintIndex) -> com.trd.api.metallurgy.system.ItemHeatColorRegistry.getHeatColor(stack, tintIndex), valid.toArray(new net.minecraft.world.level.ItemLike[0]));
+            event.register((stack, tintIndex) -> com.trd.api.industiral.metallurgy.system.ItemHeatColorRegistry.getHeatColor(stack, tintIndex), valid.toArray(new net.minecraft.world.level.ItemLike[0]));
         }
     }
 
@@ -470,9 +472,9 @@ public class ModClientSetup {
         // Их модели помечены tintindex, значит CraterTints.onModelBake их НЕ оборачивает —
         // без этого хендлера tint не применяется вовсе.
         event.register((state, level, pos, tintIndex) -> {
-            int dark = state.getValue(com.trd.block.basic.CraterBasaltBlock.DARKNESS);
+            int dark = state.getValue(CraterBasaltBlock.DARKNESS);
             float f = 1.0f - com.trd.client.render.CraterTints.MAX_DARKNESS_RATIO
-                    * (dark / (float) com.trd.block.basic.CraterBasaltBlock.MAX_DARK);
+                    * (dark / (float) CraterBasaltBlock.MAX_DARK);
             int c = (int) (255.0f * f);
             return 0xFF000000 | (c << 16) | (c << 8) | c;
         }, com.trd.block.basic.ModBlocks.BASALT_SOFT.get(), com.trd.block.basic.ModBlocks.BASALT_SOFT_2.get(),
@@ -483,10 +485,10 @@ public class ModClientSetup {
         // LIGHT=0 это темно у центра воронки. Модели помечены tintindex, поэтому
         // CraterTints их не оборачивает и цвет обязан приходить отсюда.
         event.register((state, level, pos, tintIndex) -> {
-            int light = state.getValue(com.trd.block.basic.ScorchedBasaltBlock.LIGHT);
+            int light = state.getValue(ScorchedBasaltBlock.LIGHT);
             float f = 1.0f - com.trd.client.render.CraterTints.MAX_DARKNESS_RATIO
-                    * ((com.trd.block.basic.ScorchedBasaltBlock.MAX_LIGHT - light)
-                       / (float) com.trd.block.basic.ScorchedBasaltBlock.MAX_LIGHT);
+                    * ((ScorchedBasaltBlock.MAX_LIGHT - light)
+                       / (float) ScorchedBasaltBlock.MAX_LIGHT);
             int c = (int) (255.0f * f);
             return 0xFF000000 | (c << 16) | (c << 8) | c;
         }, com.trd.block.basic.ModBlocks.BASALT_SCORCHED.get());

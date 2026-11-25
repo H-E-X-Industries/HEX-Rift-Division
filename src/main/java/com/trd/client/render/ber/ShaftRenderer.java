@@ -6,7 +6,7 @@ import com.trd.block.basic.industrial.rotation.ShaftBlock;
 import com.trd.block.entity.industrial.rotation.ShaftBlockEntity;
 import com.trd.client.render.FlywheelFallbackHelper;
 import com.trd.client.render.flywheel.ModModels;
-import com.trd.client.rotation.ClientKineticAngleTracker;
+import com.trd.api.industiral.rotation.ClientKineticAngleTracker;
 import com.trd.item.industrial.rotation.GearItem;
 import com.trd.item.industrial.rotation.PulleyItem;
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;

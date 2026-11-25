@@ -1,6 +1,6 @@
 package com.trd.block.entity.industrial.conveyors;
 
-import com.trd.block.basic.industrial.ConveyorBlock;
+import com.trd.block.basic.industrial.conveyor.ConveyorBlock;
 import com.trd.block.entity.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

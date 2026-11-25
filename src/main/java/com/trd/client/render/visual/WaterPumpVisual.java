@@ -1,5 +1,6 @@
 package com.trd.client.render.visual;
 
+import com.trd.api.industiral.rotation.ClientKineticAngleTracker;
 import com.trd.client.render.flywheel.ModModels;
 import com.trd.block.basic.industrial.fluids.WaterPumpBlock;
 import com.trd.block.entity.industrial.fluids.WaterPumpBlockEntity;
@@ -69,7 +70,7 @@ public class WaterPumpVisual extends AbstractBlockEntityVisual<WaterPumpBlockEnt
     @Override
     public void beginFrame(Context context) {
         float partialTick = context.partialTick();
-        float currentAngle = com.trd.client.rotation.ClientKineticAngleTracker.getAngle(blockEntity, facing, partialTick);
+        float currentAngle = ClientKineticAngleTracker.getAngle(blockEntity, facing, partialTick);
 
         shaft.setIdentityTransform()
                 .translate(localX, localY, localZ)

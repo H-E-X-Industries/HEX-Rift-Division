@@ -6,7 +6,6 @@ import com.trd.main.MainRegistry;
 import com.trd.sound.ModSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
@@ -1174,7 +1173,7 @@ public class TurretBulletEntity extends AbstractArrow {
      * звук на убийство, вид — у них общее.
      * <p>
      * Урон и отбрасывание отдаёт
-     * {@link com.trd.explosion.logic.ExplosionHENonDestructive#explode} — тот же
+     * {@link com.trd.event.explosion.logic.ExplosionHENonDestructive#explode} — тот же
      * неразрушающий взрыв, что и у ракеты, но с радиусом
      * {@link #HE_EXPLOSION_RADIUS}. Он же бесплатно даёт ванильный взрывной
      * звук и «маленькую» частицу взрыва: {@code Explosion#finalizeExplosion}
@@ -1211,10 +1210,10 @@ public class TurretBulletEntity extends AbstractArrow {
         // (ExplosionInteraction.TNT), малый заряд не трогает их вовсе. Урон в обоих
         // случаях свой, а не ванильный, иначе он сложился бы с собственным.
         if (lightCharge) {
-            com.trd.explosion.logic.ExplosionHENonDestructive.explode(
+            com.trd.event.explosion.logic.ExplosionHENonDestructive.explode(
                     serverLevel, center, owner, radius, damage);
         } else {
-            com.trd.explosion.logic.ExplosionHE.explode(
+            com.trd.event.explosion.logic.ExplosionHE.explode(
                     serverLevel, center, owner, radius, damage);
         }
 

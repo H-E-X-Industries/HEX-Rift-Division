@@ -1,11 +1,11 @@
 package com.trd.block.entity.industrial.rotation;
 
-import com.trd.api.energy.IEnergyConnector;
-import com.trd.api.energy.IEnergyReceiver;
-import com.trd.api.rotation.KineticNetwork;
-import com.trd.api.rotation.KineticNetworkManager;
-import com.trd.api.rotation.Rotational;
-import com.trd.api.rotation.ShaftDiameter;
+import com.trd.api.industiral.energy.IEnergyConnector;
+import com.trd.api.industiral.energy.IEnergyReceiver;
+import com.trd.api.industiral.rotation.KineticNetwork;
+import com.trd.api.industiral.rotation.KineticNetworkManager;
+import com.trd.api.industiral.rotation.Rotational;
+import com.trd.api.industiral.rotation.ShaftDiameter;
 import com.trd.block.basic.industrial.rotation.MotorElectroBlock;
 import com.trd.block.basic.industrial.rotation.ShaftBlock;
 import com.trd.block.entity.ModBlockEntities;

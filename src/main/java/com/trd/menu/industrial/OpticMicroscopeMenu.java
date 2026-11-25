@@ -74,7 +74,7 @@ public class OpticMicroscopeMenu extends AbstractContainerMenu {
     public FluidStack getFluid() {
         int amount = data.get(2);
         if (amount <= 0) return FluidStack.EMPTY;
-        return new FluidStack(com.trd.api.fluids.ModFluids.SULFURIC_ACID_SOURCE.get(), amount);
+        return new FluidStack(com.trd.api.industiral.fluids.ModFluids.SULFURIC_ACID_SOURCE.get(), amount);
     }
 
     public int getCapacity() {

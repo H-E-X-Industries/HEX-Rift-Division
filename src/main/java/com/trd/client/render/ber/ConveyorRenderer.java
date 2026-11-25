@@ -2,7 +2,8 @@ package com.trd.client.render.ber;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import com.trd.block.basic.industrial.ConveyorBlock;
+import com.trd.block.basic.industrial.conveyor.ConveyorBlock;
+import com.trd.block.basic.industrial.conveyor.ConveyorElevatorBlock;
 import com.trd.block.entity.industrial.conveyors.ConveyorBlockEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -28,7 +29,7 @@ public class ConveyorRenderer implements BlockEntityRenderer<ConveyorBlockEntity
     public void render(ConveyorBlockEntity be, float partialTick, PoseStack poseStack,
                        MultiBufferSource buffer, int packedLight, int packedOverlay) {
 
-        com.trd.api.conveyor.client.ClientConveyorManager.ClientNetworkData netData = com.trd.api.conveyor.client.ClientConveyorManager.getNetworkFor(be.getBlockPos());
+        com.trd.api.industiral.conveyor.client.ClientConveyorManager.ClientNetworkData netData = com.trd.api.industiral.conveyor.client.ClientConveyorManager.getNetworkFor(be.getBlockPos());
         if (netData == null || netData.items.isEmpty()) return;
 
         double blockIndex = netData.getIndexFor(be.getBlockPos());
@@ -46,8 +47,8 @@ public class ConveyorRenderer implements BlockEntityRenderer<ConveyorBlockEntity
                 if (d.getAxis().isVertical()) continue;
                 BlockPos p = currentPos.relative(d);
                 BlockState s = be.getLevel().getBlockState(p);
-                if (s.getBlock() instanceof com.trd.block.basic.industrial.ConveyorElevatorBlock) {
-                    if (s.getValue(com.trd.block.basic.industrial.ConveyorElevatorBlock.PART) == com.trd.block.basic.industrial.ConveyorElevatorBlock.ElevatorPart.TOP
+                if (s.getBlock() instanceof ConveyorElevatorBlock) {
+                    if (s.getValue(ConveyorElevatorBlock.PART) == ConveyorElevatorBlock.ElevatorPart.TOP
                             && s.getValue(ConveyorBlock.FACING) == d.getOpposite()) {
                         prevPos = p;
                         break;
@@ -64,8 +65,8 @@ public class ConveyorRenderer implements BlockEntityRenderer<ConveyorBlockEntity
         
         BlockPos nextPos = blockIndex < netData.path.size() - 1 ? netData.path.get((int) blockIndex + 1) : currentPos.relative(facing);
 
-        for (com.trd.api.conveyor.ConveyorItem item : netData.items) {
-            double globalProgress = item.getProgress() + (com.trd.api.conveyor.ConveyorNetwork.SPEED * partialTick);
+        for (com.trd.api.industiral.conveyor.ConveyorItem item : netData.items) {
+            double globalProgress = item.getProgress() + (com.trd.api.industiral.conveyor.ConveyorNetwork.SPEED * partialTick);
             globalProgress = Math.min(globalProgress, netData.path.size() - 0.01);
             
             // Если предмет находится на текущем блоке (от index до index + 1)
@@ -83,7 +84,7 @@ public class ConveyorRenderer implements BlockEntityRenderer<ConveyorBlockEntity
                     effectivePrevPos = itemPrevOverride;
                 }
 
-                double[] pose = com.trd.api.conveyor.PathMath.calculatePathPoint(effectivePrevPos, currentPos, nextPos, localProgress, be.getBlockState(), be.getLevel());
+                double[] pose = com.trd.api.industiral.conveyor.PathMath.calculatePathPoint(effectivePrevPos, currentPos, nextPos, localProgress, be.getBlockState(), be.getLevel());
 
                 poseStack.pushPose();
                 

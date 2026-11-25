@@ -1,6 +1,6 @@
 package com.trd.block.entity.industrial.energy;
 
-import com.trd.api.paint.IPaintableConduit;
+import com.trd.api.industiral.redstone.IPaintableConduit;
 import com.trd.block.entity.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;

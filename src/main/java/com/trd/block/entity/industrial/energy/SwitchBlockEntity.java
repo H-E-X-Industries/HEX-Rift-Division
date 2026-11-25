@@ -6,9 +6,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import org.jetbrains.annotations.NotNull;
-import com.trd.api.energy.EnergyNetworkManager;
-import com.trd.api.energy.IEnergyConnector;
+import com.trd.api.industiral.energy.EnergyNetworkManager;
+import com.trd.api.industiral.energy.IEnergyConnector;
 import com.trd.block.basic.industrial.energy.SwitchBlock;
 import com.trd.block.entity.ModBlockEntities;
 

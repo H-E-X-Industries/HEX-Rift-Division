@@ -2,7 +2,7 @@ package com.trd.client.event;
 
 import com.trd.block.basic.industrial.rotation.HandCrankBlock;
 import com.trd.main.MainRegistry;
-import com.trd.network.packet.rotation.ScrollHandCrankPacket;
+import com.trd.network.packet.industrial.rotation.ScrollHandCrankPacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;

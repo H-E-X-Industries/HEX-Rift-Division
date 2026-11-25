@@ -1,7 +1,7 @@
 package com.trd.network.packet.explosion;
 
-import com.trd.fx.particle.ExplosionParticleUtils;
-import com.trd.fx.particle.ModExplosionParticles;
+import com.trd.client.particle.ExplosionParticleUtils;
+import com.trd.client.particle.ModExplosionParticles;
 import com.trd.main.MainRegistry;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.particles.SimpleParticleType;

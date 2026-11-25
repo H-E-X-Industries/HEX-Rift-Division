@@ -1,8 +1,12 @@
 package com.trd.item;
 
+import com.trd.api.tooltip.MachineTooltipHandler;
 import com.trd.entity.weapons.grenades.GrenadeIfType;
 import com.trd.entity.weapons.grenades.GrenadeType;
 import com.trd.entity.ModEntities;
+import com.trd.event.industrial.LiquidMetalItem;
+import com.trd.event.industrial.SlagItem;
+import com.trd.item.industrial.fluids.InfiniteFluidBarrelItem;
 import com.trd.main.MainRegistry;
 import net.minecraft.world.item.Item;
 import net.neoforged.bus.api.IEventBus;
@@ -103,17 +107,17 @@ public class ModItems {
     public static final DeferredItem<Item> INDUSTRIAL_COPPER_WIRE = ITEMS.register("industrial_copper_wire", () -> new Item(new Item.Properties()));
     public static final DeferredItem<Item> GOLD_WIRE = ITEMS.register("gold_wire", () -> new Item(new Item.Properties()));
     public static final DeferredItem<Item> NEODYMIUM_WIRE = ITEMS.register("neodymium_wire", () -> new Item(new Item.Properties()));
-    public static final DeferredItem<Item> SCREWDRIVER = ITEMS.register("screwdriver", () -> new com.trd.item.tools.ScrewdriverItem(new Item.Properties().stacksTo(1)));
+    public static final DeferredItem<Item> SCREWDRIVER = ITEMS.register("screwdriver", () -> new com.trd.item.industrial.tools.ScrewdriverItem(new Item.Properties().stacksTo(1)));
 
     // New items
     public static final DeferredItem<Item> CINNABAR = ITEMS.register("cinnabar", () -> new Item(new Item.Properties()));
     public static final DeferredItem<Item> FLUORITE = ITEMS.register("fluorite", () -> new Item(new Item.Properties()));
     public static final DeferredItem<Item> CONGLOMERATE_POWDER = ITEMS.register("conglomerate_powder", () -> new Item(new Item.Properties()));
     
-    public static final DeferredItem<Item> CONGLOMERATE_CHUNK = ITEMS.register("conglomerate_chunk", () -> new com.trd.item.conglomerates.ConglomerateItem(new Item.Properties()));
-    public static final DeferredItem<Item> OIL_ROCK_CHUNK = ITEMS.register("oil_rock_chunk", () -> new com.trd.item.oil.OilRockChunkItem(new Item.Properties()));
-    public static final DeferredItem<Item> FRACTION_CHUNK = ITEMS.register("ore_fraction", () -> new com.trd.item.conglomerates.FractionChunkItem(new Item.Properties()));
-    public static final DeferredItem<Item> METAL_PIECE = ITEMS.register("metal_piece", () -> new com.trd.item.conglomerates.MetalPieceItem(new Item.Properties()));
+    public static final DeferredItem<Item> CONGLOMERATE_CHUNK = ITEMS.register("conglomerate_chunk", () -> new com.trd.item.nature.conglomerates.ConglomerateItem(new Item.Properties()));
+    public static final DeferredItem<Item> OIL_ROCK_CHUNK = ITEMS.register("oil_rock_chunk", () -> new com.trd.item.nature.oil.OilRockChunkItem(new Item.Properties()));
+    public static final DeferredItem<Item> FRACTION_CHUNK = ITEMS.register("ore_fraction", () -> new com.trd.item.nature.conglomerates.FractionChunkItem(new Item.Properties()));
+    public static final DeferredItem<Item> METAL_PIECE = ITEMS.register("metal_piece", () -> new com.trd.item.nature.conglomerates.MetalPieceItem(new Item.Properties()));
 
     // Fluid Containers
     public static final DeferredItem<Item> PIPETTE = ITEMS.register("pipette",
@@ -128,15 +132,15 @@ public class ModItems {
             () -> new Item(new Item.Properties()));
 
     public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> FLUID_IDENTIFIER = ITEMS.register("fluid_identifier", () -> new com.trd.item.industrial.fluids.FluidIdentifierItem(new net.minecraft.world.item.Item.Properties().stacksTo(1)));
-    public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> INFINITE_FLUID_BARREL = ITEMS.register("infinite_fluid_barrel", () -> new com.trd.item.tools.InfiniteFluidBarrelItem(new net.minecraft.world.item.Item.Properties().stacksTo(1)));
+    public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> INFINITE_FLUID_BARREL = ITEMS.register("infinite_fluid_barrel", () -> new InfiniteFluidBarrelItem(new net.minecraft.world.item.Item.Properties().stacksTo(1)));
     public static final net.neoforged.neoforge.registries.DeferredItem<net.minecraft.world.item.Item> FLUID_TANK_IRON = ITEMS.register("fluid_tank_iron", () -> new com.trd.item.industrial.fluids.FluidContainerItem(new net.minecraft.world.item.Item.Properties().stacksTo(16), 1000, 80, 1050));
     // Metallurgy & Casting
     public static final DeferredItem<Item> SLAG = ITEMS.register("slag",
-            () -> new com.trd.event.SlagItem(new Item.Properties()));
+            () -> new SlagItem(new Item.Properties()));
     public static final DeferredItem<Item> POKER = ITEMS.register("poker",
-            () -> new com.trd.item.tools.PokerItem(new Item.Properties().durability(250)));
+            () -> new com.trd.item.industrial.tools.PokerItem(new Item.Properties().durability(250)));
     public static final DeferredItem<Item> LIQUID_METAL = ITEMS.register("liquid_metal",
-            () -> new com.trd.event.LiquidMetalItem(new Item.Properties()));
+            () -> new LiquidMetalItem(new Item.Properties()));
 
     public static final DeferredItem<Item> CAST_PICKAXE_IRON_BASE = ITEMS.register("cast_pickaxe_iron_base",
             () -> new Item(new Item.Properties()));
@@ -166,39 +170,39 @@ public class ModItems {
             () -> new com.trd.multiblock.system.MultiblockBlockItem(ModBlocks.VISHELASHIVATEL.get(), new Item.Properties()));
 
     public static final DeferredItem<Item> BLADE = ITEMS.register("blade",
-            () -> new com.trd.item.tools.BladeItem(new Item.Properties().stacksTo(1)));
+            () -> new com.trd.item.industrial.tools.BladeItem(new Item.Properties().stacksTo(1)));
 
     // Cast Pickaxes
     public static final DeferredItem<Item> CAST_PICKAXE_IRON = ITEMS.register("cast_pickaxe_iron",
-            () -> new com.trd.item.tools.cast_pickaxes.materials.CastPickaxeIronItem(new Item.Properties().stacksTo(1)));
+            () -> new com.trd.item.industrial.tools.cast_pickaxes.materials.CastPickaxeIronItem(new Item.Properties().stacksTo(1)));
     public static final DeferredItem<Item> CAST_PICKAXE_STEEL = ITEMS.register("cast_pickaxe_steel",
-            () -> new com.trd.item.tools.cast_pickaxes.materials.CastPickaxeSteelItem(new Item.Properties().stacksTo(1)));
+            () -> new com.trd.item.industrial.tools.cast_pickaxes.materials.CastPickaxeSteelItem(new Item.Properties().stacksTo(1)));
 
     // Rotation / Kinetic Items
     public static final DeferredItem<Item> BELT = ITEMS.register("belt",
             () -> new com.trd.item.industrial.rotation.BeltItem(new Item.Properties()));
     public static final DeferredItem<Item> PULLEY = ITEMS.register("pulley",
             () -> new com.trd.item.industrial.rotation.PulleyItem(new Item.Properties(), 1, 12,
-                    com.trd.api.rotation.ShaftMaterial.IRON,
-                    com.trd.api.rotation.ShaftDiameter.LIGHT,
-                    com.trd.api.rotation.ShaftDiameter.MEDIUM));
+                    com.trd.api.industiral.rotation.ShaftMaterial.IRON,
+                    com.trd.api.industiral.rotation.ShaftDiameter.LIGHT,
+                    com.trd.api.industiral.rotation.ShaftDiameter.MEDIUM));
 
     public static final DeferredItem<Item> BEVEL_GEAR = ITEMS.register("bevel_gear",
-            () -> new com.trd.item.industrial.rotation.BevelGearItem(new Item.Properties(), com.trd.api.rotation.ShaftMaterial.STEEL));
+            () -> new com.trd.item.industrial.rotation.BevelGearItem(new Item.Properties(), com.trd.api.industiral.rotation.ShaftMaterial.STEEL));
 
     public static final DeferredItem<Item> GEAR1_STEEL = ITEMS.register("steel_gear_small",
-            () -> new com.trd.item.industrial.rotation.GearItem(new Item.Properties(), 1, com.trd.api.rotation.ShaftMaterial.STEEL));
+            () -> new com.trd.item.industrial.rotation.GearItem(new Item.Properties(), 1, com.trd.api.industiral.rotation.ShaftMaterial.STEEL));
 
     public static final DeferredItem<Item> GEAR2_STEEL = ITEMS.register("steel_gear_medium",
-            () -> new com.trd.item.industrial.rotation.GearItem(new Item.Properties(), 2, com.trd.api.rotation.ShaftMaterial.STEEL));
+            () -> new com.trd.item.industrial.rotation.GearItem(new Item.Properties(), 2, com.trd.api.industiral.rotation.ShaftMaterial.STEEL));
 
     public static final DeferredItem<Item> COPPER_COIL = ITEMS.register("copper_coil",
             () -> new com.trd.item.industrial.energy.StatorCoilItem(new Item.Properties().stacksTo(64), "copper", 1, 500, 20, 3.0f));
 
     public static final DeferredItem<Item> FLYWHEEL_LIGHT = ITEMS.register("flywheel_light",
             () -> new com.trd.item.industrial.rotation.FlywheelItem(new Item.Properties(),
-                    com.trd.api.rotation.ShaftDiameter.LIGHT,
-                    com.trd.api.rotation.ShaftDiameter.MEDIUM));
+                    com.trd.api.industiral.rotation.ShaftDiameter.LIGHT,
+                    com.trd.api.industiral.rotation.ShaftDiameter.MEDIUM));
 
     public static final DeferredItem<Item> COPPER_ROTOR = ITEMS.register("copper_rotor",
             () -> new com.trd.item.industrial.rotation.RotorItem(new Item.Properties()));
@@ -224,7 +228,7 @@ public class ModItems {
             () -> new Item(new Item.Properties()));
 
     public static final DeferredItem<Item> BEAM_PLACER = ITEMS.register("beam_placer",
-            () -> new com.trd.item.tools.BeamPlacerItem(new Item.Properties().stacksTo(1)));
+            () -> new com.trd.item.industrial.tools.BeamPlacerItem(new Item.Properties().stacksTo(1)));
 
     // ═══════════════════════════════════════════════════════
     // ВЗРЫВЧАТКА
@@ -458,7 +462,7 @@ public class ModItems {
 
     /**
      * Подробные описания предметов. Без записи здесь
-     * {@link com.trd.client.MachineTooltipHandler} не знает ключ перевода и
+     * {@link MachineTooltipHandler} не знает ключ перевода и
      * предмет не показывает подсказку «Зажми Shift».
      *
      * <p>Блоки регистрируются отдельно в {@link com.trd.block.basic.ModBlocks},

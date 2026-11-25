@@ -1,6 +1,6 @@
 package com.trd.multiblock.industrial.centrifuge.cylinder;
 
-import com.trd.api.fluids.ModFluids;
+import com.trd.api.industiral.fluids.ModFluids;
 import com.trd.item.ModItems;
 import com.trd.main.ResourceRegistry;
 import net.minecraft.resources.ResourceLocation;
