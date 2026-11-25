@@ -1,6 +1,6 @@
 package com.trd.client.overlay.hud;
 
-import com.trd.item.tools.cast_pickaxes.CastPickaxeItem;
+import com.trd.item.industrial.tools.cast_pickaxes.CastPickaxeItem;
 import com.trd.main.MainRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;

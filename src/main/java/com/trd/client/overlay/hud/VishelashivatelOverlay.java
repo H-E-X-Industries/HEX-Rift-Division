@@ -1,8 +1,8 @@
 package com.trd.client.overlay.hud;
 
-import com.trd.api.vein.FractionLayerMatrix;
-import com.trd.api.vein.FractionType;
-import com.trd.item.conglomerates.FractionChunkItem;
+import com.trd.api.nature.ore.vein.FractionLayerMatrix;
+import com.trd.api.nature.ore.vein.FractionType;
+import com.trd.item.nature.conglomerates.FractionChunkItem;
 import com.trd.main.MainRegistry;
 import com.trd.multiblock.industrial.vishelashivatel.FractionLeachLogic;
 import com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlockEntity;

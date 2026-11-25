@@ -1,13 +1,13 @@
 package com.trd.client.overlay.gui;
 
-import com.trd.api.fluids.ModFluids;
-import com.trd.api.fluids.system.FluidDropItem;
-import com.trd.api.fluids.system.FluidPropertyHelper;
+import com.trd.api.industiral.fluids.ModFluids;
+import com.trd.api.industiral.fluids.system.FluidDropItem;
+import com.trd.api.industiral.fluids.system.FluidPropertyHelper;
 import com.trd.item.industrial.fluids.FluidIdentifierItem;
 import com.trd.main.MainRegistry;
-import com.trd.network.packet.fluids.ClearFluidHistoryPacket;
-import com.trd.network.packet.fluids.SelectFluidPacket;
-import com.trd.network.packet.fluids.ToggleFavoriteFluidPacket;
+import com.trd.network.packet.industrial.fluids.ClearFluidHistoryPacket;
+import com.trd.network.packet.industrial.fluids.SelectFluidPacket;
+import com.trd.network.packet.industrial.fluids.ToggleFavoriteFluidPacket;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -23,7 +23,6 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.neoforged.neoforge.fluids.FluidStack;
-import net.minecraft.core.registries.BuiltInRegistries;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,8 +1,8 @@
 package com.trd.multiblock.industrial.centrifuge;
 
-import com.trd.api.energy.EnergyNetworkManager;
-import com.trd.api.energy.IEnergyConnector;
-import com.trd.api.energy.IEnergyReceiver;
+import com.trd.api.industiral.energy.EnergyNetworkManager;
+import com.trd.api.industiral.energy.IEnergyConnector;
+import com.trd.api.industiral.energy.IEnergyReceiver;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.multiblock.industrial.centrifuge.conus.CentrifugeConusBlockEntity;
 import com.trd.multiblock.industrial.centrifuge.cylinder.CentrifugeCylinderBlockEntity;

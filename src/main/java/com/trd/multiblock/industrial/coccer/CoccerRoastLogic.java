@@ -1,7 +1,7 @@
 package com.trd.multiblock.industrial.coccer;
 
-import com.trd.item.conglomerates.FractionChunkItem;
-import com.trd.item.conglomerates.MetalPieceItem;
+import com.trd.item.nature.conglomerates.FractionChunkItem;
+import com.trd.item.nature.conglomerates.MetalPieceItem;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.fluids.FluidStack;
 
@@ -49,6 +49,6 @@ public final class CoccerRoastLogic {
 
     /** Красный шлам, выпадающий при обжарке (или пусто). */
     public static FluidStack getSludge() {
-        return new FluidStack(com.trd.api.fluids.ModFluids.RED_SLUDGE_SOURCE.get(), SLUDGE_PER_ROAST);
+        return new FluidStack(com.trd.api.industiral.fluids.ModFluids.RED_SLUDGE_SOURCE.get(), SLUDGE_PER_ROAST);
     }
 }

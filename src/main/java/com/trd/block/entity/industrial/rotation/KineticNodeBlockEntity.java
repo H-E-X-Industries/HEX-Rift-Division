@@ -1,8 +1,8 @@
 package com.trd.block.entity.industrial.rotation;
 
-import com.trd.api.rotation.KineticNetwork;
-import com.trd.api.rotation.KineticNetworkManager;
-import com.trd.api.rotation.Rotational;
+import com.trd.api.industiral.rotation.KineticNetwork;
+import com.trd.api.industiral.rotation.KineticNetworkManager;
+import com.trd.api.industiral.rotation.Rotational;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;

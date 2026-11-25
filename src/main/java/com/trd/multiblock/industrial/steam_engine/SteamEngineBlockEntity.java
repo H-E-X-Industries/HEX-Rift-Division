@@ -1,8 +1,8 @@
 package com.trd.multiblock.industrial.steam_engine;
 
-import com.trd.api.rotation.KineticNetwork;
-import com.trd.api.rotation.KineticNetworkManager;
-import com.trd.api.rotation.Rotational;
+import com.trd.api.industiral.rotation.KineticNetwork;
+import com.trd.api.industiral.rotation.KineticNetworkManager;
+import com.trd.api.industiral.rotation.Rotational;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.block.entity.industrial.rotation.KineticNodeBlockEntity;
 import com.trd.multiblock.system.IMultiblockController;
@@ -26,13 +26,13 @@ public class SteamEngineBlockEntity extends KineticNodeBlockEntity implements IM
     public final FluidTank steamTank = new FluidTank(16_000) {
         @Override
         public boolean isFluidValid(FluidStack stack) {
-            return stack.getFluid() == com.trd.api.fluids.ModFluids.STEAM_SOURCE.get();
+            return stack.getFluid() == com.trd.api.industiral.fluids.ModFluids.STEAM_SOURCE.get();
         }
     };
     public final FluidTank lowPressureSteamTank = new FluidTank(64_000) {
         @Override
         public boolean isFluidValid(FluidStack stack) {
-            return stack.getFluid() == com.trd.api.fluids.ModFluids.LOW_PRESSURE_STEAM_SOURCE.get();
+            return stack.getFluid() == com.trd.api.industiral.fluids.ModFluids.LOW_PRESSURE_STEAM_SOURCE.get();
         }
     };
 
@@ -161,7 +161,7 @@ public class SteamEngineBlockEntity extends KineticNodeBlockEntity implements IM
             FluidStack drained = steamTank.drain(converted, IFluidHandler.FluidAction.EXECUTE);
             if (!drained.isEmpty()) {
                 int amount = drained.getAmount();
-                FluidStack lowPressure = new FluidStack(com.trd.api.fluids.ModFluids.LOW_PRESSURE_STEAM_SOURCE.get(), amount);
+                FluidStack lowPressure = new FluidStack(com.trd.api.industiral.fluids.ModFluids.LOW_PRESSURE_STEAM_SOURCE.get(), amount);
                 lowPressureSteamTank.fill(lowPressure, IFluidHandler.FluidAction.EXECUTE);
 
                 long targetSpeed = Math.min(amount * 10L, 250L);

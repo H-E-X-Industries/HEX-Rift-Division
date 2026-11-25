@@ -1,9 +1,9 @@
 package com.trd.worldgen.feature.vien;
 
-import com.trd.api.vein.VeinBiomeResolver;
-import com.trd.api.vein.VeinCompositionGenerator;
-import com.trd.api.vein.VeinManager;
-import com.trd.api.vein.VeinModifier;
+import com.trd.api.nature.ore.vein.VeinBiomeResolver;
+import com.trd.api.nature.ore.vein.VeinCompositionGenerator;
+import com.trd.api.nature.ore.vein.VeinManager;
+import com.trd.api.nature.ore.vein.VeinModifier;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;

@@ -9,7 +9,6 @@ import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
@@ -344,7 +343,7 @@ public final class MachineGunClientAnim {
                 mc.player.getYRot(),
                 false);
 
-        mc.level.addParticle(com.trd.fx.particle.ModExplosionParticles.SHOT.get(), at.x, at.y, at.z,
+        mc.level.addParticle(com.trd.client.particle.ModExplosionParticles.SHOT.get(), at.x, at.y, at.z,
                 0.0D, 0.0D, 0.0D);
     }
 

@@ -1,7 +1,7 @@
 package com.trd.worldgen.feature.oil;
 
-import com.trd.api.oil.ReservoirType;
-import com.trd.api.oil.VeinShape;
+import com.trd.api.nature.ore.oil.ReservoirType;
+import com.trd.api.nature.ore.oil.VeinShape;
 import com.trd.main.MainRegistry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;

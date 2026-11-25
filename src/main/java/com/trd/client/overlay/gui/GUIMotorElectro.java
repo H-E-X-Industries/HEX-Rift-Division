@@ -3,7 +3,7 @@ package com.trd.client.overlay.gui;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.trd.main.MainRegistry;
 import com.trd.menu.rotation.MotorElectroMenu;
-import com.trd.network.packet.energy.SyncMotorRpmPacket;
+import com.trd.network.packet.industrial.energy.SyncMotorRpmPacket;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;

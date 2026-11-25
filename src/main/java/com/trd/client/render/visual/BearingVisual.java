@@ -1,8 +1,9 @@
 package com.trd.client.render.visual;
 
+import com.trd.api.industiral.rotation.ClientKineticAngleTracker;
 import com.trd.client.render.flywheel.ModModels;
-import com.trd.api.rotation.ShaftDiameter;
-import com.trd.api.rotation.ShaftMaterial;
+import com.trd.api.industiral.rotation.ShaftDiameter;
+import com.trd.api.industiral.rotation.ShaftMaterial;
 import com.trd.block.basic.industrial.rotation.BearingBlock;
 import com.trd.block.entity.industrial.rotation.BearingBlockEntity;
 import com.trd.main.MainRegistry;
@@ -134,7 +135,7 @@ public class BearingVisual extends AbstractBlockEntityVisual<BearingBlockEntity>
         }
 
         float partialTick = ctx.partialTick();
-        float currentAngle = com.trd.client.rotation.ClientKineticAngleTracker.getAngle(blockEntity, facing, partialTick);
+        float currentAngle = ClientKineticAngleTracker.getAngle(blockEntity, facing, partialTick);
 
         applyRotation(this.innerRing, currentAngle);
         if (this.shaft != null) {

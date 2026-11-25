@@ -4,7 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.trd.client.render.FlywheelFallbackHelper;
 import com.trd.client.render.flywheel.ModModels;
-import com.trd.client.rotation.ClientKineticAngleTracker;
+import com.trd.api.industiral.rotation.ClientKineticAngleTracker;
 import com.trd.multiblock.industrial.steam_engine.SteamEngineBlock;
 import com.trd.multiblock.industrial.steam_engine.SteamEngineBlockEntity;
 import net.minecraft.client.renderer.MultiBufferSource;

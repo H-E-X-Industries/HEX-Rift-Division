@@ -1,15 +1,11 @@
 package com.trd.entity.weapons.missiles;
 
 import com.trd.block.entity.weapons.MissileTurretBlockEntity;
-import com.trd.explosion.logic.ExplosionHE;
-import com.trd.explosion.logic.ExplosionFire;
-import com.trd.explosion.logic.ExplosionHENonDestructive;
-import net.minecraft.core.BlockPos;
+import com.trd.event.explosion.logic.ExplosionHE;
+import com.trd.event.explosion.logic.ExplosionFire;
+import com.trd.event.explosion.logic.ExplosionHENonDestructive;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;

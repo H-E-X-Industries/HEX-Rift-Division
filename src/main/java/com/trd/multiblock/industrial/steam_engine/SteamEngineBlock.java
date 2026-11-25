@@ -138,7 +138,7 @@ public class SteamEngineBlock extends BaseEntityBlock implements IMultiblockCont
         if (!level.isClientSide) {
             Direction facing = state.getValue(FACING);
             getStructureHelper().placeStructure(level, pos, facing, this);
-            com.trd.api.rotation.KineticNetworkManager.get((ServerLevel) level).updateNetworkAfterPlace(pos);
+            com.trd.api.industiral.rotation.KineticNetworkManager.get((ServerLevel) level).updateNetworkAfterPlace(pos);
         }
     }
 
@@ -147,7 +147,7 @@ public class SteamEngineBlock extends BaseEntityBlock implements IMultiblockCont
         if (!state.is(newState.getBlock()) && !level.isClientSide) {
             Direction facing = state.getValue(FACING);
             getStructureHelper().destroyStructure(level, pos, facing);
-            com.trd.api.rotation.KineticNetworkManager.get((ServerLevel) level).updateNetworkAfterRemove(pos);
+            com.trd.api.industiral.rotation.KineticNetworkManager.get((ServerLevel) level).updateNetworkAfterRemove(pos);
         }
         super.onRemove(state, level, pos, newState, isMoving);
     }

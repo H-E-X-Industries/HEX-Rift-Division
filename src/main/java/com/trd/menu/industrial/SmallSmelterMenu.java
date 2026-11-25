@@ -2,7 +2,7 @@ package com.trd.menu.industrial;
 
 import com.trd.block.basic.ModBlocks;
 import com.trd.block.entity.industrial.casting.SmallSmelterBlockEntity;
-import com.trd.event.SlagItem;
+import com.trd.event.industrial.SlagItem;
 import com.trd.menu.ModMenuTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
@@ -46,7 +46,7 @@ public class SmallSmelterMenu extends AbstractContainerMenu {
         this.addSlot(new SlotItemHandler(entity.getInventory(), SmallSmelterBlockEntity.SLOT_SMELT, 121, 13) {
             @Override
             public boolean mayPlace(ItemStack stack) {
-                return (entity.getLevel() != null && com.trd.api.metallurgy.system.MetallurgyRegistry.getSmeltRecipe(entity.getLevel(), stack) != null)
+                return (entity.getLevel() != null && com.trd.api.industiral.metallurgy.system.MetallurgyRegistry.getSmeltRecipe(entity.getLevel(), stack) != null)
                         || stack.getItem() instanceof SlagItem;
             }
         });
@@ -109,7 +109,7 @@ public class SmallSmelterMenu extends AbstractContainerMenu {
                     if (!this.moveItemStackTo(stack, 0, 1, false)) {
                         return ItemStack.EMPTY;
                     }
-                } else if ((player.level() != null && com.trd.api.metallurgy.system.MetallurgyRegistry.getSmeltRecipe(player.level(), stack) != null)
+                } else if ((player.level() != null && com.trd.api.industiral.metallurgy.system.MetallurgyRegistry.getSmeltRecipe(player.level(), stack) != null)
                         || stack.getItem() instanceof SlagItem) {
                     if (!this.moveItemStackTo(stack, 2, 3, false)) {
                         return ItemStack.EMPTY;

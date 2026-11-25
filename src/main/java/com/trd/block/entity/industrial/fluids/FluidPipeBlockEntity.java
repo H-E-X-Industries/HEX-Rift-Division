@@ -1,6 +1,6 @@
 package com.trd.block.entity.industrial.fluids;
 
-import com.trd.api.fluids.system.FluidNetworkManager;
+import com.trd.api.industiral.fluids.system.FluidNetworkManager;
 import com.trd.block.entity.ModBlockEntities;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;

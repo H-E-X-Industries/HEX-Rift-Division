@@ -2,7 +2,7 @@ package com.trd.client.overlay.gui;
 
 import com.trd.main.MainRegistry;
 import com.trd.menu.industrial.RedstoneRadioMenu;
-import com.trd.network.packet.redstone.RedstoneRadioChannelPacket;
+import com.trd.network.packet.industrial.redstone.RedstoneRadioChannelPacket;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;

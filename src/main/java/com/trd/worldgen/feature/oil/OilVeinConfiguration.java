@@ -2,8 +2,8 @@ package com.trd.worldgen.feature.oil;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import com.trd.api.oil.ReservoirType;
-import com.trd.api.oil.VeinShape;
+import com.trd.api.nature.ore.oil.ReservoirType;
+import com.trd.api.nature.ore.oil.VeinShape;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
 

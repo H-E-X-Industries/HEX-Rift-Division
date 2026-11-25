@@ -1,8 +1,7 @@
 package com.trd.item.industrial.fluids;
 
-import com.trd.api.fluids.system.FluidInfoHelper;
+import com.trd.api.industiral.fluids.system.FluidInfoHelper;
 import net.minecraft.ChatFormatting;
-import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -18,7 +17,6 @@ import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandlerItem;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.component.CustomData;
@@ -111,7 +109,7 @@ public class FluidContainerItem extends Item {
         FluidStack fluid = getFluid(stack);
         if (!fluid.isEmpty()) {
             int color = FluidInfoHelper.getRgbColor(fluid);
-            tooltip.add(Component.literal("  ")
+            tooltip.add(Component.literal("")
                     .append(FluidInfoHelper.getDisplayName(fluid))
                     .append(Component.literal(": " + fluid.getAmount() + " / " + capacity + " mB"))
                     .withStyle(style -> style.withColor(color)));
@@ -125,7 +123,7 @@ public class FluidContainerItem extends Item {
     public java.util.List<Component> getMaxRatingTooltip() {
         java.util.List<Component> tooltip = new java.util.ArrayList<>();
         tooltip.add(Component.translatable("tooltip.trd.fluid_pipe.max_temp").withStyle(ChatFormatting.GRAY)
-                .append(Component.literal(maxTemperature + " °C").withStyle(ChatFormatting.GOLD)));
+                .append(Component.literal(maxTemperature + "°C").withStyle(ChatFormatting.GOLD)));
         tooltip.add(Component.translatable("tooltip.trd.fluid_pipe.max_corrosion").withStyle(ChatFormatting.GRAY)
                 .append(Component.literal(String.valueOf(maxCorrosion)).withStyle(ChatFormatting.YELLOW)));
         return tooltip;

@@ -1,7 +1,8 @@
 package com.trd.block.entity.industrial.energy;
 
-import com.trd.api.energy.IEnergyConnector;
-import com.trd.api.energy.IEnergyReceiver;
+import com.trd.api.nature.climate.system.IHeatSource;
+import com.trd.api.industiral.energy.IEnergyConnector;
+import com.trd.api.industiral.energy.IEnergyReceiver;
 import com.trd.block.basic.industrial.ElectricFurnaceBlock;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.item.industrial.energy.EnergyCellItem;
@@ -27,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-public class ElectricFurnaceBlockEntity extends BlockEntity implements IEnergyReceiver, IEnergyConnector, com.trd.api.climate.IHeatSource {
+public class ElectricFurnaceBlockEntity extends BlockEntity implements IEnergyReceiver, IEnergyConnector, IHeatSource {
 
     public static final long MAX_ENERGY = 10_000L;
     public static final long RECEIVE_SPEED = 1_000L;
@@ -124,7 +125,7 @@ public class ElectricFurnaceBlockEntity extends BlockEntity implements IEnergyRe
     public void onChunkUnloaded() {
         super.onChunkUnloaded();
         if (level != null && !level.isClientSide) {
-            com.trd.api.energy.EnergyNetworkManager.get((ServerLevel) level).removeNode(getBlockPos());
+            com.trd.api.industiral.energy.EnergyNetworkManager.get((ServerLevel) level).removeNode(getBlockPos());
         }
     }
 

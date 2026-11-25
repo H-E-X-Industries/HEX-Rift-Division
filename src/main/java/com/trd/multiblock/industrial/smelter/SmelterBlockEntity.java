@@ -1,15 +1,16 @@
 package com.trd.multiblock.industrial.smelter;
 
-import com.trd.api.metallurgy.system.ISmelter;
-import com.trd.api.metallurgy.system.Metal;
-import com.trd.api.metallurgy.system.MetalUnits2;
-import com.trd.api.metallurgy.system.MetallurgyRegistry;
-import com.trd.api.metallurgy.system.recipe.AlloyRecipe;
-import com.trd.api.metallurgy.system.recipe.AlloySlot;
-import com.trd.api.metallurgy.system.recipe.SmeltRecipe;
+import com.trd.api.nature.climate.system.IHeatSource;
+import com.trd.api.industiral.metallurgy.system.ISmelter;
+import com.trd.api.industiral.metallurgy.system.Metal;
+import com.trd.api.industiral.metallurgy.system.MetalUnits2;
+import com.trd.api.industiral.metallurgy.system.MetallurgyRegistry;
+import com.trd.api.industiral.metallurgy.system.recipe.AlloyRecipe;
+import com.trd.api.industiral.metallurgy.system.recipe.AlloySlot;
+import com.trd.api.industiral.metallurgy.system.recipe.SmeltRecipe;
 import com.trd.block.entity.ModBlockEntities;
-import com.trd.event.HotItemHandler;
-import com.trd.event.SlagItem;
+import com.trd.event.industrial.HotItemHandler;
+import com.trd.event.industrial.SlagItem;
 import com.trd.menu.industrial.SmelterMenu;
 import com.trd.multiblock.industrial.heaters.HeaterBlockEntity;
 import net.minecraft.core.BlockPos;
@@ -48,7 +49,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISmelter, com.trd.api.climate.IHeatSource {
+public class SmelterBlockEntity extends BlockEntity implements MenuProvider, ISmelter, IHeatSource {
     public static final int MAX_TEMP = 1600;
     /** Ранний старт плавки: при температуре печи от этой доли точки плавления процесс уже идёт */
     public static final float EARLY_MELT_RATIO = 0.85f;

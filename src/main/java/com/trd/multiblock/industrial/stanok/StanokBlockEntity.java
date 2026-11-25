@@ -1,6 +1,6 @@
 package com.trd.multiblock.industrial.stanok;
 
-import com.trd.api.rotation.KineticNetworkManager;
+import com.trd.api.industiral.rotation.KineticNetworkManager;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.block.entity.industrial.rotation.KineticNodeBlockEntity;
 import com.trd.item.ModItems;
@@ -105,7 +105,7 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
 
     @Override
     public boolean canConnectMechanically(BlockPos myPos, BlockPos neighborPos,
-                                          com.trd.api.rotation.Rotational neighbor) {
+                                          com.trd.api.industiral.rotation.Rotational neighbor) {
         if (neighbor instanceof com.trd.multiblock.system.MultiblockPartEntity part) {
             return part.isKineticPort()
                     && part.getControllerPos() != null
@@ -127,7 +127,7 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
             if (level != null && !level.isClientSide) {
                 level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
                 if (slot == CARRIAGE_SLOT) {
-                    com.trd.api.rotation.KineticNetwork net =
+                    com.trd.api.industiral.rotation.KineticNetwork net =
                             KineticNetworkManager.get((ServerLevel) level)
                                     .getNetworkFor(worldPosition);
                     if (net != null) net.requestRecalculation();
@@ -268,7 +268,7 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
         if (level != null && !level.isClientSide) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
             if (level instanceof ServerLevel sl) {
-                com.trd.api.rotation.KineticNetwork net =
+                com.trd.api.industiral.rotation.KineticNetwork net =
                         KineticNetworkManager.get(sl).getNetworkFor(worldPosition);
                 if (net != null) net.requestRecalculation();
             }
@@ -314,7 +314,7 @@ public class StanokBlockEntity extends KineticNodeBlockEntity implements MenuPro
         boolean changed = false;
 
         // Синхронизация момента кинетической сети на клиент для HUD
-        com.trd.api.rotation.KineticNetwork net = KineticNetworkManager
+        com.trd.api.industiral.rotation.KineticNetwork net = KineticNetworkManager
                 .get((ServerLevel) level)
                 .getNetworkFor(be.worldPosition);
         if (net != null) {

@@ -1,6 +1,5 @@
 package com.trd.multiblock.system;
 
-import com.trd.api.fluids.system.FluidNetworkManager;
 import com.trd.block.entity.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -18,7 +17,7 @@ import com.trd.multiblock.system.roles.IMultiblockPart;
 import java.util.EnumSet;
 import java.util.Set;
 
-public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart, com.trd.api.rotation.Rotational {
+public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart, com.trd.api.industiral.rotation.Rotational {
 
     private BlockPos controllerPos;
     private PartRole role = PartRole.DEFAULT;
@@ -54,7 +53,7 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
         setChanged();
 
         if (this.level != null && !this.level.isClientSide) {
-            com.trd.api.energy.EnergyNetworkManager energyManager = com.trd.api.energy.EnergyNetworkManager.get((ServerLevel) this.level);
+            com.trd.api.industiral.energy.EnergyNetworkManager energyManager = com.trd.api.industiral.energy.EnergyNetworkManager.get((ServerLevel) this.level);
             
             if (!wasEnergy && isEnergy) {
                 energyManager.ensureNodeConnected(this.getBlockPos());
@@ -63,9 +62,9 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
             }
 
             if (!wasKinetic && isKinetic) {
-                com.trd.api.rotation.KineticNetworkManager.get((ServerLevel) this.level).updateNetworkAfterPlace(this.getBlockPos());
+                com.trd.api.industiral.rotation.KineticNetworkManager.get((ServerLevel) this.level).updateNetworkAfterPlace(this.getBlockPos());
             } else if (wasKinetic && !isKinetic) {
-                com.trd.api.rotation.KineticNetworkManager.get((ServerLevel) this.level).updateNetworkAfterRemove(this.getBlockPos());
+                com.trd.api.industiral.rotation.KineticNetworkManager.get((ServerLevel) this.level).updateNetworkAfterRemove(this.getBlockPos());
             }
 
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 2);
@@ -92,7 +91,7 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
         super.onLoad();
         if (this.level != null && !this.level.isClientSide) {
             if (role == PartRole.ENERGY_CONNECTOR || role == PartRole.UNIVERSAL_CONNECTOR) {
-                com.trd.api.energy.EnergyNetworkManager energyManager = com.trd.api.energy.EnergyNetworkManager.get((net.minecraft.server.level.ServerLevel) this.level);
+                com.trd.api.industiral.energy.EnergyNetworkManager energyManager = com.trd.api.industiral.energy.EnergyNetworkManager.get((net.minecraft.server.level.ServerLevel) this.level);
                 energyManager.ensureNodeConnected(this.getBlockPos());
             }
         }
@@ -102,10 +101,10 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
         return this.role == PartRole.KINETIC_PORT;
     }
 
-    private com.trd.api.rotation.Rotational getControllerRotational() {
+    private com.trd.api.industiral.rotation.Rotational getControllerRotational() {
         if (controllerPos == null || level == null) return null;
         BlockEntity be = level.getBlockEntity(controllerPos);
-        return be instanceof com.trd.api.rotation.Rotational r ? r : null;
+        return be instanceof com.trd.api.industiral.rotation.Rotational r ? r : null;
     }
 
     @Override
@@ -127,13 +126,13 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
 
     @Override
     public long getMaxSpeed() {
-        com.trd.api.rotation.Rotational ctrl = getControllerRotational();
+        com.trd.api.industiral.rotation.Rotational ctrl = getControllerRotational();
         return ctrl != null ? ctrl.getMaxSpeed() : 0;
     }
 
     @Override
     public long getMaxTorque() {
-        com.trd.api.rotation.Rotational ctrl = getControllerRotational();
+        com.trd.api.industiral.rotation.Rotational ctrl = getControllerRotational();
         return ctrl != null ? ctrl.getMaxTorque() : 0;
     }
 
@@ -144,7 +143,7 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
 
     @Override
     public long getMaxTorqueTolerance() {
-        com.trd.api.rotation.Rotational ctrl = getControllerRotational();
+        com.trd.api.industiral.rotation.Rotational ctrl = getControllerRotational();
         return ctrl != null ? ctrl.getMaxTorqueTolerance() : 0;
     }
 
@@ -160,7 +159,7 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
 
     @Override
     public long getVisualSpeed() {
-        com.trd.api.rotation.Rotational ctrl = getControllerRotational();
+        com.trd.api.industiral.rotation.Rotational ctrl = getControllerRotational();
         if (ctrl != null) return ctrl.getVisualSpeed();
         return getSpeed();
     }
@@ -210,7 +209,7 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
     }
 
     @Override
-    public boolean canConnectMechanically(net.minecraft.core.BlockPos myPos, net.minecraft.core.BlockPos neighborPos, com.trd.api.rotation.Rotational neighbor) {
+    public boolean canConnectMechanically(net.minecraft.core.BlockPos myPos, net.minecraft.core.BlockPos neighborPos, com.trd.api.industiral.rotation.Rotational neighbor) {
         if (!isKineticPort()) return false;
         if (controllerPos != null && neighborPos.equals(controllerPos)) {
             return neighbor instanceof com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity
@@ -225,7 +224,7 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
     }
 
     @Override
-    public float calculateTransmissionRatio(net.minecraft.core.BlockPos myPos, net.minecraft.core.BlockPos neighborPos, com.trd.api.rotation.Rotational neighbor) {
+    public float calculateTransmissionRatio(net.minecraft.core.BlockPos myPos, net.minecraft.core.BlockPos neighborPos, com.trd.api.industiral.rotation.Rotational neighbor) {
         return 1.0f;
     }
 

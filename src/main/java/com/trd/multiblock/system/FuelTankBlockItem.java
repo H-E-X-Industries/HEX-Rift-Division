@@ -1,8 +1,7 @@
 package com.trd.multiblock.system;
 
-import com.trd.api.fluids.system.FluidInfoHelper;
+import com.trd.api.industiral.fluids.system.FluidInfoHelper;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;

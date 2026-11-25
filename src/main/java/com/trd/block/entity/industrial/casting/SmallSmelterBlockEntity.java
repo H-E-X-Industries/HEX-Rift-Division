@@ -1,12 +1,13 @@
 package com.trd.block.entity.industrial.casting;
 
-import com.trd.api.metallurgy.system.ISmelter;
-import com.trd.api.metallurgy.system.Metal;
-import com.trd.api.metallurgy.system.MetallurgyRegistry;
-import com.trd.api.metallurgy.system.recipe.SmeltRecipe;
+import com.trd.api.nature.climate.system.IHeatSource;
+import com.trd.api.industiral.metallurgy.system.ISmelter;
+import com.trd.api.industiral.metallurgy.system.Metal;
+import com.trd.api.industiral.metallurgy.system.MetallurgyRegistry;
+import com.trd.api.industiral.metallurgy.system.recipe.SmeltRecipe;
 import com.trd.block.entity.ModBlockEntities;
-import com.trd.event.HotItemHandler;
-import com.trd.event.SlagItem;
+import com.trd.event.industrial.HotItemHandler;
+import com.trd.event.industrial.SlagItem;
 import com.trd.item.ModItems;
 import com.trd.menu.industrial.SmallSmelterMenu;
 import com.trd.multiblock.industrial.heaters.HeaterBlockEntity;
@@ -43,7 +44,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class SmallSmelterBlockEntity extends BlockEntity implements MenuProvider, ISmelter, com.trd.api.climate.IHeatSource {
+public class SmallSmelterBlockEntity extends BlockEntity implements MenuProvider, ISmelter, IHeatSource {
     // ========== КОНСТАНТЫ ==========
     public static final int MAX_TEMP = 1100;
     public static final int CAPACITY_UNITS = 81;   // 1 блок металла
@@ -526,7 +527,7 @@ public class SmallSmelterBlockEntity extends BlockEntity implements MenuProvider
         public final int amount;
         public MetalStack(Metal metal, int amount) { this.metal = metal; this.amount = amount; }
         public String getFormattedAmount() {
-            return com.trd.api.metallurgy.system.MetalUnits2.convertFromUnits(amount).totalUnits() + " ед.";
+            return com.trd.api.industiral.metallurgy.system.MetalUnits2.convertFromUnits(amount).totalUnits() + " ед.";
         }
     }
 

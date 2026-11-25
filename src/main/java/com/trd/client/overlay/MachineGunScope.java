@@ -1,6 +1,6 @@
 package com.trd.client.overlay;
 
-import com.trd.client.config.ModKeyBindings;
+import com.trd.api.capabilities.config.ModKeyBindings;
 import com.trd.item.weapons.guns.MachineGunItem;
 import com.trd.main.MainRegistry;
 import net.minecraft.client.KeyMapping;
@@ -300,7 +300,7 @@ public final class MachineGunScope {
      * применялось и там, а не только на клиенте.
      */
     private static void syncScopeState() {
-        PacketDistributor.sendToServer(new com.trd.network.packet.guns.PacketScopeState(scoped));
+        PacketDistributor.sendToServer(new com.trd.network.packet.weapons.guns.PacketScopeState(scoped));
     }
 
     /**

@@ -1,10 +1,10 @@
 package com.trd.block.basic.industrial.casting;
 
-import com.trd.api.metallurgy.system.recipe.MoldRecipeRegistry;
+import com.trd.api.industiral.metallurgy.system.recipe.MoldRecipeRegistry;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.block.entity.industrial.casting.CastingPotBlockEntity;
-import com.trd.event.HotItemHandler;
-import com.trd.event.SlagItem;
+import com.trd.event.industrial.HotItemHandler;
+import com.trd.event.industrial.SlagItem;
 import com.trd.item.ModItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;

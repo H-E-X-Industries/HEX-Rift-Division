@@ -1,11 +1,9 @@
 package com.trd.multiblock.system;
 import com.trd.multiblock.system.roles.IMultiblockPart;
 
-import com.trd.api.energy.EnergyNetworkManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -238,7 +236,7 @@ public class MultiblockStructureHelper {
 
             public boolean hasWireObstruction(Level level, BlockPos controllerPos, BlockState state) {
         if (!(level instanceof net.minecraft.server.level.ServerLevel serverLevel)) return false;
-        com.trd.api.energy.EnergyNetworkManager manager = com.trd.api.energy.EnergyNetworkManager.get(serverLevel);
+        com.trd.api.industiral.energy.EnergyNetworkManager manager = com.trd.api.industiral.energy.EnergyNetworkManager.get(serverLevel);
         
         // Check controller first!
         if (manager.isBlockObstructingAnyWire(controllerPos)) {

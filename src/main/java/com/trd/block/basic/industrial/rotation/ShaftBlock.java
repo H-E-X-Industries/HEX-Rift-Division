@@ -1,9 +1,9 @@
 package com.trd.block.basic.industrial.rotation;
 
 import com.mojang.serialization.MapCodec;
-import com.trd.api.rotation.KineticNetworkManager;
-import com.trd.api.rotation.ShaftDiameter;
-import com.trd.api.rotation.ShaftMaterial;
+import com.trd.api.industiral.rotation.KineticNetworkManager;
+import com.trd.api.industiral.rotation.ShaftDiameter;
+import com.trd.api.industiral.rotation.ShaftMaterial;
 import com.trd.block.entity.industrial.rotation.ShaftBlockEntity;
 import com.trd.item.ModItems;
 import com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlock;
@@ -221,7 +221,7 @@ public class ShaftBlock extends BaseEntityBlock {
                                 shaftBE.setConnectedPulley(null);
                             }
 
-                            com.trd.api.rotation.BeltConnectionHelper.breakBelt(level, pos);
+                            com.trd.api.industiral.rotation.BeltConnectionHelper.breakBelt(level, pos);
                             level.setBlock(pos, state.setValue(PULLEY_SIZE, 0), 3);
                         } else if (isFlywheel && shaftBE.hasFlywheel()) {
                             Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), shaftBE.getAttachedFlywheel());
@@ -260,7 +260,7 @@ public class ShaftBlock extends BaseEntityBlock {
         BlockState stateAgainst = level.getBlockState(posAgainst);
         BlockEntity beAgainst = level.getBlockEntity(posAgainst);
 
-        if (!(beAgainst instanceof com.trd.api.rotation.Rotational)) {
+        if (!(beAgainst instanceof com.trd.api.industiral.rotation.Rotational)) {
             return null;
         }
 
@@ -504,7 +504,7 @@ public class ShaftBlock extends BaseEntityBlock {
                                 new ItemStack(ModItems.BELT.get()));
                         shaftBE.setConnectedPulley(null);
                     }
-                    com.trd.api.rotation.BeltConnectionHelper.breakBelt(level, pos);
+                    com.trd.api.industiral.rotation.BeltConnectionHelper.breakBelt(level, pos);
                 }
                 if (shaftBE.hasFlywheel()) {
                     Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), shaftBE.getAttachedFlywheel());

@@ -1,6 +1,6 @@
 package com.trd.client.overlay.gui;
 
-import com.trd.api.fluids.ModFluids;
+import com.trd.api.industiral.fluids.ModFluids;
 import com.trd.item.ModItems;
 import com.trd.main.MainRegistry;
 import com.trd.menu.industrial.FluidBarrelMenu;
@@ -20,7 +20,7 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.network.PacketDistributor;
-import com.trd.network.packet.fluids.UpdateBarrelModeC2SPacket;
+import com.trd.network.packet.industrial.fluids.UpdateBarrelModeC2SPacket;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,8 +1,9 @@
 package com.trd.block.entity.industrial.chemistry;
 
-import com.trd.api.energy.EnergyNetworkManager;
-import com.trd.api.energy.IEnergyConnector;
-import com.trd.api.energy.IEnergyReceiver;
+import com.trd.api.nature.climate.system.IHeatSource;
+import com.trd.api.industiral.energy.EnergyNetworkManager;
+import com.trd.api.industiral.energy.IEnergyConnector;
+import com.trd.api.industiral.energy.IEnergyReceiver;
 import com.trd.block.entity.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -18,7 +19,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
-public class ChemicalPlantHeaterBlockEntity extends BlockEntity implements IEnergyReceiver, IEnergyConnector, com.trd.api.climate.IHeatSource {
+public class ChemicalPlantHeaterBlockEntity extends BlockEntity implements IEnergyReceiver, IEnergyConnector, IHeatSource {
 
     public static final long MAX_ENERGY = 1000L;
     public static final long RECEIVE_SPEED = 1000L;

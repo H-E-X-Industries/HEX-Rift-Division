@@ -1,7 +1,7 @@
 package com.trd.block.entity.industrial;
 
 import com.trd.item.ModItems;
-import com.trd.item.conglomerates.ConglomerateItem;
+import com.trd.item.nature.conglomerates.ConglomerateItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -9,7 +9,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -80,7 +79,7 @@ public class OpticMicroscopeBlockEntity extends BlockEntity {
 
         @Override
         public boolean isFluidValid(FluidStack stack) {
-            return !stack.isEmpty() && stack.getFluid() == com.trd.api.fluids.ModFluids.SULFURIC_ACID_SOURCE.get();
+            return !stack.isEmpty() && stack.getFluid() == com.trd.api.industiral.fluids.ModFluids.SULFURIC_ACID_SOURCE.get();
         }
     };
 
@@ -159,8 +158,8 @@ public class OpticMicroscopeBlockEntity extends BlockEntity {
         }
 
         // Уже проанализированный — просто оставляем в слоте, ничего не тратим и не двигаем.
-        boolean alreadyAnalyzed = (input.getItem() instanceof com.trd.item.oil.OilRockChunkItem)
-                ? com.trd.item.oil.OilRockChunkItem.isAnalyzed(input)
+        boolean alreadyAnalyzed = (input.getItem() instanceof com.trd.item.nature.oil.OilRockChunkItem)
+                ? com.trd.item.nature.oil.OilRockChunkItem.isAnalyzed(input)
                 : ConglomerateItem.isAnalyzed(input);
         if (alreadyAnalyzed) {
             resetProgress();
@@ -200,13 +199,13 @@ public class OpticMicroscopeBlockEntity extends BlockEntity {
         if (!canAcceptOutput()) return false;
 
         // Списываем кислоту
-        fluidTank.drain(new FluidStack(com.trd.api.fluids.ModFluids.SULFURIC_ACID_SOURCE.get(), ACID_PER_ANALYSIS),
+        fluidTank.drain(new FluidStack(com.trd.api.industiral.fluids.ModFluids.SULFURIC_ACID_SOURCE.get(), ACID_PER_ANALYSIS),
                 IFluidHandler.FluidAction.EXECUTE);
 
         ItemStack out = input.copy();
         out.setCount(1);
-        if (out.getItem() instanceof com.trd.item.oil.OilRockChunkItem) {
-            com.trd.item.oil.OilRockChunkItem.setAnalyzed(out);
+        if (out.getItem() instanceof com.trd.item.nature.oil.OilRockChunkItem) {
+            com.trd.item.nature.oil.OilRockChunkItem.setAnalyzed(out);
         } else {
             ConglomerateItem.setAnalyzed(out);
         }
@@ -226,7 +225,7 @@ public class OpticMicroscopeBlockEntity extends BlockEntity {
     private int getSulfuricAcidAmount() {
         FluidStack fluid = fluidTank.getFluid();
         if (fluid.isEmpty()) return 0;
-        if (fluid.getFluid() != com.trd.api.fluids.ModFluids.SULFURIC_ACID_SOURCE.get()) return 0;
+        if (fluid.getFluid() != com.trd.api.industiral.fluids.ModFluids.SULFURIC_ACID_SOURCE.get()) return 0;
         return fluid.getAmount();
     }
 

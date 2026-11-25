@@ -1,6 +1,10 @@
 package com.trd.block.entity;
 
 import com.trd.block.basic.ModBlocks;
+import com.trd.block.entity.nature.climate.AtmosphericScannerBlockEntity;
+import com.trd.block.entity.nature.climate.ElectricThermometerBlockEntity;
+import com.trd.block.entity.nature.climate.InsulationControllerBlockEntity;
+import com.trd.block.entity.nature.climate.MercuryThermometerBlockEntity;
 import com.trd.block.entity.industrial.rotation.MillstoneBlockEntity;
 import com.trd.main.MainRegistry;
 import net.minecraft.core.registries.Registries;
@@ -60,20 +64,20 @@ public class ModBlockEntities {
                     com.trd.block.basic.ModBlocks.FUEL_TANK_SMALL.get()
             ).build(null));
 
-    public static final java.util.function.Supplier<net.minecraft.world.level.block.entity.BlockEntityType<com.trd.block.entity.conglomerate.ConglomerateBlockEntity>> CONGLOMERATE =
+    public static final java.util.function.Supplier<net.minecraft.world.level.block.entity.BlockEntityType<com.trd.block.entity.nature.conglomerate.ConglomerateBlockEntity>> CONGLOMERATE =
             BLOCK_ENTITIES.register("conglomerate", () -> net.minecraft.world.level.block.entity.BlockEntityType.Builder.of(
-                    com.trd.block.entity.conglomerate.ConglomerateBlockEntity::new,
+                    com.trd.block.entity.nature.conglomerate.ConglomerateBlockEntity::new,
                     com.trd.block.basic.ModBlocks.CONGLOMERATE.get()
             ).build(null));
 
-    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.hive.DepthWormNestBlockEntity>> DEPTH_WORM_NEST =
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.nature.hive.DepthWormNestBlockEntity>> DEPTH_WORM_NEST =
             BLOCK_ENTITIES.register("depth_worm_nest",
-                    () -> BlockEntityType.Builder.of(com.trd.block.entity.hive.DepthWormNestBlockEntity::new,
+                    () -> BlockEntityType.Builder.of(com.trd.block.entity.nature.hive.DepthWormNestBlockEntity::new,
                             ModBlocks.DEPTH_WORM_NEST.get()).build(null));
 
-    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.hive.HiveSoilBlockEntity>> HIVE_SOIL =
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.nature.hive.HiveSoilBlockEntity>> HIVE_SOIL =
             BLOCK_ENTITIES.register("hive_soil", () ->
-                    BlockEntityType.Builder.of(com.trd.block.entity.hive.HiveSoilBlockEntity::new, ModBlocks.HIVE_SOIL.get())
+                    BlockEntityType.Builder.of(com.trd.block.entity.nature.hive.HiveSoilBlockEntity::new, ModBlocks.HIVE_SOIL.get())
                             .build(null)
             );
 
@@ -263,38 +267,38 @@ public class ModBlockEntities {
     // РЕДСТОУН-РАДИО
     // ═══════════════════════════════════════════════════════
 
-    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.redstone.RedstoneRadioTransmitterBlockEntity>> REDSTONE_RADIO_TRANSMITTER_BE =
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.industrial.redstone.RedstoneRadioTransmitterBlockEntity>> REDSTONE_RADIO_TRANSMITTER_BE =
             BLOCK_ENTITIES.register("redstone_radio_transmitter", () -> BlockEntityType.Builder.of(
-                    com.trd.block.entity.redstone.RedstoneRadioTransmitterBlockEntity::new,
+                    com.trd.block.entity.industrial.redstone.RedstoneRadioTransmitterBlockEntity::new,
                     ModBlocks.REDSTONE_RADIO_TRANSMITTER.get()).build(null));
 
-    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.redstone.RedstoneRadioReceiverBlockEntity>> REDSTONE_RADIO_RECEIVER_BE =
+    public static final java.util.function.Supplier<BlockEntityType<com.trd.block.entity.industrial.redstone.RedstoneRadioReceiverBlockEntity>> REDSTONE_RADIO_RECEIVER_BE =
             BLOCK_ENTITIES.register("redstone_radio_receiver", () -> BlockEntityType.Builder.of(
-                    com.trd.block.entity.redstone.RedstoneRadioReceiverBlockEntity::new,
+                    com.trd.block.entity.industrial.redstone.RedstoneRadioReceiverBlockEntity::new,
                     ModBlocks.REDSTONE_RADIO_RECEIVER.get()).build(null));
 
     // ═══════════════════════════════════════════════════════
     // КЛИМАТИЧЕСКАЯ СИСТЕМА
     // ═══════════════════════════════════════════════════════
 
-    public static final java.util.function.Supplier<BlockEntityType<com.trd.climate.block.entity.InsulationControllerBlockEntity>> INSULATION_CONTROLLER_BE =
+    public static final java.util.function.Supplier<BlockEntityType<InsulationControllerBlockEntity>> INSULATION_CONTROLLER_BE =
             BLOCK_ENTITIES.register("insulation_controller", () -> BlockEntityType.Builder.of(
-                    com.trd.climate.block.entity.InsulationControllerBlockEntity::new,
+                    InsulationControllerBlockEntity::new,
                     ModBlocks.INSULATION_CONTROLLER.get()).build(null));
 
-    public static final java.util.function.Supplier<BlockEntityType<com.trd.climate.block.entity.AtmosphericScannerBlockEntity>> ATMOSPHERIC_SCANNER_BE =
+    public static final java.util.function.Supplier<BlockEntityType<AtmosphericScannerBlockEntity>> ATMOSPHERIC_SCANNER_BE =
             BLOCK_ENTITIES.register("atmospheric_scanner", () -> BlockEntityType.Builder.of(
-                    com.trd.climate.block.entity.AtmosphericScannerBlockEntity::new,
+                    AtmosphericScannerBlockEntity::new,
                     ModBlocks.ATMOSPHERIC_SCANNER.get()).build(null));
 
-    public static final java.util.function.Supplier<BlockEntityType<com.trd.climate.block.entity.MercuryThermometerBlockEntity>> THERMOMETER_MERC_BE =
+    public static final java.util.function.Supplier<BlockEntityType<MercuryThermometerBlockEntity>> THERMOMETER_MERC_BE =
             BLOCK_ENTITIES.register("thermometer_merc_be", () -> BlockEntityType.Builder.of(
-                    com.trd.climate.block.entity.MercuryThermometerBlockEntity::new,
+                    MercuryThermometerBlockEntity::new,
                     ModBlocks.THERMOMETER_MERC.get()).build(null));
 
-    public static final java.util.function.Supplier<BlockEntityType<com.trd.climate.block.entity.ElectricThermometerBlockEntity>> ELECTRIC_THERMOMETER_BE =
+    public static final java.util.function.Supplier<BlockEntityType<ElectricThermometerBlockEntity>> ELECTRIC_THERMOMETER_BE =
             BLOCK_ENTITIES.register("electric_thermometer_be", () -> BlockEntityType.Builder.of(
-                    com.trd.climate.block.entity.ElectricThermometerBlockEntity::new,
+                    ElectricThermometerBlockEntity::new,
                     ModBlocks.ELECTRIC_THERMOMETER_BLOCK.get()).build(null));
 
     public static void register(IEventBus eventBus) {

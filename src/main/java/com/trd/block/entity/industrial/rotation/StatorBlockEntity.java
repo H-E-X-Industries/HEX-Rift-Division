@@ -1,9 +1,9 @@
 package com.trd.block.entity.industrial.rotation;
 
-import com.trd.api.energy.IEnergyConnector;
-import com.trd.api.energy.IEnergyProvider;
-import com.trd.api.rotation.KineticNetworkManager;
-import com.trd.api.rotation.Rotational;
+import com.trd.api.industiral.energy.IEnergyConnector;
+import com.trd.api.industiral.energy.IEnergyProvider;
+import com.trd.api.industiral.rotation.KineticNetworkManager;
+import com.trd.api.industiral.rotation.Rotational;
 import com.trd.block.basic.industrial.rotation.StatorBlock;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.item.industrial.energy.StatorCoilItem;
@@ -256,7 +256,7 @@ public class StatorBlockEntity extends KineticNodeBlockEntity implements IEnergy
                 long maxEn = getMaxEnergyDynamic();
                 if (speed > 0 && energyStored < maxEn) {
                     float rotorEfficiency = 1.0f;
-                    com.trd.api.rotation.RotorType rotorType = shaft.getRotorType();
+                    com.trd.api.industiral.rotation.RotorType rotorType = shaft.getRotorType();
                     if (rotorType != null) rotorEfficiency = rotorType.getEfficiency();
 
                     long totalConversion = 0;

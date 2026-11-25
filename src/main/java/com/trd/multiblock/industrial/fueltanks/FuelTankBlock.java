@@ -1,6 +1,6 @@
 package com.trd.multiblock.industrial.fueltanks;
 
-import com.trd.api.fluids.system.BaseFluidType;
+import com.trd.api.industiral.fluids.system.BaseFluidType;
 import com.trd.block.basic.ModBlocks;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.item.industrial.fluids.FluidIdentifierItem;
@@ -13,9 +13,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Containers;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;

@@ -1,6 +1,6 @@
 package com.trd.client.overlay.gui;
 
-import com.trd.api.fluids.ModFluids;
+import com.trd.api.industiral.fluids.ModFluids;
 import com.trd.main.MainRegistry;
 import com.trd.menu.industrial.OpticMicroscopeMenu;
 import net.minecraft.client.gui.GuiGraphics;
@@ -61,7 +61,7 @@ public class GUIOpticMicroscope extends AbstractContainerScreen<OpticMicroscopeM
                 && relY >= TANK_Y && relY < TANK_Y + TANK_H) {
             List<Component> tooltip = new ArrayList<>();
             int amount = menu.getFluidAmount();
-            int tintColor = IClientFluidTypeExtensions.of(com.trd.api.fluids.ModFluids.SULFURIC_ACID_SOURCE.get())
+            int tintColor = IClientFluidTypeExtensions.of(com.trd.api.industiral.fluids.ModFluids.SULFURIC_ACID_SOURCE.get())
                     .getTintColor() | 0xFF000000;
             // Всегда пишем название реактива и его количество, даже при 0 мБ.
             tooltip.add(Component.translatable("gui.trd.optic_microscope.tooltip", amount)

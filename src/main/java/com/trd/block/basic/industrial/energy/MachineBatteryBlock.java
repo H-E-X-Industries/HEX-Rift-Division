@@ -2,13 +2,11 @@ package com.trd.block.basic.industrial.energy;
 
 
 import com.trd.item.industrial.energy.EnergyCellItem;
-import com.trd.item.tools.ScrewdriverItem;
+import com.trd.item.industrial.tools.ScrewdriverItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -32,7 +30,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import com.trd.api.energy.EnergyNetworkManager;
+import com.trd.api.industiral.energy.EnergyNetworkManager;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.block.entity.industrial.energy.MachineBatteryBlockEntity;
 

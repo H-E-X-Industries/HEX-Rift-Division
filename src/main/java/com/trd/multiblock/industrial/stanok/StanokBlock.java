@@ -1,6 +1,6 @@
 package com.trd.multiblock.industrial.stanok;
 
-import com.trd.api.rotation.KineticNetworkManager;
+import com.trd.api.industiral.rotation.KineticNetworkManager;
 import com.trd.block.basic.ModBlocks;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.multiblock.system.IMultiblockController;

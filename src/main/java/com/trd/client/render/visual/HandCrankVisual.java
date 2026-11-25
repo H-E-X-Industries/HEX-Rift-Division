@@ -1,5 +1,6 @@
 package com.trd.client.render.visual;
 
+import com.trd.api.industiral.rotation.ClientKineticAngleTracker;
 import com.trd.client.render.flywheel.ModModels;
 import com.trd.block.basic.industrial.rotation.HandCrankBlock;
 import com.trd.block.entity.industrial.rotation.HandCrankBlockEntity;
@@ -49,7 +50,7 @@ public class HandCrankVisual extends AbstractBlockEntityVisual<HandCrankBlockEnt
         // все узлы одной кинетической сети получают ОДИН угол (синхронно по фазе),
         // а ручной привод больше не дрейфует относительно вала, на который он стоит.
         // getNetworkScale()/знак инверсии уже учтены внутри трекера.
-        float currentAngle = com.trd.client.rotation.ClientKineticAngleTracker
+        float currentAngle = ClientKineticAngleTracker
                 .getAngle(blockEntity, facing, context.partialTick());
 
         handle.setIdentityTransform()

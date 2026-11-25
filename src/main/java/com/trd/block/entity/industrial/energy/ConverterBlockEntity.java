@@ -7,11 +7,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.energy.IEnergyStorage;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import com.trd.api.energy.ForgeWrapper;
-import com.trd.api.energy.IEnergyProvider;
-import com.trd.api.energy.IEnergyReceiver;
 import com.trd.block.entity.ModBlockEntities;
 
 public class ConverterBlockEntity extends EnergyNodeBlockEntity {

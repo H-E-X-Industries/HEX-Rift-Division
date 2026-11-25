@@ -2,6 +2,7 @@ package com.trd.client.render.ber;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.trd.api.industiral.rotation.ClientKineticAngleTracker;
 import com.trd.multiblock.industrial.vishelashivatel.VishelashivatelBlockEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -97,8 +98,8 @@ public class VishelachivatelRenderer implements BlockEntityRenderer<Vishelashiva
     public void render(VishelashivatelBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
         // Fallback рендер вала и лопастей если Flywheel отключен
         if (!com.trd.client.render.FlywheelFallbackHelper.isFlywheelActive(blockEntity.getLevel())) {
-            float currentAngle = com.trd.client.rotation.ClientKineticAngleTracker.getAngle(blockEntity, Direction.UP, partialTick);
-            float bladeAngle = -(com.trd.client.rotation.ClientKineticAngleTracker.getAngle(blockEntity, null, partialTick) / 2.0f);
+            float currentAngle = ClientKineticAngleTracker.getAngle(blockEntity, Direction.UP, partialTick);
+            float bladeAngle = -(ClientKineticAngleTracker.getAngle(blockEntity, null, partialTick) / 2.0f);
 
             // Половинка вала на верхней грани
             poseStack.pushPose();

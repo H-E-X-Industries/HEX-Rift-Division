@@ -1,9 +1,8 @@
 package com.trd.block.basic.industrial.rotation;
 
 import com.mojang.serialization.MapCodec;
-import com.trd.api.rotation.KineticNetworkManager;
-import com.trd.api.rotation.ShaftDiameter;
-import com.trd.api.rotation.ShaftMaterial;
+import com.trd.api.industiral.rotation.KineticNetworkManager;
+import com.trd.api.industiral.rotation.ShaftDiameter;
 import com.trd.block.basic.ModBlocks;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.block.entity.industrial.rotation.TachometerBlockEntity;

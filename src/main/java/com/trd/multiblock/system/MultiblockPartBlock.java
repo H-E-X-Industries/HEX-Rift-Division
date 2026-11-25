@@ -15,7 +15,6 @@ import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -124,9 +123,9 @@ public class MultiblockPartBlock extends BaseEntityBlock implements net.minecraf
             BlockEntity be = level.getBlockEntity(pos);
             if (be instanceof IMultiblockPart part) {
                 if (part.getPartRole() == PartRole.KINETIC_PORT) {
-                    com.trd.api.rotation.KineticNetworkManager.get((net.minecraft.server.level.ServerLevel) level).updateNetworkAfterRemove(pos);
+                    com.trd.api.industiral.rotation.KineticNetworkManager.get((net.minecraft.server.level.ServerLevel) level).updateNetworkAfterRemove(pos);
                 } else if (part.getPartRole() == PartRole.ENERGY_CONNECTOR || part.getPartRole() == PartRole.UNIVERSAL_CONNECTOR) {
-                    com.trd.api.energy.EnergyNetworkManager.get((net.minecraft.server.level.ServerLevel) level).removeNode(pos);
+                    com.trd.api.industiral.energy.EnergyNetworkManager.get((net.minecraft.server.level.ServerLevel) level).removeNode(pos);
                 }
             }
             if (!MultiblockStructureHelper.isDestroying()) {

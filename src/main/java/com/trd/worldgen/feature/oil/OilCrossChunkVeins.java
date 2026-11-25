@@ -1,7 +1,7 @@
 package com.trd.worldgen.feature.oil;
 
-import com.trd.api.oil.ReservoirType;
-import com.trd.api.oil.VeinShape;
+import com.trd.api.nature.ore.oil.ReservoirType;
+import com.trd.api.nature.ore.oil.VeinShape;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;

@@ -6,7 +6,7 @@ import com.trd.block.basic.industrial.rotation.TachometerBlock;
 import com.trd.block.entity.industrial.rotation.TachometerBlockEntity;
 import com.trd.client.render.FlywheelFallbackHelper;
 import com.trd.client.render.flywheel.ModModels;
-import com.trd.client.rotation.ClientKineticAngleTracker;
+import com.trd.api.industiral.rotation.ClientKineticAngleTracker;
 import dev.engine_room.flywheel.lib.model.baked.PartialModel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;

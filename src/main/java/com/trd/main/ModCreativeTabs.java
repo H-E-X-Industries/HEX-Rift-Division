@@ -1,11 +1,11 @@
 package com.trd.main;
 
-import com.trd.api.fluids.ModFluids;
-import com.trd.api.metallurgy.system.Metal;
-import com.trd.api.metallurgy.system.MetalUnits2;
-import com.trd.api.metallurgy.system.MetallurgyRegistry;
+import com.trd.api.industiral.fluids.ModFluids;
+import com.trd.api.industiral.metallurgy.system.Metal;
+import com.trd.api.industiral.metallurgy.system.MetalUnits2;
+import com.trd.api.industiral.metallurgy.system.MetallurgyRegistry;
 import com.trd.block.basic.ModBlocks;
-import com.trd.event.SlagItem;
+import com.trd.event.industrial.SlagItem;
 import com.trd.item.ModItems;
 import com.trd.item.industrial.energy.ModBatteryItem;
 import com.trd.item.industrial.energy.WireCoilItem;
@@ -145,20 +145,9 @@ public class ModCreativeTabs {
                         //ИНСТРУМЕНТЫ
                         output.accept(ModItems.SCREWDRIVER.get());
                         output.accept(ModItems.BEAM_PLACER.get());
-                        output.accept(ModItems.POKER.get());
-                        output.accept(ModItems.HAMMER.get());
 
-                        output.accept(ModItems.BELT.get());
-                        // Катушка: пустая и заряженная версии в креативной вкладке
-                        output.accept(ModItems.WIRE_COIL.get());
-                        ItemStack fullCoil = new ItemStack(ModItems.WIRE_COIL.get());
-                        WireCoilItem.setWires(fullCoil, WireCoilItem.MAX_WIRES);
-                        output.accept(fullCoil);
+                        //КЛИМАТ--------------------------------------------------------------------------------------------------------------------------
 
-                        output.accept(ModItems.INFINITE_FLUID_BARREL.get());
-                        output.accept(ModItems.FLUID_IDENTIFIER.get());
-
-                        // Термометры: разряженный и заряженный (как пустая и полная катушки)
                         output.accept(ModItems.MERCURY_THERMOMETER.get());
                         output.accept(ModBlocks.THERMOMETER_MERC.get());
 
@@ -166,12 +155,12 @@ public class ModCreativeTabs {
                         ItemStack fullThermometer = new ItemStack(ModItems.ELECTRIC_THERMOMETER.get());
                         ModBatteryItem.setEnergy(fullThermometer, com.trd.item.climate.ElectricThermometerItem.DEFAULT_CAPACITY);
                         output.accept(fullThermometer);
-
-                        // Стационарный ртутный термометр (блок: напольный / потолочный / настенный)
                         output.accept(ModBlocks.ELECTRIC_THERMOMETER_BLOCK.get());
 
+                        output.accept(ModBlocks.INSULATION_CONTROLLER.get());
 
-                        //КИНЕТИКА
+
+                        //КИНЕТИКА--------------------------------------------------------------------------------------------------------------------
                         output.accept(ModBlocks.HAND_CRANK_BLOCK.get());
 
                         output.accept(ModBlocks.SHAFT_LIGHT_IRON.get());
@@ -193,9 +182,11 @@ public class ModCreativeTabs {
                         output.accept(ModItems.GEAR1_STEEL.get());
                         output.accept(ModItems.GEAR2_STEEL.get());
 
-                        output.accept(ModItems.PULLEY.get());
                         output.accept(ModItems.FLYWHEEL_LIGHT.get());
-                        output.accept(ModItems.COPPER_ROTOR.get());
+
+                        output.accept(ModItems.PULLEY.get());
+                        output.accept(ModItems.BELT.get());
+
 
                         output.accept(ModBlocks.BEARING_BLOCK.get());
                         output.accept(ModBlocks.MOTOR_ELECTRO.get());
@@ -204,15 +195,18 @@ public class ModCreativeTabs {
                         output.accept(ModBlocks.STEAM_ENGINE.get());
                         output.accept(ModBlocks.DROBITEL.get());
                         output.accept(ModItems.BLADE.get());
+                        output.accept(ModBlocks.MILLSTONE.get());
+
                         output.accept(ModItems.STATOR_ITEM.get());
+                        output.accept(ModItems.COPPER_ROTOR.get());
                         output.accept(ModItems.COPPER_COIL.get());
-                        // ─── Станок ───
+
                         output.accept(ModBlocks.STANOK.get());
                         output.accept(ModItems.PRESS_CARRIAGE.get());
                         output.accept(ModItems.WIRE_CARRIAGE.get());
                         output.accept(ModItems.FREZA_CARRIAGE.get());
 
-                        //ЭНЕРГОСЕТЬ
+                        //ЭНЕРГОСЕТЬ------------------------------------------------------------------------------------------------------------------
                         output.accept(ModBlocks.MACHINE_BATTERY.get());
                         output.accept(ModItems.ENERGY_CELL.get());
 
@@ -221,6 +215,11 @@ public class ModCreativeTabs {
                         output.accept(ModBlocks.CONNECTOR.get());
                         output.accept(ModBlocks.MEDIUM_CONNECTOR.get());
                         output.accept(ModBlocks.LARGE_CONNECTOR.get());
+
+                        output.accept(ModItems.WIRE_COIL.get());
+                        ItemStack fullCoil = new ItemStack(ModItems.WIRE_COIL.get());
+                        WireCoilItem.setWires(fullCoil, WireCoilItem.MAX_WIRES);
+                        output.accept(fullCoil);
 
                         output.accept(ModItems.CREATIVE_BATTERY.get());
                         List<DeferredItem<Item>> batteriesToAdd = List.of(
@@ -247,7 +246,7 @@ public class ModCreativeTabs {
                         output.accept(ModBlocks.CENTRIFUGE_CONUS.get());
                         output.accept(ModBlocks.CENTRIFUGE_CYLINDER.get());
 
-                        //ЖИДКОСТИ
+                        //ЖИДКОСТИ--------------------------------------------------------------------------------------------------------------------------
                         output.accept(ModBlocks.CORRUPTED_BARREL.get());
                         output.accept(ModBlocks.LEAKING_BARREL.get());
                         output.accept(ModBlocks.IRON_BARREL.get());
@@ -260,7 +259,9 @@ public class ModCreativeTabs {
                         output.accept(ModItems.PROTECTOR_LEAD.get());
                         output.accept(ModItems.PROTECTOR_TUNGSTEN.get());
 
-                        output.accept(ModBlocks.OPTIC_MICROSCOPE.get());
+                        output.accept(ModItems.FLUID_IDENTIFIER.get());
+                        output.accept(ModItems.INFINITE_FLUID_BARREL.get());
+
                         output.accept(ModItems.PIPETTE.get());
                         output.accept(ModItems.PIPETTE_IDUSTRIAL.get());
                         output.accept(ModItems.FLUID_TANK_IRON.get());
@@ -276,6 +277,8 @@ public class ModCreativeTabs {
                         output.accept(ModBlocks.CHEMICAL_PLANT_PORT.get());
                         output.accept(ModBlocks.CHEMICAL_PLANT_HEATER.get());
 
+                        output.accept(ModBlocks.OPTIC_MICROSCOPE.get());
+
                         output.accept(ModBlocks.BOILER.get());
 
                         output.accept(ModBlocks.LOW_PRESSURE_STEAM_CONDENSER.get());
@@ -283,7 +286,7 @@ public class ModCreativeTabs {
 
                         output.accept(ModItems.VISHELASHIVATEL_ITEM.get());
 
-                        //ПРОЧЕЕ
+                        //ПЕЧИ--------------------------------------------------------------------------------------------------------------------------
                         output.accept(ModBlocks.SMALL_SMELTER.get());
 
                         output.accept(ModBlocks.HEATER.get());
@@ -300,22 +303,26 @@ public class ModCreativeTabs {
                         output.accept(ModItems.MOLD_BLOCK.get());
                         output.accept(ModItems.MOLD_PICKAXE.get());
 
+                        output.accept(ModItems.POKER.get());
+                        output.accept(ModItems.HAMMER.get());
+
+                        //КОНВЕЙЕРЫ--------------------------------------------------------------------------------------------------------------------------
                         output.accept(ModBlocks.STEEL_STORAGE.get());
 
                         output.accept(ModBlocks.CONVEYOR_VSTAVSHIK.get());
                         output.accept(ModBlocks.CONVEYOR_IZVLEKATEL.get());
-                        output.accept(ModBlocks.CONVEYOR.get());
-                        output.accept(ModBlocks.CONVEYOR_ELEVATOR.get());
+
                         output.accept(ModBlocks.SORTIROVSHIK.get());
 
-                        // ═══ РЕДСТОУН-РАДИО ═══
+                        output.accept(ModBlocks.CONVEYOR_ELEVATOR.get());
+                        output.accept(ModBlocks.CONVEYOR.get());
+
+                        //РЕДСТОУН-РАДИО--------------------------------------------------------------------------------------------------------------------------
 
                         output.accept(ModBlocks.REDSTONE_RADIO_TRANSMITTER.get());
                         output.accept(ModBlocks.REDSTONE_RADIO_RECEIVER.get());
 
-                        output.accept(ModBlocks.INSULATION_CONTROLLER.get());
-                        output.accept(ModBlocks.ATMOSPHERIC_SCANNER.get());
-
+                        //НЕФТЕПЕРЕРАБОТКА--------------------------------------------------------------------------------------------------------------------------
                         output.accept(ModBlocks.MUD_CROSS.get());
                     })
                     .build());
@@ -356,10 +363,7 @@ public class ModCreativeTabs {
                         output.accept(ModItems.PIG_TURRET_PLACER.get());
                         output.accept(ModItems.TURRET_CHIP.get());
 
-                        // Патроны идут парами: сначала обычный, потом его трассирующая версия, и
-                        // только потом следующий тип боезаряда. Так переключатель
-                        // «трассер / не трассер» не ищется по всему списку, а
-                        // стоит рядом с тем же патроном.
+
                         output.accept(ModItems.TURRET_AMMO.get());
                         output.accept(ModItems.TURRET_AMMO_TRACER.get());
                         output.accept(ModItems.TURRET_AMMO_AP.get());
@@ -474,9 +478,6 @@ public class ModCreativeTabs {
                             output.accept(drop.get());
                         }
 
-                        // Предзаполненные контейнеры: автоматически выбираются только совместимые жидкости
-                        // (по макс. коррозии/температуре самих пипеток/контейнера), чтобы предмет
-                        // не растворялся сразу в руках игрока.
                         List<Fluid> fluids = ModFluids.getAllSourceFluids();
                         addAllFilledContainers(output, ModItems.PIPETTE.get(), fluids);
                         addAllFilledContainers(output, ModItems.PIPETTE_IDUSTRIAL.get(), fluids);
@@ -503,18 +504,19 @@ public class ModCreativeTabs {
                         output.accept(ModBlocks.SULFUR_ORE.get());
                         output.accept(ModBlocks.SULFUR_ORE_DEEPSLATE.get());
 
-                        output.accept(ModBlocks.CONGLOMERATE.get());
-                        output.accept(ModBlocks.DEPLETED_CONGLOMERATE.get());
+                        output.accept(ModBlocks.DOLOMITE.get());
+                        output.accept(ModBlocks.LIMESTONE.get());
+                        output.accept(ModBlocks.SULFUR_CLUSTER.get());
+                        output.accept(ModBlocks.BAUXITE.get());
 
                         output.accept(ModBlocks.POROUS_OIL_STONE.get());
                         output.accept(ModBlocks.DEEPSLATE_OIL_SHALE.get());
                         output.accept(ModBlocks.OIL_SAND.get());
                         output.accept(ModBlocks.OIL_DIRT.get());
 
-                        output.accept(ModBlocks.DOLOMITE.get());
-                        output.accept(ModBlocks.LIMESTONE.get());
-                        output.accept(ModBlocks.SULFUR_CLUSTER.get());
-                        output.accept(ModBlocks.BAUXITE.get());
+                        output.accept(ModBlocks.CONGLOMERATE.get());
+                        output.accept(ModBlocks.DEPLETED_CONGLOMERATE.get());
+
                         output.accept(ModBlocks.SEQUOIA_BARK.get());
                         output.accept(ModBlocks.SEQUOIA_BARK_MOSSY.get());
                         output.accept(ModBlocks.SEQUOIA_BARK_DARK.get());
@@ -524,12 +526,11 @@ public class ModCreativeTabs {
                         output.accept(ModBlocks.SEQUOIA_ROOTS_MOSSY.get());
                         output.accept(ModBlocks.SEQUOIA_LEAVES.get());
                         output.accept(ModBlocks.SEQUOIA_BIOME_MOSS.get());
+
                         output.accept(ModBlocks.BASALT_SOFT.get());
-                        // BASALT_SOFT_2/3/4 остались в реестре ради старых миров, но в креативе их нет:
                         output.accept(ModBlocks.WASTE_LOG.get());
                         output.accept(ModBlocks.WASTE_GRASS.get());
 
-                       
                         output.accept(ModBlocks.DEPTH_WORM_NEST.get());
                         output.accept(ModBlocks.HIVE_SOIL.get());
                         output.accept(ModBlocks.DEPTH_WORM_NEST_DEAD.get());
@@ -559,10 +560,7 @@ public class ModCreativeTabs {
 
     private static void onBuildCreativeTabs(net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey() == net.minecraft.world.item.CreativeModeTabs.NATURAL_BLOCKS) {
-            event.accept(ModBlocks.POROUS_OIL_STONE.get());
-            event.accept(ModBlocks.DEEPSLATE_OIL_SHALE.get());
-            event.accept(ModBlocks.OIL_SAND.get());
-            event.accept(ModBlocks.OIL_DIRT.get());
+
         }
     }
 }

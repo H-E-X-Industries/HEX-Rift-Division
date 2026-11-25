@@ -1,7 +1,7 @@
 package com.trd.block.entity.industrial.chemistry;
 
-import com.trd.api.chemistry.ChemicalPlantRecipe;
-import com.trd.api.chemistry.ChemicalPlantRecipeRegistry;
+import com.trd.api.industiral.chemistry.ChemicalPlantRecipe;
+import com.trd.api.industiral.chemistry.ChemicalPlantRecipeRegistry;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.menu.industrial.ChemicalPlantReactionChamberMenu;
 import net.minecraft.core.BlockPos;

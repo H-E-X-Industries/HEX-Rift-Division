@@ -26,7 +26,6 @@ import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class ConveyorBufferBlockEntity extends BlockEntity implements MenuProvider {
@@ -122,7 +121,7 @@ public class ConveyorBufferBlockEntity extends BlockEntity implements MenuProvid
         // 2. Передаём на конвейер спереди — до 3 за раз
         BlockPos frontPos = worldPosition.relative(facing);
         if (level instanceof net.minecraft.server.level.ServerLevel serverLevel) {
-            com.trd.api.conveyor.ConveyorNetwork net = com.trd.api.conveyor.ConveyorNetworkManager.get(serverLevel).getNetworkFor(frontPos);
+            com.trd.api.industiral.conveyor.ConveyorNetwork net = com.trd.api.industiral.conveyor.ConveyorNetworkManager.get(serverLevel).getNetworkFor(frontPos);
             if (net != null) {
                 double index = net.getPath().indexOf(frontPos);
                 if (index >= 0) {

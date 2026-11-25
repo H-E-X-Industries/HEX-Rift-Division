@@ -1,8 +1,9 @@
 package com.trd.block.entity.industrial.conveyors;
 
-import com.trd.api.conveyor.ConveyorItem;
-import com.trd.api.conveyor.ConveyorNetwork;
-import com.trd.api.conveyor.ConveyorNetworkManager;
+import com.trd.api.industiral.conveyor.ConveyorItem;
+import com.trd.api.industiral.conveyor.ConveyorNetwork;
+import com.trd.api.industiral.conveyor.ConveyorNetworkManager;
+import com.trd.block.basic.industrial.conveyor.ConveyorBlock;
 import com.trd.block.entity.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -174,8 +175,8 @@ public class SortirovshikBlockEntity extends BlockEntity implements MenuProvider
             // Подхватываем предметы ТОЛЬКО с лент, направленных в сортировщик
             // (т.е. реально подключённых к нему входом; ленты сбоку/снизу/от него не трогаем)
             BlockState beltState = serverLevel.getBlockState(beltPos);
-            if (!(beltState.getBlock() instanceof com.trd.block.basic.industrial.ConveyorBlock)) continue;
-            if (beltState.getValue(com.trd.block.basic.industrial.ConveyorBlock.FACING) != side.getOpposite()) continue;
+            if (!(beltState.getBlock() instanceof ConveyorBlock)) continue;
+            if (beltState.getValue(ConveyorBlock.FACING) != side.getOpposite()) continue;
 
             ConveyorNetwork net = manager.getNetworkFor(beltPos);
             if (net == null || !visited.add(net)) continue;

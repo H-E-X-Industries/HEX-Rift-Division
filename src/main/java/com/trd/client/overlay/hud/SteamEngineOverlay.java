@@ -69,7 +69,7 @@ public class SteamEngineOverlay {
 
         int steamColor;
         try {
-            steamColor = IClientFluidTypeExtensions.of(com.trd.api.fluids.ModFluids.STEAM_SOURCE.get()).getTintColor() | 0xFF000000;
+            steamColor = IClientFluidTypeExtensions.of(com.trd.api.industiral.fluids.ModFluids.STEAM_SOURCE.get()).getTintColor() | 0xFF000000;
         } catch (Exception e) {
             steamColor = 0xFFE0E0E0;
         }

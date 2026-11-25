@@ -1,6 +1,6 @@
 package com.trd.block.entity.industrial.fluids;
 
-import com.trd.api.fluids.system.FluidNetworkManager;
+import com.trd.api.industiral.fluids.system.FluidNetworkManager;
 import com.trd.block.basic.industrial.fluids.ValveBlock;
 import com.trd.block.entity.ModBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -8,11 +8,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.core.Direction;
-import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-import org.jetbrains.annotations.NotNull;
-import javax.annotation.Nullable;
 
 /**
  * BlockEntity клапана.

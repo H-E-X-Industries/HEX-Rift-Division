@@ -1,6 +1,6 @@
 package com.trd.block.basic.industrial.energy;
 
-import com.trd.api.energy.ConnectorTier;
+import com.trd.api.industiral.energy.ConnectorTier;
 import com.trd.block.entity.industrial.energy.ConnectorBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
 import java.util.Map;
 
 public class ConnectorBlock extends BaseEntityBlock {
-    public static final com.mojang.serialization.MapCodec<ConnectorBlock> CODEC = simpleCodec(p -> new ConnectorBlock(p, new com.trd.api.energy.ConnectorTier(16, 3, 0.03125f, 4, 6)));
+    public static final com.mojang.serialization.MapCodec<ConnectorBlock> CODEC = simpleCodec(p -> new ConnectorBlock(p, new com.trd.api.industiral.energy.ConnectorTier(16, 3, 0.03125f, 4, 6)));
     @Override protected com.mojang.serialization.MapCodec<? extends BaseEntityBlock> codec() { return CODEC; }
 
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
@@ -84,9 +84,9 @@ public class ConnectorBlock extends BaseEntityBlock {
         if (support.getBlock() instanceof SwitchBlock) return true;
         if (support.getBlock() instanceof com.trd.multiblock.system.MultiblockPartBlock) return true;
         BlockEntity be = level.getBlockEntity(supportPos);
-        if (be instanceof com.trd.api.energy.IEnergyConnector ||
-            be instanceof com.trd.api.energy.IEnergyProvider ||
-            be instanceof com.trd.api.energy.IEnergyReceiver) {
+        if (be instanceof com.trd.api.industiral.energy.IEnergyConnector ||
+            be instanceof com.trd.api.industiral.energy.IEnergyProvider ||
+            be instanceof com.trd.api.industiral.energy.IEnergyReceiver) {
             return true;
         }
         return support.isFaceSturdy(level, supportPos, facing);

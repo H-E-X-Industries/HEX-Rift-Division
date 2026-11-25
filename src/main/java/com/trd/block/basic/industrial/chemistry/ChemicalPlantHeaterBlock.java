@@ -1,7 +1,7 @@
 package com.trd.block.basic.industrial.chemistry;
 
 import com.mojang.serialization.MapCodec;
-import com.trd.api.energy.EnergyNetworkManager;
+import com.trd.api.industiral.energy.EnergyNetworkManager;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.block.entity.industrial.chemistry.ChemicalPlantHeaterBlockEntity;
 import com.trd.item.ModItems;

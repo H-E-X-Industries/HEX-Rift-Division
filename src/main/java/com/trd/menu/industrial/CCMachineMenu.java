@@ -1,6 +1,6 @@
 package com.trd.menu.industrial;
 
-import com.trd.api.metallurgy.system.recipe.MoldRecipeRegistry;
+import com.trd.api.industiral.metallurgy.system.recipe.MoldRecipeRegistry;
 import com.trd.block.basic.ModBlocks;
 import com.trd.menu.ModMenuTypes;
 import com.trd.multiblock.industrial.ccmachine.CCMachineBlockEntity;

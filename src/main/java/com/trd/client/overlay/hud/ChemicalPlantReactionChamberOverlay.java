@@ -1,7 +1,7 @@
 package com.trd.client.overlay.hud;
 
-import com.trd.api.chemistry.ChemicalPlantRecipe;
-import com.trd.api.chemistry.ChemicalPlantRecipeRegistry;
+import com.trd.api.industiral.chemistry.ChemicalPlantRecipe;
+import com.trd.api.industiral.chemistry.ChemicalPlantRecipeRegistry;
 import com.trd.block.entity.industrial.chemistry.ChemicalPlantReactionChamberBlockEntity;
 import com.trd.main.MainRegistry;
 import net.minecraft.client.Minecraft;

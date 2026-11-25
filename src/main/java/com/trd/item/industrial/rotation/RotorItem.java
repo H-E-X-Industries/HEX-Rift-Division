@@ -1,6 +1,6 @@
 package com.trd.item.industrial.rotation;
 
-import com.trd.api.rotation.KineticNetworkManager;
+import com.trd.api.industiral.rotation.KineticNetworkManager;
 import com.trd.block.basic.industrial.rotation.ShaftBlock;
 import com.trd.block.entity.industrial.rotation.ShaftBlockEntity;
 import net.minecraft.ChatFormatting;

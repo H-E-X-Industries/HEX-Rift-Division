@@ -1,7 +1,7 @@
 package com.trd.multiblock.industrial.centrifuge.cylinder;
 
 import com.trd.block.entity.ModBlockEntities;
-import com.trd.capability.ModCapabilities;
+import com.trd.api.capabilities.ModCapabilities;
 import com.trd.item.industrial.energy.EnergyCellItem;
 import com.trd.item.industrial.energy.ModBatteryItem;
 import com.trd.item.industrial.fluids.FluidIdentifierItem;

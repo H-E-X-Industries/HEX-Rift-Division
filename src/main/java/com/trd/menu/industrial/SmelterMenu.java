@@ -1,7 +1,8 @@
 package com.trd.menu.industrial;
 
-import com.trd.api.metallurgy.system.MetallurgyRegistry;
+import com.trd.api.industiral.metallurgy.system.MetallurgyRegistry;
 import com.trd.block.basic.ModBlocks;
+import com.trd.event.industrial.SlagItem;
 import com.trd.menu.ModMenuTypes;
 import com.trd.multiblock.industrial.smelter.SmelterBlockEntity;
 import net.minecraft.core.BlockPos;
@@ -41,7 +42,7 @@ public class SmelterMenu extends AbstractContainerMenu {
             this.addSlot(new SlotItemHandler(entity.getInventory(), 4 + i, 95 + i * 18, 45) {
                 @Override
                 public boolean mayPlace(ItemStack stack) {
-                    if (stack.getItem() instanceof com.trd.event.SlagItem) return true;
+                    if (stack.getItem() instanceof SlagItem) return true;
                     return MetallurgyRegistry.getSmeltRecipe(entity.getLevel(), stack) != null;
                 }
             });
@@ -105,7 +106,7 @@ public class SmelterMenu extends AbstractContainerMenu {
             } else {
                 // Из инвентаря в печь
                 boolean isSmeltable = MetallurgyRegistry.getSmeltRecipe(player.level(), stack) != null;
-                boolean isSlag = stack.getItem() instanceof com.trd.event.SlagItem;
+                boolean isSlag = stack.getItem() instanceof SlagItem;
 
                 if (isSmeltable || isSlag) {
                     if (!this.moveItemStackTo(stack, 4, 8, false)) {

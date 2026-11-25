@@ -1,10 +1,10 @@
 package com.trd.worldgen.feature.oil;
 
 import com.mojang.serialization.Codec;
-import com.trd.api.oil.OilComposition;
-import com.trd.api.oil.OilVeinManager;
-import com.trd.api.oil.ReservoirType;
-import com.trd.api.oil.VeinShape;
+import com.trd.api.nature.ore.oil.OilComposition;
+import com.trd.api.nature.ore.oil.OilVeinManager;
+import com.trd.api.nature.ore.oil.ReservoirType;
+import com.trd.api.nature.ore.oil.VeinShape;
 import com.trd.block.basic.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;

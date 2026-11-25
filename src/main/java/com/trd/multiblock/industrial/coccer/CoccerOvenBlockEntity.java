@@ -1,11 +1,11 @@
 package com.trd.multiblock.industrial.coccer;
 
+import com.trd.api.nature.climate.system.IHeatSource;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.menu.industrial.CoccerOvenMenu;
 import com.trd.multiblock.industrial.heaters.HeaterBlockEntity;
 import com.trd.multiblock.system.IFluidTankProvider;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class CoccerOvenBlockEntity extends BlockEntity implements MenuProvider, IFluidTankProvider, com.trd.api.climate.IHeatSource {
+public class CoccerOvenBlockEntity extends BlockEntity implements MenuProvider, IFluidTankProvider, IHeatSource {
 
     public static final int MAX_TEMP = 2700;
     public static final int TANK_CAPACITY = 32000;

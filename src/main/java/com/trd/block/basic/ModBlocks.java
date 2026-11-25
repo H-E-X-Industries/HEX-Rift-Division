@@ -1,5 +1,15 @@
 package com.trd.block.basic;
 
+import com.trd.api.tooltip.MachineTooltipHandler;
+import com.trd.block.basic.climate.AtmosphericScannerBlock;
+import com.trd.block.basic.climate.ElectricThermometerBlock;
+import com.trd.block.basic.climate.InsulationControllerBlock;
+import com.trd.block.basic.climate.MercuryThermometerBlock;
+import com.trd.block.basic.deco.ScorchedBasaltBlock;
+import com.trd.block.basic.deco.WasteGrassBlock;
+import com.trd.block.basic.deco.CraterBasaltBlock;
+import com.trd.block.basic.industrial.RedstoneRadioBlock;
+import com.trd.block.basic.industrial.conveyor.*;
 import com.trd.item.ModItems;
 import com.trd.main.MainRegistry;
 import net.minecraft.world.item.BlockItem;
@@ -8,12 +18,11 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
-import com.trd.api.rotation.ShaftDiameter;
-import com.trd.api.rotation.ShaftMaterial;
+import com.trd.api.industiral.rotation.ShaftDiameter;
+import com.trd.api.industiral.rotation.ShaftMaterial;
 import com.trd.multiblock.system.IMultiblockController;
 import com.trd.multiblock.system.MultiblockBlockItem;
 import java.util.function.Supplier;
@@ -85,7 +94,7 @@ public class ModBlocks {
             () -> new Block(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.DEEPSLATE).strength(1.5F, 6.0F).requiresCorrectToolForDrops()));
 
     public static final DeferredBlock<Block> CONGLOMERATE = registerBlock("conglomerate",
-            () -> new com.trd.block.basic.conglomerate.ConglomerateBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.STONE)
+            () -> new com.trd.block.basic.nature.conglomerate.ConglomerateBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.STONE)
                     .mapColor(net.minecraft.world.level.material.MapColor.STONE).strength(-1.0F, 3600000.0F).noOcclusion().isValidSpawn((state, getter, pos, entityType) -> false)));
     public static final DeferredBlock<Block> DEPLETED_CONGLOMERATE = registerBlock("depleted_conglomerate",
             () -> new Block(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.STONE)
@@ -93,24 +102,24 @@ public class ModBlocks {
 
     // Нефтяные породы и коллекторы
     public static final DeferredBlock<Block> POROUS_OIL_STONE = registerBlock("porous_oil_stone",
-            () -> new com.trd.block.basic.oil.OilReservoirBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.STONE)
+            () -> new com.trd.block.basic.nature.oil.OilReservoirBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.STONE)
                     .mapColor(net.minecraft.world.level.material.MapColor.STONE).strength(1.5F, 6.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops(),
-                    com.trd.api.oil.ReservoirType.POROUS_STONE));
+                    com.trd.api.nature.ore.oil.ReservoirType.POROUS_STONE));
 
     public static final DeferredBlock<Block> DEEPSLATE_OIL_SHALE = registerBlock("deepslate_oil_shale",
-            () -> new com.trd.block.basic.oil.OilReservoirBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.DEEPSLATE)
+            () -> new com.trd.block.basic.nature.oil.OilReservoirBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.DEEPSLATE)
                     .mapColor(net.minecraft.world.level.material.MapColor.DEEPSLATE).strength(3.0F, 6.0F).sound(net.minecraft.world.level.block.SoundType.DEEPSLATE).requiresCorrectToolForDrops(),
-                    com.trd.api.oil.ReservoirType.TIGHT_SHALE));
+                    com.trd.api.nature.ore.oil.ReservoirType.TIGHT_SHALE));
 
     public static final DeferredBlock<Block> OIL_SAND = registerBlock("oil_sand",
-            () -> new com.trd.block.basic.oil.OilReservoirBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.SAND)
+            () -> new com.trd.block.basic.nature.oil.OilReservoirBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.SAND)
                     .mapColor(net.minecraft.world.level.material.MapColor.COLOR_BLACK).strength(0.5F).sound(net.minecraft.world.level.block.SoundType.SAND),
-                    com.trd.api.oil.ReservoirType.TAR_SANDS));
+                    com.trd.api.nature.ore.oil.ReservoirType.TAR_SANDS));
 
     public static final DeferredBlock<Block> OIL_DIRT = registerBlock("oil_dirt",
-            () -> new com.trd.block.basic.oil.OilReservoirBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.DIRT)
+            () -> new com.trd.block.basic.nature.oil.OilReservoirBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.DIRT)
                     .mapColor(net.minecraft.world.level.material.MapColor.COLOR_BLACK).strength(0.5F).sound(net.minecraft.world.level.block.SoundType.GRAVEL),
-                    com.trd.api.oil.ReservoirType.TAR_SANDS));
+                    com.trd.api.nature.ore.oil.ReservoirType.TAR_SANDS));
 
     public static java.util.List<DeferredBlock<Block>> BATTERY_BLOCKS = new java.util.ArrayList<>();
 
@@ -119,9 +128,9 @@ public class ModBlocks {
     public static final DeferredBlock<Block> CONVERTER_BLOCK = registerBlock("converter_block", () -> new com.trd.block.basic.industrial.energy.ConverterBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK)));
     public static final DeferredBlock<Block> WIRE_COATED = registerBlock("wire_coated", () -> new com.trd.block.basic.industrial.energy.WireBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK).noOcclusion()));
     public static final DeferredBlock<Block> SWITCH = registerBlock("switch", () -> new com.trd.block.basic.industrial.energy.SwitchBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK)));
-    public static final DeferredBlock<Block> CONNECTOR = registerBlock("connector", () -> new com.trd.block.basic.industrial.energy.ConnectorBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK), new com.trd.api.energy.ConnectorTier(16, 3, 0.03125f, 4, 6)));
-    public static final DeferredBlock<Block> MEDIUM_CONNECTOR = registerBlock("medium_connector", () -> new com.trd.block.basic.industrial.energy.ConnectorBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK), new com.trd.api.energy.ConnectorTier(32, 7, 0.035f, 6, 8)));
-    public static final DeferredBlock<Block> LARGE_CONNECTOR = registerBlock("large_connector", () -> new com.trd.block.basic.industrial.energy.ConnectorBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK), new com.trd.api.energy.ConnectorTier(200, 11, 0.055f, 8, 13)));
+    public static final DeferredBlock<Block> CONNECTOR = registerBlock("connector", () -> new com.trd.block.basic.industrial.energy.ConnectorBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK), new com.trd.api.industiral.energy.ConnectorTier(16, 3, 0.03125f, 4, 6)));
+    public static final DeferredBlock<Block> MEDIUM_CONNECTOR = registerBlock("medium_connector", () -> new com.trd.block.basic.industrial.energy.ConnectorBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK), new com.trd.api.industiral.energy.ConnectorTier(32, 7, 0.035f, 6, 8)));
+    public static final DeferredBlock<Block> LARGE_CONNECTOR = registerBlock("large_connector", () -> new com.trd.block.basic.industrial.energy.ConnectorBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK), new com.trd.api.industiral.energy.ConnectorTier(200, 11, 0.055f, 8, 13)));
     public static final DeferredBlock<Block> PAINTABLE_WIRE = registerBlock("paintable_wire", () -> new com.trd.block.basic.industrial.energy.PaintableWireBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK).noOcclusion()));
     public static final DeferredBlock<Block> ELECTRO_FURNACE = registerBlock("electro_furnace", () -> new com.trd.block.basic.industrial.ElectricFurnaceBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK)));
 
@@ -129,36 +138,36 @@ public class ModBlocks {
             () -> new com.trd.block.basic.industrial.MillstoneBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion()));
 
     // Fluid Barrels
-    public static final DeferredBlock<net.minecraft.world.level.block.Block> CORRUPTED_BARREL = registerBlock("corrupted_barrel", () -> new com.trd.block.basic.industrial.fluids.FluidBarrelBlock(com.trd.api.fluids.system.BarrelTier.CORRUPTED, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
-    public static final DeferredBlock<net.minecraft.world.level.block.Block> LEAKING_BARREL = registerBlock("leaking_barrel", () -> new com.trd.block.basic.industrial.fluids.FluidBarrelBlock(com.trd.api.fluids.system.BarrelTier.LEAKING, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
-    public static final DeferredBlock<net.minecraft.world.level.block.Block> IRON_BARREL = registerBlock("iron_barrel", () -> new com.trd.block.basic.industrial.fluids.FluidBarrelBlock(com.trd.api.fluids.system.BarrelTier.IRON, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
-    public static final DeferredBlock<net.minecraft.world.level.block.Block> STEEL_BARREL = registerBlock("steel_barrel", () -> new com.trd.block.basic.industrial.fluids.FluidBarrelBlock(com.trd.api.fluids.system.BarrelTier.STEEL, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
-    public static final DeferredBlock<net.minecraft.world.level.block.Block> LEAD_BARREL = registerBlock("lead_barrel", () -> new com.trd.block.basic.industrial.fluids.FluidBarrelBlock(com.trd.api.fluids.system.BarrelTier.LEAD, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> CORRUPTED_BARREL = registerBlock("corrupted_barrel", () -> new com.trd.block.basic.industrial.fluids.FluidBarrelBlock(com.trd.api.industiral.fluids.system.BarrelTier.CORRUPTED, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> LEAKING_BARREL = registerBlock("leaking_barrel", () -> new com.trd.block.basic.industrial.fluids.FluidBarrelBlock(com.trd.api.industiral.fluids.system.BarrelTier.LEAKING, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> IRON_BARREL = registerBlock("iron_barrel", () -> new com.trd.block.basic.industrial.fluids.FluidBarrelBlock(com.trd.api.industiral.fluids.system.BarrelTier.IRON, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> STEEL_BARREL = registerBlock("steel_barrel", () -> new com.trd.block.basic.industrial.fluids.FluidBarrelBlock(com.trd.api.industiral.fluids.system.BarrelTier.STEEL, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> LEAD_BARREL = registerBlock("lead_barrel", () -> new com.trd.block.basic.industrial.fluids.FluidBarrelBlock(com.trd.api.industiral.fluids.system.BarrelTier.LEAD, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
     // Бочка без функционала: в отличие от остальных не хранит жидкость
     // и не имеет BlockEntity, это чисто декоративный блок.
     public static final DeferredBlock<net.minecraft.world.level.block.Block> DECO_BARREL = registerBlock("deco_barrel", () -> new net.minecraft.world.level.block.Block(net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
 
     // Fluid Pipes
     // Звук установки/разрушения как у фонаря (металлический) — раньше потерялся при порте (был STONE по умолчанию)
-    public static final DeferredBlock<net.minecraft.world.level.block.Block> BRONZE_FLUID_PIPE = registerBlock("bronze_fluid_pipe", () -> new com.trd.block.basic.industrial.fluids.FluidPipeBlock(com.trd.api.fluids.system.PipeTier.BRONZE, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of().sound(net.minecraft.world.level.block.SoundType.LANTERN)));
-    public static final DeferredBlock<net.minecraft.world.level.block.Block> STEEL_FLUID_PIPE = registerBlock("steel_fluid_pipe", () -> new com.trd.block.basic.industrial.fluids.FluidPipeBlock(com.trd.api.fluids.system.PipeTier.STEEL, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of().sound(net.minecraft.world.level.block.SoundType.LANTERN)));
-    public static final DeferredBlock<net.minecraft.world.level.block.Block> LEAD_FLUID_PIPE = registerBlock("lead_fluid_pipe", () -> new com.trd.block.basic.industrial.fluids.FluidPipeBlock(com.trd.api.fluids.system.PipeTier.LEAD, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of().sound(net.minecraft.world.level.block.SoundType.LANTERN)));
-    public static final DeferredBlock<net.minecraft.world.level.block.Block> TUNGSTEN_FLUID_PIPE = registerBlock("tungsten_fluid_pipe", () -> new com.trd.block.basic.industrial.fluids.FluidPipeBlock(com.trd.api.fluids.system.PipeTier.TUNGSTEN, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of().sound(net.minecraft.world.level.block.SoundType.LANTERN)));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> BRONZE_FLUID_PIPE = registerBlock("bronze_fluid_pipe", () -> new com.trd.block.basic.industrial.fluids.FluidPipeBlock(com.trd.api.industiral.fluids.system.PipeTier.BRONZE, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of().sound(net.minecraft.world.level.block.SoundType.LANTERN)));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> STEEL_FLUID_PIPE = registerBlock("steel_fluid_pipe", () -> new com.trd.block.basic.industrial.fluids.FluidPipeBlock(com.trd.api.industiral.fluids.system.PipeTier.STEEL, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of().sound(net.minecraft.world.level.block.SoundType.LANTERN)));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> LEAD_FLUID_PIPE = registerBlock("lead_fluid_pipe", () -> new com.trd.block.basic.industrial.fluids.FluidPipeBlock(com.trd.api.industiral.fluids.system.PipeTier.LEAD, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of().sound(net.minecraft.world.level.block.SoundType.LANTERN)));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> TUNGSTEN_FLUID_PIPE = registerBlock("tungsten_fluid_pipe", () -> new com.trd.block.basic.industrial.fluids.FluidPipeBlock(com.trd.api.industiral.fluids.system.PipeTier.TUNGSTEN, net.minecraft.world.level.block.state.BlockBehaviour.Properties.of().sound(net.minecraft.world.level.block.SoundType.LANTERN)));
 
     // Conveyors
-    public static final DeferredBlock<net.minecraft.world.level.block.Block> CONVEYOR = registerBlock("conveyor", () -> new com.trd.block.basic.industrial.ConveyorBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK).noOcclusion()));
-    public static final DeferredBlock<net.minecraft.world.level.block.Block> CONVEYOR_ELEVATOR = registerBlock("conveyor_elevator", () -> new com.trd.block.basic.industrial.ConveyorElevatorBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK).noOcclusion()));
-    public static final DeferredBlock<net.minecraft.world.level.block.Block> CONVEYOR_VSTAVSHIK = registerBlock("conveyor_inserter", () -> new com.trd.block.basic.industrial.ConveyorInserterBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK)));
-    public static final DeferredBlock<net.minecraft.world.level.block.Block> CONVEYOR_IZVLEKATEL = registerBlock("conveyor_extractor", () -> new com.trd.block.basic.industrial.ConveyorExtractorBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK)));
-    public static final DeferredBlock<net.minecraft.world.level.block.Block> SORTIROVSHIK = registerBlock("conveyor_sorter", () -> new com.trd.block.basic.industrial.SortirovshikBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK).noOcclusion()));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> CONVEYOR = registerBlock("conveyor", () -> new ConveyorBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK).noOcclusion()));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> CONVEYOR_ELEVATOR = registerBlock("conveyor_elevator", () -> new ConveyorElevatorBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK).noOcclusion()));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> CONVEYOR_VSTAVSHIK = registerBlock("conveyor_inserter", () -> new ConveyorInserterBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK)));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> CONVEYOR_IZVLEKATEL = registerBlock("conveyor_extractor", () -> new ConveyorExtractorBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK)));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> SORTIROVSHIK = registerBlock("conveyor_sorter", () -> new SortirovshikBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK).noOcclusion()));
 
-    public static final DeferredBlock<net.minecraft.world.level.block.Block> PIPE_SPOTS = BLOCKS.register("pipe_spots", () -> new com.trd.block.basic.industrial.fluids.FluidPipeBlock(com.trd.api.fluids.system.PipeTier.BRONZE, net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK).noOcclusion().noCollission()));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> PIPE_SPOTS = BLOCKS.register("pipe_spots", () -> new com.trd.block.basic.industrial.fluids.FluidPipeBlock(com.trd.api.industiral.fluids.system.PipeTier.BRONZE, net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK).noOcclusion().noCollission()));
     
     // Other Fluid Blocks
     public static final DeferredBlock<com.trd.block.basic.industrial.fluids.WaterPumpBlock> WATER_PUMP = registerMultiblock("water_pump", () -> new com.trd.block.basic.industrial.fluids.WaterPumpBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK).noOcclusion()));
     public static final DeferredBlock<net.minecraft.world.level.block.Block> VALVE = registerBlock("valve", () -> new com.trd.block.basic.industrial.fluids.ValveBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.of()));
     public static final DeferredBlock<net.minecraft.world.level.block.Block> LOW_PRESSURE_STEAM_CONDENSER = registerBlock("low_pressure_steam_condenser", () -> new com.trd.block.basic.industrial.fluids.LowPressureSteamCondenserBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK).strength(0.5F, 6.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
-    public static final DeferredBlock<net.minecraft.world.level.block.Block> PAINTABLE_PIPE = registerBlock("paintable_pipe", () -> new com.trd.block.basic.industrial.fluids.PaintablePipeBlock(com.trd.api.fluids.system.PipeTier.BRONZE, net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK).noOcclusion()));
+    public static final DeferredBlock<net.minecraft.world.level.block.Block> PAINTABLE_PIPE = registerBlock("paintable_pipe", () -> new com.trd.block.basic.industrial.fluids.PaintablePipeBlock(com.trd.api.industiral.fluids.system.PipeTier.BRONZE, net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK).noOcclusion()));
 
     // Power Plant & Multiblocks
     public static final DeferredBlock<com.trd.multiblock.industrial.drilling.MudCrossBlock> MUD_CROSS = registerMultiblock("mud_cross", () -> new com.trd.multiblock.industrial.drilling.MudCrossBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK).noOcclusion()));
@@ -646,15 +655,15 @@ public class ModBlocks {
 
     // БЛОКИ УЛЬЯ
     public static final DeferredBlock<Block> DEPTH_WORM_NEST = registerBlock("depth_worm_nest",
-            () -> new com.trd.block.basic.necrosis.hive.DepthWormNestBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.MUD).sound(net.minecraft.world.level.block.SoundType.MUD)));
+            () -> new com.trd.block.basic.nature.hive.DepthWormNestBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.MUD).sound(net.minecraft.world.level.block.SoundType.MUD)));
     public static final DeferredBlock<Block> HIVE_SOIL = registerBlock("hive_soil",
-            () -> new com.trd.block.basic.necrosis.hive.HiveSoilBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.MUD).sound(net.minecraft.world.level.block.SoundType.MUD)));
+            () -> new com.trd.block.basic.nature.hive.HiveSoilBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.MUD).sound(net.minecraft.world.level.block.SoundType.MUD)));
     public static final DeferredBlock<Block> DEPTH_WORM_NEST_DEAD = registerBlock("depth_worm_nest_dead",
-            () -> new com.trd.block.basic.necrosis.hive.DepthWormNestBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.MUD).sound(net.minecraft.world.level.block.SoundType.MUD)));
+            () -> new com.trd.block.basic.nature.hive.DepthWormNestBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.MUD).sound(net.minecraft.world.level.block.SoundType.MUD)));
     public static final DeferredBlock<Block> HIVE_SOIL_DEAD = registerBlock("hive_soil_dead",
-            () -> new com.trd.block.basic.necrosis.hive.HiveSoilBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.MUD).sound(net.minecraft.world.level.block.SoundType.MUD)));
+            () -> new com.trd.block.basic.nature.hive.HiveSoilBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.MUD).sound(net.minecraft.world.level.block.SoundType.MUD)));
     public static final DeferredBlock<Block> HIVE_ROOTS = registerBlock("hive_roots",
-            () -> new com.trd.block.basic.necrosis.hive.HiveRootsBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.SPORE_BLOSSOM).noCollission().instabreak()));
+            () -> new com.trd.block.basic.nature.hive.HiveRootsBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.SPORE_BLOSSOM).noCollission().instabreak()));
 
 
     // ДВЕРИ
@@ -711,7 +720,7 @@ public class ModBlocks {
                             .sound(net.minecraft.world.level.block.SoundType.STONE)
                             .requiresCorrectToolForDrops()));
     public static final DeferredBlock<Block> AVIABOMB_MINE = registerBlock("aviabomb_mine",
-            () -> new com.trd.block.basic.direction.SideOBlock(
+            () -> new com.trd.block.basic.deco.direction.SideOBlock(
                     BlockBehaviour.Properties.of().strength(2.0F, 6.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops().noOcclusion()));
 
     // ═══════════════════════════════════════════════════════
@@ -719,21 +728,21 @@ public class ModBlocks {
     // ═══════════════════════════════════════════════════════
 
     public static final DeferredBlock<Block> REDSTONE_RADIO_TRANSMITTER = registerBlock("redstone_radio_transmitter",
-            () -> new com.trd.block.basic.redstone.RedstoneRadioBlock(
+            () -> new RedstoneRadioBlock(
                     BlockBehaviour.Properties.ofFullCopy(Blocks.REDSTONE_TORCH)
                             .noOcclusion()
                             .strength(0.0F)
                             .instabreak()
-                            .lightLevel(state -> state.getValue(com.trd.block.basic.redstone.RedstoneRadioBlock.POWERED) ? 7 : 0),
+                            .lightLevel(state -> state.getValue(RedstoneRadioBlock.POWERED) ? 7 : 0),
                     true));
 
     public static final DeferredBlock<Block> REDSTONE_RADIO_RECEIVER = registerBlock("redstone_radio_receiver",
-            () -> new com.trd.block.basic.redstone.RedstoneRadioBlock(
+            () -> new RedstoneRadioBlock(
                     BlockBehaviour.Properties.ofFullCopy(Blocks.REDSTONE_TORCH)
                             .noOcclusion()
                             .strength(0.0F)
                             .instabreak()
-                            .lightLevel(state -> state.getValue(com.trd.block.basic.redstone.RedstoneRadioBlock.POWERED) ? 7 : 0),
+                            .lightLevel(state -> state.getValue(RedstoneRadioBlock.POWERED) ? 7 : 0),
                     false));
 
     private static <T extends Block & IMultiblockController> DeferredBlock<T> registerMultiblock(String name, Supplier<T> block) {
@@ -850,7 +859,7 @@ public class ModBlocks {
 
     /**
      * Подробные описания блоков. Список повторяет 1.20.1: без записи здесь
-     * {@link com.trd.client.MachineTooltipHandler} не знает ключ перевода и
+     * {@link MachineTooltipHandler} не знает ключ перевода и
      * предмет-форма блока не показывает подсказку «Зажми Shift».
      *
      * <p>Блок, у которого есть отдельный предмет в {@link ModItems}, тоже
@@ -917,28 +926,28 @@ public class ModBlocks {
         com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(COCCER_OVEN, "tooltip.trd.machine.coccer_oven.desc");
     }
     // Климатическая система: контроллер термоизоляции помещений (Tier 1)
-    public static final DeferredBlock<com.trd.climate.block.InsulationControllerBlock> INSULATION_CONTROLLER =
+    public static final DeferredBlock<InsulationControllerBlock> INSULATION_CONTROLLER =
             registerBlock("insulation_controller",
-                    () -> new com.trd.climate.block.InsulationControllerBlock(
+                    () -> new InsulationControllerBlock(
                             BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).strength(3.5f).requiresCorrectToolForDrops()));
 
     // Климатическая система: атмосферный сканер герметичности помещений произвольной формы (Tier 2)
-    public static final DeferredBlock<com.trd.climate.block.AtmosphericScannerBlock> ATMOSPHERIC_SCANNER =
+    public static final DeferredBlock<AtmosphericScannerBlock> ATMOSPHERIC_SCANNER =
             registerBlock("atmospheric_scanner",
-                    () -> new com.trd.climate.block.AtmosphericScannerBlock(
+                    () -> new AtmosphericScannerBlock(
                             BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).strength(3.5f).requiresCorrectToolForDrops()));
 
     // Климатическая система: стационарный ртутный термометр (напольный/потолочный/настенный)
-    public static final DeferredBlock<com.trd.climate.block.MercuryThermometerBlock> THERMOMETER_MERC =
+    public static final DeferredBlock<MercuryThermometerBlock> THERMOMETER_MERC =
             registerBlock("thermometer_merc",
-                    () -> new com.trd.climate.block.MercuryThermometerBlock(
+                    () -> new MercuryThermometerBlock(
                             BlockBehaviour.Properties.of().strength(0.4f).sound(net.minecraft.world.level.block.SoundType.GLASS).noOcclusion()));
 
     // Стационарный электронный термометр (блок): 3D-модель прибора с дисплеем,
     // меряет температуру в точке установки и показывает её по центру экрана при наведении
-    public static final DeferredBlock<com.trd.climate.block.ElectricThermometerBlock> ELECTRIC_THERMOMETER_BLOCK =
+    public static final DeferredBlock<ElectricThermometerBlock> ELECTRIC_THERMOMETER_BLOCK =
             registerBlock("electric_thermometer_block",
-                    () -> new com.trd.climate.block.ElectricThermometerBlock(
+                    () -> new ElectricThermometerBlock(
                             BlockBehaviour.Properties.of().strength(0.4f).sound(SoundType.STONE).noOcclusion()));
 
     public static void register(net.neoforged.bus.api.IEventBus eventBus) {

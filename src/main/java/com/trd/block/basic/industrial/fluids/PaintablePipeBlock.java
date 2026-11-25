@@ -1,13 +1,12 @@
 package com.trd.block.basic.industrial.fluids;
 
-import com.trd.api.fluids.system.PipeTier;
+import com.trd.api.industiral.fluids.system.PipeTier;
 import com.trd.block.entity.industrial.fluids.PaintablePipeBlockEntity;
 import com.trd.item.industrial.fluids.FluidIdentifierItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;

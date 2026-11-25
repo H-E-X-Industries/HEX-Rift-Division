@@ -6,7 +6,7 @@ import com.trd.block.basic.industrial.rotation.HandCrankBlock;
 import com.trd.block.entity.industrial.rotation.HandCrankBlockEntity;
 import com.trd.client.render.FlywheelFallbackHelper;
 import com.trd.client.render.flywheel.ModModels;
-import com.trd.client.rotation.ClientKineticAngleTracker;
+import com.trd.api.industiral.rotation.ClientKineticAngleTracker;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;

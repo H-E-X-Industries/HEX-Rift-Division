@@ -1,6 +1,6 @@
 package com.trd.client.overlay.gui;
 
-import com.trd.api.metallurgy.system.MetalUnits2;
+import com.trd.api.industiral.metallurgy.system.MetalUnits2;
 import com.trd.block.entity.industrial.casting.SmallSmelterBlockEntity;
 import com.trd.main.MainRegistry;
 import com.trd.menu.industrial.SmallSmelterMenu;
