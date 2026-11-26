@@ -116,7 +116,17 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
         if (!derrickAssembled || !redstoneEnabled || extractingStopped) {
             return 0L;
         }
-        return descendingPipe ? 60L : 15L;
+        if (descendingPipe) {
+            return 24L;
+        }
+        return towerAnimPaused ? 0L : 8L;
+    }
+
+    private void notifyKineticLoadChanged(ServerLevel level) {
+        var net = KineticNetworkManager.get(level).getNetworkFor(worldPosition);
+        if (net != null) {
+            net.requestRecalculation();
+        }
     }
 
     public Direction getKineticPortSide() {
@@ -262,6 +272,9 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
     public void setTowerAnimPaused(boolean paused) {
         if (this.towerAnimPaused != paused) {
             this.towerAnimPaused = paused;
+            if (level instanceof ServerLevel serverLevel) {
+                notifyKineticLoadChanged(serverLevel);
+            }
             setChanged();
             syncToClient();
         }
@@ -306,6 +319,7 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
         waitingOnRock = false;
         detectedPocketPos = null;
         syncWellborePipeVisibility(level, pipeCountInWell);
+        notifyKineticLoadChanged(level);
         setChanged();
         syncToClient();
     }
@@ -416,6 +430,7 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
             }
         }
 
+        notifyKineticLoadChanged(level);
         setChanged();
         syncToClient();
     }
@@ -523,6 +538,7 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
     public void stopRotaryForExtraction(ServerLevel level) {
         if (!extractingStopped) {
             extractingStopped = true;
+            notifyKineticLoadChanged(level);
             setChanged();
             syncToClient();
         }
@@ -532,6 +548,7 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
     public void resumeDrillingFromExtraction(ServerLevel level) {
         if (extractingStopped) {
             extractingStopped = false;
+            notifyKineticLoadChanged(level);
             setChanged();
             syncToClient();
         }
@@ -694,8 +711,7 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
             this.redstoneEnabled = powered;
             setChanged();
             syncToClient();
-            var net = KineticNetworkManager.get(level).getNetworkFor(worldPosition);
-            if (net != null) net.requestRecalculation();
+            notifyKineticLoadChanged(level);
         }
     }
 
@@ -824,6 +840,7 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
         }
 
         this.derrickAssembled = true;
+        notifyKineticLoadChanged(level);
         return true;
     }
 
