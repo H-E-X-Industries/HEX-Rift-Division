@@ -75,6 +75,12 @@ public interface IDrillDriveModule extends IRigModule {
     @Nullable
     BlockPos findAdjacentPocketBlock(ServerLevel level);
 
+    /** Пересчитывает фактическую непрерывную колонну труб после разрушения/установки трубы в скважине. */
+    void onWellborePipeChanged(ServerLevel level, @Nullable BlockPos removedPos);
+
+    /** Проверяет, доходит ли непрерывная верхняя колонна труб до указанного блока кармана. */
+    boolean isWellboreReachingPocket(BlockPos pocketPos);
+
     /** Объявленные сокеты для привязки боковых модулей (например, PipeDrum со стороны локальной -Z). */
     default List<LateralSocket> getLateralSockets() {
         return List.of(new LateralSocket(

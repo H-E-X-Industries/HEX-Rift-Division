@@ -4,6 +4,9 @@ import com.mojang.serialization.MapCodec;
 import com.trd.api.industiral.rotation.KineticNetworkManager;
 import com.trd.block.basic.ModBlocks;
 import com.trd.block.entity.ModBlockEntities;
+import com.trd.multiblock.industrial.drilling.oilrig.core.OilRigAssembly;
+import com.trd.multiblock.industrial.drilling.oilrig.core.OilRigManager;
+import com.trd.multiblock.industrial.drilling.oilrig.core.WellboreColumn;
 import com.trd.multiblock.system.IMultiblockController;
 import com.trd.multiblock.system.MultiblockStructureHelper;
 import com.trd.multiblock.system.PartRole;
@@ -121,6 +124,7 @@ public class DrillPipeBlock extends BaseEntityBlock implements IMultiblockContro
             Direction facing = state.getValue(FACING);
             getStructureHelper().placeStructure(serverLevel, pos, facing, this);
             KineticNetworkManager.get(serverLevel).updateNetworkAfterPlace(pos);
+            notifyRigWellboreChanged(serverLevel, pos, null);
         }
     }
 
@@ -130,8 +134,16 @@ public class DrillPipeBlock extends BaseEntityBlock implements IMultiblockContro
             KineticNetworkManager.get(serverLevel).updateNetworkAfterRemove(pos);
             Direction facing = state.getValue(FACING);
             getStructureHelper().destroyStructure(serverLevel, pos, facing);
+            notifyRigWellboreChanged(serverLevel, pos, pos);
         }
         super.onRemove(state, level, pos, newState, isMoving);
+    }
+
+    private static void notifyRigWellboreChanged(ServerLevel level, BlockPos pipePos, @Nullable BlockPos removedPos) {
+        OilRigAssembly asm = OilRigManager.get(level).getAssembly(new WellboreColumn(pipePos.getX(), pipePos.getZ()));
+        if (asm != null && asm.getDrive() != null && asm.getDrive().isModuleValid()) {
+            asm.getDrive().onWellborePipeChanged(level, removedPos);
+        }
     }
 
     @Nullable

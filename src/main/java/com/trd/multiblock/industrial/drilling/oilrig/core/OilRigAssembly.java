@@ -261,6 +261,10 @@ public final class OilRigAssembly {
         if (wellhead == null || drive == null) return;
 
         BlockPos pocketPos = wellhead.getActivePocketPos();
+        if (pocketPos != null && !drive.isWellboreReachingPocket(pocketPos)) {
+            finishExtractionAndResume(level);
+            return;
+        }
         UUID veinId = wellhead.getActiveVeinId();
         OilVeinManager manager = OilVeinManager.get(level);
         OilVeinManager.OilVeinData veinData = veinId != null ? manager.getVein(veinId) : null;

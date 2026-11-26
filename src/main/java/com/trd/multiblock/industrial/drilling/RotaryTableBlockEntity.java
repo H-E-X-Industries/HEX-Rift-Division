@@ -90,6 +90,7 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
 
     private boolean brokenInCreative = false;
     private boolean detonatingBlowout = false;
+    private boolean updatingWellboreColumn = false;
     private int structureScanCooldown = 0;
     private int syncCounter = 0;
 
@@ -297,13 +298,14 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
     @Override
     public void beginPipeDescent(ServerLevel level) {
         if (descendingPipe) return;
+        reconcileWellborePipes(level, null);
         descendingPipe = true;
         descentStepIndex = 0;
         descentStepFraction = 0.0f;
         rockDelayTicks = 0;
         waitingOnRock = false;
         detectedPocketPos = null;
-        setWellborePipesHidden(level, true);
+        syncWellborePipeVisibility(level, pipeCountInWell);
         setChanged();
         syncToClient();
     }
@@ -311,6 +313,7 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
     @Override
     public boolean tickPipeDescent(ServerLevel level) {
         if (!descendingPipe) return false;
+        reconcileWellborePipes(level, null);
         BlockPos wellCenter = getWellCenterPos();
         int stepY = worldPosition.getY() - 4 * pipeCountInWell - 1 - descentStepIndex;
         BlockPos targetPos = new BlockPos(wellCenter.getX(), stepY, wellCenter.getZ());
@@ -367,28 +370,36 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
         descentStepIndex = 0;
         descentStepFraction = 0.0f;
         waitingOnRock = false;
-        pipeCountInWell++;
 
+        int targetSlot = pipeCountInWell + 1;
         BlockPos wellCenter = getWellCenterPos();
-        int newBottomY = worldPosition.getY() - 4 * pipeCountInWell;
+        int newBottomY = worldPosition.getY() - 4 * targetSlot;
         BlockPos newPipePos = new BlockPos(wellCenter.getX(), newBottomY, wellCenter.getZ());
 
-        // Освобождаем 4 блока под структуру DrillPipe (если попались заменяемые остатки)
-        for (int dy = 0; dy < 4; dy++) {
-            BlockPos p = newPipePos.above(dy);
-            BlockState st = level.getBlockState(p);
-            if (!st.isAir() && (st.canBeReplaced() || !isMudCrossOrHoleBlock(level, p, st))) {
-                level.setBlock(p, Blocks.AIR.defaultBlockState(), 3);
+        updatingWellboreColumn = true;
+        try {
+            // Освобождаем 4 блока под структуру DrillPipe (если попались заменяемые остатки)
+            for (int dy = 0; dy < 4; dy++) {
+                BlockPos p = newPipePos.above(dy);
+                BlockState st = level.getBlockState(p);
+                if (!st.isAir() && (st.canBeReplaced() || !isMudCrossOrHoleBlock(level, p, st))) {
+                    level.setBlock(p, Blocks.AIR.defaultBlockState(), 3);
+                }
             }
+
+            DrillPipeBlock pipeBlock = ModBlocks.DRILL_PIPE.get();
+            Direction pipeFacing = getDriveFacing();
+            level.setBlock(newPipePos, pipeBlock.defaultBlockState().setValue(DrillPipeBlock.FACING, pipeFacing), 3);
+            pipeBlock.getStructureHelper().placeStructure(level, newPipePos, pipeFacing, pipeBlock);
+        } finally {
+            updatingWellboreColumn = false;
         }
 
-        DrillPipeBlock pipeBlock = ModBlocks.DRILL_PIPE.get();
-        Direction pipeFacing = getDriveFacing();
-        level.setBlock(newPipePos, pipeBlock.defaultBlockState().setValue(DrillPipeBlock.FACING, pipeFacing), 3);
-        pipeBlock.getStructureHelper().placeStructure(level, newPipePos, pipeFacing, pipeBlock);
+        // Пересчитываем непрерывную колонну: при закрытии разрыва она соединяется с нижними трубами
+        pipeCountInWell = countContiguousWellborePipes(level, null);
 
         // Включаем все трубы колонны и запускаем синхронный инерционный выбег
-        setWellborePipesHidden(level, false);
+        syncWellborePipeVisibility(level, 0);
         for (int i = 1; i <= pipeCountInWell; i++) {
             BlockPos pipePos = new BlockPos(wellCenter.getX(), worldPosition.getY() - 4 * i, wellCenter.getZ());
             if (level.getBlockEntity(pipePos) instanceof DrillPipeBlockEntity pipeBe) {
@@ -398,19 +409,85 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
             }
         }
 
+        if (detectedPocketPos == null) {
+            BlockPos bottomPocket = findAdjacentPocketBlock(level);
+            if (bottomPocket != null) {
+                detectedPocketPos = bottomPocket;
+            }
+        }
+
         setChanged();
         syncToClient();
     }
 
-    private void setWellborePipesHidden(ServerLevel level, boolean hidden) {
+    private int countContiguousWellborePipes(ServerLevel level, @Nullable BlockPos ignoredRemovedPos) {
         BlockPos wellCenter = getWellCenterPos();
-        for (int i = 1; i <= pipeCountInWell; i++) {
-            BlockPos pipePos = new BlockPos(wellCenter.getX(), worldPosition.getY() - 4 * i, wellCenter.getZ());
+        int minY = level.getMinBuildHeight();
+        int slot = 1;
+        int count = 0;
+        while (true) {
+            int y = worldPosition.getY() - 4 * slot;
+            if (y < minY) break;
+            BlockPos pipePos = new BlockPos(wellCenter.getX(), y, wellCenter.getZ());
+            if (!level.isLoaded(pipePos)) break;
+            if ((ignoredRemovedPos != null && ignoredRemovedPos.equals(pipePos))
+                    || !level.getBlockState(pipePos).is(ModBlocks.DRILL_PIPE.get())) {
+                break;
+            }
+            count++;
+            slot++;
+        }
+        return count;
+    }
+
+    private void syncWellborePipeVisibility(ServerLevel level, int hiddenUpToSlot) {
+        BlockPos wellCenter = getWellCenterPos();
+        int minY = level.getMinBuildHeight();
+        for (int slot = 1; ; slot++) {
+            int y = worldPosition.getY() - 4 * slot;
+            if (y < minY) break;
+            BlockPos pipePos = new BlockPos(wellCenter.getX(), y, wellCenter.getZ());
+            if (!level.isLoaded(pipePos)) break;
             if (level.getBlockEntity(pipePos) instanceof DrillPipeBlockEntity pipeBe) {
                 pipeBe.setInWellbore(true);
-                pipeBe.setHiddenForColumnDescent(hidden);
+                pipeBe.setHiddenForColumnDescent(slot <= hiddenUpToSlot);
             }
         }
+    }
+
+    private void reconcileWellborePipes(ServerLevel level, @Nullable BlockPos ignoredRemovedPos) {
+        if (detonatingBlowout || updatingWellboreColumn) return;
+        int connected = countContiguousWellborePipes(level, ignoredRemovedPos);
+        if (descendingPipe) {
+            if (connected < pipeCountInWell) {
+                pipeCountInWell = connected;
+                descentStepIndex = 0;
+                descentStepFraction = 0.0f;
+                rockDelayTicks = 0;
+                waitingOnRock = false;
+                detectedPocketPos = null;
+                syncWellborePipeVisibility(level, pipeCountInWell);
+                setChanged();
+                syncToClient();
+            }
+        } else if (connected != pipeCountInWell) {
+            pipeCountInWell = connected;
+            syncWellborePipeVisibility(level, 0);
+            setChanged();
+            syncToClient();
+        }
+    }
+
+    @Override
+    public void onWellborePipeChanged(ServerLevel level, @Nullable BlockPos removedPos) {
+        reconcileWellborePipes(level, removedPos);
+    }
+
+    @Override
+    public boolean isWellboreReachingPocket(BlockPos pocketPos) {
+        if (pipeCountInWell <= 0) return false;
+        int lowestY = worldPosition.getY() - 4 * pipeCountInWell;
+        return pocketPos.getY() >= lowestY && pocketPos.getY() <= lowestY + 3;
     }
 
     private boolean isMudCrossOrHoleBlock(ServerLevel level, BlockPos pos, BlockState state) {
@@ -464,15 +541,26 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
     public int purgeWellborePipesForBlowout(ServerLevel level) {
         detonatingBlowout = true;
         BlockPos wellCenter = getWellCenterPos();
-        for (int i = 1; i <= pipeCountInWell; i++) {
-            BlockPos pipePos = new BlockPos(wellCenter.getX(), worldPosition.getY() - 4 * i, wellCenter.getZ());
-            BlockState st = level.getBlockState(pipePos);
-            if (st.getBlock() instanceof DrillPipeBlock pipeBlock) {
-                pipeBlock.getStructureHelper().destroyStructure(level, pipePos, st.getValue(DrillPipeBlock.FACING));
-                level.setBlock(pipePos, Blocks.AIR.defaultBlockState(), 3);
+        int minY = level.getMinBuildHeight();
+        int purged = 0;
+        updatingWellboreColumn = true;
+        try {
+            for (int slot = 1; ; slot++) {
+                int y = worldPosition.getY() - 4 * slot;
+                if (y < minY) break;
+                BlockPos pipePos = new BlockPos(wellCenter.getX(), y, wellCenter.getZ());
+                if (!level.isLoaded(pipePos)) break;
+                BlockState st = level.getBlockState(pipePos);
+                if (st.getBlock() instanceof DrillPipeBlock pipeBlock) {
+                    pipeBlock.getStructureHelper().destroyStructure(level, pipePos, st.getValue(DrillPipeBlock.FACING));
+                    level.setBlock(pipePos, Blocks.AIR.defaultBlockState(), 3);
+                    purged++;
+                }
             }
+        } finally {
+            updatingWellboreColumn = false;
         }
-        int total = pipeCountInWell + (descendingPipe ? 1 : 0);
+        int total = Math.max(purged, pipeCountInWell) + (descendingPipe ? 1 : 0);
         pipeCountInWell = 0;
         descendingPipe = false;
         descentStepIndex = 0;
@@ -566,9 +654,16 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
 
         be.pollRedstoneSignal(serverLevel);
 
+        if (be.descendingPipe) {
+            be.reconcileWellborePipes(serverLevel, null);
+        }
+
         if (--be.structureScanCooldown <= 0) {
             be.structureScanCooldown = 10;
             be.checkPlatformAndDerrickAssembly(serverLevel);
+            if (!be.descendingPipe) {
+                be.reconcileWellborePipes(serverLevel, null);
+            }
         }
 
         OilRigAssembly asm = be.assembly;
@@ -832,7 +927,7 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
 
     public void onControllerRemoved(ServerLevel level) {
         if (!detonatingBlowout) {
-            setWellborePipesHidden(level, false);
+            syncWellborePipeVisibility(level, 0);
         }
         for (BlockPos colPos : derrickCollisionPositions) {
             if (level.getBlockState(colPos).is(ModBlocks.DERRICK_COLLISION.get())) {
@@ -913,6 +1008,7 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
         towerAnimTick = tag.getInt("TowerAnimTick");
         towerAnimPaused = !tag.contains("TowerAnimPaused") || tag.getBoolean("TowerAnimPaused");
         holdingPipe = tag.getBoolean("HoldingPipe");
+        int prevPipeCount = pipeCountInWell;
         pipeCountInWell = tag.getInt("PipeCountInWell");
         descendingPipe = tag.getBoolean("DescendingPipe");
         descentStepIndex = tag.getInt("DescentStepIdx");
@@ -933,7 +1029,8 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
                 visualAnimTick = towerAnimTick;
             }
             float targetDescent = descendingPipe ? (descentStepIndex + descentStepFraction) : 0.0f;
-            if (!descendingPipe || waitingOnRock || Math.abs(visualDescentBlocks - targetDescent) > 0.35f) {
+            if (!descendingPipe || waitingOnRock || pipeCountInWell != prevPipeCount
+                    || Math.abs(visualDescentBlocks - targetDescent) > 0.35f) {
                 visualDescentBlocks = targetDescent;
             }
             boolean currentHologram = shouldRenderStage2Hologram();

@@ -34,7 +34,7 @@ public class DrillPipeRenderer implements BlockEntityRenderer<DrillPipeBlockEnti
     @Override
     public void render(DrillPipeBlockEntity be, float partialTick, PoseStack poseStack,
                        MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
-        if (FlywheelFallbackHelper.isFlywheelActive(be.getLevel())) return;
+        if (be.isRemoved() || FlywheelFallbackHelper.isFlywheelActive(be.getLevel())) return;
         if (be.isHiddenForColumnDescent()) return;
 
         Level level = be.getLevel();

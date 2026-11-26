@@ -48,7 +48,7 @@ public class DrillPipeVisual extends AbstractBlockEntityVisual<DrillPipeBlockEnt
     }
 
     private void updateTransform(float partialTick) {
-        if (blockEntity.isHiddenForColumnDescent()) {
+        if (blockEntity.isRemoved() || blockEntity.isHiddenForColumnDescent()) {
             pipe.setIdentityTransform().scale(0.0f);
         } else {
             float spin = blockEntity.getRenderSpinAngleRad(partialTick);
