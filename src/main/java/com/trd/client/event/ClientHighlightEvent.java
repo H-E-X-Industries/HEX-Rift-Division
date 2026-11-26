@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import com.trd.block.basic.industrial.rotation.StatorBlock;
 import com.trd.block.entity.industrial.rotation.StatorBlockEntity;
+import com.trd.client.render.HologramRenderTypes;
 import com.trd.client.render.flywheel.ModModels;
 import com.trd.item.industrial.energy.StatorCoilItem;
 import com.trd.main.MainRegistry;
@@ -95,7 +96,8 @@ public class ClientHighlightEvent {
         poseStack.scale(0.99f, 0.99f, 0.99f);
 
         MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
-        VertexConsumer buffer = buffers.getBuffer(RenderType.entityTranslucent(InventoryMenu.BLOCK_ATLAS));
+        RenderType hologramType = HologramRenderTypes.translucentNoDepthWrite(InventoryMenu.BLOCK_ATLAS);
+        VertexConsumer buffer = buffers.getBuffer(hologramType);
         REUSABLE_PIPE_CONSUMER.bind(buffer, alpha);
 
         mc.getBlockRenderer().getModelRenderer().renderModel(
@@ -103,11 +105,11 @@ public class ClientHighlightEvent {
                 REUSABLE_PIPE_CONSUMER,
                 null,
                 pipeModel,
-                0.55f, 0.9f, 1.0f,
+                1.0f, 1.0f, 1.0f,
                 LightTexture.FULL_BRIGHT,
                 OverlayTexture.NO_OVERLAY
         );
-        buffers.endBatch(RenderType.entityTranslucent(InventoryMenu.BLOCK_ATLAS));
+        buffers.endBatch(hologramType);
         poseStack.popPose();
     }
 

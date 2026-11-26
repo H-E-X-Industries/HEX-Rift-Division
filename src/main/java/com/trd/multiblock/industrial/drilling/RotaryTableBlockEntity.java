@@ -15,6 +15,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.LongArrayTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.Containers;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -26,9 +27,11 @@ import net.neoforged.fml.loading.FMLEnvironment;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * BlockEntity роторного стола нефтевышки (RotaryTable).
@@ -37,6 +40,9 @@ import java.util.Set;
  * а также управление буровой колонной и синхронизацию 340-тиковой анимации.
  */
 public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements IDrillDriveModule {
+
+    public static final Set<RotaryTableBlockEntity> CLIENT_TABLES =
+            Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     public static final BlockPos LOCAL_HOLE_FROM_CTRL = new BlockPos(0, 0, -1);
     public static final BlockPos LOCAL_KINETIC_PORT_FROM_CTRL = new BlockPos(1, 0, -1);
@@ -76,6 +82,9 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
     private float visualAnimTick = 0.0f;
     private float visualDescentBlocks = 0.0f;
     private float frozenDiskAngle = 0.0f;
+    private float diskAngleRad = 0.0f;
+    private float prevDiskAngleRad = 0.0f;
+    private float diskOmegaRadPerTick = 0.0f;
     private boolean lastVisualAssembled = false;
     private boolean lastVisualHologram = false;
 
@@ -140,7 +149,7 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
 
     @Override
     public long getVisualSpeed() {
-        return extractingStopped ? 0L : this.speed;
+        return this.speed;
     }
 
     // ==================== МОДУЛЬ НЕФТЕВЫШКИ (IDrillDriveModule) ====================
@@ -281,8 +290,9 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
     }
 
     public boolean isWaitingOnRock() { return waitingOnRock; }
-    public float getFrozenDiskAngle() { return frozenDiskAngle; }
+    public float getFrozenDiskAngle() { return diskAngleRad; }
     public void setFrozenDiskAngle(float angle) { this.frozenDiskAngle = angle; }
+    public float getDiskSpinAngleRad(float partialTick) { return Mth.lerp(partialTick, prevDiskAngleRad, diskAngleRad); }
 
     @Override
     public void beginPipeDescent(ServerLevel level) {
@@ -414,7 +424,7 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
     private void scanHorizontalPocket(ServerLevel level, BlockPos center) {
         for (Direction dir : Direction.Plane.HORIZONTAL) {
             BlockPos adj = center.relative(dir);
-            if (OilPocketHelper.isReservoirBlock(level.getBlockState(adj))) {
+            if (OilPocketHelper.hasExtractableOil(level, adj)) {
                 detectedPocketPos = adj.immutable();
                 return;
             }
@@ -482,7 +492,7 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
             BlockPos checkCenter = new BlockPos(wellCenter.getX(), lowestY + dy, wellCenter.getZ());
             for (Direction dir : Direction.Plane.HORIZONTAL) {
                 BlockPos adj = checkCenter.relative(dir);
-                if (OilPocketHelper.isReservoirBlock(level.getBlockState(adj))) {
+                if (OilPocketHelper.hasExtractableOil(level, adj)) {
                     return adj;
                 }
             }
@@ -497,18 +507,41 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
         super.onLoad();
         if (level instanceof ServerLevel serverLevel && !detonatingBlowout) {
             OilRigManager.get(serverLevel).onModuleLoaded(serverLevel, this);
+        } else if (level != null && level.isClientSide) {
+            CLIENT_TABLES.add(this);
         }
     }
 
     @Override
     public void setRemoved() {
+        CLIENT_TABLES.remove(this);
         if (level instanceof ServerLevel serverLevel) {
             OilRigManager.get(serverLevel).onModuleRemoved(serverLevel, worldPosition);
         }
         super.setRemoved();
     }
 
+    @Override
+    public void onChunkUnloaded() {
+        CLIENT_TABLES.remove(this);
+        super.onChunkUnloaded();
+    }
+
     public void clientTick() {
+        this.prevDiskAngleRad = this.diskAngleRad;
+        boolean drivingColumn = descendingPipe && isOptimalRpm() && redstoneEnabled && !extractingStopped && this.speed != 0L;
+        if (drivingColumn) {
+            this.diskOmegaRadPerTick = (float) (this.speed * Math.PI / 600.0);
+            this.diskAngleRad += this.diskOmegaRadPerTick;
+        } else if (Math.abs(this.diskOmegaRadPerTick) > 0.001f) {
+            this.diskAngleRad += this.diskOmegaRadPerTick;
+            this.diskOmegaRadPerTick *= 0.92f;
+            if (Math.abs(this.diskOmegaRadPerTick) < 0.001f) {
+                this.diskOmegaRadPerTick = 0.0f;
+            }
+        }
+        this.frozenDiskAngle = this.diskAngleRad;
+
         if (derrickAssembled && !towerAnimPaused && isOptimalRpm() && redstoneEnabled) {
             visualAnimTick = Math.min(OilRigAssembly.TOWER_CYCLE_TICKS, visualAnimTick + 1.0f);
             if (visualAnimTick >= OilRigAssembly.TOWER_CYCLE_TICKS && !descendingPipe) {

@@ -137,6 +137,46 @@ public class FluidBarrelBlockEntity extends FluidNodeBlockEntity implements Menu
                 if (loc != null && !loc.toString().equals(fluidFilter)) return false;
                 return super.isFluidValid(stack);
             }
+            @Override
+            public int fill(FluidStack resource, FluidAction action) {
+                if (resource.isEmpty() || !isFluidValid(resource)) {
+                    return 0;
+                }
+                if (!fluid.isEmpty()
+                        && fluid.getFluid() == com.trd.api.industiral.fluids.ModFluids.WELLHEAD_FLUID_SOURCE.get()
+                        && resource.getFluid() == com.trd.api.industiral.fluids.ModFluids.WELLHEAD_FLUID_SOURCE.get()
+                        && !FluidStack.isSameFluidSameComponents(fluid, resource)) {
+                    int filled = Math.min(capacity - fluid.getAmount(), resource.getAmount());
+                    if (action.execute() && filled > 0) {
+                        FluidStack updated = fluid.copyWithAmount(fluid.getAmount() + filled);
+                        var compType = com.trd.api.capabilities.ModDataComponents.WELLHEAD_FLUID_DATA.get();
+                        com.trd.api.capabilities.ModDataComponents.WellheadFluidData blended =
+                                com.trd.api.capabilities.ModDataComponents.WellheadFluidData.blend(
+                                        fluid.get(compType), fluid.getAmount(),
+                                        resource.get(compType), filled
+                                );
+                        if (blended != null) {
+                            updated.set(compType, blended);
+                        }
+                        setFluid(updated);
+                        onContentsChanged();
+                    }
+                    return filled;
+                }
+                return super.fill(resource, action);
+            }
+            @Override
+            public @NotNull FluidStack drain(FluidStack resource, FluidAction action) {
+                if (resource.isEmpty() || fluid.isEmpty()) {
+                    return FluidStack.EMPTY;
+                }
+                if (fluid.getFluid() == com.trd.api.industiral.fluids.ModFluids.WELLHEAD_FLUID_SOURCE.get()
+                        && resource.getFluid() == com.trd.api.industiral.fluids.ModFluids.WELLHEAD_FLUID_SOURCE.get()
+                        && !FluidStack.isSameFluidSameComponents(fluid, resource)) {
+                    return drain(resource.getAmount(), action);
+                }
+                return super.drain(resource, action);
+            }
         };
     }
 

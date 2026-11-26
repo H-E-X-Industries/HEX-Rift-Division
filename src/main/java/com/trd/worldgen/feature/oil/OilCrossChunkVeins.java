@@ -1,5 +1,7 @@
 package com.trd.worldgen.feature.oil;
 
+import com.trd.api.nature.ore.oil.OilComposition;
+import com.trd.api.nature.ore.oil.OilVeinManager;
 import com.trd.api.nature.ore.oil.ReservoirType;
 import com.trd.api.nature.ore.oil.VeinShape;
 import net.minecraft.core.BlockPos;
@@ -84,6 +86,20 @@ public final class OilCrossChunkVeins {
 
         public float horizontalReach() {
             return Math.max(rx, rz);
+        }
+
+        public float getWarpAmp() {
+            return warpAmp;
+        }
+
+        public int estimateBlockCount() {
+            double approx = switch (shape) {
+                case STRATIFIED -> Math.PI * rx * rz * (2.0 * ry + 1.0);
+                case PUDDLE -> Math.PI * rx * rz * 4.0;
+                case DOME -> Math.PI * rx * rz * ry * 0.77;
+                default -> (4.0 / 3.0) * Math.PI * rx * rz * ry;
+            };
+            return (int) Math.max(1L, Math.round(approx));
         }
 
         public boolean overlapsChunk(int minBX, int maxBX, int minBZ, int maxBZ) {
@@ -236,6 +252,28 @@ public final class OilCrossChunkVeins {
         } catch (Throwable t) {
             return null;
         }
+    }
+
+    @Nullable
+    public static Holder<Biome> resolveVeinCenterBiome(WorldGenLevel level, OilVein vein) {
+        int safeY = Mth.clamp(vein.cy, level.getMinBuildHeight(), level.getMaxBuildHeight() - 1);
+        return sampleNoiseBiome(level, vein.cx, safeY, vein.cz);
+    }
+
+    public static OilComposition resolveAuthoritativeComposition(ServerLevel level, OilVein vein, BlockPos fallbackPos) {
+        UUID veinId = veinUuid(level.getSeed(), vein);
+        OilVeinManager.OilVeinData data = OilVeinManager.get(level).getVein(veinId);
+        if (data != null && data.composition != null) {
+            return data.composition;
+        }
+        Holder<Biome> biome = resolveVeinCenterBiome(level, vein);
+        if (biome == null) {
+            biome = level.getBiome(fallbackPos);
+        }
+        return OilComposition.generate(
+                vein.cy, vein.seed, biome, vein.shape, vein.reservoirType,
+                vein.isField, vein.fieldName, vein.totalPockets, vein.pocketIndex
+        );
     }
 
     public static List<OilVein> getVeinsForBasin(WorldGenLevel level,
@@ -443,6 +481,10 @@ public final class OilCrossChunkVeins {
 
     private static double smoothstep(double t) {
         return t * t * (3.0 - 2.0 * t);
+    }
+
+    public static UUID veinUuid(long worldSeed, OilVein vein) {
+        return veinUuid(worldSeed, vein, "oil_pocket_" + vein.seed);
     }
 
     public static UUID veinUuid(long worldSeed, OilVein vein, String veinId) {

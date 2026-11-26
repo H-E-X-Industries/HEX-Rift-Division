@@ -1116,7 +1116,7 @@
   "tooltip.trd.wellhead_fluid.gor": "Gas Ratio: %s%%",
   "tooltip.trd.wellhead_fluid.sulfur_sour": "Sour Crude (Sulfur: %s%%)",
   "tooltip.trd.wellhead_fluid.sulfur_sweet": "Sweet Crude (Low Sulfur)",
-  "tooltip.trd.wellhead_fluid.fractions": "Fractions [G/N/K/D/FO/B]: %s/%s/%s/%s/%s/%s%%",
+  "tooltip.trd.wellhead_fluid.fractions": "Fractions [Gas/G/N/K/D/FO]: %s/%s/%s/%s/%s/%s%%",
   "tooltip.trd.wellhead_fluid.type.porous_stone": "Porous Sandstone",
   "tooltip.trd.wellhead_fluid.type.tight_shale": "Tight Oil Shale",
   "tooltip.trd.wellhead_fluid.type.tar_sands": "Tar Sands",

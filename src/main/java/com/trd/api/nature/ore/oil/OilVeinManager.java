@@ -89,6 +89,24 @@ public class OilVeinManager extends SavedData {
         }
     }
 
+    public OilVeinData ensureVeinRegistered(UUID id, OilComposition composition, int estimatedBlocks, int yLevel, ChunkPos centerChunk) {
+        if (id == null) return null;
+        OilVeinData existing = getVein(id);
+        if (existing != null) {
+            return existing;
+        }
+        int blocks = Math.max(1, estimatedBlocks);
+        long units = (long) blocks * MB_PER_BLOCK;
+        OilVeinMetadata meta = new OilVeinMetadata(id, composition, units, centerChunk, centerChunk, yLevel, blocks);
+        meta.remainingUnits = units;
+        OilVeinMetadata prev = veinIndex.putIfAbsent(id, meta);
+        if (prev == null) {
+            indexChunkRange(meta);
+            setDirty();
+        }
+        return getVein(id);
+    }
+
     public OilVeinData getVein(UUID id) {
         if (id == null) return null;
         OilVeinData live = activeVeins.get(id);

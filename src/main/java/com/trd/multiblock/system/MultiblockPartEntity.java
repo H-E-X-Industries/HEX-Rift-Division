@@ -38,6 +38,7 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
         this.controllerPos = pos;
         setChanged();
         if (level != null && !level.isClientSide) {
+            level.invalidateCapabilities(worldPosition);
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
         }
     }
@@ -53,6 +54,7 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
         setChanged();
 
         if (this.level != null && !this.level.isClientSide) {
+            this.level.invalidateCapabilities(this.worldPosition);
             com.trd.api.industiral.energy.EnergyNetworkManager energyManager = com.trd.api.industiral.energy.EnergyNetworkManager.get((ServerLevel) this.level);
             
             if (!wasEnergy && isEnergy) {

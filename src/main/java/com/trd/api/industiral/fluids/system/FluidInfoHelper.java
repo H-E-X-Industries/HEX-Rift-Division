@@ -1,10 +1,13 @@
 package com.trd.api.industiral.fluids.system;
 
 import com.trd.api.capabilities.ModDataComponents;
+import com.trd.api.nature.ore.oil.OilFraction;
+import com.trd.api.nature.ore.oil.ReservoirType;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
@@ -14,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Supplier;
+import java.util.function.ToIntFunction;
 
 /**
  * Единый хелпер для получения свойств жидкости (коррозионность, температура,
@@ -103,27 +107,85 @@ public class FluidInfoHelper {
     }
 
     public static void appendWellheadDataTooltip(ModDataComponents.WellheadFluidData data, List<Component> tooltip) {
-        Component resName = Component.translatable("tooltip.trd.wellhead_fluid.type." + data.getReservoirTypeEnum().getId());
-        tooltip.add(Component.translatable("tooltip.trd.wellhead_fluid.reservoir", resName)
-                .withStyle(ChatFormatting.GOLD));
-        tooltip.add(Component.translatable("tooltip.trd.wellhead_fluid.pressure",
-                        String.format(Locale.ROOT, "%.1f", data.pressure()))
-                .withStyle(ChatFormatting.YELLOW));
-        tooltip.add(Component.translatable("tooltip.trd.wellhead_fluid.gor",
-                        Math.round(data.gasRatio() * 100.0f))
-                .withStyle(ChatFormatting.AQUA));
-        if (data.sulfur() > 0.0f) {
-            tooltip.add(Component.translatable("tooltip.trd.wellhead_fluid.sulfur_sour",
-                            String.format(Locale.ROOT, "%.1f", data.sulfur() * 100.0f))
-                    .withStyle(ChatFormatting.RED));
-        } else {
-            tooltip.add(Component.translatable("tooltip.trd.wellhead_fluid.sulfur_sweet")
-                    .withStyle(ChatFormatting.GREEN));
+        tooltip.add(Component.literal("§6=== [Характеристики скважинного флюида] ==="));
+        appendOilGeochemistryTooltip(
+                tooltip,
+                data.getReservoirTypeEnum(),
+                true,
+                data::getFractionPercent,
+                data.gasRatio(),
+                data.pressure(),
+                data.sulfur()
+        );
+    }
+
+    /**
+     * Общий подробный геохимический тултип (единые цвета и детали для пробы грунта и скважинного флюида).
+     */
+    public static void appendOilGeochemistryTooltip(List<Component> tooltip,
+                                                    ReservoirType resType,
+                                                    boolean showFractions,
+                                                    ToIntFunction<OilFraction> fractionLookup,
+                                                    float gasRatio,
+                                                    float pressure,
+                                                    float sulfur) {
+        tooltip.add(Component.literal("§7Коллектор: §f" + resType.getDisplayNameRu()));
+
+        if (showFractions) {
+            tooltip.add(Component.literal("§eУглеводородный спектр:"));
+            for (OilFraction f : OilFraction.values()) {
+                int pct = fractionLookup.applyAsInt(f);
+                MutableComponent line = Component.literal("  • ")
+                        .withStyle(style -> style.withColor(f.getColor()))
+                        .append(Component.literal(f.getDisplayNameRu() + ": ")
+                                .withStyle(style -> style.withColor(f.getColor())))
+                        .append(Component.literal(pct + "%")
+                                .withStyle(ChatFormatting.WHITE));
+                tooltip.add(line);
+            }
         }
-        tooltip.add(Component.translatable("tooltip.trd.wellhead_fluid.fractions",
-                        data.gasoline(), data.naphtha(), data.kerosene(),
-                        data.diesel(), data.fuelOil(), data.bitumen())
-                .withStyle(ChatFormatting.GRAY));
+
+        float corrosiveness = Math.min(1.0f, Math.max(0.0f, sulfur * 20.0f)) * 100.0f;
+
+        tooltip.add(Component.literal(String.format(Locale.ROOT, "§7Газовый фактор (GOR): §f%.1f%%", gasRatio * 100.0f)));
+        tooltip.add(Component.literal(String.format(Locale.ROOT, "§7Пластовое давление: §f%.1f bar", pressure)));
+
+        if (sulfur > 0.0f) {
+            String corrSeverity = corrosiveness >= 65.0f ? "§4Критическая"
+                    : (corrosiveness >= 35.0f ? "§cВысокая" : "§eУмеренная");
+
+            tooltip.add(Component.literal(String.format(Locale.ROOT, "§7Сернистость: §cКислая (%.1f%% S)", sulfur * 100.0f)));
+            tooltip.add(Component.literal(String.format(Locale.ROOT, "§7Коррозийность сырья: %s (%.1f%%)", corrSeverity, corrosiveness)));
+        } else {
+            tooltip.add(Component.literal("§7Сернистость: §aСладкая (0.0% S)"));
+            tooltip.add(Component.literal("§7Коррозийность сырья: §aИнертная (0.0%)"));
+        }
+
+        tooltip.add(Component.literal("§dТехнологические требования:"));
+        boolean hasWarning = false;
+
+        if (resType != ReservoirType.TAR_SANDS && (pressure >= 150.0f || (gasRatio >= 0.40f && pressure >= 80.0f))) {
+            tooltip.add(Component.literal(" §c⚠ ТРЕБУЕТСЯ ПРЕВЕНТОР (BOP): Критическое давление газа! Скважину сдетонирует без устьевого превентора."));
+            hasWarning = true;
+        }
+
+        if (sulfur > 0.0f) {
+            tooltip.add(Component.literal(String.format(Locale.ROOT,
+                    " §e⚠ ТРЕБУЕТСЯ МОДУЛЬ ГИДРООЧИСТКИ: Высокое содержание H₂S (Коррозия %.1f%%). Без десульфуризации вызывает ускоренный износ бура и разрушение труб при выкачке.", corrosiveness)));
+            hasWarning = true;
+        }
+
+        if (resType == ReservoirType.TIGHT_SHALE) {
+            tooltip.add(Component.literal(" §6⚠ ТРЕБУЕТСЯ МОДУЛЬ ФРЕКИНГА: Низкопроницаемый сланец. Требуется гидроразрыв и подача бурового раствора."));
+            hasWarning = true;
+        } else if (resType == ReservoirType.TAR_SANDS) {
+            tooltip.add(Component.literal(" §b⚠ ТРЕБУЕТСЯ ПАРОВОЙ ИНЖЕКТОР (EOR): Застывший битум. Требуется нагнетание пара для снижения вязкости."));
+            hasWarning = true;
+        }
+
+        if (!hasWarning) {
+            tooltip.add(Component.literal(" §a✓ Стандартная добыча: Осложнений нет, достаточно базового насоса."));
+        }
     }
 
     /** Извлекает WellheadFluidData из сериализованного NBT-тега FluidTank (поле "Fluid"). */

@@ -36,7 +36,10 @@ import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Устьевой BlockEntity буровой крестовины (MudCross).
@@ -46,6 +49,9 @@ import java.util.UUID;
  */
 public class MudCrossBlockEntity extends BlockEntity
         implements IWellheadModule, IMultiblockFluidHandler, IFluidTankProvider, ITankWithMode {
+
+    public static final Set<MudCrossBlockEntity> CLIENT_WELLHEADS =
+            Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     public static final int BUFFER_CAPACITY_MB = 16000;
     private static final BlockPos LOCAL_HOLE_FROM_CONTROLLER = new BlockPos(0, 0, -1);
@@ -92,7 +98,9 @@ public class MudCrossBlockEntity extends BlockEntity
 
         @Override
         public @NotNull FluidStack drain(FluidStack resource, FluidAction action) {
-            return fluidTank.drain(resource, action);
+            if (resource.isEmpty() || fluidTank.isEmpty()) return FluidStack.EMPTY;
+            if (fluidTank.getFluid().getFluid() != resource.getFluid()) return FluidStack.EMPTY;
+            return fluidTank.drain(resource.getAmount(), action);
         }
 
         @Override
@@ -167,15 +175,24 @@ public class MudCrossBlockEntity extends BlockEntity
         super.onLoad();
         if (level instanceof ServerLevel serverLevel && !detonating) {
             OilRigManager.get(serverLevel).onModuleLoaded(serverLevel, this);
+        } else if (level != null && level.isClientSide) {
+            CLIENT_WELLHEADS.add(this);
         }
     }
 
     @Override
     public void setRemoved() {
+        CLIENT_WELLHEADS.remove(this);
         if (level instanceof ServerLevel serverLevel) {
             OilRigManager.get(serverLevel).onModuleRemoved(serverLevel, worldPosition);
         }
         super.setRemoved();
+    }
+
+    @Override
+    public void onChunkUnloaded() {
+        CLIENT_WELLHEADS.remove(this);
+        super.onChunkUnloaded();
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, MudCrossBlockEntity be) {
@@ -265,11 +282,17 @@ public class MudCrossBlockEntity extends BlockEntity
         int toAdd = Math.min(space, stack.getAmount());
         if (!simulate && toAdd > 0) {
             FluidStack updated = current.copyWithAmount(current.getAmount() + toAdd);
-            ModDataComponents.WellheadFluidData newData = stack.get(ModDataComponents.WELLHEAD_FLUID_DATA.get());
-            if (newData != null) {
-                updated.set(ModDataComponents.WELLHEAD_FLUID_DATA.get(), newData);
+            var compType = ModDataComponents.WELLHEAD_FLUID_DATA.get();
+            ModDataComponents.WellheadFluidData blended = ModDataComponents.WellheadFluidData.blend(
+                    current.get(compType), current.getAmount(),
+                    stack.get(compType), toAdd
+            );
+            if (blended != null) {
+                updated.set(compType, blended);
             }
             fluidTank.setFluid(updated);
+            setChanged();
+            syncToClient();
         }
         return toAdd;
     }
@@ -292,7 +315,7 @@ public class MudCrossBlockEntity extends BlockEntity
     @Nullable
     public IFluidHandler getControllerFluidHandler(@Nullable Direction side) {
         if (side == null) return outputOnlyHandler;
-        if (side.getAxis().isVertical()) return null;
+        if (side == Direction.UP) return null;
         if (getBlockState().getBlock() instanceof MudCrossBlock block) {
             if (block.getStructureHelper().isPortFaceExternal(worldPosition, getFacing(), worldPosition, side)) {
                 return outputOnlyHandler;
@@ -306,7 +329,7 @@ public class MudCrossBlockEntity extends BlockEntity
     public IFluidHandler getCapabilityForPart(@Nullable Direction side, PartRole role, BlockPos partPos) {
         if (role != PartRole.FLUID_CONNECTOR) return null;
         if (side == null) return outputOnlyHandler;
-        if (side.getAxis().isVertical()) return null;
+        if (side == Direction.UP) return null;
         if (getBlockState().getBlock() instanceof MudCrossBlock block) {
             if (block.getStructureHelper().isPortFaceExternal(worldPosition, getFacing(), partPos, side)) {
                 return outputOnlyHandler;

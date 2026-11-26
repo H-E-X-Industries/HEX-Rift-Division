@@ -1,6 +1,7 @@
 package com.trd.block.basic.nature.oil;
 
 import com.trd.api.nature.ore.oil.OilComposition;
+import com.trd.api.nature.ore.oil.OilVeinManager;
 import com.trd.api.nature.ore.oil.ReservoirType;
 import com.trd.item.ModItems;
 import com.trd.item.nature.oil.OilRockChunkItem;
@@ -13,11 +14,14 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+
+import java.util.UUID;
 
 public class OilReservoirBlock extends Block {
 
@@ -68,8 +72,6 @@ public class OilReservoirBlock extends Block {
             return;
         }
 
-        Holder<Biome> biome = level.getBiome(pos);
-
         float chunkChance = player.isCreative() ? 1.0f : switch (tierLevel) {
             case 0 -> 0.30f;
             case 1 -> 0.50f;
@@ -78,12 +80,22 @@ public class OilReservoirBlock extends Block {
         };
 
         if (level.random.nextFloat() < chunkChance) {
-            OilComposition comp = OilComposition.generate(vein.cy, vein.seed, biome, vein.shape, vein.reservoirType,
-                    vein.isField, vein.fieldName, vein.totalPockets, vein.pocketIndex);
+            OilComposition comp = OilCrossChunkVeins.resolveAuthoritativeComposition(level, vein, pos);
             if (this.reservoirType != ReservoirType.TAR_SANDS && comp.getReservoirType() != this.reservoirType) {
                 comp = comp.withReservoirType(this.reservoirType);
             }
-            ItemStack chunk = OilRockChunkItem.createFromComposition(comp, biome);
+            UUID veinId = OilCrossChunkVeins.veinUuid(level.getSeed(), vein);
+            OilVeinManager.OilVeinData veinData = OilVeinManager.get(level).ensureVeinRegistered(
+                    veinId, comp, vein.estimateBlockCount(), vein.cy,
+                    new ChunkPos(vein.cx >> 4, vein.cz >> 4)
+            );
+            Holder<Biome> veinBiome = OilCrossChunkVeins.resolveVeinCenterBiome(level, vein);
+            if (veinBiome == null) {
+                veinBiome = level.getBiome(pos);
+            }
+            ItemStack chunk = OilRockChunkItem.createFromComposition(
+                    comp, veinBiome, veinData.remainingUnits, veinData.maxUnits
+            );
             Block.popResource(level, pos, chunk);
         } else {
             Block.popResource(level, pos, new ItemStack(ModItems.HARD_ROCK.get()));

@@ -250,11 +250,19 @@ public class FluidNetwork {
     private record BalanceKey(FluidStack proto) {
         @Override
         public boolean equals(Object o) {
-            return o instanceof BalanceKey other && FluidStack.isSameFluidSameComponents(proto, other.proto);
+            if (!(o instanceof BalanceKey other)) return false;
+            net.minecraft.world.level.material.Fluid wellhead = com.trd.api.industiral.fluids.ModFluids.WELLHEAD_FLUID_SOURCE.get();
+            if (proto.getFluid() == wellhead && other.proto.getFluid() == wellhead) {
+                return true;
+            }
+            return FluidStack.isSameFluidSameComponents(proto, other.proto);
         }
 
         @Override
         public int hashCode() {
+            if (proto.getFluid() == com.trd.api.industiral.fluids.ModFluids.WELLHEAD_FLUID_SOURCE.get()) {
+                return Objects.hash(proto.getFluid());
+            }
             return Objects.hash(
                     proto.getFluid(),
                     proto.get(com.trd.api.capabilities.ModDataComponents.WELLHEAD_FLUID_DATA.get())

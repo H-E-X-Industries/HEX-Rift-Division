@@ -1116,7 +1116,7 @@
   "tooltip.trd.wellhead_fluid.gor": "Газовий фактор: %s%%",
   "tooltip.trd.wellhead_fluid.sulfur_sour": "Сірчиста (Сірка: %s%%)",
   "tooltip.trd.wellhead_fluid.sulfur_sweet": "Малосірчиста",
-  "tooltip.trd.wellhead_fluid.fractions": "Фракції [Б/Н/К/Д/М/Г]: %s/%s/%s/%s/%s/%s%%",
+  "tooltip.trd.wellhead_fluid.fractions": "Фракції [Газ/Б/Н/К/Д/М]: %s/%s/%s/%s/%s/%s%%",
   "tooltip.trd.wellhead_fluid.type.porous_stone": "Пористий пісковик",
   "tooltip.trd.wellhead_fluid.type.tight_shale": "Нафтовий сланець",
   "tooltip.trd.wellhead_fluid.type.tar_sands": "Бітумінозні піски",

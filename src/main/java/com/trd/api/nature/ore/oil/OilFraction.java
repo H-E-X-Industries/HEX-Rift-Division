@@ -1,12 +1,12 @@
 package com.trd.api.nature.ore.oil;
 
 public enum OilFraction {
+    GAS("gas", 0x9EE6FF, "Газовая"),
     GASOLINE("gasoline", 0xBEC287, "Бензиновая"),
     NAPHTHA("naphtha", 0xAE8D3D, "Лигроиновая"),
     KEROSENE("kerosene", 0xC290A8, "Керосиновая"),
     DIESEL("diesel", 0xB9C487, "Дизельная"),
-    FUEL_OIL("fuel_oil", 0x767676, "Мазутная"),
-    BITUMEN("bitumen", 0x585858, "Гудроновая");
+    FUEL_OIL("fuel_oil", 0x767676, "Мазутная");
 
     private final String id;
     private final int color;

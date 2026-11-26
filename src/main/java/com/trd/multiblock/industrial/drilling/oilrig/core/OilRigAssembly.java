@@ -2,8 +2,10 @@ package com.trd.multiblock.industrial.drilling.oilrig.core;
 
 import com.trd.api.nature.ore.oil.OilComposition;
 import com.trd.api.nature.ore.oil.OilVeinManager;
+import com.trd.worldgen.feature.oil.OilCrossChunkVeins;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
 import org.jetbrains.annotations.Nullable;
 
@@ -244,32 +246,78 @@ public final class OilRigAssembly {
                 : RigAssemblyState.FEEDING_PIPE);
     }
 
+    private void finishExtractionAndResume(ServerLevel level) {
+        if (wellhead != null) {
+            wellhead.bindReservoir(null, null, null);
+        }
+        extractionTimer = 0;
+        if (drive != null) {
+            drive.resumeDrillingFromExtraction(level);
+        }
+        setState(RigAssemblyState.IDLE);
+    }
+
     private void tickExtraction(ServerLevel level) {
         if (wellhead == null || drive == null) return;
 
         BlockPos pocketPos = wellhead.getActivePocketPos();
-        if (pocketPos == null || !OilPocketHelper.isReservoirBlock(level.getBlockState(pocketPos))) {
-            // Ищем соседний живой блок кармана вокруг нижней трубы
-            BlockPos adjacent = drive.findAdjacentPocketBlock(level);
-            if (adjacent != null) {
-                OilPocketHelper.ResolvedPocket resolved = OilPocketHelper.resolve(level, adjacent);
-                if (resolved != null) {
-                    wellhead.bindReservoir(resolved.composition(), resolved.pos(), resolved.veinId());
-                    pocketPos = resolved.pos();
+        UUID veinId = wellhead.getActiveVeinId();
+        OilVeinManager manager = OilVeinManager.get(level);
+        OilVeinManager.OilVeinData veinData = veinId != null ? manager.getVein(veinId) : null;
+
+        if (veinId != null) {
+            if (veinData == null && pocketPos != null) {
+                OilCrossChunkVeins.OilVein vein = OilCrossChunkVeins.getVeinAt(level, pocketPos);
+                if (vein != null) {
+                    OilComposition initComp = wellhead.getReservoirComposition();
+                    if (initComp == null) {
+                        initComp = OilCrossChunkVeins.resolveAuthoritativeComposition(level, vein, pocketPos);
+                    }
+                    veinData = manager.ensureVeinRegistered(
+                            veinId, initComp, vein.estimateBlockCount(), vein.cy,
+                            new ChunkPos(vein.cx >> 4, vein.cz >> 4)
+                    );
+                }
+            }
+            if (veinData == null || veinData.remainingUnits <= 0L) {
+                finishExtractionAndResume(level);
+                return;
+            }
+            if (pocketPos == null) {
+                pocketPos = drive.findAdjacentPocketBlock(level);
+                if (pocketPos == null) {
+                    finishExtractionAndResume(level);
+                    return;
+                }
+                wellhead.bindReservoir(
+                        wellhead.getReservoirComposition() != null ? wellhead.getReservoirComposition() : veinData.composition,
+                        pocketPos,
+                        veinId
+                );
+            }
+        } else {
+            if (pocketPos == null || !OilPocketHelper.isReservoirBlock(level.getBlockState(pocketPos))) {
+                BlockPos adjacent = drive.findAdjacentPocketBlock(level);
+                if (adjacent != null) {
+                    OilPocketHelper.ResolvedPocket resolved = OilPocketHelper.resolve(level, adjacent);
+                    if (resolved != null) {
+                        wellhead.bindReservoir(resolved.composition(), resolved.pos(), resolved.veinId());
+                        pocketPos = resolved.pos();
+                        veinId = resolved.veinId();
+                        if (veinId != null) {
+                            veinData = manager.getVein(veinId);
+                        }
+                    } else {
+                        pocketPos = null;
+                    }
                 } else {
                     pocketPos = null;
                 }
-            } else {
-                pocketPos = null;
             }
-        }
-
-        if (pocketPos == null) {
-            wellhead.bindReservoir(null, null, null);
-            extractionTimer = 0;
-            drive.resumeDrillingFromExtraction(level);
-            setState(RigAssemblyState.IDLE);
-            return;
+            if (pocketPos == null) {
+                finishExtractionAndResume(level);
+                return;
+            }
         }
 
         extractionTimer++;
@@ -280,10 +328,15 @@ public final class OilRigAssembly {
 
         OilComposition composition = wellhead.getReservoirComposition();
         if (composition == null) {
-            OilPocketHelper.ResolvedPocket resolved = OilPocketHelper.resolve(level, pocketPos);
-            if (resolved != null) {
-                composition = resolved.composition();
-                wellhead.bindReservoir(composition, resolved.pos(), resolved.veinId());
+            if (veinData != null && veinData.composition != null) {
+                composition = veinData.composition;
+                wellhead.bindReservoir(composition, pocketPos, veinId);
+            } else if (pocketPos != null) {
+                OilPocketHelper.ResolvedPocket resolved = OilPocketHelper.resolve(level, pocketPos);
+                if (resolved != null) {
+                    composition = resolved.composition();
+                    wellhead.bindReservoir(composition, resolved.pos(), resolved.veinId());
+                }
             }
         }
 
@@ -295,7 +348,13 @@ public final class OilRigAssembly {
         }
 
         int targetMb = extractionContext.finalAmountMb();
+        if (veinData != null) {
+            targetMb = (int) Math.min(targetMb, veinData.remainingUnits);
+        }
         if (targetMb <= 0) {
+            if (veinData != null && veinData.remainingUnits <= 0L) {
+                finishExtractionAndResume(level);
+            }
             return;
         }
 
@@ -308,12 +367,16 @@ public final class OilRigAssembly {
             tickPressure(level, extraDelta, false);
         }
 
-        UUID veinId = wellhead.getActiveVeinId();
-        if (veinId != null && accepted > 0) {
-            OilVeinManager.get(level).consumeVeinUnits(veinId, accepted);
-        }
-
-        if (level.random.nextFloat() < extractionContext.depletionChance) {
+        if (veinId != null && veinData != null) {
+            if (accepted > 0) {
+                manager.consumeVeinUnits(veinId, accepted);
+                OilPocketHelper.replaceRandomVeinBlockWithGravel(level, veinId, pocketPos);
+                if (veinData.remainingUnits <= 0L) {
+                    finishExtractionAndResume(level);
+                }
+            }
+        } else if (accepted > 0) {
+            // Фолбэк для ручного размещения блоков залежи в креативе / плоском мире
             level.setBlock(pocketPos, Blocks.GRAVEL.defaultBlockState(), 3);
             BlockPos nextPocket = drive.findAdjacentPocketBlock(level);
             if (nextPocket != null) {
@@ -323,7 +386,7 @@ public final class OilRigAssembly {
                     return;
                 }
             }
-            wellhead.bindReservoir(null, null, null);
+            finishExtractionAndResume(level);
         }
     }
 

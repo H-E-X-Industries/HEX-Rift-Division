@@ -1116,7 +1116,7 @@
   "tooltip.trd.wellhead_fluid.gor": "Газовый фактор: %s%%",
   "tooltip.trd.wellhead_fluid.sulfur_sour": "Сернистая (Сера: %s%%)",
   "tooltip.trd.wellhead_fluid.sulfur_sweet": "Малосернистая",
-  "tooltip.trd.wellhead_fluid.fractions": "Фракции [Б/Н/К/Д/М/Г]: %s/%s/%s/%s/%s/%s%%",
+  "tooltip.trd.wellhead_fluid.fractions": "Фракции [Газ/Б/Н/К/Д/М]: %s/%s/%s/%s/%s/%s%%",
   "tooltip.trd.wellhead_fluid.type.porous_stone": "Пористый песчаник",
   "tooltip.trd.wellhead_fluid.type.tight_shale": "Нефтяной сланец",
   "tooltip.trd.wellhead_fluid.type.tar_sands": "Битуминозные пески",

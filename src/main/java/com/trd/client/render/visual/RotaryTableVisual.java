@@ -12,6 +12,7 @@ import dev.engine_room.flywheel.lib.model.Models;
 import dev.engine_room.flywheel.lib.visual.AbstractBlockEntityVisual;
 import dev.engine_room.flywheel.lib.visual.SimpleDynamicVisual;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
@@ -22,13 +23,14 @@ import java.util.function.Consumer;
 
 /**
  * Flywheel 1.0 визуал роторного стола:
- * статичная база (rotary_table_base.obj), вращающийся диск (rotary_disk.obj)
- * и синхронизированная колонна труб (drill_pipe.obj) во время плавного спуска.
+ * статичная база (rotary_table_base.obj), вращающийся диск (rotary_disk.obj),
+ * входной железный вал в кинетическом порту '%' и синхронизированная колонна труб (drill_pipe.obj).
  */
 public class RotaryTableVisual extends AbstractBlockEntityVisual<RotaryTableBlockEntity> implements SimpleDynamicVisual {
 
     private final TransformedInstance base;
     private final TransformedInstance disk;
+    private final TransformedInstance portShaft;
     private final List<TransformedInstance> descendingPipes = new ArrayList<>(8);
 
     private final BlockPos wellCenter;
@@ -36,6 +38,12 @@ public class RotaryTableVisual extends AbstractBlockEntityVisual<RotaryTableBloc
     private final float wellLocalY;
     private final float wellLocalZ;
     private final float baseYawRad;
+
+    private final BlockPos portPos;
+    private final Direction portSide;
+    private final float portLocalX;
+    private final float portLocalY;
+    private final float portLocalZ;
 
     private final BlockPos.MutableBlockPos lightPos = new BlockPos.MutableBlockPos();
     private boolean prevAssembled;
@@ -51,8 +59,15 @@ public class RotaryTableVisual extends AbstractBlockEntityVisual<RotaryTableBloc
         this.wellLocalZ = wellCenter.getZ() - origin.getZ();
         this.baseYawRad = (float) Math.toRadians(180.0f - blockEntity.getDriveFacing().toYRot());
 
+        this.portPos = blockEntity.getKineticPortPos();
+        this.portSide = blockEntity.getKineticPortSide();
+        this.portLocalX = portPos.getX() - origin.getX();
+        this.portLocalY = portPos.getY() - origin.getY();
+        this.portLocalZ = portPos.getZ() - origin.getZ();
+
         this.base = instancerProvider().instancer(InstanceTypes.TRANSFORMED, Models.partial(ModModels.ROTARY_TABLE_BASE)).createInstance();
         this.disk = instancerProvider().instancer(InstanceTypes.TRANSFORMED, Models.partial(ModModels.ROTARY_DISK)).createInstance();
+        this.portShaft = instancerProvider().instancer(InstanceTypes.TRANSFORMED, Models.partial(ModModels.SHAFT_MODELS.get("shaft_light_iron"))).createInstance();
 
         this.prevAssembled = blockEntity.isDerrickAssembled();
         this.prevHologram = blockEntity.shouldRenderStage2Hologram();
@@ -81,18 +96,25 @@ public class RotaryTableVisual extends AbstractBlockEntityVisual<RotaryTableBloc
     }
 
     private void updateDynamicTransforms(float partialTick) {
-        float diskSpinRad;
-        if (!blockEntity.isExtractingStopped()) {
-            diskSpinRad = ClientKineticAngleTracker.getAngle(blockEntity, null, partialTick);
-            blockEntity.setFrozenDiskAngle(diskSpinRad);
-        } else {
-            diskSpinRad = blockEntity.getFrozenDiskAngle();
-        }
+        float diskSpinRad = blockEntity.getDiskSpinAngleRad(partialTick);
 
         disk.setIdentityTransform()
                 .translate(wellLocalX + 0.5f, wellLocalY, wellLocalZ + 0.5f)
                 .rotateY(baseYawRad + diskSpinRad);
         disk.setChanged();
+
+        float shaftAngleRad = ClientKineticAngleTracker.getAngle(blockEntity, portSide, partialTick);
+        portShaft.setIdentityTransform()
+                .translate(portLocalX, portLocalY, portLocalZ)
+                .translate(0.5f, 0.5f, 0.5f);
+        if (portSide.getAxis() == Direction.Axis.X) {
+            portShaft.rotateY((float) Math.toRadians(portSide == Direction.EAST ? 270 : 90));
+        } else if (portSide == Direction.SOUTH) {
+            portShaft.rotateY((float) Math.toRadians(180));
+        }
+        portShaft.rotateZ(shaftAngleRad)
+                .translate(-0.5f, -0.5f, -0.5f);
+        portShaft.setChanged();
 
         int activeCount = blockEntity.isDescendingPipe() ? (blockEntity.getPipeCountInWell() + 1) : 0;
         if (activeCount > descendingPipes.size()) {
@@ -120,6 +142,7 @@ public class RotaryTableVisual extends AbstractBlockEntityVisual<RotaryTableBloc
     @Override
     public void updateLight(float partialTick) {
         relight(wellCenter, base, disk);
+        relight(portPos, portShaft);
 
         int activeCount = blockEntity.isDescendingPipe() ? (blockEntity.getPipeCountInWell() + 1) : 0;
         float descent = blockEntity.getVisualDescentBlocks(partialTick);
@@ -134,6 +157,7 @@ public class RotaryTableVisual extends AbstractBlockEntityVisual<RotaryTableBloc
     protected void _delete() {
         base.delete();
         disk.delete();
+        portShaft.delete();
         for (TransformedInstance pipe : descendingPipes) {
             pipe.delete();
         }
@@ -144,5 +168,6 @@ public class RotaryTableVisual extends AbstractBlockEntityVisual<RotaryTableBloc
     public void collectCrumblingInstances(Consumer<@Nullable Instance> consumer) {
         consumer.accept(base);
         consumer.accept(disk);
+        consumer.accept(portShaft);
     }
 }

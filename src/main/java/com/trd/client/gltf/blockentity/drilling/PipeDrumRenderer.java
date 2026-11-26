@@ -122,7 +122,6 @@ public class PipeDrumRenderer implements BlockEntityRenderer<PipeDrumBlockEntity
         poseStack.translate(0.5f, 0.0f, 0.5f);
         poseStack.mulPose(Axis.YP.rotationDegrees(rotDeg));
         GpuSkinningDispatcher.renderModel(asset, palette, poseStack, bufferSource, light, packedOverlay, 0xFFFFFFFF, null, true);
-        com.mojang.blaze3d.vertex.BufferUploader.invalidate();
         poseStack.popPose();
     }
 }

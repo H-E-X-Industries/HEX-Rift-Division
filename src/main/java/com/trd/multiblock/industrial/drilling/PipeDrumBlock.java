@@ -134,12 +134,12 @@ public class PipeDrumBlock extends BaseEntityBlock implements IMultiblockControl
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return Shapes.block();
+        return getStructureHelper().generateShapeFromParts(state.getValue(FACING));
     }
 
     @Override
     public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return Shapes.block();
+        return getStructureHelper().generateShapeFromParts(state.getValue(FACING));
     }
 
     @Override
