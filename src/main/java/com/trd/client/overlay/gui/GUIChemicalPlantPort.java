@@ -72,6 +72,7 @@ public class GUIChemicalPlantPort extends AbstractContainerScreen<ChemicalPlantP
                 fluidName = fluidName.withStyle(Style.EMPTY.withColor(TextColor.fromRgb(tintColor)));
                 tooltip.add(fluidName);
                 tooltip.add(Component.translatable("gui.trd.fluid_barrel.amount", fluid.getAmount(), 8000).withStyle(ChatFormatting.GRAY));
+                com.trd.api.industiral.fluids.system.FluidInfoHelper.appendWellheadFluidTooltip(fluid, tooltip);
             } else {
                 tooltip.add(Component.translatable("gui.trd.chemistry.empty").withStyle(ChatFormatting.GRAY));
             }
@@ -87,6 +88,7 @@ public class GUIChemicalPlantPort extends AbstractContainerScreen<ChemicalPlantP
                 fluidName = fluidName.withStyle(Style.EMPTY.withColor(TextColor.fromRgb(tintColor)));
                 tooltip.add(fluidName);
                 tooltip.add(Component.translatable("gui.trd.fluid_barrel.amount", fluid.getAmount(), 8000).withStyle(ChatFormatting.GRAY));
+                com.trd.api.industiral.fluids.system.FluidInfoHelper.appendWellheadFluidTooltip(fluid, tooltip);
             } else {
                 tooltip.add(Component.translatable("gui.trd.chemistry.empty").withStyle(ChatFormatting.GRAY));
             }

@@ -30,9 +30,86 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderHighlightEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 
 @EventBusSubscriber(modid = MainRegistry.MOD_ID, value = Dist.CLIENT)
 public class ClientHighlightEvent {
+
+    private static final PulsingVertexConsumer REUSABLE_PIPE_CONSUMER = new PulsingVertexConsumer();
+
+    @SubscribeEvent
+    public static void onRenderLevelStage(RenderLevelStageEvent event) {
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) return;
+        Minecraft mc = Minecraft.getInstance();
+        Player player = mc.player;
+        if (player == null || mc.level == null) return;
+
+        ItemStack heldStack = player.getMainHandItem();
+        if (!com.trd.multiblock.industrial.drilling.PipeDrumBlockEntity.isDrillPipeItem(heldStack)) {
+            heldStack = player.getOffhandItem();
+            if (!com.trd.multiblock.industrial.drilling.PipeDrumBlockEntity.isDrillPipeItem(heldStack)) {
+                return;
+            }
+        }
+
+        float partialTick = event.getPartialTick().getGameTimeDeltaPartialTick(false);
+        Vec3 eye = player.getEyePosition(partialTick);
+        double reach = player.blockInteractionRange() + 1.5;
+        Vec3 lookEnd = eye.add(player.getViewVector(partialTick).scale(reach));
+
+        com.trd.multiblock.industrial.drilling.PipeDrumBlockEntity bestDrum = null;
+        int bestSlot = -1;
+        double bestDistSq = Double.MAX_VALUE;
+
+        for (var drum : com.trd.multiblock.industrial.drilling.PipeDrumBlockEntity.CLIENT_DRUMS) {
+            if (drum.getLevel() != mc.level || drum.isRemoved()) continue;
+            if (drum.getBlockPos().distToCenterSqr(eye) > (reach + 5.0) * (reach + 5.0)) continue;
+
+            int slot = drum.raycastEmptySlot(eye, lookEnd, partialTick);
+            if (slot >= 0) {
+                double dSq = drum.computeSlotWorldCenter(slot, partialTick).distanceToSqr(eye);
+                if (dSq < bestDistSq) {
+                    bestDistSq = dSq;
+                    bestDrum = drum;
+                    bestSlot = slot;
+                }
+            }
+        }
+
+        if (bestDrum == null || bestSlot < 0) return;
+
+        BakedModel pipeModel = ModModels.DRILL_PIPE.get();
+        if (pipeModel == null) return;
+
+        Vec3 slotCenter = bestDrum.computeSlotWorldCenter(bestSlot, partialTick);
+        Vec3 camPos = event.getCamera().getPosition();
+        PoseStack poseStack = event.getPoseStack();
+
+        long time = mc.level.getGameTime() * 50L + (long) (partialTick * 50.0f);
+        float alpha = 0.20f + 0.35f * (float) ((Math.sin(time / 200.0) + 1.0) * 0.5);
+
+        poseStack.pushPose();
+        poseStack.translate(slotCenter.x - camPos.x, bestDrum.getBlockPos().getY() + 1.397 - camPos.y, slotCenter.z - camPos.z);
+        float rotDeg = (180.0f - bestDrum.getFeederFacing().toYRot()) + bestSlot * 60.0f + bestDrum.getCarouselAngleDeg(partialTick);
+        poseStack.mulPose(Axis.YP.rotationDegrees(rotDeg));
+        poseStack.scale(0.99f, 0.99f, 0.99f);
+
+        MultiBufferSource.BufferSource buffers = mc.renderBuffers().bufferSource();
+        VertexConsumer buffer = buffers.getBuffer(RenderType.entityTranslucent(InventoryMenu.BLOCK_ATLAS));
+        REUSABLE_PIPE_CONSUMER.bind(buffer, alpha);
+
+        mc.getBlockRenderer().getModelRenderer().renderModel(
+                poseStack.last(),
+                REUSABLE_PIPE_CONSUMER,
+                null,
+                pipeModel,
+                0.55f, 0.9f, 1.0f,
+                LightTexture.FULL_BRIGHT,
+                OverlayTexture.NO_OVERLAY
+        );
+        buffers.endBatch(RenderType.entityTranslucent(InventoryMenu.BLOCK_ATLAS));
+        poseStack.popPose();
+    }
 
     @SubscribeEvent
     public static void onRenderHighlight(RenderHighlightEvent.Block event) {
@@ -131,10 +208,18 @@ public class ClientHighlightEvent {
     }
 
     private static class PulsingVertexConsumer implements VertexConsumer {
-        private final VertexConsumer original;
-        private final float alpha;
+        private VertexConsumer original;
+        private float alpha;
+
+        public PulsingVertexConsumer() {
+        }
 
         public PulsingVertexConsumer(VertexConsumer original, float alpha) {
+            this.original = original;
+            this.alpha = alpha;
+        }
+
+        public void bind(VertexConsumer original, float alpha) {
             this.original = original;
             this.alpha = alpha;
         }

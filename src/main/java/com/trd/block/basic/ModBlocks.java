@@ -171,6 +171,10 @@ public class ModBlocks {
 
     // Power Plant & Multiblocks
     public static final DeferredBlock<com.trd.multiblock.industrial.drilling.MudCrossBlock> MUD_CROSS = registerMultiblock("mud_cross", () -> new com.trd.multiblock.industrial.drilling.MudCrossBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK).noOcclusion()));
+    public static final DeferredBlock<com.trd.multiblock.industrial.drilling.RotaryTableBlock> ROTARY_TABLE = registerMultiblock("rotary_table", () -> new com.trd.multiblock.industrial.drilling.RotaryTableBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK).noOcclusion()));
+    public static final DeferredBlock<com.trd.multiblock.industrial.drilling.PipeDrumBlock> PIPE_DRUM = registerMultiblock("pipe_drum", () -> new com.trd.multiblock.industrial.drilling.PipeDrumBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK).noOcclusion()));
+    public static final DeferredBlock<com.trd.multiblock.industrial.drilling.DrillPipeBlock> DRILL_PIPE = registerMultiblock("drill_pipe", () -> new com.trd.multiblock.industrial.drilling.DrillPipeBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK).noOcclusion()));
+    public static final DeferredBlock<com.trd.multiblock.industrial.drilling.DerrickCollisionBlock> DERRICK_COLLISION = BLOCKS.register("derrick_collision", () -> new com.trd.multiblock.industrial.drilling.DerrickCollisionBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.of().strength(-1.0F, 3600000.0F).noOcclusion().dynamicShape().noLootTable()));
     public static final DeferredBlock<com.trd.multiblock.industrial.heaters.HeaterBlock> HEATER = registerMultiblock("heater", () -> new com.trd.multiblock.industrial.heaters.HeaterBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK).noOcclusion()));
     public static final DeferredBlock<com.trd.multiblock.industrial.boiler.BoilerBlock> BOILER = registerMultiblock("boiler", () -> new com.trd.multiblock.industrial.boiler.BoilerBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK).noOcclusion()));
     public static final DeferredBlock<com.trd.multiblock.industrial.steam_engine.SteamEngineBlock> STEAM_ENGINE = registerMultiblock("steam_engine", () -> new com.trd.multiblock.industrial.steam_engine.SteamEngineBlock(net.minecraft.world.level.block.state.BlockBehaviour.Properties.ofFullCopy(net.minecraft.world.level.block.Blocks.IRON_BLOCK).noOcclusion()));
@@ -924,6 +928,12 @@ public class ModBlocks {
         // Прочее
         com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(ELECTRO_FURNACE, "tooltip.trd.machine.electro_furnace.desc");
         com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(COCCER_OVEN, "tooltip.trd.machine.coccer_oven.desc");
+
+        // Бурение и добыча нефти
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(MUD_CROSS, "tooltip.trd.machine.mud_cross.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(ROTARY_TABLE, "tooltip.trd.machine.rotary_table.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(PIPE_DRUM, "tooltip.trd.machine.pipe_drum.desc");
+        com.trd.api.tooltip.MachineTooltipRegistry.registerBlock(DRILL_PIPE, "tooltip.trd.machine.drill_pipe.desc");
     }
     // Климатическая система: контроллер термоизоляции помещений (Tier 1)
     public static final DeferredBlock<InsulationControllerBlock> INSULATION_CONTROLLER =

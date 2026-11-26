@@ -15,6 +15,14 @@ import org.jetbrains.annotations.Nullable;
 
 public class FlywheelFallbackHelper {
 
+    public static void queueBlockEntityUpdate(@Nullable net.minecraft.world.level.block.entity.BlockEntity be) {
+        if (be == null) return;
+        try {
+            dev.engine_room.flywheel.lib.visualization.VisualizationHelper.queueUpdate(be);
+        } catch (Throwable ignored) {
+        }
+    }
+
     public static boolean isFlywheelActive(@Nullable Level level) {
         if (com.hex.hexrender.direct.HexIrisBridge.isShadowPassActive()) {
             return false;

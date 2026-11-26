@@ -3,11 +3,13 @@ package com.trd.multiblock.industrial.drilling;
 import com.mojang.serialization.MapCodec;
 import com.trd.block.basic.ModBlocks;
 import com.trd.block.entity.ModBlockEntities;
+import com.trd.multiblock.industrial.drilling.oilrig.core.OilRigManager;
 import com.trd.multiblock.system.IMultiblockController;
 import com.trd.multiblock.system.MultiblockStructureHelper;
 import com.trd.multiblock.system.PartRole;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -17,22 +19,30 @@ import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.function.Supplier;
 
+/**
+ * Буровая крестовина (устьевой модуль нефтевышки, слой -1).
+ * 3×3 с отверстием 1×1 строго по центру под буровую колонну.
+ * '@' (контроллер) и '$' работают как жидкостные порты вывода скважинного флюида.
+ */
 public class MudCrossBlock extends BaseEntityBlock implements IMultiblockController {
 
     public static final MapCodec<MudCrossBlock> CODEC = simpleCodec(MudCrossBlock::new);
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
-    private static MultiblockStructureHelper helper;
+    private static volatile MultiblockStructureHelper helper;
 
     public MudCrossBlock(Properties properties) {
         super(properties.noOcclusion());
@@ -51,12 +61,17 @@ public class MudCrossBlock extends BaseEntityBlock implements IMultiblockControl
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return this.defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
+        return this.defaultBlockState().setValue(FACING, context.getHorizontalDirection());
     }
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
         return RenderShape.ENTITYBLOCK_ANIMATED;
+    }
+
+    @Override
+    public VoxelShape getOcclusionShape(BlockState state, BlockGetter level, BlockPos pos) {
+        return Shapes.empty();
     }
 
     @Override
@@ -76,8 +91,8 @@ public class MudCrossBlock extends BaseEntityBlock implements IMultiblockControl
                     new String[][]{
                             {
                                     "#$#",
-                                    "$@$",
-                                    "#$#"
+                                    "$ $",
+                                    "#@#"
                             }
                     },
                     symbols,
@@ -102,17 +117,21 @@ public class MudCrossBlock extends BaseEntityBlock implements IMultiblockControl
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         super.setPlacedBy(level, pos, state, placer, stack);
-        if (!level.isClientSide) {
+        if (level instanceof ServerLevel serverLevel) {
             Direction facing = state.getValue(FACING);
-            getStructureHelper().placeStructure(level, pos, facing, this);
+            getStructureHelper().placeStructure(serverLevel, pos, facing, this);
+            if (serverLevel.getBlockEntity(pos) instanceof MudCrossBlockEntity mudCross) {
+                OilRigManager.get(serverLevel).onModuleAdded(serverLevel, mudCross);
+            }
         }
     }
 
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
-        if (!state.is(newState.getBlock()) && !level.isClientSide) {
+        if (!state.is(newState.getBlock()) && level instanceof ServerLevel serverLevel) {
+            OilRigManager.get(serverLevel).onModuleRemoved(serverLevel, pos);
             Direction facing = state.getValue(FACING);
-            getStructureHelper().destroyStructure(level, pos, facing);
+            getStructureHelper().destroyStructure(serverLevel, pos, facing);
         }
         super.onRemove(state, level, pos, newState, isMoving);
     }
@@ -121,5 +140,11 @@ public class MudCrossBlock extends BaseEntityBlock implements IMultiblockControl
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new MudCrossBlockEntity(pos, state);
+    }
+
+    @Nullable
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
+        return level.isClientSide ? null : createTickerHelper(type, ModBlockEntities.MUD_CROSS_BE.get(), MudCrossBlockEntity::serverTick);
     }
 }

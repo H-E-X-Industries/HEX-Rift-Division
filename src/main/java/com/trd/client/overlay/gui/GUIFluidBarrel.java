@@ -98,6 +98,7 @@ public class GUIFluidBarrel extends AbstractContainerScreen<FluidBarrelMenu> {
                 tooltip.add(fluidName);
                 tooltip.add(Component.translatable("gui.trd.fluid_barrel.amount", fluid.getAmount(), menu.getCapacity())
                         .withStyle(ChatFormatting.GRAY));
+                com.trd.api.industiral.fluids.system.FluidInfoHelper.appendWellheadFluidTooltip(fluid, tooltip);
             }
             graphics.renderComponentTooltip(this.font, tooltip, mouseX, mouseY);
         }

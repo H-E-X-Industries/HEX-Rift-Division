@@ -184,6 +184,11 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
             return new Direction[0];
         }
 
+        if (ctrlBe instanceof com.trd.multiblock.industrial.drilling.RotaryTableBlockEntity rotary) {
+            Direction portSide = rotary.getKineticPortSide();
+            return new Direction[]{portSide};
+        }
+
         BlockState ctrlState = level.getBlockState(controllerPos);
         if (!ctrlState.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING))
             return new Direction[0];
@@ -213,7 +218,8 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
         if (!isKineticPort()) return false;
         if (controllerPos != null && neighborPos.equals(controllerPos)) {
             return neighbor instanceof com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity
-                    || neighbor instanceof com.trd.multiblock.industrial.stanok.StanokBlockEntity;
+                    || neighbor instanceof com.trd.multiblock.industrial.stanok.StanokBlockEntity
+                    || neighbor instanceof com.trd.multiblock.industrial.drilling.RotaryTableBlockEntity;
         }
         for (Direction dir : getPropagationDirections()) {
             if (myPos.relative(dir).equals(neighborPos)) {

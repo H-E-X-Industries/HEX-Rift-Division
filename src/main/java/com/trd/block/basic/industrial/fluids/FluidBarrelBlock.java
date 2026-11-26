@@ -335,6 +335,13 @@ public class FluidBarrelBlock extends BaseEntityBlock {
             int color = getFluidColor(fluid);
             pTooltip.add(Component.translatable("tooltip.trd.fluid_barrel.fluid_amount", localizedName, amount, tier.getCapacity())
                     .withStyle(Style.EMPTY.withColor(TextColor.fromRgb(color))));
+            if (hasFluid) {
+                com.trd.api.capabilities.ModDataComponents.WellheadFluidData wellheadData =
+                        com.trd.api.industiral.fluids.system.FluidInfoHelper.parseWellheadDataFromFluidTag(fluidTag);
+                if (wellheadData != null) {
+                    com.trd.api.industiral.fluids.system.FluidInfoHelper.appendWellheadDataTooltip(wellheadData, pTooltip);
+                }
+            }
         }
     }
 }

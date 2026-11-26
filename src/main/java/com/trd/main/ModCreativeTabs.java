@@ -290,7 +290,6 @@ public class ModCreativeTabs {
                         output.accept(ModBlocks.SMALL_SMELTER.get());
 
                         output.accept(ModBlocks.HEATER.get());
-                        output.accept(ModBlocks.MUD_CROSS.get());
                         output.accept(ModItems.SMELTER_ITEM.get());
                         output.accept(ModItems.CC_MACHINE_ITEM.get());
                         output.accept(ModBlocks.COCCER_OVEN.get());
@@ -324,6 +323,9 @@ public class ModCreativeTabs {
 
                         //НЕФТЕПЕРЕРАБОТКА--------------------------------------------------------------------------------------------------------------------------
                         output.accept(ModBlocks.MUD_CROSS.get());
+                        output.accept(ModBlocks.ROTARY_TABLE.get());
+                        output.accept(ModBlocks.PIPE_DRUM.get());
+                        output.accept(ModBlocks.DRILL_PIPE.get());
                     })
                     .build());
 

@@ -116,7 +116,7 @@ public class ModBlockLootTableProvider extends net.minecraft.data.loot.BlockLoot
         for (DeferredHolder<Block, ? extends Block> entry : ModBlocks.BLOCKS.getEntries()) {
             Block block = entry.get();
             if (exceptions.contains(block)) continue;
-            if (block == ModBlocks.BEAM_COLLISION.get() || block == ModBlocks.MULTIBLOCK_PART.get() || block == ModBlocks.PIPE_SPOTS.get()) continue;
+            if (block == ModBlocks.BEAM_COLLISION.get() || block == ModBlocks.DERRICK_COLLISION.get() || block == ModBlocks.MULTIBLOCK_PART.get() || block == ModBlocks.PIPE_SPOTS.get()) continue;
 
             if (block instanceof net.minecraft.world.level.block.DoorBlock) {
                 this.add(block, this::createDoorTable);
@@ -183,7 +183,7 @@ public class ModBlockLootTableProvider extends net.minecraft.data.loot.BlockLoot
     protected Iterable<Block> getKnownBlocks() {
         return ModBlocks.BLOCKS.getEntries().stream()
                 .map(DeferredHolder::get)
-                .filter(block -> block != ModBlocks.BEAM_COLLISION.get() && block != ModBlocks.MULTIBLOCK_PART.get() && block != ModBlocks.PIPE_SPOTS.get())
+                .filter(block -> block != ModBlocks.BEAM_COLLISION.get() && block != ModBlocks.DERRICK_COLLISION.get() && block != ModBlocks.MULTIBLOCK_PART.get() && block != ModBlocks.PIPE_SPOTS.get())
                 .collect(Collectors.toList());
     }
 }

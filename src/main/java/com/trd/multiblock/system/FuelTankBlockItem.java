@@ -1,15 +1,22 @@
 package com.trd.multiblock.system;
 
+import com.trd.api.capabilities.ModDataComponents;
 import com.trd.api.industiral.fluids.system.FluidInfoHelper;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.fluids.FluidStack;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.component.DataComponents;
+
+import java.util.List;
 
 public class FuelTankBlockItem extends MultiblockBlockItem {
 
@@ -35,7 +42,12 @@ public class FuelTankBlockItem extends MultiblockBlockItem {
                 if (!name.isEmpty() && !name.equals("minecraft:empty") && amount > 0) {
                     Fluid f = BuiltInRegistries.FLUID.get(ResourceLocation.parse(name));
                     if (f != null && f != Fluids.EMPTY) {
-                        return new FluidStack(f, amount);
+                        FluidStack res = new FluidStack(f, amount);
+                        ModDataComponents.WellheadFluidData data = FluidInfoHelper.parseWellheadDataFromFluidTag(fluid);
+                        if (data != null) {
+                            res.set(ModDataComponents.WELLHEAD_FLUID_DATA.get(), data);
+                        }
+                        return res;
                     }
                 }
             }
@@ -70,4 +82,20 @@ public class FuelTankBlockItem extends MultiblockBlockItem {
     }
 
     public int getCapacity() { return capacity; }
+
+    @Override
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, context, tooltip, flag);
+        FluidStack fluid = readFluid(stack);
+        if (!fluid.isEmpty()) {
+            int color = FluidInfoHelper.getRgbColor(fluid);
+            tooltip.add(Component.literal("")
+                    .append(FluidInfoHelper.getDisplayName(fluid))
+                    .append(Component.literal(": " + fluid.getAmount() + " / " + capacity + " mB"))
+                    .withStyle(style -> style.withColor(color)));
+            FluidInfoHelper.appendWellheadFluidTooltip(fluid, tooltip);
+        } else {
+            tooltip.add(Component.translatable("tooltip.trd.fluid_barrel.empty").withStyle(ChatFormatting.GRAY));
+        }
+    }
 }

@@ -197,6 +197,18 @@ public class ModFluids {
     private static final BaseFlowingFluid.Properties ALUMINATE_SOLUTION_PROPS = new BaseFlowingFluid.Properties(
             ALUMINATE_SOLUTION_TYPE, ALUMINATE_SOLUTION_SOURCE, ALUMINATE_SOLUTION_FLOWING);
 
+    public static final DeferredHolder<FluidType, ? extends FluidType> WELLHEAD_FLUID_TYPE = FLUID_TYPES.register("wellhead_fluid",
+            () -> new BaseFluidType(FluidType.Properties.create().density(920).viscosity(2800).temperature(315),
+                    WATER_STILL, WATER_FLOW,
+                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("trd", "textures/gui/fluid/wellhead_fluid.png"),
+                    0x6e5138, 42, 15));
+    public static final DeferredHolder<Fluid, ? extends FlowingFluid> WELLHEAD_FLUID_SOURCE = FLUIDS.register("wellhead_fluid",
+            () -> new BaseFlowingFluid.Source(ModFluids.WELLHEAD_FLUID_PROPS));
+    public static final DeferredHolder<Fluid, ? extends FlowingFluid> WELLHEAD_FLUID_FLOWING = FLUIDS.register("flowing_wellhead_fluid",
+            () -> new BaseFlowingFluid.Flowing(ModFluids.WELLHEAD_FLUID_PROPS));
+    private static final BaseFlowingFluid.Properties WELLHEAD_FLUID_PROPS = new BaseFlowingFluid.Properties(
+            WELLHEAD_FLUID_TYPE, WELLHEAD_FLUID_SOURCE, WELLHEAD_FLUID_FLOWING);
+
 
 
     public static final DeferredHolder<Item, ? extends Item> FLUID_DROP_NONE = FLUID_DROP_ITEMS.register("fluid_drop_none", () -> new Item(new Item.Properties()));
@@ -229,6 +241,7 @@ public class ModFluids {
         registerDrop("red_sludge", RED_SLUDGE_TYPE);
         registerDrop("sodium_hydroxide", SODIUM_HYDROXIDE_TYPE);
         registerDrop("low_pressure_steam", LOW_PRESSURE_STEAM_TYPE);
+        registerDrop("wellhead_fluid", WELLHEAD_FLUID_TYPE);
     }
 
     private static void registerDrop(String name, DeferredHolder<FluidType, ? extends FluidType> fluidTypeObj) {
@@ -275,6 +288,7 @@ public class ModFluids {
         fluids.add(SODIUM_HYDROXIDE_SOURCE.get());
         fluids.add(RED_SLUDGE_SOURCE.get());
         fluids.add(ALUMINATE_SOLUTION_SOURCE.get());
+        fluids.add(WELLHEAD_FLUID_SOURCE.get());
         return fluids;
     }
 }

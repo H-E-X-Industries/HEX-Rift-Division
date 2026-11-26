@@ -1,12 +1,18 @@
 package com.trd.api.industiral.fluids.system;
 
+import com.trd.api.capabilities.ModDataComponents;
 import net.minecraft.ChatFormatting;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.neoforged.neoforge.fluids.FluidStack;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+import java.util.Locale;
 import java.util.function.Supplier;
 
 /**
@@ -85,5 +91,51 @@ public class FluidInfoHelper {
             comp = Component.literal(id);
         }
         return comp.copy().withStyle(style -> style.withColor(color));
+    }
+
+    /** Добавляет строки параметров скважинного флюида из DataComponentType в тултип. */
+    public static void appendWellheadFluidTooltip(FluidStack stack, List<Component> tooltip) {
+        if (stack == null || stack.isEmpty()) return;
+        ModDataComponents.WellheadFluidData data = stack.get(ModDataComponents.WELLHEAD_FLUID_DATA.get());
+        if (data != null) {
+            appendWellheadDataTooltip(data, tooltip);
+        }
+    }
+
+    public static void appendWellheadDataTooltip(ModDataComponents.WellheadFluidData data, List<Component> tooltip) {
+        Component resName = Component.translatable("tooltip.trd.wellhead_fluid.type." + data.getReservoirTypeEnum().getId());
+        tooltip.add(Component.translatable("tooltip.trd.wellhead_fluid.reservoir", resName)
+                .withStyle(ChatFormatting.GOLD));
+        tooltip.add(Component.translatable("tooltip.trd.wellhead_fluid.pressure",
+                        String.format(Locale.ROOT, "%.1f", data.pressure()))
+                .withStyle(ChatFormatting.YELLOW));
+        tooltip.add(Component.translatable("tooltip.trd.wellhead_fluid.gor",
+                        Math.round(data.gasRatio() * 100.0f))
+                .withStyle(ChatFormatting.AQUA));
+        if (data.sulfur() > 0.0f) {
+            tooltip.add(Component.translatable("tooltip.trd.wellhead_fluid.sulfur_sour",
+                            String.format(Locale.ROOT, "%.1f", data.sulfur() * 100.0f))
+                    .withStyle(ChatFormatting.RED));
+        } else {
+            tooltip.add(Component.translatable("tooltip.trd.wellhead_fluid.sulfur_sweet")
+                    .withStyle(ChatFormatting.GREEN));
+        }
+        tooltip.add(Component.translatable("tooltip.trd.wellhead_fluid.fractions",
+                        data.gasoline(), data.naphtha(), data.kerosene(),
+                        data.diesel(), data.fuelOil(), data.bitumen())
+                .withStyle(ChatFormatting.GRAY));
+    }
+
+    /** Извлекает WellheadFluidData из сериализованного NBT-тега FluidTank (поле "Fluid"). */
+    @Nullable
+    public static ModDataComponents.WellheadFluidData parseWellheadDataFromFluidTag(@Nullable CompoundTag fluidTag) {
+        if (fluidTag == null || fluidTag.isEmpty()) return null;
+        if (!fluidTag.contains("components", CompoundTag.TAG_COMPOUND)) return null;
+        CompoundTag comps = fluidTag.getCompound("components");
+        if (!comps.contains("trd:wellhead_fluid_data")) return null;
+        return ModDataComponents.WELLHEAD_FLUID_DATA_CODEC
+                .parse(NbtOps.INSTANCE, comps.get("trd:wellhead_fluid_data"))
+                .result()
+                .orElse(null);
     }
 }
