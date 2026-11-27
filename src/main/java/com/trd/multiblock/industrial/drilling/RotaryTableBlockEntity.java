@@ -3,6 +3,7 @@ package com.trd.multiblock.industrial.drilling;
 import com.trd.api.industiral.rotation.KineticNetworkManager;
 import com.trd.api.industiral.rotation.Rotational;
 import com.trd.block.basic.ModBlocks;
+import com.trd.block.basic.deco.BeamBlock;
 import com.trd.block.entity.ModBlockEntities;
 import com.trd.block.entity.deco.BeamCollisionBlockEntity;
 import com.trd.block.entity.industrial.rotation.KineticNodeBlockEntity;
@@ -47,6 +48,7 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
     public static final BlockPos LOCAL_HOLE_FROM_CTRL = new BlockPos(0, 0, -1);
     public static final BlockPos LOCAL_KINETIC_PORT_FROM_CTRL = new BlockPos(1, 0, -1);
     public static final int RING_HEIGHT_FROM_PLATFORM = 20;
+    private static final int DERRICK_COLLISION_VERSION = 2;
 
     private static final int[][] STRUCTURE_OFFSETS_3X3 = {
             {-1, -2}, {0, -2}, {1, -2},
@@ -61,7 +63,9 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
     private boolean extractingStopped = false;
 
     private int savedDecoSteelCount = 0;
+    private int savedDecoBeamCount = 0;
     private int savedBeamBlockCount = 0;
+    private int derrickCollisionVersion = 0;
     private final List<BlockPos> derrickCollisionPositions = new ArrayList<>();
 
     private int towerAnimTick = 0;
@@ -445,8 +449,10 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
             if (y < minY) break;
             BlockPos pipePos = new BlockPos(wellCenter.getX(), y, wellCenter.getZ());
             if (!level.isLoaded(pipePos)) break;
+            BlockState pipeState = level.getBlockState(pipePos);
             if ((ignoredRemovedPos != null && ignoredRemovedPos.equals(pipePos))
-                    || !level.getBlockState(pipePos).is(ModBlocks.DRILL_PIPE.get())) {
+                    || !pipeState.is(ModBlocks.DRILL_PIPE.get())
+                    || pipeState.getValue(DrillPipeBlock.HORIZONTAL)) {
                 break;
             }
             count++;
@@ -569,7 +575,7 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
                 if (!level.isLoaded(pipePos)) break;
                 BlockState st = level.getBlockState(pipePos);
                 if (st.getBlock() instanceof DrillPipeBlock pipeBlock) {
-                    pipeBlock.getStructureHelper().destroyStructure(level, pipePos, st.getValue(DrillPipeBlock.FACING));
+                    pipeBlock.getStructureHelper(st).destroyStructure(level, pipePos, st.getValue(DrillPipeBlock.FACING));
                     level.setBlock(pipePos, Blocks.AIR.defaultBlockState(), 3);
                     purged++;
                 }
@@ -717,21 +723,39 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
 
     // ==================== ПРОВЕРКА ПЛАТФОРМЫ И СБОРКА ВЫШКИ ====================
 
-    private boolean checkPlatformBlocks(Level level) {
-        BlockPos wellCenter = getWellCenterPos();
-        int platformY = getPlatformY();
+    public static @Nullable Block getExpectedPlatformBlock(int dx, int dz) {
+        if (dx < -4 || dx > 4 || dz < -4 || dz > 4 || (dx == 0 && dz == 0)) {
+            return null;
+        }
+        if (Math.abs(dx) == 4 || Math.abs(dz) == 4) {
+            return ModBlocks.CONCRETE_HAZARD_BRIGHT.get();
+        }
+        return ModBlocks.CONCRETE_STRIPPED.get();
+    }
+
+    public static boolean isPlatformStructureValid(Level level, BlockPos wellCenter, int platformY) {
+        BlockPos.MutableBlockPos scanPos = new BlockPos.MutableBlockPos();
+        Block hazardBright = ModBlocks.CONCRETE_HAZARD_BRIGHT.get();
+        Block concreteLight = ModBlocks.CONCRETE_STRIPPED.get();
         for (int dx = -4; dx <= 4; dx++) {
             for (int dz = -4; dz <= 4; dz++) {
-                scratchScanPos.set(wellCenter.getX() + dx, platformY, wellCenter.getZ() + dz);
-                boolean isSteel = level.getBlockState(scratchScanPos).is(ModBlocks.DECO_STEEL.get());
-                if (dx == 0 && dz == 0) {
-                    if (isSteel) return false;
-                } else if (!isSteel) {
+                scanPos.set(wellCenter.getX() + dx, platformY, wellCenter.getZ() + dz);
+                Block expected = getExpectedPlatformBlock(dx, dz);
+                BlockState state = level.getBlockState(scanPos);
+                if (expected == null) {
+                    if (state.is(hazardBright) || state.is(concreteLight)) {
+                        return false;
+                    }
+                } else if (!state.is(expected)) {
                     return false;
                 }
             }
         }
         return true;
+    }
+
+    private boolean checkPlatformBlocks(Level level) {
+        return isPlatformStructureValid(level, getWellCenterPos(), getPlatformY());
     }
 
     private void checkPlatformAndDerrickAssembly(ServerLevel level) {
@@ -749,6 +773,11 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
             if (tryAssembleDerrickFromWorld(level)) {
                 changed = true;
             }
+        } else if (derrickAssembled && derrickCollisionVersion < DERRICK_COLLISION_VERSION) {
+            clearDerrickCollisionBlocks(level);
+            buildAssembledDerrickCollision(level);
+            this.derrickCollisionVersion = DERRICK_COLLISION_VERSION;
+            changed = true;
         }
 
         if (changed) {
@@ -757,27 +786,86 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
         }
     }
 
+    public static boolean isValidManualRingBeam(BlockState state, Direction.Axis edgeAxis) {
+        return state.is(ModBlocks.BEAM_BLOCK.get()) && state.getValue(BeamBlock.FACING).getAxis() == edgeAxis;
+    }
+
+    @Nullable
+    public static BeamCollisionBlockEntity.BeamData findMatchingRingEdgeBeam(Level level, BlockPos cornerA, BlockPos cornerB) {
+        Vec3 a = Vec3.atCenterOf(cornerA);
+        Vec3 b = Vec3.atCenterOf(cornerB);
+        int stepX = Integer.signum(cornerB.getX() - cornerA.getX());
+        int stepZ = Integer.signum(cornerB.getZ() - cornerA.getZ());
+        for (int i = 1; i <= 3; i++) {
+            BlockPos pos = cornerA.offset(stepX * i, 0, stepZ * i);
+            BeamCollisionBlockEntity.BeamData match = checkBeamAtPos(level, pos, a, b);
+            if (match != null) {
+                return match;
+            }
+        }
+        return null;
+    }
+
     private boolean tryAssembleDerrickFromWorld(ServerLevel level) {
         BlockPos wellCenter = getWellCenterPos();
         int platformY = getPlatformY();
         int ringY = platformY + RING_HEIGHT_FROM_PLATFORM;
 
-        // 1. Проверяем верхнее полое кольцо 5×5 (16 блоков DECO_STEEL) на высоте Y_platform + 20
-        List<BlockPos> ringBlocks = new ArrayList<>(16);
-        for (int dx = -2; dx <= 2; dx++) {
-            for (int dz = -2; dz <= 2; dz++) {
-                if (Math.abs(dx) != 2 && Math.abs(dz) != 2) continue;
-                BlockPos ringPos = new BlockPos(wellCenter.getX() + dx, ringY, wellCenter.getZ() + dz);
-                if (!level.getBlockState(ringPos).is(ModBlocks.DECO_STEEL.get())) {
+        // 1. Проверяем 4 угла верхнего каркаса 5×5 (deco_beam) на высоте Y_platform + 20
+        BlockPos nw = new BlockPos(wellCenter.getX() - 2, ringY, wellCenter.getZ() - 2);
+        BlockPos ne = new BlockPos(wellCenter.getX() + 2, ringY, wellCenter.getZ() - 2);
+        BlockPos sw = new BlockPos(wellCenter.getX() - 2, ringY, wellCenter.getZ() + 2);
+        BlockPos se = new BlockPos(wellCenter.getX() + 2, ringY, wellCenter.getZ() + 2);
+        BlockPos[] corners = {nw, ne, sw, se};
+
+        List<BlockPos> blocksToClear = new ArrayList<>(16);
+        for (BlockPos corner : corners) {
+            if (!level.getBlockState(corner).is(ModBlocks.DECO_BEAM.get())) {
+                return false;
+            }
+            blocksToClear.add(corner);
+        }
+
+        // 2. Проверяем 4 ребра между углами: либо 3 ручных beam_block по оси ребра,
+        //    либо P2P-балка от угла к углу
+        record MatchedBeam(Vec3 start, Vec3 end, int cost) {}
+        List<MatchedBeam> matchedBeams = new ArrayList<>(8);
+        int manualEdgeBeams = 0;
+
+        BlockPos[][] edges = {{nw, ne}, {sw, se}, {nw, sw}, {ne, se}};
+        Direction.Axis[] edgeAxes = {Direction.Axis.X, Direction.Axis.X, Direction.Axis.Z, Direction.Axis.Z};
+        for (int e = 0; e < edges.length; e++) {
+            BlockPos cornerA = edges[e][0];
+            BlockPos cornerB = edges[e][1];
+            Direction.Axis axis = edgeAxes[e];
+            int stepX = Integer.signum(cornerB.getX() - cornerA.getX());
+            int stepZ = Integer.signum(cornerB.getZ() - cornerA.getZ());
+
+            boolean allManual = true;
+            List<BlockPos> manualPositions = new ArrayList<>(3);
+            for (int i = 1; i <= 3; i++) {
+                BlockPos edgePos = cornerA.offset(stepX * i, 0, stepZ * i);
+                if (!isValidManualRingBeam(level.getBlockState(edgePos), axis)) {
+                    allManual = false;
+                    break;
+                }
+                manualPositions.add(edgePos);
+            }
+
+            if (allManual) {
+                blocksToClear.addAll(manualPositions);
+                manualEdgeBeams += 3;
+            } else {
+                BeamCollisionBlockEntity.BeamData p2pEdge = findMatchingRingEdgeBeam(level, cornerA, cornerB);
+                if (p2pEdge == null) {
                     return false;
                 }
-                ringBlocks.add(ringPos);
+                int beamCost = (int) Math.ceil(p2pEdge.startPos.distanceTo(p2pEdge.endPos));
+                matchedBeams.add(new MatchedBeam(p2pEdge.startPos, p2pEdge.endPos, beamCost));
             }
         }
 
-        // 2. Ищем все 4 наклонные P2P-балки между углами 9×9 платформы и углами 5×5 кольца
-        record MatchedBeam(Vec3 start, Vec3 end, int cost) {}
-        List<MatchedBeam> matchedBeams = new ArrayList<>(4);
+        // 3. Ищем все 4 наклонные P2P-балки между углами 9×9 платформы и углами 5×5 каркаса
         int[] signs = {-1, 1};
         for (int sx : signs) {
             for (int sz : signs) {
@@ -792,56 +880,80 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
             }
         }
 
-        // 3. Полное совпадение! Сохраняем точное количество ресурсов
-        this.savedDecoSteelCount = 16;
-        int totalBeamCost = 0;
+        // 4. Полное совпадение! Сохраняем точное количество ресурсов
+        this.savedDecoSteelCount = 0;
+        this.savedDecoBeamCount = 4;
+        int totalBeamCost = manualEdgeBeams;
         for (MatchedBeam beam : matchedBeams) {
             totalBeamCost += beam.cost;
         }
         this.savedBeamBlockCount = totalBeamCost;
 
-        // 4. Сначала чисто удаляем данные P2P-балок БЕЗ срабатывания дропа при снятии якоря-кольца
+        // 5. Сначала чисто удаляем данные ВСЕХ P2P-балок БЕЗ срабатывания дропа при снятии углов-якорей
         for (MatchedBeam beam : matchedBeams) {
             clearP2PBeamWithoutDrops(level, beam.start, beam.end);
         }
 
-        // 5. Удаляем из мира 16 блоков верхнего кольца 5×5 (платформа 9×9 остаётся)
-        for (BlockPos rp : ringBlocks) {
-            level.setBlock(rp, Blocks.AIR.defaultBlockState(), 3);
+        // 6. Удаляем из мира 4 угла deco_beam и все ручные beam_block ребер верхнего каркаса 5×5
+        for (BlockPos pos : blocksToClear) {
+            level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
         }
 
-        // 6. Создаём неразрушимую коллизию каркаса по форме модели fracking_tower.gltf
-        this.derrickCollisionPositions.clear();
-        Set<BlockPos> recorded = new HashSet<>();
-
-        // Верхняя рама 5×5 толщиной 1 блок
-        for (BlockPos rp : ringBlocks) {
-            if (level.getBlockState(rp).canBeReplaced() || level.getBlockState(rp).is(ModBlocks.DERRICK_COLLISION.get())) {
-                if (!level.getBlockState(rp).is(ModBlocks.DERRICK_COLLISION.get())) {
-                    level.setBlock(rp, ModBlocks.DERRICK_COLLISION.get().defaultBlockState(), 3);
-                }
-                if (level.getBlockEntity(rp) instanceof DerrickCollisionBlockEntity col) {
-                    col.setControllerPos(worldPosition);
-                    col.setFullRingBlock(true);
-                }
-                if (recorded.add(rp)) {
-                    derrickCollisionPositions.add(rp.immutable());
-                }
-            }
-        }
-
-        // 4 наклонные ноги (Liang–Barsky) от углов 9×9 над платформой до углов верхнего кольца 5×5
-        for (int sx : signs) {
-            for (int sz : signs) {
-                Vec3 legStart = new Vec3(wellCenter.getX() + sx * 4 + 0.5, worldPosition.getY(), wellCenter.getZ() + sz * 4 + 0.5);
-                Vec3 legEnd = new Vec3(wellCenter.getX() + sx * 2 + 0.5, ringY + 0.5, wellCenter.getZ() + sz * 2 + 0.5);
-                placeDerrickLegCollision(level, legStart, legEnd, recorded);
-            }
-        }
+        // 7. Создаём неразрушимую коллизию каркаса по форме модели fracking_tower.gltf (на 1 блок выше кольца постройки)
+        buildAssembledDerrickCollision(level);
+        this.derrickCollisionVersion = DERRICK_COLLISION_VERSION;
 
         this.derrickAssembled = true;
         notifyKineticLoadChanged(level);
         return true;
+    }
+
+    private void clearDerrickCollisionBlocks(ServerLevel level) {
+        for (BlockPos colPos : derrickCollisionPositions) {
+            if (level.getBlockState(colPos).is(ModBlocks.DERRICK_COLLISION.get())) {
+                level.setBlock(colPos, Blocks.AIR.defaultBlockState(), 3);
+            }
+        }
+        derrickCollisionPositions.clear();
+    }
+
+    private void buildAssembledDerrickCollision(ServerLevel level) {
+        this.derrickCollisionPositions.clear();
+        Set<BlockPos> recorded = new HashSet<>();
+
+        BlockPos wellCenter = getWellCenterPos();
+        int collisionRingY = getPlatformY() + RING_HEIGHT_FROM_PLATFORM + 1;
+
+        // Верхняя рама 5×5 на 1 блок выше уровня сборки (вровень с макушкой fracking_tower.gltf)
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                if (Math.abs(dx) != 2 && Math.abs(dz) != 2) continue;
+                BlockPos ringPos = new BlockPos(wellCenter.getX() + dx, collisionRingY, wellCenter.getZ() + dz);
+                BlockState existing = level.getBlockState(ringPos);
+                if (existing.canBeReplaced() || existing.is(ModBlocks.DERRICK_COLLISION.get())) {
+                    if (!existing.is(ModBlocks.DERRICK_COLLISION.get())) {
+                        level.setBlock(ringPos, ModBlocks.DERRICK_COLLISION.get().defaultBlockState(), 3);
+                    }
+                    if (level.getBlockEntity(ringPos) instanceof DerrickCollisionBlockEntity col) {
+                        col.setControllerPos(worldPosition);
+                        col.setFullRingBlock(true);
+                    }
+                    if (recorded.add(ringPos)) {
+                        derrickCollisionPositions.add(ringPos.immutable());
+                    }
+                }
+            }
+        }
+
+        // 4 наклонные ноги (Liang–Barsky) от углов 9×9 над платформой до поднятого верхнего кольца 5×5
+        int[] signs = {-1, 1};
+        for (int sx : signs) {
+            for (int sz : signs) {
+                Vec3 legStart = new Vec3(wellCenter.getX() + sx * 4 + 0.5, worldPosition.getY(), wellCenter.getZ() + sz * 4 + 0.5);
+                Vec3 legEnd = new Vec3(wellCenter.getX() + sx * 2 + 0.5, collisionRingY + 0.5, wellCenter.getZ() + sz * 2 + 0.5);
+                placeDerrickLegCollision(level, legStart, legEnd, recorded);
+            }
+        }
     }
 
     @Nullable
@@ -864,7 +976,7 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
     }
 
     @Nullable
-    private static BeamCollisionBlockEntity.BeamData checkBeamAtPos(ServerLevel level, BlockPos pos, Vec3 a, Vec3 b) {
+    private static BeamCollisionBlockEntity.BeamData checkBeamAtPos(Level level, BlockPos pos, Vec3 a, Vec3 b) {
         if (!(level.getBlockEntity(pos) instanceof BeamCollisionBlockEntity be)) return null;
         for (BeamCollisionBlockEntity.BeamData data : be.getBeams()) {
             boolean forward = data.startPos.distanceToSqr(a) < 0.05 && data.endPos.distanceToSqr(b) < 0.05;
@@ -946,21 +1058,19 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
         if (!detonatingBlowout) {
             syncWellborePipeVisibility(level, 0);
         }
-        for (BlockPos colPos : derrickCollisionPositions) {
-            if (level.getBlockState(colPos).is(ModBlocks.DERRICK_COLLISION.get())) {
-                level.setBlock(colPos, Blocks.AIR.defaultBlockState(), 3);
-            }
-        }
-        derrickCollisionPositions.clear();
+        clearDerrickCollisionBlocks(level);
 
         if (derrickAssembled && !brokenInCreative && !detonatingBlowout) {
             BlockPos dropPos = getWellCenterPos();
             dropChunked(level, dropPos, ModBlocks.DECO_STEEL.get(), savedDecoSteelCount);
+            dropChunked(level, dropPos, ModBlocks.DECO_BEAM.get(), savedDecoBeamCount);
             dropChunked(level, dropPos, ModBlocks.BEAM_BLOCK.get(), savedBeamBlockCount);
         }
 
         derrickAssembled = false;
+        derrickCollisionVersion = 0;
         savedDecoSteelCount = 0;
+        savedDecoBeamCount = 0;
         savedBeamBlockCount = 0;
     }
 
@@ -992,7 +1102,9 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
         tag.putBoolean("HasPipeDrum", hasPipeDrumAttached);
         tag.putBoolean("ExtractingStopped", extractingStopped);
         tag.putInt("SavedDecoSteel", savedDecoSteelCount);
+        tag.putInt("SavedDecoBeam", savedDecoBeamCount);
         tag.putInt("SavedBeamBlocks", savedBeamBlockCount);
+        tag.putInt("DerrickColVer", derrickCollisionVersion);
         tag.putInt("TowerAnimTick", towerAnimTick);
         tag.putBoolean("TowerAnimPaused", towerAnimPaused);
         tag.putBoolean("HoldingPipe", holdingPipe);
@@ -1021,7 +1133,9 @@ public class RotaryTableBlockEntity extends KineticNodeBlockEntity implements ID
         hasPipeDrumAttached = tag.getBoolean("HasPipeDrum");
         extractingStopped = tag.getBoolean("ExtractingStopped");
         savedDecoSteelCount = tag.getInt("SavedDecoSteel");
+        savedDecoBeamCount = tag.getInt("SavedDecoBeam");
         savedBeamBlockCount = tag.getInt("SavedBeamBlocks");
+        derrickCollisionVersion = tag.getInt("DerrickColVer");
         towerAnimTick = tag.getInt("TowerAnimTick");
         towerAnimPaused = !tag.contains("TowerAnimPaused") || tag.getBoolean("TowerAnimPaused");
         holdingPipe = tag.getBoolean("HoldingPipe");

@@ -1,8 +1,12 @@
 {
   "variants": {
-    "facing=north": { "model": "trd:block/drill_pipe" },
-    "facing=east":  { "model": "trd:block/drill_pipe", "y": 90 },
-    "facing=south": { "model": "trd:block/drill_pipe", "y": 180 },
-    "facing=west":  { "model": "trd:block/drill_pipe", "y": 270 }
+    "facing=north,horizontal=false": { "model": "trd:block/drill_pipe" },
+    "facing=east,horizontal=false":  { "model": "trd:block/drill_pipe", "y": 90 },
+    "facing=south,horizontal=false": { "model": "trd:block/drill_pipe", "y": 180 },
+    "facing=west,horizontal=false":  { "model": "trd:block/drill_pipe", "y": 270 },
+    "facing=north,horizontal=true":  { "model": "trd:block/drill_pipe", "x": 90 },
+    "facing=east,horizontal=true":   { "model": "trd:block/drill_pipe", "x": 90, "y": 90 },
+    "facing=south,horizontal=true":  { "model": "trd:block/drill_pipe", "x": 90, "y": 180 },
+    "facing=west,horizontal=true":   { "model": "trd:block/drill_pipe", "x": 90, "y": 270 }
   }
 }

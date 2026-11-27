@@ -356,6 +356,12 @@ public class ModBlocks {
             () -> new Block(BlockBehaviour.Properties.of()
                     .strength(4.0F, 54.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
 
+    public static final DeferredBlock<Block> CONCRETE_HAZARD_BRIGHT = registerBlock("concrete_hazard_bright",
+            () -> new Block(BlockBehaviour.Properties.of()
+                    .strength(4.0F, 54.0F)
+                    .sound(SoundType.STONE)
+                    .requiresCorrectToolForDrops()));
+
     public static final DeferredBlock<Block> CONCRETE_TILE = registerBlock("concrete_tile",
             () -> new Block(BlockBehaviour.Properties.of()
                     .strength(4.5F, 60.0F).sound(net.minecraft.world.level.block.SoundType.STONE).requiresCorrectToolForDrops()));
@@ -795,6 +801,7 @@ public class ModBlocks {
                 CONCRETE_OLD, CONCRETE_OLD_STAIRS, CONCRETE_OLD_SLAB,
                 CONCRETE_HAZARD_NEW, CONCRETE_HAZARD_NEW_STAIRS, CONCRETE_HAZARD_NEW_SLAB,
                 CONCRETE_HAZARD_OLD, CONCRETE_HAZARD_OLD_STAIRS, CONCRETE_HAZARD_OLD_SLAB,
+                CONCRETE_HAZARD_BRIGHT,
                 CONCRETE_TILE, CONCRETE_TILE_STAIRS, CONCRETE_TILE_SLAB,
                 CONCRETE_TILE_ALT, CONCRETE_TILE_ALT_STAIRS, CONCRETE_TILE_ALT_SLAB,
                 CONCRETE_TILE_ALT_BLUE, CONCRETE_TILE_ALT_BLUE_STAIRS, CONCRETE_TILE_ALT_BLUE_SLAB,

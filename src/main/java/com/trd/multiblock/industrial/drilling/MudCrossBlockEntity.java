@@ -212,22 +212,7 @@ public class MudCrossBlockEntity extends BlockEntity
     private void refreshStage1Status(ServerLevel level) {
         BlockPos wellCenter = getWellheadCenterPos();
         int platformY = worldPosition.getY() + 1;
-        boolean platformOk = true;
-        for (int dx = -4; dx <= 4 && platformOk; dx++) {
-            for (int dz = -4; dz <= 4; dz++) {
-                BlockPos checkPos = new BlockPos(wellCenter.getX() + dx, platformY, wellCenter.getZ() + dz);
-                boolean isSteel = level.getBlockState(checkPos).is(ModBlocks.DECO_STEEL.get());
-                if (dx == 0 && dz == 0) {
-                    if (isSteel) {
-                        platformOk = false;
-                        break;
-                    }
-                } else if (!isSteel) {
-                    platformOk = false;
-                    break;
-                }
-            }
-        }
+        boolean platformOk = RotaryTableBlockEntity.isPlatformStructureValid(level, wellCenter, platformY);
 
         boolean rotaryOk = assembly != null
                 && assembly.getDrive() != null

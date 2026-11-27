@@ -11,8 +11,8 @@ import java.util.function.Function;
 
 /**
  * RenderType для полупрозрачных голограмм сборки без записи в буфер глубины (COLOR_WRITE).
- * Рисуется на стадии AFTER_TRANSLUCENT_BLOCKS поверх воды и блоков, не стирая воду позади голограммы,
- * при этом сохраняя корректный depth-test против непрозрачных блоков и воды перед голограммой.
+ * Рисуется на стадии AFTER_LEVEL после облаков, погоды и всех composite/final проходов шейдеров,
+ * читая сохранённый буфер глубины сцены без записи в depth-буфер и не разрушая воду, небо или облака.
  */
 public final class HologramRenderTypes extends RenderType {
 
@@ -21,6 +21,7 @@ public final class HologramRenderTypes extends RenderType {
                 .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
                 .setTextureState(new RenderStateShard.TextureStateShard(texture, false, false))
                 .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+                .setDepthTestState(LEQUAL_DEPTH_TEST)
                 .setCullState(NO_CULL)
                 .setLightmapState(LIGHTMAP)
                 .setOverlayState(OVERLAY)

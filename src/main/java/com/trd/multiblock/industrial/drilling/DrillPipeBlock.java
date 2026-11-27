@@ -27,6 +27,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -44,11 +45,15 @@ public class DrillPipeBlock extends BaseEntityBlock implements IMultiblockContro
 
     public static final MapCodec<DrillPipeBlock> CODEC = simpleCodec(DrillPipeBlock::new);
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+    public static final BooleanProperty HORIZONTAL = BooleanProperty.create("horizontal");
     private static volatile MultiblockStructureHelper helper;
+    private static volatile MultiblockStructureHelper horizontalHelper;
 
     public DrillPipeBlock(Properties properties) {
         super(properties.noOcclusion());
-        this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
+        this.registerDefaultState(this.stateDefinition.any()
+                .setValue(FACING, Direction.NORTH)
+                .setValue(HORIZONTAL, false));
     }
 
     @Override
@@ -58,12 +63,26 @@ public class DrillPipeBlock extends BaseEntityBlock implements IMultiblockContro
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
+        builder.add(FACING, HORIZONTAL);
     }
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return this.defaultBlockState().setValue(FACING, context.getHorizontalDirection());
+        Direction clickedFace = context.getClickedFace();
+        boolean sneaking = context.isSecondaryUseActive();
+        if (clickedFace.getAxis().isHorizontal()) {
+            if (sneaking) {
+                return this.defaultBlockState()
+                        .setValue(FACING, context.getHorizontalDirection())
+                        .setValue(HORIZONTAL, false);
+            }
+            return this.defaultBlockState()
+                    .setValue(FACING, clickedFace)
+                    .setValue(HORIZONTAL, true);
+        }
+        return this.defaultBlockState()
+                .setValue(FACING, context.getHorizontalDirection())
+                .setValue(HORIZONTAL, sneaking);
     }
 
     @Override
@@ -102,6 +121,41 @@ public class DrillPipeBlock extends BaseEntityBlock implements IMultiblockContro
         return helper;
     }
 
+    private MultiblockStructureHelper getHorizontalStructureHelper() {
+        if (horizontalHelper == null) {
+            Map<Character, Supplier<BlockState>> symbols = Map.of(
+                    '#', () -> ModBlocks.MULTIBLOCK_PART.get().defaultBlockState(),
+                    '@', () -> this.defaultBlockState()
+            );
+            Map<Character, PartRole> roles = Map.of(
+                    '#', PartRole.DEFAULT,
+                    '@', PartRole.CONTROLLER
+            );
+            horizontalHelper = MultiblockStructureHelper.createFromLayersWithRoles(
+                    new String[][]{
+                            {
+                                    "#",
+                                    "#",
+                                    "#",
+                                    "@"
+                            }
+                    },
+                    symbols,
+                    () -> ModBlocks.MULTIBLOCK_PART.get().defaultBlockState(),
+                    roles
+            );
+        }
+        return horizontalHelper;
+    }
+
+    @Override
+    public MultiblockStructureHelper getStructureHelper(BlockState state) {
+        if (state.hasProperty(HORIZONTAL) && state.getValue(HORIZONTAL)) {
+            return getHorizontalStructureHelper();
+        }
+        return getStructureHelper();
+    }
+
     @Override
     public PartRole getPartRole(BlockPos localOffset) {
         return PartRole.DEFAULT;
@@ -109,12 +163,12 @@ public class DrillPipeBlock extends BaseEntityBlock implements IMultiblockContro
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return getStructureHelper().generateShapeFromParts(state.getValue(FACING));
+        return getStructureHelper(state).generateShapeFromParts(state.getValue(FACING));
     }
 
     @Override
     public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return getStructureHelper().generateShapeFromParts(state.getValue(FACING));
+        return getStructureHelper(state).generateShapeFromParts(state.getValue(FACING));
     }
 
     @Override
@@ -122,19 +176,26 @@ public class DrillPipeBlock extends BaseEntityBlock implements IMultiblockContro
         super.setPlacedBy(level, pos, state, placer, stack);
         if (level instanceof ServerLevel serverLevel) {
             Direction facing = state.getValue(FACING);
-            getStructureHelper().placeStructure(serverLevel, pos, facing, this);
-            KineticNetworkManager.get(serverLevel).updateNetworkAfterPlace(pos);
-            notifyRigWellboreChanged(serverLevel, pos, null);
+            getStructureHelper(state).placeStructure(serverLevel, pos, facing, this);
+            if (!state.getValue(HORIZONTAL)) {
+                KineticNetworkManager.get(serverLevel).updateNetworkAfterPlace(pos);
+                notifyRigWellboreChanged(serverLevel, pos, null);
+            }
         }
     }
 
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         if (!state.is(newState.getBlock()) && level instanceof ServerLevel serverLevel) {
-            KineticNetworkManager.get(serverLevel).updateNetworkAfterRemove(pos);
+            boolean horizontal = state.getValue(HORIZONTAL);
+            if (!horizontal) {
+                KineticNetworkManager.get(serverLevel).updateNetworkAfterRemove(pos);
+            }
             Direction facing = state.getValue(FACING);
-            getStructureHelper().destroyStructure(serverLevel, pos, facing);
-            notifyRigWellboreChanged(serverLevel, pos, pos);
+            getStructureHelper(state).destroyStructure(serverLevel, pos, facing);
+            if (!horizontal) {
+                notifyRigWellboreChanged(serverLevel, pos, pos);
+            }
         }
         super.onRemove(state, level, pos, newState, isMoving);
     }

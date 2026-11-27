@@ -59,6 +59,7 @@
     "block.trd.concrete_hazard_worn":  "Worn Hazard Concrete",
     "block.trd.concrete_hazard_worn_slab":  "Old Hazard Concrete Slab",
     "block.trd.concrete_hazard_worn_stairs":  "Old Hazard Concrete Stairs",
+    "block.trd.concrete_hazard_bright":  "Bright Hazard Concrete",
     "block.trd.concrete_panel":  "Concrete Panel",
     "block.trd.concrete_mossy":  "Mossy Concrete",
     "block.trd.concrete_mossy_slab":  "Mossy Concrete Slab",
@@ -1132,7 +1133,7 @@
   "hud.trd.pipe_drum.energy": "Energy: %s / %s JE",
   "hud.trd.pipe_drum.pipes": "Pipes Loaded: %s / %s",
   "tooltip.trd.machine.mud_cross.desc": "|Mud Cross| - wellhead base module (3x3) with a center borehole opening. Outputs |Wellhead Fluid| through fluid ports and controller. At |200 bar| it vents gas; at |250 bar| the wellhead detonates.",
-  "tooltip.trd.machine.rotary_table.desc": "|Rotary Table| - central drill drive mounted on the |9x9 DECO Steel platform|. Accepts |45-75 RPM| torque on the right kinetic port and |redstone| control on any block. Auto-assembles the derrick once the |5x5 crown ring| (+20 blocks above platform) and |4 P2P beams| are built.",
+  "tooltip.trd.machine.rotary_table.desc": "|Rotary Table| - central drill drive mounted on the |9x9 concrete platform| (|Bright Hazard Concrete| rim, |Light Textured Concrete| center). Accepts |45-75 RPM| torque on the right kinetic port and |redstone| control on any block. Auto-assembles the derrick once the |5x5 crown frame| (|Decorative Industrial Block| corners + |Beam Block| or P2P beams) (+20 blocks above platform) and |4 P2P beams| are built.",
   "tooltip.trd.machine.pipe_drum.desc": "|Drill Pipe Drum| - 6-slot carousel feeder placed flush behind the |Rotary Table|. Receives |JE energy| strictly from its outward north face and consumes |1000 JE| per 60° index. Right-click empty slots with |Drill Pipes| to load.",
-  "tooltip.trd.machine.drill_pipe.desc": "|Drill Pipe| - 1x1x4 modular drilling segment. Load into a |Drill Pipe Drum| or use along a wellbore column to reach underground oil pockets."
+  "tooltip.trd.machine.drill_pipe.desc": "|Drill Pipe| - 1x1x4 modular drilling segment. Load into a |Drill Pipe Drum| to reach underground oil pockets, or place horizontally as decor by clicking a |side face| (or |Shift+RMB| on top/bottom)."
 }
