@@ -1,12 +1,12 @@
 <div align="center">
 
-[🇺🇸 English](README.md) | **🇷🇺 Русский**
+[US English](README.md) | **RU Русский**
 
 </div>
 
 # The Rift Division
 
-**The Rift Division** - это технический мод для Minecraft 1.21.1 (NeoForge).
+**The Rift Division [TRD]** - это технический мод для Minecraft 1.21.1 (NeoForge).
 
 ⚠️ **Статус проекта:** Ранняя разработка (Pre-Alpha). В текущей версии представлены экспериментальные механики и заготовки. Многие функции могут быть нестабильны или отсутствовать. На данный момент наш мод НЕ опубликован на публичных площадках, таких как CurseForge и Modrinth в связи с статусом проекта.
 
@@ -20,17 +20,57 @@
 
 ## Зависимости
 
+**Требуется:** Minecraft 1.21.1 с NeoForge `21.1.244`
+
 Для работы мода требуются следующие библиотеки:
 
-*   **GeckoLib** (версия 4.8.2 для 1.20.1) - анимации существ, брони и инструментов.
-*   **TerraBlender** (версия `1.20.1-3.0.0.169`) - генерация биомов.
+*   **GeckoLib** `4.9.3` (1.21.1 NeoForge) - анимации существ, брони и инструментов.
+*   **TerraBlender** `1.21.1-4.1.0.8` - генерация биомов.
 
-**Рекомендуем:**
-*   **JEI (Just Enough Items)** (версия 15.3.0.4) - для отображения рецептов.
+**Панируется снести GeckoLib к чертям и заменить его на наш HEX Render в ближайшее время, с последующим ремейком всех ассетов что его использовали!**
+
+**HEX рекомендует:**
+*   **JEI (Just Enough Items)** `19.21.0.247` - для отображения рецептов.
+
+**Встроено в мод (отдельно скачивать не нужно):**
+*   **Flywheel** `1.0.6-44`
+*   **HexRender** `2.0.0`
 
 ---
 
-## Контакты
+## Наши контакты:
 
-*   **Discord:** *https://discord.gg/fnRfYfry7F*
+*   **Discord:** *https://discord.gg/fnRfYfry7F* 
+
+---
+
+## Галерея
+p.s. здесь продемонстрирован далеко не весь контент нашего проекта, просто КОМУ-ТО было немнооого лень.. все равно никто же не будет смотреть наш гитхаб, не так ли?
+
+<table>
+  <tr>
+    <td align="center"><a href="media/8.png"><img src="media/8.png" width="320" alt="Скриншот 8"></a></td>
+    <td align="center"><a href="media/17.png"><img src="media/17.png" width="320" alt="Скриншот 17"></a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="media/1.png"><img src="media/1.png" width="320" alt="Скриншот 1"></a></td>
+    <td align="center"><a href="media/2.png"><img src="media/2.png" width="320" alt="Скриншот 2"></a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="media/13.png"><img src="media/13.png" width="320" alt="Скриншот 13"></a></td>
+    <td align="center"><a href="media/14.png"><img src="media/14.png" width="320" alt="Скриншот 14"></a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="media/15.png"><img src="media/15.png" width="320" alt="Скриншот 15"></a></td>
+    <td align="center"><a href="media/18.png"><img src="media/18.png" width="320" alt="Скриншот 18"></a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="media/19.png"><img src="media/19.png" width="320" alt="Скриншот 19"></a></td>
+    <td align="center"><a href="media/20.png"><img src="media/20.png" width="320" alt="Скриншот 20"></a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="media/21.png"><img src="media/21.png" width="320" alt="Скриншот 21"></a></td>
+    <td align="center"><a href="media/22.png"><img src="media/22.png" width="320" alt="Скриншот 22"></a></td>
+  </tr>
+</table>
 
