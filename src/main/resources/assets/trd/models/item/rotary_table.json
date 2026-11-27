@@ -1,0 +1,71 @@
+{
+  "loader": "neoforge:composite",
+  "textures": {
+    "particle": "trd:block/rotary_table_base"
+  },
+  "children": {
+    "base": {
+      "loader": "neoforge:obj",
+      "model": "trd:models/block/rotary_table_base.obj",
+      "flip_v": true,
+      "textures": {
+        "m_9dbc1c10-8c2c-db8c-b8df-a8ada7abdf65": "trd:block/rotary_table_base"
+      }
+    },
+    "disk": {
+      "loader": "neoforge:obj",
+      "model": "trd:models/block/rotary_disk.obj",
+      "flip_v": true,
+      "textures": {
+        "m_1cf3b8bc-1fbf-10ba-d949-7ae85a92075e": "trd:block/rotary_disk"
+      }
+    }
+  },
+  "transform": {
+    "translation": [0.5, 0.0, 0.5],
+    "rotation": [0, 0, 0],
+    "scale": 1.0
+  },
+  "display": {
+    "thirdperson_righthand": {
+      "rotation": [65, 45, 0],
+      "translation": [0.0, 2.0, 0.5],
+      "scale": [0.22, 0.22, 0.22]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [65, 45, 0],
+      "translation": [0.0, 2.0, 0.5],
+      "scale": [0.22, 0.22, 0.22]
+    },
+    "firstperson_righthand": {
+      "rotation": [0, 45, 0],
+      "translation": [0.0, 2.0, 0.0],
+      "scale": [0.2, 0.2, 0.2]
+    },
+    "firstperson_lefthand": {
+      "rotation": [0, 45, 0],
+      "translation": [0.0, 2.0, 0.0],
+      "scale": [0.2, 0.2, 0.2]
+    },
+    "ground": {
+      "rotation": [0, 0, 0],
+      "translation": [0.0, 2.5, 0.0],
+      "scale": [0.22, 0.22, 0.22]
+    },
+    "gui": {
+      "rotation": [30, 225, 0],
+      "translation": [0.0, -1.5, 0.0],
+      "scale": [0.27, 0.27, 0.27]
+    },
+    "head": {
+      "rotation": [0, 0, 0],
+      "translation": [0.0, 4.0, 0.0],
+      "scale": [0.35, 0.35, 0.35]
+    },
+    "fixed": {
+      "rotation": [0, 0, 0],
+      "translation": [0.0, 0.0, 0.0],
+      "scale": [0.35, 0.35, 0.35]
+    }
+  }
+}

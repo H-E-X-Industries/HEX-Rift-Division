@@ -78,7 +78,13 @@ public class ModClientSetup {
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.DROBITEL_BE.get(), com.trd.client.render.ber.DrobitelRenderer::new);
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.SHAFT_BE.get(), com.trd.client.render.ber.ShaftRenderer::new);
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.MUD_CROSS_BE.get(),
-                ctx -> new com.hex.hexrender.client.GltfBlockEntityRenderer<>(ctx, new com.trd.client.gltf.blockentity.drilling.MudCrossModelDescriptor()));
+                com.trd.client.gltf.blockentity.drilling.MudCrossRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.ROTARY_TABLE_BE.get(),
+                com.trd.client.gltf.blockentity.drilling.RotaryTableRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.PIPE_DRUM_BE.get(),
+                com.trd.client.gltf.blockentity.drilling.PipeDrumRenderer::new);
+        event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.DRILL_PIPE_BE.get(),
+                com.trd.client.render.ber.DrillPipeRenderer::new);
 
         // Пять текстур пули сшиваются в один атлас вариантов. Звать надо до
         // первого выстрела, иначе первые пули просто не рисуются: модель
@@ -101,6 +107,8 @@ public class ModClientSetup {
                 com.trd.client.gecko.entity.mobs.DepthWormRenderer::new);
         event.registerEntityRenderer(com.trd.entity.ModEntities.DEPTH_WORM_BRUTAL.get(),
                 com.trd.client.gecko.entity.mobs.DepthWormBrutalRenderer::new);
+        event.registerEntityRenderer(com.trd.entity.ModEntities.LAUNCHED_DRILL_PIPE.get(),
+                com.trd.client.render.entity.LaunchedDrillPipeRenderer::new);
         event.registerBlockEntityRenderer(com.trd.block.entity.ModBlockEntities.TURRET_LIGHT_PLACER_BE.get(),
                 com.trd.client.gecko.block.turrets.TurretLightPlacerRenderer::new);
 
@@ -835,6 +843,34 @@ public class ModClientSetup {
             @Override
             public boolean skipVanillaRender(com.trd.multiblock.industrial.stanok.StanokBlockEntity be) {
                 return false;
+            }
+        });
+
+        VisualizerRegistry.setVisualizer(ModBlockEntities.ROTARY_TABLE_BE.get(), new BlockEntityVisualizer<com.trd.multiblock.industrial.drilling.RotaryTableBlockEntity>() {
+            @Override
+            public BlockEntityVisual<? super com.trd.multiblock.industrial.drilling.RotaryTableBlockEntity> createVisual(VisualizationContext ctx, com.trd.multiblock.industrial.drilling.RotaryTableBlockEntity be, float partialTick) {
+                com.trd.client.render.IrisShadowBridge.track(be);
+                return new com.trd.client.render.visual.RotaryTableVisual(ctx, be, partialTick);
+            }
+
+            @Override
+            public boolean skipVanillaRender(com.trd.multiblock.industrial.drilling.RotaryTableBlockEntity be) {
+                if (com.hex.hexrender.direct.HexIrisBridge.isShadowPassActive()) return false;
+                return !be.isDerrickAssembled() && !be.shouldRenderStage2Hologram();
+            }
+        });
+
+        VisualizerRegistry.setVisualizer(ModBlockEntities.DRILL_PIPE_BE.get(), new BlockEntityVisualizer<com.trd.multiblock.industrial.drilling.DrillPipeBlockEntity>() {
+            @Override
+            public BlockEntityVisual<? super com.trd.multiblock.industrial.drilling.DrillPipeBlockEntity> createVisual(VisualizationContext ctx, com.trd.multiblock.industrial.drilling.DrillPipeBlockEntity be, float partialTick) {
+                com.trd.client.render.IrisShadowBridge.track(be);
+                return new com.trd.client.render.visual.DrillPipeVisual(ctx, be, partialTick);
+            }
+
+            @Override
+            public boolean skipVanillaRender(com.trd.multiblock.industrial.drilling.DrillPipeBlockEntity be) {
+                if (com.hex.hexrender.direct.HexIrisBridge.isShadowPassActive()) return false;
+                return true;
             }
         });
     }

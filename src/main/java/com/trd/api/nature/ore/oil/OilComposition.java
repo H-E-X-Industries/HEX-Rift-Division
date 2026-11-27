@@ -140,87 +140,87 @@ public class OilComposition {
         // === ПРИОРИТЕТ 1: ТИП ЗАЛЕЖИ (ReservoirType) ===
         // === ПРИОРИТЕТ 2: ВЛИЯНИЕ ТЕМПЕРАТУРЫ БИОМА ===
         if (reservoirType == ReservoirType.TAR_SANDS) {
-            // БИТУМИНОЗНЫЕ ПЕСКИ / ЗАМАЗУЧЕННЫЙ ГРУНТ: тяжелые фракции ВСЕГДА доминируют!
+            // БИТУМИНОЗНЫЕ ПЕСКИ / ЗАМАЗУЧЕННЫЙ ГРУНТ: тяжелые фракции (мазутная + дизельная) ВСЕГДА доминируют
             if (temperature <= 0.25f) {
-                // Холодный биом (тундра, снег): 65-72% тяжелых фракций!
-                frac.put(OilFraction.BITUMEN, 42 + random.nextInt(6)); // 42-47%
-                frac.put(OilFraction.FUEL_OIL, 23 + random.nextInt(4)); // 23-26%
-                frac.put(OilFraction.DIESEL, 14 + random.nextInt(3));   // 14-16%
-                frac.put(OilFraction.KEROSENE, 7 + random.nextInt(2));  // 7-8%
-                frac.put(OilFraction.NAPHTHA, 4 + random.nextInt(2));   // 4-5%
-                frac.put(OilFraction.GASOLINE, 2 + random.nextInt(2));  // 2-3%
+                // Холодный биом (тундра, снег): тяжелые фракции доминируют
+                frac.put(OilFraction.FUEL_OIL, 52 + random.nextInt(6)); // 52-57%
+                frac.put(OilFraction.DIESEL, 23 + random.nextInt(4));   // 23-26%
+                frac.put(OilFraction.KEROSENE, 10 + random.nextInt(2)); // 10-11%
+                frac.put(OilFraction.NAPHTHA, 5 + random.nextInt(2));   // 5-6%
+                frac.put(OilFraction.GASOLINE, 3 + random.nextInt(2));  // 3-4%
+                frac.put(OilFraction.GAS, 1 + random.nextInt(2));       // 1-2%
             } else if (temperature <= 0.50f) {
-                // Умеренно-холодный биом (тайга): 58-64% тяжелых фракций
-                frac.put(OilFraction.BITUMEN, 36 + random.nextInt(5)); // 36-40%
-                frac.put(OilFraction.FUEL_OIL, 22 + random.nextInt(4)); // 22-25%
-                frac.put(OilFraction.DIESEL, 17 + random.nextInt(3));   // 17-19%
-                frac.put(OilFraction.KEROSENE, 11 + random.nextInt(2)); // 11-12%
+                // Умеренно-холодный биом (тайга)
+                frac.put(OilFraction.FUEL_OIL, 46 + random.nextInt(5)); // 46-50%
+                frac.put(OilFraction.DIESEL, 24 + random.nextInt(3));   // 24-26%
+                frac.put(OilFraction.KEROSENE, 12 + random.nextInt(2)); // 12-13%
                 frac.put(OilFraction.NAPHTHA, 7 + random.nextInt(2));   // 7-8%
                 frac.put(OilFraction.GASOLINE, 4 + random.nextInt(2));  // 4-5%
+                frac.put(OilFraction.GAS, 2 + random.nextInt(2));       // 2-3%
             } else if (temperature < 0.90f) {
-                // Умеренный биом: 50-56% тяжелых фракций
-                frac.put(OilFraction.BITUMEN, 31 + random.nextInt(4)); // 31-34%
-                frac.put(OilFraction.FUEL_OIL, 20 + random.nextInt(3)); // 20-22%
-                frac.put(OilFraction.DIESEL, 19 + random.nextInt(3));   // 19-21%
-                frac.put(OilFraction.KEROSENE, 14 + random.nextInt(3)); // 14-16%
+                // Умеренный биом
+                frac.put(OilFraction.FUEL_OIL, 40 + random.nextInt(4)); // 40-43%
+                frac.put(OilFraction.DIESEL, 24 + random.nextInt(3));   // 24-26%
+                frac.put(OilFraction.KEROSENE, 15 + random.nextInt(3)); // 15-17%
                 frac.put(OilFraction.NAPHTHA, 9 + random.nextInt(2));   // 9-10%
-                frac.put(OilFraction.GASOLINE, 5 + random.nextInt(2));  // 5-6%
+                frac.put(OilFraction.GASOLINE, 6 + random.nextInt(2));  // 6-7%
+                frac.put(OilFraction.GAS, 2 + random.nextInt(2));       // 2-3%
             } else {
-                // Пустыня: за счет климатической компенсации 42-49% тяжелых фракций (тяжелые все еще во главе!)
-                frac.put(OilFraction.BITUMEN, 26 + random.nextInt(4)); // 26-29%
-                frac.put(OilFraction.FUEL_OIL, 18 + random.nextInt(3)); // 18-20%
-                frac.put(OilFraction.DIESEL, 20 + random.nextInt(3));   // 20-22%
+                // Пустыня: климатическая компенсация при лидерстве тяжелых фракций
+                frac.put(OilFraction.FUEL_OIL, 34 + random.nextInt(4)); // 34-37%
+                frac.put(OilFraction.DIESEL, 25 + random.nextInt(3));   // 25-27%
                 frac.put(OilFraction.KEROSENE, 16 + random.nextInt(3)); // 16-18%
                 frac.put(OilFraction.NAPHTHA, 11 + random.nextInt(2));  // 11-12%
                 frac.put(OilFraction.GASOLINE, 7 + random.nextInt(3));  // 7-9%
+                frac.put(OilFraction.GAS, 3 + random.nextInt(2));       // 3-4%
             }
         } else if (reservoirType == ReservoirType.TIGHT_SHALE) {
             // НЕФТЯНОЙ СЛАНЕЦ: сдвиг в сторону средних и легких фракций
             if (temperature <= 0.35f) {
-                frac.put(OilFraction.DIESEL, 26 + random.nextInt(4));
-                frac.put(OilFraction.FUEL_OIL, 23 + random.nextInt(3));
-                frac.put(OilFraction.BITUMEN, 18 + random.nextInt(3));
-                frac.put(OilFraction.KEROSENE, 16 + random.nextInt(3));
-                frac.put(OilFraction.NAPHTHA, 10 + random.nextInt(2));
-                frac.put(OilFraction.GASOLINE, 5 + random.nextInt(2));
+                frac.put(OilFraction.DIESEL, 28 + random.nextInt(4));
+                frac.put(OilFraction.FUEL_OIL, 26 + random.nextInt(3));
+                frac.put(OilFraction.KEROSENE, 17 + random.nextInt(3));
+                frac.put(OilFraction.NAPHTHA, 11 + random.nextInt(2));
+                frac.put(OilFraction.GASOLINE, 7 + random.nextInt(2));
+                frac.put(OilFraction.GAS, 5 + random.nextInt(2));
             } else if (temperature >= 0.90f) {
-                frac.put(OilFraction.NAPHTHA, 25 + random.nextInt(4));
-                frac.put(OilFraction.GASOLINE, 24 + random.nextInt(4));
-                frac.put(OilFraction.KEROSENE, 21 + random.nextInt(3));
-                frac.put(OilFraction.DIESEL, 17 + random.nextInt(3));
-                frac.put(OilFraction.FUEL_OIL, 8 + random.nextInt(2));
-                frac.put(OilFraction.BITUMEN, 4 + random.nextInt(2));
+                frac.put(OilFraction.NAPHTHA, 24 + random.nextInt(4));
+                frac.put(OilFraction.GASOLINE, 23 + random.nextInt(4));
+                frac.put(OilFraction.KEROSENE, 20 + random.nextInt(3));
+                frac.put(OilFraction.GAS, 12 + random.nextInt(4));
+                frac.put(OilFraction.DIESEL, 12 + random.nextInt(3));
+                frac.put(OilFraction.FUEL_OIL, 4 + random.nextInt(2));
             } else {
-                frac.put(OilFraction.DIESEL, 24 + random.nextInt(4));
+                frac.put(OilFraction.DIESEL, 25 + random.nextInt(4));
                 frac.put(OilFraction.KEROSENE, 20 + random.nextInt(3));
                 frac.put(OilFraction.NAPHTHA, 18 + random.nextInt(3));
                 frac.put(OilFraction.GASOLINE, 15 + random.nextInt(3));
-                frac.put(OilFraction.FUEL_OIL, 14 + random.nextInt(2));
-                frac.put(OilFraction.BITUMEN, 8 + random.nextInt(2));
+                frac.put(OilFraction.FUEL_OIL, 10 + random.nextInt(3));
+                frac.put(OilFraction.GAS, 7 + random.nextInt(3));
             }
         } else {
             // ПОРИСТЫЙ ПЕСЧАНИК: сбалансированная сырая нефть
             if (temperature <= 0.35f) {
-                frac.put(OilFraction.FUEL_OIL, 27 + random.nextInt(4));
-                frac.put(OilFraction.BITUMEN, 23 + random.nextInt(4));
-                frac.put(OilFraction.DIESEL, 22 + random.nextInt(3));
-                frac.put(OilFraction.KEROSENE, 14 + random.nextInt(2));
-                frac.put(OilFraction.NAPHTHA, 8 + random.nextInt(2));
-                frac.put(OilFraction.GASOLINE, 5 + random.nextInt(2));
+                frac.put(OilFraction.FUEL_OIL, 34 + random.nextInt(4));
+                frac.put(OilFraction.DIESEL, 26 + random.nextInt(3));
+                frac.put(OilFraction.KEROSENE, 16 + random.nextInt(3));
+                frac.put(OilFraction.NAPHTHA, 10 + random.nextInt(2));
+                frac.put(OilFraction.GASOLINE, 6 + random.nextInt(2));
+                frac.put(OilFraction.GAS, 3 + random.nextInt(2));
             } else if (temperature >= 0.90f) {
                 frac.put(OilFraction.NAPHTHA, 24 + random.nextInt(4));
                 frac.put(OilFraction.GASOLINE, 22 + random.nextInt(4));
                 frac.put(OilFraction.KEROSENE, 20 + random.nextInt(3));
-                frac.put(OilFraction.DIESEL, 18 + random.nextInt(3));
-                frac.put(OilFraction.FUEL_OIL, 11 + random.nextInt(2));
-                frac.put(OilFraction.BITUMEN, 4 + random.nextInt(2));
+                frac.put(OilFraction.DIESEL, 17 + random.nextInt(3));
+                frac.put(OilFraction.GAS, 8 + random.nextInt(3));
+                frac.put(OilFraction.FUEL_OIL, 4 + random.nextInt(2));
             } else {
-                frac.put(OilFraction.DIESEL, 25 + random.nextInt(4));
+                frac.put(OilFraction.DIESEL, 26 + random.nextInt(4));
                 frac.put(OilFraction.FUEL_OIL, 20 + random.nextInt(3));
                 frac.put(OilFraction.KEROSENE, 18 + random.nextInt(3));
                 frac.put(OilFraction.NAPHTHA, 15 + random.nextInt(3));
-                frac.put(OilFraction.GASOLINE, 12 + random.nextInt(2));
-                frac.put(OilFraction.BITUMEN, 9 + random.nextInt(2));
+                frac.put(OilFraction.GASOLINE, 11 + random.nextInt(3));
+                frac.put(OilFraction.GAS, 5 + random.nextInt(3));
             }
         }
 
@@ -230,7 +230,7 @@ public class OilComposition {
         if (sum != 100) {
             int diff = 100 - sum;
             OilFraction adjustFraction = reservoirType == ReservoirType.TAR_SANDS
-                    ? OilFraction.BITUMEN
+                    ? OilFraction.FUEL_OIL
                     : (temperature <= 0.35f ? OilFraction.FUEL_OIL : (temperature >= 0.90f ? OilFraction.GASOLINE : OilFraction.DIESEL));
             frac.put(adjustFraction, frac.get(adjustFraction) + diff);
         }
@@ -292,9 +292,18 @@ public class OilComposition {
         if (tag.contains("Fractions", CompoundTag.TAG_COMPOUND)) {
             CompoundTag fracTag = tag.getCompound("Fractions");
             for (String k : fracTag.getAllKeys()) {
+                if ("BITUMEN".equals(k)) {
+                    fractions.merge(OilFraction.FUEL_OIL, fracTag.getInt(k), Integer::sum);
+                    continue;
+                }
                 try {
                     fractions.put(OilFraction.valueOf(k), fracTag.getInt(k));
                 } catch (IllegalArgumentException ignored) {}
+            }
+            if (!fractions.isEmpty()) {
+                for (OilFraction f : OilFraction.values()) {
+                    fractions.putIfAbsent(f, 0);
+                }
             }
         }
         float gasRatio = tag.getFloat("GasRatio");

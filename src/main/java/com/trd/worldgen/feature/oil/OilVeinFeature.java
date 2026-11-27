@@ -54,11 +54,11 @@ public class OilVeinFeature extends Feature<OilVeinConfiguration> {
         OilCrossChunkVeins.forEachVein(level, chunkX, chunkZ, vein -> {
             placedBlocks.clear();
 
-            int safeBiomeX = Mth.clamp(vein.cx, minBX, maxBX);
-            int safeBiomeZ = Mth.clamp(vein.cz, minBZ, maxBZ);
-            int safeBiomeY = Mth.clamp(vein.cy, worldMinY, worldMaxY);
-            Holder<Biome> biome = OilCrossChunkVeins.sampleNoiseBiome(level, safeBiomeX, safeBiomeY, safeBiomeZ);
+            Holder<Biome> biome = OilCrossChunkVeins.resolveVeinCenterBiome(level, vein);
             if (biome == null) {
+                int safeBiomeX = Mth.clamp(vein.cx, minBX, maxBX);
+                int safeBiomeZ = Mth.clamp(vein.cz, minBZ, maxBZ);
+                int safeBiomeY = Mth.clamp(vein.cy, worldMinY, worldMaxY);
                 biome = level.getBiome(new BlockPos(safeBiomeX, safeBiomeY, safeBiomeZ));
             }
 
@@ -281,7 +281,7 @@ public class OilVeinFeature extends Feature<OilVeinConfiguration> {
 
             if (placedBlocks.isEmpty()) return;
 
-            UUID veinId = OilCrossChunkVeins.veinUuid(serverLevel.getSeed(), vein, "oil_pocket_" + vein.seed);
+            UUID veinId = OilCrossChunkVeins.veinUuid(serverLevel.getSeed(), vein);
             OilComposition composition = OilComposition.generate(vein.cy, vein.seed, biome, vein.shape, vein.reservoirType,
                     vein.isField, vein.fieldName, vein.totalPockets, vein.pocketIndex);
             OilVeinManager.get(serverLevel).registerVeinPortion(veinId, placedBlocks, composition, vein.cy);

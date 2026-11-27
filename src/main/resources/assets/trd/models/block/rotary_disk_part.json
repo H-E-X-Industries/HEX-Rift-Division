@@ -1,0 +1,16 @@
+{
+  "loader": "neoforge:composite",
+  "textures": {
+    "particle": "trd:block/rotary_disk"
+  },
+  "children": {
+    "main": {
+      "loader": "neoforge:obj",
+      "model": "trd:models/block/rotary_disk.obj",
+      "flip_v": true,
+      "textures": {
+        "m_1cf3b8bc-1fbf-10ba-d949-7ae85a92075e": "trd:block/rotary_disk"
+      }
+    }
+  }
+}

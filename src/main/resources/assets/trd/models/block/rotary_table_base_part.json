@@ -1,0 +1,16 @@
+{
+  "loader": "neoforge:composite",
+  "textures": {
+    "particle": "trd:block/rotary_table_base"
+  },
+  "children": {
+    "main": {
+      "loader": "neoforge:obj",
+      "model": "trd:models/block/rotary_table_base.obj",
+      "flip_v": true,
+      "textures": {
+        "m_9dbc1c10-8c2c-db8c-b8df-a8ada7abdf65": "trd:block/rotary_table_base"
+      }
+    }
+  }
+}

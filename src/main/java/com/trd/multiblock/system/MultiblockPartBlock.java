@@ -30,7 +30,7 @@ public class MultiblockPartBlock extends BaseEntityBlock implements net.minecraf
     }
 
     public MultiblockPartBlock(Properties properties) {
-        super(properties.strength(1.0f, 6.0f).noOcclusion());
+        super(properties.strength(1.0f, 6.0f).noOcclusion().dynamicShape());
         this.registerDefaultState(this.stateDefinition.any().setValue(net.minecraft.world.level.block.state.properties.BlockStateProperties.WATERLOGGED, false));
     }
 
@@ -64,6 +64,20 @@ public class MultiblockPartBlock extends BaseEntityBlock implements net.minecraf
             BlockState ctrlState = level.getBlockState(part.getControllerPos());
             if (ctrlState.getBlock() instanceof IMultiblockController controller) {
                 VoxelShape masterShape = ctrlState.getShape(level, part.getControllerPos(), context);
+                BlockPos offset = part.getControllerPos().subtract(pos);
+                return masterShape.move(offset.getX(), offset.getY(), offset.getZ());
+            }
+        }
+        return Shapes.block();
+    }
+
+    @Override
+    public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        BlockEntity be = level.getBlockEntity(pos);
+        if (be instanceof IMultiblockPart part && part.getControllerPos() != null) {
+            BlockState ctrlState = level.getBlockState(part.getControllerPos());
+            if (ctrlState.getBlock() instanceof IMultiblockController) {
+                VoxelShape masterShape = ctrlState.getCollisionShape(level, part.getControllerPos(), context);
                 BlockPos offset = part.getControllerPos().subtract(pos);
                 return masterShape.move(offset.getX(), offset.getY(), offset.getZ());
             }
@@ -166,9 +180,9 @@ public class MultiblockPartBlock extends BaseEntityBlock implements net.minecraf
                 BlockPos ctrlPos = part.getControllerPos();
                 BlockState ctrlState = level.getBlockState(ctrlPos);
                 if (ctrlState.getBlock() instanceof IMultiblockController controller) {
+                    BlockEntity ctrlBe = level.getBlockEntity(ctrlPos);
                     if (!player.isCreative()) {
                         ItemStack ctrlDrop = new ItemStack(ctrlState.getBlock());
-                        BlockEntity ctrlBe = level.getBlockEntity(ctrlPos);
 
                         // Состояние при ручной поломке сохраняют только хранилища
                         // (топливные цистерны и прочие BE на базе бочки жидкости).
@@ -180,6 +194,8 @@ public class MultiblockPartBlock extends BaseEntityBlock implements net.minecraf
                         }
 
                         Block.popResource(level, ctrlPos, ctrlDrop);
+                    } else if (ctrlBe instanceof com.trd.multiblock.industrial.drilling.RotaryTableBlockEntity rotaryBe) {
+                        rotaryBe.markBrokenInCreative();
                     }
 
                     net.minecraft.core.Direction facing = ctrlState.hasProperty(HorizontalDirectionalBlock.FACING)

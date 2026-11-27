@@ -55,6 +55,11 @@ public class ModModels {
     
     public static final PartialModel CENTRIFUGE_CYLINDER_LOPASTI = PartialModel.of(ResourceLocation.fromNamespaceAndPath("trd", "block/centrifuge_cylinder_lopasti"));
 
+    // Нефтевышка
+    public static final PartialModel ROTARY_TABLE_BASE = PartialModel.of(ResourceLocation.fromNamespaceAndPath("trd", "block/rotary_table_base_part"));
+    public static final PartialModel ROTARY_DISK = PartialModel.of(ResourceLocation.fromNamespaceAndPath("trd", "block/rotary_disk_part"));
+    public static final PartialModel DRILL_PIPE = PartialModel.of(ResourceLocation.fromNamespaceAndPath("trd", "block/drill_pipe_part"));
+
     static {
         String[] materials = {"iron", "duralumin", "steel", "titanium", "tungsten_carbide"};
         // ВАЖНО: ключи карты — это РЕАЛЬНЫЕ registry-пути предметов GearItem,

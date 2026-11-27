@@ -1,8 +1,10 @@
 package com.trd.item.industrial.fluids;
 
+import com.trd.api.capabilities.ModDataComponents;
 import com.trd.api.industiral.fluids.system.FluidInfoHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
@@ -57,8 +59,15 @@ public class FluidContainerItem extends Item {
         
         Optional<Fluid> opt = BuiltInRegistries.FLUID.getOptional(id);
         if (opt.isEmpty() || opt.get() == Fluids.EMPTY) return FluidStack.EMPTY;
-        
-        return new FluidStack(opt.get(), amount);
+
+        FluidStack result = new FluidStack(opt.get(), amount);
+        if (fluidTag.contains("WellheadData")) {
+            ModDataComponents.WELLHEAD_FLUID_DATA_CODEC
+                    .parse(NbtOps.INSTANCE, fluidTag.get("WellheadData"))
+                    .result()
+                    .ifPresent(data -> result.set(ModDataComponents.WELLHEAD_FLUID_DATA.get(), data));
+        }
+        return result;
     }
 
     public void setFluid(ItemStack stack, FluidStack fluid) {
@@ -70,6 +79,13 @@ public class FluidContainerItem extends Item {
             ResourceLocation id = BuiltInRegistries.FLUID.getKey(fluid.getFluid());
             fluidTag.putString("FluidName", id != null ? id.toString() : "minecraft:empty");
             fluidTag.putInt("Amount", capacity);
+            ModDataComponents.WellheadFluidData wellheadData = fluid.get(ModDataComponents.WELLHEAD_FLUID_DATA.get());
+            if (wellheadData != null) {
+                ModDataComponents.WELLHEAD_FLUID_DATA_CODEC
+                        .encodeStart(NbtOps.INSTANCE, wellheadData)
+                        .result()
+                        .ifPresent(encoded -> fluidTag.put("WellheadData", encoded));
+            }
             tag.put(TAG_FLUID, fluidTag);
         }
         stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
@@ -113,6 +129,7 @@ public class FluidContainerItem extends Item {
                     .append(FluidInfoHelper.getDisplayName(fluid))
                     .append(Component.literal(": " + fluid.getAmount() + " / " + capacity + " mB"))
                     .withStyle(style -> style.withColor(color)));
+            FluidInfoHelper.appendWellheadFluidTooltip(fluid, tooltip);
             tooltip.addAll(getMaxRatingTooltip());
         } else {
             tooltip.add(Component.translatable("tooltip.trd.fluid_barrel.empty").withStyle(ChatFormatting.GRAY));
@@ -206,7 +223,7 @@ public class FluidContainerItem extends Item {
         @Override
         public @NotNull FluidStack drain(FluidStack resource, FluidAction action) {
             if (resource.isEmpty()) return FluidStack.EMPTY;
-            if (internal[0].isEmpty() || !internal[0].is(resource.getFluid())) return FluidStack.EMPTY;
+            if (internal[0].isEmpty() || !FluidStack.isSameFluidSameComponents(internal[0], resource)) return FluidStack.EMPTY;
             if (internal[0].getAmount() < resource.getAmount()) return FluidStack.EMPTY;
 
             FluidStack drained = internal[0].copy();

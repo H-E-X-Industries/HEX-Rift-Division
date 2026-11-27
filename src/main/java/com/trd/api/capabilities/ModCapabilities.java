@@ -116,9 +116,17 @@ public class ModCapabilities {
         );
         event.registerBlockEntity(
                 ENERGY_RECEIVER,
+                com.trd.block.entity.ModBlockEntities.PIPE_DRUM_BE.get(),
+                (be, side) -> (side == null || side == be.getFeederFacing()) ? be : null
+        );
+        event.registerBlockEntity(
+                ENERGY_RECEIVER,
                 com.trd.block.entity.ModBlockEntities.MULTIBLOCK_PART.get(),
                 (be, side) -> {
                     if (be.getControllerPos() != null && be.getLevel() != null) {
+                        if (be.getLevel().getBlockEntity(be.getControllerPos()) instanceof com.trd.multiblock.industrial.drilling.PipeDrumBlockEntity) {
+                            return null;
+                        }
                         com.trd.multiblock.system.PartRole role = be.getPartRole();
                         if (role == com.trd.multiblock.system.PartRole.ENERGY_CONNECTOR || role == com.trd.multiblock.system.PartRole.UNIVERSAL_CONNECTOR || role == com.trd.multiblock.system.PartRole.DEFAULT) {
                             com.trd.api.industiral.energy.IEnergyReceiver rec = be.getLevel().getCapability(ENERGY_RECEIVER, be.getControllerPos(), side);
@@ -217,9 +225,17 @@ public class ModCapabilities {
         );
         event.registerBlockEntity(
                 ENERGY_CONNECTOR,
+                com.trd.block.entity.ModBlockEntities.PIPE_DRUM_BE.get(),
+                (be, side) -> (side == null || side == be.getFeederFacing()) ? be : null
+        );
+        event.registerBlockEntity(
+                ENERGY_CONNECTOR,
                 com.trd.block.entity.ModBlockEntities.MULTIBLOCK_PART.get(),
                 (be, side) -> {
                     if (be.getControllerPos() != null && be.getLevel() != null) {
+                        if (be.getLevel().getBlockEntity(be.getControllerPos()) instanceof com.trd.multiblock.industrial.drilling.PipeDrumBlockEntity) {
+                            return null;
+                        }
                         com.trd.multiblock.system.PartRole role = be.getPartRole();
                         if (role == com.trd.multiblock.system.PartRole.ENERGY_CONNECTOR || role == com.trd.multiblock.system.PartRole.UNIVERSAL_CONNECTOR || role == com.trd.multiblock.system.PartRole.DEFAULT) {
                             com.trd.api.industiral.energy.IEnergyConnector conn = be.getLevel().getCapability(ENERGY_CONNECTOR, be.getControllerPos(), side);
@@ -495,6 +511,12 @@ public class ModCapabilities {
             net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
             com.trd.block.entity.ModBlockEntities.WATER_PUMP_BE.get(),
             (be, side) -> be.getFluidHandler(side)
+    );
+
+    event.registerBlockEntity(
+            net.neoforged.neoforge.capabilities.Capabilities.FluidHandler.BLOCK,
+            com.trd.block.entity.ModBlockEntities.MUD_CROSS_BE.get(),
+            (be, side) -> be.getControllerFluidHandler(side)
     );
 
     event.registerBlockEntity(

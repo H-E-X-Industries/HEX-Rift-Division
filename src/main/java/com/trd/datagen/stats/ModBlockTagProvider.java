@@ -145,7 +145,11 @@ public class ModBlockTagProvider extends BlockTagsProvider {
             ModBlocks.BEARING_BLOCK.get(),
             ModBlocks.CLUTCH.get(),
             ModBlocks.MOTOR_ELECTRO.get(),
-            ModBlocks.TACHOMETER.get()
+            ModBlocks.TACHOMETER.get(),
+            ModBlocks.MUD_CROSS.get(),
+            ModBlocks.ROTARY_TABLE.get(),
+            ModBlocks.PIPE_DRUM.get(),
+            ModBlocks.DRILL_PIPE.get()
     );
 
     public ModBlockTagProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider,
@@ -173,6 +177,10 @@ public class ModBlockTagProvider extends BlockTagsProvider {
             Block block = entry.get();
 
             if (block instanceof net.minecraft.world.level.block.LeavesBlock) {
+                return;
+            }
+
+            if (block == ModBlocks.DERRICK_COLLISION.get()) {
                 return;
             }
 

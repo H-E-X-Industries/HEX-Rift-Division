@@ -1,0 +1,16 @@
+{
+  "loader": "neoforge:composite",
+  "textures": {
+    "particle": "trd:block/drill_pipe"
+  },
+  "children": {
+    "main": {
+      "loader": "neoforge:obj",
+      "model": "trd:models/block/drill_pipe.obj",
+      "flip_v": true,
+      "textures": {
+        "drill_pipe_mat": "trd:block/drill_pipe"
+      }
+    }
+  }
+}

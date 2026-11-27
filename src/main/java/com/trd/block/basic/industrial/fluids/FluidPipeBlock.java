@@ -199,7 +199,12 @@ public class FluidPipeBlock extends Block implements EntityBlock, SimpleWaterlog
                             updateCount++;
                         }
                         manager.addNode(nodePos);
-                        serverLevel.getBlockState(nodePos).updateNeighbourShapes(serverLevel, nodePos, 3);
+                        BlockState curState = serverLevel.getBlockState(nodePos);
+                        BlockState nextState = this.updateConnections(serverLevel, nodePos, curState);
+                        if (!nextState.equals(curState)) {
+                            serverLevel.setBlock(nodePos, nextState, 3);
+                        }
+                        nextState.updateNeighbourShapes(serverLevel, nodePos, 3);
                     }
                 }
                 
@@ -297,9 +302,11 @@ public class FluidPipeBlock extends Block implements EntityBlock, SimpleWaterlog
     private boolean canConnectTo(LevelAccessor level, BlockPos myPos, BlockPos neighborPos, Direction dir) {
         BlockState neighborState = level.getBlockState(neighborPos);
         if (neighborState.getBlock() instanceof FluidPipeBlock) {
-            if (level.getBlockEntity(myPos) instanceof FluidPipeBlockEntity myBE &&
-                    level.getBlockEntity(neighborPos) instanceof FluidPipeBlockEntity neighborBE) {
-                return myBE.getFilterFluid() == neighborBE.getFilterFluid();
+            if (level.getBlockEntity(neighborPos) instanceof FluidPipeBlockEntity neighborBE) {
+                Fluid myFilter = (level.getBlockEntity(myPos) instanceof FluidPipeBlockEntity myBE)
+                        ? myBE.getFilterFluid()
+                        : Fluids.EMPTY;
+                return myFilter == neighborBE.getFilterFluid();
             }
         }
         BlockEntity neighborBE = level.getBlockEntity(neighborPos);
@@ -312,7 +319,8 @@ public class FluidPipeBlock extends Block implements EntityBlock, SimpleWaterlog
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         FluidState fluidstate = context.getLevel().getFluidState(context.getClickedPos());
-        return this.defaultBlockState().setValue(WATERLOGGED, fluidstate.getType() == Fluids.WATER);
+        BlockState baseState = this.defaultBlockState().setValue(WATERLOGGED, fluidstate.getType() == Fluids.WATER);
+        return updateConnections(context.getLevel(), context.getClickedPos(), baseState);
     }
 
     @Override

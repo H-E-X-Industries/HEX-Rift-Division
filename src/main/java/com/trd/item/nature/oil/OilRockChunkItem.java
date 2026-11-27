@@ -10,7 +10,6 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -31,17 +30,28 @@ public class OilRockChunkItem extends Item {
     }
 
     public static ItemStack createFromVein(OilVeinManager.OilVeinData vein, Holder<Biome> biome) {
-        return createFromComposition(vein.composition, biome);
+        return createFromComposition(vein.composition, biome, vein.remainingUnits, vein.maxUnits);
     }
 
     public static ItemStack createFromComposition(OilComposition comp, Holder<Biome> biome) {
+        return createFromComposition(comp, biome, -1L, -1L);
+    }
+
+    public static ItemStack createFromComposition(OilComposition comp, Holder<Biome> biome, long remainingMb, long maxMb) {
         ItemStack stack = new ItemStack(ModItems.OIL_ROCK_CHUNK.get());
         CompoundTag tag = comp.save();
         tag.putBoolean("Analyzed", false);
 
-        ResourceLocation biomeKey = biome.unwrapKey().map(k -> k.location()).orElse(null);
+        ResourceLocation biomeKey = comp.getBiomeKey();
+        if (biomeKey == null && biome != null) {
+            biomeKey = biome.unwrapKey().map(k -> k.location()).orElse(null);
+        }
         if (biomeKey != null) {
             tag.putString("SampleBiome", biomeKey.toString());
+        }
+        if (maxMb > 0L) {
+            tag.putLong("VeinRemainingMb", Math.max(0L, remainingMb));
+            tag.putLong("VeinMaxMb", maxMb);
         }
 
         stack.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
@@ -86,9 +96,18 @@ public class OilRockChunkItem extends Item {
         CompoundTag fracTag = tag.getCompound("Fractions");
         Map<OilFraction, Integer> map = new EnumMap<>(OilFraction.class);
         for (String k : fracTag.getAllKeys()) {
+            if ("BITUMEN".equals(k)) {
+                map.merge(OilFraction.FUEL_OIL, fracTag.getInt(k), Integer::sum);
+                continue;
+            }
             try {
                 map.put(OilFraction.valueOf(k), fracTag.getInt(k));
             } catch (IllegalArgumentException ignored) {}
+        }
+        if (!map.isEmpty()) {
+            for (OilFraction f : OilFraction.values()) {
+                map.putIfAbsent(f, 0);
+            }
         }
         return map;
     }
@@ -124,6 +143,32 @@ public class OilRockChunkItem extends Item {
         return Math.min(1.0f, sulfur * 20.0f);
     }
 
+    public static long getVeinRemainingMb(ItemStack stack) {
+        if (!stack.has(DataComponents.CUSTOM_DATA)) return -1L;
+        CompoundTag tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        return tag.contains("VeinMaxMb") ? tag.getLong("VeinRemainingMb") : -1L;
+    }
+
+    public static long getVeinMaxMb(ItemStack stack) {
+        if (!stack.has(DataComponents.CUSTOM_DATA)) return -1L;
+        CompoundTag tag = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
+        return tag.contains("VeinMaxMb") ? tag.getLong("VeinMaxMb") : -1L;
+    }
+
+    private static String formatGroupedLong(long value) {
+        String s = Long.toString(Math.max(0L, value));
+        if (s.length() <= 3) return s;
+        StringBuilder sb = new StringBuilder(s.length() + s.length() / 3);
+        int mod = s.length() % 3;
+        for (int i = 0; i < s.length(); i++) {
+            if (i > 0 && (i - mod) % 3 == 0) {
+                sb.append(' ');
+            }
+            sb.append(s.charAt(i));
+        }
+        return sb.toString();
+    }
+
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
         if (!isAnalyzed(stack)) {
@@ -145,69 +190,40 @@ public class OilRockChunkItem extends Item {
             tooltip.add(Component.literal("§7Залежь: §fОдиночный нефтяной карман"));
         }
 
-        ReservoirType resType = getReservoirType(stack);
-        tooltip.add(Component.literal("§7Коллектор: §f" + resType.getDisplayNameRu()));
-
-        Map<OilFraction, Integer> fractions = getFractions(stack);
-        if (!fractions.isEmpty()) {
-            tooltip.add(Component.literal("§eУглеводородный спектр:"));
-            for (OilFraction f : OilFraction.values()) {
-                int pct = fractions.getOrDefault(f, 0);
-                MutableComponent line = Component.literal("  • ")
-                        .withStyle(style -> style.withColor(f.getColor()))
-                        .append(Component.literal(f.getDisplayNameRu() + ": ")
-                                .withStyle(style -> style.withColor(f.getColor())))
-                        .append(Component.literal(pct + "%")
-                                .withStyle(ChatFormatting.WHITE));
-                tooltip.add(line);
+        long maxMb = getVeinMaxMb(stack);
+        if (maxMb > 0L) {
+            long remainingMb = Math.max(0L, getVeinRemainingMb(stack));
+            long maxBuckets = maxMb / 1000L;
+            if (remainingMb <= 0L) {
+                tooltip.add(Component.literal(String.format(Locale.ROOT,
+                        "§7Запасы пласта: §cИстощён (0 / %s B)",
+                        formatGroupedLong(maxBuckets))));
+            } else if (remainingMb < maxMb) {
+                long remBuckets = remainingMb / 1000L;
+                double pct = (remainingMb * 100.0) / maxMb;
+                tooltip.add(Component.literal(String.format(Locale.ROOT,
+                        "§7Запасы пласта: §b%s / %s B §8(%.1f%% | %s mB)",
+                        formatGroupedLong(remBuckets),
+                        formatGroupedLong(maxBuckets),
+                        pct,
+                        formatGroupedLong(remainingMb))));
+            } else {
+                tooltip.add(Component.literal(String.format(Locale.ROOT,
+                        "§7Запасы пласта: §b%s B §8(%s mB)",
+                        formatGroupedLong(maxBuckets),
+                        formatGroupedLong(maxMb))));
             }
         }
 
-        float gasRatio = getGasRatio(stack);
-        float pressure = getPressure(stack);
-        float sulfur = getSulfur(stack);
-        float corrosiveness = getCorrosiveness(stack) * 100.0f;
-
-        tooltip.add(Component.literal(String.format(Locale.ROOT, "§7Газовый фактор (GOR): §f%.1f%%", gasRatio * 100.0f)));
-        tooltip.add(Component.literal(String.format(Locale.ROOT, "§7Пластовое давление: §f%.1f bar", pressure)));
-
-        if (sulfur > 0.0f) {
-            String corrSeverity = corrosiveness >= 65.0f ? "§4Критическая"
-                    : (corrosiveness >= 35.0f ? "§cВысокая" : "§eУмеренная");
-
-            tooltip.add(Component.literal(String.format(Locale.ROOT, "§7Сернистость: §cКислая (%.1f%% S)", sulfur * 100.0f)));
-            tooltip.add(Component.literal(String.format(Locale.ROOT, "§7Коррозийность сырья: %s (%.1f%%)", corrSeverity, corrosiveness)));
-        } else {
-            tooltip.add(Component.literal("§7Сернистость: §aСладкая (0.0% S)"));
-            tooltip.add(Component.literal("§7Коррозийность сырья: §aИнертная (0.0%)"));
-        }
-
-        // Технологические требования и рекомендации по оборудованию
-        tooltip.add(Component.literal("§dТехнологические требования:"));
-
-        boolean hasWarning = false;
-
-        if (resType != ReservoirType.TAR_SANDS && (pressure >= 150.0f || (gasRatio >= 0.40f && pressure >= 80.0f))) {
-            tooltip.add(Component.literal(" §c⚠ ТРЕБУЕТСЯ ПРЕВЕНТОР (BOP): Критическое давление газа! Скважину сдетонирует без устьевого превентора."));
-            hasWarning = true;
-        }
-
-        if (sulfur > 0.0f) {
-            tooltip.add(Component.literal(String.format(Locale.ROOT,
-                    " §e⚠ ТРЕБУЕТСЯ МОДУЛЬ ГИДРООЧИСТКИ: Высокое содержание H₂S (Коррозия %.1f%%). Без десульфуризации вызывает ускоренный износ бура и разрушение труб при выкачке.", corrosiveness)));
-            hasWarning = true;
-        }
-
-        if (resType == ReservoirType.TIGHT_SHALE) {
-            tooltip.add(Component.literal(" §6⚠ ТРЕБУЕТСЯ МОДУЛЬ ФРЕКИНГА: Низкопроницаемый сланец. Требуется гидроразрыв и подача бурового раствора."));
-            hasWarning = true;
-        } else if (resType == ReservoirType.TAR_SANDS) {
-            tooltip.add(Component.literal(" §b⚠ ТРЕБУЕТСЯ ПАРОВОЙ ИНЖЕКТОР (EOR): Застывший битум. Требуется нагнетание пара для снижения вязкости."));
-            hasWarning = true;
-        }
-
-        if (!hasWarning) {
-            tooltip.add(Component.literal(" §a✓ Стандартная добыча: Осложнений нет, достаточно базового насоса."));
-        }
+        Map<OilFraction, Integer> fractions = getFractions(stack);
+        com.trd.api.industiral.fluids.system.FluidInfoHelper.appendOilGeochemistryTooltip(
+                tooltip,
+                getReservoirType(stack),
+                !fractions.isEmpty(),
+                f -> fractions.getOrDefault(f, 0),
+                getGasRatio(stack),
+                getPressure(stack),
+                getSulfur(stack)
+        );
     }
 }

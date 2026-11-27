@@ -38,6 +38,7 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
         this.controllerPos = pos;
         setChanged();
         if (level != null && !level.isClientSide) {
+            level.invalidateCapabilities(worldPosition);
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
         }
     }
@@ -53,6 +54,7 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
         setChanged();
 
         if (this.level != null && !this.level.isClientSide) {
+            this.level.invalidateCapabilities(this.worldPosition);
             com.trd.api.industiral.energy.EnergyNetworkManager energyManager = com.trd.api.industiral.energy.EnergyNetworkManager.get((ServerLevel) this.level);
             
             if (!wasEnergy && isEnergy) {
@@ -184,6 +186,11 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
             return new Direction[0];
         }
 
+        if (ctrlBe instanceof com.trd.multiblock.industrial.drilling.RotaryTableBlockEntity rotary) {
+            Direction portSide = rotary.getKineticPortSide();
+            return new Direction[]{portSide};
+        }
+
         BlockState ctrlState = level.getBlockState(controllerPos);
         if (!ctrlState.hasProperty(net.minecraft.world.level.block.state.properties.BlockStateProperties.HORIZONTAL_FACING))
             return new Direction[0];
@@ -213,7 +220,8 @@ public class MultiblockPartEntity extends BlockEntity implements IMultiblockPart
         if (!isKineticPort()) return false;
         if (controllerPos != null && neighborPos.equals(controllerPos)) {
             return neighbor instanceof com.trd.multiblock.industrial.drobitel.DrobitelBlockEntity
-                    || neighbor instanceof com.trd.multiblock.industrial.stanok.StanokBlockEntity;
+                    || neighbor instanceof com.trd.multiblock.industrial.stanok.StanokBlockEntity
+                    || neighbor instanceof com.trd.multiblock.industrial.drilling.RotaryTableBlockEntity;
         }
         for (Direction dir : getPropagationDirections()) {
             if (myPos.relative(dir).equals(neighborPos)) {

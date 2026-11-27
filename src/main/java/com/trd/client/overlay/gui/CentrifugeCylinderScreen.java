@@ -193,6 +193,7 @@ public class CentrifugeCylinderScreen extends AbstractContainerScreen<Centrifuge
             lines.add(Component.translatable("gui.trd.vishelashivatel.fluid_amount",
                             fluid.getAmount(), be.getInputTank().getCapacity())
                     .withStyle(ChatFormatting.GRAY));
+            com.trd.api.industiral.fluids.system.FluidInfoHelper.appendWellheadFluidTooltip(fluid, lines);
         } else if (be.getTargetFluid() != Fluids.EMPTY) {
             var target = be.getTargetFluid();
             FluidStack dummy = new FluidStack(target, 1000);
@@ -231,6 +232,7 @@ public class CentrifugeCylinderScreen extends AbstractContainerScreen<Centrifuge
         lines.add(Component.translatable("gui.trd.vishelashivatel.fluid_amount",
                         fluid.getAmount(), be.getOutputTank(index).getCapacity())
                 .withStyle(ChatFormatting.GRAY));
+        com.trd.api.industiral.fluids.system.FluidInfoHelper.appendWellheadFluidTooltip(fluid, lines);
         gui.renderComponentTooltip(this.font, lines, mx, my);
     }
 }

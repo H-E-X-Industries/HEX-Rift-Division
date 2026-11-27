@@ -211,6 +211,18 @@ public class ModEntities {
                     .sized(0.6F, 1.95F) // Размеры как у обычного зомби
                     .build("trd:grenadier_zombie"));
 
+    // === НЕФТЕВЫШКА ===
+
+    public static final DeferredHolder<EntityType<?>, EntityType<com.trd.entity.industrial.drilling.LaunchedDrillPipeEntity>> LAUNCHED_DRILL_PIPE =
+            ENTITY_TYPES.register("launched_drill_pipe", () -> EntityType.Builder
+                    .<com.trd.entity.industrial.drilling.LaunchedDrillPipeEntity>of(
+                            com.trd.entity.industrial.drilling.LaunchedDrillPipeEntity::new, MobCategory.MISC)
+                    .sized(0.95F, 0.95F)
+                    .clientTrackingRange(8)
+                    .updateInterval(1)
+                    .setShouldReceiveVelocityUpdates(true)
+                    .build("trd:launched_drill_pipe"));
+
     public static void register(IEventBus eventBus) {
         ENTITY_TYPES.register(eventBus);
     }

@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "trd:block/rotary_table" },
+    "facing=east":  { "model": "trd:block/rotary_table", "y": 90 },
+    "facing=south": { "model": "trd:block/rotary_table", "y": 180 },
+    "facing=west":  { "model": "trd:block/rotary_table", "y": 270 }
+  }
+}

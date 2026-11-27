@@ -186,7 +186,7 @@ public class FluidNetwork {
 
         for (IFluidHandler dest : destinations) {
             if (source == dest) continue;
-            int accepted = dest.fill(new FluidStack(fluid, Integer.MAX_VALUE), IFluidHandler.FluidAction.SIMULATE);
+            int accepted = dest.fill(available.copyWithAmount(Integer.MAX_VALUE), IFluidHandler.FluidAction.SIMULATE);
             if (accepted > 0) {
                 validDestinations.put(dest, accepted);
                 totalCapacity += accepted;
@@ -211,7 +211,7 @@ public class FluidNetwork {
                 toFill = Math.min(toFill, remaining);
 
                 if (toFill > 0) {
-                    FluidStack drained = source.drain(new FluidStack(fluid, toFill), IFluidHandler.FluidAction.EXECUTE);
+                    FluidStack drained = source.drain(available.copyWithAmount(toFill), IFluidHandler.FluidAction.EXECUTE);
                     if (!drained.isEmpty()) {
                         dest.fill(drained, IFluidHandler.FluidAction.EXECUTE);
                         remaining -= drained.getAmount();
@@ -230,7 +230,7 @@ public class FluidNetwork {
                     }
                 }
 
-                int newAccepted = dest.fill(new FluidStack(fluid, Integer.MAX_VALUE), IFluidHandler.FluidAction.SIMULATE);
+                int newAccepted = dest.fill(available.copyWithAmount(Integer.MAX_VALUE), IFluidHandler.FluidAction.SIMULATE);
                 totalCapacity -= maxAcceptable;
                 if (newAccepted > 0) {
                     entry.setValue(newAccepted);
@@ -247,28 +247,51 @@ public class FluidNetwork {
         return false;
     }
 
+    private record BalanceKey(FluidStack proto) {
+        @Override
+        public boolean equals(Object o) {
+            if (!(o instanceof BalanceKey other)) return false;
+            net.minecraft.world.level.material.Fluid wellhead = com.trd.api.industiral.fluids.ModFluids.WELLHEAD_FLUID_SOURCE.get();
+            if (proto.getFluid() == wellhead && other.proto.getFluid() == wellhead) {
+                return true;
+            }
+            return FluidStack.isSameFluidSameComponents(proto, other.proto);
+        }
+
+        @Override
+        public int hashCode() {
+            if (proto.getFluid() == com.trd.api.industiral.fluids.ModFluids.WELLHEAD_FLUID_SOURCE.get()) {
+                return Objects.hash(proto.getFluid());
+            }
+            return Objects.hash(
+                    proto.getFluid(),
+                    proto.get(com.trd.api.capabilities.ModDataComponents.WELLHEAD_FLUID_DATA.get())
+            );
+        }
+    }
+
     private void balance(ServerLevel level, List<IFluidHandler> buffers, Set<net.minecraft.world.level.material.Fluid> allowedFluids) {
         if (buffers.size() < 2) return;
 
-        // Группируем баки по типу жидкости
-        Map<net.minecraft.world.level.material.Fluid, List<IFluidHandler>> byFluid = new HashMap<>();
-        
+        // Группируем баки по типу жидкости и её компонентам
+        Map<BalanceKey, List<IFluidHandler>> byFluid = new HashMap<>();
+
         for (IFluidHandler buf : buffers) {
             FluidStack fs = buf.getFluidInTank(0);
             if (!fs.isEmpty()) {
                 if (!allowedFluids.isEmpty() && !allowedFluids.contains(fs.getFluid())) continue;
-                byFluid.computeIfAbsent(fs.getFluid(), k -> new ArrayList<>()).add(buf);
+                byFluid.computeIfAbsent(new BalanceKey(fs.copyWithAmount(1)), k -> new ArrayList<>()).add(buf);
             }
         }
-        
+
         // Для каждой жидкости балансируем свои баки
-        for (Map.Entry<net.minecraft.world.level.material.Fluid, List<IFluidHandler>> entry : byFluid.entrySet()) {
-            net.minecraft.world.level.material.Fluid type = entry.getKey();
+        for (Map.Entry<BalanceKey, List<IFluidHandler>> entry : byFluid.entrySet()) {
+            FluidStack typeStack = entry.getKey().proto();
             List<IFluidHandler> activeBuffers = entry.getValue();
-            
+
             // Также добавляем пустые баки, которые могут принять эту жидкость
             for (IFluidHandler buf : buffers) {
-                if (buf.getFluidInTank(0).isEmpty() && buf.isFluidValid(0, new FluidStack(type, 1))) {
+                if (buf.getFluidInTank(0).isEmpty() && buf.isFluidValid(0, typeStack)) {
                     activeBuffers.add(buf);
                 }
             }
@@ -319,9 +342,9 @@ public class FluidNetwork {
                     if (recDeficit <= 0) continue;
 
                     int toMove = Math.min(donorExcess, recDeficit);
-                    int acceptedSim = receiver.fill(new FluidStack(type, toMove), IFluidHandler.FluidAction.SIMULATE);
+                    int acceptedSim = receiver.fill(donorFluid.copyWithAmount(toMove), IFluidHandler.FluidAction.SIMULATE);
                     if (acceptedSim > 0) {
-                        FluidStack drained = donor.drain(new FluidStack(type, acceptedSim), IFluidHandler.FluidAction.EXECUTE);
+                        FluidStack drained = donor.drain(donorFluid.copyWithAmount(acceptedSim), IFluidHandler.FluidAction.EXECUTE);
                         if (!drained.isEmpty()) {
                             receiver.fill(drained, IFluidHandler.FluidAction.EXECUTE);
                             donorExcess -= drained.getAmount();
