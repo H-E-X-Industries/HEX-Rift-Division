@@ -276,10 +276,10 @@ public class ModBlocks {
                     .strength(1.5F, 6.0F).sound(net.minecraft.world.level.block.SoundType.NETHER_BRICKS).requiresCorrectToolForDrops().noOcclusion()));
 
     public static final DeferredBlock<Block> CASTING_POT = registerBlock("casting_pot",
-            () -> new com.trd.block.basic.industrial.casting.CastingPotBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion()));
+            () -> new com.trd.block.basic.industrial.casting.CastingPotBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.NETHER_BRICKS).noOcclusion()));
 
     public static final DeferredBlock<Block> CASTING_DESCENT = registerBlock("casting_descent",
-            () -> new com.trd.block.basic.industrial.casting.CastingDescentBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion()));
+            () -> new com.trd.block.basic.industrial.casting.CastingDescentBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.NETHER_BRICKS).noOcclusion()));
 
     public static final DeferredBlock<Block> DROBITEL = BLOCKS.register("ore_crusher",
             () -> new com.trd.multiblock.industrial.drobitel.DrobitelBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.IRON_BLOCK).noOcclusion().strength(3.0f, 10.0f)));
@@ -705,9 +705,9 @@ public class ModBlocks {
                     .noOcclusion()));
 
     public static final DeferredBlock<Block> FIREBRICK_BLOCK = registerBlock("firebrick_block",
-            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.STONE_BRICKS)));
+            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.NETHER_BRICKS)));
     public static final DeferredBlock<Block> REINFORCEDBRICK_BLOCK = registerBlock("reinforcedbrick_block",
-            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.STONE_BRICKS)));
+            () -> new Block(BlockBehaviour.Properties.ofFullCopy(Blocks.NETHER_BRICKS)));
     public static final DeferredBlock<net.minecraft.world.level.block.StairBlock> FIREBRICK_STAIRS = registerBlock("firebrick_stairs",
             () -> new net.minecraft.world.level.block.StairBlock(FIREBRICK_BLOCK.get().defaultBlockState(), BlockBehaviour.Properties.ofFullCopy(FIREBRICK_BLOCK.get())));
     public static final DeferredBlock<net.minecraft.world.level.block.StairBlock> REINFORCEDBRICK_STAIRS = registerBlock("reinforcedbrick_stairs",
