@@ -107,7 +107,7 @@ public class FluidInfoHelper {
     }
 
     public static void appendWellheadDataTooltip(ModDataComponents.WellheadFluidData data, List<Component> tooltip) {
-        tooltip.add(Component.literal("§6=== [Характеристики скважинного флюида] ==="));
+        tooltip.add(Component.literal("§6=== [Характеристики скважинной жидкости] ==="));
         appendOilGeochemistryTooltip(
                 tooltip,
                 data.getReservoirTypeEnum(),

@@ -54,6 +54,7 @@ public class ModCreativeTabs {
                         output.accept(ModBlocks.CONCRETE_HAZARD_OLD.get());
                         output.accept(ModBlocks.CONCRETE_HAZARD_OLD_SLAB.get());
                         output.accept(ModBlocks.CONCRETE_HAZARD_OLD_STAIRS.get());
+                        output.accept(ModBlocks.CONCRETE_HAZARD_BRIGHT.get());
                         output.accept(ModBlocks.CONCRETE_TILE.get());
                         output.accept(ModBlocks.CONCRETE_TILE_SLAB.get());
                         output.accept(ModBlocks.CONCRETE_TILE_STAIRS.get());

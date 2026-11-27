@@ -96,6 +96,7 @@ public class ModBlockTagProvider extends BlockTagsProvider {
             ModBlocks.CONCRETE_HAZARD_OLD.get(),
             ModBlocks.CONCRETE_HAZARD_OLD_SLAB.get(),
             ModBlocks.CONCRETE_HAZARD_OLD_STAIRS.get(),
+            ModBlocks.CONCRETE_HAZARD_BRIGHT.get(),
             ModBlocks.CONCRETE_TILE.get(),
             ModBlocks.CONCRETE_TILE_SLAB.get(),
             ModBlocks.CONCRETE_TILE_STAIRS.get(),

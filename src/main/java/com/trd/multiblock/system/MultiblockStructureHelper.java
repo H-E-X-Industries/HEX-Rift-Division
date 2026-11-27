@@ -610,7 +610,7 @@ public class MultiblockStructureHelper {
         if (!state.hasProperty(HorizontalDirectionalBlock.FACING)) return;
         Direction facing = state.getValue(HorizontalDirectionalBlock.FACING);
 
-        MultiblockStructureHelper helper = controller.getStructureHelper();
+        MultiblockStructureHelper helper = controller.getStructureHelper(state);
         if (helper != null) {
             fs.setFrameVisible(helper.computeFrameVisible(level, controllerPos, facing));
         }

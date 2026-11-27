@@ -9,6 +9,10 @@ public interface IMultiblockController {
 
     MultiblockStructureHelper getStructureHelper();
 
+    default MultiblockStructureHelper getStructureHelper(BlockState state) {
+        return getStructureHelper();
+    }
+
     PartRole getPartRole(BlockPos localOffset);
 
     @Nullable

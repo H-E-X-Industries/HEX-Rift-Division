@@ -46,18 +46,26 @@ public class DrillPipeBlockEntity extends KineticNodeBlockEntity {
         return state.hasProperty(DrillPipeBlock.FACING) ? state.getValue(DrillPipeBlock.FACING) : Direction.NORTH;
     }
 
+    public boolean isHorizontal() {
+        BlockState state = getBlockState();
+        return state.hasProperty(DrillPipeBlock.HORIZONTAL) && state.getValue(DrillPipeBlock.HORIZONTAL);
+    }
+
     @Override
     public Direction[] getPropagationDirections() {
-        return new Direction[]{Direction.UP, Direction.DOWN};
+        return isHorizontal() ? new Direction[0] : new Direction[]{Direction.UP, Direction.DOWN};
     }
 
     @Override
     public List<BlockPos> getPotentialConnections(Level level, BlockPos myPos) {
-        return List.of(myPos.below(), myPos.above(4));
+        return isHorizontal() ? List.of() : List.of(myPos.below(), myPos.above(4));
     }
 
     @Override
     public boolean canConnectMechanically(BlockPos myPos, BlockPos neighborPos, Rotational neighbor) {
+        if (isHorizontal()) {
+            return false;
+        }
         return neighborPos.equals(myPos.below()) || neighborPos.equals(myPos.above(4));
     }
 
@@ -107,6 +115,9 @@ public class DrillPipeBlockEntity extends KineticNodeBlockEntity {
     }
 
     public float getRenderSpinAngleRad(float partialTick) {
+        if (isHorizontal()) {
+            return 0.0f;
+        }
         if (inWellbore) {
             if (speed != 0L) {
                 return ClientKineticAngleTracker.getAngle(this, null, partialTick);

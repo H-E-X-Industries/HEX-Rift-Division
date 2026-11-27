@@ -56,6 +56,7 @@
     "block.trd.concrete_hazard_worn":  "Worn Hazard Concrete",
     "block.trd.concrete_hazard_worn_slab":  "Old Hazard Concrete Slab",
     "block.trd.concrete_hazard_worn_stairs":  "Old Hazard Concrete Stairs",
+    "block.trd.concrete_hazard_bright":  "Яскравий бетон з розміткою",
     "block.trd.concrete_panel":  "Concrete Panel",
     "block.trd.concrete_mossy":  "Mossy Concrete",
     "block.trd.concrete_mossy_slab":  "Mossy Concrete Slab",
@@ -1108,9 +1109,9 @@
   "block.trd.drill_pipe": "Бурова труба",
   "block.trd.derrick_collision": "Каркас бурової вежі",
   "entity.trd.launched_drill_pipe": "Вилетіла бурова труба",
-  "fluid_type.trd.wellhead_fluid": "Свердловинний флюїд",
-  "fluid.trd.wellhead_fluid": "Свердловинний флюїд",
-  "item.trd.fluid_drop_wellhead_fluid": "Крапля свердловинного флюїду",
+  "fluid_type.trd.wellhead_fluid": "Свердловинна рідина",
+  "fluid.trd.wellhead_fluid": "Свердловинна рідина",
+  "item.trd.fluid_drop_wellhead_fluid": "Крапля свердловинної рідини",
   "tooltip.trd.wellhead_fluid.reservoir": "Поклад: %s",
   "tooltip.trd.wellhead_fluid.pressure": "Пластовий тиск: %s бар",
   "tooltip.trd.wellhead_fluid.gor": "Газовий фактор: %s%%",
@@ -1131,8 +1132,8 @@
   "hud.trd.pipe_drum.title": "Барабан бурових труб",
   "hud.trd.pipe_drum.energy": "Енергія: %s / %s JE",
   "hud.trd.pipe_drum.pipes": "Труб у барабані: %s / %s",
-  "tooltip.trd.machine.mud_cross.desc": "|Бурова хрестовина| - гирловий модуль вежі (3x3) з центральним отвором під бурову колону. Виводить |свердловинний флюїд| через бічні порти та контролер. При |200 бар| стравлює газ, а при |250 бар| детонує.",
-  "tooltip.trd.machine.rotary_table.desc": "|Роторний стіл| - привід бурової колони на |платформі 9x9 з DECO Steel|. Потребує |45-75 RPM| на правий кінетичний порт і сигнал |редстоуна| на будь-який блок. Вежа збирається автоматично при побудові |кільця 5x5| (+20 блоків над платформою) та |4 похилих P2P-балок|.",
+  "tooltip.trd.machine.mud_cross.desc": "|Бурова хрестовина| - гирловий модуль вежі (3x3) з центральним отвором під бурову колону. Виводить |свердловинну рідину| через бічні порти та контролер. При |200 бар| стравлює газ, а при |250 бар| детонує.",
+  "tooltip.trd.machine.rotary_table.desc": "|Роторний стіл| - привід бурової колони на |бетонній платформі 9x9| (обідок — |Яскравий бетон з розміткою|, центр — |Light Textured Concrete|). Потребує |45-75 RPM| на правий кінетичний порт і сигнал |редстоуна| на будь-який блок. Вежа збирається автоматично при побудові |каркаса 5x5| (кути — |Decorative Industrial Block|, між ними — |Beam Block| або P2P-балки) (+20 блоків над платформою) та |4 похилих P2P-балок|.",
   "tooltip.trd.machine.pipe_drum.desc": "|Барабан бурових труб| - револьверний подавач на 6 труб, що ставиться впритул позаду |Роторного столу|. Приймає |JE енергію| лише із зовнішньої/північної грані та витрачає |1000 JE| на поворот на 60°. Для завантаження натисніть |ПКМ| буровою трубою по порожньому слоту.",
-  "tooltip.trd.machine.drill_pipe.desc": "|Бурова труба| - секція бурової колони розміром 1x1x4. Завантажується в |барабан бурових труб| для буріння нафтових кишень."
+  "tooltip.trd.machine.drill_pipe.desc": "|Бурова труба| - секція бурової колони розміром 1x1x4. Завантажується в |барабан бурових труб| для буріння нафтових кишень або встановлюється горизонтально як декор при кліку по |бічній грані| (або |Shift+ПКМ| по верху/низу)."
 }

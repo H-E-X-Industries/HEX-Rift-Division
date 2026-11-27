@@ -27,8 +27,10 @@ public class MultiblockBlockItem extends BlockItem {
         Level level = context.getLevel();
         Player player = context.getPlayer();
 
+        MultiblockStructureHelper helper = controller.getStructureHelper(state);
+
         // 1. Проверяем помехи от энергетических проводов
-        if (controller.getStructureHelper().hasWireObstruction(level, context.getClickedPos(), state)) {
+        if (helper.hasWireObstruction(level, context.getClickedPos(), state)) {
             if (player != null) {
                 player.displayClientMessage(Component.translatable("message.trd.multiblock.wire_obstructed"), true);
             }
@@ -40,19 +42,19 @@ public class MultiblockBlockItem extends BlockItem {
         if (state.hasProperty(BlockStateProperties.AXIS) && state.hasProperty(BlockStateProperties.FACING)) {
             Direction.Axis axis = state.getValue(BlockStateProperties.AXIS);
             Direction facing = state.getValue(BlockStateProperties.FACING);
-            canPlace = controller.getStructureHelper().checkPlacementStator(level, context.getClickedPos(), facing, axis, player);
+            canPlace = helper.checkPlacementStator(level, context.getClickedPos(), facing, axis, player);
         } else if (state.hasProperty(BlockStateProperties.AXIS)) {
             Direction.Axis axis = state.getValue(BlockStateProperties.AXIS);
-            canPlace = controller.getStructureHelper().checkPlacement(level, context.getClickedPos(), axis, player);
+            canPlace = helper.checkPlacement(level, context.getClickedPos(), axis, player);
         } else if (state.hasProperty(HorizontalDirectionalBlock.FACING)) {
             Direction facing = state.getValue(HorizontalDirectionalBlock.FACING);
-            canPlace = controller.getStructureHelper().checkPlacement(level, context.getClickedPos(), facing, player);
+            canPlace = helper.checkPlacement(level, context.getClickedPos(), facing, player);
         } else if (state.hasProperty(BlockStateProperties.FACING)) {
             Direction facing = state.getValue(BlockStateProperties.FACING);
-            canPlace = controller.getStructureHelper().checkPlacement(level, context.getClickedPos(), facing, player);
+            canPlace = helper.checkPlacement(level, context.getClickedPos(), facing, player);
         } else {
             // Без направления (например, центрифуги)
-            canPlace = controller.getStructureHelper().checkPlacement(level, context.getClickedPos(), Direction.NORTH, player);
+            canPlace = helper.checkPlacement(level, context.getClickedPos(), Direction.NORTH, player);
         }
 
         if (canPlace) {

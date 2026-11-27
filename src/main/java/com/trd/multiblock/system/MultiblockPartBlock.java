@@ -159,9 +159,9 @@ public class MultiblockPartBlock extends BaseEntityBlock implements net.minecraf
                         
                         if (ctrlState.hasProperty(com.trd.block.basic.industrial.rotation.StatorBlock.AXIS)) {
                             net.minecraft.core.Direction.Axis axis = ctrlState.getValue(com.trd.block.basic.industrial.rotation.StatorBlock.AXIS);
-                            controller.getStructureHelper().destroyStructureStator(level, ctrlPos, facing, axis);
+                            controller.getStructureHelper(ctrlState).destroyStructureStator(level, ctrlPos, facing, axis);
                         } else {
-                            controller.getStructureHelper().destroyStructure(level, ctrlPos, facing);
+                            controller.getStructureHelper(ctrlState).destroyStructure(level, ctrlPos, facing);
                         }
                         level.removeBlock(ctrlPos, false);
                     }
@@ -202,9 +202,9 @@ public class MultiblockPartBlock extends BaseEntityBlock implements net.minecraf
                             ? ctrlState.getValue(HorizontalDirectionalBlock.FACING) : net.minecraft.core.Direction.NORTH;
                     if (ctrlState.hasProperty(com.trd.block.basic.industrial.rotation.StatorBlock.AXIS)) {
                         net.minecraft.core.Direction.Axis axis = ctrlState.getValue(com.trd.block.basic.industrial.rotation.StatorBlock.AXIS);
-                        controller.getStructureHelper().destroyStructureStator(level, ctrlPos, facing, axis);
+                        controller.getStructureHelper(ctrlState).destroyStructureStator(level, ctrlPos, facing, axis);
                     } else {
-                        controller.getStructureHelper().destroyStructure(level, ctrlPos, facing);
+                        controller.getStructureHelper(ctrlState).destroyStructure(level, ctrlPos, facing);
                     }
                     level.removeBlock(ctrlPos, false);
                 }
